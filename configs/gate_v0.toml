@@ -57,7 +57,10 @@ radius = 1
 
 [eval]
 # The same backend and the same committed weight table the deployment config
-# reads: the gate narrows what the search looks at, and nothing else.
+# reads. The eval is the one thing this document does NOT narrow — the radius
+# above and the table size are both smaller than the deployment config's, and
+# both change which move comes back on a tie (docs/decisions.md D-109). That is
+# why nothing measured here is a strength claim.
 backend = "handcrafted_v0"
 weights_file = "configs/eval_v0_weights.toml"
 
