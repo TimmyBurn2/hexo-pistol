@@ -1,15 +1,47 @@
 //! `pistol-search` — the classical search.
 //!
-//! This crate will own principal variation search with iterative deepening, the
-//! transposition table, move ordering, threat-only quiescence, budget handling
-//! and `SearchInfo`. No MCTS.
+//! Principal variation search with iterative deepening, a transposition table,
+//! move ordering and budget handling. No MCTS, and in Stage 0 no quiescence, no
+//! threat generation and none of the reductions the research report parks in
+//! later stages.
 //!
-//! Two invariants constrain everything added here:
+//! Two invariants constrain everything here:
 //!
 //! - the determinism law (CLAUDE.md rule 4) — in instrument mode nothing
 //!   nondeterministic may influence move choice, so no unseeded hash iteration
 //!   on a choice path, no time-based tie-breaks, no thread races;
 //! - the search candidate policy is config, never a literal, and it is a
-//!   different concept from the rules' radius-8 legal region.
+//!   different concept from the rules' radius-8 legal region
+//!   ([`candidate_cells`], docs/decisions.md D-20).
 //!
-//! WP-01 is workspace scaffold, config, errors and CI; it writes no search.
+//! # Units
+//!
+//! Depth is measured internally in **plies** — a turn is two same-side plies
+//! with the phase bit in the position key — and externally in **turns**
+//! (docs/decisions.md D-9). Everything a caller sees is turns: the budget, the
+//! reported depth, the mate distance, and the principal variation.
+
+pub mod candidates;
+pub mod error;
+pub mod info;
+pub mod params;
+pub mod score;
+pub mod search;
+pub mod stop;
+pub mod tt;
+
+// The recursion and what it walks. Private because they are how the search
+// works rather than what it offers: a caller holds a `Searcher` and a `Stop`,
+// and everything below is free to change behind them.
+pub(crate) mod ordering;
+pub(crate) mod position;
+pub(crate) mod pv;
+pub(crate) mod pvs;
+
+pub use candidates::candidate_cells;
+pub use error::SearchError;
+pub use info::{SearchInfo, SearchOutcome};
+pub use params::{CandidatePolicy, SearchParams};
+pub use score::{MATE, ScoreKind};
+pub use search::{MAX_DEPTH_TURNS, Searcher};
+pub use stop::{NODE_CHECK_INTERVAL, Stop};

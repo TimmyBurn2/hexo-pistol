@@ -9,3 +9,9 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
+# The rules, the geometry and the position key: search restates none of them
+# (CLAUDE.md rule 2).
+pistol-core = { workspace = true }
+# The `Eval` trait. The search holds a backend chosen elsewhere and never names
+# a concrete one (docs/decisions.md D-61).
+pistol-eval = { workspace = true }
