@@ -17,6 +17,21 @@
 //! move ordering. No quiescence, no null move, no reductions, no aspiration
 //! window: the research report parks each of those behind an SPRT the arena
 //! cannot run yet (docs/ROADMAP.md, Stage 1 and Stage 4).
+//!
+//! # Why this file is over the soft cap (CLAUDE.md rule 9)
+//!
+//! `visit` is one recursion and splitting it would not reduce what a reader has
+//! to hold. Its parts are not independent: the window a child inherits depends
+//! on whether the ply was the mover's second stone or the opponent's reply, the
+//! table's bound depends on the alpha it started with, the abort path has to
+//! unwind through every one of them without a result being used, and the
+//! invariants that make it correct — the mate re-basing, the no-cutoff-at-a-PV
+//! -node rule, the two horizons — are stated against the whole. Cutting it into
+//! free functions would pass six values back and forth and put the reasoning
+//! that justifies them in a different file from the code they constrain. The
+//! honest reductions are elsewhere and are scheduled: the doc comments here
+//! carry the arguments, and Stage 1 moves candidate generation out entirely
+//! (docs/decisions.md D-117, WP-1.5).
 
 use pistol_core::{Coord, Phase, PlyOutcome};
 
@@ -35,6 +50,15 @@ pub const CANDIDATE_ILLEGAL: &str = "CANDIDATE_ILLEGAL";
 /// Named invariant: the candidate policy offered nothing half way through a
 /// turn, where no static value is an answer (docs/decisions.md D-104).
 pub const NO_CANDIDATES_MID_TURN: &str = "NO_CANDIDATES_MID_TURN";
+
+/// Named invariant: a static evaluation was returned as a node's answer half way
+/// through a turn (docs/decisions.md D-111).
+///
+/// A mover who still owes a stone has not finished doing anything, so the
+/// pattern tables are reading a position no player will ever face. The search
+/// deepens in turns and every horizon therefore lands on a turn boundary; this
+/// is what says so at the place that would first be wrong.
+pub const STATIC_EVAL_MID_TURN: &str = "STATIC_EVAL_MID_TURN";
 
 /// One search: everything that belongs to this call and nothing that outlives
 /// it.
@@ -117,6 +141,20 @@ impl<'a> Run<'a> {
             return 0;
         }
         if depth_plies == 0 {
+            // The horizon is a turn boundary or it is not a horizon
+            // (docs/decisions.md D-111). `plies_for` sums the stones each turn
+            // ahead owes, so the ply budget runs out exactly where a turn does,
+            // and a mid-turn horizon would mean that arithmetic — or a future
+            // extension's — had drifted. Debug-only because this runs at every
+            // leaf and the gate that reads it is `cargo test`; the other
+            // horizon, the one an empty candidate set reaches, carries the same
+            // statement under `NO_CANDIDATES_MID_TURN` below.
+            debug_assert!(
+                self.position.state().phase() == Phase::First,
+                "pistol-search invariant {STATIC_EVAL_MID_TURN}: the horizon landed at phase 1, \
+                 where the mover still owes a stone — a horizon must extend one ply to complete \
+                 the turn rather than evaluate half of it"
+            );
             return self.position.value();
         }
 

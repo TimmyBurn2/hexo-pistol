@@ -69,6 +69,8 @@ tools/determinism.sh || fail "determinism"
 # here, and not silently absent, so that adding the work package that creates
 # them also means deleting its line from this list.
 printf '\n=== pending gates (nothing to run yet)\n'
-echo "  file-justification check — needs a file that exceeds the soft cap"
+echo "  file-justification check — OWED: a file now exceeds the soft cap and"
+echo "    carries its why-justification by hand (crates/pistol-search/src/pvs.rs)."
+echo "    Mechanizing the check needs a marker convention, which needs an ADR."
 
 printf '\nci: all gates passed\n'

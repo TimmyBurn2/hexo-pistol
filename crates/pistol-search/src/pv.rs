@@ -105,3 +105,54 @@ pub fn turns_from_plies(root: &GameState, plies: &[Coord]) -> Vec<Turn> {
     );
     turns
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A line a node abandoned is not adopted by the node above it.
+    ///
+    /// [`PvTable::clear`] drops the *length* and leaves the coordinates where
+    /// they are — zeroing the row would be work at every node for a buffer
+    /// nobody reads past its length. So the length is the whole guard: every
+    /// node clears on entry, and a node that then fails low leaves a zero there
+    /// rather than whatever a previous sibling's subtree wrote. Without it a
+    /// parent's [`PvTable::promote`] copies the stale cells into its own line,
+    /// and the search reports a variation it never searched — which surfaces at
+    /// the root, as a `PV_NOT_PLAYABLE` panic or, worse, as a plausible line
+    /// that is simply not the one the score was proved on.
+    ///
+    /// This is a private-invariant guard: `PvTable` is `pub(crate)`, and the
+    /// staleness is invisible from outside because the stale line is often
+    /// still legal (docs/decisions.md D-115).
+    ///
+    /// Mutation checked: making `clear` a no-op makes this test red.
+    #[test]
+    fn a_cleared_line_is_not_adopted_by_the_parent_that_promotes_over_it() {
+        let (a, b, c) = (Coord::new(0, 0), Coord::new(1, 0), Coord::new(2, 0));
+        let mut pv = PvTable::new(4);
+
+        // A sibling subtree found a two-ply line under ply 1.
+        pv.promote(2, c);
+        pv.promote(1, b);
+        assert_eq!(pv.line(1), [b, c], "the line under ply 1 is what was found");
+
+        // Ply 1 is re-entered for the next sibling and clears on entry; this
+        // one fails low, so it never promotes anything.
+        pv.clear(1);
+        assert_eq!(
+            pv.line(1),
+            [] as [Coord; 0],
+            "a node that has not improved on alpha has no line, whatever the buffer still holds"
+        );
+
+        // The parent improves on alpha and takes its child's line — which is
+        // empty, so its own ply is the whole line.
+        pv.promote(0, a);
+        assert_eq!(
+            pv.line(0),
+            [a],
+            "the parent adopts the empty line its child left, not the one a previous sibling wrote"
+        );
+    }
+}
