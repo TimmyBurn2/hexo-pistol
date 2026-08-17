@@ -1,7 +1,7 @@
 //! The golden-board fixture: positions, the stone played last, and the verdict
 //! that stone must get (game rules 2 and 4).
 
-use pistol_core::{Board, Color, Coord};
+use pistol_core::{Board, Coord, Player};
 
 use super::{directives, fixture_text, parse_coord, parse_coords};
 
@@ -16,11 +16,11 @@ pub struct GoldenCase {
     /// Whether the last stone completes a run of six or more.
     pub expect_win: bool,
     /// Every stone, in the order the fixture lists them.
-    pub stones: Vec<(Coord, Color)>,
+    pub stones: Vec<(Coord, Player)>,
     /// The stone the verdict is about.
     pub last: Coord,
-    /// Its colour.
-    pub last_color: Color,
+    /// Its player.
+    pub last_player: Player,
     /// The fixture line the case starts on, for failure messages.
     pub line: usize,
 }
@@ -42,10 +42,10 @@ impl GoldenCase {
         )
     }
 
-    fn board_from(&self, stones: impl Iterator<Item = (Coord, Color)>) -> Board {
+    fn board_from(&self, stones: impl Iterator<Item = (Coord, Player)>) -> Board {
         let mut board = Board::empty();
-        for (at, color) in stones {
-            board.apply(at, color).unwrap_or_else(|error| {
+        for (at, player) in stones {
+            board.apply(at, player).unwrap_or_else(|error| {
                 panic!("case `{}` (line {}): {error}", self.name, self.line)
             });
         }
@@ -93,8 +93,8 @@ struct Partial {
     name: String,
     line: usize,
     expect_win: Option<bool>,
-    stones: Vec<(Coord, Color)>,
-    last: Option<(Coord, Color)>,
+    stones: Vec<(Coord, Player)>,
+    last: Option<(Coord, Player)>,
 }
 
 impl Partial {
@@ -122,11 +122,11 @@ impl Partial {
                     self.name
                 );
             }
-            "black" | "white" => {
-                let color = if directive == "black" {
-                    Color::Black
+            "p1" | "p2" => {
+                let player = if directive == "p1" {
+                    Player::P1
                 } else {
-                    Color::White
+                    Player::P2
                 };
                 assert!(
                     !rest.is_empty(),
@@ -138,21 +138,21 @@ impl Partial {
                         "line {line}: cell {at} listed twice in case `{}`",
                         self.name
                     );
-                    self.stones.push((at, color));
+                    self.stones.push((at, player));
                 }
             }
             "last" => {
-                let (color_word, token) = rest
+                let (player_word, token) = rest
                     .split_once(char::is_whitespace)
-                    .unwrap_or_else(|| panic!("line {line}: `last` takes a colour and a cell"));
-                let color = match color_word.trim() {
-                    "black" => Color::Black,
-                    "white" => Color::White,
-                    other => panic!("line {line}: `last` takes black or white, got `{other}`"),
+                    .unwrap_or_else(|| panic!("line {line}: `last` takes a player and a cell"));
+                let player = match player_word.trim() {
+                    "p1" => Player::P1,
+                    "p2" => Player::P2,
+                    other => panic!("line {line}: `last` takes p1 or p2, got `{other}`"),
                 };
                 let at = parse_coord(token.trim(), line);
                 assert!(
-                    self.last.replace((at, color)).is_none(),
+                    self.last.replace((at, player)).is_none(),
                     "line {line}: `last` given twice for case `{}`",
                     self.name
                 );
@@ -167,20 +167,20 @@ impl Partial {
         let expect_win = self
             .expect_win
             .unwrap_or_else(|| panic!("case `{name}` (line {line}) has no `expect`"));
-        let (last, last_color) = self
+        let (last, last_player) = self
             .last
             .unwrap_or_else(|| panic!("case `{name}` (line {line}) has no `last`"));
         assert!(
-            self.stones.contains(&(last, last_color)),
-            "case `{name}` (line {line}): the last stone {last_color} {last} is not among that \
-             colour's stones"
+            self.stones.contains(&(last, last_player)),
+            "case `{name}` (line {line}): the last stone {last_player} {last} is not among that \
+             player's stones"
         );
         GoldenCase {
             name,
             expect_win,
             stones: self.stones,
             last,
-            last_color,
+            last_player,
             line,
         }
     }

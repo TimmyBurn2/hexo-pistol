@@ -52,7 +52,7 @@ case one_stone_at_the_origin
 plies 0,0
 expect depth 1 turns 42768
 
-# A five-stone cloud at a turn boundary, white to move: overlapping balls, so
+# A five-stone cloud at a turn boundary, P2 to move: overlapping balls, so
 # the region is a union that is strictly smaller than the sum of its parts.
 case tight_cluster_at_a_turn_boundary
 plies 0,0
@@ -60,7 +60,7 @@ plies 1,0 2,0
 plies 0,1 1,1
 expect depth 1 turns 54228
 
-# Two lobes joined by a bridge, white to move. White's turn-2 pair 8,0/16,0 is
+# Two lobes joined by a bridge, P2 to move. P2's turn-2 pair 8,0/16,0 is
 # legal in exactly one order — 16,0 is sixteen cells from the only stone on the
 # board and becomes legal only through the ball 8,0 opens (docs/decisions.md
 # D-6) — so the fixture exercises that rule on the way in as well as at the
@@ -77,7 +77,7 @@ plies 8,0 16,0
 plies 16,1 8,1
 expect depth 1 turns 162538
 
-# Black to move with five in a row and both ends open: two cells complete the
+# P1 to move with five in a row and both ends open: two cells complete the
 # line. Rule 4 makes each of them a turn of ONE stone, and neither is half of a
 # pair — while a pair whose SECOND stone completes the line is an ordinary turn
 # and is counted as one.
@@ -90,7 +90,7 @@ plies 3,0 4,0
 plies 0,3 2,3
 expect depth 1 turns 78072
 
-# Black completed a line on the first stone of turn 7; the second stone of that
+# P1 completed a line on the first stone of turn 7; the second stone of that
 # turn was never played (rule 4). A decided position has no turns, at any depth:
 # won lines are counted where they end and are never expanded.
 case already_won_is_not_expanded

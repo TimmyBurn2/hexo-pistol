@@ -20,7 +20,7 @@ use pistol_core::{Axis, WIN_LEN, wins_at};
 /// Changing the fixture means changing this line, in the same commit, having
 /// looked at what changed.
 const GOLDEN_BOARDS_SHA256: &str =
-    "45f87b4c63b3ae55b2e8b0bafa3348dbf9de6465580600fe5f2faea799a3de42";
+    "86354bf079e5130e3d9ccb08bd679fb47e25820d1fb707932b367b0d2758b26d";
 
 #[test]
 fn golden_boards_fixture_matches_its_pinned_sha256() {
@@ -61,7 +61,7 @@ fn golden_boards_match_their_recorded_verdict() {
         let name = &case.name;
         assert_eq!(
             board.get(case.last),
-            Some(case.last_color),
+            Some(case.last_player),
             "case `{name}`: the last stone is not on the board"
         );
 
@@ -69,12 +69,12 @@ fn golden_boards_match_their_recorded_verdict() {
             assert!(
                 wins_at(&board, case.last),
                 "case `{name}`: {} on {} must complete a run",
-                case.last_color,
+                case.last_player,
                 case.last
             );
             let run = winning_run(&board, case.last).expect("a winning run");
             assert!(run.len >= WIN_LEN, "case `{name}`: run of {}", run.len);
-            assert_eq!(run.color, case.last_color, "case `{name}`");
+            assert_eq!(run.player, case.last_player, "case `{name}`");
 
             // The last stone has to be the one that wins: without it, nothing on
             // the board completes a run. That is what rule 4 is about.
@@ -130,28 +130,28 @@ fn golden_boards_cover_both_verdicts_and_all_three_axes() {
         .count();
     assert!(overlines >= 1, "no overline case");
 
-    let white_wins = cases
+    let p2_wins = cases
         .iter()
-        .filter(|case| case.expect_win && case.last_color == pistol_core::Color::White)
+        .filter(|case| case.expect_win && case.last_player == pistol_core::Player::P2)
         .count();
-    assert!(white_wins >= 1, "every win case is black's");
+    assert!(p2_wins >= 1, "every win case is p1's");
 }
 
 #[test]
 #[should_panic(expected = "unknown directive")]
 fn golden_loader_refuses_a_line_it_does_not_understand() {
     // A fixture that is quietly half-read reports a pass for cases nobody ran.
-    parse_boards("case a\nexpect win\nblack 0,0\nlast black 0,0\nvariant exact-six\n");
+    parse_boards("case a\nexpect win\np1 0,0\nlast p1 0,0\nvariant exact-six\n");
 }
 
 #[test]
 #[should_panic(expected = "has no `expect`")]
 fn golden_loader_refuses_a_case_without_a_verdict() {
-    parse_boards("case a\nblack 0,0\nlast black 0,0\n");
+    parse_boards("case a\np1 0,0\nlast p1 0,0\n");
 }
 
 #[test]
-#[should_panic(expected = "is not among that colour's stones")]
+#[should_panic(expected = "is not among that player's stones")]
 fn golden_loader_refuses_a_last_stone_that_is_not_on_the_board() {
-    parse_boards("case a\nexpect win\nblack 0,0\nlast black 1,0\n");
+    parse_boards("case a\nexpect win\np1 0,0\nlast p1 1,0\n");
 }

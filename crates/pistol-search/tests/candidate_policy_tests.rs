@@ -9,7 +9,7 @@ mod common;
 use std::collections::BTreeSet;
 
 use common::{line, position, spectators};
-use pistol_core::{Axis, Board, Color, Coord, LEGAL_RADIUS};
+use pistol_core::{Axis, Board, Coord, LEGAL_RADIUS, Player};
 use pistol_search::{CandidatePolicy, candidate_cells};
 
 /// Every empty, legally placeable cell within `radius` of some stone, found by
@@ -44,11 +44,11 @@ fn extent(values: impl Iterator<Item = i16>, reach: i16) -> (i16, i16) {
     (low, high)
 }
 
-/// Four black stones on one axis and white sitting well clear of them.
+/// Four P1 stones on one axis and P2 sitting well clear of them.
 fn two_clusters() -> pistol_core::GameState {
-    let black = line(Coord::ORIGIN, Axis::ConstR, 5);
-    let white = spectators(Coord::new(0, 6), Axis::ConstR, 6);
-    position(&black, &white, Color::Black)
+    let p1 = line(Coord::ORIGIN, Axis::ConstR, 5);
+    let p2 = spectators(Coord::new(0, 6), Axis::ConstR, 6);
+    position(&p1, &p2, Player::P1)
 }
 
 #[test]

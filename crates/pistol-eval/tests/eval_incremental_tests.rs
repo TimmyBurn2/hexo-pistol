@@ -12,21 +12,21 @@ mod common;
 use common::playouts::{Rng, random_ply};
 use common::reference::value_from_scratch;
 use common::{built, committed_weights};
-use pistol_core::{Color, Coord, GameState};
+use pistol_core::{Coord, GameState, Player};
 use pistol_eval::{Eval, HandcraftedV0, Weights};
 
 /// Both sides' readings of a position, which is what a caller can observe.
 fn both_sides(eval: &HandcraftedV0) -> (i32, i32) {
-    (eval.value(Color::Black), eval.value(Color::White))
+    (eval.value(Player::P1), eval.value(Player::P2))
 }
 
 /// Assert the incremental value equals a from-scratch recompute, for both sides.
 ///
-/// The recompute runs once and white's reading is its negation: the recompute is
+/// The recompute runs once and P2's reading is its negation: the recompute is
 /// what makes this test cost anything, and running it twice would pay for the
-/// antisymmetry that `eval_antisymmetric_under_color_swap` already pins.
+/// antisymmetry that `eval_antisymmetric_under_player_swap` already pins.
 fn assert_matches_recompute(eval: &HandcraftedV0, game: &GameState, weights: &Weights, at: &str) {
-    let expected = value_from_scratch(game.board(), weights, Color::Black);
+    let expected = value_from_scratch(game.board(), weights, Player::P1);
     assert_eq!(
         both_sides(eval),
         (expected, -expected),
@@ -47,7 +47,7 @@ fn eval_incremental_matches_from_scratch_on_random_playouts() {
         let mut rng = Rng::new(seed);
         let mut game = GameState::new_game();
         let mut eval = HandcraftedV0::new(weights.clone());
-        let mut played: Vec<(Coord, Color)> = Vec::new();
+        let mut played: Vec<(Coord, Player)> = Vec::new();
         let mut values = vec![both_sides(&eval)];
 
         // A playout that stumbles into a completed line stops there: a decided
@@ -105,28 +105,28 @@ fn eval_apply_undo_roundtrip() {
     // Stones that share windows on all three axes, so taking one back has to
     // repair counts rather than merely drop entries.
     let stones = [
-        (Coord::new(0, 0), Color::Black),
-        (Coord::new(0, 1), Color::Black),
-        (Coord::new(1, 0), Color::White),
-        (Coord::new(0, 2), Color::Black),
-        (Coord::new(2, -1), Color::White),
-        (Coord::new(0, 3), Color::White),
-        (Coord::new(-1, 1), Color::Black),
+        (Coord::new(0, 0), Player::P1),
+        (Coord::new(0, 1), Player::P1),
+        (Coord::new(1, 0), Player::P2),
+        (Coord::new(0, 2), Player::P1),
+        (Coord::new(2, -1), Player::P2),
+        (Coord::new(0, 3), Player::P2),
+        (Coord::new(-1, 1), Player::P1),
     ];
 
     let fresh = HandcraftedV0::new(weights.clone());
     let mut eval = fresh.clone();
     let mut values = vec![both_sides(&eval)];
-    for &(at, color) in &stones {
-        eval.apply(at, color);
+    for &(at, player) in &stones {
+        eval.apply(at, player);
         values.push(both_sides(&eval));
     }
     let full = eval.clone();
     assert_ne!(full, fresh, "the position must be worth something");
 
     // Last stone first: the order a search takes a line back in.
-    for (index, &(at, color)) in stones.iter().enumerate().rev() {
-        eval.undo(at, color);
+    for (index, &(at, player)) in stones.iter().enumerate().rev() {
+        eval.undo(at, player);
         assert_eq!(
             both_sides(&eval),
             values[index],
@@ -143,8 +143,8 @@ fn eval_apply_undo_roundtrip() {
     // on the board, not of the path that put them there, so a rotated take-back
     // has to arrive at the same empty state.
     let mut eval = full.clone();
-    for &(at, color) in stones.iter().skip(3).chain(stones.iter().take(3)) {
-        eval.undo(at, color);
+    for &(at, player) in stones.iter().skip(3).chain(stones.iter().take(3)) {
+        eval.undo(at, player);
     }
     assert_eq!(eval, fresh, "take-back order must not matter");
 }
@@ -153,11 +153,11 @@ fn eval_apply_undo_roundtrip() {
 fn eval_is_independent_of_the_order_stones_were_applied() {
     let weights = committed_weights();
     let stones = [
-        (Coord::new(0, 0), Color::Black),
-        (Coord::new(1, -1), Color::White),
-        (Coord::new(0, 1), Color::Black),
-        (Coord::new(2, -2), Color::White),
-        (Coord::new(0, 2), Color::Black),
+        (Coord::new(0, 0), Player::P1),
+        (Coord::new(1, -1), Player::P2),
+        (Coord::new(0, 1), Player::P1),
+        (Coord::new(2, -2), Player::P2),
+        (Coord::new(0, 2), Player::P1),
     ];
     let mut reversed = stones;
     reversed.reverse();

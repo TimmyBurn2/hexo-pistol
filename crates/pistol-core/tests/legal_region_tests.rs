@@ -6,7 +6,7 @@
 //! stone, distance from the centroid, a bounding box, or a union with an
 //! off-by-one where two balls overlap.
 
-use pistol_core::{Board, Color, Coord, CoreError, GameState, LEGAL_RADIUS};
+use pistol_core::{Board, Coord, CoreError, GameState, LEGAL_RADIUS, Player};
 
 /// Cells the implementation calls legal region, over a box that reaches at
 /// least one cell beyond the far side of every ball.
@@ -36,10 +36,10 @@ fn union_of_balls(centres: &[Coord], cell: Coord) -> bool {
         .any(|centre| centre.distance(cell) <= LEGAL_RADIUS)
 }
 
-fn board_with(stones: &[(Coord, Color)]) -> Board {
+fn board_with(stones: &[(Coord, Player)]) -> Board {
     let mut board = Board::empty();
-    for &(at, color) in stones {
-        board.apply(at, color).expect("distinct fixture cells");
+    for &(at, player) in stones {
+        board.apply(at, player).expect("distinct fixture cells");
     }
     board
 }
@@ -50,7 +50,7 @@ fn legal_region_is_radius8_union() {
     // which is 217 at R = 8. Stated here as the pin it is — an implementation
     // that excluded the centre would give 216 and must not be able to have the
     // expected number "corrected" to match it afterwards.
-    let single = board_with(&[(Coord::ORIGIN, Color::Black)]);
+    let single = board_with(&[(Coord::ORIGIN, Player::P1)]);
     let centres = [Coord::ORIGIN];
     let region = region_over_box(&single, &centres);
     assert_eq!(region.len(), 1 + 3 * 8 * 9, "cells within radius 8");
@@ -72,7 +72,7 @@ fn legal_region_is_radius8_union() {
     // centroid — gets this wrong.
     let far = Coord::new(100, -50);
     assert_eq!(Coord::ORIGIN.distance(far), 100);
-    let two_cloud = board_with(&[(Coord::ORIGIN, Color::Black), (far, Color::White)]);
+    let two_cloud = board_with(&[(Coord::ORIGIN, Player::P1), (far, Player::P2)]);
     let centres = [Coord::ORIGIN, far];
     let region = region_over_box(&two_cloud, &centres);
     for &cell in &region {
@@ -99,7 +99,7 @@ fn legal_region_is_radius8_union() {
     // cell in the box agrees with the oracle — which is what catches an
     // off-by-one in the overlap that a disjoint case cannot see.
     let near = Coord::new(5, 0);
-    let overlapping = board_with(&[(Coord::ORIGIN, Color::Black), (near, Color::White)]);
+    let overlapping = board_with(&[(Coord::ORIGIN, Player::P1), (near, Player::P2)]);
     let centres = [Coord::ORIGIN, near];
     let pad = i16::try_from(LEGAL_RADIUS).expect("fits") + 2;
     let mut union_count = 0;
@@ -123,18 +123,14 @@ fn legal_region_is_radius8_union() {
 }
 
 #[test]
-fn legal_region_ignores_stone_colour() {
+fn legal_region_ignores_stone_player() {
     // Rule 5 says "an existing stone", not "an own stone".
-    let black = board_with(&[(Coord::ORIGIN, Color::Black)]);
-    let white = board_with(&[(Coord::ORIGIN, Color::White)]);
+    let p1 = board_with(&[(Coord::ORIGIN, Player::P1)]);
+    let p2 = board_with(&[(Coord::ORIGIN, Player::P2)]);
     for q in -12..=12 {
         for r in -12..=12 {
             let cell = Coord::new(q, r);
-            assert_eq!(
-                black.in_legal_region(cell),
-                white.in_legal_region(cell),
-                "{cell}"
-            );
+            assert_eq!(p1.in_legal_region(cell), p2.in_legal_region(cell), "{cell}");
         }
     }
 }
@@ -166,7 +162,7 @@ fn empty_board_legal_region_is_the_origin_only() {
 
 #[test]
 fn occupied_cell_is_not_a_legal_placement() {
-    let board = board_with(&[(Coord::ORIGIN, Color::Black)]);
+    let board = board_with(&[(Coord::ORIGIN, Player::P1)]);
     assert!(board.in_legal_region(Coord::ORIGIN), "still in the region");
     assert!(!board.is_legal_placement(Coord::ORIGIN));
     assert_eq!(

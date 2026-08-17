@@ -82,8 +82,8 @@ impl Weights {
         document.into_weights()
     }
 
-    /// What one window holding `own_count` stones of one colour, and none of the
-    /// other, is worth to that colour.
+    /// What one window holding `own_count` stones of one player, and none of the
+    /// other, is worth to that player.
     ///
     /// # Panics
     ///

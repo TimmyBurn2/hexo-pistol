@@ -6,7 +6,7 @@
 //! writing the trait that way now means swapping the backend later is not also a
 //! search change.
 
-use pistol_core::{Color, Coord};
+use pistol_core::{Coord, Player};
 
 /// The largest magnitude a static evaluation may report.
 ///
@@ -23,7 +23,7 @@ pub const EVAL_MAX: i32 = 16_000;
 ///
 /// - [`Eval::apply`] and [`Eval::undo`] are called by whoever moves the stone,
 ///   at the same seam the board and the zobrist key are updated
-///   (docs/decisions.md D-41). The colour travels with the cell so that an
+///   (docs/decisions.md D-41). The player travels with the cell so that an
 ///   implementation never has to consult a board, and can cross-check what it
 ///   is told against what it already holds.
 /// - The two are inverses, and the value depends only on the *set* of stones
@@ -46,12 +46,12 @@ pub const EVAL_MAX: i32 = 16_000;
 /// at construction, and `Box<dyn Eval>` is the cheapest way to hold that choice
 /// without making every search type generic over it.
 pub trait Eval {
-    /// Account for a stone of `color` arriving on `at`.
-    fn apply(&mut self, at: Coord, color: Color);
+    /// Account for a stone of `player` arriving on `at`.
+    fn apply(&mut self, at: Coord, player: Player);
 
-    /// Account for the stone of `color` on `at` being taken back.
-    fn undo(&mut self, at: Coord, color: Color);
+    /// Account for the stone of `player` on `at` being taken back.
+    fn undo(&mut self, at: Coord, player: Player);
 
     /// What the position is worth to `side_to_move`, in `-EVAL_MAX..=EVAL_MAX`.
-    fn value(&self, side_to_move: Color) -> i32;
+    fn value(&self, side_to_move: Player) -> i32;
 }

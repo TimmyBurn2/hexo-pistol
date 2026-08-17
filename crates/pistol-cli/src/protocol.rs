@@ -10,7 +10,7 @@
 //! pistol                                  -> id lines, then `pistolok`
 //! newgame                                 -> (silence)
 //! position start [moves <turn> ...]       -> (silence)
-//! position set b:<q,r> ... w:<q,r> ... tomove:<b|w> phase:<0|1>
+//! position set p1:<q,r> ... p2:<q,r> ... tomove:<p1|p2> phase:<0|1>
 //! go depth_turns <n> | go nodes <n> | go movetime <ms>
 //!                                         -> one `info` per completed depth,
 //!                                            a final `info` with the totals,

@@ -20,7 +20,7 @@
 use std::fmt;
 use std::str::FromStr;
 
-use crate::board::Color;
+use crate::board::Player;
 use crate::coord::Coord;
 use crate::error::{CoreError, PAIR_NOT_CANONICAL, PAIR_OF_ONE_CELL};
 
@@ -57,7 +57,7 @@ pub enum Outcome {
     /// A stone completed a run of at least [`crate::WIN_LEN`].
     Win {
         /// The side that placed it.
-        winner: Color,
+        winner: Player,
         /// The turn it completed on.
         turn: u32,
     },
@@ -70,7 +70,7 @@ impl Outcome {
     }
 
     /// The winner, if there is one.
-    pub const fn winner(self) -> Option<Color> {
+    pub const fn winner(self) -> Option<Player> {
         match self {
             Outcome::Ongoing => None,
             Outcome::Win { winner, .. } => Some(winner),
@@ -90,7 +90,7 @@ pub enum PlyOutcome {
     /// stone of the turn the second is never played (rule 4).
     Win {
         /// The side that placed it.
-        winner: Color,
+        winner: Player,
         /// The turn it completed on.
         turn: u32,
     },

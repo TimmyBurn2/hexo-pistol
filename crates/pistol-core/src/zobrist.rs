@@ -2,7 +2,7 @@
 //!
 //! The board is unbounded (rule 1), so the usual pre-tabulated array of one
 //! random number per cell has no size to be. A key is therefore **computed**:
-//! [`cell_key`] is a pure function of `(q, r, colour, ZOBRIST_SEED)`, and the
+//! [`cell_key`] is a pure function of `(q, r, player, ZOBRIST_SEED)`, and the
 //! table a bounded board would have held is the function's graph
 //! (docs/decisions.md D-8, D-57).
 //!
@@ -25,7 +25,7 @@
 //! encodes the thing being named. The word is `tag << 56 | payload`, with a
 //! distinct tag per family, so a cell key can never be a side key; the payload
 //! of a cell is its two `i16` coordinates in their two's-complement bit pattern
-//! plus the colour. The word is injective, and SplitMix64 is a bijection, so no
+//! plus the player. The word is injective, and SplitMix64 is a bijection, so no
 //! two distinct inputs share a key — in the full 128 bits or in either half on
 //! its own, which matters because the search TT verifies with the high 64 (D-8).
 //!
@@ -40,7 +40,7 @@
 use std::fmt;
 use std::ops::{BitXor, BitXorAssign};
 
-use crate::board::{Board, Color};
+use crate::board::{Board, Player};
 use crate::coord::Coord;
 use crate::turn::Phase;
 
@@ -122,17 +122,18 @@ impl fmt::Debug for Key128 {
     }
 }
 
-/// The key of a `colour` stone on `at`.
-pub const fn cell_key(at: Coord, color: Color) -> Key128 {
+/// The key of a `player` stone on `at`.
+pub const fn cell_key(at: Coord, player: Player) -> Key128 {
     // The coordinates go in as their two's-complement bit patterns, which is
     // what makes the word injective over the whole addressable lattice.
-    let payload = (color_index(color) << 32) | ((at.r as u16 as u64) << 16) | (at.q as u16 as u64);
+    let payload =
+        (player_index(player) << 32) | ((at.r as u16 as u64) << 16) | (at.q as u16 as u64);
     key_of(CELL_TAG, payload)
 }
 
-/// The key of `color` being the side to move.
-pub const fn side_key(color: Color) -> Key128 {
-    key_of(SIDE_TAG, color_index(color))
+/// The key of `player` being the side to move.
+pub const fn side_key(player: Player) -> Key128 {
+    key_of(SIDE_TAG, player_index(player))
 }
 
 /// The key of the mover standing at `phase` of the current turn.
@@ -152,10 +153,10 @@ pub const fn phase_key(phase: Phase) -> Key128 {
 /// the stones on the board; the search never calls it — it carries
 /// [`crate::GameState::key`] instead, which is what the round-trip test pins it
 /// against.
-pub fn from_scratch_key(board: &Board, to_move: Color, phase: Phase) -> Key128 {
+pub fn from_scratch_key(board: &Board, to_move: Player, phase: Phase) -> Key128 {
     let mut key = context_key(to_move, phase);
-    for (at, color) in board.stones() {
-        key ^= cell_key(at, color);
+    for (at, player) in board.stones() {
+        key ^= cell_key(at, player);
     }
     key
 }
@@ -166,7 +167,7 @@ pub fn from_scratch_key(board: &Board, to_move: Color, phase: Phase) -> Key128 {
 /// Both are the state machine's own fields, so composing them on read is exact
 /// by construction — there is no third copy of the side and the phase to fall
 /// out of step with the two the machine already keeps (docs/decisions.md D-58).
-pub(crate) const fn context_key(to_move: Color, phase: Phase) -> Key128 {
+pub(crate) const fn context_key(to_move: Player, phase: Phase) -> Key128 {
     side_key(to_move).xor(phase_key(phase))
 }
 
@@ -177,12 +178,12 @@ const CELL_TAG: u64 = 1;
 const SIDE_TAG: u64 = 2;
 const PHASE_TAG: u64 = 3;
 
-/// Black is 0 and white is 1 — an encoding for the key, deliberately local:
-/// nothing outside this module gets a number for a colour from here.
-const fn color_index(color: Color) -> u64 {
-    match color {
-        Color::Black => 0,
-        Color::White => 1,
+/// P1 is 0 and P2 is 1 — an encoding for the key, deliberately local:
+/// nothing outside this module gets a number for a player from here.
+const fn player_index(player: Player) -> u64 {
+    match player {
+        Player::P1 => 0,
+        Player::P2 => 1,
     }
 }
 

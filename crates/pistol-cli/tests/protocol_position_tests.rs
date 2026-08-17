@@ -41,22 +41,22 @@ fn protocol_position_moves_roundtrip() {
 
     let state = engine.state();
     assert_eq!(state.turn(), 4, "three turns were played");
-    assert_eq!(state.to_move(), pistol_core::Color::White);
+    assert_eq!(state.to_move(), pistol_core::Player::P2);
     assert_eq!(state.phase(), pistol_core::Phase::First);
     assert_eq!(
         state.board().stone_count(),
         5,
         "one stone, then two, then two"
     );
-    for (cell, color) in [
-        ("0,0", pistol_core::Color::Black),
-        ("1,0", pistol_core::Color::White),
-        ("2,0", pistol_core::Color::White),
-        ("-1,1", pistol_core::Color::Black),
-        ("0,1", pistol_core::Color::Black),
+    for (cell, player) in [
+        ("0,0", pistol_core::Player::P1),
+        ("1,0", pistol_core::Player::P2),
+        ("2,0", pistol_core::Player::P2),
+        ("-1,1", pistol_core::Player::P1),
+        ("0,1", pistol_core::Player::P1),
     ] {
         let at = cell.parse::<pistol_core::Coord>().expect("a stone token");
-        assert_eq!(state.board().get(at), Some(color), "{cell} holds {color}");
+        assert_eq!(state.board().get(at), Some(player), "{cell} holds {player}");
     }
 }
 
@@ -65,7 +65,7 @@ fn protocol_set_position_with_phase_roundtrip() {
     // The `set` form exists to say what a move list cannot: a position in the
     // middle of a turn. The mover's already-placed stone is the last one listed
     // for that side (docs/decisions.md D-6).
-    let tail = "set b:0,0 1,0 w:0,1 1,1 tomove:b phase:1";
+    let tail = "set p1:0,0 1,0 p2:0,1 1,1 tomove:p1 phase:1";
     let spec: PositionSpec = tail.parse().expect("a well-formed stone list");
     assert_eq!(spec.to_string(), tail);
 
@@ -77,7 +77,7 @@ fn protocol_set_position_with_phase_roundtrip() {
     );
 
     let state = engine.state();
-    assert_eq!(state.to_move(), pistol_core::Color::Black);
+    assert_eq!(state.to_move(), pistol_core::Player::P1);
     assert_eq!(
         state.phase(),
         pistol_core::Phase::Second,
@@ -87,22 +87,22 @@ fn protocol_set_position_with_phase_roundtrip() {
     assert_eq!(state.stones_owed(), 1, "the mover owes the second stone");
     assert_eq!(
         state.board().get("1,0".parse().unwrap()),
-        Some(pistol_core::Color::Black),
-        "black's last listed stone is the one already placed this turn"
+        Some(pistol_core::Player::P1),
+        "p1's last listed stone is the one already placed this turn"
     );
 }
 
 #[test]
 fn protocol_set_position_accepts_a_side_with_no_stones() {
-    // After turn 1 white holds nothing, and the form has to be able to say so.
-    let tail = "set b:0,0 w: tomove:w phase:0";
-    let spec: PositionSpec = tail.parse().expect("an empty white list is a list");
+    // After turn 1 P2 holds nothing, and the form has to be able to say so.
+    let tail = "set p1:0,0 p2: tomove:p2 phase:0";
+    let spec: PositionSpec = tail.parse().expect("an empty p2 list is a list");
     assert_eq!(spec.to_string(), tail);
 
     let mut engine = engine(GATE);
     assert!(talk(&mut engine, &[&format!("position {tail}")]).is_empty());
     assert_eq!(engine.state().board().stone_count(), 1);
-    assert_eq!(engine.state().to_move(), pistol_core::Color::White);
+    assert_eq!(engine.state().to_move(), pistol_core::Player::P2);
 }
 
 #[test]
@@ -143,13 +143,13 @@ fn protocol_rejects_a_stone_list_that_is_not_a_position() {
     // IllegalPosition and not IllegalMove: the operator named no turn.
     for tail in [
         // Stone counts that fit no turn structure (rule 3).
-        "set b:0,0 1,0 w:0,1 tomove:b phase:0",
+        "set p1:0,0 1,0 p2:0,1 tomove:p1 phase:0",
         // A stone out of reach when it was played (rule 5).
-        "set b:0,0 40,0 w:0,1 1,1 tomove:b phase:0",
-        // The stones say white is to move; the document says black.
-        "set b:0,0 1,0 2,0 w:0,1 1,1 0,2 tomove:b phase:0",
+        "set p1:0,0 40,0 p2:0,1 1,1 tomove:p1 phase:0",
+        // The stones say P2 is to move; the document says P1.
+        "set p1:0,0 1,0 2,0 p2:0,1 1,1 0,2 tomove:p1 phase:0",
         // A first stone that is not the origin (rule 3).
-        "set b:5,5 w: tomove:w phase:0",
+        "set p1:5,5 p2: tomove:p2 phase:0",
     ] {
         let answers = talk(&mut engine, &[&format!("position {tail}")]);
         assert_eq!(
@@ -165,14 +165,14 @@ fn protocol_rejects_already_won_set_position() {
     // A won position is terminal: there is no move to ask for, so the engine
     // refuses to stand on one at all (rule 4).
     let mut engine = engine(GATE);
-    // Black completed six with the first stone of turn 7, so the second stone of
+    // P1 completed six with the first stone of turn 7, so the second stone of
     // that turn was never played (rule 4) and the stone counts are 6 and 6.
-    let tail = "set b:0,0 1,0 2,0 3,0 4,0 5,0 w:0,3 1,3 2,3 0,5 1,5 2,5 tomove:b phase:0";
+    let tail = "set p1:0,0 1,0 2,0 3,0 4,0 5,0 p2:0,3 1,3 2,3 0,5 1,5 2,5 tomove:p1 phase:0";
     let answers = talk(&mut engine, &[&format!("position {tail}")]);
     assert_eq!(refusal(&answers), "IllegalPosition");
     let line = only_line(&answers, "error");
     assert!(
-        line.contains("black") && line.contains("terminal"),
+        line.contains("p1") && line.contains("terminal"),
         "the refusal says who won and why that ends it: {line}"
     );
 }

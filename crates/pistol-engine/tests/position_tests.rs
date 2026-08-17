@@ -5,7 +5,7 @@
 //! replayed through the rules in pistol-core, so every refusal here is a rules
 //! refusal wearing the engine's name for it.
 
-use pistol_core::{Color, Coord, Phase, Turn};
+use pistol_core::{Coord, Phase, Player, Turn};
 use pistol_engine::{EngineError, PositionSpec};
 
 /// The tail as the engine spells it back.
@@ -42,10 +42,10 @@ fn position_tokens_round_trip_for_every_form() {
         "start",
         "start moves 0,0",
         "start moves 0,0 1,0/2,0",
-        "set b: w: tomove:b phase:0",
-        "set b:0,0 w: tomove:w phase:0",
-        "set b:0,0 1,0 w:0,1 1,1 tomove:b phase:1",
-        "set b:0,0 -1,0 w:0,-1 1,-1 tomove:b phase:1",
+        "set p1: p2: tomove:p1 phase:0",
+        "set p1:0,0 p2: tomove:p2 phase:0",
+        "set p1:0,0 1,0 p2:0,1 1,1 tomove:p1 phase:1",
+        "set p1:0,0 -1,0 p2:0,-1 1,-1 tomove:p1 phase:1",
     ] {
         assert_eq!(spelled(tail), tail, "one position, one spelling");
     }
@@ -57,24 +57,24 @@ fn position_tokens_refuse_what_they_could_have_repaired() {
     // (docs/decisions.md D-46, D-56): two lines that differ must not mean the
     // same position.
     for tail in [
-        "",                                      // no form
-        "sideways b:0,0",                        // no such form
-        "start extra",                           // the move list needs its keyword
-        "start moves",                           // and something after it
-        "start moves 1,0/0,0",                   // an uncanonical pair token
-        "start moves 0,0/0,0",                   // a pair of one cell
-        "start moves 0,0/1,0/2,0",               // one separator
-        "set",                                   // every section is required
-        "set b:0,0 w: tomove:b",                 // including the phase
-        "set b:0,0 w: phase:0 tomove:b",         // in order
-        "set w: b:0,0 tomove:b phase:0",         // likewise
-        "set b:0,0 b:1,0 w: tomove:b phase:0",   // once each
-        "set b: 0,0 w: tomove:b phase:0",        // a stone follows its prefix
-        "set b:0,0 w: tomove: b phase:0",        // a value is attached
-        "set b:0,0 w: tomove:black phase:0",     // `b` or `w`
-        "set b:0,0 w: tomove:b phase:2",         // `0` or `1`
-        "set b:0,0 w: tomove:b phase:0 extra:1", // no fifth section
-        "set b:007,0 w: tomove:b phase:0",       // canonical stone tokens only
+        "",                                         // no form
+        "sideways p1:0,0",                          // no such form
+        "start extra",                              // the move list needs its keyword
+        "start moves",                              // and something after it
+        "start moves 1,0/0,0",                      // an uncanonical pair token
+        "start moves 0,0/0,0",                      // a pair of one cell
+        "start moves 0,0/1,0/2,0",                  // one separator
+        "set",                                      // every section is required
+        "set p1:0,0 p2: tomove:p1",                 // including the phase
+        "set p1:0,0 p2: phase:0 tomove:p1",         // in order
+        "set p2: p1:0,0 tomove:p1 phase:0",         // likewise
+        "set p1:0,0 p1:1,0 p2: tomove:p1 phase:0",  // once each
+        "set p1: 0,0 p2: tomove:p1 phase:0",        // a stone follows its prefix
+        "set p1:0,0 p2: tomove: p1 phase:0",        // a value is attached
+        "set p1:0,0 p2: tomove:p3 phase:0",         // `p1` or `p2`
+        "set p1:0,0 p2: tomove:p1 phase:2",         // `0` or `1`
+        "set p1:0,0 p2: tomove:p1 phase:0 extra:1", // no fifth section
+        "set p1:007,0 p2: tomove:p1 phase:0",       // canonical stone tokens only
     ] {
         assert!(
             tail.parse::<PositionSpec>().is_err(),
@@ -87,16 +87,16 @@ fn position_tokens_refuse_what_they_could_have_repaired() {
 fn a_move_list_replays_into_the_position_it_describes() {
     let state = replayed("start moves 0,0 1,0/2,0 -1,1/0,1");
     assert_eq!(state.turn(), 4);
-    assert_eq!(state.to_move(), Color::White);
+    assert_eq!(state.to_move(), Player::P2);
     assert_eq!(state.phase(), Phase::First);
     assert_eq!(state.board().stone_count(), 5);
-    assert_eq!(state.board().get(cell("2,0")), Some(Color::White));
-    assert_eq!(state.board().get(cell("0,1")), Some(Color::Black));
+    assert_eq!(state.board().get(cell("2,0")), Some(Player::P2));
+    assert_eq!(state.board().get(cell("0,1")), Some(Player::P1));
 }
 
 #[test]
 fn an_empty_stone_list_is_the_initial_position() {
-    let state = replayed("set b: w: tomove:b phase:0");
+    let state = replayed("set p1: p2: tomove:p1 phase:0");
     assert!(state.board().is_empty());
     assert_eq!(state.turn(), 1);
     assert_eq!(state.stones_owed(), 1, "turn 1 places one stone (rule 3)");
@@ -108,11 +108,11 @@ fn a_stone_list_carries_a_turn_in_progress() {
     // What the move list cannot say. The mover's already-placed stone is the last
     // one listed for that side (docs/decisions.md D-6), which falls out of the
     // list being in play order rather than being a rule of its own.
-    let state = replayed("set b:0,0 1,0 w:0,1 1,1 tomove:b phase:1");
+    let state = replayed("set p1:0,0 1,0 p2:0,1 1,1 tomove:p1 phase:1");
     assert_eq!(state.phase(), Phase::Second);
-    assert_eq!(state.to_move(), Color::Black);
+    assert_eq!(state.to_move(), Player::P1);
     assert_eq!(state.stones_owed(), 1);
-    assert_eq!(state.board().get(cell("1,0")), Some(Color::Black));
+    assert_eq!(state.board().get(cell("1,0")), Some(Player::P1));
 }
 
 #[test]
@@ -122,21 +122,21 @@ fn set_position_accepts_a_pair_whose_only_legal_order_is_reversed() {
     // near one opens. The near cell here is the LARGER of the two in the canonical
     // order, so the canonical ordering is refused and the reverse is what plays —
     // which is `make_turn`'s rule (D-51) and not something this form re-decides.
-    let state = replayed("set b:0,0 w:-16,0 -8,0 tomove:b phase:0");
-    assert_eq!(state.board().get(cell("-16,0")), Some(Color::White));
-    assert_eq!(state.board().get(cell("-8,0")), Some(Color::White));
+    let state = replayed("set p1:0,0 p2:-16,0 -8,0 tomove:p1 phase:0");
+    assert_eq!(state.board().get(cell("-16,0")), Some(Player::P2));
+    assert_eq!(state.board().get(cell("-8,0")), Some(Player::P2));
 
     // The stone list is never sorted or canonicalized, so the other order of the
     // same two cells is the same position.
-    let other = replayed("set b:0,0 w:-8,0 -16,0 tomove:b phase:0");
+    let other = replayed("set p1:0,0 p2:-8,0 -16,0 tomove:p1 phase:0");
     assert_eq!(state.key(), other.key(), "the same position either way");
 
     // And the move list says it with one canonical turn token.
     let moves = replayed("start moves 0,0 -16,0/-8,0");
     assert_eq!(moves.key(), state.key());
     assert_eq!(
-        moves.played().collect::<Vec<(Coord, Color)>>(),
-        state.played().collect::<Vec<(Coord, Color)>>(),
+        moves.played().collect::<Vec<(Coord, Player)>>(),
+        state.played().collect::<Vec<(Coord, Player)>>(),
         "one turn leaves one ply history, whichever form stated it (D-51)"
     );
 }
@@ -146,9 +146,9 @@ fn a_stone_list_that_fits_no_turn_structure_is_refused() {
     // Rule 3 fixes the counts: one stone on turn 1, two on every turn after. The
     // refusal names both counts and what was left over.
     for tail in [
-        "set b:0,0 1,0 w:0,1 tomove:b phase:0",
-        "set b:0,0 w:0,1 1,1 2,1 tomove:b phase:0",
-        "set b: w:0,0 tomove:w phase:0",
+        "set p1:0,0 1,0 p2:0,1 tomove:p1 phase:0",
+        "set p1:0,0 p2:0,1 1,1 2,1 tomove:p1 phase:0",
+        "set p1: p2:0,0 tomove:p2 phase:0",
     ] {
         match refused(tail) {
             EngineError::IllegalPosition { why } => {
@@ -167,10 +167,10 @@ fn a_stone_list_that_contradicts_its_own_header_is_refused() {
     // `tomove` and `phase` are checked, never trusted: the stones alone fix them,
     // and a document that says otherwise is refused rather than repaired.
     for tail in [
-        "set b:0,0 1,0 2,0 w:0,1 1,1 0,2 tomove:b phase:0",
-        "set b:0,0 w: tomove:b phase:0",
-        "set b:0,0 1,0 w:0,1 1,1 tomove:b phase:0",
-        "set b:0,0 1,0 w:0,1 1,1 tomove:w phase:1",
+        "set p1:0,0 1,0 2,0 p2:0,1 1,1 0,2 tomove:p1 phase:0",
+        "set p1:0,0 p2: tomove:p1 phase:0",
+        "set p1:0,0 1,0 p2:0,1 1,1 tomove:p1 phase:0",
+        "set p1:0,0 1,0 p2:0,1 1,1 tomove:p2 phase:1",
     ] {
         match refused(tail) {
             EngineError::IllegalPosition { why } => {
@@ -189,7 +189,7 @@ fn a_stone_the_rules_refuse_names_the_ply_it_was_played_on() {
     // Rule 5: a stone goes within hex-distance 8 of an existing stone. On the
     // stone-list path the operator named no turn, so the refusal is about the
     // position and names the ply instead of inventing a turn index.
-    match refused("set b:0,0 40,0 w:0,1 1,1 tomove:b phase:0") {
+    match refused("set p1:0,0 40,0 p2:0,1 1,1 tomove:p1 phase:0") {
         EngineError::IllegalPosition { why } => {
             assert!(why.contains("stone 4"), "{why}");
             assert!(why.contains("play order"), "{why}");
@@ -198,7 +198,7 @@ fn a_stone_the_rules_refuse_names_the_ply_it_was_played_on() {
         other => panic!("expected IllegalPosition, got {other}"),
     }
     // Rule 3: the first stone is the origin, and that is not rule 5's refusal.
-    match refused("set b:5,5 w: tomove:w phase:0") {
+    match refused("set p1:5,5 p2: tomove:p2 phase:0") {
         EngineError::IllegalPosition { why } => assert!(why.contains("0,0"), "{why}"),
         other => panic!("expected IllegalPosition, got {other}"),
     }
@@ -227,12 +227,13 @@ fn a_decided_position_is_refused_by_both_forms() {
     // has no move to be asked for (rule 4). `from_plies` alone would accept it —
     // it refuses a stone AFTER the win, not the winning stone — so this is an
     // explicit check after the replay rather than a consequence of it.
-    let won_by_stones = "set b:0,0 1,0 2,0 3,0 4,0 5,0 w:0,3 1,3 2,3 0,5 1,5 2,5 tomove:b phase:0";
+    let won_by_stones =
+        "set p1:0,0 1,0 2,0 3,0 4,0 5,0 p2:0,3 1,3 2,3 0,5 1,5 2,5 tomove:p1 phase:0";
     let won_by_moves = "start moves 0,0 0,3/1,3 1,0/2,0 0,5/2,3 3,0/4,0 1,5/2,5 5,0";
     for tail in [won_by_stones, won_by_moves] {
         match refused(tail) {
             EngineError::IllegalPosition { why } => {
-                assert!(why.contains("black") && why.contains("turn 7"), "{why}");
+                assert!(why.contains("p1") && why.contains("turn 7"), "{why}");
             }
             other => panic!("`{tail}`: expected IllegalPosition, got {other}"),
         }
@@ -241,7 +242,7 @@ fn a_decided_position_is_refused_by_both_forms() {
 
 #[test]
 fn a_win_by_the_second_stone_of_a_turn_is_refused_too() {
-    // Black holds four in a row with one end blocked, and the last turn's two
+    // P1 holds four in a row with one end blocked, and the last turn's two
     // stones complete six: the first does not win and the second does. Rule 4
     // leaves that turn an ordinary pair rather than a truncated one, and the
     // position it reaches is just as decided.

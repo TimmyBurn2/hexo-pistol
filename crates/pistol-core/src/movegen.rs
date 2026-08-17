@@ -49,7 +49,7 @@
 
 use std::collections::BTreeSet;
 
-use crate::board::{Board, Color};
+use crate::board::{Board, Player};
 use crate::coord::Coord;
 use crate::error::CoreError;
 use crate::rules::{LEGAL_RADIUS, TURN_STONES};
@@ -184,14 +184,14 @@ fn ball_offsets() -> Vec<Coord> {
 /// For each cell, whether a `mover` stone placed there would complete a line.
 ///
 /// The question is about a stone that is not on the board yet, and win
-/// detection reads the colour off the board by design (docs/decisions.md D-36),
+/// detection reads the player off the board by design (docs/decisions.md D-36),
 /// so the stone goes down on a scratch copy and comes straight back off.
 ///
 /// # Panics
 ///
 /// With [`SCRATCH_DESYNC`] if the scratch board refuses a cell the position
 /// says is empty, or hands back a stone that was never put there.
-fn winning_cells(board: &Board, cells: &[Coord], mover: Color) -> Vec<bool> {
+fn winning_cells(board: &Board, cells: &[Coord], mover: Player) -> Vec<bool> {
     let mut scratch = board.clone();
     cells
         .iter()

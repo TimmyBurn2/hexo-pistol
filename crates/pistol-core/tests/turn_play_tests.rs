@@ -15,7 +15,7 @@ use pistol_core::error::{
     EITHER_STONE_ALREADY_WINS, PAIR_NOT_CANONICAL, PAIR_OF_ONE_CELL, PAIR_ON_THE_FIRST_TURN,
     SINGLE_THAT_DOES_NOT_WIN,
 };
-use pistol_core::{Color, Coord, CoreError, GameState, Outcome, Turn, generate_turns};
+use pistol_core::{Coord, CoreError, GameState, Outcome, Player, Turn, generate_turns};
 
 /// How many of a position's turns the roundtrip walks. They are spread evenly
 /// over the generated order, so the sample covers the rim of the region, the
@@ -202,7 +202,7 @@ fn make_turn_refuses_a_cell_by_name() {
     let Outcome::Win { winner, turn } = decided.outcome() else {
         panic!("the fixture case is a won game");
     };
-    assert_eq!(winner, Color::Black);
+    assert_eq!(winner, Player::P1);
     refused(
         &decided,
         Turn::Single(cell("6,0")),

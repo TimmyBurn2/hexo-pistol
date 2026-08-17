@@ -12,7 +12,7 @@
 
 use std::fmt;
 
-use pistol_core::Color;
+use pistol_core::Player;
 
 /// Every way the search refuses to proceed.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -35,7 +35,7 @@ pub enum SearchError {
     /// The root position is already decided. There is no move to search for.
     GameDecided {
         /// The side that completed a line.
-        winner: Color,
+        winner: Player,
         /// The turn it completed on.
         turn: u32,
     },

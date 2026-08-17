@@ -23,7 +23,7 @@ schema_version = 1
 backend = "handcrafted_v0"
 
 # What one length-6 window is worth to the side that holds the stones in it, by
-# how many of the six cells that side holds. A window holding both colours is
+# how many of the six cells that side holds. A window holding both players is
 # dead and scores 0 — neither side can complete it — and every other window
 # holding stones scores the entry below, positive for its owner. A position's
 # value is the sum over every window that holds a stone, clamped to the eval

@@ -55,14 +55,14 @@ fn protocol_rejects_malformed_lines_and_stays_alive() {
         "pistol extra",                               // takes no arguments
         "quit now",                                   // likewise
         "position",                                   // neither form
-        "position sideways b:0,0",                    // no such form
+        "position sideways p1:0,0",                   // no such form
         "position start moves",                       // a keyword with nothing after it
         "position start moves 0,0 1,0/",              // a turn token that is not one
-        "position set b:0,0",                         // sections are all required
-        "position set b: 0,0 w: tomove:b phase:0",    // a stone must follow its prefix
-        "position set w: b:0,0 tomove:b phase:0",     // sections come in order
-        "position set b:0,0 w: tomove:black phase:0", // b or w, not the word
-        "position set b:0,0 w: tomove:b phase:2",     // 0 or 1
+        "position set p1:0,0",                        // sections are all required
+        "position set p1: 0,0 p2: tomove:p1 phase:0", // a stone must follow its prefix
+        "position set p2: p1:0,0 tomove:p1 phase:0",  // sections come in order
+        "position set p1:0,0 p2: tomove:p3 phase:0",  // p1 or p2, and no third side
+        "position set p1:0,0 p2: tomove:p1 phase:2",  // 0 or 1
         "go 4",                                       // no such budget
         "go depth_turns",                             // no amount
         "go depth_turns four",                        // not an amount
@@ -203,7 +203,7 @@ fn protocol_reports_one_info_line_per_completed_depth_then_a_totals_line() {
     let answers = talk(
         &mut engine,
         &[
-            "position set b:0,0 2,0 0,2 2,2 1,4 w:1,0 0,1 1,1 2,1 0,3 1,3 tomove:b phase:0",
+            "position set p1:0,0 2,0 0,2 2,2 1,4 p2:1,0 0,1 1,1 2,1 0,3 1,3 tomove:p1 phase:0",
             "go depth_turns 3",
         ],
     );

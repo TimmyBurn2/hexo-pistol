@@ -63,7 +63,7 @@ pub mod win;
 pub mod zobrist;
 
 pub use axis::{Axis, NEIGHBOUR_DIRECTIONS};
-pub use board::{Board, Color};
+pub use board::{Board, Player};
 pub use coord::{Coord, ParseCoordError};
 pub use error::CoreError;
 pub use movegen::{generate_turns, legal_placements};

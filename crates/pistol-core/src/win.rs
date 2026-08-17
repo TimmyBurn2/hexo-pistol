@@ -13,7 +13,7 @@
 //! completed line* — is a different question, asked once at a seam, and it
 //! arrives with `set_position` (docs/decisions.md D-6, D-36).
 //!
-//! The colour is read from the board rather than passed in. A colour argument
+//! The player is read from the board rather than passed in. A player argument
 //! admits a caller that passes the wrong one, and there is no legitimate caller
 //! who would; asking about an empty cell is a bug and panics with the named
 //! invariant [`WIN_CHECK_ON_EMPTY_CELL`].
@@ -29,14 +29,14 @@
 //! a cell whose contents it does not know.
 
 use crate::axis::Axis;
-use crate::board::{Board, Color};
+use crate::board::{Board, Player};
 use crate::coord::Coord;
 use crate::rules::WIN_LEN;
 
 /// Named invariant: win detection was asked about a cell holding no stone.
 pub const WIN_CHECK_ON_EMPTY_CELL: &str = "WIN_CHECK_ON_EMPTY_CELL";
 
-/// A contiguous single-colour run along one axis.
+/// A contiguous single-player run along one axis.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Run {
     /// The axis the run lies on.
@@ -51,7 +51,7 @@ pub struct Run {
     /// How many stones long it is.
     pub len: u32,
     /// Whose stones they are.
-    pub color: Color,
+    pub player: Player,
 }
 
 /// Whether the stone on `at` completes a line, and so wins the game.
@@ -60,10 +60,10 @@ pub struct Run {
 ///
 /// With [`WIN_CHECK_ON_EMPTY_CELL`] if `at` holds no stone.
 pub fn wins_at(board: &Board, at: Coord) -> bool {
-    let color = color_at(board, at);
+    let player = player_at(board, at);
     Axis::ALL
         .iter()
-        .any(|&axis| run_length(board, at, color, axis) >= WIN_LEN)
+        .any(|&axis| run_length(board, at, player, axis) >= WIN_LEN)
 }
 
 /// The length of the run through `at` along `axis`, counting `at` itself.
@@ -72,8 +72,8 @@ pub fn wins_at(board: &Board, at: Coord) -> bool {
 ///
 /// With [`WIN_CHECK_ON_EMPTY_CELL`] if `at` holds no stone.
 pub fn run_through(board: &Board, at: Coord, axis: Axis) -> u32 {
-    let color = color_at(board, at);
-    run_length(board, at, color, axis)
+    let player = player_at(board, at);
+    run_length(board, at, player, axis)
 }
 
 /// The run through `at` that wins the game, if one does.
@@ -90,9 +90,9 @@ pub fn run_through(board: &Board, at: Coord, axis: Axis) -> u32 {
 ///
 /// With [`WIN_CHECK_ON_EMPTY_CELL`] if `at` holds no stone.
 pub fn winning_run(board: &Board, at: Coord) -> Option<Run> {
-    let color = color_at(board, at);
+    let player = player_at(board, at);
     Axis::ALL.iter().find_map(|&axis| {
-        let (backward, forward) = extents(board, at, color, axis);
+        let (backward, forward) = extents(board, at, player, axis);
         let len = backward.count + forward.count + 1;
         if len < WIN_LEN {
             return None;
@@ -107,15 +107,15 @@ pub fn winning_run(board: &Board, at: Coord) -> Option<Run> {
             axis,
             start: backward.end,
             len,
-            color,
+            player,
         })
     })
 }
 
-/// The colour of the stone whose placement is being judged.
-fn color_at(board: &Board, at: Coord) -> Color {
+/// The player of the stone whose placement is being judged.
+fn player_at(board: &Board, at: Coord) -> Player {
     match board.get(at) {
-        Some(color) => color,
+        Some(player) => player,
         None => panic!(
             "pistol-core invariant {WIN_CHECK_ON_EMPTY_CELL}: asked whether the stone on \
              {at} wins, but that cell is empty"
@@ -123,9 +123,9 @@ fn color_at(board: &Board, at: Coord) -> Color {
     }
 }
 
-/// Length of the contiguous `color` run through `at` along `axis`.
-fn run_length(board: &Board, at: Coord, color: Color, axis: Axis) -> u32 {
-    let (backward, forward) = extents(board, at, color, axis);
+/// Length of the contiguous `player` run through `at` along `axis`.
+fn run_length(board: &Board, at: Coord, player: Player, axis: Axis) -> u32 {
+    let (backward, forward) = extents(board, at, player, axis);
     backward.count + forward.count + 1
 }
 
@@ -137,15 +137,15 @@ struct Reach {
 
 /// How far the run reaches from `at` in each direction along `axis`, not
 /// counting `at` itself.
-fn extents(board: &Board, at: Coord, color: Color, axis: Axis) -> (Reach, Reach) {
+fn extents(board: &Board, at: Coord, player: Player, axis: Axis) -> (Reach, Reach) {
     let direction = axis.direction();
     (
-        reach(board, at, color, direction.negated()),
-        reach(board, at, color, direction),
+        reach(board, at, player, direction.negated()),
+        reach(board, at, player, direction),
     )
 }
 
-/// The consecutive `color` stones following `from` in `direction`: how many,
+/// The consecutive `player` stones following `from` in `direction`: how many,
 /// and the last cell the walk stood on.
 ///
 /// A step that leaves the addressable lattice ends the run: there is no cell
@@ -153,14 +153,14 @@ fn extents(board: &Board, at: Coord, color: Color, axis: Axis) -> (Reach, Reach)
 /// question, not a swallowed overflow — the arithmetic that must never leave
 /// the range is a *placement*, and that one panics (see
 /// [`crate::coord::COORD_OVERFLOW`]).
-fn reach(board: &Board, from: Coord, color: Color, direction: Coord) -> Reach {
+fn reach(board: &Board, from: Coord, player: Player, direction: Coord) -> Reach {
     let mut count = 0;
     let mut cell = from;
     loop {
         let Some(next) = cell.checked_offset(direction) else {
             return Reach { count, end: cell };
         };
-        if board.get(next) != Some(color) {
+        if board.get(next) != Some(player) {
             return Reach { count, end: cell };
         }
         count += 1;

@@ -12,18 +12,18 @@
 mod common;
 
 use common::games::golden_game;
-use pistol_core::{Color, Coord, CoreError, GameState, Outcome, Phase, PlyOutcome};
+use pistol_core::{Coord, CoreError, GameState, Outcome, Phase, Player, PlyOutcome};
 
 /// The scripted games live in the sha-pinned golden-game fixture, not in an
 /// array in this file: rule 4's truncation is one of the things D-12 promises a
 /// pinned fixture covers, and a script that can drift pins nothing.
-const FIRST_STONE_WIN: &str = "black_wins_on_the_first_stone_of_its_turn";
-const SECOND_STONE_WIN: &str = "black_wins_on_the_second_stone_of_its_turn";
+const FIRST_STONE_WIN: &str = "p1_wins_on_the_first_stone_of_its_turn";
+const SECOND_STONE_WIN: &str = "p1_wins_on_the_second_stone_of_its_turn";
 
 #[test]
 fn first_turn_is_one_stone_at_the_origin() {
     let mut game = GameState::new_game();
-    assert_eq!(game.to_move(), Color::Black);
+    assert_eq!(game.to_move(), Player::P1);
     assert_eq!(game.turn(), 1);
     assert_eq!(game.phase(), Phase::First);
     assert_eq!(game.stones_owed(), 1, "one stone on turn 1");
@@ -39,7 +39,7 @@ fn first_turn_is_one_stone_at_the_origin() {
 
     assert_eq!(game.place(Coord::ORIGIN), Ok(PlyOutcome::TurnComplete));
     assert_eq!(game.turn(), 2, "one stone ends the first turn");
-    assert_eq!(game.to_move(), Color::White);
+    assert_eq!(game.to_move(), Player::P2);
     assert_eq!(game.phase(), Phase::First);
     assert_eq!(game.stones_owed(), 2);
 }
@@ -50,23 +50,23 @@ fn later_turns_are_two_stones_by_the_same_side() {
     game.place(Coord::ORIGIN).expect("turn 1");
 
     assert_eq!(game.place(Coord::new(1, 0)), Ok(PlyOutcome::TurnContinues));
-    assert_eq!(game.to_move(), Color::White, "still white's turn");
+    assert_eq!(game.to_move(), Player::P2, "still p2's turn");
     assert_eq!(game.turn(), 2);
     assert_eq!(game.phase(), Phase::Second);
     assert_eq!(game.stones_owed(), 1);
 
     assert_eq!(game.place(Coord::new(2, 0)), Ok(PlyOutcome::TurnComplete));
-    assert_eq!(game.to_move(), Color::Black);
+    assert_eq!(game.to_move(), Player::P1);
     assert_eq!(game.turn(), 3);
     assert_eq!(game.phase(), Phase::First);
     assert_eq!(game.stones_owed(), 2);
 
     assert_eq!(
         game.board().get(Coord::new(1, 0)),
-        Some(Color::White),
-        "both stones of the turn are white"
+        Some(Player::P2),
+        "both stones of the turn are p2"
     );
-    assert_eq!(game.board().get(Coord::new(2, 0)), Some(Color::White));
+    assert_eq!(game.board().get(Coord::new(2, 0)), Some(Player::P2));
 }
 
 #[test]
@@ -75,14 +75,14 @@ fn win_on_first_stone_ends_turn_second_not_played() {
     let (prefix, winning) = script.split_last();
     let mut game = GameState::from_plies(prefix).expect("a legal game");
     assert_eq!(game.turn(), 7);
-    assert_eq!(game.to_move(), Color::Black);
+    assert_eq!(game.to_move(), Player::P1);
     assert_eq!(game.phase(), Phase::First);
     assert_eq!(game.outcome(), Outcome::Ongoing);
     let stones_before = game.board().stone_count();
     assert_eq!(
         game.place(winning),
         Ok(PlyOutcome::Win {
-            winner: Color::Black,
+            winner: Player::P1,
             turn: 7
         })
     );
@@ -90,7 +90,7 @@ fn win_on_first_stone_ends_turn_second_not_played() {
     assert_eq!(
         game.outcome(),
         Outcome::Win {
-            winner: Color::Black,
+            winner: Player::P1,
             turn: 7
         },
         "the win is scored on the turn it completed on"
@@ -99,7 +99,7 @@ fn win_on_first_stone_ends_turn_second_not_played() {
     assert_eq!(game.phase(), Phase::First, "the turn ended on this stone");
     assert_eq!(
         game.to_move(),
-        Color::Black,
+        Player::P1,
         "the state freezes on the completing stone: the mover does not change"
     );
     assert_eq!(game.stones_owed(), 0, "the second stone is not owed");
@@ -110,7 +110,7 @@ fn win_on_first_stone_ends_turn_second_not_played() {
     assert_eq!(
         game.place(second),
         Err(CoreError::GameDecided {
-            winner: Color::Black,
+            winner: Player::P1,
             turn: 7
         })
     );
@@ -129,7 +129,7 @@ fn win_on_second_stone_detected() {
     let (first_stone_of_turn, opening) = prefix.split_last().expect("a scripted game");
     let mut game = GameState::from_plies(opening).expect("a legal game");
     assert_eq!(game.turn(), 7);
-    assert_eq!(game.to_move(), Color::Black);
+    assert_eq!(game.to_move(), Player::P1);
 
     assert_eq!(
         game.place(*first_stone_of_turn),
@@ -141,14 +141,14 @@ fn win_on_second_stone_detected() {
     assert_eq!(
         game.place(winning),
         Ok(PlyOutcome::Win {
-            winner: Color::Black,
+            winner: Player::P1,
             turn: 7
         })
     );
     assert_eq!(
         game.outcome(),
         Outcome::Win {
-            winner: Color::Black,
+            winner: Player::P1,
             turn: 7
         },
         "the same turn number as the first stone of the turn, not the next one"
@@ -156,7 +156,7 @@ fn win_on_second_stone_detected() {
     assert_eq!(game.turn(), 7);
     assert_eq!(
         game.to_move(),
-        Color::Black,
+        Player::P1,
         "the state freezes on the completing stone"
     );
     assert_eq!(game.stones_owed(), 0);
@@ -182,10 +182,10 @@ fn played_lists_every_stone_in_play_order() {
     let played: Vec<Coord> = game.played().map(|(at, _)| at).collect();
     assert_eq!(played, script.plies, "the move list is the position");
 
-    let colors: Vec<Color> = game.played().map(|(_, color)| color).collect();
+    let players: Vec<Player> = game.played().map(|(_, player)| player).collect();
     assert_eq!(
-        colors[..3],
-        [Color::Black, Color::White, Color::White],
+        players[..3],
+        [Player::P1, Player::P2, Player::P2],
         "one stone on turn 1, two on turn 2"
     );
 }
@@ -204,7 +204,7 @@ fn from_plies_refuses_a_game_that_continues_past_a_win() {
     assert_eq!(
         GameState::from_plies(&script),
         Err(CoreError::GameDecided {
-            winner: Color::Black,
+            winner: Player::P1,
             turn: 7
         })
     );

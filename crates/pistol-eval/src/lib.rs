@@ -10,7 +10,7 @@
 //! - [`Eval`] is the contract, and [`EVAL_MAX`] the band a static value lives
 //!   in; the mate band above it belongs to the search (D-3).
 //! - [`HandcraftedV0`] is the v0 backend: every length-[`WINDOW_LEN`] window on
-//!   each of the three axes, a window holding both colours dead, one carried
+//!   each of the three axes, a window holding both players dead, one carried
 //!   sum, [`WINDOWS_PER_CELL`] entries touched per stone.
 //! - [`Weights`] is its table, read from committed configuration
 //!   (`configs/eval_v0_weights.toml`) with every entry required and no code-side

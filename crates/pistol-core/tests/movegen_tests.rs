@@ -11,7 +11,7 @@ mod common;
 
 use common::perft_positions::perft_case;
 use pistol_core::{
-    Board, Color, Coord, CoreError, GameState, LEGAL_RADIUS, Outcome, Turn, generate_turns,
+    Board, Coord, CoreError, GameState, LEGAL_RADIUS, Outcome, Player, Turn, generate_turns,
     legal_placements,
 };
 
@@ -28,7 +28,7 @@ fn cell(token: &str) -> Coord {
 
 #[test]
 fn pair_legal_iff_some_ordering_legal() {
-    // One stone on the board, white to move: the legal region is the radius-8
+    // One stone on the board, P2 to move: the legal region is the radius-8
     // ball around the origin, and a pair may reach outside it through the ball
     // its own first stone opens (docs/decisions.md D-6).
     let state = GameState::from_plies(&[Coord::ORIGIN]).expect("the first stone");
@@ -98,7 +98,7 @@ fn pair_legal_iff_some_ordering_legal() {
 
 #[test]
 fn winning_first_stone_truncates_pair_in_movegen() {
-    // Black to move with 0,0 through 4,0: both ends of the five complete it.
+    // P1 to move with 0,0 through 4,0: both ends of the five complete it.
     let state = fixture_position("a_win_the_mover_can_take");
     let turns = generate_turns(&state).expect("a turn boundary");
     let (low, high) = (cell("-1,0"), cell("5,0"));
@@ -132,7 +132,7 @@ fn winning_first_stone_truncates_pair_in_movegen() {
     assert_eq!(
         position.make_turn(Turn::Single(high)),
         Ok(Outcome::Win {
-            winner: pistol_core::Color::Black,
+            winner: pistol_core::Player::P1,
             turn: turn_number
         })
     );
@@ -224,7 +224,7 @@ fn legal_placements_stop_at_the_edge_of_the_addressable_lattice() {
     // rather than overflow a coordinate (D-34).
     let corner = Coord::new(i16::MAX - 2, i16::MAX - 2);
     let mut board = Board::empty();
-    board.apply(corner, Color::Black).expect("an empty cell");
+    board.apply(corner, Player::P1).expect("an empty cell");
 
     let cells = legal_placements(&board);
     assert!(
@@ -241,7 +241,7 @@ fn legal_placements_stop_at_the_edge_of_the_addressable_lattice() {
     let ball_at_the_origin = legal_placements(&{
         let mut board = Board::empty();
         board
-            .apply(Coord::ORIGIN, Color::Black)
+            .apply(Coord::ORIGIN, Player::P1)
             .expect("an empty cell");
         board
     });

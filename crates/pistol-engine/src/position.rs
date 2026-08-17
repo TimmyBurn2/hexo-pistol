@@ -22,7 +22,7 @@
 //! list for the same reason: a won position is terminal, so asking this engine
 //! to stand on one is asking it for a move that does not exist (rule 4).
 
-use pistol_core::{Color, Coord, CoreError, GameState, Outcome, Phase, Turn};
+use pistol_core::{Coord, CoreError, GameState, Outcome, Phase, Player, Turn};
 
 use crate::error::EngineError;
 
@@ -59,12 +59,12 @@ pub enum PositionSpec {
     /// The lists are never sorted or canonicalized here. The order given is the
     /// order replayed, so a refusal names the ply it happened on.
     Set {
-        /// Black's stones, in play order.
-        black: Vec<Coord>,
-        /// White's stones, in play order.
-        white: Vec<Coord>,
+        /// P1's stones, in play order.
+        p1: Vec<Coord>,
+        /// P2's stones, in play order.
+        p2: Vec<Coord>,
         /// The side that places the next stone.
-        to_move: Color,
+        to_move: Player,
         /// How far into the current turn that side is.
         phase: Phase,
     },
@@ -83,11 +83,11 @@ impl PositionSpec {
         let state = match self {
             PositionSpec::Start { moves } => replay_moves(moves)?,
             PositionSpec::Set {
-                black,
-                white,
+                p1,
+                p2,
                 to_move,
                 phase,
-            } => replay_stones(black, white, *to_move, *phase)?,
+            } => replay_stones(p1, p2, *to_move, *phase)?,
         };
         if let Outcome::Win { winner, turn } = state.outcome() {
             return Err(EngineError::illegal_position(format!(
@@ -129,12 +129,12 @@ fn replay_moves(moves: &[Turn]) -> Result<GameState, EngineError> {
 /// tokens, because a fixture that states what it means is a fixture whose
 /// meaning survives being edited.
 fn replay_stones(
-    black: &[Coord],
-    white: &[Coord],
-    to_move: Color,
+    p1: &[Coord],
+    p2: &[Coord],
+    to_move: Player,
     phase: Phase,
 ) -> Result<GameState, EngineError> {
-    let lists = [black, white];
+    let lists = [p1, p2];
     let mut taken = [0usize, 0usize];
     let mut state = GameState::new_game();
 
@@ -185,12 +185,12 @@ fn replay_stones(
             let side = side_of(index);
             return Err(EngineError::illegal_position(format!(
                 "{} of {side}'s stones are left over after replaying {} plies, starting with \
-                 {stone}: b: has {} and w: has {}, which is not a turn structure any game \
+                 {stone}: p1: has {} and p2: has {}, which is not a turn structure any game \
                  reaches (rule 3: one stone on turn 1, two on every turn after)",
                 left.len(),
                 taken[0] + taken[1],
-                black.len(),
-                white.len(),
+                p1.len(),
+                p2.len(),
             )));
         }
     }
@@ -211,7 +211,7 @@ fn whole_turn(
     remaining: &[Coord],
     owed: usize,
     ply: usize,
-    side: Color,
+    side: Player,
 ) -> Result<Turn, EngineError> {
     match owed {
         1 => Ok(Turn::Single(remaining[0])),
@@ -230,18 +230,18 @@ fn whole_turn(
 }
 
 /// Which slot of the stone lists a side owns. A local convenience, not a rule.
-const fn side_index(side: Color) -> usize {
+const fn side_index(side: Player) -> usize {
     match side {
-        Color::Black => 0,
-        Color::White => 1,
+        Player::P1 => 0,
+        Player::P2 => 1,
     }
 }
 
 /// The inverse of [`side_index`].
-const fn side_of(index: usize) -> Color {
+const fn side_of(index: usize) -> Player {
     match index {
-        0 => Color::Black,
-        _ => Color::White,
+        0 => Player::P1,
+        _ => Player::P2,
     }
 }
 
@@ -253,7 +253,7 @@ const fn side_of(index: usize) -> Color {
 /// at them would invent a turn index they never wrote. The ply the refusal
 /// happened on is named instead, because "in play order" is what the form means
 /// and the ply is where that order failed.
-fn stone_refusal(error: CoreError, ply: usize, side: Color) -> EngineError {
+fn stone_refusal(error: CoreError, ply: usize, side: Player) -> EngineError {
     match error {
         CoreError::NothingToUndo | CoreError::UnoccupiedCell { .. } => EngineError::internal(
             format!("replaying stone {ply} raised an undo refusal: {error}"),

@@ -22,7 +22,7 @@ mod common;
 use std::collections::BTreeSet;
 
 use common::playouts::{Rng, random_ply};
-use pistol_core::{Board, Color, Coord, GameState, Phase, from_scratch_key, phase_key, side_key};
+use pistol_core::{Board, Coord, GameState, Phase, Player, from_scratch_key, phase_key, side_key};
 
 /// A position no game reaches, built directly (docs/decisions.md D-35).
 ///
@@ -32,22 +32,22 @@ use pistol_core::{Board, Color, Coord, GameState, Phase, from_scratch_key, phase
 /// nothing by leaving the turn number out.
 fn synthetic_board() -> Board {
     let mut board = Board::empty();
-    for (at, color) in [
-        (Coord::ORIGIN, Color::Black),
-        (Coord::new(1, 0), Color::White),
-        (Coord::new(0, 1), Color::Black),
-        (Coord::new(-2, 3), Color::White),
-        (Coord::new(4, -4), Color::Black),
+    for (at, player) in [
+        (Coord::ORIGIN, Player::P1),
+        (Coord::new(1, 0), Player::P2),
+        (Coord::new(0, 1), Player::P1),
+        (Coord::new(-2, 3), Player::P2),
+        (Coord::new(4, -4), Player::P1),
     ] {
-        board.apply(at, color).expect("distinct cells");
+        board.apply(at, player).expect("distinct cells");
     }
     board
 }
 
 #[test]
 fn zobrist_transpositions_collide_by_construction() {
-    // The same five stones by the same two sides, reached two ways: white's
-    // turn 2 and black's turn 3 each played in the other order. Same position,
+    // The same five stones by the same two sides, reached two ways: P2's
+    // turn 2 and P1's turn 3 each played in the other order. Same position,
     // same side to move, same phase — one key.
     let one = GameState::from_plies(&[
         Coord::ORIGIN,
@@ -92,8 +92,8 @@ fn zobrist_transpositions_collide_by_construction() {
 #[test]
 fn zobrist_phase_bit_distinguishes_intra_turn_states() {
     let board = synthetic_board();
-    let first = from_scratch_key(&board, Color::Black, Phase::First);
-    let second = from_scratch_key(&board, Color::Black, Phase::Second);
+    let first = from_scratch_key(&board, Player::P1, Phase::First);
+    let second = from_scratch_key(&board, Player::P1, Phase::Second);
 
     assert_ne!(
         first, second,
@@ -107,7 +107,7 @@ fn zobrist_phase_bit_distinguishes_intra_turn_states() {
 
     // And a real position in the middle of a turn carries the phase it is in.
     let mut game = GameState::from_plies(&[Coord::ORIGIN, Coord::new(1, 0)]).expect("a legal game");
-    assert_eq!(game.phase(), Phase::Second, "white owes one more stone");
+    assert_eq!(game.phase(), Phase::Second, "p2 owes one more stone");
     assert_eq!(
         game.key(),
         from_scratch_key(game.board(), game.to_move(), Phase::Second)
@@ -128,22 +128,22 @@ fn zobrist_phase_bit_distinguishes_intra_turn_states() {
 #[test]
 fn zobrist_side_to_move_distinguishes() {
     let board = synthetic_board();
-    let black = from_scratch_key(&board, Color::Black, Phase::First);
-    let white = from_scratch_key(&board, Color::White, Phase::First);
+    let p1 = from_scratch_key(&board, Player::P1, Phase::First);
+    let p2 = from_scratch_key(&board, Player::P2, Phase::First);
 
-    assert_ne!(black, white, "whose move it is, is part of the position");
+    assert_ne!(p1, p2, "whose move it is, is part of the position");
     assert_eq!(
-        black ^ white,
-        side_key(Color::Black) ^ side_key(Color::White),
+        p1 ^ p2,
+        side_key(Player::P1) ^ side_key(Player::P2),
         "the side is XORed in, not folded into the stones"
     );
 
     let mut distinct = BTreeSet::new();
-    for color in [Color::Black, Color::White] {
+    for player in [Player::P1, Player::P2] {
         for phase in [Phase::First, Phase::Second] {
             assert!(
-                distinct.insert(from_scratch_key(&board, color, phase)),
-                "{color} at {phase:?} shares a key with another context"
+                distinct.insert(from_scratch_key(&board, player, phase)),
+                "{player} at {phase:?} shares a key with another context"
             );
         }
     }
@@ -152,8 +152,8 @@ fn zobrist_side_to_move_distinguishes() {
     let before = GameState::from_plies(&[Coord::ORIGIN, Coord::new(1, 0)]).expect("a legal game");
     let mut after = before.clone();
     after.place(Coord::new(2, 0)).expect("the second stone");
-    assert_eq!(before.to_move(), Color::White);
-    assert_eq!(after.to_move(), Color::Black);
+    assert_eq!(before.to_move(), Player::P2);
+    assert_eq!(after.to_move(), Player::P1);
     assert_ne!(before.key(), after.key());
 }
 

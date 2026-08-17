@@ -17,7 +17,7 @@
 
 use std::collections::BTreeSet;
 
-use pistol_core::{Axis, Board, Color, Coord, WIN_LEN};
+use pistol_core::{Axis, Board, Coord, Player, WIN_LEN};
 use pistol_eval::{EVAL_MAX, Weights};
 
 /// The window length the v0 backend reads: the win length (rules 2 and D-11).
@@ -25,7 +25,7 @@ use pistol_eval::{EVAL_MAX, Weights};
 const LEN: i16 = WIN_LEN as i16;
 
 /// The value of `board` to `side_to_move`, from the windows through its stones.
-pub fn value_from_scratch(board: &Board, weights: &Weights, side_to_move: Color) -> i32 {
+pub fn value_from_scratch(board: &Board, weights: &Weights, side_to_move: Player) -> i32 {
     let mut windows = BTreeSet::new();
     for (stone, _) in board.stones() {
         for axis in Axis::ALL {
@@ -45,7 +45,7 @@ pub fn value_from_scratch(board: &Board, weights: &Weights, side_to_move: Color)
 
 /// The value of `board` to `side_to_move`, from a scan of a region that
 /// contains every window that could hold a stone.
-pub fn value_by_region_scan(board: &Board, weights: &Weights, side_to_move: Color) -> i32 {
+pub fn value_by_region_scan(board: &Board, weights: &Weights, side_to_move: Player) -> i32 {
     let mut cells = board.stones().map(|(at, _)| at);
     let Some(first) = cells.next() else {
         // No stones, no window with anything in it. An unbounded board has
@@ -73,34 +73,34 @@ pub fn value_by_region_scan(board: &Board, weights: &Weights, side_to_move: Colo
 /// What one window is worth, signed for whoever owns the stones in it, or
 /// `None` if the window runs off the addressable lattice and so is not a window.
 ///
-/// This is D-11 said literally: a window holding both colours is dead, and any
+/// This is D-11 said literally: a window holding both players is dead, and any
 /// other window holding stones is worth the table entry for how many it holds,
-/// positive for black and negative for white.
+/// positive for P1 and negative for P2.
 fn window_score(board: &Board, weights: &Weights, axis: Axis, start: Coord) -> Option<i64> {
-    let mut black = 0u8;
-    let mut white = 0u8;
+    let mut p1 = 0u8;
+    let mut p2 = 0u8;
     for step in 0..LEN {
         match board.get(start.checked_step(axis, step)?) {
-            Some(Color::Black) => black += 1,
-            Some(Color::White) => white += 1,
+            Some(Player::P1) => p1 += 1,
+            Some(Player::P2) => p2 += 1,
             None => {}
         }
     }
-    let score = match (black, white) {
-        (_, 0) => i64::from(weights.window_value(black)),
-        (0, _) => -i64::from(weights.window_value(white)),
+    let score = match (p1, p2) {
+        (_, 0) => i64::from(weights.window_value(p1)),
+        (0, _) => -i64::from(weights.window_value(p2)),
         _ => 0,
     };
     Some(score)
 }
 
-/// A black-relative score as the side to move reads it, clamped into the eval
+/// A P1-relative score as the side to move reads it, clamped into the eval
 /// band (docs/decisions.md D-3).
-pub fn signed(score: i64, side_to_move: Color) -> i32 {
+pub fn signed(score: i64, side_to_move: Player) -> i32 {
     let band = i64::from(EVAL_MAX);
     let clamped = i32::try_from(score.clamp(-band, band)).expect("the clamp keeps it in range");
     match side_to_move {
-        Color::Black => clamped,
-        Color::White => -clamped,
+        Player::P1 => clamped,
+        Player::P2 => -clamped,
     }
 }

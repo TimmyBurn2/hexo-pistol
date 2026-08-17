@@ -1,7 +1,7 @@
 //! Shared test scaffolding: positions stated as stones per side, and the
 //! searcher the tests run.
 //!
-//! A tactical fixture is easiest to read as "black has these stones, white has
+//! A tactical fixture is easiest to read as "P1 has these stones, P2 has
 //! these" — but a position is a move list (docs/decisions.md D-6), and the only
 //! way to reach one is to play it (D-42). [`position`] bridges the two: it
 //! interleaves the two sides' stones into the turn structure rule 3 imposes and
@@ -12,7 +12,7 @@
 
 use std::path::PathBuf;
 
-use pistol_core::{Axis, Color, Coord, GameState};
+use pistol_core::{Axis, Coord, GameState, Player};
 use pistol_eval::{HandcraftedV0, Weights};
 use pistol_search::{CandidatePolicy, SearchParams, Searcher};
 
@@ -52,43 +52,43 @@ pub fn searcher(radius: u32) -> Searcher {
 
 /// A position, stated as the stones each side holds.
 ///
-/// The turn structure is rule 3's: black opens with one stone on the origin,
-/// and every turn after that is two stones by the side to move. So black always
-/// holds an odd number of stones, and white holds one more than black when it
-/// is black to move and one fewer when it is white's.
+/// The turn structure is rule 3's: P1 opens with one stone on the origin,
+/// and every turn after that is two stones by the side to move. So P1 always
+/// holds an odd number of stones, and P2 holds one more than P1 when it
+/// is P1 to move and one fewer when it is P2's.
 ///
 /// Stones are played in the order given, which is what makes an intermediate
 /// position legal or not; a fixture that wins early, plays out of the legal
 /// region, or does not fit the turn structure panics here.
-pub fn position(black: &[Coord], white: &[Coord], to_move: Color) -> GameState {
+pub fn position(p1: &[Coord], p2: &[Coord], to_move: Player) -> GameState {
     assert!(
-        !black.is_empty() && black[0] == Coord::ORIGIN,
-        "black's first stone is turn 1's, and turn 1 is the origin (rule 3)"
+        !p1.is_empty() && p1[0] == Coord::ORIGIN,
+        "p1's first stone is turn 1's, and turn 1 is the origin (rule 3)"
     );
-    let (b, w) = (black.len(), white.len());
-    assert!(b % 2 == 1, "black holds an odd number of stones, got {b}");
-    let expected_white = match to_move {
-        Color::Black => b + 1,
-        Color::White => b - 1,
+    let (b, w) = (p1.len(), p2.len());
+    assert!(b % 2 == 1, "p1 holds an odd number of stones, got {b}");
+    let expected_p2 = match to_move {
+        Player::P1 => b + 1,
+        Player::P2 => b - 1,
     };
     assert_eq!(
-        w, expected_white,
-        "with {b} black stones and {to_move} to move, white holds {expected_white}"
+        w, expected_p2,
+        "with {b} p1 stones and {to_move} to move, p2 holds {expected_p2}"
     );
 
-    let mut plies = vec![black[0]];
-    let (mut next_black, mut next_white) = (1, 0);
-    while next_black < b || next_white < w {
+    let mut plies = vec![p1[0]];
+    let (mut next_p1, mut next_p2) = (1, 0);
+    while next_p1 < b || next_p2 < w {
         for _ in 0..2 {
-            if next_white < w {
-                plies.push(white[next_white]);
-                next_white += 1;
+            if next_p2 < w {
+                plies.push(p2[next_p2]);
+                next_p2 += 1;
             }
         }
         for _ in 0..2 {
-            if next_black < b {
-                plies.push(black[next_black]);
-                next_black += 1;
+            if next_p1 < b {
+                plies.push(p1[next_p1]);
+                next_p1 += 1;
             }
         }
     }
@@ -116,20 +116,20 @@ pub fn spectators(from: Coord, axis: Axis, count: i16) -> Vec<Coord> {
 /// A small position with nothing decided in it, for the tests that are about
 /// the machinery rather than about tactics.
 ///
-/// Every line of it is dead or short: black's pairs each have a white stone in
+/// Every line of it is dead or short: P1's pairs each have a P2 stone in
 /// the gap, so no side can complete six inside the depths these tests reach and
 /// no iteration ends early on a mate. It is also *small* — eleven stones in a
 /// three-by-five patch — because every extra stone widens the candidate set at
 /// every node.
 pub fn quiet() -> GameState {
-    let black = [
+    let p1 = [
         Coord::ORIGIN,
         Coord::new(2, 0),
         Coord::new(0, 2),
         Coord::new(2, 2),
         Coord::new(1, 4),
     ];
-    let white = [
+    let p2 = [
         Coord::new(1, 0),
         Coord::new(0, 1),
         Coord::new(1, 1),
@@ -137,7 +137,7 @@ pub fn quiet() -> GameState {
         Coord::new(0, 3),
         Coord::new(1, 3),
     ];
-    position(&black, &white, Color::Black)
+    position(&p1, &p2, Player::P1)
 }
 
 /// A compact cluster of harmless stones: rows of three, two apart.

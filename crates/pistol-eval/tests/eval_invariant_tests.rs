@@ -18,7 +18,7 @@ mod common;
 
 use common::reference::value_from_scratch;
 use common::{built, committed_weights};
-use pistol_core::{Axis, Color, Coord};
+use pistol_core::{Axis, Coord, Player};
 use pistol_eval::{Eval, HandcraftedV0};
 
 #[test]
@@ -29,18 +29,18 @@ fn eval_apply_that_overfills_a_window_panics() {
     let weights = committed_weights();
     let mut eval = HandcraftedV0::new(weights);
     for step in 0..6 {
-        eval.apply(Coord::ORIGIN.step(Axis::ConstQ, step), Color::Black);
+        eval.apply(Coord::ORIGIN.step(Axis::ConstQ, step), Player::P1);
     }
-    eval.apply(Coord::new(0, 3), Color::Black);
+    eval.apply(Coord::new(0, 3), Player::P1);
 }
 
 #[test]
 #[should_panic(expected = "EVAL_DESYNC")]
-fn eval_undo_of_a_colour_the_window_never_held_panics() {
+fn eval_undo_of_a_player_the_window_never_held_panics() {
     let weights = committed_weights();
     let mut eval = HandcraftedV0::new(weights);
-    eval.apply(Coord::ORIGIN, Color::Black);
-    eval.undo(Coord::ORIGIN, Color::White);
+    eval.apply(Coord::ORIGIN, Player::P1);
+    eval.undo(Coord::ORIGIN, Player::P2);
 }
 
 #[test]
@@ -48,8 +48,8 @@ fn eval_undo_of_a_colour_the_window_never_held_panics() {
 fn eval_undo_of_a_cell_that_holds_nothing_panics() {
     let weights = committed_weights();
     let mut eval = HandcraftedV0::new(weights);
-    eval.apply(Coord::ORIGIN, Color::Black);
-    eval.undo(Coord::new(20, -20), Color::Black);
+    eval.apply(Coord::ORIGIN, Player::P1);
+    eval.undo(Coord::new(20, -20), Player::P1);
 }
 
 #[test]
@@ -60,15 +60,15 @@ fn eval_windows_stop_at_the_edge_of_the_addressable_lattice() {
     // there would be a crash the type system invites, so it is checked.
     let weights = committed_weights();
     let corners = [
-        (Coord::new(i16::MAX, 0), Color::Black),
-        (Coord::new(i16::MIN, 0), Color::White),
-        (Coord::new(0, i16::MAX), Color::Black),
-        (Coord::new(i16::MIN, i16::MAX), Color::White),
-        (Coord::new(i16::MAX, i16::MIN), Color::Black),
+        (Coord::new(i16::MAX, 0), Player::P1),
+        (Coord::new(i16::MIN, 0), Player::P2),
+        (Coord::new(0, i16::MAX), Player::P1),
+        (Coord::new(i16::MIN, i16::MAX), Player::P2),
+        (Coord::new(i16::MAX, i16::MIN), Player::P1),
     ];
 
     let (board, eval) = built(&weights, &corners);
-    for side in [Color::Black, Color::White] {
+    for side in [Player::P1, Player::P2] {
         assert_eq!(
             eval.value(side),
             value_from_scratch(&board, &weights, side),
@@ -79,8 +79,8 @@ fn eval_windows_stop_at_the_edge_of_the_addressable_lattice() {
     // Fewer windows hold a corner cell than hold an interior one, and the eval
     // has to take back exactly the ones it created.
     let mut unwound = eval;
-    for &(at, color) in corners.iter().rev() {
-        unwound.undo(at, color);
+    for &(at, player) in corners.iter().rev() {
+        unwound.undo(at, player);
     }
     assert_eq!(
         unwound,

@@ -1,7 +1,7 @@
 //! The golden-game fixture: move lists, and what the last stone did to the
 //! turn (game rules 3 and 4).
 
-use pistol_core::{Color, Coord, Phase};
+use pistol_core::{Coord, Phase, Player};
 
 use super::{directives, fixture_text, parse_coords};
 
@@ -21,7 +21,7 @@ pub enum GameVerdict {
     /// The last ply completed a run.
     Win {
         /// Who placed it.
-        winner: Color,
+        winner: Player,
         /// The turn it is scored on.
         turn: u32,
         /// The phase the winning stone was placed AT — `First` means it was
@@ -114,7 +114,7 @@ pub fn parse_games(text: &str) -> Vec<GoldenGame> {
 }
 
 /// `ongoing turn <n> phase <first|second>`, or
-/// `win <colour> on-turn <n> as <first|second>-stone`.
+/// `win <player> on-turn <n> as <first|second>-stone`.
 fn parse_verdict(rest: &str, line: usize) -> GameVerdict {
     let words: Vec<&str> = rest.split_whitespace().collect();
     match words.as_slice() {
@@ -122,12 +122,12 @@ fn parse_verdict(rest: &str, line: usize) -> GameVerdict {
             turn: parse_turn(turn, line),
             phase: parse_phase(phase, line),
         },
-        ["win", color, "on-turn", turn, "as", stone] => {
+        ["win", player, "on-turn", turn, "as", stone] => {
             let phase = stone
                 .strip_suffix("-stone")
                 .unwrap_or_else(|| panic!("line {line}: `as` takes first-stone or second-stone"));
             GameVerdict::Win {
-                winner: parse_color(color, line),
+                winner: parse_player(player, line),
                 turn: parse_turn(turn, line),
                 phase: parse_phase(phase, line),
             }
@@ -153,11 +153,11 @@ fn parse_phase(word: &str, line: usize) -> Phase {
     }
 }
 
-fn parse_color(word: &str, line: usize) -> Color {
+fn parse_player(word: &str, line: usize) -> Player {
     match word {
-        "black" => Color::Black,
-        "white" => Color::White,
-        other => panic!("line {line}: a colour is black or white, got `{other}`"),
+        "p1" => Player::P1,
+        "p2" => Player::P2,
+        other => panic!("line {line}: a player is p1 or p2, got `{other}`"),
     }
 }
 

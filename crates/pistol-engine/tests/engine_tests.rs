@@ -7,7 +7,7 @@
 mod common;
 
 use common::{VALID, buildable, replacing};
-use pistol_core::{Color, Coord, Phase, Turn};
+use pistol_core::{Coord, Phase, Player, Turn};
 use pistol_engine::{Budget, Engine, EngineError, EngineMode, Pistol, PositionSpec, ScoreKind};
 
 /// An engine from a document.
@@ -32,7 +32,7 @@ fn play() -> Pistol {
 /// A position with a mate in one for the side to move: five in a row, one end
 /// blocked, so exactly one cell completes six.
 fn mate_in_one() -> PositionSpec {
-    "set b:0,0 1,0 2,0 3,0 4,0 w:-1,0 1,3 2,3 3,3 1,5 2,5 tomove:b phase:0"
+    "set p1:0,0 1,0 2,0 3,0 4,0 p2:-1,0 1,3 2,3 3,3 1,5 2,5 tomove:p1 phase:0"
         .parse()
         .expect("a well-formed stone list")
 }
@@ -43,7 +43,7 @@ fn a_new_engine_stands_on_the_initial_position() {
     assert_eq!(engine.mode(), EngineMode::Instrument);
     assert!(engine.state().board().is_empty());
     assert_eq!(engine.state().turn(), 1);
-    assert_eq!(engine.state().to_move(), Color::Black);
+    assert_eq!(engine.state().to_move(), Player::P1);
     assert_eq!(engine.state().phase(), Phase::First);
 }
 
@@ -76,7 +76,7 @@ fn go_reporting_reports_once_per_completed_depth() {
     let mut engine = instrument();
     engine
         .set_position(
-            &"set b:0,0 2,0 0,2 2,2 1,4 w:1,0 0,1 1,1 2,1 0,3 1,3 tomove:b phase:0"
+            &"set p1:0,0 2,0 0,2 2,2 1,4 p2:1,0 0,1 1,1 2,1 0,3 1,3 tomove:p1 phase:0"
                 .parse()
                 .expect("a quiet position"),
         )
@@ -164,7 +164,7 @@ fn go_on_a_half_played_turn_says_there_is_nothing_to_search() {
     let mut engine = instrument();
     engine
         .set_position(
-            &"set b:0,0 1,0 w:0,1 1,1 tomove:b phase:1"
+            &"set p1:0,0 1,0 p2:0,1 1,1 tomove:p1 phase:1"
                 .parse()
                 .expect("a turn in progress"),
         )
@@ -222,7 +222,7 @@ fn a_refused_position_leaves_the_engine_where_it_was() {
     engine.set_position(&good).expect("a legal position");
     let before = engine.state().key();
 
-    let bad: PositionSpec = "set b:0,0 1,0 w:0,1 tomove:b phase:0"
+    let bad: PositionSpec = "set p1:0,0 1,0 p2:0,1 tomove:p1 phase:0"
         .parse()
         .expect("parses, but is no position");
     assert!(engine.set_position(&bad).is_err());

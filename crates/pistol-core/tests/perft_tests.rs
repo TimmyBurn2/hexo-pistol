@@ -33,7 +33,7 @@ use pistol_core::{Coord, GameState, Turn, generate_turns, perft};
 /// Changing the fixture means changing this line, in the same commit, having
 /// looked at what changed.
 const PERFT_POSITIONS_SHA256: &str =
-    "3ea61678535a98ce30197c368e8ea36896671c2a679620f885203f7f1ace5f65";
+    "808f69f1b02597d2af8785ea54d6146ddea293e77d729c4517427c202238acfb";
 
 /// How many first turns the default run divides on, per case. One level of a
 /// midgame position is a second or two of reference time, and the wider sweep

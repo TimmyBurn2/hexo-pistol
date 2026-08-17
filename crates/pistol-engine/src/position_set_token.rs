@@ -1,4 +1,4 @@
-//! The stone-list form: `set b:<q,r> … w:<q,r> … tomove:<b|w> phase:<0|1>`.
+//! The stone-list form: `set p1:<q,r> … p2:<q,r> … tomove:<p1|p2> phase:<0|1>`.
 //!
 //! Both directions of one grammar, in one file, for the reason docs/decisions.md
 //! D-39 gives: a formatter without its parser grows a second implementation of
@@ -6,40 +6,35 @@
 //! between this form and the move list is [`crate::position_token`].
 //!
 //! Four sections, in this order, each exactly once, every one required. A
-//! section's first value is attached to its prefix — `b:0,0 1,0` is the position
-//! and `b: 0,0 1,0` is a rejection — so a side with no stones yet is the bare
+//! section's first value is attached to its prefix — `p1:0,0 1,0` is the position
+//! and `p1: 0,0 1,0` is a rejection — so a side with no stones yet is the bare
 //! prefix and nothing else. That strictness is D-46's argument at the scale of a
 //! line: one position, one spelling.
 
 use std::fmt;
 
-use pistol_core::{Color, Coord, Phase};
+use pistol_core::{Coord, Phase, Player};
 
 use crate::position::PositionSpec;
 
 /// The sections of a `set` tail, in the order they are written.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Section {
-    Black,
-    White,
+    P1,
+    P2,
     ToMove,
     Phase,
 }
 
 /// Every section, in the order the grammar requires.
-const SECTIONS: [Section; 4] = [
-    Section::Black,
-    Section::White,
-    Section::ToMove,
-    Section::Phase,
-];
+const SECTIONS: [Section; 4] = [Section::P1, Section::P2, Section::ToMove, Section::Phase];
 
 impl Section {
     /// The prefix that opens it.
     const fn prefix(self) -> &'static str {
         match self {
-            Section::Black => "b:",
-            Section::White => "w:",
+            Section::P1 => "p1:",
+            Section::P2 => "p2:",
             Section::ToMove => "tomove:",
             Section::Phase => "phase:",
         }
@@ -47,32 +42,32 @@ impl Section {
 
     /// Whether it holds a list of stones rather than one value.
     const fn is_list(self) -> bool {
-        matches!(self, Section::Black | Section::White)
+        matches!(self, Section::P1 | Section::P2)
     }
 }
 
 /// Write the tail after the form's own word.
 pub(crate) fn write_set(
     f: &mut fmt::Formatter<'_>,
-    black: &[Coord],
-    white: &[Coord],
-    to_move: Color,
+    p1: &[Coord],
+    p2: &[Coord],
+    to_move: Player,
     phase: Phase,
 ) -> fmt::Result {
-    write_stones(f, Section::Black, black)?;
+    write_stones(f, Section::P1, p1)?;
     f.write_str(" ")?;
-    write_stones(f, Section::White, white)?;
+    write_stones(f, Section::P2, p2)?;
     write!(
         f,
         " {}{} {}{}",
         Section::ToMove.prefix(),
-        color_token(to_move),
+        player_token(to_move),
         Section::Phase.prefix(),
         phase.index()
     )
 }
 
-/// `b:0,0 1,0`, or the bare prefix for a side with none yet.
+/// `p1:0,0 1,0`, or the bare prefix for a side with none yet.
 fn write_stones(f: &mut fmt::Formatter<'_>, section: Section, stones: &[Coord]) -> fmt::Result {
     f.write_str(section.prefix())?;
     for (index, stone) in stones.iter().enumerate() {
@@ -84,11 +79,11 @@ fn write_stones(f: &mut fmt::Formatter<'_>, section: Section, stones: &[Coord]) 
     Ok(())
 }
 
-/// A colour, as this form writes it.
-const fn color_token(color: Color) -> &'static str {
-    match color {
-        Color::Black => "b",
-        Color::White => "w",
+/// A player, as this form writes it.
+const fn player_token(player: Player) -> &'static str {
+    match player {
+        Player::P1 => "p1",
+        Player::P2 => "p2",
     }
 }
 
@@ -100,7 +95,7 @@ pub(crate) fn parse_set(words: &[&str]) -> Result<PositionSpec, String> {
     // of place and a section stated twice are the same rejection.
     let mut opened = 0usize;
     // The list a bare token continues. A list opened with no value accepts none,
-    // because `b:` followed by a stone would spell what `b:<stone>` already does.
+    // because `p1:` followed by a stone would spell what `p1:<stone>` already does.
     let mut continuing: Option<Section> = None;
 
     for word in words {
@@ -122,7 +117,7 @@ pub(crate) fn parse_set(words: &[&str]) -> Result<PositionSpec, String> {
                 if value.is_empty() {
                     if !section.is_list() {
                         return Err(format!(
-                            "`{}` takes its value attached, as `{}b`",
+                            "`{}` takes its value attached, as `{}p1`",
                             section.prefix(),
                             section.prefix()
                         ));
@@ -139,7 +134,7 @@ pub(crate) fn parse_set(words: &[&str]) -> Result<PositionSpec, String> {
                     return Err(format!(
                         "`{word}` belongs to no section: a stone follows the prefix that opens \
                          its list, as `{}0,0 1,0`",
-                        Section::Black.prefix()
+                        Section::P1.prefix()
                     ));
                 };
                 built.take(section, word)?;
@@ -154,8 +149,8 @@ pub(crate) fn parse_set(words: &[&str]) -> Result<PositionSpec, String> {
         ));
     };
     Ok(PositionSpec::Set {
-        black: built.black,
-        white: built.white,
+        p1: built.p1,
+        p2: built.p2,
         to_move,
         phase,
     })
@@ -164,9 +159,9 @@ pub(crate) fn parse_set(words: &[&str]) -> Result<PositionSpec, String> {
 /// A `set` tail part way through being read.
 #[derive(Debug, Default)]
 struct SetBuilder {
-    black: Vec<Coord>,
-    white: Vec<Coord>,
-    to_move: Option<Color>,
+    p1: Vec<Coord>,
+    p2: Vec<Coord>,
+    to_move: Option<Player>,
     phase: Option<Phase>,
 }
 
@@ -174,9 +169,9 @@ impl SetBuilder {
     /// Read one value into a section.
     fn take(&mut self, section: Section, value: &str) -> Result<(), String> {
         match section {
-            Section::Black => self.black.push(stone(value)?),
-            Section::White => self.white.push(stone(value)?),
-            Section::ToMove => self.to_move = Some(color(value)?),
+            Section::P1 => self.p1.push(stone(value)?),
+            Section::P2 => self.p2.push(stone(value)?),
+            Section::ToMove => self.to_move = Some(player(value)?),
             Section::Phase => self.phase = Some(phase(value)?),
         }
         Ok(())
@@ -207,13 +202,13 @@ fn stone(token: &str) -> Result<Coord, String> {
         .map_err(|error| error.why.to_string())
 }
 
-/// `b` or `w`.
-fn color(token: &str) -> Result<Color, String> {
+/// `p1` or `p2`.
+fn player(token: &str) -> Result<Player, String> {
     match token {
-        "b" => Ok(Color::Black),
-        "w" => Ok(Color::White),
+        "p1" => Ok(Player::P1),
+        "p2" => Ok(Player::P2),
         other => Err(format!(
-            "`{}` takes `b` or `w`, got `{other}`",
+            "`{}` takes `p1` or `p2`, got `{other}`",
             Section::ToMove.prefix()
         )),
     }

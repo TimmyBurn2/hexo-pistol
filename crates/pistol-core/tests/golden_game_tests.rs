@@ -13,7 +13,7 @@ use pistol_core::{CoreError, GameState, Outcome, Phase, PlyOutcome};
 
 /// The SHA-256 of `tests/fixtures/golden_games_v1.txt`.
 const GOLDEN_GAMES_SHA256: &str =
-    "7d6f09d65c3ac2314de65f17c82eb6a18e85939f6bad2683e898fb95e78a5722";
+    "8cdc714ab722b5a39166fc27cfe20c1afdc89c07099c3966789a3c785a51293a";
 
 #[test]
 fn golden_games_fixture_matches_its_pinned_sha256() {
@@ -91,7 +91,7 @@ fn golden_games_replay_legally_and_reach_their_recorded_verdict() {
 }
 
 #[test]
-fn golden_games_cover_both_phases_and_both_colours() {
+fn golden_games_cover_both_phases_and_both_players() {
     let games = golden_games();
     assert_eq!(games.len(), 5, "the fixture lost or gained cases");
 
@@ -131,9 +131,8 @@ fn golden_games_cover_both_phases_and_both_colours() {
         })
         .collect();
     assert!(
-        winners.contains(&pistol_core::Color::Black)
-            && winners.contains(&pistol_core::Color::White),
-        "both colours need a win case: {winners:?}"
+        winners.contains(&pistol_core::Player::P1) && winners.contains(&pistol_core::Player::P2),
+        "both players need a win case: {winners:?}"
     );
 }
 
@@ -146,7 +145,7 @@ fn golden_game_loader_refuses_a_line_it_does_not_understand() {
 #[test]
 #[should_panic(expected = "not one of the two forms")]
 fn golden_game_loader_refuses_a_verdict_it_cannot_read() {
-    parse_games("case a\nplies 0,0\nexpect black wins eventually\n");
+    parse_games("case a\nplies 0,0\nexpect p1 wins eventually\n");
 }
 
 #[test]

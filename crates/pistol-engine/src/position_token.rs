@@ -66,13 +66,13 @@ impl fmt::Display for PositionSpec {
                 Ok(())
             }
             PositionSpec::Set {
-                black,
-                white,
+                p1,
+                p2,
                 to_move,
                 phase,
             } => {
                 write!(f, "{SET_FORM} ")?;
-                write_set(f, black, white, *to_move, *phase)
+                write_set(f, p1, p2, *to_move, *phase)
             }
         }
     }

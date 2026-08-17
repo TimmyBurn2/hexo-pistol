@@ -33,7 +33,7 @@
 
 use std::collections::BTreeSet;
 
-use pistol_core::{Board, Color, Coord, FIRST_TURN, LEGAL_RADIUS, stones_in_turn, wins_at};
+use pistol_core::{Board, Coord, FIRST_TURN, LEGAL_RADIUS, Player, stones_in_turn, wins_at};
 
 /// A turn as the reference spells it: its own type, canonicalized by its own
 /// comparison, so that agreement with `pistol_core::Turn` is a result and not a
@@ -62,17 +62,17 @@ impl RefTurn {
 #[derive(Debug, Clone)]
 pub struct RefGame {
     board: Board,
-    to_move: Color,
+    to_move: Player,
     turn: u32,
     decided: bool,
 }
 
 impl RefGame {
-    /// A new game: no stones, black to move, turn one.
+    /// A new game: no stones, P1 to move, turn one.
     pub fn new() -> RefGame {
         RefGame {
             board: Board::empty(),
-            to_move: Color::Black,
+            to_move: Player::P1,
             turn: FIRST_TURN,
             decided: false,
         }

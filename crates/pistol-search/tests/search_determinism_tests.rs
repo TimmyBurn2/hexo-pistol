@@ -13,15 +13,15 @@
 mod common;
 
 use common::{blob, position, quiet, searcher};
-use pistol_core::{Color, Coord, GameState};
+use pistol_core::{Coord, GameState, Player};
 use pistol_search::{SearchOutcome, Stop};
 
 /// Another position, to be searched in between so that anything carried over
 /// from it would show up.
 fn distraction() -> GameState {
-    let black = vec![Coord::ORIGIN, Coord::new(0, 1), Coord::new(2, 1)];
-    let white = blob(Coord::new(1, -1), 4);
-    position(&black, &white, Color::Black)
+    let p1 = vec![Coord::ORIGIN, Coord::new(0, 1), Coord::new(2, 1)];
+    let p2 = blob(Coord::new(1, -1), 4);
+    position(&p1, &p2, Player::P1)
 }
 
 fn assert_same(left: &SearchOutcome, right: &SearchOutcome, what: &str) {

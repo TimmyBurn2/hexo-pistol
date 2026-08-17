@@ -163,11 +163,11 @@ fn search_refuses_a_root_in_the_middle_of_a_turn() {
 
 #[test]
 fn search_refuses_a_decided_root() {
-    // Black completes six; there is no move to search for.
-    let black = line(Coord::ORIGIN, Axis::ConstR, 5);
-    let mut white = vec![Coord::new(-1, 0)];
-    white.extend(blob(Coord::new(0, 3), 5));
-    let mut state = position(&black, &white, pistol_core::Color::Black);
+    // P1 completes six; there is no move to search for.
+    let p1 = line(Coord::ORIGIN, Axis::ConstR, 5);
+    let mut p2 = vec![Coord::new(-1, 0)];
+    p2.extend(blob(Coord::new(0, 3), 5));
+    let mut state = position(&p1, &p2, pistol_core::Player::P1);
     state.place(Coord::new(5, 0)).expect("the winning stone");
 
     let mut searcher = searcher(1);

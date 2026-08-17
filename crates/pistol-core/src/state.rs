@@ -24,7 +24,7 @@
 //! search depth, while this one is a position's own history and is bounded only
 //! by how long a game gets.
 
-use crate::board::{Board, Color};
+use crate::board::{Board, Player};
 use crate::coord::Coord;
 use crate::error::CoreError;
 use crate::rules::{FIRST_TURN, TURN_STONES, stones_in_turn};
@@ -48,7 +48,7 @@ pub const HISTORY_DESYNC: &str = "HISTORY_DESYNC";
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Ply {
     at: Coord,
-    mover: Color,
+    mover: Player,
     phase: Phase,
     turn: u32,
 }
@@ -65,12 +65,12 @@ struct Ply {
 /// use pistol_core::{Board, Coord, GameState};
 /// let mut state = GameState::new_game();
 /// let board: &mut Board = state.board();
-/// board.apply(Coord::ORIGIN, pistol_core::Color::Black).unwrap();
+/// board.apply(Coord::ORIGIN, pistol_core::Player::P1).unwrap();
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GameState {
     board: Board,
-    to_move: Color,
+    to_move: Player,
     phase: Phase,
     turn: u32,
     outcome: Outcome,
@@ -78,13 +78,13 @@ pub struct GameState {
 }
 
 impl GameState {
-    /// A new game: an empty board, black to move, turn one, one stone owed.
+    /// A new game: an empty board, P1 to move, turn one, one stone owed.
     ///
     /// Named for the protocol verb it serves (docs/decisions.md D-2, D-5).
     pub fn new_game() -> Self {
         GameState {
             board: Board::empty(),
-            to_move: Color::Black,
+            to_move: Player::P1,
             phase: Phase::First,
             turn: FIRST_TURN,
             outcome: Outcome::Ongoing,
@@ -125,7 +125,7 @@ impl GameState {
     ///
     /// Only meaningful while the game is ongoing; after a win the state freezes
     /// on the completing stone, and this reads as the winner.
-    pub fn to_move(&self) -> Color {
+    pub fn to_move(&self) -> Player {
         self.to_move
     }
 
@@ -173,7 +173,7 @@ impl GameState {
 
     /// Every stone in the order it was played. This move list is the canonical
     /// encoding of a position (docs/decisions.md D-6).
-    pub fn played(&self) -> impl Iterator<Item = (Coord, Color)> + '_ {
+    pub fn played(&self) -> impl Iterator<Item = (Coord, Player)> + '_ {
         self.history.iter().map(|ply| (ply.at, ply.mover))
     }
 
@@ -247,7 +247,7 @@ impl GameState {
             return Err(CoreError::NothingToUndo);
         };
         let removed = match self.board.undo(ply.at) {
-            Ok(color) => color,
+            Ok(player) => player,
             Err(error) => panic!(
                 "pistol-core invariant {HISTORY_DESYNC}: the history records a {} stone on {}, \
                  and the board says: {error}",

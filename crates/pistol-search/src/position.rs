@@ -14,7 +14,7 @@
 //! just placed, so a refusal there is a broken invariant and panics with
 //! [`POSITION_DESYNC`].
 
-use pistol_core::{Board, Color, Coord, CoreError, GameState, PlyOutcome};
+use pistol_core::{Board, Coord, CoreError, GameState, Player, PlyOutcome};
 use pistol_eval::Eval;
 
 /// Named invariant: the game and the evaluation disagree about what is on the
@@ -28,11 +28,11 @@ pub struct Position {
     /// The stones this search put down, newest last.
     ///
     /// Not a second copy of the game: it is what the *evaluation* has to be told
-    /// to take back, and the cell alone is not enough — the colour has left the
+    /// to take back, and the cell alone is not enough — the player has left the
     /// board by the time the game hands the cell back. Reading it off the game
     /// instead would mean walking its history on every take-back, which is a
     /// linear cost per ply in a loop that runs millions of times.
-    placed: Vec<(Coord, Color)>,
+    placed: Vec<(Coord, Player)>,
 }
 
 impl Position {
@@ -53,13 +53,13 @@ impl Position {
     /// the stones came off in (docs/decisions.md D-61, D-62) — and it keeps this
     /// from needing a way to construct a backend it only knows as `dyn Eval`.
     pub fn reset_to(&mut self, state: &GameState) {
-        let stones: Vec<(Coord, Color)> = self.state.board().stones().collect();
-        for (at, color) in stones {
-            self.eval.undo(at, color);
+        let stones: Vec<(Coord, Player)> = self.state.board().stones().collect();
+        for (at, player) in stones {
+            self.eval.undo(at, player);
         }
         self.state = state.clone();
-        for (at, color) in self.state.board().stones() {
-            self.eval.apply(at, color);
+        for (at, player) in self.state.board().stones() {
+            self.eval.apply(at, player);
         }
         self.placed.clear();
     }
@@ -113,7 +113,7 @@ impl Position {
     /// With [`POSITION_DESYNC`] if there is nothing this search placed to take
     /// back, or if the game hands back a different stone than the one recorded.
     pub fn undo(&mut self) {
-        let (at, color) = self.placed.pop().unwrap_or_else(|| {
+        let (at, player) = self.placed.pop().unwrap_or_else(|| {
             panic!(
                 "pistol-search invariant {POSITION_DESYNC}: nothing to take back, though the \
                  search only ever takes back what it placed"
@@ -127,6 +127,6 @@ impl Position {
             "pistol-search invariant {POSITION_DESYNC}: this search placed {at} last and the \
              game took back {taken}"
         );
-        self.eval.undo(at, color);
+        self.eval.undo(at, player);
     }
 }

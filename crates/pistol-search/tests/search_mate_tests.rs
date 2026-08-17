@@ -9,7 +9,7 @@
 mod common;
 
 use common::{blob, line, position, searcher};
-use pistol_core::{Axis, Color, Coord, Turn};
+use pistol_core::{Axis, Coord, Player, Turn};
 use pistol_search::Stop;
 use pistol_search::score::{ScoreKind, classify};
 
@@ -23,13 +23,13 @@ fn cells(turn: Turn) -> Vec<Coord> {
 
 #[test]
 fn search_finds_mate_in_1_turn() {
-    // Black holds five in a row with one end blocked, so exactly one stone wins.
+    // P1 holds five in a row with one end blocked, so exactly one stone wins.
     // Rule 4 ends the turn on it: the winning turn is a single stone, not a
     // pair, and the second stone is never played.
-    let black = line(Coord::ORIGIN, Axis::ConstR, 5);
-    let mut white = vec![Coord::new(-1, 0)];
-    white.extend(blob(Coord::new(0, 3), 5));
-    let state = position(&black, &white, Color::Black);
+    let p1 = line(Coord::ORIGIN, Axis::ConstR, 5);
+    let mut p2 = vec![Coord::new(-1, 0)];
+    p2.extend(blob(Coord::new(0, 3), 5));
+    let state = position(&p1, &p2, Player::P1);
 
     let mut searcher = searcher(2);
     let outcome = searcher
@@ -59,11 +59,11 @@ fn search_finds_mate_in_1_turn_completed_by_the_second_stone() {
     // Four in a row with one end blocked: no single stone wins, but the two
     // stones of one turn do. The turn is an ordinary pair, and the win still
     // completes on the turn the search is standing on.
-    let mut black = line(Coord::ORIGIN, Axis::ConstR, 4);
-    black.push(Coord::new(0, 3));
-    let mut white = vec![Coord::new(-1, 0)];
-    white.extend(blob(Coord::new(-1, 2), 5));
-    let state = position(&black, &white, Color::Black);
+    let mut p1 = line(Coord::ORIGIN, Axis::ConstR, 4);
+    p1.push(Coord::new(0, 3));
+    let mut p2 = vec![Coord::new(-1, 0)];
+    p2.extend(blob(Coord::new(-1, 2), 5));
+    let state = position(&p1, &p2, Player::P1);
 
     let mut searcher = searcher(2);
     let outcome = searcher
@@ -80,14 +80,14 @@ fn search_finds_mate_in_1_turn_completed_by_the_second_stone() {
 
 #[test]
 fn search_blocks_opponent_mate_in_1() {
-    // White holds five in a row with one end blocked. Black is to move and must
-    // take the other end; anything else loses on white's turn, which is two
+    // P2 holds five in a row with one end blocked. P1 is to move and must
+    // take the other end; anything else loses on P2's turn, which is two
     // turns from the root and so scores as being mated in two.
-    let mut black = vec![Coord::ORIGIN, Coord::new(-1, 1)];
-    black.extend(blob(Coord::new(0, 3), 3));
-    let mut white = line(Coord::new(0, 1), Axis::ConstR, 5);
-    white.push(Coord::new(-2, 2));
-    let state = position(&black, &white, Color::Black);
+    let mut p1 = vec![Coord::ORIGIN, Coord::new(-1, 1)];
+    p1.extend(blob(Coord::new(0, 3), 3));
+    let mut p2 = line(Coord::new(0, 1), Axis::ConstR, 5);
+    p2.push(Coord::new(-2, 2));
+    let state = position(&p1, &p2, Player::P1);
 
     let mut searcher = searcher(1);
     let outcome = searcher
@@ -96,7 +96,7 @@ fn search_blocks_opponent_mate_in_1() {
 
     assert!(
         cells(outcome.best).contains(&Coord::new(5, 1)),
-        "black must take white's only winning cell, played {}",
+        "p1 must take p2's only winning cell, played {}",
         outcome.best
     );
     assert!(
@@ -108,19 +108,19 @@ fn search_blocks_opponent_mate_in_1() {
 
 #[test]
 fn search_finds_forced_mate_in_2_turns() {
-    // Black holds two threes that share a stone. One turn extends both to a live
-    // four, and white's two stones cannot answer two live fours: killing one
-    // costs both of them. So black wins on its second turn from here, which is
+    // P1 holds two threes that share a stone. One turn extends both to a live
+    // four, and P2's two stones cannot answer two live fours: killing one
+    // costs both of them. So P1 wins on its second turn from here, which is
     // the third turn of the line and scores as a mate in three turns
     // (docs/decisions.md D-72).
-    let black = vec![
+    let p1 = vec![
         Coord::ORIGIN,
         Coord::new(1, 0),
         Coord::new(2, 0),
         Coord::new(0, 1),
         Coord::new(0, 2),
     ];
-    let white = vec![
+    let p2 = vec![
         Coord::new(-1, 1),
         Coord::new(-2, 2),
         Coord::new(-1, 3),
@@ -128,7 +128,7 @@ fn search_finds_forced_mate_in_2_turns() {
         Coord::new(-2, 4),
         Coord::new(-3, 5),
     ];
-    let state = position(&black, &white, Color::Black);
+    let state = position(&p1, &p2, Player::P1);
 
     let mut searcher = searcher(1);
     let outcome = searcher
@@ -138,7 +138,7 @@ fn search_finds_forced_mate_in_2_turns() {
     assert_eq!(
         classify(outcome.info.score),
         ScoreKind::MateIn(3),
-        "black wins on the third turn of the line, which is its second"
+        "p1 wins on the third turn of the line, which is its second"
     );
     assert!(
         matches!(outcome.best, Turn::Pair(_, _)),

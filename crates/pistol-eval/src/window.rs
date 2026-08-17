@@ -2,7 +2,7 @@
 //!
 //! A v0 window is [`WINDOW_LEN`] consecutive cells along one of the three line
 //! axes, named by the cell it starts at. That is the same length as a win
-//! (rule 2), which is why a window that fills with one colour is a won position
+//! (rule 2), which is why a window that fills with one player is a won position
 //! — but the *length* is a property of the eval backend and not a rule: the
 //! Stage-2 codebook reads length-eleven windows under the same trait. So the
 //! enumeration lives here rather than in pistol-core, and composes core's

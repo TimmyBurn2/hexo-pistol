@@ -13,7 +13,7 @@ pub mod reference;
 
 use std::path::PathBuf;
 
-use pistol_core::{Board, Color, Coord};
+use pistol_core::{Board, Coord, Player};
 use pistol_eval::{Eval, EvalError, HandcraftedV0, Weights};
 
 /// A complete, in-range weights document.
@@ -92,19 +92,24 @@ pub fn weights_rejection(document: &str) -> (String, String) {
 /// incrementally. Nothing here goes through `GameState`, so a position no legal
 /// game reaches is buildable — which the window tests need
 /// (docs/decisions.md D-35).
-pub fn built(weights: &Weights, stones: &[(Coord, Color)]) -> (Board, HandcraftedV0) {
+pub fn built(weights: &Weights, stones: &[(Coord, Player)]) -> (Board, HandcraftedV0) {
     let mut board = Board::empty();
     let mut eval = HandcraftedV0::new(weights.clone());
-    for &(at, color) in stones {
+    for &(at, player) in stones {
         board
-            .apply(at, color)
+            .apply(at, player)
             .unwrap_or_else(|error| panic!("test position must have distinct cells: {error}"));
-        eval.apply(at, color);
+        eval.apply(at, player);
     }
     (board, eval)
 }
 
-/// A run of `count` stones of one colour from `from`, stepping along `axis`.
-pub fn line(from: Coord, axis: pistol_core::Axis, count: i16, color: Color) -> Vec<(Coord, Color)> {
-    (0..count).map(|k| (from.step(axis, k), color)).collect()
+/// A run of `count` stones of one player from `from`, stepping along `axis`.
+pub fn line(
+    from: Coord,
+    axis: pistol_core::Axis,
+    count: i16,
+    player: Player,
+) -> Vec<(Coord, Player)> {
+    (0..count).map(|k| (from.step(axis, k), player)).collect()
 }

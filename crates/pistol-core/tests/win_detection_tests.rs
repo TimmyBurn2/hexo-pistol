@@ -9,18 +9,18 @@
 //! every other one.
 
 use pistol_core::win::{run_through, winning_run};
-use pistol_core::{Axis, Board, Color, Coord, WIN_LEN, wins_at};
+use pistol_core::{Axis, Board, Coord, Player, WIN_LEN, wins_at};
 
-/// `count` stones of `color` along `axis`, starting at `start`.
+/// `count` stones of `player` along `axis`, starting at `start`.
 fn line(start: Coord, axis: Axis, count: i16) -> Vec<Coord> {
     (0..count).map(|step| start.step(axis, step)).collect()
 }
 
-/// A board holding exactly these stones, all one colour.
-fn board_of(cells: &[Coord], color: Color) -> Board {
+/// A board holding exactly these stones, all one player.
+fn board_of(cells: &[Coord], player: Player) -> Board {
     let mut board = Board::empty();
     for &cell in cells {
-        board.apply(cell, color).expect("distinct cells");
+        board.apply(cell, player).expect("distinct cells");
     }
     board
 }
@@ -44,13 +44,13 @@ fn win_detects_exact_six_on_each_of_three_axes() {
             // anywhere on it.
             let mut before: Vec<Coord> = six.clone();
             let last = before.remove(completing);
-            let mut board = board_of(&before, Color::Black);
+            let mut board = board_of(&before, Player::P1);
             assert!(
                 !any_stone_wins(&board),
                 "{axis:?}: five stones already win, without {last}"
             );
 
-            board.apply(last, Color::Black).expect("empty cell");
+            board.apply(last, Player::P1).expect("empty cell");
             assert!(
                 wins_at(&board, last),
                 "{axis:?}: {last} completes six and must win"
@@ -59,7 +59,7 @@ fn win_detects_exact_six_on_each_of_three_axes() {
             let run = winning_run(&board, last).expect("a winning run");
             assert_eq!(run.axis, axis);
             assert_eq!(run.len, 6);
-            assert_eq!(run.color, Color::Black);
+            assert_eq!(run.player, Player::P1);
             assert_eq!(run.start, six[0], "the run starts at its lower end");
             assert_eq!(run.start, *six.iter().min().expect("six stones"));
             assert_eq!(run_through(&board, last, axis), 6);
@@ -76,9 +76,9 @@ fn win_detects_overline_seven() {
         for completing in 0..seven.len() {
             let mut before = seven.clone();
             let last = before.remove(completing);
-            let mut board = board_of(&before, Color::Black);
+            let mut board = board_of(&before, Player::P1);
             let already = any_stone_wins(&board);
-            board.apply(last, Color::Black).expect("empty cell");
+            board.apply(last, Player::P1).expect("empty cell");
 
             assert!(
                 wins_at(&board, last),
@@ -101,7 +101,7 @@ fn win_detects_overline_seven() {
 fn five_in_row_is_not_win() {
     for axis in Axis::ALL {
         let five = line(Coord::new(1, 1), axis, 5);
-        let board = board_of(&five, Color::White);
+        let board = board_of(&five, Player::P2);
         assert!(!any_stone_wins(&board), "{axis:?}: five is not six");
         for &cell in &five {
             assert_eq!(run_through(&board, cell, axis), 5);
@@ -119,10 +119,10 @@ fn stone_filling_a_gap_between_two_runs_wins() {
         let mut cells: Vec<Coord> = (1..=5)
             .flat_map(|k| [hole.step(axis, k), hole.step(axis, -k)])
             .collect();
-        let mut board = board_of(&cells, Color::Black);
+        let mut board = board_of(&cells, Player::P1);
         assert!(!any_stone_wins(&board), "{axis:?}: two fives, no six");
 
-        board.apply(hole, Color::Black).expect("the hole is empty");
+        board.apply(hole, Player::P1).expect("the hole is empty");
         assert!(wins_at(&board, hole), "{axis:?}: the bridging stone wins");
         assert_eq!(run_through(&board, hole, axis), 11);
         cells.push(hole);
@@ -140,8 +140,8 @@ fn stone_filling_a_gap_that_leaves_five_does_not_win() {
             hole.step(axis, 1),
             hole.step(axis, 2),
         ];
-        let mut board = board_of(&cells, Color::Black);
-        board.apply(hole, Color::Black).expect("the hole is empty");
+        let mut board = board_of(&cells, Player::P1);
+        board.apply(hole, Player::P1).expect("the hole is empty");
         assert!(
             !wins_at(&board, hole),
             "{axis:?}: two plus one plus two is five"
@@ -154,11 +154,11 @@ fn stone_filling_a_gap_that_leaves_five_does_not_win() {
 fn a_run_stops_at_an_opponent_stone() {
     for axis in Axis::ALL {
         let start = Coord::ORIGIN;
-        let mut board = board_of(&line(start, axis, 3), Color::Black);
+        let mut board = board_of(&line(start, axis, 3), Player::P1);
         let blocker = start.step(axis, 3);
-        board.apply(blocker, Color::White).expect("empty cell");
+        board.apply(blocker, Player::P2).expect("empty cell");
         for cell in line(start.step(axis, 4), axis, 3) {
-            board.apply(cell, Color::Black).expect("empty cell");
+            board.apply(cell, Player::P1).expect("empty cell");
         }
 
         assert!(!any_stone_wins(&board), "{axis:?}: three, block, three");
@@ -179,7 +179,7 @@ fn a_run_does_not_bend_between_axes() {
         Axis::ConstQ,
         3,
     ));
-    let board = board_of(&cells, Color::Black);
+    let board = board_of(&cells, Player::P1);
 
     assert_eq!(board.stone_count(), 6);
     assert!(!any_stone_wins(&board), "a bent chain of six is not a run");
@@ -189,7 +189,7 @@ fn a_run_does_not_bend_between_axes() {
 fn a_run_does_not_count_the_parallel_line_beside_it() {
     let mut cells = line(Coord::ORIGIN, Axis::ConstR, 5);
     cells.extend(line(Coord::new(0, 1), Axis::ConstR, 5));
-    let board = board_of(&cells, Color::Black);
+    let board = board_of(&cells, Player::P1);
     assert_eq!(board.stone_count(), 10);
     assert!(!any_stone_wins(&board), "two parallel fives are not a six");
 }
@@ -208,10 +208,10 @@ fn winning_run_reports_the_first_axis_when_a_stone_completes_two() {
             }
         }
     }
-    let mut board = board_of(&cells, Color::Black);
+    let mut board = board_of(&cells, Player::P1);
     assert!(!any_stone_wins(&board), "neither line is six without it");
 
-    board.apply(crossing, Color::Black).expect("empty cell");
+    board.apply(crossing, Player::P1).expect("empty cell");
     assert!(wins_at(&board, crossing));
     assert_eq!(run_through(&board, crossing, Axis::ConstQ), 6);
     assert_eq!(run_through(&board, crossing, Axis::ConstR), 6);
@@ -224,7 +224,7 @@ fn winning_run_reports_the_first_axis_when_a_stone_completes_two() {
 #[test]
 #[should_panic(expected = "WIN_CHECK_ON_EMPTY_CELL")]
 fn asking_whether_an_empty_cell_wins_is_a_named_invariant_panic() {
-    let board = board_of(&[Coord::ORIGIN], Color::Black);
+    let board = board_of(&[Coord::ORIGIN], Player::P1);
     let _ = wins_at(&board, Coord::new(1, 0));
 }
 
@@ -241,7 +241,7 @@ fn a_run_longer_than_a_step_count_still_reports_its_start() {
     for step in 0..length {
         let r = i16::try_from(-step).expect("inside the lattice");
         board
-            .apply(Coord::new(0, r), Color::Black)
+            .apply(Coord::new(0, r), Player::P1)
             .expect("distinct cells");
     }
     let probe = Coord::ORIGIN;

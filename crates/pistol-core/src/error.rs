@@ -11,7 +11,7 @@
 
 use std::fmt;
 
-use crate::board::Color;
+use crate::board::Player;
 use crate::coord::Coord;
 use crate::rules::LEGAL_RADIUS;
 use crate::turn::Turn;
@@ -66,7 +66,7 @@ pub enum CoreError {
     /// turn is never played (rule 4).
     GameDecided {
         /// Who won.
-        winner: Color,
+        winner: Player,
         /// The turn the win completed on. Sudden death is scored in turns.
         turn: u32,
     },
