@@ -29,37 +29,60 @@ than a failure (CLAUDE.md rule 5).
 
 ## Stage 1 — Tactical core
 
-Minimal pistol-arena lands FIRST (paired openings, GSPRT, distinct-game
-dedupe, per-side compute accounting) — deviation from the report, which parks
+Work-package cut of record, in this order (docs/decisions.md D-117; a cut that
+moves is an amendment on that line, never a silent reorder here). Each WP gets
+its own prompt and names its own gates there.
+
+**WP-1.1 — differential search oracle** (D-106). A full-width negamax reference
+in the pistol-search test tree: the search's equivalent of the brute-force
+movegen oracle (rule 7) and the from-scratch eval (D-68). It goes first,
+*ahead of the arena*, because it makes no strength claim and so needs no judge,
+while everything after it is a pruning change — and SPRT judges strength, not
+soundness, so a pruning commit that quietly changed the value of the tree would
+pass one. Two reviewers each built such a reference ad hoc and each found zero
+divergences, so this is coverage that persists, not a suspected defect.
+
+**WP-1.2 — minimal pistol-arena.** Paired openings, GSPRT, distinct-game
+dedupe, per-side compute accounting. A deviation from the report, which parks
 the harness in Stage 5: Hard Rule 6 makes SPRT the judge of every Stage-1
-change, so the judge must exist before the first defendant. First arena
-experiment (doubles as its shakedown): candidate radius r=2 vs r=3,
-fixed-node, paired openings, verdict pre-registered. Then: threat-first staged
-pair generation + dominance pruning; killers/history/countermove on pair
-moves; threat-only zone-bounded quiescence; upgrade the AND-OR solver to
-relevance-zone Deep df-pn (+1+epsilon, GHI). The staged threat-first candidate
-generator SUPERSEDES the radius policy as the primary candidate source (radius
-stays as a config-selectable fallback policy).
+change, so the judge must exist before the first defendant.
 
-Carried in from the WP-05/WP-06 reviews (docs/decisions.md D-102..D-108), in
-order, before the threat machinery:
+**WP-1.3 — calibration experiments.** Every verdict pre-registered before the
+first run; no post-hoc threshold moves. (a) Candidate radius r=2 vs r=3,
+fixed-node, paired openings — doubles as the arena's shakedown. (b) The
+**decided-window floor** (D-105): whether a won position should evaluate at the
+band top rather than summing freely. It changes move ordering, so it is a
+strength claim and needed the judge. (c) The **flamegraph session** (D-114):
+two pre-registered hypotheses, H1 = D-76's eval apply/undo per candidate per
+node, H2 = per-node allocation in `candidates.rs`/`ordering.rs`; operator
+hardware, release, instrument mode, fixed-node runs at two stone counts. The
+profile adjudicates before any fix, and the confirmed hotspot then earns its
+own rule-5 bench. `Eval::delta` (D-110) is pre-approved and lands only if H1
+survives.
 
-1. The **differential search oracle** (D-106): a full-width negamax reference
-   in the pistol-search test tree, the search's equivalent of the brute-force
-   movegen oracle (rule 7) and the from-scratch eval (D-68). It lands before
-   threat generation because everything after it is a pruning change, and SPRT
-   judges strength rather than soundness — a pruning commit that quietly changes
-   the value of the tree is invisible without it. Two reviewers each built one
-   ad hoc and each found zero divergences, so this is coverage that persists,
-   not a suspected defect.
-2. The **movetime-ceiling fix** (D-95): an interruptible or root-staged first
-   iteration that can always answer with the best completed root move. On HeXO
-   the server owns the clock and hard-clamps the call, so this is a forfeit
-   risk rather than a known limitation. Play mode only.
-3. The **decided-window floor** as a pre-registered arena experiment (D-105):
-   whether a won position should evaluate at the band top rather than summing
-   freely. It changes move ordering, so it is a strength claim (rule 6) and
-   waits for the judge.
+**WP-1.4 — movetime-ceiling fix** (D-95). An interruptible or root-staged first
+iteration that can always answer with the best completed root move. On HeXO the
+server owns the clock and hard-clamps the call, so this is a forfeit risk rather
+than a known limitation. Play mode only; instrument mode is untouched.
+
+**WP-1.5 — threat infrastructure.** Window-count and hot-window tables, the
+must-block filter, the unblockable-double-threat check — the mechanisms
+docs/research/sealbot_notes.md measures working in another engine for this exact
+game. Threat-first staged pair generation with dominance pruning SUPERSEDES the
+radius policy as the primary candidate source (radius stays as a
+config-selectable fallback). Rules truth stays in pistol-core; threat semantics
+live in search/solver (rule 2).
+
+**WP-1.6 — threat-only zone-bounded quiescence**, under D-111's invariant: the
+static eval answers at turn boundaries only, so quiescence stands pat and
+extends in TURNS, never in plies.
+
+**WP-1.7 — killers/history/countermove on pair moves.** Ordering changes worth
+measuring only once the candidate set they order is the threat-first one. Keyed
+on the completing stone and on the pair, per the report's move-ordering stack.
+
+**WP-1.8 — AND-OR solver**, upgraded to relevance-zone Deep df-pn (+1+epsilon,
+GHI).
 
 Exit: engine refutes the tactical fixture class at pre-registered thresholds;
 every landed change SPRT-positive.

@@ -107,7 +107,9 @@ post-hoc threshold moves. Reviewers flag correctness and requirement gaps, not s
 REVIEW-design, REVIEW-impl and RED-TEAM are dispatched as subagents with fresh
 contexts; the implementing session never reviews its own work. A WP is not landable
 while its reviews are outstanding. A session that cannot dispatch subagents states so
-and stops after IMPL; the operator launches the reviews.
+and stops after IMPL; the operator launches the reviews. A reviewer finding is
+verified with a minimal reproducer before its fix lands; a finding that cannot be
+reproduced is recorded as rejected with the attempted reproducer.
 
 ## Roadmap pointer
 
