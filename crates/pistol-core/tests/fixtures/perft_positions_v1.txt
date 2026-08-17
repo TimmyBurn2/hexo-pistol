@@ -1,0 +1,105 @@
+# pistol perft positions, v1 — the movegen oracle's positions (game rules 3, 4
+# and 5).
+#
+# Pinned by SHA-256 in crates/pistol-core/tests/perft_tests.rs
+# (PERFT_POSITIONS_SHA256). Editing this file without updating that constant is
+# a red test, which is the point. Pass threshold, pre-registered: every case,
+# every stated depth, EXACT equality — the engine's count, this file's count,
+# and the count an independently written brute-force generator produces, all
+# three the same number. A perft that is off by one is a movegen that is wrong,
+# and there is no partial credit on it (CLAUDE.md rule 7, docs/decisions.md
+# D-12).
+#
+# Format. One block per case; `plies` accumulates and `expect` is given once per
+# depth:
+#
+#   case <name>
+#   plies <q,r> <q,r> ...          stones in play order, repeatable
+#   expect depth <n> turns <n>     how many distinct sequences of <n> TURNS the
+#                                  position has, repeatable, once per depth
+#
+# `#` starts a comment line. Anything else is a loader error naming the line: a
+# fixture that is quietly half-read is worse than no fixture.
+#
+# A position is written as the game that reaches it, not as a heap of stones.
+# The move list is the canonical position encoding (docs/decisions.md D-6), and
+# replaying it means the fixture states only positions a legal game can arrive
+# at, with both readings of the rules replaying it for themselves (D-42). Turn 1
+# is one stone and every later turn is two, so a ply list groups as 1, 2, 2, …
+# and every case but the last one ends at a turn boundary.
+#
+# What is counted is TURNS: one unordered pair of distinct cells, or the single
+# stone that turn 1 (rule 3) and rule 4's truncation make a whole turn. The two
+# orderings of a pair are one turn.
+#
+# Depths. The branching factor is the size of rule 5's legal region squared over
+# two, and the region is 217 cells around a lone stone: the counts below are
+# measured, and they say that one stone at the origin already has 42768 turns
+# and a five-stone cloud 54228. A second full level is that number times the
+# next one — around 9 * 10^9 turns for the smallest midgame case here, which no
+# test run can enumerate. Depth 2 is therefore stated only where it is
+# reachable (a decided position, which has no turns at all), and the second
+# level is checked instead by a divide over a deterministic sample of first
+# turns, exactly, against the same reference. That is a measured structural
+# fact about this game, not a gap in the oracle (CLAUDE.md rule 5's finding, not
+# failure).
+
+# One stone on the board: the position every game passes through, and the
+# smallest legal region there is — a single radius-8 ball, 217 cells, 216 of
+# them empty. Its 42768 turns are the pairs among those 216 plus the pairs whose
+# second stone is reachable only through the ball the first one opens.
+case one_stone_at_the_origin
+plies 0,0
+expect depth 1 turns 42768
+
+# A five-stone cloud at a turn boundary, white to move: overlapping balls, so
+# the region is a union that is strictly smaller than the sum of its parts.
+case tight_cluster_at_a_turn_boundary
+plies 0,0
+plies 1,0 2,0
+plies 0,1 1,1
+expect depth 1 turns 54228
+
+# Two lobes joined by a bridge, white to move. White's turn-2 pair 8,0/16,0 is
+# legal in exactly one order — 16,0 is sixteen cells from the only stone on the
+# board and becomes legal only through the ball 8,0 opens (docs/decisions.md
+# D-6) — so the fixture exercises that rule on the way in as well as at the
+# position it reaches.
+#
+# Two DISJOINT clouds are not reachable in a legal game: every stone is placed
+# within eight of an existing one, so the region a game builds is always
+# connected. The union this exercises is the shape a game can actually make —
+# lobes with a waist — and an implementation that measured from one stone, from
+# the centroid, or from a bounding box gets it wrong.
+case two_lobes_joined_by_a_bridge
+plies 0,0
+plies 8,0 16,0
+plies 16,1 8,1
+expect depth 1 turns 162538
+
+# Black to move with five in a row and both ends open: two cells complete the
+# line. Rule 4 makes each of them a turn of ONE stone, and neither is half of a
+# pair — while a pair whose SECOND stone completes the line is an ordinary turn
+# and is counted as one.
+case a_win_the_mover_can_take
+plies 0,0
+plies 0,2 1,2
+plies 1,0 2,0
+plies 3,2 4,2
+plies 3,0 4,0
+plies 0,3 2,3
+expect depth 1 turns 78072
+
+# Black completed a line on the first stone of turn 7; the second stone of that
+# turn was never played (rule 4). A decided position has no turns, at any depth:
+# won lines are counted where they end and are never expanded.
+case already_won_is_not_expanded
+plies 0,0
+plies 0,2 2,2
+plies 1,0 2,0
+plies 4,2 6,2
+plies 3,0 4,0
+plies 0,4 2,4
+plies 5,0
+expect depth 1 turns 0
+expect depth 2 turns 0
