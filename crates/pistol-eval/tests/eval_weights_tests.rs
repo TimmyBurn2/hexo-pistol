@@ -79,13 +79,27 @@ fn eval_weights_reject_a_table_that_is_not_strictly_increasing() {
 fn eval_weights_reject_a_window_worth_more_than_the_eval_band() {
     // One window that alone saturates the clamp would make every deeper
     // distinction invisible (docs/decisions.md D-3, D-65).
-    let over = i64::from(EVAL_MAX) + 1;
-    let (key, why) = weights_rejection(&replacing("5 = 1500", &format!("5 = {over}")));
-    assert_eq!(key, "table.5", "{why}");
-    assert!(
-        why.contains(&EVAL_MAX.to_string()),
-        "the rejection should say what the bound is: {why}"
-    );
+    // The bound is strict, and the boundary itself is the case that matters: a
+    // `table.5` equal to the decided window's value passes a `<=` check and then
+    // makes one-from-a-win and a win the same number, which is exactly the
+    // distinction the sixth entry exists to draw. The stated table is compared
+    // entry by entry with the one before it and so never reaches entry 6 on its
+    // own (docs/decisions.md D-65, D-103).
+    for value in [i64::from(EVAL_MAX), i64::from(EVAL_MAX) + 1] {
+        let (key, why) = weights_rejection(&replacing("5 = 1500", &format!("5 = {value}")));
+        assert_eq!(key, "table.5", "{value} gave: {why}");
+        assert!(
+            why.contains(&EVAL_MAX.to_string()),
+            "the rejection should say what the bound is: {why}"
+        );
+    }
+
+    // And the largest table this build will accept is the one just below it, so
+    // the bound refuses a value rather than a range an operator cannot reach.
+    let highest = i64::from(EVAL_MAX) - 1;
+    let document = replacing("5 = 1500", &format!("5 = {highest}"));
+    Weights::parse(&document)
+        .unwrap_or_else(|error| panic!("{highest} is inside the bound, so it loads: {error}"));
 }
 
 #[test]

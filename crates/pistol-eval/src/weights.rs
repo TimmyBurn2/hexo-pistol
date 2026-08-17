@@ -178,10 +178,19 @@ impl Document {
                 };
                 return Err(EvalError::weights(key, why));
             }
-            if value > EVAL_MAX {
+            // Strictly below the derived entry, not merely inside the band: the
+            // sixth entry is `DECIDED_WINDOW_VALUE` and is spliced in below, so
+            // an accepted `table.5` equal to it would leave the table flat at
+            // exactly the step that separates one-from-a-win from a win. The
+            // loop above compares each stated entry with the one before it and
+            // never reaches entry 6, so this is where that comparison happens.
+            if value >= DECIDED_WINDOW_VALUE {
                 return Err(EvalError::weights(
                     key,
-                    format!("must be at most the eval band's {EVAL_MAX}, got {value}"),
+                    format!(
+                        "must be less than the decided window's {DECIDED_WINDOW_VALUE}, which is \
+                         what six own stones are worth, got {value}"
+                    ),
                 ));
             }
             previous = value;

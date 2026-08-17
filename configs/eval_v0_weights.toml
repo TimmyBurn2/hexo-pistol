@@ -35,9 +35,10 @@ backend = "handcrafted_v0"
 # unbounded board has infinitely many of them.
 #
 # Every one of 1..=5 is required, explicitly. Values must be at least 1, strictly
-# increasing (more own stones in a window is never worth less), and no larger
-# than 16000 (one window that alone saturates the clamp would hide every deeper
-# distinction).
+# increasing (more own stones in a window is never worth less), and strictly less
+# than 16000 — which is what six own stones are worth, so a fifth stone valued at
+# it would make one-from-a-win and a win the same number, and one window that
+# alone saturates the clamp would hide every deeper distinction.
 #
 # OPERATOR-CONFIRM — the Stage-0 sanity values, confirmed for WP-05 and not
 # tuned. Roughly a factor of five per added stone, so that a window one stone
