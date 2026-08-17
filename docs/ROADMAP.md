@@ -41,6 +41,26 @@ relevance-zone Deep df-pn (+1+epsilon, GHI). The staged threat-first candidate
 generator SUPERSEDES the radius policy as the primary candidate source (radius
 stays as a config-selectable fallback policy).
 
+Carried in from the WP-05/WP-06 reviews (docs/decisions.md D-102..D-108), in
+order, before the threat machinery:
+
+1. The **differential search oracle** (D-106): a full-width negamax reference
+   in the pistol-search test tree, the search's equivalent of the brute-force
+   movegen oracle (rule 7) and the from-scratch eval (D-68). It lands before
+   threat generation because everything after it is a pruning change, and SPRT
+   judges strength rather than soundness — a pruning commit that quietly changes
+   the value of the tree is invisible without it. Two reviewers each built one
+   ad hoc and each found zero divergences, so this is coverage that persists,
+   not a suspected defect.
+2. The **movetime-ceiling fix** (D-95): an interruptible or root-staged first
+   iteration that can always answer with the best completed root move. On HeXO
+   the server owns the clock and hard-clamps the call, so this is a forfeit
+   risk rather than a known limitation. Play mode only.
+3. The **decided-window floor** as a pre-registered arena experiment (D-105):
+   whether a won position should evaluate at the band top rather than summing
+   freely. It changes move ordering, so it is a strength claim (rule 6) and
+   waits for the judge.
+
 Exit: engine refutes the tactical fixture class at pre-registered thresholds;
 every landed change SPRT-positive.
 
