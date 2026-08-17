@@ -258,6 +258,15 @@ impl<'a> Run<'a> {
         } else {
             -self.visit(depth_plies, -alpha - 1, -alpha, ply)
         };
+        // An aborted scan returned the sentinel, not a score, and the sentinel
+        // sits inside most windows — so without this the re-search fires on a
+        // number that means nothing, spends a node the budget never granted, and
+        // does it once per level of the unwind. That is what made a search given
+        // n nodes report more than `n.next_multiple_of(NODE_CHECK_INTERVAL)`
+        // (docs/decisions.md D-74).
+        if self.aborted {
+            return scan;
+        }
         if scan > alpha && scan < beta {
             full(self)
         } else {

@@ -64,6 +64,40 @@ fn search_respects_node_budget_exactly_at_check_granularity() {
 }
 
 #[test]
+fn every_node_budget_stops_on_the_check_its_granularity_names() {
+    // The test above states the rule at two budgets, and two budgets can agree
+    // with it by coincidence: the overshoot this sweep exists to catch cost one
+    // node per level of an unwind that came back through a null-window scan, so
+    // whether it appeared at all depended on the shape of the tree under the
+    // budget rather than on the budget. A rule the whole range obeys is a
+    // property; a rule two numbers obey is an anecdote (docs/decisions.md D-74).
+    // The range is what a debug `cargo test` can afford rather than what the
+    // property deserves; it is chosen because the defect this catches lives at
+    // the FIRST abort of a search, so the tightest budgets exercise it hardest.
+    let state = quiet();
+    let mut overshot = Vec::new();
+    for step in 1..=8u64 {
+        for budget in [
+            step * NODE_CHECK_INTERVAL - 1,
+            step * NODE_CHECK_INTERVAL,
+            step * NODE_CHECK_INTERVAL + 1,
+        ] {
+            let mut fresh = searcher(1);
+            let (outcome, _) = collect(&mut fresh, &state, Stop::Nodes(budget));
+            let expected = budget.next_multiple_of(NODE_CHECK_INTERVAL);
+            if outcome.info.nodes != expected {
+                overshot.push((budget, expected, outcome.info.nodes));
+            }
+        }
+    }
+    assert!(
+        overshot.is_empty(),
+        "budgets that did not stop where the granularity says, as (budget, expected, actual): \
+         {overshot:?}"
+    );
+}
+
+#[test]
 fn iterative_deepening_reports_each_depth() {
     let state = quiet();
     let mut searcher = searcher(1);
