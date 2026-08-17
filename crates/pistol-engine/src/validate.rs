@@ -6,7 +6,7 @@
 
 use crate::config::{
     CandidatePolicy, Config, EngineMode, EvalSection, InstrumentSection, MAX_CANDIDATE_RADIUS,
-    MIN_TT_BYTES, SCHEMA_VERSION, SearchSection,
+    MAX_TT_BYTES, MIN_TT_BYTES, SCHEMA_VERSION, SearchSection,
 };
 use crate::error::EngineError;
 
@@ -54,6 +54,15 @@ impl SearchSection {
                 "search.tt_bytes",
                 format!(
                     "must be at least {MIN_TT_BYTES} bytes, got {}",
+                    self.tt_bytes
+                ),
+            ));
+        }
+        if self.tt_bytes > MAX_TT_BYTES {
+            return Err(EngineError::config(
+                "search.tt_bytes",
+                format!(
+                    "must be at most {MAX_TT_BYTES} bytes, got {}",
                     self.tt_bytes
                 ),
             ));

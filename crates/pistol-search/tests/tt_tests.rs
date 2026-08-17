@@ -169,3 +169,18 @@ fn tt_replacement_prefers_depth_and_is_the_same_every_run() {
         );
     }
 }
+
+#[test]
+fn table_refuses_a_size_this_machine_cannot_allocate_by_name() {
+    // The engine's ceiling catches the typo class offline (`MAX_TT_BYTES`), but
+    // how much memory a machine actually has is not a question config validation
+    // is allowed to ask (docs/decisions.md D-21), so the constructor answers it.
+    // The failure it replaces was `handle_alloc_error`: no name, no key, and a
+    // core dump instead of a line (CLAUDE.md rule 3).
+    let error = Table::new(1u64 << 60).expect_err("a table this large is refused, never aborted");
+    let said = error.to_string();
+    assert!(
+        said.contains("search.tt_bytes"),
+        "the refusal names the key an operator edits: {said}"
+    );
+}

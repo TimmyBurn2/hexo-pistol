@@ -29,6 +29,17 @@ pub const SCHEMA_VERSION: u32 = 1;
 /// a config that omits `search.tt_bytes` is still an error.
 pub const MIN_TT_BYTES: u64 = 1 << 20;
 
+/// Largest transposition table this build accepts, in bytes.
+///
+/// The same kind of bound as [`MIN_TT_BYTES`] and [`MAX_CANDIDATE_RADIUS`]: a
+/// rejection, not a value. It catches the typo class — a document asking for a
+/// terabyte — offline and deterministically, which is what config validation is
+/// allowed to do (docs/decisions.md D-21, D-66). It cannot catch "more than this
+/// machine has", because that answer is not the same on two machines and
+/// validation may not ask; the table refuses that one itself, by name, when it
+/// tries to allocate.
+pub const MAX_TT_BYTES: u64 = 1 << 36;
+
 /// Largest search candidate radius this build accepts.
 ///
 /// A sanity ceiling that catches typos and absurd values. It is deliberately

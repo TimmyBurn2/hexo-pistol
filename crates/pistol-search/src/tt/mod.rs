@@ -87,8 +87,25 @@ impl Table {
                 format!("{tt_bytes} bytes is more table than this machine can address"),
             )
         })?;
+        // Asked for, not taken: the plain `vec!` form ends a table this machine
+        // cannot hold with `handle_alloc_error`, which aborts the process — no
+        // name, no key, no line an operator could act on, and a core dump where
+        // CLAUDE.md rule 3 requires a refusal. How much memory a machine has is
+        // not something config validation may ask (docs/decisions.md D-21), so
+        // this is the seam that has to answer for it.
+        let mut buckets: Vec<[Entry; BUCKET_ENTRIES]> = Vec::new();
+        buckets.try_reserve_exact(count).map_err(|_| {
+            SearchError::params(
+                "search.tt_bytes",
+                format!(
+                    "{tt_bytes} bytes is more table than this machine can allocate ({count} \
+                     buckets of {BUCKET_BYTES} bytes)"
+                ),
+            )
+        })?;
+        buckets.resize(count, [EMPTY; BUCKET_ENTRIES]);
         Ok(Table {
-            buckets: vec![[EMPTY; BUCKET_ENTRIES]; count],
+            buckets,
             mask: count as u64 - 1,
             generation: 0,
             used: 0,

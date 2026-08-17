@@ -6,7 +6,7 @@ mod common;
 use std::path::Path;
 
 use common::{accepted, rejection, replacing};
-use pistol_engine::config::{EngineMode, MAX_CANDIDATE_RADIUS, MIN_TT_BYTES};
+use pistol_engine::config::{EngineMode, MAX_CANDIDATE_RADIUS, MAX_TT_BYTES, MIN_TT_BYTES};
 use pistol_engine::{Config, SCHEMA_VERSION};
 
 /// A document that is instrument mode but asks for more than one thread parses
@@ -64,6 +64,21 @@ fn config_rejects_undersized_transposition_table() {
     ));
     assert_eq!(key, "search.tt_bytes");
     assert!(why.contains("at least"), "unexpected reason: {why}");
+}
+
+#[test]
+fn config_rejects_oversized_transposition_table() {
+    // The bound at the other end, and it exists because the failure without it
+    // is not a refusal at all: an engine handed a table it cannot allocate ended
+    // the process through `handle_alloc_error`, naming no key and leaving a core
+    // dump where CLAUDE.md rule 3 requires one readable line.
+    let too_big = MAX_TT_BYTES * 2;
+    let (key, why) = rejection(&replacing(
+        "tt_bytes = 1048576",
+        &format!("tt_bytes = {too_big}"),
+    ));
+    assert_eq!(key, "search.tt_bytes");
+    assert!(why.contains("at most"), "unexpected reason: {why}");
 }
 
 #[test]
