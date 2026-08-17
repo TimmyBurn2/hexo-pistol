@@ -1,0 +1,67 @@
+# pistol — Stage Roadmap
+
+Authored in session 1 per CLAUDE.md. Changed only by ADR (one D-line in
+docs/decisions.md per change). Stage gates are exit criteria; a stage is not
+done until its gate holds. The research report
+(docs/research/minimax_report.md) is the technique prior; SPRT is the judge.
+
+## Stage 0 — Foundations (in progress)
+
+Legal, correct, reproducible engine: board + rules + win detection in
+pistol-core, perft-verified pair movegen, lazy 128-bit zobrist with phase bit,
+handcrafted eval v0, PVS + iterative deepening + TT, line-protocol CLI,
+deterministic instrument mode with a two-process CI gate.
+
+Work packages WP-01..WP-07; gates named per WP. Exit: the engine plays legal
+games via the line protocol under all three budget kinds, deterministically in
+instrument mode, with perft-verified movegen and sane play at depth 4-6 turns.
+
+## Stage 1 — Tactical core
+
+Minimal pistol-arena lands FIRST (paired openings, GSPRT, distinct-game
+dedupe, per-side compute accounting) — deviation from the report, which parks
+the harness in Stage 5: Hard Rule 6 makes SPRT the judge of every Stage-1
+change, so the judge must exist before the first defendant. First arena
+experiment (doubles as its shakedown): candidate radius r=2 vs r=3,
+fixed-node, paired openings, verdict pre-registered. Then: threat-first staged
+pair generation + dominance pruning; killers/history/countermove on pair
+moves; threat-only zone-bounded quiescence; upgrade the AND-OR solver to
+relevance-zone Deep df-pn (+1+epsilon, GHI). The staged threat-first candidate
+generator SUPERSEDES the radius policy as the primary candidate source (radius
+stays as a config-selectable fallback policy).
+
+Exit: engine refutes the tactical fixture class at pre-registered thresholds;
+every landed change SPRT-positive.
+
+## Stage 2 — Cheap learned eval
+
+Rapfi-style incremental pattern-codebook net: 3 directional maps, length-11
+axial windows, integer-quantized + SIMD, incremental under 2-stone moves,
+distilled from mantis self-play + human corpora. Acceptance bar
+(pre-registered): node-matched SPRT >= +150 Elo vs handcrafted_v0; otherwise
+handcrafted stays and the eval budget moves to search.
+
+## Stage 3 — Forcing search
+
+Full TSS/DBS with independent-region decomposition; CTSS conservative defense;
+RZOP relevance zones wired into online search for VCDT/VCST detection. Every
+threat count, zone radius, and win-density number RE-DERIVED for 3 axes —
+never imported from square-board Connect6.
+
+Exit: decisive forcing lines of 15-30 turns in sharp positions at negligible
+node cost, SPRT-confirmed strength gain.
+
+## Stage 4 — Parallelism + tuning
+
+Lazy SMP (shared TT, staggered depths), ABDADA fallback if efficiency < 0.4 at
+16 cores; SPSA/Texel tuning of eval weights and search margins; PROTOTYPE
+gauntlet per the report's verdict table (guarded/verified null-move, LMR,
+futility/razoring) — each kept only if SPRT-positive. Deterministic instrument
+mode stays single-threaded and untouched.
+
+## Stage 5 — Opening book + full harness
+
+Offline JL-PN/SPDFPN solving of symmetry-distinct openings; 12-fold
+canonicalized book; balanced-opening generator; pentanomial paired-game
+manager; full reporting fields per the report's Deliverable 4 (instrument,
+protocol, n, distinct-n, per-side compute, first-player win rate).
