@@ -46,6 +46,11 @@ usage:
   iteration's cost (docs/decisions.md D-74, D-95). Budget by nodes or depth when
   the clock is hard.
 
+  `score mate T` counts EVERY turn from the root, both sides', not the winner's
+  own turns: an odd T is a win for the side to move at the root, an even T a loss,
+  and `-mate T` is that loss from the mated side (docs/decisions.md D-3, D-72,
+  D-98). A driver that assumes the other convention halves every distance it reads.
+
   `bench` is not implemented. A benchmark ships with the first perf-sensitive
   change, its pre-registered hotspot and its abort threshold, not before
   (CLAUDE.md rule 5, docs/decisions.md D-14).
