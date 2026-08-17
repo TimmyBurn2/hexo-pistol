@@ -18,7 +18,7 @@
 //! window: the research report parks each of those behind an SPRT the arena
 //! cannot run yet (docs/ROADMAP.md, Stage 1 and Stage 4).
 
-use pistol_core::{Coord, PlyOutcome};
+use pistol_core::{Coord, Phase, PlyOutcome};
 
 use crate::candidates::candidate_cells;
 use crate::ordering::order;
@@ -31,6 +31,10 @@ use crate::tt::{Bound, Record, Table};
 
 /// Named invariant: the candidate policy offered a cell the rules refuse.
 pub const CANDIDATE_ILLEGAL: &str = "CANDIDATE_ILLEGAL";
+
+/// Named invariant: the candidate policy offered nothing half way through a
+/// turn, where no static value is an answer (docs/decisions.md D-104).
+pub const NO_CANDIDATES_MID_TURN: &str = "NO_CANDIDATES_MID_TURN";
 
 /// One search: everything that belongs to this call and nothing that outlives
 /// it.
@@ -139,12 +143,23 @@ impl<'a> Run<'a> {
         if cells.is_empty() {
             // Unreachable for any radius of at least one, by the argument
             // `pistol_core::turn` gives for there being no stalemate — and kept
-            // because that is a claim about today's policies. If a later policy
-            // does run dry, this is a horizon rather than a rules statement: the
-            // rules still admit a move, and the honest answer is what the
-            // position is worth, not a cell the policy excluded. The root
-            // refuses the same case by name, because there a move is owed
-            // (`SearchError::NoCandidates`).
+            // because that is a claim about today's policies rather than about
+            // every policy (docs/decisions.md D-104).
+            //
+            // At a turn boundary a static value is the honest answer: the rules
+            // still admit a move, the policy is what excluded it, and the line
+            // reported so far ends on a whole turn. Half way through a turn it
+            // is not an answer at all — the parent would promote a line ending
+            // on a lone stone, and `turns_from_plies` refuses that by name at
+            // the root, far from the node that caused it. A policy that runs dry
+            // mid-turn has to say what the mover's second stone is; there is no
+            // value this node can return that makes that question go away.
+            assert!(
+                self.position.state().phase() == Phase::First,
+                "pistol-search invariant {NO_CANDIDATES_MID_TURN}: the candidate policy offered \
+                 nothing at phase 1, where the mover still owes a stone — a policy that can run \
+                 dry must answer inside a turn, not only at its boundary"
+            );
             return self.position.value();
         }
         order(self.position, &mut cells, known.map(|record| record.best));
