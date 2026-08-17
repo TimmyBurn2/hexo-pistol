@@ -24,8 +24,12 @@ pub const EVAL_MAX: i32 = 16_000;
 /// - [`Eval::apply`] and [`Eval::undo`] are called by whoever moves the stone,
 ///   at the same seam the board and the zobrist key are updated
 ///   (docs/decisions.md D-41). The player travels with the cell so that an
-///   implementation never has to consult a board, and can cross-check what it
-///   is told against what it already holds.
+///   implementation never has to consult a board — that is the whole reason,
+///   and NOT so that it can cross-check what it is told against what it already
+///   holds: this crate's checks are opportunistic and cannot see a caller that
+///   mispairs an apply with an undo, so pairing them is the caller's invariant
+///   (docs/decisions.md D-70, and D-108 which withdrew the cross-check clause
+///   this sentence used to make).
 /// - The two are inverses, and the value depends only on the *set* of stones
 ///   applied — never on the order they arrived in, nor on the order they are
 ///   taken back in. A search relies on the first half; the second half is what
