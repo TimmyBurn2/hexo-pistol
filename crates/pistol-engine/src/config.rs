@@ -89,6 +89,21 @@ pub enum EngineMode {
     Play,
 }
 
+impl EngineMode {
+    /// The document's spelling of this mode, which is also the protocol's.
+    ///
+    /// It must match the `serde` rename above; `mode_token_matches_the_document`
+    /// pins that it does. The two exist separately because a `serde` attribute
+    /// cannot be read at run time, and the handshake has to name the mode
+    /// somehow — spelling it twice in two files is what this avoids.
+    pub const fn token(self) -> &'static str {
+        match self {
+            EngineMode::Instrument => "instrument",
+            EngineMode::Play => "play",
+        }
+    }
+}
+
 /// `[search]`.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -133,6 +148,15 @@ pub enum EvalBackend {
     /// Handcrafted three-axis line-window pattern tables.
     #[serde(rename = "handcrafted_v0")]
     HandcraftedV0,
+}
+
+impl EvalBackend {
+    /// The document's spelling of this backend. See [`EngineMode::token`].
+    pub const fn token(self) -> &'static str {
+        match self {
+            EvalBackend::HandcraftedV0 => "handcrafted_v0",
+        }
+    }
 }
 
 /// `[instrument]`.

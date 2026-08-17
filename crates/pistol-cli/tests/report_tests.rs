@@ -1,0 +1,110 @@
+//! Every line the engine writes, field by field.
+//!
+//! The protocol's field names, their order and the three score spellings are the
+//! contract a driver is written against (docs/decisions.md D-5, D-88). Asserting
+//! that an `info` line merely *contains* `nodes` would let a rename, a reorder or
+//! a dropped field pass, so these tests spell the lines out in full.
+
+use pistol_cli::report::{
+    TOTALS_MARKER, bestmove_line, error_line, id_line, info_line, score_token, totals_line,
+};
+use pistol_core::{Coord, Turn};
+use pistol_engine::{EngineError, MATE, SearchInfo};
+
+/// A report with every field set to something recognisable.
+fn info() -> SearchInfo {
+    SearchInfo {
+        depth_turns: 3,
+        seldepth_turns: 4,
+        nodes: 1234,
+        nps: 5678,
+        time_ms: 90,
+        pv: vec![
+            Turn::Single(Coord::ORIGIN),
+            Turn::pair(Coord::new(1, 0), Coord::new(2, 0)).expect("two distinct cells"),
+        ],
+        score: 42,
+        hashfull_permille: 12,
+    }
+}
+
+#[test]
+fn info_line_states_every_field_in_one_fixed_order() {
+    assert_eq!(
+        info_line(&info()),
+        "info depth_turns 3 seldepth 4 nodes 1234 nps 5678 time 90 hashfull 12 score cp 42 \
+         pv 0,0 1,0/2,0"
+    );
+}
+
+#[test]
+fn the_totals_line_is_the_same_fields_behind_a_marker() {
+    // It repeats a depth already reported with the whole search's cost, so a
+    // driver has to be able to tell the two apart (docs/decisions.md D-80, D-88).
+    let totals = totals_line(&info());
+    assert_eq!(
+        totals,
+        "info totals depth_turns 3 seldepth 4 nodes 1234 nps 5678 time 90 hashfull 12 \
+         score cp 42 pv 0,0 1,0/2,0"
+    );
+    assert_eq!(
+        totals.replace(&format!(" {TOTALS_MARKER}"), ""),
+        info_line(&info()),
+        "the marker is the only difference"
+    );
+}
+
+#[test]
+fn score_spellings_are_cp_mate_and_negative_mate() {
+    // A distance counts every turn from the root, both sides', so a win for the
+    // side to move is an odd number and a loss an even one (docs/decisions.md
+    // D-72). `-mate` is the one a driver must read to learn it is losing.
+    assert_eq!(score_token(0), "cp 0");
+    assert_eq!(score_token(42), "cp 42");
+    assert_eq!(score_token(-16_000), "cp -16000");
+    assert_eq!(score_token(MATE - 1), "mate 1");
+    assert_eq!(score_token(MATE - 3), "mate 3");
+    assert_eq!(score_token(-(MATE - 2)), "-mate 2");
+    assert_eq!(score_token(-(MATE - 4)), "-mate 4");
+}
+
+#[test]
+fn bestmove_line_carries_one_canonical_turn_token() {
+    assert_eq!(
+        bestmove_line(Turn::Single(Coord::new(5, 0))),
+        "bestmove 5,0"
+    );
+    assert_eq!(
+        bestmove_line(Turn::pair(Coord::new(5, 0), Coord::new(4, 0)).expect("two cells")),
+        "bestmove 4,0/5,0",
+        "a pair is written smaller cell first, whichever way round it was built"
+    );
+}
+
+#[test]
+fn an_error_line_names_the_error_and_stays_one_line() {
+    assert_eq!(
+        error_line(&EngineError::config(
+            "search.tt_bytes",
+            "must be a power of two, got 3"
+        )),
+        "error Config: `search.tt_bytes`: must be a power of two, got 3"
+    );
+    assert_eq!(
+        error_line(&EngineError::BudgetMissing)
+            .split_once(": ")
+            .map(|(name, _)| name),
+        Some("error BudgetMissing")
+    );
+    // A multi-line explanation is folded rather than trusted not to exist: two
+    // lines for one refusal would desynchronize a driver.
+    let folded = error_line(&EngineError::illegal_position("first\nsecond"));
+    assert_eq!(folded, "error IllegalPosition: first; second");
+    assert!(!folded.contains('\n'));
+}
+
+#[test]
+fn an_id_line_is_prefixed_and_folded() {
+    assert_eq!(id_line("name pistol"), "id name pistol");
+    assert_eq!(id_line("config a\nconfig b"), "id config a; config b");
+}

@@ -1,0 +1,58 @@
+# pistol — play-mode configuration.
+#
+# The deployment counterpart of configs/instrument_v0.toml: the same search, told
+# that it may be asked for a move under a wall-clock budget. That is the whole
+# difference, and it is the reason this document exists — CLAUDE.md's design point
+# is a strong move within 0.5 s, which is a `movetime` budget, and instrument mode
+# refuses one by name because a wall-clock result cannot be reproduced
+# (docs/decisions.md D-22).
+#
+# Every strength claim in this project still comes from instrument mode. This mode
+# is for playing, not for measuring: a result obtained here carries no number
+# anyone may quote (CLAUDE.md rule 6).
+#
+# Validate this file with tools/config_check.sh.
+
+# Schema version this document is written against.
+schema_version = 1
+
+[engine]
+# "play" — all three budget kinds are accepted, including movetime.
+#
+# ACCEPTED, not bounded. A wall-clock budget is honoured from the SECOND iterative
+# deepening iteration on: the first one cannot be interrupted, because a search
+# that returned no move at all would be a silent failure (docs/decisions.md D-74).
+# Its cost grows with the candidate count, which grows with how spread out the
+# stones are — so measured on the development machine at this radius,
+# `go movetime 500` returns after about 1.9 s ten turns into a game whose stones
+# sit eight apart, 8.6 s at twenty turns and 58.6 s at fifty (D-95). A driver on a
+# hard clock should budget by nodes or by depth until Stage 1 makes the first
+# iteration cheap; a driver that wants a strength number must use instrument mode
+# anyway (CLAUDE.md rule 6).
+mode = "play"
+
+[search]
+# 256 MiB, as in the instrument config: the table is the search's memory of the
+# game, and a deployment has no reason to hold less of it than a measurement does.
+# Must be a power of two and at least 1 MiB.
+tt_bytes = 268435456
+
+# The same candidate policy the instrument config states, for the same reason
+# (see the comment there): a length-6 window reaches five cells from a stone, so
+# correct extensions and blocks legitimately sit at distance 3 to 5. Play and
+# measurement search the same way, or a measurement says nothing about play.
+[search.candidate_policy]
+kind = "radius"
+radius = 3
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+# Stated even though the mode is "play": a config is complete, and every key is
+# present because no key has a code-side default (CLAUDE.md rule 1). This build
+# searches single-threaded in every mode and refuses any other number by name;
+# Lazy SMP arrives in Stage 4 (docs/ROADMAP.md).
+threads = 1
+tie_break = "lexicographic"

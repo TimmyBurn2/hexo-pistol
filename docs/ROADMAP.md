@@ -5,7 +5,7 @@ docs/decisions.md per change). Stage gates are exit criteria; a stage is not
 done until its gate holds. The research report
 (docs/research/minimax_report.md) is the technique prior; SPRT is the judge.
 
-## Stage 0 — Foundations (in progress)
+## Stage 0 — Foundations (complete; WP-01..WP-07 landed)
 
 Legal, correct, reproducible engine: board + rules + win detection in
 pistol-core, perft-verified pair movegen, lazy 128-bit zobrist with phase bit,
@@ -15,6 +15,17 @@ deterministic instrument mode with a two-process CI gate.
 Work packages WP-01..WP-07; gates named per WP. Exit: the engine plays legal
 games via the line protocol under all three budget kinds, deterministically in
 instrument mode, with perft-verified movegen and sane play at depth 4-6 turns.
+
+Exit gate held at WP-07 (docs/decisions.md D-82..D-93). What it rests on: the
+perft oracle (`tools/perft_check.sh`), the cross-process determinism gate
+(`tools/determinism.sh`), the sha-pinned tactical fixture at its pre-registered
+threshold (`tools/tactical_check.sh`), and self-play through the line protocol
+with pistol-core as referee. The one exit criterion that is a *measured* answer
+rather than a clean one is the depth: D-81's floor puts depth 4-6 turns inside
+the 0.5 s deployment budget only at a narrower candidate radius than the one
+that ships, and depth 3 at the shipping radius (docs/decisions.md D-89 records
+the numbers). That gap is Stage 1's whole argument, and it is a finding rather
+than a failure (CLAUDE.md rule 5).
 
 ## Stage 1 — Tactical core
 

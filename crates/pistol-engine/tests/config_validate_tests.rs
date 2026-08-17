@@ -30,7 +30,7 @@ fn instrument_mode_rejects_multithread_config() {
 }
 
 #[test]
-fn play_mode_allows_multiple_threads() {
+fn config_validation_allows_multiple_threads_in_play_mode() {
     let document = replacing("mode = \"instrument\"", "mode = \"play\"");
     let config = accepted(&replacing_in(&document, "threads = 1", "threads = 8"));
     assert_eq!(config.engine.mode, EngineMode::Play);

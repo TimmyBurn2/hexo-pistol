@@ -9,6 +9,14 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
+# The rules, the geometry and the position: the engine composes them and
+# restates none of them (CLAUDE.md rule 2).
+pistol-core = { workspace = true }
+# The evaluation backends the config can name, and their weight tables.
+pistol-eval = { workspace = true }
+# The search this engine drives, and the types it reports with. The engine is
+# the only place a `Budget` becomes a `Stop` (docs/decisions.md D-73).
+pistol-search = { workspace = true }
 serde = { workspace = true }
 toml = { workspace = true }
 # Recovers the exact key path of a rejected field, so every config failure can

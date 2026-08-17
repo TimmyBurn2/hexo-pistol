@@ -86,6 +86,28 @@ pub fn rejection(document: &str) -> (String, String) {
     }
 }
 
+/// The repository root, from this package's location.
+pub fn repo_root() -> std::path::PathBuf {
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .expect("the repository root is two directories up from this package")
+}
+
+/// [`VALID`], validated, with the committed weights file named absolutely.
+///
+/// A config names its weights file relative to the working directory
+/// (docs/decisions.md D-21 keeps validation from touching the filesystem at all),
+/// and a cargo test's working directory is its own package — which a test cannot
+/// change, because the process is shared with every other test in the binary. So
+/// the absolute path is stated here rather than inherited from wherever cargo was
+/// invoked.
+pub fn buildable(document: &str) -> Config {
+    let mut config = accepted(document);
+    config.eval.weights_file = repo_root().join("configs/eval_v0_weights.toml");
+    config
+}
+
 /// Parse and validate, expecting success.
 pub fn accepted(document: &str) -> Config {
     let config = Config::parse_unvalidated(document)

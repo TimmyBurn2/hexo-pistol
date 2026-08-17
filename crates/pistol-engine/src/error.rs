@@ -37,9 +37,26 @@ pub enum EngineError {
         /// Why the position is unreachable.
         why: String,
     },
+    /// The position is legal, and there is still nothing here to search: the
+    /// mover is half way through a turn, or the game is already decided.
+    ///
+    /// This is a different refusal from [`EngineError::IllegalPosition`], which
+    /// says a position could not exist at all. A `phase:1` position exists, is
+    /// reachable, and is a position the protocol can be handed
+    /// (docs/decisions.md D-6) — but the search counts, deepens and reports in
+    /// turns and so starts at a turn boundary (D-50, D-71), and the ply-level
+    /// rules entry point is what finishes a half-played turn.
+    PositionNotSearchable {
+        /// What about the position leaves nothing to search.
+        why: String,
+    },
     /// A line of the engine protocol could not be understood or obeyed.
     Protocol {
-        /// The offending line, verbatim.
+        /// The offending line, as whoever refused it chose to quote it — which is
+        /// usually verbatim, but is a truncated prefix for a very long line and a
+        /// hex dump for one that was not text at all. A refusal is one readable
+        /// line (docs/decisions.md D-5, D-88), and a megabyte of nonsense answered
+        /// with a megabyte of nonsense is not.
         line: String,
         /// Why it was rejected.
         why: String,
@@ -66,6 +83,67 @@ impl EngineError {
             why: why.into(),
         }
     }
+
+    /// Build an [`EngineError::IllegalPosition`] from anything string-shaped.
+    pub fn illegal_position(why: impl Into<String>) -> Self {
+        EngineError::IllegalPosition { why: why.into() }
+    }
+
+    /// Build an [`EngineError::PositionNotSearchable`] from anything
+    /// string-shaped.
+    pub fn not_searchable(why: impl Into<String>) -> Self {
+        EngineError::PositionNotSearchable { why: why.into() }
+    }
+
+    /// Build an [`EngineError::InternalInvariant`] from anything string-shaped.
+    pub fn internal(what: impl Into<String>) -> Self {
+        EngineError::InternalInvariant { what: what.into() }
+    }
+
+    /// The explanation the line protocol carries after the variant's name.
+    ///
+    /// [`fmt::Display`] writes prose for a log ("illegal move on turn 4: …");
+    /// this writes the same facts without the kind, because the protocol states
+    /// the kind separately and `error IllegalMove: illegal move on turn 4: …`
+    /// says it twice. The two are composed from the same fields, so neither can
+    /// tell an operator something the other does not.
+    ///
+    /// The result is always one line: a protocol answer is one line
+    /// (docs/decisions.md D-5), and the only multi-line text that reaches these
+    /// variants is a parser diagnostic, which is collapsed before it gets here.
+    pub fn detail(&self) -> String {
+        match self {
+            EngineError::Config { key, why } => format!("`{key}`: {why}"),
+            EngineError::IllegalMove { turn, why } => format!("turn {turn}: {why}"),
+            EngineError::IllegalPosition { why } => why.clone(),
+            EngineError::PositionNotSearchable { why } => why.clone(),
+            EngineError::Protocol { line, why } => format!("{why} (in: {line:?})"),
+            EngineError::BudgetMissing | EngineError::InstrumentBudgetUnsupported => {
+                self.to_string()
+            }
+            EngineError::InternalInvariant { what } => what.clone(),
+        }
+    }
+
+    /// The variant's name, as the line protocol spells it.
+    ///
+    /// The protocol answers a rejected line with `error <NamedError>: <why>`
+    /// (docs/decisions.md D-5), so this name is part of the operator contract
+    /// and part of what a driver may match on: it is written here rather than
+    /// derived from `Debug`, which would let a field rename change the wire
+    /// format.
+    pub const fn name(&self) -> &'static str {
+        match self {
+            EngineError::Config { .. } => "Config",
+            EngineError::IllegalMove { .. } => "IllegalMove",
+            EngineError::IllegalPosition { .. } => "IllegalPosition",
+            EngineError::PositionNotSearchable { .. } => "PositionNotSearchable",
+            EngineError::Protocol { .. } => "Protocol",
+            EngineError::BudgetMissing => "BudgetMissing",
+            EngineError::InstrumentBudgetUnsupported => "InstrumentBudgetUnsupported",
+            EngineError::InternalInvariant { .. } => "InternalInvariant",
+        }
+    }
 }
 
 impl fmt::Display for EngineError {
@@ -76,6 +154,9 @@ impl fmt::Display for EngineError {
                 write!(f, "illegal move on turn {turn}: {why}")
             }
             EngineError::IllegalPosition { why } => write!(f, "illegal position: {why}"),
+            EngineError::PositionNotSearchable { why } => {
+                write!(f, "nothing to search: {why}")
+            }
             EngineError::Protocol { line, why } => write!(f, "protocol: {why} (in: {line:?})"),
             EngineError::BudgetMissing => {
                 f.write_str("no budget given: a search budget is always explicit, never defaulted")

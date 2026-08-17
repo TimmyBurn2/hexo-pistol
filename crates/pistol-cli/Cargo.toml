@@ -8,4 +8,17 @@ publish.workspace = true
 [lints]
 workspace = true
 
+# A library as well as a binary: the line protocol is the contract the future API
+# layer adapts (CLAUDE.md rule 11), so it is tested in-process rather than only
+# through a pipe. The binary is the same code with a stdin loop around it.
+[lib]
+name = "pistol_cli"
+path = "src/lib.rs"
+
 [dependencies]
+# The turn and stone tokens, and the rules a driver validates its game against
+# (CLAUDE.md rule 2).
+pistol-core = { workspace = true }
+# The `Engine` seam, its config, its budgets and its errors. Everything this
+# crate says to an engine, it says through that trait (CLAUDE.md rule 11).
+pistol-engine = { workspace = true }
