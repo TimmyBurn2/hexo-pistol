@@ -81,6 +81,24 @@ impl Searcher {
                 "must be at least 1: a radius of 0 reaches only occupied cells",
             ));
         }
+        // The other end, and it is this crate's to refuse rather than the
+        // engine's: the engine's ceiling binds documents, and a `SearchParams`
+        // built in code never passes through it. A radius no `Coord` can step is
+        // not a wide search, it is a radius the geometry cannot express — and
+        // the generator used to answer it by quietly substituting the largest
+        // one it could, which is the silent repair rule 3 forbids. This bound is
+        // about what a coordinate can hold and is never compared with the rules'
+        // legal region (docs/decisions.md D-20, D-77).
+        if i16::try_from(radius).is_err() {
+            return Err(SearchError::params(
+                "search.candidate_policy.radius",
+                format!(
+                    "must be at most {}: a ball wider than a coordinate can step is not a ball, \
+                     got {radius}",
+                    i16::MAX
+                ),
+            ));
+        }
         Ok(Searcher {
             params,
             table: Table::new(params.tt_bytes)?,

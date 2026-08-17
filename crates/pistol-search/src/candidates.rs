@@ -66,7 +66,15 @@ fn within_radius(board: &Board, radius: u32) -> Vec<Coord> {
 /// pistol-core at its own pinned radius, and this one is enumerated here at
 /// whatever radius the operator configured.
 fn ball_offsets(radius: u32) -> Vec<Coord> {
-    let reach = i16::try_from(radius).unwrap_or(i16::MAX);
+    // `Searcher::new` refuses a radius this conversion cannot make, so a failure
+    // here is a caller that reached the generator without passing that gate —
+    // an internal invariant, named rather than silently substituted.
+    let reach = i16::try_from(radius).unwrap_or_else(|_| {
+        panic!(
+            "RADIUS_UNREPRESENTABLE: candidate radius {radius} exceeds {}",
+            i16::MAX
+        )
+    });
     let mut offsets = Vec::new();
     for dq in -reach..=reach {
         for dr in -reach..=reach {

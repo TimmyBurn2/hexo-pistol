@@ -131,3 +131,30 @@ fn candidate_cells_are_ascending_and_unoccupied() {
         "an occupied cell is not a candidate"
     );
 }
+
+/// A radius this crate cannot honour is refused by name at construction, at
+/// both ends of the range.
+///
+/// The engine validates its own document before a `Searcher` is ever built, but
+/// `SearchParams` is public and a bench, an arena or a test constructs one
+/// directly — so a radius the generator cannot express has to be refused here or
+/// nowhere. It used to be repaired instead: the generator clamped it to the
+/// widest ball a coordinate can hold and searched that, which is the silent
+/// fallback CLAUDE.md rule 3 forbids.
+#[test]
+fn a_radius_this_search_cannot_honour_is_refused_by_name() {
+    for radius in [0, u32::from(i16::MAX as u16) + 1, u32::MAX] {
+        let refused = pistol_search::Searcher::new(
+            common::params(radius, common::SMALL_TT),
+            Box::new(pistol_eval::HandcraftedV0::new(common::committed_weights())),
+        );
+        let Err(error) = refused else {
+            panic!("radius {radius} cannot be honoured, so it must be refused");
+        };
+        let said = error.to_string();
+        assert!(
+            said.contains("candidate_policy.radius"),
+            "radius {radius} must name the key an operator edits, got: {said}"
+        );
+    }
+}
