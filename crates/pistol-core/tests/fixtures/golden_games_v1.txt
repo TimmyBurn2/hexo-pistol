@@ -1,0 +1,79 @@
+# pistol golden games, v1 — the turn-structure oracle for game rules 3 and 4.
+#
+# Pinned by SHA-256 in crates/pistol-core/tests/golden_game_tests.rs
+# (GOLDEN_GAMES_SHA256). docs/decisions.md D-12 promises that the sha-pinned
+# goldens cover the first-stone-win truncation and the second-stone win. A board
+# without a move list cannot express either — both are statements about WHEN a
+# stone was played, not about where the stones ended up — so those cases live
+# here, pinned, rather than in a Rust array that can drift without anyone
+# noticing (D-43).
+#
+# Format. One block per case; `plies` accumulates, `expect` is given once:
+#
+#   case <name>
+#   plies <q,r> <q,r> ...            stones in play order, repeatable
+#   expect ongoing turn <n> phase <first|second>
+#                                    after the last ply: whose turn it is and
+#                                    how far into it
+#   expect win <black|white> on-turn <n> as <first|second>-stone
+#                                    the last ply completed a run of six or
+#                                    more: who won, the turn it was scored on,
+#                                    and whether it was that turn's first stone
+#                                    — in which case the second is never played
+#                                    — or its second
+#
+# Turn 1 is one stone and every later turn is two, so a ply list groups as
+# 1, 2, 2, 2, … and the turn each ply belongs to is fixed by its position. The
+# comments mark the turns; they are commentary, and the loader ignores them.
+#
+# Every game here is legal all the way through: every stone lands within
+# hex-distance 8 of a stone already on the board, the first on the origin, and
+# no side completes a run before the case says so.
+
+case black_wins_on_the_first_stone_of_its_turn
+plies 0,0
+plies 0,2 2,2
+plies 1,0 2,0
+plies 4,2 6,2
+plies 3,0 4,0
+plies 0,4 2,4
+plies 5,0
+expect win black on-turn 7 as first-stone
+
+case black_wins_on_the_second_stone_of_its_turn
+plies 0,0
+plies 0,2 2,2
+plies 1,0 0,3
+plies 4,2 6,2
+plies 2,0 3,0
+plies 0,4 2,4
+plies 4,0 5,0
+expect win black on-turn 7 as second-stone
+
+case white_wins_on_the_second_stone_of_its_turn
+plies 0,0
+plies 0,2 1,2
+plies 0,5 2,5
+plies 2,2 3,2
+plies 4,5 6,5
+plies 4,2 5,2
+expect win white on-turn 6 as second-stone
+
+case five_in_a_row_leaves_the_game_ongoing
+plies 0,0
+plies 0,2 2,2
+plies 1,0 2,0
+plies 4,2 6,2
+plies 3,0 4,0
+plies 0,4 2,4
+expect ongoing turn 7 phase first
+
+case five_in_a_row_mid_turn_leaves_the_game_ongoing
+plies 0,0
+plies 0,2 2,2
+plies 1,0 0,3
+plies 4,2 6,2
+plies 2,0 3,0
+plies 0,4 2,4
+plies 4,0
+expect ongoing turn 7 phase second

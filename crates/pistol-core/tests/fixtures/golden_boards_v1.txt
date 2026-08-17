@@ -1,0 +1,125 @@
+# pistol golden boards, v1 — the win/no-win oracle for game rules 2 and 4.
+#
+# Pinned by SHA-256 in crates/pistol-core/tests/golden_board_tests.rs
+# (GOLDEN_BOARDS_SHA256). Editing this file without updating that constant is a
+# red test, which is the point: a golden file that can drift quietly is not
+# golden. Pass threshold, pre-registered: every case, every run. There is no
+# partial credit on a rule.
+#
+# Format. One block per case; the directives inside a block may come in any
+# order, and each is required exactly once except `black` and `white`, which
+# accumulate and may be absent if that colour has no stones:
+#
+#   case <name>                starts a block and ends the previous one
+#   expect win | no-win        the verdict for the `last` stone
+#   black <q,r> <q,r> ...      black stones, axial coordinates
+#   white <q,r> ...            white stones
+#   last <black|white> <q,r>   the completing stone; must be one of that colour's
+#
+# `#` starts a comment line. Anything else is a loader error naming the line:
+# a fixture that is quietly half-read is worse than no fixture.
+#
+# A `win` case asserts two things: the last stone completes a run of six or
+# more, AND the same position without that stone has no completed run anywhere.
+# The stone has to be the one that wins — that is what rule 4 is about. A
+# `no-win` case asserts that no stone anywhere on the board completes a run,
+# which is stronger than asking only about the last one.
+#
+# Axis names follow docs/decisions.md D-33 — an axis is named for the coordinate
+# that stays constant along it, and the name says so: Axis::ConstQ has direction
+# (0,+1), ConstR (+1,0), ConstS (+1,-1), where s = -q - r.
+#
+# These positions are synthetic. Several are unreachable in a real game (a
+# board of eleven stones with nobody to blame for them); the board is storage
+# and does not pretend otherwise, and reachability is GameState's question
+# (docs/decisions.md D-35).
+
+case exact_six_where_q_is_constant
+expect win
+black 0,0 0,1 0,2 0,3 0,4 0,5
+white 1,0 1,1 1,2 1,3 1,4
+last black 0,5
+
+case exact_six_where_r_is_constant
+expect win
+black 0,0 1,0 2,0 3,0 4,0 5,0
+white 0,1 1,1 2,1 3,1 4,1
+last black 5,0
+
+case exact_six_where_s_is_constant
+expect win
+black 0,0 1,-1 2,-2 3,-3 4,-4 5,-5
+white 0,1 1,0 2,-1 3,-2 4,-3
+last black 5,-5
+
+case completing_stone_in_the_middle_of_the_run
+expect win
+black 0,0 1,0 2,0 3,0 4,0 5,0
+white 0,-1 1,-1 2,-1
+last black 3,0
+
+case overline_of_seven_wins
+expect win
+black -1,0 0,0 1,0 2,0 3,0 4,0 5,0
+white 0,1 1,1 2,1 3,1
+last black 2,0
+
+case six_with_both_ends_blocked_still_wins
+expect win
+black 0,0 1,0 2,0 3,0 4,0 5,0
+white -1,0 6,0 0,1 1,1
+last black 5,0
+
+case white_completes_six_where_r_is_constant
+expect win
+white 0,0 1,0 2,0 3,0 4,0 5,0
+black 0,1 1,1 2,1 3,1 4,1
+last white 5,0
+
+case win_far_from_the_origin
+expect win
+black -40,17 -39,17 -38,17 -37,17 -36,17 -35,17
+white -40,18 -39,18 -38,18
+last black -37,17
+
+case win_where_s_is_constant_through_the_origin
+expect win
+black -3,3 -2,2 -1,1 0,0 1,-1 2,-2
+white -3,4 -2,3 -1,2
+last black 0,0
+
+case five_in_a_row_is_not_six
+expect no-win
+black 0,0 1,0 2,0 3,0 4,0
+white 0,1 1,1 2,1
+last black 4,0
+
+case a_gap_breaks_the_run
+expect no-win
+black 0,0 1,0 2,0 4,0 5,0 6,0
+white 0,1 1,1
+last black 6,0
+
+case an_opponent_stone_breaks_the_run
+expect no-win
+black 0,0 1,0 2,0 4,0 5,0 6,0
+white 3,0 0,1
+last black 6,0
+
+case a_run_that_bends_is_not_a_run
+expect no-win
+black 0,0 1,0 2,0 2,1 2,2 2,3
+white 0,1 1,1
+last black 2,3
+
+case two_parallel_fives_are_not_a_six
+expect no-win
+black 0,0 1,0 2,0 3,0 4,0 0,1 1,1 2,1 3,1 4,1
+white -1,0 -1,1
+last black 4,1
+
+case the_sixth_stone_off_axis_is_not_a_six
+expect no-win
+black 0,0 1,0 2,0 3,0 4,0 5,-1
+white 0,1 1,1
+last black 5,-1
