@@ -104,6 +104,11 @@ DESIGN → REVIEW-design (fresh context, attacks the premise) → IMPL → REVIE
 rules/data paths (adversarial inputs). Pre-register verdicts before experiments; no
 post-hoc threshold moves. Reviewers flag correctness and requirement gaps, not style.
 
+REVIEW-design, REVIEW-impl and RED-TEAM are dispatched as subagents with fresh
+contexts; the implementing session never reviews its own work. A WP is not landable
+while its reviews are outstanding. A session that cannot dispatch subagents states so
+and stops after IMPL; the operator launches the reviews.
+
 ## Roadmap pointer
 
 Stages per the research report: 0 foundations (correct + reproducible) → 1 tactical
