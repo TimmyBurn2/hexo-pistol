@@ -1,0 +1,21 @@
+# Build output.
+/target
+**/*.rs.bk
+
+# Artifacts are never committed (CLAUDE.md rule 8). tools/artifact_check.sh is
+# the gate; these entries keep the common cases from ever reaching the index.
+*.bin
+*.net
+*.nnue
+*.book
+*.npz
+*.pt
+*.pth
+*.safetensors
+*.onnx
+*.pgn
+*.matchlog
+*.match.jsonl
+/artifacts/
+/logs/
+/bench-out/

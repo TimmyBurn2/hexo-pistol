@@ -1,0 +1,26 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.97"
+publish = false
+
+# One version of every shared dependency, chosen here and inherited by member
+# crates. pistol-core takes nothing from this table: it is std-only by contract.
+[workspace.dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "1.1.4"
+serde_path_to_error = "0.1.20"
+
+# Deliberately no `[profile.release]` tuning here. Codegen settings are a
+# perf-sensitive change and CLAUDE.md rule 5 wants one change, one commit, one
+# IQR-gated bench; there is no code to bench yet. See docs/decisions.md D-14.
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+all = "deny"
