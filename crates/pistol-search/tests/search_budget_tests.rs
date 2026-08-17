@@ -114,9 +114,16 @@ fn iterative_deepening_reports_each_depth() {
     );
     for info in &reports {
         assert!(!info.pv.is_empty(), "a completed depth has a line");
-        assert!(
-            info.pv.len() as u32 <= info.depth_turns,
-            "a line of {} turns cannot come from a depth of {}",
+        // Equality, not `<=`: D-78 declines a transposition cutoff at a
+        // principal variation node precisely so the reported line runs to the
+        // horizon, and the weaker assertion hides that. This position holds no
+        // win inside three turns, so the horizon is the only place the line can
+        // end — and deleting the `!is_pv` guard leaves a `<=` assertion green
+        // while the whole reason for the rule is gone.
+        assert_eq!(
+            info.pv.len() as u32,
+            info.depth_turns,
+            "a quiet line runs to the horizon (docs/decisions.md D-78); got {} turns at depth {}",
             info.pv.len(),
             info.depth_turns
         );
