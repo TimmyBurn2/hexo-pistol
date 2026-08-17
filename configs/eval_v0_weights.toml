@@ -1,0 +1,53 @@
+# pistol — handcrafted_v0 eval weight table.
+#
+# This is an EVAL WEIGHT TABLE, not an engine config. It is a different document
+# kind with its own schema and its own version, and tools/config_check.sh tells
+# the two apart by the `_weights.toml` suffix on this file's name, validating
+# this one with the pistol-eval example `validate_weights`
+# (docs/decisions.md D-64).
+#
+# Committed configuration rather than an artifact: a handful of integers an
+# operator can read and edit (docs/decisions.md D-11). The Stage-2 codebook net
+# is the artifact, and that one is never committed (CLAUDE.md rule 8).
+#
+# Complete by rule (CLAUDE.md rule 1): every key the schema names is present,
+# because no key has a code-side default and a missing key is a named error.
+# Unknown keys are rejected too, so a typo fails loudly instead of doing nothing.
+
+# Weights schema version this document is written against. The build refuses a
+# version it does not read, rather than guessing at the difference.
+schema_version = 1
+
+# Which Eval implementation this table is for. A Stage-2 codebook file names a
+# different backend and is refused here rather than read as a v0 table.
+backend = "handcrafted_v0"
+
+# What one length-6 window is worth to the side that holds the stones in it, by
+# how many of the six cells that side holds. A window holding both colours is
+# dead and scores 0 — neither side can complete it — and every other window
+# holding stones scores the entry below, positive for its owner. A position's
+# value is the sum over every window that holds a stone, clamped to the eval
+# band's 16000.
+#
+# There is no entry for 6: six own stones in a window is a win, and a win's score
+# is the search's mate band, never a number in this file (docs/decisions.md D-3,
+# D-63). There is no entry for 0 either — an empty window scores nothing, and an
+# unbounded board has infinitely many of them.
+#
+# Every one of 1..=5 is required, explicitly. Values must be at least 1, strictly
+# increasing (more own stones in a window is never worth less), and no larger
+# than 16000 (one window that alone saturates the clamp would hide every deeper
+# distinction).
+#
+# OPERATOR-CONFIRM — the Stage-0 sanity values, confirmed for WP-05 and not
+# tuned. Roughly a factor of five per added stone, so that a window one stone
+# from a win outweighs any plausible pile of threes, while a lone stone still
+# scores enough that the engine prefers building lines to scattering. SPSA/Texel
+# replaces these in Stage 4 (docs/ROADMAP.md); until then an edit here is a
+# strength claim and wants an SPRT to go with it (CLAUDE.md rule 6).
+[table]
+1 = 2
+2 = 12
+3 = 60
+4 = 300
+5 = 1500

@@ -1,23 +1,51 @@
 //! `pistol-eval` — position evaluation behind one trait.
 //!
-//! This crate will own the `Eval` trait and its implementations: the v0
-//! handcrafted three-axis line-window pattern tables first, an incremental
-//! codebook net later. The contract is incremental by construction —
-//! apply/undo per placed stone — so that swapping the backend never becomes a
-//! search change.
+//! This crate owns the [`Eval`] trait and its implementations: the v0
+//! handcrafted three-axis line-window pattern tables now, an incremental
+//! pattern-codebook net in Stage 2. The contract is incremental by construction
+//! — apply/undo per placed stone, integer arithmetic, side-relative value — so
+//! that swapping the backend never becomes a search change
+//! (docs/decisions.md D-11, D-61).
+//!
+//! - [`Eval`] is the contract, and [`EVAL_MAX`] the band a static value lives
+//!   in; the mate band above it belongs to the search (D-3).
+//! - [`HandcraftedV0`] is the v0 backend: every length-[`WINDOW_LEN`] window on
+//!   each of the three axes, a window holding both colours dead, one carried
+//!   sum, [`WINDOWS_PER_CELL`] entries touched per stone.
+//! - [`Weights`] is its table, read from committed configuration
+//!   (`configs/eval_v0_weights.toml`) with every entry required and no code-side
+//!   default (CLAUDE.md rule 1).
 //!
 //! The v0 weight table is committed configuration, not an artifact: it is a
-//! handful of integers in `configs/eval_v0_weights.toml`, the file named by
-//! `eval.weights_file` (docs/decisions.md D-11). The Stage-2 codebook net is
-//! the artifact, and that one is never committed (CLAUDE.md rule 8). Either
-//! way, a missing or malformed weights file is a loud load-time error raised
-//! here and not a config parse error — config validation stays pure and
+//! handful of integers an operator can read and edit. The Stage-2 codebook net
+//! *is* an artifact, and that one is never committed (CLAUDE.md rule 8). Either
+//! way, a missing or malformed weights file is a loud load-time [`EvalError`]
+//! raised here and not a config parse error — config validation stays pure and
 //! offline (docs/decisions.md D-21).
 //!
-//! Operator-confirmed Stage-0 values for that file, which WP-05 writes:
-//! `table[1..=5] = 2 / 12 / 60 / 300 / 1500`. A length-6 window holding both
-//! colours is dead and scores 0; every other window scores
-//! `table[own_count] - table[opp_count]`. These are sanity values, tuned by
-//! SPSA/Texel in Stage 4.
+//! # Determinism
 //!
-//! WP-01 is workspace scaffold, config, errors and CI; it writes no eval logic.
+//! Integer arithmetic throughout, no interior mutability, no hasher: the window
+//! bookkeeping is a `BTreeMap`, so no iteration order in this crate can differ
+//! between two runs of the same position (CLAUDE.md rule 4, D-7, D-32). Nothing
+//! here reads a clock, a thread count, or an environment variable.
+//!
+//! # Failure
+//!
+//! A malformed weights document is a named [`EvalError`] carrying the key an
+//! operator must edit. Being told about a stone that contradicts what an eval
+//! already holds is not operator input — it means a caller's board and its eval
+//! have drifted — so it panics with [`EVAL_DESYNC`](handcrafted::EVAL_DESYNC)
+//! rather than returning an error nobody could handle (CLAUDE.md rule 3).
+
+pub mod error;
+pub mod eval;
+pub mod handcrafted;
+pub mod weights;
+pub mod window;
+
+pub use error::EvalError;
+pub use eval::{EVAL_MAX, Eval};
+pub use handcrafted::{EVAL_DESYNC, HandcraftedV0};
+pub use weights::{DECIDED_WINDOW_VALUE, WEIGHTS_SCHEMA_VERSION, Weights};
+pub use window::{WINDOW_LEN, WINDOWS_PER_CELL, Window, windows_through};

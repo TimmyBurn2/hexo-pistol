@@ -9,8 +9,13 @@ rust-version = "1.97"
 publish = false
 
 # One version of every shared dependency, chosen here and inherited by member
-# crates. pistol-core takes nothing from this table: it is std-only by contract.
+# crates. pistol-core takes nothing from this table: it is std-only by contract —
+# it appears here as something other crates depend *on*, never the other way.
 [workspace.dependencies]
+pistol-core = { path = "crates/pistol-core" }
+pistol-eval = { path = "crates/pistol-eval" }
+pistol-search = { path = "crates/pistol-search" }
+pistol-engine = { path = "crates/pistol-engine" }
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.4"
 serde_path_to_error = "0.1.20"

@@ -41,6 +41,10 @@ version = "0.0.1"
 [[package]]
 name = "pistol-cli"
 version = "0.0.1"
+dependencies = [
+ "pistol-core",
+ "pistol-engine",
+]
 
 [[package]]
 name = "pistol-core"
@@ -50,6 +54,9 @@ version = "0.0.1"
 name = "pistol-engine"
 version = "0.0.1"
 dependencies = [
+ "pistol-core",
+ "pistol-eval",
+ "pistol-search",
  "serde",
  "serde_path_to_error",
  "toml",
@@ -58,10 +65,20 @@ dependencies = [
 [[package]]
 name = "pistol-eval"
 version = "0.0.1"
+dependencies = [
+ "pistol-core",
+ "serde",
+ "serde_path_to_error",
+ "toml",
+]
 
 [[package]]
 name = "pistol-search"
 version = "0.0.1"
+dependencies = [
+ "pistol-core",
+ "pistol-eval",
+]
 
 [[package]]
 name = "pistol-solver"
