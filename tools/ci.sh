@@ -71,6 +71,6 @@ tools/determinism.sh || fail "determinism"
 printf '\n=== pending gates (nothing to run yet)\n'
 echo "  file-justification check — OWED: a file now exceeds the soft cap and"
 echo "    carries its why-justification by hand (crates/pistol-search/src/pvs.rs)."
-echo "    Mechanizing the check needs a marker convention, which needs an ADR."
+echo "    Mechanizing it needs a marker convention (docs/decisions.md D-118)."
 
 printf '\nci: all gates passed\n'
