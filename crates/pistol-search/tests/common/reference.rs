@@ -39,10 +39,15 @@
 //! [`PairOrder::Deduped`] values each unordered turn once, and is what every
 //! oracle assertion runs under: it is exact, it is three to five times cheaper,
 //! and the depth the saving buys is what carries the mate distances and the
-//! window claim. D-79's premise keeps a check of its own —
-//! `reference_dedupe_matches_both_orderings_enumeration` runs both modes over
-//! the same fixtures at the depths a debug build affords, and a disagreement
-//! there is the same failure the interior assertion used to raise.
+//! window claim.
+//!
+//! D-79's premise keeps a check of its own, and it is a NARROWER one — said here
+//! because "the check moved" would read as "the check is the same size", and it
+//! is not (docs/decisions.md D-134). It used to run at the root of every
+//! reference run: 31 fixtures, three depths, two radii. It now runs where
+//! `search_oracle_dedupe_tests.rs` and `search_oracle_deep_tests.rs` ask for it
+//! — five fixtures, radius 1, two turns — comparing whole per-turn maps rather
+//! than catching a disagreement at the node that reached it.
 
 use std::collections::BTreeMap;
 
@@ -52,6 +57,9 @@ use pistol_search::{CandidatePolicy, MAX_DEPTH_TURNS, candidate_cells};
 
 use super::ref_score::RefScore;
 use super::reference_walk::Walk;
+
+// The named invariants this module used to hold are `super::reference_invariants`,
+// together with the inventory of which of them can actually fire.
 
 /// How the reference enumerates the two stones of a turn.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -69,40 +77,6 @@ pub enum PairOrder {
     /// the one that runs.
     Deduped,
 }
-
-/// Named invariant: a horizon landed half way through a turn, where no static
-/// value is an answer (docs/decisions.md D-111).
-pub const REFERENCE_HORIZON_MID_TURN: &str = "REFERENCE_HORIZON_MID_TURN";
-
-/// Named invariant: the candidate policy offered a cell the rules refuse.
-pub const REFERENCE_CANDIDATE_ILLEGAL: &str = "REFERENCE_CANDIDATE_ILLEGAL";
-
-/// Named invariant: the policy offered nothing for the mover's second stone
-/// (docs/decisions.md D-104).
-pub const REFERENCE_NO_CANDIDATES_MID_TURN: &str = "REFERENCE_NO_CANDIDATES_MID_TURN";
-
-/// Named invariant: a turn asked for a third stone.
-pub const REFERENCE_TURN_OWES_A_THIRD_STONE: &str = "REFERENCE_TURN_OWES_A_THIRD_STONE";
-
-/// Named invariant: the two orderings of one pair valued it differently.
-pub const REFERENCE_PAIR_ORDER_DISAGREES: &str = "REFERENCE_PAIR_ORDER_DISAGREES";
-
-/// Named invariant: the dedupe ledger was fed out of the ascending, distinct
-/// order `candidate_cells` promises, which is what it bisects on.
-pub const REFERENCE_DEDUPE_KEY_UNSORTED: &str = "REFERENCE_DEDUPE_KEY_UNSORTED";
-
-// Which of the five above can actually fire today, stated so that a reader does
-// not count them as coverage they are not. Only `REFERENCE_PAIR_ORDER_DISAGREES`
-// is live, it has never fired (measured over 230 669 root turns of undesigned
-// positions), and under `PairOrder::Deduped` it cannot fire at all — the second
-// ordering is never walked, so the check it carries is bought by the mode
-// comparison instead and not by every run. The other four restate things
-// pistol-core and `candidates` already guarantee — the walk descends only at
-// turn boundaries so a horizon is always at phase 0, `place` at phase 1 cannot
-// return `TurnContinues`, and `candidate_cells` has already asked the rules
-// about every cell it offers. They are here for the reason `pvs.rs` carries the
-// same set: the guarantee is one crate away, and an extension that broke it
-// should fail where the assumption is made rather than three levels up.
 
 /// Every way the reference refuses to answer.
 ///
@@ -196,7 +170,8 @@ impl ReferenceRun {
 /// worth to the side to move at the root.
 ///
 /// Deduped, which is the mode every oracle assertion runs under. The other mode
-/// has exactly one caller, and it is named in [`PairOrder`].
+/// is reached only through [`reference_root_values_under`], and only by the two
+/// tests that compare the modes against each other.
 pub fn reference_root_values(
     root: &GameState,
     depth_turns: u32,

@@ -8,7 +8,8 @@
 
 use pistol_core::Coord;
 
-use super::reference::{PairOrder, REFERENCE_DEDUPE_KEY_UNSORTED};
+use super::reference::PairOrder;
+use super::reference_invariants::REFERENCE_DEDUPE_KEY_UNSORTED;
 
 /// The first stones at ONE node whose own pair enumeration has already valued
 /// every pair they belong to. This is the whole of the dedupe.

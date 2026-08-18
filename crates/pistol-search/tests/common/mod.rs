@@ -17,6 +17,7 @@ pub mod pair_dedupe;
 pub mod playouts;
 pub mod ref_score;
 pub mod reference;
+pub mod reference_invariants;
 pub mod reference_walk;
 
 use std::path::PathBuf;

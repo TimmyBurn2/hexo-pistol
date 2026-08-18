@@ -14,10 +14,11 @@ use pistol_search::{CandidatePolicy, candidate_cells};
 
 use super::pair_dedupe::Paired;
 use super::ref_score::RefScore;
-use super::reference::{
-    PairOrder, REFERENCE_CANDIDATE_ILLEGAL, REFERENCE_HORIZON_MID_TURN,
+use super::reference::{PairOrder, ReferenceRun};
+use super::reference_invariants::{
+    REFERENCE_CANDIDATE_ILLEGAL, REFERENCE_EVERY_PAIR_ALREADY_VALUED, REFERENCE_HORIZON_MID_TURN,
     REFERENCE_NO_CANDIDATES_MID_TURN, REFERENCE_PAIR_ORDER_DISAGREES,
-    REFERENCE_TURN_OWES_A_THIRD_STONE, ReferenceRun,
+    REFERENCE_TURN_OWES_A_THIRD_STONE,
 };
 
 /// One walk of the tree: the position it moves, the evaluation kept in step
@@ -144,7 +145,12 @@ impl Walk {
         for first in cells {
             let (outcome, mover) = self.place(first);
             // `None` where every pair of this first stone was valued under
-            // another ordering, so it adds nothing new to the maximum.
+            // another ordering, so it adds nothing new to the maximum. Never
+            // reached today — the last candidate in ascending order has always
+            // opened at least one cell nothing else did — and kept because that
+            // is a claim about today's radius-ball policy rather than about
+            // every policy, which is the argument `pvs.rs` makes about its own
+            // empty-candidate branch (docs/decisions.md D-104).
             let score = match outcome {
                 PlyOutcome::Win { .. } => Some(self.win_here()),
                 PlyOutcome::TurnComplete => Some(self.negamax(turns_left - 1).negate()),
@@ -163,8 +169,8 @@ impl Walk {
                     assert!(
                         inner.is_some() || self.pairs == PairOrder::Deduped,
                         "pistol-search reference invariant \
-                         {REFERENCE_NO_CANDIDATES_MID_TURN}: every pair at turn {} was skipped, \
-                         and only the deduped mode skips anything",
+                         {REFERENCE_EVERY_PAIR_ALREADY_VALUED}: every pair at turn {} was \
+                         skipped, and only the deduped mode skips anything",
                         self.state.turn()
                     );
                     inner
