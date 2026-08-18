@@ -145,10 +145,13 @@ impl<'a> Run<'a> {
             // (docs/decisions.md D-111). `plies_for` sums the stones each turn
             // ahead owes, so the ply budget runs out exactly where a turn does,
             // and a mid-turn horizon would mean that arithmetic — or a future
-            // extension's — had drifted. Debug-only because this runs at every
-            // leaf and the gate that reads it is `cargo test`; the other
-            // horizon, the one an empty candidate set reaches, carries the same
-            // statement under `NO_CANDIDATES_MID_TURN` below.
+            // extension's — had drifted. A diagnostic and not a correctness
+            // invariant, so it is `debug_assert!` under D-129's taxonomy: it
+            // runs at every leaf, and the profiles that read it are `cargo
+            // test`'s and `release-checked`'s (D-128). The other horizon, the
+            // one an empty candidate set reaches, is a correctness invariant and
+            // carries the same statement as an always-on `assert!` under
+            // `NO_CANDIDATES_MID_TURN` below.
             debug_assert!(
                 self.position.state().phase() == Phase::First,
                 "pistol-search invariant {STATIC_EVAL_MID_TURN}: the horizon landed at phase 1, \

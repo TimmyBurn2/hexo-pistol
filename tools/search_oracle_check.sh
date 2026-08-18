@@ -42,6 +42,15 @@ cargo test --release --locked --package pistol-search --test search_oracle_tests
 cargo test --release --locked --package pistol-search --test search_oracle_universe_tests ||
 	fail "the reference's universe or its refusals are not the search's"
 
+# A ride-along, and not an oracle assertion: `[profile.release] overflow-checks =
+# true` is a flag that reverts silently, and its test has to run in the profile
+# it is about — a debug build has overflow checks by default and would pass it
+# without saying anything. This script owns the only release `cargo test` in the
+# gate set, so the alternative is a gate of its own for one test
+# (docs/decisions.md D-127).
+cargo test --release --locked --package pistol-search --test build_profile_tests ||
+	fail "the release profile no longer keeps the checks it is configured to keep"
+
 echo "search_oracle_check: the depths a debug build cannot afford"
 cargo test --release --locked --package pistol-search --test search_oracle_deep_tests -- \
 	--include-ignored --nocapture ||

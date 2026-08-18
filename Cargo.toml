@@ -20,9 +20,25 @@ serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.4"
 serde_path_to_error = "0.1.20"
 
-# Deliberately no `[profile.release]` tuning here. Codegen settings are a
-# perf-sensitive change and CLAUDE.md rule 5 wants one change, one commit, one
-# IQR-gated bench; there is no code to bench yet. See docs/decisions.md D-14.
+# Still deliberately no codegen tuning here — that is what D-14 defers, and it
+# stays deferred until there is a bench to judge it by (CLAUDE.md rule 5). What
+# these two profiles set is not codegen: it is which checks a build keeps.
+#
+# `overflow-checks` in release because a wrapped coordinate or a wrapped turn
+# count is a wrong answer this engine would go on to play, and a rule-3 fail-loud
+# project does not ship the one class of error the compiler will silently absorb
+# (docs/decisions.md D-127). Its measured cost is in that line.
+#
+# `release-checked` is the profile red-team and deep verification runs build:
+# release speed plus `debug_assert!`, so a diagnostic whose cost is unwanted on
+# the deployment hot path is live where it is being looked for, without anyone
+# hand-editing an assertion's class to go looking (D-128, D-129).
+[profile.release]
+overflow-checks = true
+
+[profile.release-checked]
+inherits = "release"
+debug-assertions = true
 
 [workspace.lints.rust]
 unsafe_code = "deny"
