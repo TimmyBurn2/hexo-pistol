@@ -2,9 +2,9 @@
 //! recursion that values them.
 //!
 //! Split from [`super::reference`] for size discipline (CLAUDE.md rule 9), not
-//! because it is a second concept: that module is the contract and its
-//! refusals, and this is the tree walk behind it. Everything the walk needs to
-//! be correct is stated against the walk, so the two read in either order.
+//! because it is a second concept: that module is the contract and its refusals,
+//! and this is the tree walk behind it. Everything the walk needs to be correct
+//! is stated against the walk, so the two read in either order.
 
 use std::collections::BTreeMap;
 
@@ -12,10 +12,12 @@ use pistol_core::{Coord, GameState, Phase, Player, PlyOutcome, Turn};
 use pistol_eval::{Eval, HandcraftedV0, Weights};
 use pistol_search::{CandidatePolicy, candidate_cells};
 
+use super::pair_dedupe::Paired;
 use super::ref_score::RefScore;
 use super::reference::{
-    REFERENCE_CANDIDATE_ILLEGAL, REFERENCE_HORIZON_MID_TURN, REFERENCE_NO_CANDIDATES_MID_TURN,
-    REFERENCE_PAIR_ORDER_DISAGREES, REFERENCE_TURN_OWES_A_THIRD_STONE, ReferenceRun,
+    PairOrder, REFERENCE_CANDIDATE_ILLEGAL, REFERENCE_HORIZON_MID_TURN,
+    REFERENCE_NO_CANDIDATES_MID_TURN, REFERENCE_PAIR_ORDER_DISAGREES,
+    REFERENCE_TURN_OWES_A_THIRD_STONE, ReferenceRun,
 };
 
 /// One walk of the tree: the position it moves, the evaluation kept in step
@@ -24,6 +26,8 @@ pub struct Walk {
     state: GameState,
     eval: Box<dyn Eval>,
     policy: CandidatePolicy,
+    /// Whether both orderings of a pair are walked, or one.
+    pairs: PairOrder,
     /// The turn every mate distance is measured from (docs/decisions.md D-72).
     root_turn: u32,
     nodes: u64,
@@ -35,9 +39,13 @@ impl Walk {
     /// The evaluation is built from empty rather than by unwinding another
     /// position: the trait makes a value depend only on the SET of stones
     /// applied, so this is the number the search's own `reset_to` arrives at
-    /// (docs/decisions.md D-61, D-62), reached without touching
-    /// `pistol_search::position`.
-    pub fn new(root: &GameState, policy: CandidatePolicy, weights: &Weights) -> Walk {
+    /// (docs/decisions.md D-61, D-62), without touching `pistol_search::position`.
+    pub fn new(
+        root: &GameState,
+        policy: CandidatePolicy,
+        weights: &Weights,
+        pairs: PairOrder,
+    ) -> Walk {
         let mut eval: Box<dyn Eval> = Box::new(HandcraftedV0::new(weights.clone()));
         for (at, player) in root.board().stones() {
             eval.apply(at, player);
@@ -46,24 +54,24 @@ impl Walk {
             state: root.clone(),
             eval,
             policy,
+            pairs,
             root_turn: root.turn(),
             nodes: 0,
         }
     }
 
-    /// A walk whose mate distances are measured from someone else's root.
-    ///
+    /// A walk whose mate distances are measured from someone else's root:
     /// [`super::reference::reference_turn_value`] starts one turn inside the
-    /// position it is answering about, and D-72's distances are anchored at the
-    /// root rather than at the node — so the anchor is passed in rather than
-    /// taken from where the walk happens to begin.
+    /// position it answers about, and D-72's distances are anchored at the root
+    /// rather than at the node, so the anchor is passed in.
     pub fn anchored(
         root: &GameState,
         policy: CandidatePolicy,
         weights: &Weights,
         root_turn: u32,
+        pairs: PairOrder,
     ) -> Walk {
-        let mut walk = Walk::new(root, policy, weights);
+        let mut walk = Walk::new(root, policy, weights, pairs);
         walk.root_turn = root_turn;
         walk
     }
@@ -72,11 +80,12 @@ impl Walk {
     ///
     /// The same loop [`Walk::negamax`] runs, keeping each turn instead of only
     /// the maximum. Kept separate rather than shared with a collecting callback
-    /// because the interior runs tens of millions of times and must not allocate
-    /// per node beyond the candidate set it already builds.
+    /// because the interior runs tens of millions of times and must not
+    /// allocate per node beyond the candidate set and the [`Paired`] ledger.
     pub fn root(&mut self, depth_turns: u32) -> ReferenceRun {
         self.nodes += 1;
         let mut values: BTreeMap<Turn, RefScore> = BTreeMap::new();
+        let mut paired = Paired::new(self.pairs);
         for first in candidate_cells(self.state.board(), self.policy) {
             let (outcome, mover) = self.place(first);
             match outcome {
@@ -92,6 +101,9 @@ impl Walk {
                 }
                 PlyOutcome::TurnContinues => {
                     for second in self.second_stone_cells() {
+                        if paired.holds(second) {
+                            continue;
+                        }
                         let (outcome, mover) = self.place(second);
                         let score = self.after_second_stone(outcome, depth_turns);
                         self.undo(second, mover);
@@ -100,6 +112,7 @@ impl Walk {
                         });
                         record(&mut values, turn, score);
                     }
+                    paired.push(first);
                 }
             }
             self.undo(first, mover);
@@ -127,26 +140,42 @@ impl Walk {
         }
 
         let mut best: Option<RefScore> = None;
+        let mut paired = Paired::new(self.pairs);
         for first in cells {
             let (outcome, mover) = self.place(first);
+            // `None` where every pair of this first stone was valued under
+            // another ordering, so it adds nothing new to the maximum.
             let score = match outcome {
-                PlyOutcome::Win { .. } => self.win_here(),
-                PlyOutcome::TurnComplete => self.negamax(turns_left - 1).negate(),
+                PlyOutcome::Win { .. } => Some(self.win_here()),
+                PlyOutcome::TurnComplete => Some(self.negamax(turns_left - 1).negate()),
                 PlyOutcome::TurnContinues => {
                     let mut inner: Option<RefScore> = None;
                     for second in self.second_stone_cells() {
+                        if paired.holds(second) {
+                            continue;
+                        }
                         let (outcome, mover) = self.place(second);
                         let score = self.after_second_stone(outcome, turns_left);
                         self.undo(second, mover);
                         inner = Some(inner.map_or(score, |held: RefScore| held.max(score)));
                     }
-                    inner.expect("the second stone's candidate set was checked non-empty")
+                    paired.push(first);
+                    assert!(
+                        inner.is_some() || self.pairs == PairOrder::Deduped,
+                        "pistol-search reference invariant \
+                         {REFERENCE_NO_CANDIDATES_MID_TURN}: every pair at turn {} was skipped, \
+                         and only the deduped mode skips anything",
+                        self.state.turn()
+                    );
+                    inner
                 }
             };
             self.undo(first, mover);
-            best = Some(best.map_or(score, |held: RefScore| held.max(score)));
+            if let Some(score) = score {
+                best = Some(best.map_or(score, |held: RefScore| held.max(score)));
+            }
         }
-        best.expect("the candidate set was checked non-empty")
+        best.expect("the first candidate is never skipped, so a value was folded in")
     }
 
     /// What the mover's SECOND stone is worth. The same side is still to move
@@ -219,8 +248,9 @@ impl Walk {
     }
 }
 
-/// Record a turn's value, checking the one assumption the engine makes about
-/// the two orderings of a pair (docs/decisions.md D-79).
+/// Record a turn's value, checking the assumption the engine makes about the two
+/// orderings of a pair — which only [`PairOrder::BothOrderings`] reaches twice
+/// (docs/decisions.md D-79).
 fn record(values: &mut BTreeMap<Turn, RefScore>, turn: Turn, score: RefScore) {
     if let Some(&held) = values.get(&turn) {
         assert_eq!(

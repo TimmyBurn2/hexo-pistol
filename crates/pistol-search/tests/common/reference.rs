@@ -28,15 +28,21 @@
 //! reads the turn structure off `PlyOutcome`, which is an independent statement
 //! of the same invariant.
 //!
-//! # Why it enumerates both orderings of every pair
+//! # How it enumerates the two stones of a turn
 //!
-//! The engine enumerates plies, so it reaches each pair twice, once per order,
-//! and relies on the transposition table to collapse them (docs/decisions.md
-//! D-79). This does the same. Evaluating each unordered turn once instead would
-//! be three to five times cheaper and would lose the only check in the workspace
-//! that the two orderings of a pair are worth the same at search depth — which
-//! is D-79's premise, and one of the three arguments D-106 built this oracle to
-//! certify. The cost of that choice is measured and recorded in D-120.
+//! Two modes, one [`PairOrder`] apart, because the choice buys different things
+//! at different prices (docs/decisions.md D-120 and its amendment).
+//! [`PairOrder::BothOrderings`] reaches each pair twice, once per order, as the
+//! engine's ply-level recursion does before the transposition table collapses
+//! them (D-79) — which is the only check in the workspace that the two orderings
+//! of a pair are worth the same at search depth.
+//! [`PairOrder::Deduped`] values each unordered turn once, and is what every
+//! oracle assertion runs under: it is exact, it is three to five times cheaper,
+//! and the depth the saving buys is what carries the mate distances and the
+//! window claim. D-79's premise keeps a check of its own —
+//! `reference_dedupe_matches_both_orderings_enumeration` runs both modes over
+//! the same fixtures at the depths a debug build affords, and a disagreement
+//! there is the same failure the interior assertion used to raise.
 
 use std::collections::BTreeMap;
 
@@ -46,6 +52,23 @@ use pistol_search::{CandidatePolicy, MAX_DEPTH_TURNS, candidate_cells};
 
 use super::ref_score::RefScore;
 use super::reference_walk::Walk;
+
+/// How the reference enumerates the two stones of a turn.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PairOrder {
+    /// Both orderings of every pair, each valued on its own subtree.
+    BothOrderings,
+    /// Each unordered turn once: the ordering `(a, b)` is not descended into
+    /// when `b` has already enumerated its own pairs at this node.
+    ///
+    /// Rule 4's truncation survives that, and it is the reason the key is the
+    /// turn rather than the cell set: a first stone that completes a line makes
+    /// a ONE-stone turn, enumerates no pair at all, and therefore never
+    /// suppresses the other ordering of a pair it belongs to. The pair whose
+    /// smaller cell wins is realised by one ordering only, and that ordering is
+    /// the one that runs.
+    Deduped,
+}
 
 /// Named invariant: a horizon landed half way through a turn, where no static
 /// value is an answer (docs/decisions.md D-111).
@@ -64,16 +87,22 @@ pub const REFERENCE_TURN_OWES_A_THIRD_STONE: &str = "REFERENCE_TURN_OWES_A_THIRD
 /// Named invariant: the two orderings of one pair valued it differently.
 pub const REFERENCE_PAIR_ORDER_DISAGREES: &str = "REFERENCE_PAIR_ORDER_DISAGREES";
 
+/// Named invariant: the dedupe ledger was fed out of the ascending, distinct
+/// order `candidate_cells` promises, which is what it bisects on.
+pub const REFERENCE_DEDUPE_KEY_UNSORTED: &str = "REFERENCE_DEDUPE_KEY_UNSORTED";
+
 // Which of the five above can actually fire today, stated so that a reader does
 // not count them as coverage they are not. Only `REFERENCE_PAIR_ORDER_DISAGREES`
-// is live, and it has never fired (measured over 230 669 root turns of
-// undesigned positions). The other four restate things pistol-core and
-// `candidates` already guarantee — the walk descends only at turn boundaries so
-// a horizon is always at phase 0, `place` at phase 1 cannot return
-// `TurnContinues`, and `candidate_cells` has already asked the rules about every
-// cell it offers. They are here for the reason `pvs.rs` carries the same set:
-// the guarantee is one crate away, and an extension that broke it should fail
-// where the assumption is made rather than three levels up.
+// is live, it has never fired (measured over 230 669 root turns of undesigned
+// positions), and under `PairOrder::Deduped` it cannot fire at all — the second
+// ordering is never walked, so the check it carries is bought by the mode
+// comparison instead and not by every run. The other four restate things
+// pistol-core and `candidates` already guarantee — the walk descends only at
+// turn boundaries so a horizon is always at phase 0, `place` at phase 1 cannot
+// return `TurnContinues`, and `candidate_cells` has already asked the rules
+// about every cell it offers. They are here for the reason `pvs.rs` carries the
+// same set: the guarantee is one crate away, and an extension that broke it
+// should fail where the assumption is made rather than three levels up.
 
 /// Every way the reference refuses to answer.
 ///
@@ -165,14 +194,28 @@ impl ReferenceRun {
 
 /// Every turn the root may play, and what plain full-width negamax says it is
 /// worth to the side to move at the root.
+///
+/// Deduped, which is the mode every oracle assertion runs under. The other mode
+/// has exactly one caller, and it is named in [`PairOrder`].
 pub fn reference_root_values(
     root: &GameState,
     depth_turns: u32,
     policy: CandidatePolicy,
     weights: &Weights,
 ) -> Result<ReferenceRun, ReferenceError> {
+    reference_root_values_under(root, depth_turns, policy, weights, PairOrder::Deduped)
+}
+
+/// The same question, asked of a named enumeration mode.
+pub fn reference_root_values_under(
+    root: &GameState,
+    depth_turns: u32,
+    policy: CandidatePolicy,
+    weights: &Weights,
+    pairs: PairOrder,
+) -> Result<ReferenceRun, ReferenceError> {
     check_root(root, depth_turns, policy)?;
-    Ok(Walk::new(root, policy, weights).root(depth_turns))
+    Ok(Walk::new(root, policy, weights, pairs).root(depth_turns))
 }
 
 /// What ONE named turn is worth, re-derived through pistol-core's TURN-level
@@ -205,9 +248,11 @@ pub fn reference_turn_value(
     if let Outcome::Win { turn: won_on, .. } = after.outcome() {
         return Ok(RefScore::WinInTurns(won_on - root.turn() + 1));
     }
-    Ok(Walk::anchored(&after, policy, weights, root.turn())
-        .negamax(depth_turns - 1)
-        .negate())
+    Ok(
+        Walk::anchored(&after, policy, weights, root.turn(), PairOrder::Deduped)
+            .negamax(depth_turns - 1)
+            .negate(),
+    )
 }
 
 /// Everything that has to hold before the reference will answer.

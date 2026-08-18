@@ -11,8 +11,9 @@
 //!
 //! A full-width reference pays the candidate count SQUARED per turn, and the
 //! smallest position this game has (one stone, radius 1) still offers six cells.
-//! So a depth-3 run costs at least a million reference nodes ANYWHERE, which is
-//! seconds in release and half a minute in a debug build. This file therefore
+//! So a depth-3 run costs a quarter of a million reference nodes on the smallest
+//! position with a branching factor at all, and the mate distance of three this
+//! suite certifies costs millions. This file therefore
 //! carries what a debug build can afford on every commit; the depths that cannot
 //! run in debug live in `search_oracle_deep_tests.rs`, which `cargo test` skips
 //! and `tools/search_oracle_check.sh` runs in release. That is the split
@@ -28,12 +29,14 @@
 //! all of them.
 //!
 //! Tier-1 budget, pre-registered before the matrix was chosen: **under 5 s in a
-//! debug build** on the development machine, per test binary. Measured there:
-//! this file 3.95 s debug / 0.31 s release, `search_oracle_universe_tests.rs`
-//! 1.85 s / 0.12 s, and the two run concurrently under `cargo test`, which grew
-//! the workspace run from 83 s to 89 s. Each run reports its own reference node
-//! count under `--nocapture`, so the numbers the budget rests on regenerate from
-//! a run rather than being remembered from the one that set them.
+//! debug build** on the development machine, per test binary. Measured there
+//! after the reference stopped walking both orderings of every pair
+//! (docs/decisions.md D-126): this file 1.74 s debug, `search_oracle_universe_
+//! tests.rs` 1.50 s, and the two run concurrently under `cargo test`, which
+//! leaves the workspace run at 86.6 s against 83 s before this suite existed.
+//! Each run reports its own reference node count under `--nocapture`, so the
+//! numbers the budget rests on regenerate from a run rather than being
+//! remembered from the one that set them.
 
 mod common;
 

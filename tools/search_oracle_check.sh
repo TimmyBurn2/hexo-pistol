@@ -10,10 +10,11 @@
 # table-size independence check and the movegen cross-check. What this script
 # adds is DEPTH — the third turn, where an exact mate distance greater than two
 # first exists and where D-72's root-anchored re-basing is exercised across more
-# than one turn of each side. A third turn costs at least a million reference
-# nodes on the smallest position this game has, which is seconds in release and
-# half a minute in a debug build. The same split `tools/perft_check.sh` uses for
-# the movegen oracle (docs/decisions.md D-54).
+# than one turn of each side, plus a fourth turn on the one position that can
+# carry one. A third turn costs a quarter of a million reference nodes on the
+# smallest position with a branching factor at all, and the mate distance of
+# three costs millions. The same split `tools/perft_check.sh` uses for the
+# movegen oracle (docs/decisions.md D-54).
 #
 # `--nocapture` is deliberate: each run prints the reference node count it cost,
 # so the measured runtime this suite is budgeted against regenerates from a run
@@ -44,4 +45,4 @@ cargo test --release --locked --package pistol-search --test search_oracle_unive
 echo "search_oracle_check: the depths a debug build cannot afford"
 cargo test --release --locked --package pistol-search --test search_oracle_deep_tests -- \
 	--include-ignored --nocapture ||
-	fail "the search and the reference disagree at depth 3"
+	fail "the search and the reference disagree at depth 3 or 4"

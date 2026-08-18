@@ -13,6 +13,7 @@
 pub mod agreement;
 pub mod fixture_text;
 pub mod fixtures;
+pub mod pair_dedupe;
 pub mod playouts;
 pub mod ref_score;
 pub mod reference;

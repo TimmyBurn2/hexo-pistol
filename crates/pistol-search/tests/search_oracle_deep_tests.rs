@@ -3,46 +3,48 @@
 //! `search_oracle_tests.rs` carries what runs on every commit. This carries the
 //! depths that do not: a full-width reference pays the candidate count squared
 //! per TURN, and the smallest position this game has still offers six cells, so
-//! a third turn costs at least a million reference nodes anywhere — seconds in
-//! release and half a minute in debug. Every test here is therefore `#[ignore]`d
+//! a third turn costs a quarter of a million reference nodes on the smallest
+//! position with a branching factor at all, and a mate distance of three costs
+//! millions. Every test here is therefore `#[ignore]`d
 //! and run by `tools/search_oracle_check.sh` in release, which is the split
 //! `perft_tests.rs` already uses for the movegen oracle's wide sample
 //! (docs/decisions.md D-54, D-120).
 //!
-//! # What depth 3 buys, and what depth 4 would have cost
+//! # What depth 3 buys, what depth 4 costs, and where the cost is
 //!
 //! Depth 3 is where an exact mate distance greater than two first appears, and
 //! therefore the only place D-72's root-anchored re-basing is exercised across
-//! more than one turn of each side. Depth 4 was measured rather than estimated:
-//! on the cheapest position that exists — one stone, radius 1 — it is
-//! 273 594 001 reference nodes and 614 s, against 999 841 nodes and 2.3 s at
-//! depth 3. It is not run, and that number is recorded in D-120 rather than left
-//! as a guess.
+//! more than one turn of each side. Depth 4 is reached on one position only, and
+//! which one is a measurement rather than a preference: see
+//! `search_value_matches_reference_negamax_at_depth_4`.
 //!
-//! Measured on the development machine, release, the three tests in parallel as
-//! the gate runs them: **84.4 s**, of which the mate-in-three case at depth 3 is
-//! 37 050 968 reference nodes and essentially all of it. The whole gate, this
-//! file plus the always-on tiers re-run in release, is **86 s**. Every run
-//! reports its own reference node count under `--nocapture`, which the gate
-//! script passes, so those numbers regenerate instead of being remembered.
+//! Measured on the development machine, release, the tests in parallel as the
+//! gate runs them, with the reference valuing each unordered turn once
+//! (docs/decisions.md D-126): **18.1 s**, of which the mate-in-three case at
+//! depth 3 is 6 714 383 reference nodes and 18.0 s run on its own. The whole
+//! gate, this file plus the always-on tiers re-run in release, is **19.6 s**.
+//! Every run reports its own reference node count under `--nocapture`, which the
+//! gate script passes, so those numbers regenerate instead of being remembered.
 //!
 //! Where the power is, as against where the cost is: the mate-in-three case buys
 //! the only exact mate distance above two and catches NEITHER of the two window
 //! bugs both reviews injected, while `tight_cluster_at_a_turn_boundary` at depth
-//! 3 — 9 308 846 nodes, about 21 s — is the only comparison in the suite that
-//! catches either (docs/decisions.md D-125). A trim of this gate has to know
-//! which second is which.
+//! 3 — 1 879 674 nodes — is the only comparison in the suite that catches either
+//! (docs/decisions.md D-125). A trim of this gate has to know which second is
+//! which.
 
 mod common;
 
 use common::agreement::agreement;
 use common::ref_score::RefScore;
+use common::reference::{PairOrder, reference_root_values_under};
 use common::{SMALL_TT, committed_weights, fixtures};
+use pistol_search::CandidatePolicy;
 
 /// The positions a third turn is affordable on, and what each one is for.
 ///
 /// `empty_board_turn_1` is where rule 3's one-stone turn makes the engine's ply
-/// arithmetic stop being twice the depth, and it is nearly free (5 378 reference
+/// arithmetic stop being twice the depth, and it is nearly free (2 312 reference
 /// nodes at depth 3) because the policy offers one cell on an empty board.
 /// `one_stone_at_the_origin` is the smallest position with a real branching
 /// factor. `tight_cluster_at_a_turn_boundary` is the expensive one and it earns
@@ -95,6 +97,32 @@ fn search_value_matches_reference_negamax_depths_1_to_3() {
             run.holds(&weights);
         }
     }
+}
+
+/// A FOURTH turn, on the one position that can carry one.
+///
+/// What it buys is on the engine's side rather than the reference's: four turns
+/// is seven plies here, so `plies_for`'s sum over rule 3's one-stone opening
+/// turn and three pair turns is exercised a turn past everything else in the
+/// suite, and so are the principal variation's length and the table's packed
+/// depth. What it costs is the reason it is this position and not another: an
+/// empty board offers the policy one cell, so the tree below the opening stone
+/// is `one_stone_at_the_origin`'s depth-3 tree and nothing more. The next
+/// cheapest depth-4 case is that position's own, 40 535 269 reference nodes
+/// deduped, which is minutes and stays out (docs/decisions.md D-126).
+#[test]
+#[ignore = "the fourth turn: tools/search_oracle_check.sh runs it in release"]
+fn search_value_matches_reference_negamax_at_depth_4() {
+    let weights = committed_weights();
+    let run = agreement(
+        &fixtures::named("empty_board_turn_1"),
+        4,
+        1,
+        SMALL_TT,
+        &weights,
+    );
+    run.report();
+    run.holds(&weights);
 }
 
 /// A mate three turns from the root agrees exactly — the distance, not merely
@@ -151,5 +179,38 @@ fn search_reference_agreement_holds_over_the_full_fixture_set() {
         let run = agreement(&fixtures::named(name), 2, 2, SMALL_TT, &weights);
         run.report();
         run.holds(&weights);
+    }
+}
+
+/// The dedupe stays exact one turn BELOW the root, where rule 4's truncation
+/// happens at an interior node rather than at the one being reported.
+///
+/// `search_oracle_universe_tests.rs` runs this comparison on every commit and
+/// runs the winning position at one turn only: both modes over its second turn
+/// is 583 200 reference nodes, which is seconds in a debug build and a fraction
+/// of one here. So the depth the always-on tier cannot afford is bought where
+/// every other such depth is bought (docs/decisions.md D-120 and its amendment).
+#[test]
+#[ignore = "the second turn of a winning position in both modes: tools/search_oracle_check.sh"]
+fn reference_dedupe_matches_both_orderings_below_the_root() {
+    let weights = committed_weights();
+    let radius_1 = CandidatePolicy::Radius { radius: 1 };
+    for name in ["a_win_the_mover_can_take", "compact_mated_in_2"] {
+        let fixture = fixtures::named(name);
+        let run = |pairs| {
+            reference_root_values_under(&fixture.state, 2, radius_1, &weights, pairs)
+                .unwrap_or_else(|error| panic!("{name}: the reference refused: {error:?}"))
+        };
+        let both = run(PairOrder::BothOrderings);
+        let deduped = run(PairOrder::Deduped);
+        assert_eq!(
+            both.values, deduped.values,
+            "{name}: valuing each unordered turn once must reach the same value for every turn \
+             as walking both orderings (2 turns)"
+        );
+        println!(
+            "dedupe {name:44} d2 both_orderings={:>10} deduped={:>10}",
+            both.nodes, deduped.nodes
+        );
     }
 }
