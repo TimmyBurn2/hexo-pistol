@@ -14,7 +14,7 @@
 //! build affords, and one turn deeper in the release tier, where rule 4's
 //! truncation happens below the root rather than at it.
 //!
-//! Split from `search_oracle_universe_tests.rs` for rule 9's soft cap; the three
+//! Split from `search_oracle_universe_tests.rs` for rule 9's soft cap; the four
 //! oracle files are one suite and the gate script runs all of them.
 
 mod common;

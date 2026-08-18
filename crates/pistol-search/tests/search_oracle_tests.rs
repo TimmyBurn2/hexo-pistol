@@ -24,9 +24,11 @@
 //!
 //! This file is the AGREEMENT half: the value, the move and the mate distance.
 //! What the oracle's UNIVERSE is, and what both implementations refuse, is
-//! `search_oracle_universe_tests.rs`. The split is CLAUDE.md rule 9's soft cap
-//! and nothing else — the three files are one suite, and the gate script runs
-//! all of them.
+//! `search_oracle_universe_tests.rs`; that the reference's deduped enumeration
+//! is its both-orderings one is `search_oracle_dedupe_tests.rs`; the depths a
+//! debug build cannot afford are `search_oracle_deep_tests.rs`. Every split is
+//! CLAUDE.md rule 9's soft cap and nothing else — the four files are one suite,
+//! and the gate script runs all of them.
 //!
 //! Tier-1 budget, pre-registered before the matrix was chosen: **under 5 s in a
 //! debug build** on the development machine, per test binary. Measured there
