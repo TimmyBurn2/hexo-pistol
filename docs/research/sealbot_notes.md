@@ -22,6 +22,10 @@ Three rule/representation deltas that matter before any comparison:
    must be resolved against the htttx spec before pistol plays there: a
    platform-legal opponent move outside pistol's rule-5 region would be
    refused by set_position (fail loud) and cost the game.
+   *Resolved (docs/decisions.md D-101): the operator confirmed against the
+   htttx spec and the HeXO server that radius 8 IS a rule the platform
+   enforces, so nothing in pistol moves; the paragraph above stands as the
+   question that was asked and this line is its answer.*
 2. **Bounded arrays.** Flat 140x140 (coords in [-70, 69]); positions outside
    crash or are silently skipped. Pistol's unbounded board is strictly more
    correct.
