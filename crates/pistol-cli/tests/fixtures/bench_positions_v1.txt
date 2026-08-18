@@ -1,6 +1,6 @@
 # pistol bench positions, v1 — two stone counts for a like-for-like bench.
 #
-# Pinned by SHA-256 in crates/pistol-cli/tests/corpus_output_tests.rs
+# Pinned by SHA-256 in crates/pistol-cli/tests/corpus_document_tests.rs
 # (BENCH_POSITIONS_V1_SHA256).
 #
 # Same line form as openings_v1.txt: a `position` verb tail, then commentary from

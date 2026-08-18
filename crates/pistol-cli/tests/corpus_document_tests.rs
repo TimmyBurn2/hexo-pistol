@@ -15,10 +15,10 @@ use pistol_engine::PositionSpec;
 use std::path::PathBuf;
 
 /// The SHA-256 of the committed `fixtures/openings_v1.txt`.
-const OPENINGS_V1_SHA256: &str = "947284be96d89aa8ad9c4723ddb55a1e4077ad7712fca7fa10e2228fc5744727";
+const OPENINGS_V1_SHA256: &str = "5ccc3dc0ccfc9ed8df1135c74cc161fafcc0fd8bd8ff750149ddd0e8e2bcd530";
 /// The SHA-256 of the committed `fixtures/bench_positions_v1.txt`.
 const BENCH_POSITIONS_V1_SHA256: &str =
-    "22beb57feb845c0c10c0e132ebe59cdce9b21c7ffc8e42ded3c6774d6416af00";
+    "931c50b19411eef5aaf0385df46782bb2babbf3443e65a6e56fe7bd169906e47";
 
 fn fixture(name: &str) -> PathBuf {
     repo("crates/pistol-cli/tests/fixtures").join(name)

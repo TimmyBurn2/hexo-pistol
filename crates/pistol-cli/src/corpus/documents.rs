@@ -42,7 +42,7 @@ pub fn openings_fixture(
     let mut fixture = Fixture::new(&[
         "pistol opening corpus, v1 — the positions the arena plays from.",
         "",
-        "Pinned by SHA-256 in crates/pistol-cli/tests/corpus_output_tests.rs",
+        "Pinned by SHA-256 in crates/pistol-cli/tests/corpus_document_tests.rs",
         "(OPENINGS_V1_SHA256). Editing this file without updating that constant is a red",
         "test, which is the point.",
         "",
@@ -102,7 +102,7 @@ pub fn bench_fixture(
     let mut fixture = Fixture::new(&[
         "pistol bench positions, v1 — two stone counts for a like-for-like bench.",
         "",
-        "Pinned by SHA-256 in crates/pistol-cli/tests/corpus_output_tests.rs",
+        "Pinned by SHA-256 in crates/pistol-cli/tests/corpus_document_tests.rs",
         "(BENCH_POSITIONS_V1_SHA256).",
         "",
         "Same line form as openings_v1.txt: a `position` verb tail, then commentary from",

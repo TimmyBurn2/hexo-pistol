@@ -1,6 +1,6 @@
 # pistol opening corpus, v1 — the positions the arena plays from.
 #
-# Pinned by SHA-256 in crates/pistol-cli/tests/corpus_output_tests.rs
+# Pinned by SHA-256 in crates/pistol-cli/tests/corpus_document_tests.rs
 # (OPENINGS_V1_SHA256). Editing this file without updating that constant is a red
 # test, which is the point.
 #
