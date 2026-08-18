@@ -111,6 +111,13 @@ and stops after IMPL; the operator launches the reviews. A reviewer finding is
 verified with a minimal reproducer before its fix lands; a finding that cannot be
 reproduced is recorded as rejected with the attempted reproducer.
 
+A review is dispatched against a NAMED REVISION — a commit SHA, or a `git stash
+create` SHA where the work is uncommitted — and every reviewer states that revision
+in its report header together with whether it still matches HEAD. Mutation testing
+runs in a separate git worktree, never the live tree: a mutation is a deliberate
+break, and a break left in the tree the implementing session is editing is
+indistinguishable from a regression.
+
 ## Roadmap pointer
 
 Stages per the research report: 0 foundations (correct + reproducible) → 1 tactical
