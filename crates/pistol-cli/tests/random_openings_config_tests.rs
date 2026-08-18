@@ -175,11 +175,16 @@ fn random_openings_refuse_a_radius_or_a_count_past_its_typo_ceiling() {
 fn the_committed_config_states_the_operator_ruling() {
     // The document is the ruling's only home, so a silent edit of it would move
     // the book without moving anything a reader of docs/decisions.md D-175 can
-    // see. These four numbers are that line, in force.
+    // see. These four numbers are that line, in force — with `n_openings` as
+    // D-187 amended it, which is the one of the four that is a power
+    // calculation rather than a shape (docs/experiments/wp13_prereg.md).
     let config = RandomOpeningsConfig::load(&repo("configs/random_openings_v1.toml"))
         .expect("the committed config loads");
     assert_eq!(config.generate.k_stones, 5, "k = 5 (D-175)");
-    assert_eq!(config.generate.n_openings, 500, "N = 500 (D-175)");
+    assert_eq!(
+        config.generate.n_openings, 2000,
+        "N = 2000 (D-175, amended by D-187)"
+    );
     assert_eq!(config.generate.max_radius, 5, "max_radius = 5 (D-175)");
 }
 

@@ -169,3 +169,37 @@ fn random_openings_respect_generation_radius() {
         );
     }
 }
+
+#[test]
+fn a_shorter_book_is_a_prefix_of_the_committed_one() {
+    // What makes raising `n_openings` in place an EXTENSION of the sample rather
+    // than a replacement of it, checked rather than argued. D-177 emits in
+    // generation order precisely so that a prefix of the file is already a
+    // sample, and D-187 leaned on that to grow the book from 500 to 2000 by
+    // editing the committed config instead of writing a second one: if this
+    // property did not hold, that edit would have silently discarded the 500
+    // openings every earlier reading of the book was about.
+    //
+    // The seed, the stone count and the radius are the committed document's, so
+    // the only difference between the two runs is how many candidates were asked
+    // for. Drawing fewer must not change the ones drawn.
+    let committed = committed_config();
+    let shorter = config(
+        committed.generate.k_stones,
+        500,
+        committed.generate.max_radius,
+        committed.generate.seed,
+    );
+    let book = random_openings::generate(&shorter).expect("a 500-opening book generates");
+    let lines = committed_lines();
+    assert!(
+        lines.len() > book.openings.len(),
+        "the committed book is the longer of the two, or this test compares it with itself"
+    );
+    for (index, opening) in book.openings.iter().enumerate() {
+        assert_eq!(
+            opening.tail, lines[index],
+            "opening {index} of a shorter run differs from the committed book's"
+        );
+    }
+}

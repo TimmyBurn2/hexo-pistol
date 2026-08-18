@@ -31,14 +31,14 @@ fn arena_loads_primary_book_with_digest() {
     // the bytes are the ones this test was written against, so a regenerated
     // book with a different seed cannot slip through as "still loads".
     let path = repo().join("crates/pistol-cli/tests/fixtures/random_openings_v1.txt");
-    let loaded = openings::load(&path, 500, CAP).expect("the primary book loads");
+    let loaded = openings::load(&path, 2000, CAP).expect("the primary book loads");
     assert_eq!(
-        loaded.total, 500,
-        "the whole book (docs/decisions.md D-175)"
+        loaded.total, 2000,
+        "the whole book (docs/decisions.md D-175, extended to 2000 by D-187)"
     );
-    assert_eq!(loaded.taken.len(), 500, "and all of it was taken");
+    assert_eq!(loaded.taken.len(), 2000, "and all of it was taken");
     assert_eq!(
-        loaded.body_sha256, "f0bf76c5f53ae192d970a32f8127f3aae1910e5a8d4fb4374238e4450c6a152e",
+        loaded.body_sha256, "7b1b3a998a2d0c88c682b64144333e694d106b71ae567322735d73168dbac08d",
         "the in-band digest pistol-cli wrote, read back here"
     );
     assert_eq!(

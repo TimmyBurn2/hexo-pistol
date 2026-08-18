@@ -20,7 +20,7 @@ use std::path::PathBuf;
 
 /// The SHA-256 of the committed `fixtures/random_openings_v1.txt`.
 const RANDOM_OPENINGS_V1_SHA256: &str =
-    "41abbbbb3067abfc757656b44226ab2740313708f1313007f598e72773cfa35e";
+    "895a05edb53a0a8d89c262bb058e3bc3dd24d446405d375458aaf067e2f076e7";
 
 fn book_path() -> PathBuf {
     repo("crates/pistol-cli/tests/fixtures").join(FILE_NAME)

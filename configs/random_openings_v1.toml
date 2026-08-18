@@ -29,9 +29,29 @@ schema_version = 1
 k_stones = 5
 
 # How many openings the book holds. Each is played from both seats, so this is
-# 500 pairs and 1000 games at full length. There is no cap on top of it: the
+# 2000 pairs and 4000 games at full length. There is no cap on top of it: the
 # number asked for is the number written, or the run refuses.
-n_openings = 500
+#
+# 2000 AND NOT 500, and the number is a power calculation rather than a taste.
+# The book is the whole sample a paired SPRT can draw on, so it fixes the
+# design's error rates: at 500 pairs, `[sprt]` bounds of elo0 = 0, elo1 = 25 and
+# alpha = beta = 0.05 achieve a measured alpha of 0.030 and a power of 0.569
+# against their own alternative — because the LLR needs 569 pairs to reach a
+# boundary on drift alone, and the book ran out at 500. A declared beta the
+# design cannot deliver is worse than a smaller claim. At 2000 pairs the same
+# bounds achieve alpha 0.048 and power 0.945.
+#
+# It costs almost nothing, which is the point: the sequential test stops when it
+# has an answer, so raising the cap four-fold raises the EXPECTED number of pairs
+# played from 374 to 513 — about six minutes at four workers. The cap binds only
+# on the runs that need it (docs/experiments/wp13_prereg.md, docs/decisions.md
+# D-187).
+#
+# The 500-opening book is the first 500 lines of this one, byte for byte:
+# emission is generation order and the draws are independent (D-177), so raising
+# this number EXTENDS the sample rather than replacing it. That is what makes
+# editing this line in place honest, and it is checked rather than asserted.
+n_openings = 2000
 
 # How far from the ORIGIN a sampled stone may land, in hex distance.
 #
