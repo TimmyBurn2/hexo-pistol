@@ -1,0 +1,66 @@
+# pistol — instrument-mode configuration at candidate radius 2.
+#
+# THE DEFENDANT IN WP-1.3 RUN 1, and nothing else. It exists so that the radius
+# question configs/instrument_v0.toml states in prose — "radius = 3, not 2 ...
+# r=2 against r=3 is settled by the first fixed-node SPRT experiment once the
+# minimal arena lands" — has a second document to run against the first. It is
+# that file byte for byte apart from the one line under `[search.candidate_policy]`
+# and the comments that say so, because an experiment that changed two things
+# would measure neither (docs/experiments/wp13_prereg.md).
+#
+# It is NOT a deployment config and it is not a fallback. If Run 1 accepts H1
+# this file's radius moves into configs/instrument_v0.toml by one config commit
+# and one ADR line, and this document goes back to being what it is now: the
+# losing arm of a recorded experiment, kept so the experiment can be re-run.
+#
+# Complete by rule (CLAUDE.md rule 1): every key the schema names is present,
+# because no key has a code-side default and a missing key is an error.
+#
+# Validate this file with tools/config_check.sh.
+
+# Schema version this document is written against. The build refuses a version
+# it does not read, rather than guessing at the difference.
+schema_version = 1
+
+[engine]
+# Instrument mode, as the arena requires of both sides: single-threaded, fixed
+# budget, stable tie-breaking. A run whose engines were in play mode would not
+# be a strength claim (CLAUDE.md rule 6, docs/decisions.md D-22).
+mode = "instrument"
+
+[search]
+# 256 MiB, the same table the config under test holds. The table size changes
+# which move comes back on a tie (docs/decisions.md D-109), so it is one of the
+# things this document must NOT vary.
+tt_bytes = 268435456
+
+# The one line this file exists for.
+#
+# A search knob and never the rules' radius-8 legal region, which is a pinned
+# constant in pistol-core and is never compared with this number (CLAUDE.md
+# rule 2, docs/decisions.md D-20).
+#
+# The prior, stated so the experiment can refute it: a length-6 window reaches
+# up to five cells from an existing stone along an axis, so correct extensions
+# and blocks legitimately sit at distance 3 to 5, and this radius cannot see
+# them. Against that, a narrower set is a smaller branching factor at a fixed
+# node budget — more depth per node — and the research report's own
+# recommendation 5 is to fix the candidate policy empirically and start tight.
+# Which effect is larger is what Run 1 measures.
+[search.candidate_policy]
+kind = "radius"
+radius = 2
+
+[eval]
+# The same backend and the same committed weight table the config under test
+# reads. Varying the eval would confound the radius with it.
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+# Must be 1 while mode = "instrument": the determinism law admits no thread race
+# on a move-choice path (CLAUDE.md rule 4).
+threads = 1
+# Equal-scoring moves are ordered by coordinate, which is stable across runs,
+# machines and builds.
+tie_break = "lexicographic"

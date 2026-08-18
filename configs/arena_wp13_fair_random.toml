@@ -1,0 +1,66 @@
+# pistol — WP-1.3 Run 3a: first-player win rate on the primary book.
+#
+# A MEASUREMENT, NOT A TEST. There is no hypothesis to accept or reject here:
+# the committed configuration plays itself over the whole primary book and the
+# number this run exists for is one line of the report,
+# `first_player_wins <k> of <n> decided`. The research report names fairness on
+# 3 axes as untested and says to measure the first-player win rate directly
+# (Caveats, and Deliverable 4's reporting fields); this is that measurement, and
+# it is the number the opening corpus could not give because a corpus's own
+# first-player rate is confounded by who was playing.
+#
+# WHAT A SELF-MATCH DOES TO THE SAMPLE, pre-registered so it is not read wrong
+# afterwards: two identical deterministic engines play the same game from either
+# seat, so both games of a pair are the same game, `distinct_n` is exactly half
+# of `n`, every pair scores 1-1 and the verdict is `inconclusive_degenerate`
+# (docs/decisions.md D-156). That is the CORRECT answer and not a failure. It
+# also means the effective sample for the rate is the 500 distinct games, not
+# the 1000 played, and the interval quoted for it must be computed on 500.
+#
+# The `[sprt]` block below is therefore inert. It is present because the schema
+# requires it and complete because CLAUDE.md rule 1 admits no absent key; no
+# likelihood ratio is defined on this sample at all.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 1
+
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+# The whole book: 500 openings, 1000 games, 500 distinct.
+openings_take = 500
+# As Run 1, and for the same reason: a capped game has no first-player winner
+# and is excluded from the rate's denominator by the arena, so a cap that bound
+# would silently shrink this measurement's sample.
+turn_cap = 40
+n_workers = 4
+hang_timeout_ms = 120000
+
+[budget]
+# Run 1's budget, unchanged, because the calibration probe measured the
+# first-player rate MOVING WITH IT — 8 of 20 at 25 000 and at 50 000, 12 of 20
+# at 100 000. A fairness number is therefore a property of the instrument and
+# not of the game, and quoting one without its budget would be a claim nobody
+# measured.
+kind = "nodes"
+value = 50000
+
+[sprt]
+# Inert; see the header. The values match Run 1's so that the two documents do
+# not appear to disagree about a hypothesis neither of them tests here.
+elo0 = 0.0
+elo1 = 25.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# The committed deployment-shaped configuration, both seats. The labels differ
+# because the report has to tell two sides apart; the configurations do not.
+label = "self_a"
+binary = "target/release/pistol"
+config = "configs/instrument_v0.toml"
+
+[engine_b]
+label = "self_b"
+binary = "target/release/pistol"
+config = "configs/instrument_v0.toml"

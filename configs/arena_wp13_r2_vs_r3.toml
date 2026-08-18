@@ -1,0 +1,109 @@
+# pistol — WP-1.3 Run 1: candidate radius 2 against candidate radius 3.
+#
+# THE PRE-REGISTERED EXPERIMENT. Every number below was fixed before the first
+# game was played and none of them may move afterwards; the reasoning, the
+# calibration probe they came from, and the outcome handling are in
+# docs/experiments/wp13_prereg.md, pre-registered at eb6ea93 and recorded as
+# docs/decisions.md D-186. Editing this file after a run has started does not
+# adjust the experiment, it ends it.
+#
+# WHICH SIDE IS `engine_a` IS LOAD-BEARING AND IS NOT THE RUNBOOK'S LETTERING.
+# The arena's statistic is engine A's score: `score::game_sample` builds the
+# sample from `wins_a / capped / losses_a`, so `elo1 > 0` states the hypothesis
+# "A is stronger than B" and nothing else. The pre-registered direction is
+# H1 = "radius 2 is stronger than radius 3", so the radius-2 configuration must
+# sit in `engine_a`. Putting it in `engine_b` and reading the sign backwards
+# afterwards is the one mistake a pre-registration exists to prevent.
+#
+# Validate this file with tools/config_check.sh.
+
+# The ARENA's schema version, unrelated to the engine configs' (D-15..D-17).
+schema_version = 1
+
+[run]
+# The primary SPRT book (docs/decisions.md D-175), verified against its own
+# in-band body digest before a game is played (D-148, D-183). NOT
+# openings_v1.txt: that one is the realism cross-check suite and is played in
+# Run 3, where it is a measurement rather than a judge.
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+
+# The WHOLE book, which is also this run's game cap: every opening is exactly
+# one pair, so the cap is twice this and is derived rather than stated again
+# (docs/decisions.md D-157). 500 pairs is the largest sample this book can
+# supply and therefore the run's resolution: the reported `ci95` is
+# 1.96 / (NELO_TO_T * sqrt(2) * sqrt(pairs)), a function of the pair count
+# alone, which is +/-21.5 normalized Elo here. That number is why `elo1` below
+# is 25 and not the research report's 3-5 — see the pre-registration.
+openings_take = 500
+
+# An evaluation horizon, never a game rule (game rule 6, D-157). Pre-registered
+# rather than left to taste because capped games are not inert in the statistic:
+# a mass point at a half shrinks sigma and accelerates the LLR (D-157). 40 is
+# three times the longest game the calibration probe saw at this budget (13
+# turns, over 60 games at three budgets, none capped), so it is expected to bind
+# on nothing; `capped_fraction` is reported and will say whether it did.
+turn_cap = 40
+
+# The containment ceiling this crate's RED-TEAM round cleared (D-174): the
+# concurrency surface above four workers is explicitly NOT cleared, and a
+# strength claim is not the place to explore it. The verdict block is
+# worker-invariant for a run that completes (D-161), so this costs the result
+# nothing.
+n_workers = 4
+
+# Liveness only: it can end a run and it can never produce a game result
+# (D-159). Two minutes against a worst single search of about 2.9 s in the
+# calibration probe at this budget, single-threaded — roughly forty times the
+# worst observed turn, which is the margin four contending workers and a
+# late-game position are allowed to want.
+hang_timeout_ms = 120000
+
+[budget]
+# Fixed nodes, per the research report's recommendation 5 — candidate-policy
+# variants are benchmarked with a fixed-node SPRT — and because a movetime
+# budget is refused by name (D-74, D-95).
+#
+# 50 000, from the calibration probe recorded in the pre-registration: 4.9 s per
+# game and 2.4 s per side, which is the runbook's single-digit-seconds-per-side
+# criterion with room, and a second deepening iteration completes in some games
+# rather than none (25 000 completes one iteration and no more; 100 000 costs
+# 48 s per game). The probe is not part of the sample.
+#
+# What node-matching does and does not buy is stated here rather than assumed:
+# the first deepening iteration is not interruptible by design (D-74), so a
+# position whose depth-1 search costs more than the budget spends more — up to
+# 104 448 nodes against a 25 000 budget in the probe. Both sides are held to the
+# same cap, and the per-side `compute` lines report what each actually spent.
+kind = "nodes"
+value = 50000
+
+[sprt]
+# Normalized Elo, alpha = beta = 0.05 per the research report's Deliverable 4.
+#
+# elo1 = 25 DEVIATES from that deliverable's suggested 3-5, deliberately and for
+# an arithmetic reason: at the 500 pairs this book supplies, the report's own
+# `games ~= 640000/elo1^2` guidance solves to elo1 = 25.3, and the interval the
+# run will report is +/-21.5 normalized Elo. An elo1 of 5 would put a verdict
+# about a 5-Elo difference beside an interval four times wider, and could accept
+# neither hypothesis inside the book unless the true difference exceeded about
+# 70 Elo. At 25: H1 needs an observed +26.7, H0 an observed -1.7, and a true tie
+# runs to the cap and reports the interval instead. The full derivation and the
+# rejected alternatives are in the pre-registration.
+elo0 = 0.0
+elo1 = 25.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# THE DEFENDANT. In slot A because the statistic is slot A's score; see the
+# header. `label` is what the report calls it, and it is not the slot.
+label = "r2"
+binary = "target/release/pistol"
+config = "configs/instrument_r2_v0.toml"
+
+[engine_b]
+# THE INCUMBENT, and the tie-winner by the pre-registered outcome rule: H0 and
+# either inconclusive verdict all leave this configuration committed.
+label = "r3"
+binary = "target/release/pistol"
+config = "configs/instrument_v0.toml"

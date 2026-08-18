@@ -1,0 +1,78 @@
+# pistol — WP-1.3 Run 3b: first-player win rate on the realism cross-check book.
+#
+# A MEASUREMENT, NOT A TEST. There is no hypothesis to accept or reject here:
+# the committed configuration plays itself over the whole realism cross-check book and the
+# number this run exists for is one line of the report,
+# `first_player_wins <k> of <n> decided`. The research report names fairness on
+# 3 axes as untested and says to measure the first-player win rate directly
+# (Caveats, and Deliverable 4's reporting fields); this is that measurement, and
+# it is the number this corpus could not give on its own: the corpus's recorded
+# first-player rate is confounded by which humans were playing, and this run
+# replaces them with one engine playing both seats (docs/decisions.md D-145).
+#
+# WHAT A SELF-MATCH DOES TO THE SAMPLE, pre-registered so it is not read wrong
+# afterwards: two identical deterministic engines play the same game from either
+# seat, so both games of a pair are the same game, `distinct_n` is exactly half
+# of `n`, every pair scores 1-1 and the verdict is `inconclusive_degenerate`
+# (docs/decisions.md D-156). That is the CORRECT answer and not a failure. It
+# also means the effective sample for the rate is the 1591 distinct games, not
+# the 3182 played, and the interval quoted for it must be computed on 1591.
+#
+# THIS RUN AND RUN 3a DO NOT ESTIMATE THE SAME QUANTITY, and the two numbers are
+# never averaged. Run 3a samples openings uniformly, so its rate is the first
+# player's advantage from an arbitrary five-stone position. This book's openings
+# are the ones humans actually reached, and D-145 measured them lopsided: across
+# canonical classes with at least ten corpus games the human first-player rate
+# runs 0.10 to 0.91, and 26 of 61 sit outside 0.35-0.65. So this rate is the
+# first player's advantage CONDITIONED ON a human-reached opening, which is the
+# realism cross-check it is here for and is not a fairness constant.
+#
+# The `[sprt]` block below is therefore inert. It is present because the schema
+# requires it and complete because CLAUDE.md rule 1 admits no absent key; no
+# likelihood ratio is defined on this sample at all.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 1
+
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
+# The whole book: 1591 openings, 3182 games, 1591 distinct. Openings here are
+# four turns rather than three, so every game starts one turn deeper than
+# Run 3a's (docs/decisions.md D-143).
+openings_take = 1591
+# As Run 1, and for the same reason: a capped game has no first-player winner
+# and is excluded from the rate's denominator by the arena, so a cap that bound
+# would silently shrink this measurement's sample.
+turn_cap = 40
+n_workers = 4
+hang_timeout_ms = 120000
+
+[budget]
+# Run 1's budget, unchanged, because the calibration probe measured the
+# first-player rate MOVING WITH IT — 8 of 20 at 25 000 and at 50 000, 12 of 20
+# at 100 000. A fairness number is therefore a property of the instrument and
+# not of the game, and quoting one without its budget would be a claim nobody
+# measured.
+kind = "nodes"
+value = 50000
+
+[sprt]
+# Inert; see the header. The values match Run 1's so that the two documents do
+# not appear to disagree about a hypothesis neither of them tests here.
+elo0 = 0.0
+elo1 = 25.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# The committed deployment-shaped configuration, both seats. The labels differ
+# because the report has to tell two sides apart; the configurations do not.
+label = "self_a"
+binary = "target/release/pistol"
+config = "configs/instrument_v0.toml"
+
+[engine_b]
+label = "self_b"
+binary = "target/release/pistol"
+config = "configs/instrument_v0.toml"
