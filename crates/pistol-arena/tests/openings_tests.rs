@@ -7,11 +7,45 @@
 
 mod common;
 
-use common::{Scratch, committed_body, openings_fixture, openings_prefix};
+use common::{Scratch, committed_body, openings_fixture, openings_prefix, repo};
 use pistol_arena::openings;
 
 /// A cap comfortably clear of the fixture's four-turn openings.
 const CAP: u32 = 12;
+
+#[test]
+fn arena_loads_primary_book_with_digest() {
+    // The one thing neither crate could assert on its own. `random_openings_v1.txt`
+    // is written by pistol-cli and read here, and every property the reader
+    // requires was asserted only on the WRITER's side — the header and body
+    // offset, a payload of position tails with no stray `#` line, one turn count
+    // for every opening, and no two openings equal up to a lattice symmetry.
+    // That is not the same as this reader having read it, and D-175 makes this
+    // file the book every SPRT runs over, so the day the two serializations
+    // drift apart must be a red test rather than a failed experiment
+    // (docs/decisions.md D-182, which this closes).
+    //
+    // The digest is checked by value as well as by loading. `load` verifies the
+    // body against the header's own claim and refuses a mismatch, so a load that
+    // succeeded already proves them consistent; what the constant adds is that
+    // the bytes are the ones this test was written against, so a regenerated
+    // book with a different seed cannot slip through as "still loads".
+    let path = repo().join("crates/pistol-cli/tests/fixtures/random_openings_v1.txt");
+    let loaded = openings::load(&path, 500, CAP).expect("the primary book loads");
+    assert_eq!(
+        loaded.total, 500,
+        "the whole book (docs/decisions.md D-175)"
+    );
+    assert_eq!(loaded.taken.len(), 500, "and all of it was taken");
+    assert_eq!(
+        loaded.body_sha256, "f0bf76c5f53ae192d970a32f8127f3aae1910e5a8d4fb4374238e4450c6a152e",
+        "the in-band digest pistol-cli wrote, read back here"
+    );
+    assert_eq!(
+        loaded.opening_turns, 3,
+        "five stones is three turns: one on turn 1, two thereafter (game rule 3)"
+    );
+}
 
 #[test]
 fn a_correct_fixture_loads_and_reports_what_it_holds() {
