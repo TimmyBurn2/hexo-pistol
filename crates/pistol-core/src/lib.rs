@@ -23,9 +23,11 @@
 //!   the intra-turn phase, which the search's transposition table and the
 //!   solver will both index by (docs/decisions.md D-8).
 //!
-//! Still to come, in this crate and nowhere else: when the opening book needs
-//! them in Stage 5, the twelve-fold hex symmetry transforms, which are geometry
-//! and so belong here rather than in the book generator.
+//! - the twelve symmetries of the lattice about the origin ([`symmetry`]), and
+//!   the [`canonical_form`] a position has under them. Reserved for Stage 5's
+//!   opening book and brought forward for WP-1.2a's opening corpus, which
+//!   otherwise counts a position and its mirror image as two openings
+//!   (docs/decisions.md D-137).
 //!
 //! Dependencies: `std` only, permanently — dev-dependencies included, which is
 //! why the test tree carries its own SHA-256 for pinning fixtures
@@ -58,6 +60,7 @@ pub mod perft;
 pub mod play;
 pub mod rules;
 pub mod state;
+pub mod symmetry;
 pub mod turn;
 pub mod win;
 pub mod zobrist;
@@ -72,6 +75,7 @@ pub use rules::{
     FIRST_TURN, FIRST_TURN_STONES, LEGAL_RADIUS, TURN_STONES, WIN_LEN, stones_in_turn,
 };
 pub use state::GameState;
+pub use symmetry::{Symmetry, canonical_form, canonical_sequence};
 pub use turn::{Outcome, ParseTurnError, Phase, PlyOutcome, Turn};
 pub use win::{Run, wins_at};
 pub use zobrist::{Key128, ZOBRIST_SEED, cell_key, from_scratch_key, phase_key, side_key};

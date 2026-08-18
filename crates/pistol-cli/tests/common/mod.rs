@@ -12,8 +12,6 @@
 //! depending on where cargo was invoked from.
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
-pub mod sha256;
-
 use std::path::PathBuf;
 
 use pistol_cli::Session;
@@ -32,6 +30,31 @@ pub fn repo(relative: &str) -> PathBuf {
     repo_root().join(relative)
 }
 
+/// A fresh, empty directory for a test to write into, named after the test.
+///
+/// Under the system temp directory rather than the repository, so nothing a test
+/// writes can reach the git index — an output that leaked into the tree would be
+/// an artifact nobody committed on purpose (CLAUDE.md rule 8).
+pub fn scratch(name: &str) -> PathBuf {
+    // Tests in one binary share a process and run in parallel, so the process id
+    // alone is not unique: two calls with the same name would race, one removing
+    // the directory the other is writing into.
+    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let path = std::env::temp_dir().join(format!("pistol-{}-{name}-{serial}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&path);
+    std::fs::create_dir_all(&path)
+        .unwrap_or_else(|error| panic!("cannot create {}: {error}", path.display()));
+    path
+}
+
+/// Write `text` to a file in a fresh scratch directory and return its path.
+pub fn scratch_file(name: &str, file: &str, text: &str) -> PathBuf {
+    let path = scratch(name).join(file);
+    std::fs::write(&path, text)
+        .unwrap_or_else(|error| panic!("cannot write {}: {error}", path.display()));
+    path
+}
 /// The committed instrument-mode config: the one every strength claim uses.
 pub const INSTRUMENT: &str = "configs/instrument_v0.toml";
 /// The committed gate config: narrow on purpose, and fast enough for a test.

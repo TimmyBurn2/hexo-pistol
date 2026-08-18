@@ -224,8 +224,12 @@ impl FromStr for Coord {
 }
 
 /// Report a coordinate that left the representable lattice, loudly.
+///
+/// `pub(crate)` because [`crate::symmetry`] does its own checked arithmetic on
+/// coordinates and must fail the same way this file does — one overflow
+/// report, one token, one message shape.
 #[cold]
 #[inline(never)]
-fn overflow(detail: fmt::Arguments<'_>) -> ! {
+pub(crate) fn overflow(detail: fmt::Arguments<'_>) -> ! {
     panic!("pistol-core invariant {COORD_OVERFLOW}: {detail} leaves the i16 coordinate range");
 }

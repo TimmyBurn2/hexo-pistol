@@ -21,10 +21,11 @@ mod common;
 
 use std::collections::BTreeSet;
 
-use common::{repo, sha256::sha256_hex};
+use common::repo;
 use pistol_cli::fixture_loader;
 use pistol_cli::fixtures::Suite;
 use pistol_cli::selftest;
+use pistol_cli::sha256::sha256_hex;
 use pistol_engine::{Budget, Config};
 
 /// The fixture's name under `tests/fixtures/`.
@@ -184,29 +185,5 @@ fn tactical_v0_suite_meets_its_pre_registered_threshold() {
     assert!(
         report.tactical_passes() >= suite.required,
         "the suite must meet the threshold pre-registered in the fixture:\n{report}"
-    );
-}
-
-#[test]
-fn sha256_matches_published_test_vectors() {
-    // The pin above is computed by this test tree's own SHA-256, so that
-    // implementation is itself pinned — against the FIPS 180-4 vectors, because a
-    // fixture pin computed by an unverified hash pins nothing
-    // (docs/decisions.md D-37, D-60).
-    assert_eq!(
-        sha256_hex(b"abc"),
-        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
-    );
-    assert_eq!(
-        sha256_hex(b""),
-        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    );
-    assert_eq!(
-        sha256_hex(b"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"),
-        "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1"
-    );
-    assert_eq!(
-        sha256_hex(&b"a".repeat(1_000_000)),
-        "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"
     );
 }

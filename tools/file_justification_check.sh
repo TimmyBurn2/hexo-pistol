@@ -40,11 +40,21 @@ command -v git >/dev/null || fail "git is not on PATH"
 SOFT_CAP=300
 MARKER='RULE9-JUSTIFICATION:'
 
-# One file's verdict, on stdout: `under`, `justified`, `unjustified`, `empty` or
-# `counted`. Everything this gate knows is in here, so that the seeded self-test
-# below exercises the same function the tracked file set goes through.
+# One file's verdict, on stdout: `under`, `justified`, `unjustified`, `empty`,
+# `counted` or `missing`. Everything this gate knows is in here, so that the
+# seeded self-test below exercises the same function the tracked file set goes
+# through.
 verdict() {
 	local file="$1" lines line why
+	# A tracked file that is not on disk — a rename whose deletion is not staged,
+	# or a checkout mid-operation. Without this the `wc -l` below fails, `lines`
+	# is empty, the `[` test errors, and the file is then misdiagnosed as an
+	# unjustified over-cap file. That is a wrong answer where a named refusal
+	# belongs (CLAUDE.md rule 3), inside the gate that exists to give one.
+	if [ ! -f "$file" ]; then
+		echo "missing"
+		return
+	fi
 	lines="$(wc -l <"$file")"
 	if [ "$lines" -le "$SOFT_CAP" ]; then
 		echo "under"
@@ -101,7 +111,8 @@ expect over_justified.rs justified
 expect over_empty.rs empty
 expect over_counted.rs counted
 expect under.rs under
-echo "file_justification_check: self-test passed on 5 seeded files (cap $SOFT_CAP)"
+expect no_such_file.rs missing
+echo "file_justification_check: self-test passed on 6 seeded cases (cap $SOFT_CAP)"
 
 # --- the tracked file set -------------------------------------------------
 
@@ -117,6 +128,7 @@ while IFS= read -r file; do
 	unjustified) BAD+=("$file: over the cap with no $MARKER comment") ;;
 	empty) BAD+=("$file: $MARKER carries no why") ;;
 	counted) BAD+=("$file: $MARKER states a line count, and counts are derived") ;;
+	missing) BAD+=("$file: tracked by git but not on disk; stage the deletion or restore it") ;;
 	esac
 done < <(git ls-files '*.rs')
 
