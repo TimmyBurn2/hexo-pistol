@@ -30,18 +30,42 @@ fn dependency_names(manifest: &str) -> Vec<String> {
     for raw in manifest.lines() {
         let line = raw.trim();
         if line.starts_with('[') {
+            // TOML allows whitespace inside a header, so the spellings are
+            // compared with it removed rather than one variant at a time.
+            let header: String = line.chars().filter(|c| !c.is_whitespace()).collect();
             // A dependency has two spellings and both count. `[dependencies.x]`
             // names `x` and then holds `version =` and `workspace =` lines that
             // are NOT dependency names, so the section is recorded and the scan
-            // stays off through its body. Without this the table form was a way
-            // to add any dependency and keep every assertion below green, which
-            // is the opposite of what a shape test is for.
-            if let Some(name) = line.strip_prefix("[dependencies.") {
+            // stays off through its body.
+            if let Some(name) = header.strip_prefix("[dependencies.") {
                 names.push(name.trim_end_matches(']').trim_matches('"').to_string());
                 inside = false;
                 continue;
             }
-            inside = line == "[dependencies]";
+            if header == "[dependencies]" {
+                inside = true;
+                continue;
+            }
+            // Anything else that names dependencies is a spelling this scan does
+            // NOT understand — `[target.'cfg(unix)'.dependencies]` is the real
+            // one — and a spelling it does not understand is dependencies it
+            // does not see, which is how a guard acquires a door. Enumerating
+            // spellings is the losing move; refusing the ones it cannot read is
+            // not (CLAUDE.md rule 3). It fires on nothing in this workspace
+            // today, which is the point: it fires the day someone adds one.
+            //
+            // dev- and build-dependencies are excluded deliberately and not by
+            // oversight: they do not ship, so they are not what these tests are
+            // about.
+            let ships =
+                !header.contains("dev-dependencies") && !header.contains("build-dependencies");
+            assert!(
+                !ships || !header.contains("dependencies"),
+                "this scan reads `[dependencies]` and `[dependencies.<name>]`; `{line}` names \
+                 dependencies some other way, and dependencies it cannot read are dependencies \
+                 these tests cannot police"
+            );
+            inside = false;
             continue;
         }
         if !inside || line.is_empty() || line.starts_with('#') {

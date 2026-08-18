@@ -189,3 +189,63 @@ fn a_refused_run_leaves_an_earlier_book_exactly_as_it_was() {
         "a refused run left {leftovers:?} behind"
     );
 }
+
+#[test]
+fn random_openings_binary_refuses_an_out_dir_it_cannot_write_into() {
+    // Three ways the filesystem says no, each of which must be a named refusal
+    // and none of which may leave a book behind. Chosen to be root-safe: a
+    // permission bit stops meaning anything when the tests run as root, but a
+    // directory standing where a file must go stops everyone.
+    let config = committed_config();
+
+    // The out-dir is an existing regular file, so it cannot be created.
+    let occupied = scratch("cli-out-dir-is-a-file").join("in-the-way");
+    std::fs::write(&occupied, b"not a directory").expect("scratch is writable");
+    let output = generate_into(&config, &occupied);
+    assert_eq!(code(&output), 2);
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("cannot create"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    // A directory stands where the staged file must be written.
+    let blocked = scratch("cli-staged-name-taken");
+    std::fs::create_dir(blocked.join(format!("{FILE_NAME}.staged"))).expect("scratch is writable");
+    let output = generate_into(&config, &blocked);
+    assert_eq!(code(&output), 2);
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("cannot write"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        !blocked.join(FILE_NAME).exists(),
+        "a run that could not stage its output still put a book in place"
+    );
+}
+
+#[test]
+fn a_failed_rename_removes_the_file_it_staged() {
+    // The one branch of this binary that no other test reaches: the `let _ =`
+    // cleanup after a rename that failed. A directory standing at the book's
+    // own name lets the staged write succeed and the rename fail, which is the
+    // only way to get here. What must not survive is the staged file — a
+    // half-finished output left beside a name that does not exist yet is the
+    // thing the staging was for.
+    let out = scratch("cli-rename-blocked");
+    let staged = out.join(format!("{FILE_NAME}.staged"));
+    std::fs::create_dir(out.join(FILE_NAME)).expect("scratch is writable");
+
+    let output = generate_into(&committed_config(), &out);
+    assert_eq!(code(&output), 2);
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("cannot put"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        !staged.exists(),
+        "the staged file outlived the run that could not put it in place"
+    );
+}
