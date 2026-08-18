@@ -18,10 +18,10 @@
 //! window: the research report parks each of those behind an SPRT the arena
 //! cannot run yet (docs/ROADMAP.md, Stage 1 and Stage 4).
 //!
-//! # Why this file is over the soft cap (CLAUDE.md rule 9)
+//! # RULE9-JUSTIFICATION: `visit` is one recursion and splitting it would not
+//! reduce what a reader has to hold (CLAUDE.md rule 9).
 //!
-//! `visit` is one recursion and splitting it would not reduce what a reader has
-//! to hold. Its parts are not independent: the window a child inherits depends
+//! Its parts are not independent: the window a child inherits depends
 //! on whether the ply was the mover's second stone or the opponent's reply, the
 //! table's bound depends on the alpha it started with, the abort path has to
 //! unwind through every one of them without a result being used, and the

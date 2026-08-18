@@ -36,11 +36,15 @@ echo "search_oracle_check: the always-on tier, in release"
 cargo test --release --locked --package pistol-search --test search_oracle_tests -- --nocapture ||
 	fail "the search and the reference disagree at depths 1 and 2"
 
-# The universe and the refusals: what the agreement assertions stand on. Split
-# from the file above for CLAUDE.md rule 9's soft cap, not because it is a
-# different gate, so it runs here too.
+# The universe and the refusals: what the agreement assertions stand on. And the
+# reference's enumeration checking itself. Split from the file above for
+# CLAUDE.md rule 9's soft cap, not because they are different gates, so they run
+# here too.
 cargo test --release --locked --package pistol-search --test search_oracle_universe_tests ||
 	fail "the reference's universe or its refusals are not the search's"
+
+cargo test --release --locked --package pistol-search --test search_oracle_dedupe_tests ||
+	fail "the reference's deduped enumeration is not its both-orderings enumeration"
 
 # A ride-along, and not an oracle assertion: `[profile.release] overflow-checks =
 # true` is a flag that reverts silently, and its test has to run in the profile

@@ -21,10 +21,10 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 
 # First because it is instant and needs no build: fastest possible feedback
 # (docs/decisions.md D-30).
-step "gate 1/10: cargo fmt --all --check"
+step "gate 1/11: cargo fmt --all --check"
 cargo fmt --all --check || fail "formatting: run \`cargo fmt --all\`"
 
-step "gate 2/10: build from the git-tracked file set"
+step "gate 2/11: build from the git-tracked file set"
 # The point of this gate is to catch a build that depends on a file nobody
 # tracked. The tracked set is the git index: it equals HEAD on a fresh checkout,
 # and equals the about-to-be-committed tree when work is staged, so the gate
@@ -39,30 +39,30 @@ echo "ci: building $(git ls-files | wc -l) tracked files in $WORK/repo"
 rm -rf "$WORK"
 trap - EXIT
 
-step "gate 3/10: cargo test --workspace --locked"
+step "gate 3/11: cargo test --workspace --locked"
 cargo test --workspace --locked || fail "tests"
 
 # --all-targets so tests and examples are linted too, which is strictly more
 # than CLAUDE.md asks for and costs nothing.
-step "gate 4/10: cargo clippy --workspace --all-targets -- -D clippy::all"
+step "gate 4/11: cargo clippy --workspace --all-targets -- -D clippy::all"
 cargo clippy --workspace --all-targets --locked -- -D clippy::all || fail "clippy"
 
-step "gate 5/10: artifact rejection"
+step "gate 5/11: artifact rejection"
 tools/artifact_check.sh || fail "artifact check"
 
-step "gate 6/10: config validation"
+step "gate 6/11: config validation"
 tools/config_check.sh || fail "config check"
 
-step "gate 7/10: perft oracle"
+step "gate 7/11: perft oracle"
 tools/perft_check.sh || fail "perft oracle"
 
 # The determinism law's executable form (CLAUDE.md rule 4, docs/decisions.md D-7).
 # It runs last of the two engine gates because it is the slowest: two processes
 # over the whole sha-pinned fixture set at two budgets.
-step "gate 8/10: tactical fixture at its pre-registered threshold"
+step "gate 8/11: tactical fixture at its pre-registered threshold"
 tools/tactical_check.sh || fail "tactical fixture"
 
-step "gate 9/10: cross-process determinism"
+step "gate 9/11: cross-process determinism"
 tools/determinism.sh || fail "determinism"
 
 # The search's oracle, and the last of the correctness gates because it is the
@@ -71,15 +71,13 @@ tools/determinism.sh || fail "determinism"
 # determinism gate for the same reason that one runs after the tactical gate —
 # the cheapest thing that can fail should fail first (docs/decisions.md D-106,
 # D-120).
-step "gate 10/10: differential search oracle"
+step "gate 10/11: differential search oracle"
 tools/search_oracle_check.sh || fail "search oracle"
 
-# Gates CLAUDE.md names that have nothing to run against yet. They are listed
-# here, and not silently absent, so that adding the work package that creates
-# them also means deleting its line from this list.
-printf '\n=== pending gates (nothing to run yet)\n'
-echo "  file-justification check — OWED: a file now exceeds the soft cap and"
-echo "    carries its why-justification by hand (crates/pistol-search/src/pvs.rs)."
-echo "    Mechanizing it needs a marker convention (docs/decisions.md D-118)."
+# CLAUDE.md rule 9's soft cap. Last because it is the only gate that reads the
+# tracked files rather than building them, so it costs nothing to put it where a
+# reader looks for the summary (docs/decisions.md D-131).
+step "gate 11/11: file-justification check"
+tools/file_justification_check.sh || fail "file justification"
 
 printf '\nci: all gates passed\n'
