@@ -29,9 +29,9 @@ than a failure (CLAUDE.md rule 5).
 
 ## Stage 1 — Tactical core
 
-Work-package cut of record, in this order (docs/decisions.md D-117; a cut that
-moves is an amendment on that line, never a silent reorder here). Each WP gets
-its own prompt and names its own gates there.
+Work-package cut of record, in this order (docs/decisions.md D-117, amended by
+D-133; a cut that moves is an amendment on those lines, never a silent reorder
+here). Each WP gets its own prompt and names its own gates there.
 
 **WP-1.1 — differential search oracle** (D-106). A full-width negamax reference
 in the pistol-search test tree: the search's equivalent of the brute-force
@@ -42,7 +42,14 @@ soundness, so a pruning commit that quietly changed the value of the tree would
 pass one. Two reviewers each built such a reference ad hoc and each found zero
 divergences, so this is coverage that persists, not a suspected defect.
 
-**WP-1.2 — minimal pistol-arena.** Paired openings, GSPRT, distinct-game
+**WP-1.2a — opening corpus extraction and fixture curation.** The positions
+the arena plays from, and the curation that makes them a corpus rather than a
+list: paired-opening selection, balance, and the sha-pinned fixture form the
+runner reads. Cut from WP-1.2 because it is data work with no runner in it,
+and a work package that is half corpus and half harness lands neither under
+review (docs/decisions.md D-133).
+
+**WP-1.2b — minimal pistol-arena.** Paired openings, GSPRT, distinct-game
 dedupe, per-side compute accounting. A deviation from the report, which parks
 the harness in Stage 5: Hard Rule 6 makes SPRT the judge of every Stage-1
 change, so the judge must exist before the first defendant.
