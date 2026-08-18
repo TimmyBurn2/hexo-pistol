@@ -10,6 +10,14 @@
 //! never see.
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
+pub mod agreement;
+pub mod fixture_text;
+pub mod fixtures;
+pub mod playouts;
+pub mod ref_score;
+pub mod reference;
+pub mod reference_walk;
+
 use std::path::PathBuf;
 
 use pistol_core::{Axis, Coord, GameState, Player};
