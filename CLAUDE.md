@@ -135,3 +135,5 @@ session 1, changed only by ADR).
   `cargo test --workspace --locked` + clippy (`-D clippy::all`); perft oracle;
   determinism self-test; artifact rejection; config validation; file-justification
   check.
+- A gate or test claim in any report cites the gate's own log output, never a
+  wrapper's exit status.
