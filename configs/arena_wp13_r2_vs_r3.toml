@@ -29,12 +29,24 @@ openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
 
 # The WHOLE book, which is also this run's game cap: every opening is exactly
 # one pair, so the cap is twice this and is derived rather than stated again
-# (docs/decisions.md D-157). 500 pairs is the largest sample this book can
-# supply and therefore the run's resolution: the reported `ci95` is
+# (docs/decisions.md D-157).
+#
+# 2000 AND NOT 500, because the cap IS the design's error rates and 500 could
+# not deliver the ones the `[sprt]` block declares. The LLR needs 569 pairs to
+# reach a boundary on drift alone at these bounds; a 500-pair book ran out
+# first, achieving a measured power of 0.569 against a declared beta of 0.05.
+# The book was extended to 2000 openings for this reason and the committed 500
+# are its first 500 lines byte for byte (docs/decisions.md D-187). At this cap
+# the same bounds achieve alpha 0.049 and power 0.945, with 0.7% inconclusive.
+#
+# It is not four times the compute: the sequential test stops when it has an
+# answer, so the EXPECTED run is about 520 pairs either way and the cap binds
+# only on the runs that need it.
+#
+# The run's resolution at the cap: `ci95` is
 # 1.96 / (NELO_TO_T * sqrt(2) * sqrt(pairs)), a function of the pair count
-# alone, which is +/-21.5 normalized Elo here. That number is why `elo1` below
-# is 25 and not the research report's 3-5 — see the pre-registration.
-openings_take = 500
+# alone, so +/-10.8 normalized Elo at 2000 pairs against +/-21.5 at 500.
+openings_take = 2000
 
 # An evaluation horizon, never a game rule (game rule 6, D-157). Pre-registered
 # rather than left to taste because capped games are not inert in the statistic:
@@ -44,18 +56,25 @@ openings_take = 500
 # on nothing; `capped_fraction` is reported and will say whether it did.
 turn_cap = 40
 
-# The containment ceiling this crate's RED-TEAM round cleared (D-174): the
-# concurrency surface above four workers is explicitly NOT cleared, and a
-# strength claim is not the place to explore it. The verdict block is
-# worker-invariant for a run that completes (D-161), so this costs the result
-# nothing.
+# Four, and the clearance is WP-1.3's own RED-TEAM round rather than D-174.
+# D-174 does not say four workers is cleared — it lists the concurrency surface
+# under "NOT reached, and therefore not cleared" and predicts that WP-1.3's
+# first full-book run would motivate the pass that clears it. It did: that round
+# ran the full 1591-opening book with two different engines through a real early
+# stop and got byte-identical verdict blocks at 1, 2, 4 and 8 workers, which is
+# D-161's invariance claim tested at this experiment's worker count and scale.
+# Nothing in this repository had run the arena above two workers before it.
 n_workers = 4
 
 # Liveness only: it can end a run and it can never produce a game result
-# (D-159). Two minutes against a worst single search of about 2.9 s in the
-# calibration probe at this budget, single-threaded — roughly forty times the
-# worst observed turn, which is the margin four contending workers and a
-# late-game position are allowed to want.
+# (D-159). Two minutes against a worst single search of 5.1 s over the whole
+# 24-position bench fixture at this budget, single-threaded — roughly
+# twenty-four times the worst observed turn, which is the margin four contending
+# workers and a late-game position are allowed to want. The earlier basis for
+# this key said 2.9 s and forty times; that was the worst of an eight-position
+# probe, not of the fixture, and the number it justified is unchanged.
+# Liveness only, never an adjudication (D-159). Two minutes against a worst
+# single search of 5.1 s over the whole bench fixture at this budget.
 hang_timeout_ms = 120000
 
 [budget]
@@ -69,26 +88,49 @@ hang_timeout_ms = 120000
 # rather than none (25 000 completes one iteration and no more; 100 000 costs
 # 48 s per game). The probe is not part of the sample.
 #
-# What node-matching does and does not buy is stated here rather than assumed:
-# the first deepening iteration is not interruptible by design (D-74), so a
-# position whose depth-1 search costs more than the budget spends more — up to
-# 104 448 nodes against a 25 000 budget in the probe. Both sides are held to the
-# same cap, and the per-side `compute` lines report what each actually spent.
+# What node-matching does and does not buy is stated here rather than assumed,
+# and it was measured across the whole bench fixture at THIS budget rather than
+# reasoned about. The cap binds identically on both arms in 22 of 24 positions;
+# radius 3 exceeds it in 2 (104 448 and 54 272 nodes against a 50 176 cap)
+# because the first deepening iteration is not interruptible by design (D-74),
+# and radius 2 exceeds it in none. So the arms are node-matched almost
+# everywhere, and where they are not the overshoot favours radius 3.
+#
+# What the same nodes BUY differs sharply, and that is the mechanism under test
+# rather than a confound: radius 3 completes a second turn-iteration in 6 of the
+# 24 positions and radius 2 in 17. A depth-1 iteration searches the mover's own
+# turn only, so in most positions radius 3 chooses without seeing a reply. The
+# per-side `compute` lines report nodes and searches; the per-game `depth_a` and
+# `depth_b` fields carry the depth distribution, because the run-level `deepest`
+# is a maximum and would hide it.
 kind = "nodes"
 value = 50000
 
 [sprt]
 # Normalized Elo, alpha = beta = 0.05 per the research report's Deliverable 4.
 #
-# elo1 = 25 DEVIATES from that deliverable's suggested 3-5, deliberately and for
-# an arithmetic reason: at the 500 pairs this book supplies, the report's own
-# `games ~= 640000/elo1^2` guidance solves to elo1 = 25.3, and the interval the
-# run will report is +/-21.5 normalized Elo. An elo1 of 5 would put a verdict
-# about a 5-Elo difference beside an interval four times wider, and could accept
-# neither hypothesis inside the book unless the true difference exceeded about
-# 70 Elo. At 25: H1 needs an observed +26.7, H0 an observed -1.7, and a true tie
-# runs to the cap and reports the interval instead. The full derivation and the
-# rejected alternatives are in the pre-registration.
+# elo1 = 25 DEVIATES from that deliverable's suggested 3-5, deliberately: at 3-5
+# no sample this project can draw resolves anything — inside even a 2000-pair
+# book an elo1 of 5 reaches neither boundary at any truth, measured.
+#
+# THE DERIVATION THAT FIRST PRODUCED 25 WAS WRONG AND IS CORRECTED HERE. It read
+# the report's `games ~= 640000/elo1^2` as a power formula; it is not one. That
+# expression sizes the sample at which the LLR's EXPECTED value first reaches a
+# boundary — the run has crossed roughly half the time there — so solving it at
+# the book size chose a design with about 50% power by construction. Measured at
+# 500 pairs: power 0.569 against a declared beta of 0.05.
+#
+# 25 survives the correction; the CAP is what had to move. The honest statement
+# of this design, simulated on this crate's own `Sample`/`crossing` over 40 000
+# runs per truth at a 0.5 decisive-pair fraction:
+#
+#            truth      P(H1)   P(H0)   P(inconclusive)   mean pairs
+#            0 nElo     0.049   0.944       0.007             521
+#          +25 nElo     0.945   0.048       0.007             520
+#          -25 nElo     0.049   0.945       0.006             518
+#          +50 nElo     1.000   0.000       0.000             191
+#
+# so alpha and beta are delivered at this cap rather than merely declared.
 elo0 = 0.0
 elo1 = 25.0
 alpha = 0.05

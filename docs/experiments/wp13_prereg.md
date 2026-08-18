@@ -1,384 +1,459 @@
-# WP-1.3 — pre-registration
+# WP-1.3 — pre-registration (revision 2)
 
 Filled from the operator's WP-1.3 runbook and committed **before the first game
 and before the first profile**. Every blank the runbook left is filled here, and
-so are four the runbook did not have (§7). Nothing below moves afterwards: an
-inconclusive result is a result, and a threshold changed after the numbers are in
-is not a smaller experiment, it is no experiment. Changing anything here means a
-new pre-registration commit and a re-run, never an edit to this one.
+so are five the runbook did not have (§7). Nothing below moves once Run 3a's
+first game is played: an inconclusive result is a result, and a threshold changed
+after the numbers are in is not a smaller experiment, it is no experiment.
 
-**The review window is open until the first game of Run 1.** This document is
-committed before its own REVIEW-design round, because the runbook requires it
-committed before any game and a review cannot attack what is not written down.
-Until that first game a fresh-context reviewer may still overturn any choice
-below — which is precisely what happened to WP-1.2b's pre-registered verdict unit
-(D-154) — and the overturning is a new pre-registration commit. From the first
-game on, nothing here moves.
+**This is revision 2, and revision 1 was never run.** It supersedes the
+pre-registration committed at `23f14f0` after three fresh-context reviews
+attacked it — two REVIEW-design rounds and a RED-TEAM round — exactly as §0 of
+that document invited. No game and no profile was run under revision 1; the
+review window it opened is what this revision came through, and it closes at Run
+3a's first game. Changing anything after that means a new pre-registration and a
+re-run, never an edit.
 
-- **Measured revision:** `eb6ea932098e22ab29957d2b1798471169256d25` (`eb6ea93`),
-  branch `dev`, tree clean. That is the engine, the fixtures and the tooling every
-  number in §1 and §2 was produced with, and the tree the run configs were written
-  against.
-- **Named revision for review:** the commit that adds this file and the four run
-  configs, directly on top of `eb6ea93` — `git log -1 --format=%H --
-  docs/experiments/wp13_prereg.md`. A reviewer states that SHA and whether it
-  still matches HEAD (CLAUDE.md, Process).
+- **Measured revision:** `eb6ea93` for §1 and for §2b; `23f14f0` for §2a's
+  radius-2 columns and for §2c's per-arm measurements, because
+  `configs/instrument_r2_v0.toml` did not exist before that commit. Revision 1's
+  header claimed all of §1 and §2 for `eb6ea93` and was wrong on that point.
+- **Named revision for review:** the commit that carries this file —
+  `git log -1 --format=%H -- docs/experiments/wp13_prereg.md`.
 - **Date:** 2026-08-18.
-- **Machine:** AMD Ryzen 7 3700X, 8 cores / 16 threads, Linux 7.1.8-arch1-3.
-  Every number in §2 and every projection in §3 is this machine's.
-- **Build:** `cargo build --release --locked`, i.e. the committed `[profile.release]`
-  with `overflow-checks = true` (docs/decisions.md D-127). That IS the deployment
-  build; no run below uses `release-checked` or a hand-edited profile.
-- **Recorded as:** docs/decisions.md D-186.
+- **Machine:** AMD Ryzen 7 3700X, 8 cores / 16 threads, 46 GB RAM, Linux
+  7.1.8-arch1-3. Four workers hold two engines each at `tt_bytes = 268435456`,
+  so about 2 GiB resident against 19 GiB available — checked, because an
+  OOM-killed child abandons a run rather than forfeiting it.
+- **Build:** `cargo build --release --locked` — the committed `[profile.release]`
+  with `overflow-checks = true` (D-127). That IS the deployment build.
+- **Recorded as:** D-186, amended by D-188. The book this run plays is D-187.
 
-Run configs are committed with this document, because a pre-registration whose
-numbers live only in prose is re-typed into TOML afterwards, which is the gap it
-exists to close:
-
-| run | arena config | engines |
-|---|---|---|
-| 1 — r2 vs r3 | `configs/arena_wp13_r2_vs_r3.toml` | `configs/instrument_r2_v0.toml` vs `configs/instrument_v0.toml` |
-| 3a — fairness, primary book | `configs/arena_wp13_fair_random.toml` | `configs/instrument_v0.toml` both seats |
-| 3b — fairness, corpus book | `configs/arena_wp13_fair_corpus.toml` | `configs/instrument_v0.toml` both seats |
-
-Run 2 has no arena config: it is a profile, and its driver is in §5.
+| run | order | arena config | engines |
+|---|---|---|---|
+| 3a — fairness + determinism gate | **first** | `configs/arena_wp13_fair_random.toml` | `instrument_v0` both seats |
+| 1 — r2 vs r3 | second | `configs/arena_wp13_r2_vs_r3.toml` | `instrument_r2_v0` (slot A) vs `instrument_v0` |
+| 3b — fairness, corpus book | third | `configs/arena_wp13_fair_corpus.toml` | `instrument_v0` both seats |
+| 2 — flamegraph | fourth | none; §5 is the driver | `instrument_v0` (radius 3), pinned |
 
 ---
 
-## 1. Run 0 — smoke. COMPLETE, no anomaly, WP-1.3 proceeds.
+## 0. What the reviews changed
 
-Not a measurement. It answers one question — does the tool work on this hardware
-— and the runbook makes any anomaly a full stop.
+Recorded because a pre-registration that quietly replaced its predecessor would
+be worth less than one that never existed.
 
-**`tools/arena_smoke.sh`**, from its own log output (docs/decisions.md D-185, not
-an exit status):
+1. **The design was underpowered and said the opposite.** At the 500-opening book
+   revision 1 named, `alpha = beta = 0.05` achieved α = 0.030 and **power 0.569**
+   against its own alternative. The book is extended to 2000 openings (D-187) and
+   the same bounds now achieve α = 0.049 and power 0.945 (§3).
+2. **`640000/elo1²` is not a power formula.** Revision 1's central derivation read
+   an expected-sample heuristic as one. The corrected reasoning is in §3; D-188
+   amends D-186, which carried it into the append-only log.
+3. **A crossing could fire on ten pairs.** §3 now sets a 100-pair floor on the H1
+   *action*.
+4. **D-174 was miscited.** Revision 1 said four workers were "the ceiling D-174's
+   RED-TEAM round cleared". D-174 lists the concurrency surface under "NOT
+   reached, and therefore not cleared". WP-1.3's own RED-TEAM round then cleared
+   1, 2, 4 and 8 workers over the full corpus book through a real early stop, and
+   that is what §3 now cites. Nothing in this repository had run the arena above
+   two workers before it.
+5. **A promised reporting field does not exist.** Revision 1 said the eval weight
+   table's digest stood in for Deliverable 4's net hash. Nothing digests it, and
+   two engines differing only in that file produce byte-identical provenance
+   (§3, §9).
+6. **The profile's H1 target is inlined away**, and revision 1's fallback
+   double-counted with H2 (§5).
+7. **Run 2's engine config was never named** (§5), and Run 3 had no forfeit
+   clause (§6).
+8. Plus corrections to the wall-clock reading, the first-player claim, the
+   `hang_timeout_ms` basis, the depth asymmetry, the "pooled"/"inclusive"
+   definitions, `ball_offsets`, an off-by-one (14 218 pairs, not 14 217), and the run order.
+
+## 1. Run 0 — smoke. COMPLETE, no anomaly.
+
+Not a measurement. `tools/arena_smoke.sh`, from the gate's own log output
+(D-185):
 
 ```
 arena_smoke: ok — 8 games over 4 openings, distinct-n 4, verdict inconclusive_degenerate,
 arena_smoke:      three runs agree on the verdict block at 1 and 2 workers
 ```
 
-**Ten-opening paired self-match of the committed config, one worker**, at 25 000
-nodes (the budget was not yet chosen; this run is what began choosing it):
-
-```
-n 20  distinct-n 10  (10 duplicate games)
-10 W / 10 L / 0 capped for a  (capped fraction 0.000)
-pair outcomes  p0 0 p1 0 p2 10 p3 0 p4 0  (10 pairs)
-LLR pair  none (degenerate sample)
-compute a: 1149403 nodes, 5245 ms, 52 searches, deepest 1 turns
-compute b: 1149403 nodes, 5242 ms, 52 searches, deepest 1 turns
-wall 11753 ms at 1 workers
-VERDICT inconclusive_degenerate
-```
-
-Every one of those is the value two identical deterministic engines must
-produce: both games of a pair are the same game, so `distinct_n` is half of `n`,
-every pair is 1-1, and no likelihood ratio is defined (docs/decisions.md D-156).
-Both sides spent the identical node count. **No anomaly. Run 1 is unblocked.**
+Ten-opening paired self-match of the committed config, one worker, at 25 000
+nodes: `n 20`, `distinct-n 10`, all ten pairs 1-1, both sides on identical node
+counts, `inconclusive_degenerate`. Every one of those is the value two identical
+deterministic engines must produce. **This run is unaffected by D-187's extension
+of the book**, because the ten openings it played are the book's first ten and
+those bytes did not change.
 
 ## 2. The calibration probe — NOT part of any sample
 
-The runbook requires the node budget to be picked by a probe and the probe to be
-recorded. It is recorded here in full, and no game or sample from it enters any
-result. It ran at `eb6ea93`, release, one worker.
-
 ### 2a. Per-move cost, `bench_positions_v1.txt`, median of 4 positions per band
 
-| budget | r3, 15 stones | r3, 35 stones | r2, 15 stones | r2, 35 stones |
+| budget | r3, 15 st | r3, 35 st | r2, 15 st | r2, 35 st |
 |---|---|---|---|---|
 | 25 000 | 172 ms | 119 ms | 482 ms | 400 ms |
-| 50 000 | 1477 ms | 275 ms | 1163 ms | 1838 ms |
+| **50 000** | 1477 ms | 275 ms | 1163 ms | 1838 ms |
 | 100 000 | 3413 ms | 5560 ms | 2094 ms | 3478 ms |
 | 200 000 | 7338 ms | 11135 ms | 3160 ms | 6538 ms |
 
-### 2b. Whole games, ten openings of the primary book, self-match, one worker
+**The ordering is not monotone in either direction**, and §3's second interval
+reading depends on knowing that: at 50 000 nodes radius 2 costs 6.7× radius 3's
+wall-clock in the 35-stone band, while at 100 000 and 200 000 it is uniformly
+cheaper. Equal nodes is not equal time, and which way it falls is a property of
+which iteration completes.
 
-| budget | wall/game | per side/game | deepest depth reached | game length | capped | first player |
+### 2b. Whole games, ten openings, self-match, one worker
+
+| budget | wall/game | per side | deepest reached | game length | capped | first player |
 |---|---|---|---|---|---|---|
-| 25 000 | 0.59 s | 0.26 s | 1 turn in 20 of 20 games | 7–13 turns | 0 | 8 of 20 |
-| 50 000 | 4.9 s | 2.4 s | 2 turns in 5 of 20 games | 7–13 turns | 0 | 8 of 20 |
-| 100 000 | 48.4 s | ~24 s | 2 turns in 20 of 20 games | 10–29 turns | 0 | 12 of 20 |
+| 25 000 | 0.59 s | 0.26 s | 1 turn in 20/20 games | 7–13 turns | 0 | 8 of 20 |
+| 50 000 | 4.9 s | 2.4 s | 2 turns in 5/20 games | 7–13 turns | 0 | 8 of 20 |
+| 100 000 | 48.4 s | ~24 s | 2 turns in 20/20 games | 10–29 turns | 0 | 12 of 20 |
 
-The 100 000 row shared the machine with the 50 000 row for about 97 s of its
-969 s, so it is a slight over-estimate. It is far enough from the criterion that
-the contention does not change what it decides.
+### 2c. What else the probe measured
 
-### 2c. What the probe found, beyond the budget
-
-1. **The budget is a cliff, not a dial.** Doubling nodes costs 8× the time,
-   because what the extra nodes buy is *completing the next turn-iteration*, and
-   an iteration the budget interrupts is discarded (`search.rs`).
-2. **A fixed-node budget has a floor**, and it is D-74's deliberate design rather
-   than a defect: `search.rs:150` passes `abortable = depth_turns > 1`, so the
-   first deepening iteration cannot be interrupted and a position whose depth-1
-   search costs more than the budget spends more. Measured: 104 448 nodes against
-   a 25 000 budget. Node-matching is therefore approximate, and the per-side
-   `compute` lines are what make the real spend visible.
-3. **The cap is the first multiple of 1024 at or past the budget** — the pinned
-   `NODE_CHECK_INTERVAL` (`stop.rs`) — so "50 000 nodes" is 50 176 in the report.
-4. **nps collapses from ~215 000 to 10 000–50 000 exactly when a search reaches
-   depth 2**, i.e. a large share of the time is not counted as nodes. That is a
-   prior consistent with D-114's H1. **H1's threshold in §5 was NOT moved because
-   of it** and stands at the runbook's recommended value; a profile is what
-   adjudicates D-114, not this table.
-5. **The first-player win rate moved with the budget** (8/20, 8/20, 12/20). Run 3
-   therefore measures a property of the instrument, not of the game, and its ADR
-   lines must say so.
+1. **The budget is a cliff, not a dial.** Doubling nodes costs ~8× the time,
+   because what the extra nodes buy is completing the next turn-iteration, and an
+   interrupted iteration is discarded.
+2. **A fixed-node budget has a floor** — D-74's deliberate design, since
+   `search.rs:150` passes `abortable = depth_turns > 1`. Measured over the whole
+   24-position fixture **at this run's budget**: the 50 176-node cap binds
+   identically on both arms in 22 of 24 positions; radius 3 exceeds it in two
+   (104 448 and 54 272 nodes) and radius 2 in none.
+3. **The same nodes buy very different depth.** Radius 3 completes a second
+   turn-iteration in **6 of 24** positions, radius 2 in **17 of 24**. A depth-1
+   iteration searches the mover's own turn only, so in most positions radius 3
+   chooses without seeing a reply. This is the mechanism under test — a narrower
+   candidate set is more depth per node — and not a confound, but it is a
+   contrast and §4 states it rather than pooling it.
+4. **The cap is the next multiple of 1024** (`NODE_CHECK_INTERVAL`), so "50 000
+   nodes" is 50 176.
+5. **nps collapses from ~215 000 to 10 000–50 000 when a search reaches depth 2**,
+   i.e. much of the time is not counted as nodes — a prior consistent with
+   D-114's H1. **§5's thresholds were not moved because of it.**
+6. **The worst single search at this budget is 5.1 s**, over the whole fixture,
+   single-threaded. Revision 1 said 2.9 s, which was the worst of the eight-position
+   probe rather than of the fixture.
+7. **The first-player rate is NOT known to move with the budget.** Revision 1
+   called the 8/20, 8/20, 12/20 sequence "measured". It is not: those are ten
+   *distinct* games each (both games of a pair are the same game), the three rows
+   are paired on the same openings, and no split of a net-2 shift over ten paired
+   openings reaches p < 0.5. The caution survives — a first-player rate must be
+   quoted with its budget — but the observation does not.
 
 ## 3. Run 1 — r2 vs r3, fixed-node SPRT
 
-**Book.** `crates/pistol-cli/tests/fixtures/random_openings_v1.txt`, the primary
-SPRT book. *The runbook cites "A-2 ADR" for this; there is no A-numbered ADR in
-this project — the ruling is **D-175**, and D-183 pins the cross-crate load. This
-document cites D-175.* The arena verifies the file against its own in-band body
-digest before a game is played (D-148).
+**Book.** `random_openings_v1.txt`, the primary SPRT book (**D-175**, extended to
+2000 openings by D-187 — the runbook's "A-2 ADR" does not exist). Whole-file
+digest `895a05ed…`, in-band body digest `7b1b3a99…`, verified by the arena
+before a game is played (D-148, D-183).
 
-**Budget.** Fixed **nodes = 50 000**. Chosen from §2: 2.4 s per side per game
-meets the runbook's single-digit-seconds-per-side criterion with room, and a
-second iteration completes in some games rather than in none of them (25 000) or
-at 10× the cost (100 000). Projected run: ~25 min at 4 workers, from §2b's 4.9 s per game — an order of
-magnitude rather than a promise, since §2b measured radius 3 against itself and
-this run pairs it with radius 2, whose per-move cost differs.
-
-**Engines.** A = `configs/instrument_r2_v0.toml` (radius 2). B =
-`configs/instrument_v0.toml` (radius 3, the committed config). The two documents
-differ in exactly one value — verified by diffing them with comments stripped:
-`radius = 3` against `radius = 2`, and nothing else.
+**Budget.** Fixed **nodes = 50 000** (§2). **Engines.** A =
+`instrument_r2_v0.toml` (radius 2), B = `instrument_v0.toml` (radius 3). The two
+differ in exactly one value, verified by a comment-stripped diff.
 
 **THE SLOT ASSIGNMENT IS THE REVERSE OF THE RUNBOOK'S LETTERING, DELIBERATELY.**
-The runbook says "A = committed config (radius 3), B = ... radius 2" with
-"H1 = B (r2) is stronger". The arena's statistic is **engine A's** score —
-`score::game_sample` builds the sample from `wins_a / capped / losses_a` — so
-`elo1 > 0` states "A is stronger than B" and can state nothing else. Had radius 3
-gone in slot A, the tool would have tested the opposite hypothesis to the one the
-runbook pre-registered, and the error would have shown up only as a sign nobody
-questioned. **The pre-registered direction is what binds: H1 = "radius 2 is
-stronger than radius 3", and the radius-2 config therefore sits in `engine_a`.**
+The arena's statistic is **engine A's** score, so `elo1 > 0` states "A is
+stronger than B" and can state nothing else. All three reviewers traced this
+independently — `record::score_a` → `tally.wins_a` → `Sample::of_pairs` →
+`t_hat` → `crossing` — and RED-TEAM confirmed it empirically by running r2 in
+slot A and getting `nelo_pair +148`, `llr_pair +1.12`, toward H1. The
+pre-registered direction binds: **H1 = "radius 2 is stronger than radius 3"**, so
+radius 2 sits in `engine_a`. (Revision 1 cited `score::game_sample` for this; that
+is the *diagnostic* unit. The verdict runs through `score::pair_sample`. Both are
+A-oriented.)
 
-**Hypotheses.** `elo0 = 0`, **`elo1 = 25`** normalized Elo, `alpha = beta = 0.05`.
-Direction as above.
+**Hypotheses.** `elo0 = 0`, **`elo1 = 25`** normalized Elo, `alpha = beta = 0.05`,
+cap **2000 pairs = 4000 games** (`openings_take = 2000`; the game cap is derived
+as twice it, D-157).
 
-*Why 25 and not the runbook's recommended 5.* The book supplies 500 openings =
-500 pairs = 1000 games, and that is the hard cap (the game cap is derived as
-twice `openings_take`, D-157). Two independent calculations agree on what a
-sample that size can resolve:
+*Why 25, corrected.* Revision 1 argued from the report's `games ≈ 640000/elo1²`
+solved at the book size. **That expression is not a power formula** — it sizes the
+sample at which the LLR's *expected* value first reaches a boundary, where the
+run has crossed roughly half the time. Solving it at the book size therefore
+chose a ~50 %-power design by construction, and the measurement agreed: 0.569.
+What survives is that 3–5 is badly matched to any sample this project can draw,
+though not as badly as revision 1 implied: at elo1 = 5 and this cap, H1 is
+reachable — about 1580 pairs at a truth of +25 nElo — but a true tie can never
+be concluded, since its drift totals −0.41 against a −2.94 bound and would need
+14 218 pairs. A design that can accept H1 and can never accept H0 is not a test.
+25 is the scale at which this instrument can both test and estimate. **The cap is what had to move, not the alternative.**
 
-- The research report's own guidance, `games ≈ 640000/elo1²`, solves to
-  elo1 = 25.3 at 1000 games. At elo1 = 5 it wants 25 600 games — 12 800 openings,
-  25.6× this book.
-- The interval the arena will print. `conclusion.rs::confidence` is
-  `1.96 / (NELO_TO_T · √2 · √pairs)`, **a function of the pair count alone** — the
-  observed scores never enter it, because the estimate is already standardized.
-  At 500 pairs that is **±21.5 normalized Elo**.
+*The achieved operating characteristics*, simulated over 40 000 runs per truth on
+this crate's own `Sample` and `crossing`, at a 0.5 decisive-pair fraction:
 
-At the pair-level GSPRT this crate implements, with `LLR = n·(t₁·t̂ − t₁²/2)` and
-a Wald bound of ±2.9444:
+| truth | P(H1) | P(H0) | P(inconclusive) | mean pairs | mean games |
+|---|---|---|---|---|---|
+| 0 nElo | 0.049 | 0.944 | 0.007 | 521 | 1042 |
+| **+25 nElo** | **0.945** | 0.048 | 0.007 | 520 | 1039 |
+| −25 nElo | 0.049 | 0.945 | 0.006 | 518 | 1037 |
+| +50 nElo | 1.000 | 0.000 | 0.000 | 191 | 382 |
 
-| elo1 | accepts H1 at observed | accepts H0 at observed | pairs at a true tie |
-|---|---|---|---|
-| 5 | +73.6 nElo | −68.6 nElo | 14 217 (28× the book) |
-| **25** | **+26.7 nElo** | **−1.7 nElo** | **569** |
-| 30 | +26.8 nElo | +3.2 nElo | 395 |
+α and β are now delivered rather than declared. The four-fold cap costs almost
+nothing because the test stops when it has an answer: the expected run is ~520
+pairs either way, and the cap binds only where it is needed. At the cap, `ci95`
+is **±10.8 nElo** (±21.5 at 500), H1 needs an observed +16.1 and H0 an observed
++9.0, and the drift boundary at 569 pairs is now *inside* the cap.
 
-elo1 = 5 would print a verdict about a 5-Elo difference beside an interval four
-times wider, and inside this book could conclude only on a ~70-Elo effect. At 25
-the verdict and the interval tell the same story. **Rejected alternatives**, so
-that this is re-openable rather than re-argued: (a) elo1 = 5 as recommended,
-rejected on the arithmetic above; (b) elo1 = 30, marginally better powered —
-it reaches an H0 verdict at a true tie inside the book — rejected only because 25
-is the value the report's own formula and the reported interval both land on, and
-a bound derived from the instrument is easier to defend than one tuned for its
-own power; (c) regenerate the book at ~12 800 openings so elo1 = 5 is powered,
-rejected as a work package of its own (new fixture, config, regeneration test and
-ADR under D-175/D-177) plus ~3.5 days of games at 4 workers, which is a decision
-for after this run rather than before it.
+**The 100-pair floor on the H1 action.** At `elo1 = 25` the smallest H1 crossing
+is **10 pairs** — 9 swept pairs and one 1-1 — which would be a config change on
+20 games; D-156 declined a `min_pairs_before_stop` when the floor was 33 pairs at
+elo1 = 4–5, and that reasoning does not survive the larger alternative. So: **an
+H1 crossing on fewer than 100 pairs is reported and is NOT acted on.** It happens
+in 1.8 % of runs at truth +25 and 0.12 % at a true tie. Confirmation cannot be a
+re-run — the engines are deterministic, so the identical config reproduces the
+identical result — and the arena takes a prefix with no offset knob, so the
+pre-registered confirmatory sample is **`openings_v1.txt` at the same budget**, a
+disjoint 1591-opening sample; the config changes only if that run also crosses
+H1. H0 crossings have no floor: they leave the incumbent in place.
 
-**Verdict level.** **Pair.** D-154 already makes this law and the arena hard-codes
-`verdict_unit pair`; the game-level LLR is printed beside it as a diagnostic and
-is not the verdict. Written here because the runbook asked for it in writing.
-
-**Workers.** 4 — the ceiling D-174's RED-TEAM round cleared. Above it the
-concurrency surface is explicitly not cleared, and a strength claim is not where
-to explore it. The verdict block is worker-invariant for a run that completes
-(D-161), so this costs the result nothing.
-
-**Game cap if inconclusive.** **1000 games = 500 pairs = the whole book**, set as
-`openings_take = 500`. This is the largest sample the primary book can supply;
-the runbook's `~640000/elo1²` guidance is unreachable here at any elo1 below 25
-and is what §3's elo1 choice answers instead.
+**Verdict level: pair.** D-154 makes it law and `conclusion.rs` hard-codes
+`verdict_unit pair`. **Workers: 4** — cleared by WP-1.3's own RED-TEAM round (see
+§0.4), not by D-174.
 
 **Outcome handling, pre-committed.**
 
-- **H1 accepted** → radius 2 becomes the committed config, by one config commit
-  and one ADR line. `configs/instrument_r2_v0.toml` stays as the recorded losing
-  arm so the experiment can be re-run.
-- **H0 accepted** → radius 3 stays.
+- **H1 accepted on ≥ 100 pairs** → radius 2 becomes the committed config, by one
+  config commit and one ADR line — **after all four runs are complete** (§8).
+- **H1 accepted on < 100 pairs** → reported as a signal; the confirmatory run
+  above decides.
+- **H0 accepted** → radius 3 stays. The ADR line carries `nelo_pair ± ci95`
+  *and* states what H0 does and does not exclude: at this cap it means "radius 2
+  is not ≥ 25 nElo better", which is weaker than it sounds.
 - **Inconclusive at the cap** → radius 3 stays; the incumbent wins ties. The ADR
-  line still carries `nelo_pair ± ci95`, which makes it a *bounded* null: "the
-  candidate radius is worth less than about ±22 normalized Elo" is a finding, and
-  a useful one given Stage 1's threat-first generator supersedes the radius policy
-  (docs/ROADMAP.md WP-1.5).
+  line carries the interval, making it a bounded null.
 - **`inconclusive_degenerate`** → not expected between two different
-  configurations; if it happens, the run is reported and the cause is found before
-  anything is concluded.
-- **`invalid_forfeit`** → the run is not a measurement (D-158). It is reported,
-  not discarded, and it is re-run only after the forfeit's cause is fixed; the
-  report's `verdict_if_clean` line is read as diagnosis, never as the verdict.
+  configurations; reported, and the cause found before anything is concluded.
+- **`invalid_forfeit`** → not a measurement (D-158). Reported, not discarded, and
+  re-run only after the cause is fixed. **`nelo_pair`, `ci95` and `llr_pair` on
+  such a report include the forfeited pairs**; only `verdict_if_clean` excludes
+  them, so the estimate printed above that line is the polluted one.
+- **An abandoned run** — a hang, an engine exit or a handshake failure — writes
+  `arena_report_aborted` with **no verdict line at all**, and exits 1. It is not a
+  measurement and its completed prefix is not a result: reading one would be
+  optional stopping on a timing-correlated rule. It is re-run in full.
 
-**Reporting fields**, per the research report's Deliverable 4, and where each one
-comes from. The ADR line carries the starred ones; the full report file carries
-all of them.
+**Reporting fields** (Deliverable 4). ADR line carries the starred ones.
 
-| Deliverable 4 field | source |
+| field | source |
 |---|---|
-| engine hashes | `engine_id` / per-side binary and config digests; `experiment_sha256`\* |
-| net hash | none at Stage 0 — the eval is `handcrafted_v0`; the committed weight table's digest stands in |
+| engine hashes | `engine_id`, per-side binary and config digests, `experiment_sha256`\* |
+| net hash | **none, and none stands in.** The eval is `handcrafted_v0`; **nothing in the report identifies `eval_v0_weights.toml` by content** — see §9.1. Provenance is the repository revision plus the directory the run started in |
 | budget mode + value\* | `budget nodes 50000` |
-| hardware, thread count | this document's header; `threads = 1` per engine, `n_workers 4` |
+| hardware, threads | this header; `threads = 1` per engine, `n_workers 4` |
 | book\* | `openings_file` + `openings_body_sha256` |
-| n, n distinct\* | `counts n … distinct_n …` |
-| W/D/L\* | `wins_a`, `capped`, `losses_a` — "D" is *capped*, not a draw; there are no draws (game rule 6) |
-| pentanomial\* | `pentanomial p0 … p4` |
-| Elo ± CI\*, normalized Elo\* | `nelo_pair … ci95 …`, reported in **normalized** Elo and NOT converted to logistic Elo — the two coincide only at σ = ½ |
-| LLR\* | `llr_pair last` (verdict) and `llr_game last` (diagnostic) |
-| first-player win rate | `first_player_wins k of n decided` (Run 3 is the run that exists for it) |
-| per-side compute\* | `compute` lines: nodes, ms, searches, deepest |
+| n, distinct-n\* | `counts n … distinct_n …` (an over-count and a bound, D-163) |
+| W/D/L\* | `wins_a`, `capped`, `losses_a` — "D" is *capped*; there are no draws |
+| pentanomial\*, **decisive pairs**\* | `pentanomial p0 … p4`; the decisive count is `p0+p1+p3+p4` and is quoted beside the estimate — see §4 |
+| Elo ± CI\*, normalized Elo\* | `nelo_pair … ci95 …`, in **normalized** Elo, never converted to logistic |
+| LLR\* | `llr_pair last` (verdict), `llr_game last` (diagnostic) |
+| first-player rate | Run 3 |
+| per-side compute\* | `compute`: nodes, ms, searches, deepest — **plus the per-game `depth_a`/`depth_b` distribution**, since run-level `deepest` is a maximum |
 
-**Two pre-registered readings of the interval**, so neither can be discovered
-afterwards:
+**Two pre-registered readings of the interval.**
 
-1. **`ci95` is anti-conservative at an early stop.** Optional stopping selects on
-   the estimate, so a run that crosses a boundary prints an optimistic interval;
-   it is honest only at the cap. A crossing run's ADR line says so.
-2. **A fixed-node result is not a fixed-time result.** At 50 000 nodes r3 and r2
-   do not cost the same wall-clock (§2a), and the per-side `compute` lines are
-   what show it. If r2 wins on nodes it wins on time too; if r3 wins on nodes, the
-   time picture is the opposite and the ADR line states both.
+1. **`ci95` is anti-conservative at an early stop.** Measured: coverage 0.868 at
+   the sequential stop against 0.978 for runs reaching the cap — about eight
+   points. A crossing run's ADR line says so. It also prints a *wider* interval
+   than ±10.8, because the interval is a function of the pairs actually played.
+2. **A fixed-node result is not a fixed-time result, and the direction is not
+   predictable in advance.** Revision 1 asserted that an r2 node-win would be a
+   time-win too; §2a refutes that at this very budget. **The direction is read off
+   the run's own per-side `compute` ms lines, in whichever way they fall, and
+   nothing is asserted here.**
 
 ## 4. What the pre-registration does not claim
 
-- **1-1 pairs carry no signal.** D-145 measured human openings lopsided, and under
-  determinism a decided opening yields a fixed 1-1 pair. If `pentanomial p2`
-  dominates, the effective sample is below 500 pairs even though `ci95` — which
-  is a function of the pair count alone — does not shrink to say so. The
-  pentanomial line is what reveals it and the ADR line quotes it.
+- **A normalized-Elo bar is set by the run's own tie rate, and that is the axis
+  this experiment is fragile on.** Revision 1 said 1-1 pairs make `ci95`
+  overstate precision. That is wrong and is withdrawn: measured coverage of
+  `nelo_pair ± ci95` is 0.946–0.957 across decisive fractions from 1.0 down to
+  0.02, and if anything the interval is conservative when decisive pairs are
+  sparse. What *is* true is that the same conditional edge maps to wildly
+  different normalized Elo depending on how often the arms differ at all — a
+  radius 2 winning 60 % of the openings where the two differ registers ~50 nElo
+  if they differ everywhere and ~11 nElo if they differ on 5 % of openings. At the
+  extreme, **494 pairs 1-1 plus six openings swept by A crosses H1** (`llr_pair
+  +3.0186`). That is arithmetically correct for a normalized-Elo SPRT and it is
+  why the decisive-pair count is a required ADR field: the verdict is not wrong,
+  but its practical weight is not readable without it.
+- **The arms differ often enough for the run not to be vacuous** — measured, they
+  choose different moves on 9 of 24 bench positions and 7 of 12 in the 15-stone
+  band, which is the regime a 7–13-turn game occupies.
+- **The instrument is shallow, asymmetrically.** §2c.3: radius 3 completes a
+  second iteration in 6 of 24 positions against radius 2's 17. This experiment
+  compares two candidate policies at *that* instrument and does not predict their
+  order at Stage 1 depths.
 - **`distinct_n` is an over-count and a bound, not a census** (D-163).
-- **The instrument is shallow.** At this budget most searches complete one turn of
-  depth and some complete two. This experiment compares two candidate policies at
-  *that* instrument; it does not predict their order at Stage 1 depths, and
-  nothing here licenses that extrapolation.
 
 ## 5. Run 2 — flamegraph, adjudicating D-114's H1 and H2
 
-**Build.** Release, the committed profile, `overflow-checks` on — the deployment
-build, stated because the writeup must. DWARF line tables are added with
-`CARGO_PROFILE_RELEASE_DEBUG=line-tables-only` in the environment: it is not a
-profile edit and does not change codegen, only what the samples can be attributed
-to.
+**Engine config: `configs/instrument_v0.toml` as it stands at THIS commit —
+radius 3 — regardless of Run 1's outcome.** Named because revision 1 named
+everything else and left this blank, while its own H1 action would have rewritten
+"the committed config" underneath it. **Build:** release, committed profile,
+`overflow-checks` on, with `CARGO_PROFILE_RELEASE_DEBUG=line-tables-only` in the
+environment — not a profile edit, and it changes no codegen. **Workload:**
+instrument mode over `bench_positions_v1.txt`, both bands — 12 positions at 15
+stones and 12 in the 35-stone band, of which eleven hold 35 and one holds 31
+(D-146) — at **50 000 nodes**.
 
-**Workload.** Instrument mode, fixed-node runs over
-`crates/pistol-cli/tests/fixtures/bench_positions_v1.txt`, **both bands** — 12
-positions in the 15-stone band and 12 in the 35-stone band, of which eleven hold
-35 stones and one holds 31, because a band does not always reach its centre
-(D-146). D-114 requires two stone counts because candidate cost grows with how
-far apart the stones sit, at **50 000 nodes**, the
-Run-1 value.
+**Driver.** `bench` is unimplemented and stays so (D-14): for each position,
+`newgame`, `position <tail>`, `go nodes 50000`, one `perf record -F 999
+--call-graph dwarf` per band.
 
-**Driver.** `bench` is unimplemented and stays so (D-14), so the workload is
-driven through the line protocol: for each position, `newgame`, `position <tail>`,
-`go nodes 50000`, one `perf record` per band. `perf record -F 999 --call-graph
-dwarf`, and the writeup reports the total sample count so the percentages have an
-*n*.
+**Adjudication, pre-registered.** **Pooled** means the raw sample counts of the
+two `perf.data` files are summed; **inclusive** means the fraction of samples
+whose stack contains the frame. Per-band numbers are reported beside the pooled
+figure; pooling is fixed now so neither band can be chosen afterwards.
 
-**Adjudication rule, pre-registered, on the POOLED two-band sample** (per-band
-numbers are reported beside it; pooling is stated now so that neither band can be
-chosen after the fact):
+- **H1 — ordering evals (D-76) is CONFIRMED at ≥ 20 % of pooled samples.**
+  Revision 1 named `Position::static_score_after`; **that symbol does not exist in
+  this build** (`nm -C target/release/pistol | grep -c static_score_after` → 0),
+  and revision 1's fallback — everything inclusive under `ordering::order` —
+  swept in the `scored` vector's allocation and the sort, which is what H2
+  separately counts, making H1 near-self-confirming. The target is instead the
+  three `Eval` callees, which sit behind `Box<dyn Eval>` (`position.rs:27`) and
+  therefore **cannot be inlined**: `<pistol_eval::handcrafted::HandcraftedV0 as
+  pistol_eval::eval::Eval>::{apply, value, undo}`, counted only on stacks passing
+  through `pistol_search::ordering::order`. DWARF call graphs separate those from
+  the same callees reached via `Position::place` under `pvs::visit`. **H1's figure
+  excludes the sort and the allocations H2 counts.**
+- **H2 — per-node allocation is CONFIRMED at ≥ 10 %** of pooled samples in
+  allocator frames reached from `pistol_search::candidates::candidate_cells`
+  (which allocates per node via `pistol_search::candidates::within_radius` and
+  `pistol_search::candidates::ball_offsets` — **not** `pistol_core::movegen::
+  ball_offsets`, which is the rules' radius-8 generator and a different function
+  on the other side of the distinction rule 2 forbids conflating) or from
+  `ordering::order`'s `scored` vector.
+- **H1 confirmed** unlocks `Eval::delta` (D-110) as its own WP with D-110's oracle
+  test and a rule-5 bench. **H2 confirmed** gets its own pre-registered bench.
+  **Neither** → record the top three and stop. A third hypothesis is a new D-line
+  and a new profile (D-114).
 
-- **H1 — ordering evals (D-76)** is CONFIRMED at **≥ 20 %** of samples
-  attributable to the eval apply/undo roundtrip in move ordering. The target is
-  named exactly rather than described: `pistol_search::position::Position::
-  static_score_after`, which *is* D-76's `apply` → `value` → `undo`, called once
-  per candidate from `ordering::order`. Measured inclusively; if it is inlined
-  into `order`, the inclusive figure under `order` is the attribution and the
-  writeup says so. **This threshold is the runbook's recommendation and was not
-  moved by §2c's nps observation.**
-- **H2 — per-node allocation** is CONFIRMED at **≥ 10 %** of samples in allocator
-  frames reached from `candidates::candidate_cells` (which allocates a fresh
-  `Vec` per node, via `within_radius` and `ball_offsets`) or from
-  `ordering::order` (which allocates its `scored` vector per node).
-- **H1 confirmed** unlocks implementing `Eval::delta` per D-110 — its own work
-  package, with D-110's oracle test and a Hard-Rule-5 bench. **H2 confirmed** gets
-  its own pre-registered bench before any fix. **Neither confirmed** → record the
-  actual top three and stop. No fix lands without a new pre-registration, and a
-  third hypothesis is a new D-line and a new profile, never an addition to this
-  one (D-114).
+**`kernel.perf_event_paranoid` is 2 here**, permitting user-space samples only.
+The profile is attempted at 1; if the operator declines the `sysctl`, H2 is a
+**lower bound**, since allocation cost landing in kernel page-fault handling is
+invisible. The writeup states which happened, and the total sample count per band.
 
-**One machine caveat, stated in advance.** `kernel.perf_event_paranoid` is 2 here,
-which permits user-space samples only. The profile is attempted at 1 (one
-`sysctl`, operator's call); if it is not lowered, the run is user-space-only, and
-H2 is then a **lower bound**, because allocation cost that lands in kernel
-page-fault handling is invisible. The writeup states which of the two happened.
-
-**Artifacts.** SVGs and `perf.data` go to the operator's workbench directory
-outside the repository and are never committed (CLAUDE.md rule 8). One ADR line
-each for H1 and H2.
+**Artifacts** go to the workbench directory outside the repository (§8).
 
 ## 6. Run 3 — fairness (a measurement, not a test)
 
-Self-play of the committed config, 50 000 nodes, 4 workers, **both books**, via
-`configs/arena_wp13_fair_random.toml` (500 openings) and
-`configs/arena_wp13_fair_corpus.toml` (1591 openings). Projected ~1.5 h at 4
-workers for the pair of them.
+Self-play of the committed config at 50 000 nodes, 4 workers, both books.
+
+**Run 3a runs FIRST and is this package's determinism gate.** A self-match is
+*forced* to `inconclusive_degenerate` by the determinism law: both games of a
+pair are the same game with the seats relabelled, so every pair scores 1-1 and no
+LLR is defined (D-156). **A non-degenerate Run 3a is a FULL STOP** — rule 4 would
+be broken, and with it the pair-level verdict unit Run 1 rests on (D-154). It is
+a strictly stronger gate than Run 0's four-opening smoke: same book, budget, turn
+cap and worker count as Run 1. No early stop is possible on a degenerate sample,
+so all 4000 games are played.
 
 Reported per book: `first_player_wins k of n decided`, `distinct_n`,
-`capped_fraction`, per-side compute, and a **Wilson 95 % interval computed on
-DISTINCT games** — the estimator is named now so it is not chosen after the
-numbers: ±4.4 pp at 500 distinct games, ±2.5 pp at 1591 (both at p = ½). One ADR
-line per book. The expected verdict is `inconclusive_degenerate`, which is the
-correct answer for a self-match and not a failure (D-156).
+`capped_fraction`, per-side compute, and a **Wilson 95 % interval on DISTINCT
+games** — the estimator named now, not later: **±2.2 pp** at 2000 distinct games
+(3a), **±2.5 pp** at 1591 (3b), both at p = ½. One ADR line per book.
 
-Three clauses that go in those ADR lines whatever the numbers are:
+Three clauses those lines carry whatever the numbers are:
 
-1. **The rate is a property of the instrument.** §2b measured it moving with the
-   budget — 8/20 at 25 000 and 50 000, 12/20 at 100 000. A first-player rate
-   quoted without its budget is a claim nobody measured.
-2. **The two books do not estimate the same quantity and are never averaged.**
-   3a samples openings uniformly; 3b's openings are the ones humans reached, and
-   D-145 measured those lopsided (first-player rate 0.10–0.91 across classes with
-   ≥10 corpus games). 3b is the first player's advantage *conditioned on a
+1. **The rate is a property of the instrument** and is quoted with its budget.
+   §2c.7 withdraws revision 1's claim that the rate was *measured* to move with
+   the budget, but the caution stands.
+2. **The two books do not estimate the same quantity and are never averaged.** 3a
+   samples openings uniformly; 3b's are the ones humans reached, and D-145
+   measured those lopsided (0.10–0.91 across classes with ≥10 games, 26 of 61
+   outside 0.35–0.65). 3b is the first player's advantage *conditioned on a
    human-reached opening*.
-3. **The sample is the distinct games**, not the games played: identical
-   deterministic engines make both games of a pair the same game.
+3. **The sample is the distinct games**, not the games played.
 
-## 7. Blanks the runbook did not have, filled here
+**A forfeit invalidates the number and the number still prints.** `score::tally`
+counts any non-capped result as `decided`, and a forfeit is a decided result, so
+a forfeited run reports a first-player rate composed of protocol failures on the
+very line this run exists for; only the `forfeits` count and the `invalid_forfeit`
+token, on neighbouring lines, say so. Run 3 takes Run 1's forfeit rule: not a
+measurement, reported rather than discarded, re-run after the cause is found.
+Related: `distinct_n` counts all games while `decided` is the rate's denominator;
+the two coincide only while `capped_fraction` is 0, and if the cap ever binds
+partially the Wilson denominator is stated explicitly in the writeup.
 
-The arena schema requires them, they are not statistically inert, and a
-pre-registration that left them to run time would leave the two liveliest knobs
-unpinned.
+Also expected and not an error: **Run 3's `llr_game` will read far past its
+boundary** while the verdict is correctly `inconclusive_degenerate` — the file
+marks the unit only via `verdict_unit pair`, and D-154 makes the game-level LLR a
+diagnostic.
 
-- **`turn_cap = 40`** (all three runs). Capped games are *not* inert: normalized
-  Elo is variance-normalized, so a mass point at a half shrinks σ and, for a fixed
-  decisive record, accelerates the LLR toward H1 (D-157, which reports the
-  measurement and deliberately does not threshold on it). 40 is three times the
-  longest game §2b saw, across 60 games at three budgets, none of which capped. It
-  is expected to bind on nothing, and `capped_fraction` is reported so that a run
-  in which it did bind cannot be read as one in which it did not.
-- **`hang_timeout_ms = 120000`** (all three runs). Liveness only — it can end a
-  run and can never produce a game result (D-159) — set at roughly forty times the
-  worst single search the probe saw at this budget (2.9 s, single-threaded), which
-  is the margin four contending workers and a late-game position are allowed to
-  want.
-- **The slot assignment**, §3. The runbook's A/B lettering would have inverted the
-  hypothesis.
-- **The `[sprt]` block in the two Run-3 configs**, which is inert and complete
-  because the schema admits no absent key (CLAUDE.md rule 1). No likelihood ratio
-  is defined on a self-match sample at all.
+## 7. Blanks the runbook did not have
 
-## 8. Order, and what happens after
+- **`turn_cap = 40`** (all runs). Capped games are not inert: a mass point at a
+  half shrinks σ and, for a fixed decisive record, accelerates the LLR toward H1
+  (D-157). 40 is three times the longest of sixty probe games, none of which
+  capped — but that probe was radius-3 self-play on the primary book only, so
+  neither the heterogeneous pairing of Run 1 nor 3b's four-turn corpus openings
+  are measured. `capped_fraction` is reported so a run in which it bound cannot
+  be read as one in which it did not.
+- **`hang_timeout_ms = 120000`** (all runs). Liveness only (D-159), about 24× the
+  worst single search over the whole fixture at this budget (5.1 s), single-threaded.
+- **The slot assignment** (§3), which the runbook's lettering would have inverted.
+- **The 100-pair floor** (§3).
+- **The inert `[sprt]` blocks** in the Run-3 configs, complete because the schema
+  admits no absent key (rule 1); no LLR is defined on a self-match sample.
 
-Run 2's budget is Run 1's and is fixed here, so the three runs are independent and
-may be run in any order; each writes its own report to the workbench directory
-outside the repository. Results return to the planning session as ADR lines. Then
-WP-1.4 (movetime ceiling, D-95) with the pistol-api stdio-shim spec ADR riding
-along, then WP-1.5 (threat core, carrying its D-124 visibility obligation).
+## 8. Order, operating rules, and outputs
+
+**Order: 3a → 1 → 3b → 2.** 3a first because it is the determinism gate Run 1's
+verdict unit depends on. Run 2 is independent of Run 1's outcome by §5's pinned
+config.
+
+**The digests are taken once and the engines are respawned from disk for every
+game** — `identity_of` runs before the first game; `schedule::one_game` re-execs
+per game (D-164). A mid-run edit is therefore silent: RED-TEAM swapped
+`radius = 2` for `radius = 1` eighteen seconds into a live run and got exit 0 and
+a report attesting radius 2. So, for the duration of this package:
+
+1. **No document under `configs/` is edited while any run is live.**
+2. **`target/release/pistol` is not rebuilt while any run is live** — including
+   Run 2's `CARGO_PROFILE_RELEASE_DEBUG` build, which writes a different binary to
+   the same path both arena configs name. Run 2 runs last for this reason, and
+   the plain `--release` binary is rebuilt before any re-run.
+3. **Run 1's outcome is landed only after all four runs are complete**, because
+   the H1 action edits `instrument_v0.toml`, which is engine B of Run 1 and *both
+   seats* of Runs 3a and 3b.
+
+**Outputs.** One report per run, written outside the repository to
+`~/Work/pistol-wp13/`, named `wp13_run3a.matchlog`, `wp13_run1.matchlog`,
+`wp13_run3b.matchlog`. The `.matchlog` extension is not decoration: `.gitignore`
+already ignores it, whereas a report written as `.txt` or `.report` passes both
+`.gitignore` and `tools/artifact_check.sh` and is committable — rule 8 breached
+with no gate firing. Distinct names because `--out` refuses an existing file only
+at dispatch: two runs started before either finishes both pass the check and one
+silently destroys the other's report.
+
+## 9. Known gaps this pre-registration does not close
+
+1. **The eval weight table is not identified by content anywhere.**
+   `identity_of` digests the binary and the engine config; nothing digests
+   `eval_v0_weights.toml`, and the handshake emits only the backend name. RED-TEAM
+   ran two workspaces differing solely in that file and got byte-identical
+   `experiment_sha256` and every other digest, while `nelo_pair` moved 98 points
+   and `first_player_wins` moved 25 points. The path is relative and resolves
+   against the working directory, and CLAUDE.md's own mutation-testing rule means
+   a second worktree will exist. **Mitigation for these runs: every run is started
+   from the repository root of this checkout, and the ADR lines name the
+   repository revision.** The fix — digesting the weights file, or emitting
+   `id weights_sha256` from the handshake — is a code change and its own work
+   package, and until it lands this is a real limit on what a report proves.
+2. **No offset knob**, so a confirmatory disjoint sample from the same book is not
+   expressible; §3's confirmatory run uses the other book instead.
+3. **Not reached by any review round:** the flamegraph itself; the full 4000-game
+   run with the real engine at four workers (RED-TEAM's scale test used the stub);
+   `hang_timeout_ms` under real four-worker contention; D-174's remaining protocol
+   items; and any run above 8 workers.
+
+## 10. After WP-1.3
+
+Results return to the planning session as ADR lines. Then WP-1.4 (movetime
+ceiling, D-95) with the pistol-api stdio-shim spec ADR riding along, then WP-1.5
+(threat core, carrying its D-124 visibility obligation).

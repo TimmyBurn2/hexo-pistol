@@ -14,9 +14,27 @@
 # seat, so both games of a pair are the same game, `distinct_n` is exactly half
 # of `n`, every pair scores 1-1 and the verdict is `inconclusive_degenerate`
 # (docs/decisions.md D-156). That is the CORRECT answer and not a failure. It
-# also means the effective sample for the rate is the 500 distinct games, not
-# the 1000 played, and the interval quoted for it must be computed on 500.
+# also means the effective sample for the rate is the 2000 distinct games, not
+# the 4000 played, and the interval quoted for it must be computed on 2000.
 #
+# IT IS ALSO THIS PACKAGE'S DETERMINISM GATE, which is why it runs FIRST. The
+# degeneracy above is forced by the determinism law (CLAUDE.md rule 4), not
+# merely expected: if this run comes back non-degenerate, rule 4 is broken and
+# the pair-level verdict unit Run 1 rests on is invalid with it. A non-degenerate
+# result here is a FULL STOP for WP-1.3, not a curiosity. It is a strictly
+# stronger gate than Run 0's four-opening smoke: same book, same budget, same
+# turn cap and the same worker count Run 1 uses.
+#
+# A FORFEIT INVALIDATES THIS MEASUREMENT, and the number it invalidates still
+# prints. `score::tally` counts any non-capped result as `decided`, and a forfeit
+# is a decided result (D-158 keeps the result and the manner of it separate), so
+# a run in which every game forfeited reports a first-player rate composed
+# entirely of protocol failures on the very line this run exists to produce. The
+# verdict token `invalid_forfeit` and the `forfeits` count are what say so, and
+# they are on neighbouring lines rather than on that one. So: a run with any
+# forfeit is not a measurement, is reported rather than discarded, and is re-run
+# only after the forfeit's cause is found — the same rule Run 1 states.
+
 # The `[sprt]` block below is therefore inert. It is present because the schema
 # requires it and complete because CLAUDE.md rule 1 admits no absent key; no
 # likelihood ratio is defined on this sample at all.
@@ -27,13 +45,20 @@ schema_version = 1
 
 [run]
 openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
-# The whole book: 500 openings, 1000 games, 500 distinct.
-openings_take = 500
+# The whole book: 2000 openings, 4000 games, 2000 distinct (D-187). No early
+# stop is possible on a degenerate sample, so every game is played.
+openings_take = 2000
 # As Run 1, and for the same reason: a capped game has no first-player winner
 # and is excluded from the rate's denominator by the arena, so a cap that bound
 # would silently shrink this measurement's sample.
 turn_cap = 40
+# Four. The clearance is WP-1.3's own RED-TEAM round, not D-174, which lists the
+# concurrency surface under "NOT reached, and therefore not cleared": that round
+# got byte-identical verdict blocks at 1, 2, 4 and 8 workers over the full
+# 1591-opening book through a real early stop.
 n_workers = 4
+# Liveness only, never an adjudication (D-159). Two minutes against a worst
+# single search of 5.1 s over the whole bench fixture at this budget.
 hang_timeout_ms = 120000
 
 [budget]
