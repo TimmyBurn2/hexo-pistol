@@ -15,16 +15,32 @@ use common::repo;
 
 /// The dependency names in a manifest's `[dependencies]` table.
 ///
-/// Read by scanning rather than by parsing: this crate has no TOML dependency,
-/// and adding one so that a test can read a manifest would be a strange way to
-/// keep a dependency list short. Every dependency in this workspace is written on
-/// one line, which is what makes the scan enough.
+/// Read by scanning rather than by parsing. This crate does now have a TOML
+/// dependency — `random-openings` reads a committed config document
+/// (docs/decisions.md D-176) — so the original reason for the scan has gone,
+/// and it stays a scan for a second one that has not: a manifest test that
+/// parsed manifests with the parser under test would be reading the workspace
+/// through one of the things it is policing. Every dependency in this workspace
+/// is written on one line, which is what makes the scan enough for the inline
+/// form; the table form is recognised separately, because a scan that only knew
+/// one of the two spellings would be a guard with a door in it.
 fn dependency_names(manifest: &str) -> Vec<String> {
     let mut names = Vec::new();
     let mut inside = false;
     for raw in manifest.lines() {
         let line = raw.trim();
         if line.starts_with('[') {
+            // A dependency has two spellings and both count. `[dependencies.x]`
+            // names `x` and then holds `version =` and `workspace =` lines that
+            // are NOT dependency names, so the section is recorded and the scan
+            // stays off through its body. Without this the table form was a way
+            // to add any dependency and keep every assertion below green, which
+            // is the opposite of what a shape test is for.
+            if let Some(name) = line.strip_prefix("[dependencies.") {
+                names.push(name.trim_end_matches(']').trim_matches('"').to_string());
+                inside = false;
+                continue;
+            }
             inside = line == "[dependencies]";
             continue;
         }
@@ -47,13 +63,42 @@ fn manifest(crate_name: &str) -> String {
 
 #[test]
 fn pistol_cli_manifest_names_only_core_and_engine() {
+    // Two claims, asserted separately because only the first is a rule.
     let mut names = dependency_names(&manifest("pistol-cli"));
     names.sort();
+
+    // The seam (CLAUDE.md rule 11). This crate says everything it says to an
+    // engine through the `Engine` trait, so a pistol-search or pistol-eval
+    // dependency here would be reaching past it.
+    let mut inside: Vec<String> = names
+        .iter()
+        .filter(|name| name.starts_with("pistol-"))
+        .cloned()
+        .collect();
+    inside.sort();
+    assert_eq!(
+        inside,
+        vec![String::from("pistol-core"), String::from("pistol-engine")],
+        "a search or eval dependency here would be reaching past the `Engine` seam"
+    );
+
+    // The footprint, which is a ledger rather than a rule: every entry is
+    // listed so that a fourth cannot arrive unremarked. The three non-pistol
+    // ones are the schema discipline CLAUDE.md rule 1 asks of the committed
+    // random-openings config, and they cost the shipping binary nothing —
+    // pistol-engine already links all three to load its own config
+    // (docs/decisions.md D-176). Nothing on the engine's path in this crate
+    // reads TOML.
     assert_eq!(
         names,
-        vec![String::from("pistol-core"), String::from("pistol-engine")],
-        "this crate says everything it says to an engine through the `Engine` trait \
-         (CLAUDE.md rule 11); a search or eval dependency here would be reaching past the seam"
+        vec![
+            String::from("pistol-core"),
+            String::from("pistol-engine"),
+            String::from("serde"),
+            String::from("serde_path_to_error"),
+            String::from("toml"),
+        ],
+        "a dependency arrived in pistol-cli without a line in docs/decisions.md saying why"
     );
 }
 

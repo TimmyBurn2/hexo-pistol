@@ -13,6 +13,10 @@
 //!   and bench fixtures out. It touches no engine and speaks no protocol; it is
 //!   here because this crate holds the binaries and already owns the fixture
 //!   forms (docs/decisions.md D-136).
+//! - [`random_openings`] — `random-openings`: a committed config in, the
+//!   arena's seeded synthetic opening book out. A sibling of [`corpus`] rather
+//!   than a mode of it — it reads no corpus at all (docs/decisions.md D-176).
+//! - [`flags`] — the `--name value` grammar both curation binaries take.
 //! - [`report`] — every line the engine writes, and exactly what is in each one.
 //! - [`mod@serve`] — the read loop.
 //! - [`fixtures`] — the sha-pinned tactical suite's format, and
@@ -33,8 +37,10 @@ pub mod corpus;
 pub mod count;
 pub mod fixture_loader;
 pub mod fixtures;
+pub mod flags;
 pub mod perft;
 pub mod protocol;
+pub mod random_openings;
 pub mod report;
 pub mod selftest;
 pub mod serve;

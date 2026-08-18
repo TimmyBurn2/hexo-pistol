@@ -1,0 +1,48 @@
+# pistol — the parameters `random_openings_v1.txt` was generated with.
+#
+# This is the ONLY home of those four numbers. The book they produced is a
+# committed fixture, and a test regenerates it from this document and compares
+# the bytes, so editing anything here without regenerating the book is a red
+# test (docs/decisions.md D-177).
+#
+# Regenerate with:
+#   cargo run -p pistol-cli --bin random-openings -- \
+#     --config configs/random_openings_v1.toml \
+#     --out-dir crates/pistol-cli/tests/fixtures
+#
+# Validate this file with tools/config_check.sh.
+
+# Schema version this document is written against. This is the RANDOM-OPENINGS
+# schema and is unrelated to the engine's, the eval weights' and the arena's:
+# they version different documents that change for different reasons.
+schema_version = 1
+
+[generate]
+# Stones per opening. A TURN-BOUNDARY count: five is the position after turn 3
+# — P1's opening stone, P2's two, P1's two. Four would be mid-turn and is a
+# named refusal, not a rounding (game rule 3, docs/decisions.md D-175).
+#
+# Five rather than three because three is P1's stone and P2's reply and little
+# else, and because five is still short enough that the no-balance-filter
+# argument holds by arithmetic: a mate in one TURN needs four own stones in a
+# six-window, and no side here holds more than three.
+k_stones = 5
+
+# How many openings the book holds. Each is played from both seats, so this is
+# 500 pairs and 1000 games at full length. There is no cap on top of it: the
+# number asked for is the number written, or the run refuses.
+n_openings = 500
+
+# How far from the ORIGIN a sampled stone may land, in hex distance.
+#
+# A GENERATION knob. It is NOT game rule 5's LEGAL_RADIUS, which is a pinned
+# constant in pistol-core and never a knob; this number only decides how spread
+# out a synthetic opening is. Five keeps the stones close enough to interact —
+# a win needs six in a line, so stones eleven apart share no window — while
+# leaving a 91-cell ball, which is far more distinct openings than 500.
+max_radius = 5
+
+# The PRNG seed. Arbitrary, and recorded rather than chosen: any seed gives an
+# equally good book, and what matters is that this one is written down, in this
+# document and in the header of the file it produced.
+seed = 20260818

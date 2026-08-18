@@ -52,6 +52,9 @@ version = "0.0.1"
 dependencies = [
  "pistol-core",
  "pistol-engine",
+ "serde",
+ "serde_path_to_error",
+ "toml",
 ]
 
 [[package]]

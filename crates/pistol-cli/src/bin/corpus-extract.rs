@@ -21,6 +21,7 @@ use pistol_cli::corpus::openings::Candidate;
 use pistol_cli::corpus::stats::Stats;
 use pistol_cli::corpus::verdict::Replayed;
 use pistol_cli::corpus::{bench, openings, read, replay};
+use pistol_cli::flags;
 use pistol_cli::sha256::sha256_hex;
 
 /// What this program does, and what it refuses to guess.
@@ -65,10 +66,10 @@ fn run(words: &[&str]) -> Result<ExitCode, String> {
         print!("{USAGE}");
         return Ok(ExitCode::SUCCESS);
     }
-    let flags = flags(words)?;
-    let corpus_path = PathBuf::from(one(&flags, "--corpus")?);
-    let out_dir = PathBuf::from(one(&flags, "--out-dir")?);
-    only(&flags, &["--corpus", "--out-dir"])?;
+    let flags = flags::pairs(words, USAGE)?;
+    let corpus_path = PathBuf::from(flags::one(&flags, "--corpus", USAGE)?);
+    let out_dir = PathBuf::from(flags::one(&flags, "--out-dir", USAGE)?);
+    flags::only(&flags, &["--corpus", "--out-dir"], USAGE)?;
 
     let bytes = std::fs::read(&corpus_path)
         .map_err(|error| format!("cannot read {}: {error}", corpus_path.display()))?;
@@ -200,49 +201,4 @@ fn discard(staged: &[(PathBuf, PathBuf)]) {
     for (staged_path, _) in staged {
         let _ = std::fs::remove_file(staged_path);
     }
-}
-
-/// `--name value` pairs, in the order given.
-fn flags<'a>(words: &[&'a str]) -> Result<Vec<(&'a str, &'a str)>, String> {
-    let mut pairs = Vec::new();
-    let mut rest = words;
-    while let [name, tail @ ..] = rest {
-        if !name.starts_with("--") {
-            return Err(format!("expected a flag, got `{name}`\n\n{USAGE}"));
-        }
-        let [value, tail @ ..] = tail else {
-            return Err(format!("`{name}` needs a value"));
-        };
-        if value.starts_with("--") {
-            return Err(format!("`{name}` needs a value, got the flag `{value}`"));
-        }
-        pairs.push((*name, *value));
-        rest = tail;
-    }
-    Ok(pairs)
-}
-
-/// The one value of a flag that must appear exactly once.
-fn one<'a>(pairs: &[(&'a str, &'a str)], name: &str) -> Result<&'a str, String> {
-    let mut found = pairs.iter().filter(|(flag, _)| *flag == name);
-    let Some((_, value)) = found.next() else {
-        return Err(format!("`{name}` is required\n\n{USAGE}"));
-    };
-    if found.next().is_some() {
-        return Err(format!("`{name}` is given more than once"));
-    }
-    Ok(value)
-}
-
-/// Refuse a flag this command does not have.
-fn only(pairs: &[(&str, &str)], allowed: &[&str]) -> Result<(), String> {
-    for (flag, _) in pairs {
-        if !allowed.contains(flag) {
-            return Err(format!(
-                "unknown flag `{flag}`; this command takes {}\n\n{USAGE}",
-                allowed.join(", ")
-            ));
-        }
-    }
-    Ok(())
 }
