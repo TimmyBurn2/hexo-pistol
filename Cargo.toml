@@ -16,6 +16,7 @@ pistol-core = { path = "crates/pistol-core" }
 pistol-eval = { path = "crates/pistol-eval" }
 pistol-search = { path = "crates/pistol-search" }
 pistol-engine = { path = "crates/pistol-engine" }
+pistol-cli = { path = "crates/pistol-cli" }
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.4"
 serde_path_to_error = "0.1.20"

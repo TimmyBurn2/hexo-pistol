@@ -8,4 +8,22 @@ publish.workspace = true
 [lints]
 workspace = true
 
+[[bin]]
+name = "arena"
+path = "src/bin/arena.rs"
+
+# A deliberately misbehaving protocol speaker. It is a test instrument, not an
+# engine, and it exists because the forfeit, garbage, hang, exit, wrong-position
+# and play-mode paths are otherwise unreachable by any test
+# (docs/decisions.md D-166).
+[[bin]]
+name = "arena-stub-engine"
+path = "src/bin/stub_engine.rs"
+
 [dependencies]
+pistol-core = { workspace = true }
+pistol-engine = { workspace = true }
+pistol-cli = { workspace = true }
+serde = { workspace = true }
+toml = { workspace = true }
+serde_path_to_error = { workspace = true }

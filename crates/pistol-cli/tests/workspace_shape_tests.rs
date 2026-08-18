@@ -58,6 +58,29 @@ fn pistol_cli_manifest_names_only_core_and_engine() {
 }
 
 #[test]
+fn pistol_arena_manifest_names_only_core_engine_and_cli() {
+    // The prefix check in `pistol_api_is_still_empty` admits any `pistol-*`
+    // dependency, so without this the arena could grow a pistol-search or
+    // pistol-eval dependency and stay green — the same reach past the seam the
+    // test above this one exists to stop for the CLI. pistol-cli is admitted
+    // because it owns the line protocol's one spelling (docs/decisions.md D-5,
+    // D-167): the arena is a CLIENT of that protocol, and a second spelling of
+    // the verbs in the arena would be a second protocol.
+    let mut names = dependency_names(&manifest("pistol-arena"));
+    names.retain(|name| name.starts_with("pistol-"));
+    names.sort();
+    assert_eq!(
+        names,
+        vec![
+            String::from("pistol-cli"),
+            String::from("pistol-core"),
+            String::from("pistol-engine"),
+        ],
+        "the arena talks to engines through the protocol and to the rules through pistol-core;          a search or eval dependency here would be reaching past the seam"
+    );
+}
+
+#[test]
 fn pistol_api_is_still_empty() {
     // Rule 11: no code, and nothing to link against, until there is a spec.
     assert!(

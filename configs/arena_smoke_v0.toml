@@ -1,0 +1,72 @@
+# pistol — the arena configuration the CI smoke gate runs.
+#
+# NOT an experiment. This document exists so that `tools/arena_smoke.sh` proves
+# the judge still works end to end on every CI run: two subprocesses per game,
+# the referee between them, paired openings, dedupe, and a report. The numbers
+# below are chosen to finish in seconds, not to measure anything.
+#
+# It is a SELF-MATCH: both sides are the same binary with the same engine
+# config. That makes the expected answer knowable in advance and therefore
+# assertable — two identical deterministic engines play the same game whichever
+# seat they sit in, so every pair scores 1-1, distinct-n is exactly half of n,
+# and the verdict is `inconclusive_degenerate`. A gate whose expected output is
+# "something plausible" is not a gate.
+#
+# The engine config is configs/gate_v0.toml for the reason that file states: at
+# candidate radius 3 a completed depth costs minutes per position, and a gate
+# has to finish. Nothing measured here is a strength claim.
+#
+# Validate this file with tools/config_check.sh.
+
+# Schema version this document is written against. This is the ARENA's schema
+# and is unrelated to the engine config's version.
+schema_version = 1
+
+[run]
+# The sha-pinned opening corpus WP-1.2a emitted. The arena verifies the file
+# against its own in-band body digest before playing a single game
+# (docs/decisions.md D-148).
+openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
+
+# Four openings, so eight games. A prefix rather than a selection: the fixture
+# is emitted in content-hash order precisely so that a prefix is a sample
+# (docs/decisions.md D-143).
+openings_take = 4
+
+# An evaluation horizon, never a game rule (game rule 6). Openings are four
+# turns, so this leaves six turns of actual play per game.
+turn_cap = 10
+
+# Two, so that the gate exercises the parallel path. The verdict block is
+# worker-invariant and the gate asserts it against a one-worker run.
+n_workers = 2
+
+# The liveness watchdog. Generous against a depth-1 search at radius 1, which
+# the gate config's own table puts well under a second. It can end a run and it
+# can never produce a game result (docs/decisions.md D-159).
+hang_timeout_ms = 60000
+
+[budget]
+# An instrument budget. A movetime budget is refused by name: wall-clock is not
+# reproducible and is not even a ceiling (docs/decisions.md D-74, D-95).
+kind = "depth_turns"
+value = 1
+
+[sprt]
+# Normalized-Elo bounds. Present because the schema requires them, not because
+# a self-match can cross one — every pair scores alike, so no likelihood ratio
+# is defined at all and the verdict says so (docs/decisions.md D-156).
+elo0 = 0.0
+elo1 = 4.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+label = "a"
+binary = "target/release/pistol"
+config = "configs/gate_v0.toml"
+
+[engine_b]
+label = "b"
+binary = "target/release/pistol"
+config = "configs/gate_v0.toml"

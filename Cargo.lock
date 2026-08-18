@@ -37,6 +37,14 @@ version = "0.0.1"
 [[package]]
 name = "pistol-arena"
 version = "0.0.1"
+dependencies = [
+ "pistol-cli",
+ "pistol-core",
+ "pistol-engine",
+ "serde",
+ "serde_path_to_error",
+ "toml",
+]
 
 [[package]]
 name = "pistol-cli"
