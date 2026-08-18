@@ -1,0 +1,63 @@
+# pistol — WP-1.3 Run 1's PRE-REGISTERED CONFIRMATORY RUN.
+#
+# NOT a new experiment, and not a second bite at the first one. Run 1 crossed H1
+# at 37 pairs, below the 100-pair floor that docs/experiments/wp13_prereg.md §3
+# put on the H1 ACTION before any game was played, so by that rule the crossing
+# is a signal and the committed configuration does not move until a DISJOINT
+# sample agrees. This document is that sample. It was written after Run 1 ended
+# and before Run 3b began, when no run was live, and it changes nothing about
+# the test: elo0, elo1, alpha, beta, the budget, the turn cap, the worker count,
+# the slot assignment and the engines are Run 1's, byte for byte.
+#
+# WHY A DIFFERENT BOOK AND NOT MORE OF THE SAME ONE. Both engines are
+# deterministic in instrument mode, so re-running Run 1's config reproduces Run
+# 1's games exactly and would confirm nothing; and `openings_take` takes a
+# PREFIX, with no offset knob, so the first 37 pairs of the primary book cannot
+# be skipped. `openings_v1.txt` is the realism cross-check suite (D-175) and is
+# disjoint from the sample Run 1 stopped on, which is what makes it evidence.
+#
+# What it costs to read this run correctly: these openings are the ones humans
+# reached and D-145 measured them lopsided, so this book has different balance
+# properties from the primary one. That is a reason its verdict is a CHECK on
+# Run 1's rather than a replacement for it — the strength claim of record stays
+# Run 1's, at Run 1's book, and this run decides only whether the pre-registered
+# H1 action fires.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 1
+
+[run]
+# The disjoint sample. The whole book, 1591 openings, verified against its own
+# in-band digest before a game is played (D-148).
+openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
+openings_take = 1591
+
+# Run 1's, unchanged.
+turn_cap = 40
+n_workers = 4
+hang_timeout_ms = 120000
+
+[budget]
+kind = "nodes"
+value = 50000
+
+[sprt]
+# Run 1's hypotheses exactly. A confirmatory run that moved a bound would be a
+# different test wearing the first one's name.
+elo0 = 0.0
+elo1 = 25.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# Radius 2 in slot A, as in Run 1, because the statistic is slot A's score and
+# the pre-registered direction is H1 = "radius 2 is stronger than radius 3".
+label = "r2"
+binary = "target/release/pistol"
+config = "configs/instrument_r2_v0.toml"
+
+[engine_b]
+label = "r3"
+binary = "target/release/pistol"
+config = "configs/instrument_v0.toml"
