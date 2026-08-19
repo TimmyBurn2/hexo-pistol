@@ -19,6 +19,18 @@
 //! budget in release, minutes in debug), and honest about what a debug wall
 //! clock can promise. The same pattern as the release-profile assertion in
 //! pistol-search's build_profile_tests (docs/decisions.md D-127).
+//!
+//! # RULE9-JUSTIFICATION: one acceptance suite over one measuring harness
+//! (CLAUDE.md rule 9).
+//!
+//! Every test here is a claim about the same contract — `go movetime N`
+//! answers legally within N + epsilon — measured through the same strict
+//! fixture loader and the same timed-search harness, whose invariants (the
+//! sha pin, the stone-count cross-check, the legality replay, the
+//! debug-relaxation rule) are stated once above them. Splitting the suite
+//! would either duplicate that harness per file or hoist it into the shared
+//! test scaffolding where no other suite uses it, and would scatter the
+//! ceiling contract's assertions across files a reviewer has to reassemble.
 
 mod common;
 
