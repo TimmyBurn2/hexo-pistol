@@ -23,6 +23,17 @@
 # Run 1's, at Run 1's book, and this run decides only whether the pre-registered
 # H1 action fires.
 #
+#
+# HISTORICAL AS OF docs/decisions.md D-194. `engine_b` names
+# configs/instrument_v0.toml, whose candidate radius moved from 3 to 2 when this
+# experiment's own H1 action fired, so RE-RUNNING THIS DOCUMENT TODAY WOULD BE A
+# SELF-MATCH between two radius-2 configurations and would report
+# `inconclusive_degenerate`, not the experiment it describes. Nothing here has
+# been adjusted — only this note added — because the values are the experiment.
+# To reproduce the run, check out the revision it ran at; the report's
+# `experiment_sha256` and its per-engine `config_sha256` lines are what verify a
+# reproduction, never the paths (docs/decisions.md D-161).
+#
 # Validate this file with tools/config_check.sh.
 
 schema_version = 1
