@@ -49,9 +49,10 @@ cargo test --release --locked --package pistol-search --test search_oracle_dedup
 # A ride-along, and not an oracle assertion: `[profile.release] overflow-checks =
 # true` is a flag that reverts silently, and its test has to run in the profile
 # it is about — a debug build has overflow checks by default and would pass it
-# without saying anything. This script owns the only release `cargo test` in the
-# gate set, so the alternative is a gate of its own for one test
-# (docs/decisions.md D-127).
+# without saying anything. This script owned the only release `cargo test` in
+# the gate set when the ride-along landed (tools/movetime_check.sh has since
+# grown release runs of its own, docs/decisions.md D-213), and the test stays
+# here rather than moving for no reason (docs/decisions.md D-127).
 cargo test --release --locked --package pistol-search --test build_profile_tests ||
 	fail "the release profile no longer keeps the checks it is configured to keep"
 

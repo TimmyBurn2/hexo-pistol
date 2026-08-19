@@ -80,3 +80,35 @@ fn every_budget_kind_names_itself() {
     assert_eq!(Budget::Nodes(1).key(), "budget.nodes");
     assert_eq!(Budget::MovetimeMs(1).key(), "budget.movetime_ms");
 }
+
+/// The RED-TEAM's F1 (WP-1.4): `movetime 18446744073709551615` used to be
+/// ACCEPTED — the `Instant::checked_add` refusal in the deadline translation is
+/// unreachable on this platform, where u64::MAX milliseconds fits an `Instant`
+/// — turning a fat-fingered budget into a multi-century search with no stop
+/// verb to end it. A movetime past [`pistol_engine::budget::MAX_MOVETIME_MS`]
+/// is now refused by name, offline, like every other absurd-value typo
+/// (docs/decisions.md D-18).
+#[test]
+fn budget_rejects_absurd_movetime_by_name() {
+    use pistol_engine::budget::MAX_MOVETIME_MS;
+
+    for millis in [MAX_MOVETIME_MS + 1, u64::MAX] {
+        match Budget::resolve(Some(Budget::MovetimeMs(millis)), EngineMode::Play) {
+            Err(EngineError::Config { key, why }) => {
+                assert_eq!(key, "budget.movetime_ms");
+                assert!(
+                    why.contains(&MAX_MOVETIME_MS.to_string()),
+                    "the refusal should state the bound: {why}"
+                );
+            }
+            other => panic!("movetime {millis} should be refused, got: {other:?}"),
+        }
+    }
+
+    // The bound is a rejection of the typo class, not a narrowing of use: the
+    // largest accepted value passes the whole gate.
+    assert_eq!(
+        Budget::resolve(Some(Budget::MovetimeMs(MAX_MOVETIME_MS)), EngineMode::Play),
+        Ok(Budget::MovetimeMs(MAX_MOVETIME_MS))
+    );
+}

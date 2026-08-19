@@ -13,13 +13,19 @@
 //!
 //! # Granularity
 //!
-//! The node and deadline conditions are tested every [`NODE_CHECK_INTERVAL`]
-//! nodes, at a node boundary. For a node budget that makes the stopping point
-//! exact and reproducible: a search given `n` nodes stops on node
-//! `n.next_multiple_of(NODE_CHECK_INTERVAL)`, on every machine and in every run
-//! (CLAUDE.md rule 4). The interval is a pinned constant of that contract, not a
-//! tunable: a configurable granularity would make two runs with different
-//! configs incomparable at the same node budget.
+//! The node condition is tested every [`NODE_CHECK_INTERVAL`] nodes, at a node
+//! boundary, which makes the stopping point exact and reproducible: a search
+//! given `n` nodes stops on node `n.next_multiple_of(NODE_CHECK_INTERVAL)`, on
+//! every machine and in every run (CLAUDE.md rule 4). The interval is a pinned
+//! constant of that contract, not a tunable: a configurable granularity would
+//! make two runs with different configs incomparable at the same node budget.
+//!
+//! The deadline condition is NOT masked (WP-1.4, docs/decisions.md D-207): it
+//! is tested at every abortable node, and inside the move-ordering scoring
+//! loop every `ORDER_CHECK_INTERVAL` cells, because a mask tuned for node
+//! budgets would let up to [`NODE_CHECK_INTERVAL`] nodes — each with a whole
+//! ordering pass — run past the clock, which is D-95's magnitude class. A
+//! deadline is not reproducible anyway, so granularity buys it nothing.
 
 use std::time::Instant;
 
@@ -41,9 +47,10 @@ pub enum Stop {
     DepthTurns(u32),
     /// Stop at the first node check at or past this count. Reproducible.
     Nodes(u64),
-    /// Stop at the first node check at or past this instant. **Not**
-    /// reproducible: the engine refuses to build one of these in instrument
-    /// mode, and no other variant reads a clock.
+    /// Stop at the first check at or past this instant — tested at every
+    /// abortable node and inside the ordering pass, never masked (see the
+    /// module doc). **Not** reproducible: the engine refuses to build one of
+    /// these in instrument mode, and no other variant reads a clock.
     Deadline(Instant),
 }
 

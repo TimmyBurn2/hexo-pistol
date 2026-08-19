@@ -11,9 +11,11 @@
 //! # Why this file is in pistol-search
 //!
 //! It is about the workspace and not about the search. It lives here because
-//! `tools/search_oracle_check.sh` owns the only release `cargo test` in the gate
-//! set, so this is where a release-profile assertion can be run without adding a
-//! gate for one test; that script names the ride-along where it runs it.
+//! `tools/search_oracle_check.sh` owned the only release `cargo test` in the
+//! gate set when this ride-along landed (tools/movetime_check.sh has since
+//! grown release runs of its own, docs/decisions.md D-213), so this is where a
+//! release-profile assertion could run without adding a gate for one test;
+//! that script names the ride-along where it runs it.
 
 use std::hint::black_box;
 use std::panic;

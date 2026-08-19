@@ -20,9 +20,10 @@
 //!
 //! In release every case runs (~7 s). Under `cargo test`'s debug profile the
 //! full set costs ~90 s, so every [`DEBUG_STRIDE`]-th case runs instead — the
-//! subset is deterministic, spans both budgets and the position variety, and
-//! the release gates (tools/search_oracle_check.sh's release `cargo test`) run
-//! the full set on every CI pass.
+//! subset is deterministic and spans both budgets and the position variety.
+//! The full set runs in release on every CI pass via tools/movetime_check.sh
+//! (gate 11), which a REVIEW-impl round added after catching this comment
+//! naming a gate that did not run it (docs/decisions.md D-213).
 
 mod common;
 

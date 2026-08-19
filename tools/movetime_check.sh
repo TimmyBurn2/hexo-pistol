@@ -44,11 +44,18 @@ EPSILON="$(sed -n 's/^movetime_epsilon_ms = \([0-9]\+\)$/\1/p' "$CONFIG")"
 [ -n "$EPSILON" ] || fail "$CONFIG states no movetime_epsilon_ms"
 echo "movetime: epsilon ${EPSILON} ms from $CONFIG"
 
-echo "movetime: release test layer (movetime_tests, fallback_tests)"
+echo "movetime: release test layer (movetime_tests, fallback_tests, instrument golden)"
 cargo test --release --locked -p pistol-cli --test movetime_tests ||
 	fail "the release movetime tests do not hold"
 cargo test --release --locked -p pistol-search --test fallback_tests ||
 	fail "the release fallback tests do not hold"
+# The FULL golden-transcript set (all 40 pinned instrument cases; the debug
+# profile's cargo test runs a stride subset). It rides this gate because this
+# is the release cargo test the WP that pinned the transcripts added — a
+# REVIEW-impl round caught the full set running in release on no gate at all
+# (docs/decisions.md D-213).
+cargo test --release --locked -p pistol-cli --test instrument_golden_tests ||
+	fail "instrument behavior diverged from the pinned golden transcripts"
 
 echo "movetime: building the engine (release, locked)"
 cargo build --release --locked --quiet --bin pistol || fail "the engine does not build"

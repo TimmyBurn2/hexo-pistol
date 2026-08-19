@@ -259,3 +259,46 @@ fn movetime_answers_a_turn_token_through_the_protocol() {
         .unwrap_or_else(|error| panic!("`{token}` is not a turn token: {error:?}"));
     assert_eq!(parsed, outcome.best, "the token round-trips");
 }
+
+/// The deadline mechanism a step past the fixture envelope: 299 spread
+/// stones, three times D-95's measured worst point, where the pre-WP first
+/// iteration cost MINUTES. The N + epsilon promise (D-207) is stated for the
+/// <= 99-stone domain; what this asserts is that at 299 stones the mechanism
+/// still answers inside the same bound — the fallback (~20 ms here) plus the
+/// per-node interrupt tail — so a regression of D-95's class (an
+/// uninterruptible iteration creeping back) fails violently rather than only
+/// inside the fixture.
+///
+/// Stated honestly after a mutation round: this test does NOT see the
+/// intra-ordering (64-cell) check — at this scale the per-node check alone
+/// keeps the bound, and the band where the ordering check binds (~1000
+/// stones) has margins under timing noise (docs/decisions.md D-213). What it
+/// pins is the ceiling beyond the envelope, not that one check.
+#[test]
+fn deadline_holds_on_a_spread_past_the_fixture_envelope() {
+    // 299 stones: turn 1 at the origin, then 149 pairs marching along one
+    // axis at hex-distance 8 — the D-95 spread geometry, twice the fixture's
+    // worst point.
+    let mut moves = String::from("0,0");
+    let mut q = 8i32;
+    for _ in 0..149 {
+        moves.push_str(&format!(" {q},0/{},0", q + 8));
+        q += 16;
+    }
+    let spec = PositionSpec::from_str(&format!("start moves {moves}"))
+        .expect("the constructed spread parses");
+    let spread = Spread { stones: 299, spec };
+
+    let mut engine = engine(PLAY);
+    let (elapsed, outcome) = timed_search(&mut engine, &spread, 40, &mut |_| {});
+    let bound = ceiling_ms(40);
+    assert!(
+        elapsed <= bound,
+        "movetime 40 on 299 spread stones returned after {elapsed} ms (bound {bound} ms): \
+         a D-95-class uninterruptible stretch is back"
+    );
+    assert!(
+        !outcome.info.pv.is_empty(),
+        "the interrupted search still answers with its evidence"
+    );
+}

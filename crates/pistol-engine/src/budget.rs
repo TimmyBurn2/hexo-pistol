@@ -7,6 +7,15 @@
 use crate::config::EngineMode;
 use crate::error::EngineError;
 
+/// Largest wall-clock budget this build accepts, in milliseconds: one hour.
+///
+/// A rejection bound, not a value (docs/decisions.md D-18), catching the typo
+/// class offline: the deployment design point is half a second, and the
+/// platform's `Instant` representation holds u64::MAX milliseconds without
+/// overflowing, so without this bound a fat-fingered `movetime` became a
+/// multi-century search no protocol verb can end (WP-1.4 RED-TEAM finding F1).
+pub const MAX_MOVETIME_MS: u64 = 3_600_000;
+
 /// Every way to bound a search.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Budget {
@@ -53,6 +62,14 @@ impl Budget {
         };
         if amount == 0 {
             return Err(EngineError::config(self.key(), "must be at least 1, got 0"));
+        }
+        if let Budget::MovetimeMs(millis) = self
+            && millis > MAX_MOVETIME_MS
+        {
+            return Err(EngineError::config(
+                self.key(),
+                format!("must be at most {MAX_MOVETIME_MS} ms (one hour), got {millis}"),
+            ));
         }
         Ok(())
     }
