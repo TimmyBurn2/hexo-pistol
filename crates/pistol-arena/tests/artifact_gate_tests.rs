@@ -36,10 +36,18 @@ fn artifact_check_catches_renamed_report() {
         );
     };
     git(&["init", "-q"]);
-    // A report renamed past every name pattern: no artifact extension, but the
-    // first line is the schema header the arena writes.
+    // Reports renamed past every name pattern: no artifact extension, but the
+    // first line is the schema header the arena writes — verbatim, with a
+    // trailing space, and with trailing tokens, because a token-splitting
+    // consumer reads all three as reports and RED-TEAM showed the last two
+    // slipped an exact-match regex (docs/decisions.md D-205).
     scratch.write("report.txt", "arena_report 4\narena_version 0.0.1\n");
-    git(&["add", "report.txt"]);
+    scratch.write("padded.txt", "arena_report 4 \narena_version 0.0.1\n");
+    scratch.write(
+        "suffixed.txt",
+        "arena_report 4 extra\narena_version 0.0.1\n",
+    );
+    git(&["add", "report.txt", "padded.txt", "suffixed.txt"]);
 
     let ran = Command::new("bash")
         .arg(&script)
@@ -52,15 +60,19 @@ fn artifact_check_catches_renamed_report() {
         String::from_utf8_lossy(&ran.stdout)
     );
     let stderr = String::from_utf8_lossy(&ran.stderr);
-    assert!(
-        stderr.contains("match report by content: report.txt"),
-        "the gate names the file and the reason: {stderr}"
-    );
+    for name in ["report.txt", "padded.txt", "suffixed.txt"] {
+        assert!(
+            stderr.contains(&format!("match report by content: {name}")),
+            "the gate names {name} and the reason: {stderr}"
+        );
+    }
 
-    // Control: the same repo without the report passes, so the failure above
+    // Control: the same repo without the reports passes, so the failure above
     // is the detection and not the scaffolding refusing everything.
-    git(&["rm", "-q", "--cached", "report.txt"]);
-    std::fs::remove_file(scratch.path("report.txt")).expect("the decoy removes");
+    for name in ["report.txt", "padded.txt", "suffixed.txt"] {
+        git(&["rm", "-q", "--cached", name]);
+        std::fs::remove_file(scratch.path(name)).expect("the decoy removes");
+    }
     let clean = Command::new("bash")
         .arg(&script)
         .current_dir(&scratch.dir)

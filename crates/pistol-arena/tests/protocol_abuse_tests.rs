@@ -105,6 +105,77 @@ const SCRIPT_HANDSHAKE: &str = "printf 'id name script\\nid protocol v0\\nid mod
                                 weights_sha256 0000000000000000000000000000000000000000000000000000000000000000\\npistolok\\n'";
 
 #[test]
+fn arena_refuses_a_self_contradictory_or_non_canonical_weights_identity() {
+    // RED-TEAM found both leniencies against 55aa5e6 (docs/decisions.md
+    // D-205). Two `weights_sha256` lines naming DIFFERENT tables is a
+    // self-contradictory identity — `Identity::field` silently took the first,
+    // so a report could carry two digests with no complaint, in the exact
+    // property D-198 exists to make unambiguous. And uppercase hex is
+    // non-canonical: no pistol build emits it, and two runs of the SAME
+    // weights differing only in case would compute different
+    // `experiment_sha256` and read as different experiments.
+    let scratch = Scratch::new("weights-identity");
+    let openings = scratch.write("openings.txt", &openings_prefix(1));
+    let honest_config = scratch.stub_config("honest.toml", "honest");
+    let zeros = "0".repeat(64);
+    let cases = [
+        (
+            "doubled-weights.sh",
+            format!(
+                "id name script\\nid protocol v0\\nid mode instrument\\nid weights_sha256 \
+                 {zeros}\\nid weights_sha256 {}\\npistolok\\n",
+                "1".repeat(64)
+            ),
+            "more than once",
+        ),
+        (
+            "uppercase-weights.sh",
+            format!(
+                "id name script\\nid protocol v0\\nid mode instrument\\nid weights_sha256 \
+                 {}\\npistolok\\n",
+                "A".repeat(64)
+            ),
+            "lowercase",
+        ),
+    ];
+    for (name, handshake, expected) in cases {
+        let script = script_engine(
+            &scratch,
+            name,
+            &format!(
+                "#!/usr/bin/env bash\n\
+                 while IFS= read -r line; do\n\
+                   case \"$line\" in\n\
+                     pistol*) printf '{handshake}' ;;\n\
+                     quit*) exit 0 ;;\n\
+                     *) : ;;\n\
+                   esac\n\
+                 done\n"
+            ),
+        );
+        let mut spec = self_match(&openings, &honest_config, 1, TURN_CAP, 1);
+        spec.binary_b = &script;
+        let ran = run(&scratch, &spec, name);
+        assert_eq!(
+            ran.code(),
+            2,
+            "{name} is refused before any game.\nstdout: {}\nstderr: {}",
+            String::from_utf8_lossy(&ran.output.stdout),
+            String::from_utf8_lossy(&ran.output.stderr)
+        );
+        assert!(
+            ran.report.is_none(),
+            "{name}: nothing is written, because there is no run to report on"
+        );
+        let stderr = String::from_utf8_lossy(&ran.output.stderr);
+        assert!(
+            stderr.contains("weights_sha256") && stderr.contains(expected),
+            "{name}'s refusal names the field and the rule: {stderr}"
+        );
+    }
+}
+
+#[test]
 fn arena_forfeits_engine_that_answers_when_nothing_was_asked() {
     // RED-TEAM's worst finding, pinned. The channel beneath the referee is a
     // plain queue with no request identifier — the protocol has none to offer —

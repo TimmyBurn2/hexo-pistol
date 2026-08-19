@@ -68,10 +68,13 @@ while IFS= read -r -d '' path; do
 	# files it cannot match anyway. A CR is trimmed so a CRLF report cannot
 	# slip through. A pathological first line is slurped whole, bounded in
 	# practice by the size ceiling above.
+	# The match is on the header's TOKENS, not the exact line: a consumer that
+	# splits on whitespace reads `arena_report 4 extra` or a trailing-space
+	# variant as a report, so the gate must too (RED-TEAM's bypass, D-205).
 	first=""
 	IFS= read -r first <"$path" 2>/dev/null || true
 	first="${first%$'\r'}"
-	if [[ "$first" =~ ^arena_report(_aborted)?\ [0-9]+$ ]]; then
+	if [[ "$first" =~ ^arena_report(_aborted)?[[:space:]]+[0-9]+([[:space:]]|$) ]]; then
 		violations+=("match report by content: $path (first line \"$first\")")
 	fi
 done < <(git ls-files -z)

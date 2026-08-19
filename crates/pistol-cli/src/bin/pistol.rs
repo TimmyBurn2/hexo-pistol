@@ -96,9 +96,14 @@ fn protocol_command(words: &[&str]) -> Result<ExitCode, String> {
     only(&flags, &["--config"])?;
 
     let config = Config::load(&path).map_err(|error| error.to_string())?;
-    let weights_sha256 = weights_digest(&config)?;
-    let identity = identity_lines(&path, &config, &weights_sha256);
+    let weights_file = config.eval.weights_file.clone();
+    let mut identity = identity_lines(&path, &config);
+    // The engine is built FIRST, so a missing or corrupt weights file dies
+    // with pistol-eval's named `eval.weights_file` error, and the identity
+    // digest below is the SECOND read of a file the eval just loaded
+    // (docs/decisions.md D-198; REVIEW-impl caught this order reversed).
     let mut engine = Pistol::from_config(config).map_err(|error| error.to_string())?;
+    identity.push(format!("weights_sha256 {}", weights_digest(&weights_file)?));
     let mut session = Session::new(&mut engine).identify(identity);
 
     let stdin = io::stdin();
@@ -112,14 +117,15 @@ fn protocol_command(words: &[&str]) -> Result<ExitCode, String> {
 
 /// The handshake lines that make a transcript reproducible: which document, and
 /// the values from it that decide what the search does (CLAUDE.md rule 6).
-fn identity_lines(path: &Path, config: &Config, weights_sha256: &str) -> Vec<String> {
+/// The caller appends `weights_sha256` after the engine is built (see
+/// [`weights_digest`] for why the order matters).
+fn identity_lines(path: &Path, config: &Config) -> Vec<String> {
     let pistol_engine::config::CandidatePolicy::Radius { radius } = config.search.candidate_policy;
     vec![
         format!("config {}", path.display()),
         format!("eval {}", config.eval.backend.token()),
         format!("tt_bytes {}", config.search.tt_bytes),
         format!("candidate_policy radius {radius}"),
-        format!("weights_sha256 {weights_sha256}"),
     ]
 }
 
@@ -132,15 +138,14 @@ fn identity_lines(path: &Path, config: &Config, weights_sha256: &str) -> Vec<Str
 /// loads the file, resolved against ITS working directory; a referee digesting
 /// the path on its own could attest bytes this process never read.
 ///
-/// A limit, stated rather than hidden: this is a read of the file at handshake
-/// build time, not of the bytes the eval parsed — the loader would have to
-/// digest what it read, and it sits below this workspace's one hashing
-/// implementation (docs/decisions.md D-198 records why that is declined for
-/// now). A swap landing between the eval's read and this one surfaces as a
-/// named `IdentityDrift` abort at the arena's next spawn, never as a silently
-/// wrong number.
-fn weights_digest(config: &Config) -> Result<String, String> {
-    let path = &config.eval.weights_file;
+/// A limit, stated rather than hidden: this is a SECOND read of the file,
+/// after the eval loaded it, not a digest of the bytes the eval parsed — the
+/// loader would have to digest what it read, and it sits below this
+/// workspace's one hashing implementation (docs/decisions.md D-198 records
+/// why that is declined for now). A swap landing between the eval's read and
+/// this one surfaces as a named `IdentityDrift` abort at the arena's next
+/// spawn, never as a silently wrong number.
+fn weights_digest(path: &Path) -> Result<String, String> {
     let bytes = std::fs::read(path).map_err(|io| {
         format!(
             "eval.weights_file `{}`: cannot read for the identity digest: {io}",

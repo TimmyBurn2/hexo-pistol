@@ -85,9 +85,11 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
     match run(&config_path, &out_path, claimed) {
         Ok(code) => Ok(code),
         Err(error) => {
-            // Exit 2 promises "no report at all", and the claim is this
-            // process's own empty file (outpath::abandon says why that is
-            // safe). A failed removal is reported, never swallowed.
+            // Exit 2 promises "no report at all". This branch is every
+            // pre-game refusal AND a report write that failed partway — in
+            // both cases the file holds no report, and it is this process's
+            // own claim (outpath::abandon says why removing it is safe). A
+            // failed removal is reported, never swallowed.
             if let Err(cleanup) = outpath::abandon(&out_path) {
                 eprintln!("arena: {cleanup}");
             }

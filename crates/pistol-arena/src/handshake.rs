@@ -134,11 +134,41 @@ pub fn shake(channel: &mut Channel, timeout_ms: u64) -> Result<Identity, ArenaEr
         }
     }
 
+    // Exactly one weights line: an identity naming two different weight tables
+    // is self-contradictory, and `field`'s first-match rule would otherwise
+    // silently pick a winner — in the one property D-198 exists to make
+    // unambiguous (RED-TEAM, docs/decisions.md D-205).
+    let weights_lines = identity
+        .lines
+        .iter()
+        .filter(|line| {
+            line.strip_prefix(crate::identity::WEIGHTS_FIELD)
+                .is_some_and(|rest| rest.starts_with(' '))
+        })
+        .count();
+    if weights_lines > 1 {
+        return Err(refuse(format!(
+            "its handshake names `{}` more than once ({weights_lines} times); an identity \
+             naming two weight tables is self-contradictory and no line of it can be trusted \
+             (docs/decisions.md D-198, D-205)",
+            crate::identity::WEIGHTS_FIELD
+        )));
+    }
+
+    // Canonical form: 64 LOWERCASE hex digits, which is what every pistol
+    // build emits. Uppercase would be the same table under a different
+    // `experiment_sha256` — two spellings of one experiment (D-205).
+    let canonical = |digest: &str| {
+        digest
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    };
     match identity.field(crate::identity::WEIGHTS_FIELD) {
-        Some(digest) if digest.len() == 64 && digest.bytes().all(|b| b.is_ascii_hexdigit()) => {}
+        Some(digest) if digest.len() == 64 && canonical(digest) => {}
         Some(digest) => {
             return Err(refuse(format!(
-                "its `{}` is `{digest}`, which is not 64 hex digits and therefore not a SHA-256",
+                "its `{}` is `{digest}`, and a weights digest is exactly 64 lowercase hex \
+                 digits — the canonical spelling every identity digest in this workspace uses",
                 crate::identity::WEIGHTS_FIELD
             )));
         }

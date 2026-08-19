@@ -43,8 +43,12 @@ pub fn claim(path: &Path) -> Result<File, ArenaError> {
 
 /// Release a claim that will never hold a report.
 ///
-/// A refusal BEFORE any game exits 2 and promises "no report at all", so the
-/// empty claim is removed rather than left to masquerade as one. This can only
+/// Exit 2 promises "no report at all", so the claim is removed rather than
+/// left to masquerade as one. Two paths lead here: a refusal BEFORE any game
+/// (the claim is still empty), and a report WRITE that failed partway (disk
+/// full after a played run) — there the file holds a truncated non-report,
+/// and a partial report left on disk would be worse than none, because
+/// nothing marks it partial (REVIEW-impl, docs/decisions.md D-205). This can only
 /// ever remove a file this process created via [`claim`]: a pre-existing file
 /// fails `claim` before anything is written, and a concurrent run's own
 /// `create_new` fails while the claim stands — so no path through here
