@@ -1282,8 +1282,9 @@ branches — master is the pure alpha-beta bot.
   never on this disk and was not fetched, so the platform's own words
   remain unread here; the ruling still rests on D-101's operator act plus
   this corpus measurement. That is a gap in provenance, not in the
-  verdict — no spec text can make 5024 recorded placements beyond
-  distance 6 disappear.
+  verdict — no spec text can make 2812 ORDER-INDEPENDENT placements
+  beyond distance 6 disappear (5024 is the raw count, of which only the
+  order-independent ones are witnesses).
 - PROPOSED VERIFICATION (discharged for the radius arm; open for the
   other): re-read the htttx spec / platform source for the legal radius
   (operator act, D-101 said 8); count sealbot's out-of-region proposals

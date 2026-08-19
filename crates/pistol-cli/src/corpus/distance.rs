@@ -57,6 +57,15 @@ use pistol_core::{Coord, FIRST_TURN, stones_in_turn};
 
 use super::record::Record;
 
+/// The radius SB-65's log note claims the platform enforces, and which this
+/// histogram exists to test (docs/research/sealbot_deep_dive.md, D-101).
+///
+/// Named rather than written inline at the one place it is reported, so the
+/// printed line says which hypothesis its count is about. It is not a tunable
+/// and nothing reads it as one: the game's own radius is
+/// [`pistol_core::LEGAL_RADIUS`], which this module never compares anything to.
+pub const CLAIMED_RADIUS: u32 = 6;
+
 /// Every stone after a game's first, counted by its distance to the nearest
 /// stone already placed.
 ///
@@ -207,6 +216,15 @@ impl fmt::Display for PlacementDistances {
             f,
             "  order-independent       {}",
             self.order_independent_total()
+        )?;
+        // The headline the adjudication rests on, printed rather than left to be
+        // hand-summed off the rows above: transcribing a total out of a rendered
+        // block by eye is the path that carried this module's earlier false
+        // claim (docs/decisions.md D-219).
+        writeln!(
+            f,
+            "  order-independent beyond {CLAIMED_RADIUS}   {}  <- refutes radius {CLAIMED_RADIUS}",
+            self.unrescuable_beyond(CLAIMED_RADIUS)
         )?;
         write!(f, "  MAX distance            {max}")
     }

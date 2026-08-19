@@ -148,8 +148,11 @@ fn the_rendered_block_lists_every_distance_in_range_including_the_zero_rows() {
     );
     assert_eq!(lines[9], ["stones", "measured", "10"]);
     assert_eq!(lines[10], ["order-independent", "5"]);
-    assert_eq!(lines[11], ["MAX", "distance", "8"]);
-    assert_eq!(lines.len(), 12, "no row beyond the ones named above");
+    // The refuting headline itself, so the number the record quotes is printed
+    // rather than hand-summed off the rows above.
+    assert_eq!(lines[11][..4], ["order-independent", "beyond", "6", "2"]);
+    assert_eq!(lines[12], ["MAX", "distance", "8"]);
+    assert_eq!(lines.len(), 13, "no row beyond the ones named above");
 }
 
 #[test]
