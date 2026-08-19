@@ -63,8 +63,17 @@ pub fn render(config: &ArenaConfig, records: &[GameRecord], wall_ms: u64) -> Str
     );
     let _ = writeln!(
         out,
-        "  first player won {} of {} decided games",
-        counted.first_player_wins, counted.decided
+        "  first player won {} of {} decided non-forfeit games{}",
+        counted.first_player_wins,
+        counted.decided_clean,
+        if counted.forfeits > 0 {
+            format!(
+                " — CONDITIONAL: {} forfeited game(s) excluded",
+                counted.forfeits
+            )
+        } else {
+            String::new()
+        }
     );
     let _ = writeln!(
         out,

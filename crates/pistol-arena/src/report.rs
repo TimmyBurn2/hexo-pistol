@@ -53,7 +53,10 @@ pub const ABORTED_KIND: &str = "arena_report_aborted";
 ///
 /// 2: the `engine` line gained `weights_sha256` and `experiment_sha256` closed
 /// over it (docs/decisions.md D-198).
-pub const REPORT_SCHEMA: u32 = 2;
+/// 3: `first_player_wins` is over decided NON-FORFEIT games, with the forfeit
+/// count adjacent and a `conditional` flag when it is nonzero
+/// (docs/decisions.md D-201).
+pub const REPORT_SCHEMA: u32 = 3;
 /// Where the verdict block ends and nothing comparable begins.
 pub const TIMING_MARKER: &str = "# timing";
 

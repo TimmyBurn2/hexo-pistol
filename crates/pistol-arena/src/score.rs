@@ -39,8 +39,17 @@ pub struct Tally {
     /// Games that ended in a forfeit.
     pub forfeits: usize,
     /// Games the rules decided, which is every game that was not capped.
+    /// Forfeits are decided — the offender lost — so they are in here.
     pub decided: usize,
-    /// How many DECIDED games the first seat won.
+    /// Decided games that were NOT forfeits: the first-player rate's
+    /// denominator (docs/decisions.md D-201).
+    pub decided_clean: usize,
+    /// How many decided NON-FORFEIT games the first seat won.
+    ///
+    /// A win by forfeit measures a protocol bug in the loser, not the game, so
+    /// counting it here made the rate readable only beside a zero `forfeits`
+    /// count — wp13_results §6b's debt, paid by excluding forfeits from the
+    /// numerator AND the denominator and printing the forfeit count adjacent.
     pub first_player_wins: usize,
 }
 
@@ -72,8 +81,11 @@ pub fn tally(records: &[GameRecord]) -> Tally {
             GameResult::Capped => out.capped += 1,
             _ => {
                 out.decided += 1;
-                if record.result == GameResult::P1Win {
-                    out.first_player_wins += 1;
+                if !record.is_forfeit() {
+                    out.decided_clean += 1;
+                    if record.result == GameResult::P1Win {
+                        out.first_player_wins += 1;
+                    }
                 }
                 if record.score_a() > 0.5 {
                     out.wins_a += 1;

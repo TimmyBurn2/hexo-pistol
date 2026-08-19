@@ -85,6 +85,35 @@ fn the_first_player_rate_is_over_decided_games_only() {
 }
 
 #[test]
+fn first_player_rate_excludes_forfeits() {
+    // Game 0: the first seat "won" because the second seat broke the protocol.
+    // That measures a bug in the loser, not the game, so it moves neither the
+    // numerator nor the denominator — the debt wp13_results §6b recorded,
+    // where the rate was only readable beside a zero forfeits count
+    // (docs/decisions.md D-201).
+    let moves = game_moves();
+    let mut forfeited = record(0, GameResult::P1Win, true, moves.clone());
+    forfeited.end = End::Forfeit(ForfeitReason::ProtocolError);
+    forfeited.forfeit_by = Some(1);
+    let records = vec![forfeited, record(1, GameResult::P1Win, false, moves)];
+
+    let counted = score::tally(&records);
+    assert_eq!(
+        counted.decided, 2,
+        "a forfeit IS decided — the offender lost"
+    );
+    assert_eq!(
+        counted.decided_clean, 1,
+        "but it is not in the first-player rate's denominator"
+    );
+    assert_eq!(
+        counted.first_player_wins, 1,
+        "and a first-seat win by forfeit is not in the numerator"
+    );
+    assert_eq!(counted.forfeits, 1);
+}
+
+#[test]
 fn pair_buckets_are_indexed_by_score_not_by_a_chess_word() {
     // Bucket 2 is a pair scoring one point. That is a 1-1 split of two DECISIVE
     // games as often as it is two capped games, which is why the report spells

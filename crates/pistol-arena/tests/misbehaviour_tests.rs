@@ -75,6 +75,17 @@ fn arena_forfeits_engine_that_plays_illegal_turn() {
         counts.contains(&format!("wins_a {}", OPENINGS * 2)),
         "the forfeits scored as losses for b: {counts}"
     );
+    // Every game here was won by forfeit, so the first-player rate has NOTHING
+    // in it — and the line says so itself, with the forfeit count adjacent and
+    // the `conditional` flag in the token (docs/decisions.md D-201).
+    assert_eq!(
+        ran.field("first_player_wins"),
+        format!(
+            "0 of 0 decided_non_forfeit forfeits {} conditional",
+            OPENINGS * 2
+        ),
+        "a rate over forfeited games is not a measurement of the game"
+    );
 }
 
 #[test]

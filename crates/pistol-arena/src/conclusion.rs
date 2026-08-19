@@ -104,12 +104,22 @@ pub fn found(out: &mut String, written: &Written<'_>) {
         p[0], p[1], p[2], p[3], p[4]
     );
     let _ = writeln!(out, "capped_fraction {}", float(counted.capped_fraction()));
-    // Over DECIDED games: a capped game has no first-player winner, and putting
-    // it in the denominator would report a rate nobody measured.
+    // Over decided NON-FORFEIT games: a capped game has no first-player winner,
+    // and a win by forfeit measures a protocol bug in the loser, not the game
+    // (docs/decisions.md D-201). The forfeit count sits adjacent because the
+    // rate is only unconditional when that count is zero; a nonzero count puts
+    // `conditional` in the token itself, where no reader can skim past it.
+    // (`decided_non_forfeit` is deliberately a different word from the `counts`
+    // line's forfeit-inclusive `decided`.)
+    let conditional = if counted.forfeits > 0 {
+        " conditional"
+    } else {
+        ""
+    };
     let _ = writeln!(
         out,
-        "first_player_wins {} of {} decided",
-        counted.first_player_wins, counted.decided
+        "first_player_wins {} of {} decided_non_forfeit forfeits {}{conditional}",
+        counted.first_player_wins, counted.decided_clean, counted.forfeits
     );
     let game = score::game_sample(records);
     let pair = score::pair_sample(records);
