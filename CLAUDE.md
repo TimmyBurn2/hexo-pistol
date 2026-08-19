@@ -104,6 +104,17 @@ DESIGN → REVIEW-design (fresh context, attacks the premise) → IMPL → REVIE
 rules/data paths (adversarial inputs). Pre-register verdicts before experiments; no
 post-hoc threshold moves. Reviewers flag correctness and requirement gaps, not style.
 
+A named design decision with more than one viable option is settled by an OPTION
+MATRIX — options, costs, failure modes, recommendation — attacked by a fresh-context
+DECISION-RED-TEAM subagent BEFORE selection; the surviving option's ADR line records
+the strongest surviving attack. An option adopted without a matrix, or a matrix never
+attacked, is the same breach as silent architecture drift.
+
+A pre-registration is reviewed at the revision that GOVERNS the run: the revision
+that governs a run must itself pass a fresh-context review before the first run it
+governs. Reviews of superseded revisions do not transfer — an amendment reopens the
+review, however small the diff.
+
 REVIEW-design, REVIEW-impl and RED-TEAM are dispatched as subagents with fresh
 contexts; the implementing session never reviews its own work. A WP is not landable
 while its reviews are outstanding. A session that cannot dispatch subagents states so
