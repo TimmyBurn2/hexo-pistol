@@ -29,7 +29,9 @@ use std::process::ExitCode;
 
 use pistol_core::{Coord, GameState, NEIGHBOUR_DIRECTIONS, PlyOutcome, Turn, legal_placements};
 use pistol_engine::config::EngineMode;
-use pistol_engine::{Budget, Engine, EngineError, PositionSpec, SearchInfo, SearchOutcome};
+use pistol_engine::{
+    Budget, Engine, EngineError, PositionSpec, Provenance, SearchInfo, SearchOutcome,
+};
 
 /// What this instrument does wrong.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -136,7 +138,11 @@ impl Engine for FirstLegal {
             hashfull_permille: 0,
         };
         report(&info);
-        Ok(SearchOutcome { best, info })
+        Ok(SearchOutcome {
+            best,
+            info,
+            provenance: Provenance::CompletedDepth,
+        })
     }
 }
 

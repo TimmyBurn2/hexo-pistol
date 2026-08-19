@@ -1,0 +1,28 @@
+# spread_v1.txt — the D-95 reproducer class: games whose stones sit hex-distance
+# 8 apart along one axis, so the candidate count (and with it the cost of a
+# full-width iteration) grows as fast as the rules allow per stone. Measured at
+# revision 3926110: `go movetime 500` on these positions returned after 644 ms,
+# 2334 ms and 14135 ms at 11, 21 and 51 stones (configs/play_v0.toml, release),
+# and D-95 records 58.6 s at the 99-stone point.
+#
+# Stone counts: the WP-1.4 prompt names 10/20/50 stones, but a turn-boundary
+# position in this game always holds an odd stone count (turn 1 places one
+# stone, every later turn two — rule 3), and a search starts only at a turn
+# boundary. 11/21/51 are the smallest turn-boundary counts at or above the named
+# sizes; 99 stones (50 turns) is D-95's own worst measured point, added on the
+# REVIEW-design finding that the largest measured instance is the one the
+# epsilon promise must be measured at.
+#
+# Every `position` line is a protocol line (docs/decisions.md D-5, D-6). Every
+# placement is legal under rule 5: each stone is exactly distance 8 from its
+# predecessor. No line of same-colored stones is ever contiguous, so no position
+# here is decided. This file is sha-pinned by the test that reads it (D-37).
+
+stones 11
+position start moves 0,0 8,0/16,0 24,0/32,0 40,0/48,0 56,0/64,0 72,0/80,0
+stones 21
+position start moves 0,0 8,0/16,0 24,0/32,0 40,0/48,0 56,0/64,0 72,0/80,0 88,0/96,0 104,0/112,0 120,0/128,0 136,0/144,0 152,0/160,0
+stones 51
+position start moves 0,0 8,0/16,0 24,0/32,0 40,0/48,0 56,0/64,0 72,0/80,0 88,0/96,0 104,0/112,0 120,0/128,0 136,0/144,0 152,0/160,0 168,0/176,0 184,0/192,0 200,0/208,0 216,0/224,0 232,0/240,0 248,0/256,0 264,0/272,0 280,0/288,0 296,0/304,0 312,0/320,0 328,0/336,0 344,0/352,0 360,0/368,0 376,0/384,0 392,0/400,0
+stones 99
+position start moves 0,0 8,0/16,0 24,0/32,0 40,0/48,0 56,0/64,0 72,0/80,0 88,0/96,0 104,0/112,0 120,0/128,0 136,0/144,0 152,0/160,0 168,0/176,0 184,0/192,0 200,0/208,0 216,0/224,0 232,0/240,0 248,0/256,0 264,0/272,0 280,0/288,0 296,0/304,0 312,0/320,0 328,0/336,0 344,0/352,0 360,0/368,0 376,0/384,0 392,0/400,0 408,0/416,0 424,0/432,0 440,0/448,0 456,0/464,0 472,0/480,0 488,0/496,0 504,0/512,0 520,0/528,0 536,0/544,0 552,0/560,0 568,0/576,0 584,0/592,0 600,0/608,0 616,0/624,0 632,0/640,0 648,0/656,0 664,0/672,0 680,0/688,0 696,0/704,0 712,0/720,0 728,0/736,0 744,0/752,0 760,0/768,0 776,0/784,0

@@ -8,7 +8,7 @@ use pistol_engine::{Config, EngineError};
 
 /// A complete, in-range, instrument-mode document.
 pub const VALID: &str = r#"
-schema_version = 1
+schema_version = 2
 
 [engine]
 mode = "instrument"
@@ -27,6 +27,9 @@ weights_file = "configs/eval_v0_weights.toml"
 [instrument]
 threads = 1
 tie_break = "lexicographic"
+
+[play]
+movetime_epsilon_ms = 50
 "#;
 
 /// [`VALID`] with one substring rewritten.

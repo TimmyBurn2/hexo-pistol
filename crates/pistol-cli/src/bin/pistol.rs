@@ -41,10 +41,13 @@ usage:
   --fixtures    a sha-pinned tactical fixture. It names the config it was
                 pre-registered against, so `selftest` takes no --config.
 
-  A `movetime` budget is accepted in play mode and is not a ceiling: the first
-  deepening iteration cannot be interrupted, so a short budget overshoots by that
-  iteration's cost (docs/decisions.md D-74, D-95). Budget by nodes or depth when
-  the clock is hard.
+  A `movetime N` budget is accepted in play mode and is a CEILING: the answer
+  arrives within N + epsilon, where epsilon is the config's
+  play.movetime_epsilon_ms, advertised on the handshake. Before deepening the
+  engine secures a bounded fallback answer, so every iteration may be
+  interrupted; under an abort the report's depth_turns counts only COMPLETED
+  depths, and may be 0 (docs/decisions.md D-95 superseded, WP-1.4 series).
+  Wall-clock results are never evidence for a strength claim (CLAUDE.md rule 6).
 
   `score mate T` counts EVERY turn from the root, both sides', not the winner's
   own turns: an odd T is a win for the side to move at the root, an even T a loss,
@@ -119,14 +122,26 @@ fn protocol_command(words: &[&str]) -> Result<ExitCode, String> {
 /// the values from it that decide what the search does (CLAUDE.md rule 6).
 /// The caller appends `weights_sha256` after the engine is built (see
 /// [`weights_digest`] for why the order matters).
+///
+/// Play mode additionally advertises `movetime_epsilon_ms` — the ceiling
+/// contract a driver sizes its clamp against (WP-1.4). Instrument mode does
+/// NOT: it refuses movetime by name, and its handshake is pinned byte-for-byte
+/// against the pre-WP-1.4 revision.
 fn identity_lines(path: &Path, config: &Config) -> Vec<String> {
     let pistol_engine::config::CandidatePolicy::Radius { radius } = config.search.candidate_policy;
-    vec![
+    let mut lines = vec![
         format!("config {}", path.display()),
         format!("eval {}", config.eval.backend.token()),
         format!("tt_bytes {}", config.search.tt_bytes),
         format!("candidate_policy radius {radius}"),
-    ]
+    ];
+    if config.engine.mode == pistol_engine::EngineMode::Play {
+        lines.push(format!(
+            "movetime_epsilon_ms {}",
+            config.play.movetime_epsilon_ms
+        ));
+    }
+    lines
 }
 
 /// The eval weight table, identified by CONTENT.

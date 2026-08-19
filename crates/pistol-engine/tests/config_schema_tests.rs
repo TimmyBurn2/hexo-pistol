@@ -29,8 +29,8 @@ const VALUE_SUPPLYING_CONSTRUCTS: [&str; 6] = [
 fn config_rejects_unknown_field() {
     // At the top level.
     let (key, why) = rejection(&replacing(
-        "schema_version = 1",
-        "schema_version = 1\nbogus_top = true",
+        "schema_version = 2",
+        "schema_version = 2\nbogus_top = true",
     ));
     assert_eq!(key, "bogus_top");
     assert!(why.contains("unknown field"), "unexpected reason: {why}");
@@ -61,6 +61,7 @@ fn config_rejects_missing_field() {
         ("weights_file", "eval.weights_file"),
         ("threads", "instrument.threads"),
         ("tie_break", "instrument.tie_break"),
+        ("movetime_epsilon_ms", "play.movetime_epsilon_ms"),
     ] {
         let (key, why) = rejection(&without_key(dropped));
         assert_eq!(
@@ -76,7 +77,7 @@ fn config_rejects_missing_field() {
 
 #[test]
 fn config_rejects_missing_table() {
-    for table in ["engine", "search", "eval", "instrument"] {
+    for table in ["engine", "search", "eval", "instrument", "play"] {
         let (key, why) = rejection(&without_table(table));
         assert_eq!(key, table, "dropping `[{table}]` named the wrong key");
         assert!(why.contains("missing field"), "dropping `[{table}]`: {why}");
@@ -92,7 +93,7 @@ fn config_rejects_code_side_default_probe() {
 
     // No section can be conjured either — `config_rejects_missing_table`
     // covers that, and this restates it as part of the same guarantee.
-    for table in ["engine", "search", "eval", "instrument"] {
+    for table in ["engine", "search", "eval", "instrument", "play"] {
         assert_eq!(rejection(&without_table(table)).0, table);
     }
 

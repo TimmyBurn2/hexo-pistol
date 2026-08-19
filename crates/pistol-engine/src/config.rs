@@ -21,7 +21,11 @@ use serde::Deserialize;
 use crate::error::{self, EngineError};
 
 /// The configuration schema version this build understands.
-pub const SCHEMA_VERSION: u32 = 1;
+///
+/// 2 since WP-1.4: the schema gained the required `[play]` section, and a
+/// version-1 document must fail by version rather than by a puzzling
+/// missing-key error (docs/decisions.md D-16).
+pub const SCHEMA_VERSION: u32 = 2;
 
 /// Smallest transposition table this build accepts, in bytes.
 ///
@@ -39,6 +43,15 @@ pub const MIN_TT_BYTES: u64 = 1 << 20;
 /// validation may not ask; the table refuses that one itself, by name, when it
 /// tries to allocate.
 pub const MAX_TT_BYTES: u64 = 1 << 36;
+
+/// Largest movetime overshoot allowance this build accepts, in milliseconds.
+///
+/// A rejection bound like [`MAX_CANDIDATE_RADIUS`], not a value: it catches the
+/// typo class — an epsilon longer than the budget it excuses — offline. The
+/// promise itself (`go movetime N` answers within N + epsilon) is validated by
+/// the release movetime gate, and raising the config value to green a failing
+/// gate is a post-hoc threshold move CLAUDE.md forbids.
+pub const MAX_MOVETIME_EPSILON_MS: u64 = 1000;
 
 /// Largest search candidate radius this build accepts.
 ///
@@ -78,6 +91,9 @@ pub struct Config {
     pub eval: EvalSection,
     /// Settings that only bind in instrument mode, but are always stated.
     pub instrument: InstrumentSection,
+    /// Settings that only bind in play mode, but are always stated — the same
+    /// completeness rule that puts `[instrument]` in a play document.
+    pub play: PlaySection,
 }
 
 /// `[engine]`.
@@ -180,6 +196,23 @@ pub struct InstrumentSection {
     pub threads: u16,
     /// How equal-scoring moves are ordered against each other.
     pub tie_break: TieBreak,
+}
+
+/// `[play]`.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PlaySection {
+    /// The overshoot allowance of the movetime ceiling, in milliseconds:
+    /// `go movetime N` answers within N + this. In `1..=`
+    /// [`MAX_MOVETIME_EPSILON_MS`].
+    ///
+    /// A PROMISE the search mechanism must measure under, not a knob the search
+    /// reads: the internal deadline stays at N, and epsilon covers the bounded
+    /// uninterruptible sections (the fallback stage, one node's candidate
+    /// generation and ordering tail, the unwind, report I/O). It is advertised
+    /// on the play-mode handshake so a driver can size its clamp. Its measured
+    /// domain is recorded in docs/decisions.md beside the mechanism decision.
+    pub movetime_epsilon_ms: u64,
 }
 
 /// How the engine breaks a tie between equally scored moves.

@@ -6,7 +6,8 @@
 
 use crate::config::{
     CandidatePolicy, Config, EngineMode, EvalSection, InstrumentSection, MAX_CANDIDATE_RADIUS,
-    MAX_TT_BYTES, MIN_TT_BYTES, SCHEMA_VERSION, SearchSection,
+    MAX_MOVETIME_EPSILON_MS, MAX_TT_BYTES, MIN_TT_BYTES, PlaySection, SCHEMA_VERSION,
+    SearchSection,
 };
 use crate::error::EngineError;
 
@@ -29,6 +30,7 @@ impl Config {
         self.search.validate()?;
         self.eval.validate()?;
         self.instrument.validate()?;
+        self.play.validate()?;
 
         // The determinism law: instrument mode is the source of every strength
         // claim, so it may not race (CLAUDE.md rule 4).
@@ -110,6 +112,24 @@ impl InstrumentSection {
             return Err(EngineError::config(
                 "instrument.threads",
                 "must be at least 1, got 0",
+            ));
+        }
+        Ok(())
+    }
+}
+
+impl PlaySection {
+    fn validate(&self) -> Result<(), EngineError> {
+        // Zero would promise an unmeasurable instantaneous reply; past the
+        // ceiling is the typo class. Both are rejection bounds, not values
+        // (docs/decisions.md D-18).
+        if self.movetime_epsilon_ms == 0 || self.movetime_epsilon_ms > MAX_MOVETIME_EPSILON_MS {
+            return Err(EngineError::config(
+                "play.movetime_epsilon_ms",
+                format!(
+                    "must be in 1..={MAX_MOVETIME_EPSILON_MS}, got {}",
+                    self.movetime_epsilon_ms
+                ),
             ));
         }
         Ok(())

@@ -18,7 +18,11 @@ use pistol_core::Turn;
 /// One report from the search.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SearchInfo {
-    /// The depth this report is for, in turns.
+    /// The depth this report is for, in turns — always a depth that was
+    /// actually COMPLETED. Zero only in a returned outcome under a wall-clock
+    /// abort that no iteration survived, where the answer is the fallback or
+    /// the aborted iteration's completed root prefix; partial-iteration work is
+    /// never attributed to a completed depth (WP-1.4).
     pub depth_turns: u32,
     /// The deepest any line reached, in turns. Equal to `depth_turns` in a
     /// completed iteration — Stage 0 has no extension that passes the horizon —
@@ -47,17 +51,45 @@ pub struct SearchInfo {
 /// answer to the question that was asked, and the report is the evidence
 /// (docs/decisions.md D-2).
 ///
-/// The report is the last completed depth's — its line, its score, its depth —
-/// with the **totals** for the whole search in `nodes`, `time_ms`, `nps`,
-/// `seldepth_turns` and `hashfull_permille`. An iteration the budget interrupted
-/// is discarded as an answer but not as work: a node budget is a promise about
-/// what the search spends, and per-side compute is a reporting requirement
-/// (CLAUDE.md rule 6). So the final `nodes` is generally larger than the one in
-/// the last report the callback saw.
+/// Under a reproducible stop the report is the last completed depth's — its
+/// line, its score, its depth — with the **totals** for the whole search in
+/// `nodes`, `time_ms`, `nps`, `seldepth_turns` and `hashfull_permille`. An
+/// iteration the budget interrupted is discarded as an answer but not as work:
+/// a node budget is a promise about what the search spends, and per-side
+/// compute is a reporting requirement (CLAUDE.md rule 6). So the final `nodes`
+/// is generally larger than the one in the last report the callback saw.
+///
+/// Under a wall-clock stop the answer may come from deeper than the last
+/// completed depth — the aborted iteration's completed root prefix, or the
+/// pre-deepening fallback when nothing completed at all — and `provenance`
+/// says which, because a score whose kind cannot be read from the data is the
+/// silent widening CLAUDE.md rule 10 forbids. `depth_turns` still counts only
+/// completed depths: the depth field understates, never overstates.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SearchOutcome {
     /// The turn the engine would play.
     pub best: Turn,
-    /// The report for the last completed depth.
+    /// The report: the answer's line and score, the completed depth, the
+    /// whole search's totals.
     pub info: SearchInfo,
+    /// Where the answer came from.
+    pub provenance: Provenance,
+}
+
+/// Where a search's answer came from — closed, and telling a consumer exactly
+/// how to read `SearchInfo::score` beside `SearchInfo::depth_turns`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Provenance {
+    /// The last completed iteration's move: the score is exact at
+    /// `depth_turns`. The only provenance a reproducible stop can produce, and
+    /// therefore the only one a strength claim ever quotes (CLAUDE.md rule 6).
+    CompletedDepth,
+    /// A wall-clock abort's salvage: the move was fully searched at one turn
+    /// DEEPER than `depth_turns` inside the aborted iteration, its score exact
+    /// for that move there — a lower bound on the position, not its value.
+    PartialRoot,
+    /// A wall-clock abort before any iteration completed: the pre-deepening
+    /// fallback. The score is the root static evaluation — or a mate score,
+    /// when the fallback's instant-win check proved the turn wins (rule 4).
+    Fallback,
 }

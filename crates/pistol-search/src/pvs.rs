@@ -33,10 +33,12 @@
 //! carry the arguments, and Stage 1 moves candidate generation out entirely
 //! (docs/decisions.md D-117, WP-1.5).
 
+use std::time::Instant;
+
 use pistol_core::{Coord, Phase, PlyOutcome};
 
 use crate::candidates::candidate_cells;
-use crate::ordering::order;
+use crate::ordering::{OrderOutcome, order};
 use crate::params::CandidatePolicy;
 use crate::position::Position;
 use crate::pv::PvTable;
@@ -80,10 +82,17 @@ pub struct Run<'a> {
     /// Set once the stop condition has fired; every node above unwinds without
     /// using its result.
     pub aborted: bool,
-    /// Whether this iteration may be abandoned. The first one may not: a search
-    /// that returned no move at all would be a silent failure
-    /// (docs/decisions.md D-74).
+    /// Whether this iteration may be abandoned. Under a reproducible stop the
+    /// first one may not — a search that returned no move at all would be a
+    /// silent failure (docs/decisions.md D-74); under a wall-clock stop every
+    /// iteration may, because the caller secured a fallback answer before
+    /// deepening (D-74 as amended by WP-1.4).
     abortable: bool,
+    /// The score of the last ply-0 promotion of the CURRENT iteration, reset by
+    /// [`Run::iterate`]. Written on every ply-0 promotion whatever the stop
+    /// kind — the write is behavior-neutral — and read only by
+    /// [`Run::salvage`], which only a wall-clock caller consults.
+    root_score: Option<i32>,
     pv: PvTable,
 }
 
@@ -108,6 +117,7 @@ impl<'a> Run<'a> {
             seldepth_turns: 0,
             aborted: false,
             abortable: false,
+            root_score: None,
             pv: PvTable::new(max_ply),
         }
     }
@@ -116,6 +126,11 @@ impl<'a> Run<'a> {
     /// the stop condition fired before it finished.
     pub fn iterate(&mut self, depth_plies: u32, abortable: bool) -> Option<i32> {
         self.abortable = abortable;
+        // Reset with the iteration, exactly as `visit` clears the ply-0 line on
+        // entry: an abort landing before this iteration's first ply-0 promotion
+        // must find nothing salvageable, not the previous iteration's score
+        // beside an empty line (the decision-red-team's MAJOR-4a).
+        self.root_score = None;
         let score = self.visit(depth_plies, -INFINITY, INFINITY, 0);
         (!self.aborted).then_some(score)
     }
@@ -123,6 +138,37 @@ impl<'a> Run<'a> {
     /// The line under the root, in plies.
     pub fn line(&self) -> &[Coord] {
         self.pv.line(0)
+    }
+
+    /// What the aborted iteration had already proved at the root: the last
+    /// ply-0 promotion's line and its exact score, or `None` if the abort
+    /// landed before any root candidate's subtree completed.
+    ///
+    /// Sound because a ply-0 promotion only ever happens on a COMPLETED child
+    /// subtree — `visit` returns an aborted child's sentinel before its score
+    /// can be used — and root beta is infinite, so a root promotion is never a
+    /// fail-high adopting a truncated null-window line: the line is turn-whole
+    /// and the score exact. The first root candidate is the table's move, which
+    /// is the previous iteration's best, so a salvaged answer is never
+    /// worse-informed than the last completed depth's (WP-1.4's decision,
+    /// verified line-by-line by its decision-red-team).
+    ///
+    /// Only a wall-clock caller may consult this: using it under a node budget
+    /// would change reproducible-budget answers, which are pinned byte-for-byte
+    /// (CLAUDE.md rule 4, the instrument golden transcripts).
+    pub fn salvage(&self) -> Option<(i32, &[Coord])> {
+        if !self.aborted {
+            return None;
+        }
+        let line = self.pv.line(0);
+        // The score and the line are written together by a ply-0 promotion and
+        // reset together at iteration entry; one without the other is a desync.
+        assert_eq!(
+            self.root_score.is_some(),
+            !line.is_empty(),
+            "pistol-search invariant: a salvaged root score and its line must exist together"
+        );
+        self.root_score.map(|score| (score, line))
     }
 
     /// How full the table is, in parts per thousand.
@@ -203,7 +249,18 @@ impl<'a> Run<'a> {
             );
             return self.position.value();
         }
-        order(self.position, &mut cells, known.map(|record| record.best));
+        // A deadline can land inside the scoring loop — its length is the
+        // candidate count, which the opponent partly grows (D-95) — so under a
+        // wall-clock stop the ordering itself checks the clock and the node
+        // aborts like any other; the partially scored order is discarded with
+        // it. Reproducible stops pass `None` and read no clock (rule 4).
+        let table_move = known.map(|record| record.best);
+        if order(self.position, &mut cells, table_move, self.order_deadline())
+            == OrderOutcome::DeadlinePassed
+        {
+            self.aborted = true;
+            return 0;
+        }
 
         let original_alpha = alpha;
         let mut best_score = -INFINITY;
@@ -253,6 +310,14 @@ impl<'a> Run<'a> {
                 if score > alpha {
                     alpha = score;
                     self.pv.promote(ply, at);
+                    if ply == 0 {
+                        // The root's best-so-far, kept beside the line the
+                        // promotion just wrote so a wall-clock abort can answer
+                        // with what this iteration already proved
+                        // (`Run::salvage`). Behavior-neutral for every other
+                        // stop kind: written always, read never.
+                        self.root_score = Some(score);
+                    }
                 }
             }
             // A win is the best this node can do — every winning stone here
@@ -336,16 +401,152 @@ impl<'a> Run<'a> {
         self.position.state().turn() - self.root_turn
     }
 
-    /// Whether the budget has run out, tested at a fixed node granularity so
-    /// that the stopping point of a node budget is exact and reproducible.
+    /// Whether the budget has run out.
+    ///
+    /// A node budget is tested at a fixed node granularity so its stopping
+    /// point is exact and reproducible (docs/decisions.md D-74). A deadline is
+    /// tested at EVERY abortable node: a mask tuned for node budgets would let
+    /// up to [`NODE_CHECK_INTERVAL`] nodes — each with a whole ordering pass —
+    /// run past the clock, which is D-95's magnitude class, and a deadline stop
+    /// is not reproducible anyway, so granularity buys it nothing.
     fn should_stop(&mut self) -> bool {
         if self.aborted {
             return true;
         }
-        if !self.abortable || !self.nodes.is_multiple_of(NODE_CHECK_INTERVAL) {
+        if !self.abortable {
+            return false;
+        }
+        let check_now = match self.stop {
+            Stop::Deadline(_) => true,
+            Stop::DepthTurns(_) | Stop::Nodes(_) => self.nodes.is_multiple_of(NODE_CHECK_INTERVAL),
+        };
+        if !check_now {
             return false;
         }
         self.aborted = self.stop.is_spent(self.nodes);
         self.aborted
+    }
+
+    /// The deadline the ordering pass must respect, or `None` — and it is
+    /// `None` for every reproducible stop and every non-abortable iteration,
+    /// so no instrument path can reach a clock read through it.
+    fn order_deadline(&self) -> Option<Instant> {
+        match self.stop {
+            Stop::Deadline(at) if self.abortable => Some(at),
+            _ => None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::{Duration, Instant};
+
+    use pistol_core::{Coord, GameState, Player};
+    use pistol_eval::Eval;
+
+    use super::*;
+    use crate::pv::turns_from_plies;
+    use crate::tt::Table;
+
+    /// An evaluation that thinks nothing of anything, so the tests here are
+    /// about the run's abort-and-salvage bookkeeping and not about scores.
+    struct Flat;
+
+    impl Eval for Flat {
+        fn apply(&mut self, _at: Coord, _player: Player) {}
+        fn undo(&mut self, _at: Coord, _player: Player) {}
+        fn value(&self, _side_to_move: Player) -> i32 {
+            0
+        }
+    }
+
+    /// Turn 2 of a game: one stone on the origin, two plies owed.
+    fn root() -> GameState {
+        GameState::from_plies(&[Coord::ORIGIN]).expect("turn 1 on the origin is legal")
+    }
+
+    /// An instant that is already in the past — or, where the platform cannot
+    /// step back, now, which every `>=` deadline test also accepts as spent.
+    fn expired() -> Instant {
+        let now = Instant::now();
+        now.checked_sub(Duration::from_millis(1)).unwrap_or(now)
+    }
+
+    /// The decision-red-team's MAJOR-4a, pinned: an abort that lands before the
+    /// new iteration promotes anything at the root must salvage NOTHING — not
+    /// the previous iteration's score sitting beside a freshly cleared line.
+    ///
+    /// Mutation checked: removing the `root_score = None` reset in
+    /// [`Run::iterate`] makes this test die on `salvage`'s pairing assertion.
+    #[test]
+    fn an_abort_before_any_root_promotion_salvages_nothing() {
+        let state = root();
+        let mut position = Position::new(Box::new(Flat));
+        position.reset_to(&state);
+        let mut table = Table::new(1 << 20).expect("the smallest table");
+        let policy = CandidatePolicy::Radius { radius: 1 };
+        let mut run = Run::new(
+            &mut position,
+            &mut table,
+            policy,
+            Stop::Deadline(expired()),
+            12,
+        );
+
+        // Iteration 1 is run non-abortable, so it completes over the expired
+        // deadline and promotes at the root.
+        let score = run.iterate(2, false);
+        assert!(score.is_some(), "a non-abortable iteration completes");
+        assert!(!run.line().is_empty(), "a completed iteration has a line");
+        assert!(
+            run.salvage().is_none(),
+            "nothing is salvaged from a search that was not aborted"
+        );
+
+        // Iteration 2 is abortable and the deadline is long gone: the first
+        // node aborts after clearing the root line and before any promotion.
+        let score = run.iterate(4, true);
+        assert!(score.is_none(), "the abortable iteration aborts");
+        assert!(run.aborted, "the run records the abort");
+        assert!(
+            run.salvage().is_none(),
+            "an abort before any root promotion salvages nothing from iteration 1"
+        );
+    }
+
+    /// The salvage read path: a line the aborted iteration promoted at the root
+    /// is turn-whole (it replays into whole turns from the root) and comes back
+    /// with exactly the score its promotion recorded — the invariant that lets
+    /// `Searcher::search` hand it to `turns_from_plies` without a
+    /// `PV_NOT_PLAYABLE` panic being reachable from play mode.
+    #[test]
+    fn a_salvaged_root_line_is_turn_whole_and_keeps_its_promotion_score() {
+        let state = root();
+        let mut position = Position::new(Box::new(Flat));
+        position.reset_to(&state);
+        let mut table = Table::new(1 << 20).expect("the smallest table");
+        let policy = CandidatePolicy::Radius { radius: 1 };
+        let far = Instant::now() + Duration::from_secs(3600);
+        let mut run = Run::new(&mut position, &mut table, policy, Stop::Deadline(far), 12);
+
+        let score = run
+            .iterate(2, true)
+            .expect("an hour of deadline completes a two-ply iteration");
+        // Manufacture the abort AFTER the iteration completed its promotions:
+        // the deterministic stand-in for a deadline landing between the last
+        // root promotion and the iteration's end.
+        run.aborted = true;
+
+        let (salvaged, line) = run
+            .salvage()
+            .expect("an aborted iteration that promoted at the root salvages");
+        assert_eq!(salvaged, score, "the salvage is the promotion's own score");
+        let turns = turns_from_plies(&state, line);
+        assert_eq!(
+            turns.len(),
+            1,
+            "a two-ply line from turn 2 is exactly one whole turn"
+        );
     }
 }

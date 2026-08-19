@@ -56,3 +56,47 @@ fn handshake_reports_weights_sha256() {
         "the handshake names the weight table by content — expected `{line}` in:\n{stdout}"
     );
 }
+
+/// The movetime ceiling contract travels on the play-mode handshake — and only
+/// there: instrument mode refuses a movetime by name, and its handshake is
+/// pinned byte-for-byte against the pre-WP-1.4 revision, so an epsilon line in
+/// it would be drift (WP-1.4, docs/decisions.md D-95 superseded).
+#[test]
+fn play_handshake_advertises_movetime_epsilon_and_instrument_does_not() {
+    let root = repo_root();
+    let epsilon_line = "id movetime_epsilon_ms 50";
+
+    for (config, advertised) in [
+        ("configs/play_v0.toml", true),
+        ("configs/instrument_v0.toml", false),
+    ] {
+        let mut child = Command::new(env!("CARGO_BIN_EXE_pistol"))
+            .current_dir(&root)
+            .args(["--config", config])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .expect("the engine binary starts");
+        child
+            .stdin
+            .as_mut()
+            .expect("a stdin pipe")
+            .write_all(b"pistol\nquit\n")
+            .expect("the handshake is sent");
+        let output = child
+            .wait_with_output()
+            .expect("the engine answers and quits");
+        assert!(
+            output.status.success(),
+            "the engine refused {config}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let stdout = String::from_utf8(output.stdout).expect("protocol output is text");
+        assert_eq!(
+            stdout.lines().any(|answer| answer == epsilon_line),
+            advertised,
+            "{config}: expected `{epsilon_line}` present = {advertised} in:\n{stdout}"
+        );
+    }
+}

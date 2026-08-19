@@ -23,20 +23,59 @@
 //! reads a clock, a hasher, or a node count (CLAUDE.md rule 4).
 
 use std::cmp::Reverse;
+use std::time::Instant;
 
 use pistol_core::Coord;
 
 use crate::position::Position;
 
+/// How many candidates are scored between two deadline checks.
+///
+/// The scoring loop is the longest uninterruptible stretch inside one node —
+/// its length is the candidate count, which grows with how spread out the
+/// stones are, which the opponent partly controls (docs/decisions.md D-95). So
+/// under a wall-clock stop the loop checks the deadline at this stride, and the
+/// worst-case tail of a node is this many static-score roundtrips rather than
+/// a whole ordering pass. A constant of the overshoot bound, not a tunable.
+pub const ORDER_CHECK_INTERVAL: usize = 64;
+
+/// How an ordering pass ended.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OrderOutcome {
+    /// `cells` is sorted and ready to search.
+    Completed,
+    /// The deadline passed mid-scoring; `cells` is in an unspecified order and
+    /// must not be searched — the caller aborts the node.
+    DeadlinePassed,
+}
+
 /// Sort `cells` into the order the search will try them.
 ///
 /// `cells` must be ascending and duplicate-free, which is what
 /// [`crate::candidate_cells`] emits.
-pub fn order(position: &mut Position, cells: &mut Vec<Coord>, table_move: Option<Coord>) {
-    let mut scored: Vec<(i32, Coord)> = cells
-        .iter()
-        .map(|&at| (position.static_score_after(at), at))
-        .collect();
+///
+/// `deadline` is `Some` only under a wall-clock stop in an abortable
+/// iteration: instrument mode and every reproducible budget pass `None`, and
+/// with `None` this function performs **zero clock reads** — the determinism
+/// law's no-clock-on-a-choice-path rule, kept by construction (CLAUDE.md
+/// rule 4, docs/decisions.md D-73).
+pub fn order(
+    position: &mut Position,
+    cells: &mut Vec<Coord>,
+    table_move: Option<Coord>,
+    deadline: Option<Instant>,
+) -> OrderOutcome {
+    let mut scored: Vec<(i32, Coord)> = Vec::with_capacity(cells.len());
+    for (index, &at) in cells.iter().enumerate() {
+        if let Some(expires) = deadline
+            && index % ORDER_CHECK_INTERVAL == 0
+            && index > 0
+            && Instant::now() >= expires
+        {
+            return OrderOutcome::DeadlinePassed;
+        }
+        scored.push((position.static_score_after(at), at));
+    }
     // Descending by score. `sort_by` is stable, so equal scores keep the
     // ascending coordinate order they arrived in.
     scored.sort_by_key(|&(score, _)| Reverse(score));
@@ -55,6 +94,7 @@ pub fn order(position: &mut Position, cells: &mut Vec<Coord>, table_move: Option
         // put them in, so the table's move costs nothing but its own place.
         cells[..=found].rotate_right(1);
     }
+    OrderOutcome::Completed
 }
 
 #[cfg(test)]
@@ -126,7 +166,7 @@ mod tests {
         // A cell that is nowhere in the set leaves it exactly as the sort left
         // it, and above all does not join it.
         let mut cells = candidates.to_vec();
-        order(&mut position, &mut cells, Some(Coord::new(9, 9)));
+        order(&mut position, &mut cells, Some(Coord::new(9, 9)), None);
         assert_eq!(
             cells, sorted,
             "a table move that is not a candidate must neither be played nor displace one"
@@ -136,7 +176,7 @@ mod tests {
         // that had stopped promoting anything at all: the same table move, when
         // it IS a candidate, goes first.
         let mut cells = candidates.to_vec();
-        order(&mut position, &mut cells, Some(Coord::new(0, 0)));
+        order(&mut position, &mut cells, Some(Coord::new(0, 0)), None);
         assert_eq!(
             cells,
             vec![Coord::new(0, 0), Coord::new(2, 0), Coord::new(1, 0)],

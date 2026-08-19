@@ -23,6 +23,7 @@
 
 pub mod candidates;
 pub mod error;
+pub mod fallback;
 pub mod info;
 pub mod params;
 pub mod score;
@@ -40,7 +41,8 @@ pub(crate) mod pvs;
 
 pub use candidates::candidate_cells;
 pub use error::SearchError;
-pub use info::{SearchInfo, SearchOutcome};
+pub use fallback::{FallbackAnswer, fallback_turn};
+pub use info::{Provenance, SearchInfo, SearchOutcome};
 pub use params::{CandidatePolicy, SearchParams};
 pub use score::{MATE, ScoreKind};
 pub use search::{MAX_DEPTH_TURNS, Searcher};

@@ -14,21 +14,20 @@
 # Validate this file with tools/config_check.sh.
 
 # Schema version this document is written against.
-schema_version = 1
+schema_version = 2
 
 [engine]
 # "play" — all three budget kinds are accepted, including movetime.
 #
-# ACCEPTED, not bounded. A wall-clock budget is honoured from the SECOND iterative
-# deepening iteration on: the first one cannot be interrupted, because a search
-# that returned no move at all would be a silent failure (docs/decisions.md D-74).
-# Its cost grows with the candidate count, which grows with how spread out the
-# stones are — so measured on the development machine at this radius,
-# `go movetime 500` returns after about 1.9 s ten turns into a game whose stones
-# sit eight apart, 8.6 s at twenty turns and 58.6 s at fifty (D-95). A driver on a
-# hard clock should budget by nodes or by depth until Stage 1 makes the first
-# iteration cheap; a driver that wants a strength number must use instrument mode
-# anyway (CLAUDE.md rule 6).
+# ACCEPTED, and since WP-1.4 a CEILING: `go movetime N` answers within
+# N + play.movetime_epsilon_ms. Before deepening the search secures a bounded
+# fallback answer (an instant-win check, then the first candidates of the
+# deterministic ordering), so every iteration — the first included — may be
+# interrupted, and a completed root candidate of the interrupted iteration is
+# salvaged when one exists. D-95's floor (1.9 s / 8.6 s / 58.6 s returns against
+# a 500 ms budget) is superseded; the measured overshoot table and the promise's
+# domain live beside the mechanism decision in docs/decisions.md. A driver that
+# wants a strength number must use instrument mode anyway (CLAUDE.md rule 6).
 mode = "play"
 
 [search]
@@ -52,11 +51,10 @@ tt_bytes = 268435456
 # survives the halving. Moving this file on that evidence would be exactly the
 # extrapolation D-190 declined to make.
 #
-# What reunites them: the time-matched SPRT that WP-1.4 unblocks. Until D-95's
-# movetime floor is fixed this mode cannot even be measured honestly — a
-# `movetime 500` search has been measured returning after 1.9 s, 8.6 s and
-# 58.6 s at 10, 20 and 50 turns — so the comparison is not merely unrun, it is
-# not yet runnable.
+# What reunites them: the time-matched r2-vs-r3 SPRT at 500 ms, which WP-1.4's
+# movetime ceiling has now made runnable and LICENSED but which has not run —
+# the operator pre-registers and runs it per the WP-1.3 runbook pattern, and it
+# decides this file's radius. Until that verdict this value does not move.
 [search.candidate_policy]
 kind = "radius"
 radius = 3
@@ -72,3 +70,14 @@ weights_file = "configs/eval_v0_weights.toml"
 # Lazy SMP arrives in Stage 4 (docs/ROADMAP.md).
 threads = 1
 tie_break = "lexicographic"
+
+[play]
+# The movetime ceiling's overshoot allowance, in milliseconds: `go movetime N`
+# answers within N + this value. It covers the bounded uninterruptible sections
+# (the fallback stage, one node's candidate-generation and ordering tail, the
+# unwind and report I/O); the internal deadline stays at N. Advertised on the
+# play-mode handshake. Its measured domain — machine, build, stone-count
+# envelope — is recorded beside the mechanism decision in docs/decisions.md;
+# raising this value to green a failing movetime gate is a post-hoc threshold
+# move CLAUDE.md forbids.
+movetime_epsilon_ms = 50

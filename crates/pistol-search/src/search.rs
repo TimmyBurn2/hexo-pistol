@@ -9,15 +9,34 @@
 //! rather than twice the depth. Every iteration therefore ends on a turn
 //! boundary, which is what lets the principal variation be reported as turns.
 //!
-//! An iteration that the budget interrupts is **discarded**: its move ordering
-//! was only partly informed by the previous iteration, and half of a depth is
-//! not a depth. The first iteration is not interruptible, because a search that
-//! returned no move would be a silent failure (CLAUDE.md rule 3,
-//! docs/decisions.md D-74); a node budget is honoured from the second iteration
-//! on, and what the first one cost is reported in `nodes` rather than hidden.
+//! An iteration that a REPRODUCIBLE budget interrupts is **discarded**: its
+//! move ordering was only partly informed by the previous iteration, and half
+//! of a depth is not a depth. Under those budgets the first iteration is not
+//! interruptible, because a search that returned no move would be a silent
+//! failure (CLAUDE.md rule 3, docs/decisions.md D-74); a node budget is
+//! honoured from the second iteration on, and what the first one cost is
+//! reported in `nodes` rather than hidden.
+//!
+//! A WALL-CLOCK budget cannot afford that rule — the first iteration's cost
+//! grows with the candidate count, which the opponent partly controls (D-95) —
+//! so before deepening the search secures a bounded fallback answer
+//! ([`crate::fallback`]), makes every iteration abortable, and under an abort
+//! answers with the best information it holds: the aborted iteration's
+//! completed root prefix, else the last completed depth, else the fallback.
+//! [`SearchOutcome::provenance`] says which, and `depth_turns` counts only
+//! completed depths whichever way the answer came (WP-1.4, amending D-74).
 //!
 //! The loop also stops early on a proven mate: once a line is won or lost by
 //! force, deeper search cannot improve on the distance the shallower one found.
+//!
+//! # RULE9-JUSTIFICATION: one deepening loop and the one decision about what
+//! its answer is (CLAUDE.md rule 9).
+//!
+//! The wall-clock fallback staging, the salvage-else-completed-else-fallback
+//! resolution, and the totals accounting all read and settle the same state the
+//! loop produced, in one order that the abort-honesty argument is stated
+//! against; splitting them would put the reasoning that justifies the answer in
+//! a different file from the loop whose interruption it answers for.
 
 use std::time::Instant;
 
@@ -26,12 +45,13 @@ use pistol_eval::Eval;
 
 use crate::candidates::candidate_cells;
 use crate::error::SearchError;
-use crate::info::{SearchInfo, SearchOutcome};
+use crate::fallback::{FallbackAnswer, fallback_turn};
+use crate::info::{Provenance, SearchInfo, SearchOutcome};
 use crate::params::{CandidatePolicy, SearchParams};
 use crate::position::Position;
 use crate::pv::turns_from_plies;
 use crate::pvs::Run;
-use crate::score::{MAX_MATE_TURNS, is_mate};
+use crate::score::{MAX_MATE_TURNS, is_mate, mate_in};
 use crate::stop::Stop;
 use crate::tt::Table;
 
@@ -135,7 +155,19 @@ impl Searcher {
 
         self.position.reset_to(state);
         self.table.new_generation();
+        // Under a wall-clock stop the answer is secured BEFORE any deepening:
+        // the fallback's cost is bounded and paid up front, so every iteration
+        // — the first included — may then be interrupted (D-74 as amended by
+        // WP-1.4; the old first-iteration rule stands for reproducible stops).
+        // The root's static value rides along for the fallback's report.
         let started = Instant::now();
+        let fallback = match stop {
+            Stop::Deadline(_) => Some((
+                fallback_turn(state, self.params.candidate_policy),
+                self.position.value(),
+            )),
+            Stop::DepthTurns(_) | Stop::Nodes(_) => None,
+        };
         let mut run = Run::new(
             &mut self.position,
             &mut self.table,
@@ -147,7 +179,10 @@ impl Searcher {
         let mut outcome = None;
         for depth_turns in 1..=max_depth {
             let depth_plies = plies_for(state.turn(), depth_turns);
-            let Some(score) = run.iterate(depth_plies, depth_turns > 1) else {
+            // Every iteration is abortable once a fallback answer is secured;
+            // under a reproducible stop the first one still is not (D-74).
+            let abortable = depth_turns > 1 || fallback.is_some();
+            let Some(score) = run.iterate(depth_plies, abortable) else {
                 break;
             };
 
@@ -170,19 +205,84 @@ impl Searcher {
                 hashfull_permille: run.hashfull_permille(),
             };
             report(&info);
-            outcome = Some(SearchOutcome { best, info });
+            outcome = Some(SearchOutcome {
+                best,
+                info,
+                provenance: Provenance::CompletedDepth,
+            });
 
             if is_mate(score) {
                 break;
             }
         }
 
-        let mut outcome = outcome.unwrap_or_else(|| {
-            panic!(
-                "pistol-search invariant {NO_MOVE_FROM_A_COMPLETED_ITERATION}: the first \
-                 iteration cannot be interrupted, so one of them completed"
-            )
-        });
+        // What the answer is, in order of information: the aborted iteration's
+        // completed root prefix where one exists (it starts from the table's
+        // move, so it is never worse-informed than the last completed depth),
+        // then the last completed depth, then — only under a wall-clock stop —
+        // the fallback secured before deepening. The salvage is read for a
+        // Deadline stop ONLY: under a node budget it would change answers that
+        // are pinned byte-for-byte (CLAUDE.md rule 4, the golden transcripts).
+        let completed_depth = outcome.as_ref().map_or(0, |done| done.info.depth_turns);
+        let salvage = match stop {
+            Stop::Deadline(_) => run
+                .salvage()
+                .map(|(score, line)| (score, turns_from_plies(state, line))),
+            Stop::DepthTurns(_) | Stop::Nodes(_) => None,
+        };
+        let mut outcome = if let Some((score, pv)) = salvage {
+            let best = *pv.first().unwrap_or_else(|| {
+                panic!(
+                    "pistol-search invariant {NO_MOVE_FROM_A_COMPLETED_ITERATION}: a salvaged \
+                     root line is a promotion's line and cannot be empty"
+                )
+            });
+            SearchOutcome {
+                best,
+                info: SearchInfo {
+                    depth_turns: completed_depth,
+                    seldepth_turns: 0,
+                    nodes: 0,
+                    nps: 0,
+                    time_ms: 0,
+                    pv,
+                    score,
+                    hashfull_permille: 0,
+                },
+                provenance: Provenance::PartialRoot,
+            }
+        } else if let Some(done) = outcome {
+            done
+        } else {
+            let (answer, root_value) = fallback.unwrap_or_else(|| {
+                panic!(
+                    "pistol-search invariant {NO_MOVE_FROM_A_COMPLETED_ITERATION}: under a \
+                     reproducible stop the first iteration cannot be interrupted, so one of \
+                     them completed"
+                )
+            });
+            // An instant win the fallback proved is a mate in one turn (D-3:
+            // either stone of the turn completes on the same turn count);
+            // anything else is unsearched and carries the root's static value.
+            let score = match answer {
+                FallbackAnswer::WinsThisTurn(_) => mate_in(1),
+                FallbackAnswer::Ordinary(_) => root_value,
+            };
+            SearchOutcome {
+                best: answer.turn(),
+                info: SearchInfo {
+                    depth_turns: 0,
+                    seldepth_turns: 0,
+                    nodes: 0,
+                    nps: 0,
+                    time_ms: 0,
+                    pv: vec![answer.turn()],
+                    score,
+                    hashfull_permille: 0,
+                },
+                provenance: Provenance::Fallback,
+            }
+        };
         // What the last completed depth found, and what the whole search cost —
         // an interrupted iteration is discarded as an answer but not as work,
         // and per-side compute accounting is a reporting requirement

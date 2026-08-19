@@ -21,10 +21,10 @@ git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 
 # First because it is instant and needs no build: fastest possible feedback
 # (docs/decisions.md D-30).
-step "gate 1/12: cargo fmt --all --check"
+step "gate 1/13: cargo fmt --all --check"
 cargo fmt --all --check || fail "formatting: run \`cargo fmt --all\`"
 
-step "gate 2/12: build from the git-tracked file set"
+step "gate 2/13: build from the git-tracked file set"
 # The point of this gate is to catch a build that depends on a file nobody
 # tracked. The tracked set is the git index: it equals HEAD on a fresh checkout,
 # and equals the about-to-be-committed tree when work is staged, so the gate
@@ -39,30 +39,30 @@ echo "ci: building $(git ls-files | wc -l) tracked files in $WORK/repo"
 rm -rf "$WORK"
 trap - EXIT
 
-step "gate 3/12: cargo test --workspace --locked"
+step "gate 3/13: cargo test --workspace --locked"
 cargo test --workspace --locked || fail "tests"
 
 # --all-targets so tests and examples are linted too, which is strictly more
 # than CLAUDE.md asks for and costs nothing.
-step "gate 4/12: cargo clippy --workspace --all-targets -- -D clippy::all"
+step "gate 4/13: cargo clippy --workspace --all-targets -- -D clippy::all"
 cargo clippy --workspace --all-targets --locked -- -D clippy::all || fail "clippy"
 
-step "gate 5/12: artifact rejection"
+step "gate 5/13: artifact rejection"
 tools/artifact_check.sh || fail "artifact check"
 
-step "gate 6/12: config validation"
+step "gate 6/13: config validation"
 tools/config_check.sh || fail "config check"
 
-step "gate 7/12: perft oracle"
+step "gate 7/13: perft oracle"
 tools/perft_check.sh || fail "perft oracle"
 
 # The determinism law's executable form (CLAUDE.md rule 4, docs/decisions.md D-7).
 # It runs last of the two engine gates because it is the slowest: two processes
 # over the whole sha-pinned fixture set at two budgets.
-step "gate 8/12: tactical fixture at its pre-registered threshold"
+step "gate 8/13: tactical fixture at its pre-registered threshold"
 tools/tactical_check.sh || fail "tactical fixture"
 
-step "gate 9/12: cross-process determinism"
+step "gate 9/13: cross-process determinism"
 tools/determinism.sh || fail "determinism"
 
 # The search's oracle, and the last of the correctness gates because it is the
@@ -71,8 +71,16 @@ tools/determinism.sh || fail "determinism"
 # determinism gate for the same reason that one runs after the tactical gate —
 # the cheapest thing that can fail should fail first (docs/decisions.md D-106,
 # D-120).
-step "gate 10/12: differential search oracle"
+step "gate 10/13: differential search oracle"
 tools/search_oracle_check.sh || fail "search oracle"
+
+# The play-mode ceiling (WP-1.4, superseding docs/decisions.md D-95): release
+# `cargo test` over the movetime and fallback suites, then the real binary over
+# the sha-pinned spread fixture with every measured overshoot checked against
+# N + play.movetime_epsilon_ms. After the instrument gates because it reuses
+# their release build.
+step "gate 11/13: movetime ceiling on the D-95 reproducer class"
+tools/movetime_check.sh || fail "movetime ceiling"
 
 # The judge itself. It runs after the engine gates because it USES the engine:
 # a smoke run that failed because the engine was broken would be a confusing
@@ -80,13 +88,13 @@ tools/search_oracle_check.sh || fail "search oracle"
 # in advance and is asserted exactly, and it repeats the run to cover the
 # arena's own determinism — which nothing else in this suite does
 # (docs/decisions.md D-169).
-step "gate 11/12: arena self-match smoke"
+step "gate 12/13: arena self-match smoke"
 tools/arena_smoke.sh || fail "arena smoke"
 
 # CLAUDE.md rule 9's soft cap. Last because it is the only gate that reads the
 # tracked files rather than building them, so it costs nothing to put it where a
 # reader looks for the summary (docs/decisions.md D-131).
-step "gate 12/12: file-justification check"
+step "gate 13/13: file-justification check"
 tools/file_justification_check.sh || fail "file justification"
 
 printf '\nci: all gates passed\n'

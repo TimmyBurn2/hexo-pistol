@@ -6,7 +6,9 @@ mod common;
 use std::path::Path;
 
 use common::{accepted, rejection, replacing};
-use pistol_engine::config::{EngineMode, MAX_CANDIDATE_RADIUS, MAX_TT_BYTES, MIN_TT_BYTES};
+use pistol_engine::config::{
+    EngineMode, MAX_CANDIDATE_RADIUS, MAX_MOVETIME_EPSILON_MS, MAX_TT_BYTES, MIN_TT_BYTES,
+};
 use pistol_engine::{Config, SCHEMA_VERSION};
 
 /// A document that is instrument mode but asks for more than one thread parses
@@ -47,7 +49,7 @@ fn config_rejects_zero_threads() {
 
 #[test]
 fn config_rejects_foreign_schema_version() {
-    let (key, why) = rejection(&replacing("schema_version = 1", "schema_version = 2"));
+    let (key, why) = rejection(&replacing("schema_version = 2", "schema_version = 1"));
     assert_eq!(key, "schema_version");
     assert!(
         why.contains(&SCHEMA_VERSION.to_string()),
@@ -128,6 +130,33 @@ fn config_accepts_a_weights_path_that_does_not_exist_yet() {
         "weights_file = \"configs/nothing-here-yet.toml\"",
     ));
     assert!(!config.eval.weights_file.exists());
+}
+
+/// The epsilon is a promise with rejection bounds, not a free integer: zero
+/// promises an unmeasurable instantaneous reply, and past the ceiling is the
+/// typo class (docs/decisions.md D-18).
+#[test]
+fn config_rejects_out_of_range_movetime_epsilon() {
+    let (key, why) = rejection(&replacing(
+        "movetime_epsilon_ms = 50",
+        "movetime_epsilon_ms = 0",
+    ));
+    assert_eq!(key, "play.movetime_epsilon_ms");
+    assert!(
+        why.contains(&MAX_MOVETIME_EPSILON_MS.to_string()),
+        "the reason should state the ceiling: {why}"
+    );
+
+    let over = MAX_MOVETIME_EPSILON_MS + 1;
+    let (key, why) = rejection(&replacing(
+        "movetime_epsilon_ms = 50",
+        &format!("movetime_epsilon_ms = {over}"),
+    ));
+    assert_eq!(key, "play.movetime_epsilon_ms");
+    assert!(
+        why.contains(&over.to_string()),
+        "the reason should quote the value: {why}"
+    );
 }
 
 /// The committed config is part of the contract, so CI loads it for real.

@@ -10,7 +10,7 @@
 
 # Schema version this document is written against. The build refuses a version
 # it does not read, rather than guessing at the difference.
-schema_version = 1
+schema_version = 2
 
 [engine]
 # "instrument" — single-threaded, fixed budget, stable tie-breaking, CPU
@@ -76,3 +76,11 @@ threads = 1
 # Equal-scoring moves are ordered by coordinate, which is stable across runs,
 # machines and builds.
 tie_break = "lexicographic"
+
+[play]
+# Stated even though the mode is "instrument": a config is complete, and every
+# key is present because no key has a code-side default (CLAUDE.md rule 1).
+# This key binds only in play mode — the movetime ceiling's overshoot allowance
+# in milliseconds, promised as `go movetime N` answering within N + epsilon and
+# advertised on the play-mode handshake (docs/decisions.md, WP-1.4 series).
+movetime_epsilon_ms = 50
