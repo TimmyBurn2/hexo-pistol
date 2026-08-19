@@ -16,7 +16,9 @@
 //! Reported here and computed in [`super::distance`], where the argument for it
 //! is written out: the replay's zero legality violations are consistent with a
 //! radius-6 platform and a radius-8 one alike, and only an observed placement
-//! beyond 6 tells them apart (docs/decisions.md D-101, D-149).
+//! beyond 6 tells them apart (docs/decisions.md D-101, D-149). Read the
+//! ORDER-INDEPENDENT column, not the raw one: a stone that is not the last of
+//! its turn can be rescued by a partner recorded after it.
 //!
 //! # What the first-player rate does and does not say
 //!
@@ -231,11 +233,11 @@ impl fmt::Display for Stats {
         )?;
         writeln!(
             f,
-            "  placed; counted over every game read. A stone beyond distance 6 is a placement the"
+            "  placed; counted over every game read. Only an ORDER-INDEPENDENT stone — the last of"
         )?;
         writeln!(
             f,
-            "  platform accepted and a radius-6 rule forbids — see the module note and SB-65):"
+            "  its turn — bounds a radius from below, so those are the counts that refute one):"
         )?;
         writeln!(f, "{}", self.placements)?;
         writeln!(f)?;

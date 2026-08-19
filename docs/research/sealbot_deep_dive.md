@@ -1167,23 +1167,70 @@ branches — master is the pure alpha-beta bot.
     human corpus (SHA-256 `b2fe61eb360b91d77873a751446d28287955cad49e331fc32c156b4e1316840c`,
     the digest D-184 pins, verified before the run), 8698 games,
     538553 stones measured — distance 1: 471674, 2: 44785, 3: 11811,
-    4: 2912, 5: 1542, 6: 805, **7: 845, 8: 4179**, MAX 8. Five thousand
-    and twenty-four placements sit beyond distance 6 in games the
-    platform accepted and recorded. A radius-6 platform cannot produce
-    them.
+    4: 2912, 5: 1542, 6: 805, **7: 845, 8: 4179**, MAX 8. Of the 5024
+    placements beyond distance 6, **2812 are ORDER-INDEPENDENT** (479 at
+    distance 7, 2333 at distance 8) — the last stone of their own turn,
+    so no ordering of that turn can bring them within 6 of anything. A
+    radius-6 platform cannot produce those 2812. The other 2212 are NOT
+    evidence and are not counted as such; see the soundness bullet.
   - **The colony-blocking claim: still UNVERIFIED.** No blocking fix
     attempted, colony-illegal far moves ~8/150 games — nothing here
     touched it, and D-206 still bars it from driving a WP-1.5 change
     until its own method runs.
-- WHY THE MEASUREMENT IS SOUND IN THE REFUTING DIRECTION: each stone is
+- WHY ONLY PART OF THE MEASUREMENT IS SOUND — CORRECTED, and the
+  correction is recorded rather than quietly applied because BOTH review
+  rounds found the original argument false (D-219). Each stone is
   measured against every stone EARLIER IN THE RECORD'S FLAT `moves`
-  ARRAY, which is order-sensitive where legality is not (a pair is legal
-  iff SOME ordering is — D-6, D-51). It refutes anyway: if a stone's
-  nearest earlier stone is at distance `d >= 7`, then its distance to
-  every pre-turn stone is `>= 7` AND its distance to its own pair partner
-  is `>= 7`, so neither ordering places it within 6 of anything. The
-  converse fails and is not claimed — `d <= 6` never was evidence for
-  either radius.
+  ARRAY, which is order-sensitive where legality is not (a turn is legal
+  iff SOME ordering is — D-6, D-51). The first draft of this entry
+  claimed that a stone at `d >= 7` from every earlier stone is also
+  `>= 7` from its own pair partner, so no ordering rescues it. **THAT IS
+  FALSE FOR THE FIRST STONE OF A PAIR**, whose partner is recorded at the
+  NEXT index and never enters the minimum at all: play the partner first,
+  within 6 of the board, then this stone within 6 of the partner.
+  Counterexample from this corpus, `dff648bcbc1833d0` index 1 — `(7,-1)`
+  measures 7 from the origin, the only stone before it, while its partner
+  `(6,-1)` is 6 from the origin and 1 from it, so the order (partner,
+  stone) is fully legal at radius 6. `a7bf376041f893b0` turn 2 is a
+  second. Fifty of the 5024 are rescuable this way.
+  The SOUND criterion, which the tool now reports as its own column: a
+  stone is a witness iff it is the LAST STONE OF ITS OWN TURN as
+  recorded. Then every turn-mate is already inside its minimum, and
+  reordering can only take stones OFF the board at the moment it is
+  placed, so the measured distance is a lower bound over every ordering.
+  Rule 4's truncated turn falls out correctly — a stone with no turn-mate
+  has nothing that could bridge it. That is 2812 placements. The converse
+  fails in both classes and is not claimed: `d <= 6` never was evidence
+  for either radius.
+- STRONGER, FROM THE REVIEWERS, recorded because it is a bigger number
+  than the shipped tool can produce and nobody should re-derive it: a
+  per-turn counterfactual replay (decidable without search, since the
+  post-turn board is order-independent) finds **2991 of 8698 games
+  (34.4%) admit NO ordering whatsoever under radius 6, against 0 of 8698
+  illegal under radius 8** — 4974 individual placements unrescuable. The
+  shipped tool reports the conservative 2812 instead, because computing
+  the 4974 needs a second legality rule at a radius the game does not
+  have, and putting that in pistol-cli is the CLAUDE.md rule-2 breach the
+  convenience tempts (D-219).
+- THREE CORROBORATIONS FROM THE RED-TEAM, each of which could have gone
+  the other way: stone ownership derived purely from the declared turn
+  structure matches the corpus's independently exported `winner` field on
+  ALL 8698 games, which kills the export-artefact family at once (an
+  interleaved array, a re-ordering across turn boundaries, a mid-game
+  truncated turn, a pass, a padded stone or a resignation artefact would
+  each break parity somewhere); reading the coordinates as odd-r or
+  even-r OFFSET rather than axial gives MAX 12 with a smeared tail
+  (9: 363, 10: 268, 11: 220, 12: 477) and no clean cap, so the hard cap
+  at 8 is itself evidence the axial reading is right (the q/r swap and
+  the `(q,s)` cube misread are lattice symmetries and reproduce the
+  histogram exactly, per D-140); and measured against the PRE-TURN board
+  only, the distribution spikes at 8, spikes AGAIN at exactly 16 and is
+  absolutely zero at 17 — the signature of "within 8 of the board, with
+  the pair permitted to chain", which corroborates D-6/D-51's
+  some-ordering rule from platform data. 866 stones in this corpus are
+  legal ONLY because their partner rescues them. A radius-6 platform
+  would put those spikes at 6 and 12; instead distance 6 (805) is LESS
+  common than distance 7 (845), so there is no cap at 6 at all.
 - WHY D-149 COULD NOT HAVE ANSWERED THIS, recorded because it is the
   trap: WP-1.2a's zero-violations replay is ONE-SIDED evidence.
   Radius-6-legal games are a strict SUBSET of radius-8-legal games, so
@@ -1193,13 +1240,13 @@ branches — master is the pure alpha-beta bot.
   the first measurement that could have come out either way.
 - THE BRIDGE, RE-READ (the entry's other proposed method), at
   `/home/tom/Projects/hexo-bridge` revision `4a96d13` ("chore: bump hexo
-  spec pin to main"), clean tree, no submodules, 60 tracked files.
+  spec pin to main"), clean tree, no submodules, 65 tracked files.
   **The legal radius is stated NOWHERE in it, and the repo cannot state
   it**: `src/hexo_bridge/specs.py:7-8` — "The specs themselves are NOT
   vendored into the repo; they are fetched at the pinned commit by the
   contract test" — corroborated at `README.md:126` and
   `OPEN-QUESTIONS.md:58-60`. The upstream pin is
-  `pyproject.toml:56` (`htttx = "37d2385f1016abe8b25798238a7d0c4a17a25dda"`,
+  `pyproject.toml:58` (`htttx = "37d2385f1016abe8b25798238a7d0c4a17a25dda"`,
   github.com/hex-tic-tac-toe/htttx-bot-api), and the two spec documents
   that would carry a placement rule are named only as paths at
   `tests/test_spec_contract.py:305` and `:331`. Absence, evidenced in the
@@ -1210,8 +1257,8 @@ branches — master is the pure alpha-beta bot.
   replay) with NO placement-radius bullet;
   `src/hexo_bridge/adapters/engine_sessions/htttx_models.py:31-134`
   models the whole bws wire surface and no field expresses a radius
-  (`Coord` at 31-34 is two unbounded ints; `Move` at 57-70 constrains
-  only arity); `src/hexo_bridge/core/board.py:1-154` states at 4-5 and
+  (`Coord` at 31-34 is two unbounded ints; `Move` at 57-62 and
+  `MoveOption` at 65-70 constrain only arity); `src/hexo_bridge/core/board.py:1-154` states at 4-5 and
   89-91 that "Core does not reimplement legality... the server is the
   referee" and contains no legality check at all; `docs/data-flow.md:51`
   assigns "Move legality | HeXO server" and never defines what legality
