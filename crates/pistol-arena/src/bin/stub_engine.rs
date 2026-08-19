@@ -57,6 +57,11 @@ enum Behave {
     BadProtocol,
     /// Claims to be in play mode.
     PlayMode,
+    /// Plays honestly, but appends a comment line to its OWN config file on
+    /// the first `go` it is asked — the deterministic reproducer for a
+    /// document edited under a live run, which the arena must catch at the
+    /// next spawn's identity re-verification (docs/decisions.md D-199).
+    EditOwnConfig,
 }
 
 impl Behave {
@@ -71,13 +76,14 @@ impl Behave {
             "exit" => Behave::Exit,
             "bad_protocol" => Behave::BadProtocol,
             "play_mode" => Behave::PlayMode,
+            "edit_own_config" => Behave::EditOwnConfig,
             _ => return None,
         })
     }
 
     /// Every spelling, for a refusal that has to list them.
     const ALL: &'static str = "honest, honest_last, illegal, garbage, bad_bestmove, hang, \
-                               exit, bad_protocol, play_mode";
+                               exit, bad_protocol, play_mode, edit_own_config";
 }
 
 /// The exit code the `exit` behaviour uses. Distinct from this program's own
@@ -237,18 +243,44 @@ fn run(words: &[String]) -> Result<ExitCode, String> {
         state: GameState::new_game(),
         behave,
     };
-    serve(&mut engine, behave)
+    serve(&mut engine, behave, &path, &text)
 }
 
 /// The read loop, with the one deviation layered over the real session.
-fn serve(engine: &mut FirstLegal, behave: Behave) -> Result<ExitCode, String> {
+fn serve(
+    engine: &mut FirstLegal,
+    behave: Behave,
+    config_path: &str,
+    config_text: &str,
+) -> Result<ExitCode, String> {
     let stdin = io::stdin();
     let stdout = io::stdout();
     let mut out = stdout.lock();
-    let mut session = pistol_cli::Session::new(engine);
+    // The stub identifies its "weights" as its own behaviour file, by content:
+    // the arena REQUIRES a `weights_sha256` field of every engine it will run
+    // (docs/decisions.md D-198), and the behaviour file is the one document
+    // that decides what this instrument does.
+    let weights_line = format!(
+        "weights_sha256 {}",
+        pistol_cli::sha256::sha256_hex(config_text.as_bytes())
+    );
+    let mut session = pistol_cli::Session::new(engine).identify(vec![weights_line]);
+    let mut config_edited = false;
     for line in stdin.lock().lines() {
         let line = line.map_err(|io| format!("stdin: {io}"))?;
         let asking_to_move = line.trim_start().starts_with(pistol_cli::protocol::GO);
+        if asking_to_move && behave == Behave::EditOwnConfig && !config_edited {
+            // The edit keeps the document valid — a comment — so an arena that
+            // MISSED the drift would play on cleanly, which is exactly the
+            // silent continuation the test must be able to observe.
+            config_edited = true;
+            let mut file = std::fs::OpenOptions::new()
+                .append(true)
+                .open(config_path)
+                .map_err(|io| format!("cannot reopen {config_path}: {io}"))?;
+            writeln!(file, "# edited under a live run")
+                .map_err(|io| format!("cannot edit {config_path}: {io}"))?;
+        }
         if asking_to_move {
             match behave {
                 Behave::Hang => {

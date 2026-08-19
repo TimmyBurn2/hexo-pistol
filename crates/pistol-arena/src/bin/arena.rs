@@ -15,13 +15,11 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Instant;
 
-use pistol_arena::channel::Channel;
 use pistol_arena::config::ArenaConfig;
 use pistol_arena::error::ArenaError;
-use pistol_arena::handshake;
-use pistol_arena::report::{EngineIdentity, Written};
+use pistol_arena::identity;
+use pistol_arena::report::Written;
 use pistol_arena::{openings, report, schedule, score, summary};
-use pistol_cli::sha256::sha256_hex;
 
 /// What this program does, and what it refuses to guess.
 const USAGE: &str = "\
@@ -88,7 +86,7 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
 
 fn run(config_path: &Path, out_path: &Path) -> Result<ExitCode, ArenaError> {
     let config = ArenaConfig::load(config_path)?;
-    let config_sha = digest_of(config_path)?;
+    let config_sha = identity::digest_of(config_path)?;
     let openings = openings::load(
         &config.run.openings_file,
         config.run.openings_take,
@@ -100,14 +98,17 @@ fn run(config_path: &Path, out_path: &Path) -> Result<ExitCode, ArenaError> {
         .unwrap_or_else(|| unreachable!("validate refuses a movetime budget before this point"));
 
     // The instrument, by content. A path is not identity: `target/release/pistol`
-    // is a different program after every build (docs/decisions.md D-147).
+    // is a different program after every build (docs/decisions.md D-147), and
+    // the identity closes over the eval weight table the engine itself digests
+    // (docs/decisions.md D-198). Every later spawn is re-verified against this
+    // capture (docs/decisions.md D-199).
     let identities = [
-        identity_of(&config.engine_a, config.run.hang_timeout_ms)?,
-        identity_of(&config.engine_b, config.run.hang_timeout_ms)?,
+        identity::capture(&config.engine_a, config.run.hang_timeout_ms)?,
+        identity::capture(&config.engine_b, config.run.hang_timeout_ms)?,
     ];
 
     let started = Instant::now();
-    let (outcome, played) = schedule::run(&config, &openings, &go_line);
+    let (outcome, played) = schedule::run(&config, &openings, &identities, &go_line);
     let wall_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
     let failure = outcome.err();
 
@@ -146,36 +147,4 @@ fn run(config_path: &Path, out_path: &Path) -> Result<ExitCode, ArenaError> {
             })
         }
     }
-}
-
-/// One engine's identity: what it says about itself, and what it is by content.
-///
-/// The engine is started once here, before any game, purely to shake hands.
-/// That costs one process per side and buys the run's instrument (CLAUDE.md
-/// rule 6): the `id` lines carry the candidate radius and the table size, and a
-/// log that cannot recover those cannot be re-run. It also fails the run early
-/// on an engine a strength claim may not come from, rather than on the first
-/// game.
-///
-/// The digests are what the `id` lines cannot say: they name a config by PATH,
-/// and a path is the same string after an edit (docs/decisions.md D-147).
-fn identity_of(
-    engine: &pistol_arena::config::EngineSection,
-    timeout_ms: u64,
-) -> Result<EngineIdentity, ArenaError> {
-    let mut channel = Channel::start(&engine.label, &engine.binary, &engine.config)?;
-    let spoken = handshake::shake(&mut channel, timeout_ms)?;
-    channel.shutdown();
-    Ok(EngineIdentity {
-        id_lines: spoken.lines,
-        binary_sha256: digest_of(&engine.binary)?,
-        config_sha256: digest_of(&engine.config)?,
-    })
-}
-
-/// The SHA-256 of a file this run depends on.
-fn digest_of(path: &Path) -> Result<String, ArenaError> {
-    let bytes = std::fs::read(path)
-        .map_err(|io| ArenaError::io(format!("reading {}", path.display()), io))?;
-    Ok(sha256_hex(&bytes))
 }

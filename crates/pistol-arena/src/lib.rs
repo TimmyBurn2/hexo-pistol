@@ -11,6 +11,8 @@
 //!   in-band digest and refused if it repeats an opening up to a symmetry.
 //! - [`channel`] / [`handshake`] / [`reap`] — one engine subprocess, whether a
 //!   strength claim may come from it, and the two ways it can stop talking.
+//! - [`identity`] — who each engine is by content, captured before the first
+//!   game and re-verified at every spawn.
 //! - [`game`] / [`exchange`] — the referee, and one question-and-answer with one
 //!   engine. Every turn is validated through pistol-core, which is the only
 //!   judge of legality in this workspace (rule 2).
@@ -43,6 +45,7 @@ pub mod error;
 pub mod exchange;
 pub mod game;
 pub mod handshake;
+pub mod identity;
 pub mod openings;
 pub mod reap;
 pub mod record;

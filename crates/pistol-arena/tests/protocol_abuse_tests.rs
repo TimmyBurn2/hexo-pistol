@@ -40,7 +40,7 @@ fn arena_abandons_a_run_when_an_engine_closes_its_pipe_and_keeps_running() {
          # A test instrument: handshakes, then closes stdout and does not exit.\n\
          while IFS= read -r line; do\n\
            case \"$line\" in\n\
-             pistol*) printf 'id name mute\\nid protocol v0\\nid mode instrument\\npistolok\\n' ;;\n\
+             pistol*) printf 'id name mute\\nid protocol v0\\nid mode instrument\\nid weights_sha256 0000000000000000000000000000000000000000000000000000000000000000\\npistolok\\n' ;;\n\
              go*) exec 1>&-; while true; do sleep 3600; done ;;\n\
              quit*) exit 0 ;;\n\
              *) : ;;\n\
@@ -97,9 +97,12 @@ fn script_engine(scratch: &Scratch, name: &str, body: &str) -> String {
     path.display().to_string()
 }
 
-/// The handshake every script engine below answers with.
-const SCRIPT_HANDSHAKE: &str =
-    "printf 'id name script\\nid protocol v0\\nid mode instrument\\npistolok\\n'";
+/// The handshake every script engine below answers with. The `weights_sha256`
+/// value is a fixed well-formed token, not a digest of anything: the arena
+/// requires the FIELD of every engine (docs/decisions.md D-198), and what these
+/// instruments misbehave about is elsewhere.
+const SCRIPT_HANDSHAKE: &str = "printf 'id name script\\nid protocol v0\\nid mode instrument\\nid \
+                                weights_sha256 0000000000000000000000000000000000000000000000000000000000000000\\npistolok\\n'";
 
 #[test]
 fn arena_forfeits_engine_that_answers_when_nothing_was_asked() {

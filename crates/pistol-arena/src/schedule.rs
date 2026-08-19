@@ -38,6 +38,7 @@ use crate::config::ArenaConfig;
 use crate::error::ArenaError;
 use crate::game::{self, Rules};
 use crate::handshake;
+use crate::identity::{self, EngineIdentity};
 use crate::openings::Openings;
 use crate::record::GameRecord;
 use crate::score;
@@ -59,6 +60,7 @@ pub struct Played {
 pub fn run(
     config: &ArenaConfig,
     openings: &Openings,
+    identities: &[EngineIdentity; 2],
     go_line: &str,
 ) -> (Result<(), ArenaError>, Played) {
     let total = openings.taken.len() * 2;
@@ -93,7 +95,7 @@ pub fn run(
                     {
                         return;
                     }
-                    match one_game(config, openings, &rules, index) {
+                    match one_game(config, openings, identities, &rules, index) {
                         Ok(record) => {
                             slots.lock().expect("slots")[index] = Some(record);
                         }
@@ -151,10 +153,12 @@ fn contiguous(slots: &[Option<GameRecord>]) -> Vec<GameRecord> {
         .collect()
 }
 
-/// One game: two fresh engines, a handshake each, and the referee.
+/// One game: two fresh engines, a handshake each — re-verified against the
+/// run-start identity capture — and the referee.
 fn one_game(
     config: &ArenaConfig,
     openings: &Openings,
+    identities: &[EngineIdentity; 2],
     rules: &Rules<'_>,
     index: usize,
 ) -> Result<GameRecord, ArenaError> {
@@ -163,20 +167,19 @@ fn one_game(
     // report's order is opening index, then side assignment, by construction.
     let a_is_p1 = index.is_multiple_of(2);
 
+    let sides = [&config.engine_a, &config.engine_b];
     let mut channels = [
-        Channel::start(
-            &config.engine_a.label,
-            &config.engine_a.binary,
-            &config.engine_a.config,
-        )?,
-        Channel::start(
-            &config.engine_b.label,
-            &config.engine_b.binary,
-            &config.engine_b.config,
-        )?,
+        Channel::start(&sides[0].label, &sides[0].binary, &sides[0].config)?,
+        Channel::start(&sides[1].label, &sides[1].binary, &sides[1].config)?,
     ];
-    for channel in &mut channels {
-        handshake::shake(channel, config.run.hang_timeout_ms)?;
+    for (side, channel) in channels.iter_mut().enumerate() {
+        let spoken = handshake::shake(channel, config.run.hang_timeout_ms)?;
+        // Digests were captured once before the first game, and engines are
+        // respawned from disk per game: without this, a config or weights file
+        // edited mid-run silently changes the experiment while the report
+        // attests the old one (docs/decisions.md D-188's operating rule,
+        // D-199). Drift aborts the RUN by name; it is never a game result.
+        identity::verify_respawn(sides[side], &identities[side], &spoken)?;
         if channel.send(pistol_cli::protocol::NEW_GAME).is_err() {
             return Err(ArenaError::Handshake {
                 engine: channel.label().to_string(),

@@ -40,6 +40,7 @@ use std::fmt::Write as _;
 use crate::conclusion;
 use crate::config::ArenaConfig;
 use crate::error::ArenaError;
+use crate::identity::EngineIdentity;
 use crate::openings::Openings;
 use crate::record::{Compute, GameRecord};
 use crate::sprt::Bounds;
@@ -49,7 +50,10 @@ pub const REPORT_KIND: &str = "arena_report";
 /// The first token of a report from a run that was abandoned.
 pub const ABORTED_KIND: &str = "arena_report_aborted";
 /// The report format version.
-pub const REPORT_SCHEMA: u32 = 1;
+///
+/// 2: the `engine` line gained `weights_sha256` and `experiment_sha256` closed
+/// over it (docs/decisions.md D-198).
+pub const REPORT_SCHEMA: u32 = 2;
 /// Where the verdict block ends and nothing comparable begins.
 pub const TIMING_MARKER: &str = "# timing";
 
@@ -86,10 +90,14 @@ pub fn experiment_digest(written: &Written<'_>) -> String {
         ("a", &config.engine_a, &written.identities[0]),
         ("b", &config.engine_b, &written.identities[1]),
     ] {
+        // The weights digest is part of the experiment: two engines differing
+        // only in the weight table are DIFFERENT engines, which every recorded
+        // digest used to deny while `nelo_pair` moved by 98 points
+        // (docs/decisions.md D-188, D-198).
         let _ = writeln!(
             canonical,
-            "engine {slot} {} {} {}",
-            engine.label, identity.binary_sha256, identity.config_sha256
+            "engine {slot} {} {} {} {}",
+            engine.label, identity.binary_sha256, identity.config_sha256, identity.weights_sha256
         );
     }
     pistol_cli::sha256::sha256_hex(canonical.as_bytes())
@@ -101,17 +109,6 @@ pub fn experiment_digest(written: &Written<'_>) -> String {
 /// numbers should not disagree with the run over a rounding. The comparison
 /// itself is on the `f64`, and this is the rendering of it.
 pub const FLOAT_DIGITS: usize = 9;
-
-/// The identity of one engine, gathered before the first game.
-#[derive(Debug, Clone)]
-pub struct EngineIdentity {
-    /// The handshake's `id` lines, verbatim.
-    pub id_lines: Vec<String>,
-    /// The digest of the binary that was actually run.
-    pub binary_sha256: String,
-    /// The digest of the config it was run with.
-    pub config_sha256: String,
-}
 
 /// Everything a report is written from.
 pub struct Written<'a> {
@@ -194,12 +191,14 @@ fn instrument(out: &mut String, written: &Written<'_>) {
     ] {
         let _ = writeln!(
             out,
-            "engine {slot} label {} binary {} binary_sha256 {} config {} config_sha256 {}",
+            "engine {slot} label {} binary {} binary_sha256 {} config {} config_sha256 {} \
+             weights_sha256 {}",
             engine.label,
             engine.binary.display(),
             identity.binary_sha256,
             engine.config.display(),
-            identity.config_sha256
+            identity.config_sha256,
+            identity.weights_sha256
         );
         for line in &identity.id_lines {
             let _ = writeln!(out, "engine_id {slot} {line}");

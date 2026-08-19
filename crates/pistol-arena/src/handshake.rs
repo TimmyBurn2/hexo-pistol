@@ -134,5 +134,25 @@ pub fn shake(channel: &mut Channel, timeout_ms: u64) -> Result<Identity, ArenaEr
         }
     }
 
+    match identity.field(crate::identity::WEIGHTS_FIELD) {
+        Some(digest) if digest.len() == 64 && digest.bytes().all(|b| b.is_ascii_hexdigit()) => {}
+        Some(digest) => {
+            return Err(refuse(format!(
+                "its `{}` is `{digest}`, which is not 64 hex digits and therefore not a SHA-256",
+                crate::identity::WEIGHTS_FIELD
+            )));
+        }
+        None => {
+            return Err(refuse(format!(
+                "its handshake names no `{}` — an engine that cannot identify its evaluation \
+                 weights by content is the provenance hole WP-1.3 recorded: two engines \
+                 differing only in the weight table were indistinguishable in every recorded \
+                 digest while their strength differed by 98 normalized Elo (docs/decisions.md \
+                 D-188, D-198)",
+                crate::identity::WEIGHTS_FIELD
+            )));
+        }
+    }
+
     Ok(identity)
 }

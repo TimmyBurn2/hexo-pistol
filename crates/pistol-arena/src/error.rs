@@ -89,6 +89,19 @@ pub enum ArenaError {
         /// What is known about the death.
         why: String,
     },
+    /// An engine respawned mid-run is no longer the engine the run started
+    /// with: its config document or its handshake identity has drifted from
+    /// the capture taken before the first game (docs/decisions.md D-199).
+    IdentityDrift {
+        /// Which side.
+        engine: String,
+        /// What moved: the config document, or the handshake identity.
+        what: String,
+        /// What the run started with.
+        expected: String,
+        /// What this spawn has.
+        found: String,
+    },
     /// A file could not be read or written.
     Io {
         /// What was being attempted.
@@ -135,6 +148,7 @@ impl ArenaError {
             ArenaError::Handshake { .. } => "Handshake",
             ArenaError::Hung { .. } => "Hung",
             ArenaError::Killed { .. } => "Killed",
+            ArenaError::IdentityDrift { .. } => "IdentityDrift",
             ArenaError::Io { .. } => "Io",
         }
     }
@@ -193,6 +207,19 @@ impl fmt::Display for ArenaError {
                 "Killed: engine {engine}: {why}. A child the environment killed is not a move \
                  the engine made, so it aborts the run rather than forfeiting a game \
                  (docs/decisions.md D-159)."
+            ),
+            ArenaError::IdentityDrift {
+                engine,
+                what,
+                expected,
+                found,
+            } => write!(
+                f,
+                "IdentityDrift: engine {engine}: its {what} changed under a live run — the run \
+                 started with `{expected}` and this spawn has `{found}`. Engines are respawned \
+                 from disk per game, so an edit mid-run silently changes the experiment; the run \
+                 is aborted rather than reported as a measurement of a configuration nobody can \
+                 name (docs/decisions.md D-199)."
             ),
             ArenaError::Io { what, why } => write!(f, "Io: {what}: {why}"),
         }

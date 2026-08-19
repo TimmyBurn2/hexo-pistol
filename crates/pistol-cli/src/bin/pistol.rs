@@ -96,7 +96,8 @@ fn protocol_command(words: &[&str]) -> Result<ExitCode, String> {
     only(&flags, &["--config"])?;
 
     let config = Config::load(&path).map_err(|error| error.to_string())?;
-    let identity = identity_lines(&path, &config);
+    let weights_sha256 = weights_digest(&config)?;
+    let identity = identity_lines(&path, &config, &weights_sha256);
     let mut engine = Pistol::from_config(config).map_err(|error| error.to_string())?;
     let mut session = Session::new(&mut engine).identify(identity);
 
@@ -111,14 +112,42 @@ fn protocol_command(words: &[&str]) -> Result<ExitCode, String> {
 
 /// The handshake lines that make a transcript reproducible: which document, and
 /// the values from it that decide what the search does (CLAUDE.md rule 6).
-fn identity_lines(path: &Path, config: &Config) -> Vec<String> {
+fn identity_lines(path: &Path, config: &Config, weights_sha256: &str) -> Vec<String> {
     let pistol_engine::config::CandidatePolicy::Radius { radius } = config.search.candidate_policy;
     vec![
         format!("config {}", path.display()),
         format!("eval {}", config.eval.backend.token()),
         format!("tt_bytes {}", config.search.tt_bytes),
         format!("candidate_policy radius {radius}"),
+        format!("weights_sha256 {weights_sha256}"),
     ]
+}
+
+/// The eval weight table, identified by CONTENT.
+///
+/// Two configs that differ only in the weights file used to produce
+/// byte-identical arena identities while `nelo_pair` moved by 98 points — the
+/// provenance hole WP-1.3 recorded (docs/decisions.md D-188, D-198). The digest
+/// travels in the handshake because the engine is the process that actually
+/// loads the file, resolved against ITS working directory; a referee digesting
+/// the path on its own could attest bytes this process never read.
+///
+/// A limit, stated rather than hidden: this is a read of the file at handshake
+/// build time, not of the bytes the eval parsed — the loader would have to
+/// digest what it read, and it sits below this workspace's one hashing
+/// implementation (docs/decisions.md D-198 records why that is declined for
+/// now). A swap landing between the eval's read and this one surfaces as a
+/// named `IdentityDrift` abort at the arena's next spawn, never as a silently
+/// wrong number.
+fn weights_digest(config: &Config) -> Result<String, String> {
+    let path = &config.eval.weights_file;
+    let bytes = std::fs::read(path).map_err(|io| {
+        format!(
+            "eval.weights_file `{}`: cannot read for the identity digest: {io}",
+            path.display()
+        )
+    })?;
+    Ok(pistol_cli::sha256::sha256_hex(&bytes))
 }
 
 /// Count turn sequences from a stated position.
