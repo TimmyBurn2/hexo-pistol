@@ -24,6 +24,19 @@
 //! no static value returned as a node's answer mid-turn — is about answers,
 //! which a comparison key never is. The playout below probes at every ply
 //! parity for exactly that reason.
+//!
+//! # RULE9-JUSTIFICATION: one oracle over one equivalence claim (CLAUDE.md
+//! rule 9).
+//!
+//! Every test here asserts the same D-110 equation against the same pair of
+//! oracles, through the same probe harness (`assert_probe_matches`, the
+//! region machinery, `DefaultDelta` with its never-override warning).
+//! Splitting the suite would either duplicate that harness per file or hoist
+//! it into the shared scaffolding no other suite uses, and would separate the
+//! clamp-matrix constructions from the region helpers whose semantics make
+//! them readable. The suite shrinks when D-110's oracle discipline moves into
+//! a shared reference for the Stage-2 codebook override, which will want the
+//! same harness and is when hoisting pays.
 
 mod common;
 
