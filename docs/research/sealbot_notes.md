@@ -104,6 +104,24 @@ loses") measured in the wild, and it is what Stage 1 exists to fix.
 - TT keyed by the bare 64-bit hash with no verification distinct from the
   index (collisions merge silently). Pistol's D-8 layout is stronger.
 
+## Strength calibration (operator ruling, 2026-08-19)
+
+Recorded so no report drifts into treating either engine as a human-strength
+proxy (docs/decisions.md D-197):
+
+- pistol is NOT at strong-human strength, and will not be after the current
+  work packages (the WP-1.3/1.4 era). Nothing in this repository claims
+  otherwise.
+- sealbot is strong, but strong humans exploit its weaknesses decently well —
+  the colony blindness above is the canonical example. sealbot is a
+  MILESTONE on pistol's road, not a proxy for human strength.
+- The calibration order the operator rules: pistol below sealbot; sealbot
+  below strong humans who exploit it.
+- No human-strength claim is made without measurement, ever. CLAUDE.md
+  rule 6 applies to claims about humans exactly as it applies to claims
+  about engines: beating sealbot licenses the claim "beats sealbot" and
+  nothing more.
+
 ## Comparison protocol (when we get there)
 
 Via hexo-bridge (loopback for smoke tests, HeXO server for refereed games) —
