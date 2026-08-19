@@ -47,6 +47,7 @@ pub mod game;
 pub mod handshake;
 pub mod identity;
 pub mod openings;
+pub mod outpath;
 pub mod reap;
 pub mod record;
 pub mod report;

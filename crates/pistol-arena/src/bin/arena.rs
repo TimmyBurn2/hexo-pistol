@@ -15,11 +15,12 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Instant;
 
+use std::io::Write as _;
+
 use pistol_arena::config::ArenaConfig;
 use pistol_arena::error::ArenaError;
-use pistol_arena::identity;
 use pistol_arena::report::Written;
-use pistol_arena::{openings, report, schedule, score, summary};
+use pistol_arena::{identity, openings, outpath, report, schedule, score, summary};
 
 /// What this program does, and what it refuses to guess.
 const USAGE: &str = "\
@@ -31,10 +32,13 @@ usage:
   --config  an arena config. Always explicit: there is no default path and no
             built-in configuration (CLAUDE.md rule 1). It states the openings,
             the budget, the turn cap, the worker count and the SPRT bounds.
-  --out     where to write the report. Refused if it already exists: a run that
-            silently overwrote a previous report would destroy the evidence for
-            a claim somebody has already made. Match logs are artifacts and are
-            never written inside the repository (CLAUDE.md rule 8).
+  --out     where to write the report. CLAIMED exclusively at dispatch
+            (create_new/O_EXCL), so an existing file — a previous report, or
+            another run in flight — is refused by name before any game: a run
+            that silently overwrote a report would destroy the evidence for a
+            claim somebody has already made. A refusal before any game removes
+            the empty claim again. Match logs are artifacts and are never
+            written inside the repository (CLAUDE.md rule 8).
 
   Only instrument budgets are accepted. A `movetime` budget is refused by name:
   wall-clock is not reproducible, and it is not even a ceiling — the first
@@ -75,16 +79,28 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
         }
         _ => return Err(format!("--config and --out are both required\n\n{USAGE}")),
     };
-    if out_path.exists() {
-        return Err(format!(
-            "{} already exists; a run does not overwrite a previous report",
-            out_path.display()
-        ));
+    // The claim IS the existence check: one O_EXCL syscall, no window for a
+    // second run to slip through (docs/decisions.md D-200).
+    let claimed = outpath::claim(&out_path).map_err(|error| error.to_string())?;
+    match run(&config_path, &out_path, claimed) {
+        Ok(code) => Ok(code),
+        Err(error) => {
+            // Exit 2 promises "no report at all", and the claim is this
+            // process's own empty file (outpath::abandon says why that is
+            // safe). A failed removal is reported, never swallowed.
+            if let Err(cleanup) = outpath::abandon(&out_path) {
+                eprintln!("arena: {cleanup}");
+            }
+            Err(error.to_string())
+        }
     }
-    run(&config_path, &out_path).map_err(|error| error.to_string())
 }
 
-fn run(config_path: &Path, out_path: &Path) -> Result<ExitCode, ArenaError> {
+fn run(
+    config_path: &Path,
+    out_path: &Path,
+    mut claimed: std::fs::File,
+) -> Result<ExitCode, ArenaError> {
     let config = ArenaConfig::load(config_path)?;
     let config_sha = identity::digest_of(config_path)?;
     let openings = openings::load(
@@ -123,7 +139,9 @@ fn run(config_path: &Path, out_path: &Path) -> Result<ExitCode, ArenaError> {
         aborted: failure.as_ref(),
     };
     let rendered = report::render(&written);
-    std::fs::write(out_path, &rendered)
+    claimed
+        .write_all(rendered.as_bytes())
+        .and_then(|()| claimed.flush())
         .map_err(|io| ArenaError::io(format!("writing {}", out_path.display()), io))?;
 
     match failure {
