@@ -11,9 +11,13 @@
 //!
 //! The static score is the [`Eval`](pistol_eval::Eval) backend's own reading —
 //! the search does not carry a second opinion about what a pattern is worth
-//! (docs/decisions.md D-76). A cell that completes a line saturates the eval
-//! band, so a winning ply sorts to the front without the ordering knowing what a
-//! win is.
+//! (docs/decisions.md D-76). Since D-214 the reading arrives through
+//! [`Eval::delta`](pistol_eval::Eval::delta) — the same number the D-76
+//! apply/value/undo roundtrip produced, without mutating the eval — because
+//! that roundtrip was measured at 76.27% of profiled stacks under this
+//! module's `order` (D-192). A cell that completes a line saturates the eval
+//! band, so a winning ply sorts to the front without the ordering knowing what
+//! a win is.
 //!
 //! # Determinism
 //!
@@ -35,7 +39,7 @@ use crate::position::Position;
 /// its length is the candidate count, which grows with how spread out the
 /// stones are, which the opponent partly controls (docs/decisions.md D-95). So
 /// under a wall-clock stop the loop checks the deadline at this stride, and the
-/// worst-case tail of a node is this many static-score roundtrips rather than
+/// worst-case tail of a node is this many static-score probes rather than
 /// a whole ordering pass. A constant of the overshoot bound, not a tunable.
 pub const ORDER_CHECK_INTERVAL: usize = 64;
 

@@ -58,4 +58,44 @@ pub trait Eval {
 
     /// What the position is worth to `side_to_move`, in `-EVAL_MAX..=EVAL_MAX`.
     fn value(&self, side_to_move: Player) -> i32;
+
+    /// What the position would be worth **to `player`** with a hypothetical
+    /// stone of theirs on `at` — leaving the eval indistinguishable from
+    /// before the call.
+    ///
+    /// Despite the name, this is NOT a difference: it answers exactly what
+    /// the D-76 roundtrip answers, the *value after* the stone, because that
+    /// is the number move ordering sorts by and the equation the oracle test
+    /// pins — `delta(c, p) == apply(c, p); value(p); undo(c, p)` — is the
+    /// operative contract (docs/decisions.md D-110, whose prose "score
+    /// change" is overruled by its own equation; D-214 records the
+    /// amendment).
+    ///
+    /// # Contract
+    ///
+    /// - The default body IS that roundtrip, so a backend that does not
+    ///   override this method computes precisely what the search computed
+    ///   before the method existed — a performance path, never a correctness
+    ///   fork (D-110). An override ships with a test asserting the equation
+    ///   over seeded playouts plus adversarial cases; it may disagree with
+    ///   the default on NOTHING, panics included.
+    /// - "Indistinguishable" means OBSERVATIONAL equivalence through
+    ///   [`Eval::apply`]/[`Eval::undo`]/[`Eval::value`]; a backend whose
+    ///   whole state is comparable pins it as equality (D-214).
+    /// - The receiver is `&mut self` because the default body applies and
+    ///   takes back a stone; that amends D-110's `&self` parenthetical,
+    ///   which is unsatisfiable beside the roundtrip default it mandates.
+    ///   Object safety — what the parenthetical was guarding — is unaffected.
+    /// - Being told an impossible stone (a window already full) is the same
+    ///   broken invariant it is for [`Eval::apply`], and both paths panic
+    ///   with the same named token. The post-panic state may differ between
+    ///   the default and an override — the default panics mid-mutation, a
+    ///   read-only override with state untouched — which is observable only
+    ///   under `catch_unwind`, where an eval must never be reused.
+    fn delta(&mut self, at: Coord, player: Player) -> i32 {
+        self.apply(at, player);
+        let value = self.value(player);
+        self.undo(at, player);
+        value
+    }
 }

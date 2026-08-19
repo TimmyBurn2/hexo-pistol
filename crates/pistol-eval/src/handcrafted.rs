@@ -205,6 +205,66 @@ impl Eval for HandcraftedV0 {
             Player::P2 => -clamped,
         }
     }
+
+    /// The fast path move ordering runs on: the roundtrip's answer WITHOUT the
+    /// roundtrip — no map surgery, no entry inserted or removed, nothing to
+    /// undo (docs/decisions.md D-110, licensed by D-192's H1 at 76.27%).
+    ///
+    /// # Equivalence, term by term (the oracle test pins this; D-214)
+    ///
+    /// [`Eval::apply`] folds `contribution(after) - contribution(before)` into
+    /// `p1_score` for every window of `windows_through(at)`; `value(player)`
+    /// then clamps the sum and negates for P2; [`Eval::undo`] reverses. This
+    /// body sums the same terms over the same iterator into a local `diff` and
+    /// clamps `p1_score + diff` once — the same single end-of-path clamp
+    /// `value` performs, there being no intermediate saturation in either
+    /// path. Two premises make the sums equal rather than merely similar:
+    ///
+    /// - **Distinctness.** `windows_through` yields pairwise-distinct windows
+    ///   (pinned in `eval_window_tests`): `apply` reads each `before` from a
+    ///   map its earlier iterations already mutated, this body reads every
+    ///   `before` from the unmutated map, and the two agree only because no
+    ///   window repeats within one pass.
+    /// - **Associativity, unconditionally.** Stepwise and summed accumulation
+    ///   differ only under intermediate overflow, and the sum sits far from
+    ///   i64's edge: |p1_score| <= stones x [`WINDOWS_PER_CELL`]
+    ///   (crate::WINDOWS_PER_CELL) x [`EVAL_MAX`] — even the full i16 lattice
+    ///   is ~1.2e15, so neither path can trap where the other doesn't.
+    ///
+    /// The `before` values are equal too: `entry().or_default()` reads the
+    /// same counts `get().copied().unwrap_or_default()` reads, and the empty
+    /// entry `apply` inserts is removed again by `undo`, so the roundtrip
+    /// leaves no residue for this body to miss.
+    ///
+    /// The full-window check mirrors `apply`'s, so an impossible stone panics
+    /// with the same [`EVAL_DESYNC`] token on the same first window instead of
+    /// returning a number the default would refuse — the token is shared, the
+    /// post-panic state deliberately not (this body has mutated nothing).
+    fn delta(&mut self, at: Coord, player: Player) -> i32 {
+        let mut diff = 0i64;
+        for window in windows_through(at) {
+            let before = self.windows.get(&window).copied().unwrap_or_default();
+            if before.total() >= WINDOW_LEN_STONES {
+                desync(format_args!(
+                    "a hypothetical {player} stone on {at} would make {} stones in the \
+                     {WINDOW_LEN}-cell window at {} along {:?}",
+                    u32::from(before.total()) + 1,
+                    window.start,
+                    window.axis
+                ));
+            }
+            let mut after = before;
+            after.add(player);
+            diff += self.contribution(after) - self.contribution(before);
+        }
+        let band = i64::from(EVAL_MAX);
+        let clamped = i32::try_from((self.p1_score + diff).clamp(-band, band))
+            .expect("the clamp keeps the score inside the eval band");
+        match player {
+            Player::P1 => clamped,
+            Player::P2 => -clamped,
+        }
+    }
 }
 
 /// Report a caller whose stones contradict what this eval holds, loudly.

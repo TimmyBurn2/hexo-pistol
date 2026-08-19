@@ -85,13 +85,14 @@ impl Position {
     /// This touches the evaluation and not the game: ordering asks about cells
     /// the candidate policy has already established are legal, and it does not
     /// care whether one of them wins, only what the pattern tables make of it.
-    /// The stone comes straight back off, so the position is unchanged.
+    /// The stone is HYPOTHETICAL and is never applied: [`pistol_eval::Eval::delta`]
+    /// answers what the D-76 apply/value/undo roundtrip used to answer here,
+    /// leaving the eval untouched — the mechanism change D-192's profile
+    /// licensed, with the numbers pinned identical by the delta oracle test
+    /// and the search-identity gate (docs/decisions.md D-110, D-214).
     pub fn static_score_after(&mut self, at: Coord) -> i32 {
         let mover = self.state.to_move();
-        self.eval.apply(at, mover);
-        let score = self.eval.value(mover);
-        self.eval.undo(at, mover);
-        score
+        self.eval.delta(at, mover)
     }
 
     /// Place the next stone of the turn, accounting for it in the evaluation.
