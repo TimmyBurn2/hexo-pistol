@@ -2,8 +2,10 @@
 
 **REVISION 3. Supersedes revisions 1 and 2. This document registers no
 threshold and adjudicates nothing.** Revisions 1 and 2 pre-registered a profile
-to adjudicate two hypotheses (H1' residual eval share, H3 window storage). Five
-fresh-context review rounds established that the profile cannot adjudicate what
+to adjudicate two hypotheses (H1' residual eval share, H3 window storage). Six
+fresh-context rounds in one session — one governing-revision review and five
+red-teams, the seventh on this document counting the review that failed
+revision 1 — established that the profile cannot adjudicate what
 it registers and that its licensing answer is already determined by the record.
 The operator retired the adjudicating version on 2026-08-19; what remains is an
 observation profile whose numbers feed WP-1.5a's design and license nothing.
