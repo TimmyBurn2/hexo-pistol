@@ -11,6 +11,13 @@
 //! integer ratio it was counted as, never as a formatted float, so nothing here
 //! depends on float formatting or rounding (CLAUDE.md rule 4).
 //!
+//! # The placement-distance histogram
+//!
+//! Reported here and computed in [`super::distance`], where the argument for it
+//! is written out: the replay's zero legality violations are consistent with a
+//! radius-6 platform and a radius-8 one alike, and only an observed placement
+//! beyond 6 tells them apart (docs/decisions.md D-101, D-149).
+//!
 //! # What the first-player rate does and does not say
 //!
 //! The research report flags 3-axis fairness as unmeasured, and this is the
@@ -27,6 +34,7 @@ use std::fmt;
 
 use pistol_core::Player;
 
+use super::distance::PlacementDistances;
 use super::openings::ELO_GAP_CEILING;
 use super::record::Record;
 use super::verdict::Replayed;
@@ -113,6 +121,10 @@ pub struct Stats {
     pub order_rescued: usize,
     /// Turns whose recorded first stone already won.
     pub stone_after_win: usize,
+    /// Every stone after a game's first, by its distance to the nearest stone
+    /// already placed — the sufficient side of the legal-radius question that
+    /// the replay's zero violations could only answer one way round.
+    pub placements: PlacementDistances,
     /// Game lengths in turns, over eligible games.
     pub turns: Vec<usize>,
     /// The lower of each eligible game's two ratings.
@@ -163,6 +175,7 @@ impl Stats {
             by_verdict,
             order_rescued,
             stone_after_win,
+            placements: PlacementDistances::of(records),
             turns,
             min_elos,
             eligible,
@@ -211,6 +224,20 @@ impl fmt::Display for Stats {
         writeln!(f, "  including games later excluded):")?;
         writeln!(f, "  order-rescued turns      {}", self.order_rescued)?;
         writeln!(f, "  stone-after-win turns    {}", self.stone_after_win)?;
+        writeln!(f)?;
+        writeln!(
+            f,
+            "PLACEMENT DISTANCE (every stone after a game's first, to the NEAREST stone already"
+        )?;
+        writeln!(
+            f,
+            "  placed; counted over every game read. A stone beyond distance 6 is a placement the"
+        )?;
+        writeln!(
+            f,
+            "  platform accepted and a radius-6 rule forbids — see the module note and SB-65):"
+        )?;
+        writeln!(f, "{}", self.placements)?;
         writeln!(f)?;
         let mut turns = self.turns.clone();
         writeln!(f, "game length, turns:  {}", Spread::of(&mut turns))?;

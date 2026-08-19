@@ -13,6 +13,9 @@
 //!   be wrong with one. This is the module's most valuable output and its
 //!   least visible: replaying thousands of real platform games under the
 //!   radius-8 legal region is the first independent evidence for D-101.
+//! - [`distance`] — how far each stone landed from the stones already down,
+//!   which is the *sufficient* side of that same question: the replay shows no
+//!   game exceeds radius 8, and only this shows a game exceeding radius 6.
 //! - [`openings`] and [`bench`] — the two curations.
 //! - [`emit`] — the header and digest discipline both fixtures share, and
 //!   [`documents`] — what the two particular fixtures say.
@@ -23,6 +26,7 @@
 //! regroups, asks, and records the answer.
 
 pub mod bench;
+pub mod distance;
 pub mod documents;
 pub mod emit;
 pub mod json;

@@ -1158,10 +1158,89 @@ branches — master is the pure alpha-beta bot.
   about the platform's legal radius, and it disagrees with D-101's
   confirmed 8, so the match adapter must pin the value from the htttx
   spec, never from either engine's folklore.
-- STATUS: UNVERIFIED.
-- PROPOSED VERIFICATION: re-read the htttx spec / platform source for the
-  legal radius (operator act, D-101 said 8); count sealbot's out-of-region
-  proposals per game under enforcement.
+- STATUS: SPLIT, and the split is the point — this entry bundles two
+  claims and only one of them was tested.
+  - **The radius-6 claim: VERIFIED-FALSE (2026-08-19, task A-3).** The
+    sealbot log note's "radius 6 of a stone" is not the HeXO platform's
+    legality rule. D-101's radius 8 stands untouched. Measured, not
+    argued: `corpus-extract`'s placement-distance histogram over the
+    human corpus (SHA-256 `b2fe61eb360b91d77873a751446d28287955cad49e331fc32c156b4e1316840c`,
+    the digest D-184 pins, verified before the run), 8698 games,
+    538553 stones measured — distance 1: 471674, 2: 44785, 3: 11811,
+    4: 2912, 5: 1542, 6: 805, **7: 845, 8: 4179**, MAX 8. Five thousand
+    and twenty-four placements sit beyond distance 6 in games the
+    platform accepted and recorded. A radius-6 platform cannot produce
+    them.
+  - **The colony-blocking claim: still UNVERIFIED.** No blocking fix
+    attempted, colony-illegal far moves ~8/150 games — nothing here
+    touched it, and D-206 still bars it from driving a WP-1.5 change
+    until its own method runs.
+- WHY THE MEASUREMENT IS SOUND IN THE REFUTING DIRECTION: each stone is
+  measured against every stone EARLIER IN THE RECORD'S FLAT `moves`
+  ARRAY, which is order-sensitive where legality is not (a pair is legal
+  iff SOME ordering is — D-6, D-51). It refutes anyway: if a stone's
+  nearest earlier stone is at distance `d >= 7`, then its distance to
+  every pre-turn stone is `>= 7` AND its distance to its own pair partner
+  is `>= 7`, so neither ordering places it within 6 of anything. The
+  converse fails and is not claimed — `d <= 6` never was evidence for
+  either radius.
+- WHY D-149 COULD NOT HAVE ANSWERED THIS, recorded because it is the
+  trap: WP-1.2a's zero-violations replay is ONE-SIDED evidence.
+  Radius-6-legal games are a strict SUBSET of radius-8-legal games, so
+  8698 games replaying clean under radius 8 is exactly what BOTH
+  hypotheses predict — it was never capable of distinguishing them. That
+  is the necessary side. This histogram is the sufficient side, and it is
+  the first measurement that could have come out either way.
+- THE BRIDGE, RE-READ (the entry's other proposed method), at
+  `/home/tom/Projects/hexo-bridge` revision `4a96d13` ("chore: bump hexo
+  spec pin to main"), clean tree, no submodules, 60 tracked files.
+  **The legal radius is stated NOWHERE in it, and the repo cannot state
+  it**: `src/hexo_bridge/specs.py:7-8` — "The specs themselves are NOT
+  vendored into the repo; they are fetched at the pinned commit by the
+  contract test" — corroborated at `README.md:126` and
+  `OPEN-QUESTIONS.md:58-60`. The upstream pin is
+  `pyproject.toml:56` (`htttx = "37d2385f1016abe8b25798238a7d0c4a17a25dda"`,
+  github.com/hex-tic-tac-toe/htttx-bot-api), and the two spec documents
+  that would carry a placement rule are named only as paths at
+  `tests/test_spec_contract.py:305` and `:331`. Absence, evidenced in the
+  files that WOULD say it: `src/hexo_bridge/core/__init__.py:6-27` is the
+  canonical ground-truth rule list and enumerates six facts (unbounded
+  axial coordinates at line 9, the x/o alphabet, the setup-packet
+  opening, server-stated side to move, two stones per turn, stateless
+  replay) with NO placement-radius bullet;
+  `src/hexo_bridge/adapters/engine_sessions/htttx_models.py:31-134`
+  models the whole bws wire surface and no field expresses a radius
+  (`Coord` at 31-34 is two unbounded ints; `Move` at 57-70 constrains
+  only arity); `src/hexo_bridge/core/board.py:1-154` states at 4-5 and
+  89-91 that "Core does not reimplement legality... the server is the
+  referee" and contains no legality check at all; `docs/data-flow.md:51`
+  assigns "Move legality | HeXO server" and never defines what legality
+  is. A pickaxe over the full history for `LEGAL_RADIUS`, `MAX_DISTANCE`,
+  `max_dist`, `hex distance`, `hex_distance` and `radius` in `.md`
+  returned nothing, and no file has ever been deleted from the repo.
+- THE LIKELY ORIGIN OF "RADIUS 6", named so nobody re-derives it: the
+  only "six" in the bridge is the finish-reason string `six-in-a-row`
+  (`src/hexo_bridge/adapters/platforms/hexo_models.py:172`) — the WIN
+  CONDITION, not a placement radius — and the only literal 6 in a
+  distance-shaped context is `for radius in range(2, 6)` at
+  `src/hexo_bridge/core/move.py:145`, a SEARCH SPIRAL for an empty filler
+  cell whose siblings cap at 20, 20 and 50
+  (`adapters/engines/in_process.py:52-65`,
+  `src/hexo_bridge_examples/custom_engine.py:53-66`,
+  `examples/stateless_engine_reference.py:50-62`); their mutual
+  disagreement is what proves they are incidental. A note reading either
+  of these as the legality rule would produce exactly the claim SB-65
+  records.
+- RESIDUAL, stated rather than closed: the htttx spec YAML itself was
+  never on this disk and was not fetched, so the platform's own words
+  remain unread here; the ruling still rests on D-101's operator act plus
+  this corpus measurement. That is a gap in provenance, not in the
+  verdict — no spec text can make 5024 recorded placements beyond
+  distance 6 disappear.
+- PROPOSED VERIFICATION (discharged for the radius arm; open for the
+  other): re-read the htttx spec / platform source for the legal radius
+  (operator act, D-101 said 8); count sealbot's out-of-region proposals
+  per game under enforcement.
 
 ### SB-66 — decision quality is measurably WORST on human positions
 
