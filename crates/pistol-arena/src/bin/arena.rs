@@ -106,6 +106,7 @@ fn run(
     let openings = openings::load(
         &config.run.openings_file,
         config.run.openings_take,
+        config.run.openings_skip,
         config.run.turn_cap,
     )?;
     let go_line = config

@@ -43,7 +43,7 @@
 #
 # Validate this file with tools/config_check.sh.
 
-schema_version = 1
+schema_version = 2
 
 [run]
 openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
@@ -51,6 +51,11 @@ openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
 # four turns rather than three, so every game starts one turn deeper than
 # Run 3a's (docs/decisions.md D-143).
 openings_take = 1591
+
+# Openings skipped before taking: this run starts at the top of the book.
+# The knob exists so a second run can draw a DISJOINT window of the SAME book
+# (docs/decisions.md D-202).
+openings_skip = 0
 # As Run 1, and for the same reason: a capped game has no first-player winner
 # and is excluded from the rate's denominator by the arena, so a cap that bound
 # would silently shrink this measurement's sample.

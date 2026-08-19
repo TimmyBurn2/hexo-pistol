@@ -56,7 +56,10 @@ pub const ABORTED_KIND: &str = "arena_report_aborted";
 /// 3: `first_player_wins` is over decided NON-FORFEIT games, with the forfeit
 /// count adjacent and a `conditional` flag when it is nonzero
 /// (docs/decisions.md D-201).
-pub const REPORT_SCHEMA: u32 = 3;
+/// 4: the instrument block gained `openings_skip` and `experiment_sha256`
+/// closed over it; `game … opening <i>` is WINDOW-relative, absolute position
+/// `openings_skip + i` (docs/decisions.md D-202).
+pub const REPORT_SCHEMA: u32 = 4;
 /// Where the verdict block ends and nothing comparable begins.
 pub const TIMING_MARKER: &str = "# timing";
 
@@ -79,6 +82,9 @@ pub fn experiment_digest(written: &Written<'_>) -> String {
     let mut canonical = String::new();
     let _ = writeln!(canonical, "openings_body {}", written.openings.body_sha256);
     let _ = writeln!(canonical, "openings_take {}", config.run.openings_take);
+    // The skip decides WHICH games are played, so two runs differing only in it
+    // are different experiments (docs/decisions.md D-202).
+    let _ = writeln!(canonical, "openings_skip {}", config.run.openings_skip);
     let _ = writeln!(canonical, "turn_cap {}", config.run.turn_cap);
     let _ = writeln!(canonical, "budget {kind} {value}");
     let _ = writeln!(
@@ -167,6 +173,9 @@ fn instrument(out: &mut String, written: &Written<'_>) {
         "openings_take {} of {}",
         config.run.openings_take, written.openings.total
     );
+    // `game … opening <i>` below is window-relative; the absolute book
+    // position is this skip plus i (docs/decisions.md D-202).
+    let _ = writeln!(out, "openings_skip {}", config.run.openings_skip);
     let _ = writeln!(out, "opening_turns {}", written.openings.opening_turns);
     let _ = writeln!(out, "game_cap {}", config.run.openings_take * 2);
     let (kind, value) = config.budget.report_tokens();

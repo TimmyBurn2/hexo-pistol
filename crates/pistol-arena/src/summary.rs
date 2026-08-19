@@ -27,12 +27,13 @@ pub fn render(config: &ArenaConfig, records: &[GameRecord], wall_ms: u64) -> Str
 
     let _ = writeln!(
         out,
-        "arena: {} vs {}, budget {} {}, {} openings",
+        "arena: {} vs {}, budget {} {}, {} openings (skip {})",
         config.engine_a.label,
         config.engine_b.label,
         config.budget.report_tokens().0,
         config.budget.report_tokens().1,
-        config.run.openings_take
+        config.run.openings_take,
+        config.run.openings_skip
     );
     let _ = writeln!(
         out,

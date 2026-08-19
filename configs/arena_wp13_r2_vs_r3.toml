@@ -29,7 +29,7 @@
 # Validate this file with tools/config_check.sh.
 
 # The ARENA's schema version, unrelated to the engine configs' (D-15..D-17).
-schema_version = 1
+schema_version = 2
 
 [run]
 # The primary SPRT book (docs/decisions.md D-175), verified against its own
@@ -58,6 +58,11 @@ openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
 # 1.96 / (NELO_TO_T * sqrt(2) * sqrt(pairs)), a function of the pair count
 # alone, so +/-10.8 normalized Elo at 2000 pairs against +/-21.5 at 500.
 openings_take = 2000
+
+# Openings skipped before taking: this run starts at the top of the book.
+# The knob exists so a second run can draw a DISJOINT window of the SAME book
+# (docs/decisions.md D-202).
+openings_skip = 0
 
 # An evaluation horizon, never a game rule (game rule 6, D-157). Pre-registered
 # rather than left to taste because capped games are not inert in the statistic:

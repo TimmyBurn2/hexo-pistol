@@ -15,10 +15,11 @@ use pistol_arena::error::ArenaError;
 /// A complete document, which each test then breaks in exactly one place.
 fn complete() -> String {
     String::from(
-        "schema_version = 1\n\
+        "schema_version = 2\n\
          [run]\n\
          openings_file = \"openings.txt\"\n\
          openings_take = 4\n\
+         openings_skip = 0\n\
          turn_cap = 12\n\
          n_workers = 2\n\
          hang_timeout_ms = 1000\n\
@@ -117,7 +118,7 @@ fn an_unknown_key_is_refused_rather_than_ignored() {
 
 #[test]
 fn the_schema_version_is_the_arenas_own() {
-    let wrong = complete().replace("schema_version = 1", "schema_version = 2");
+    let wrong = complete().replace("schema_version = 2", "schema_version = 3");
     let error = load(&wrong).expect_err("a version this build does not read is an error");
     let text = error.to_string();
     assert!(
@@ -138,6 +139,10 @@ fn every_cross_field_rule_names_its_key() {
         (
             complete().replace("openings_take = 4", "openings_take = 0"),
             "run.openings_take",
+        ),
+        (
+            complete().replace("openings_skip = 0", "openings_skip = 1000001"),
+            "run.openings_skip",
         ),
         (
             complete().replace("turn_cap = 12", "turn_cap = 0"),

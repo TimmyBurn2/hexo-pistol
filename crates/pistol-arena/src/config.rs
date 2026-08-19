@@ -20,7 +20,9 @@ use serde::Deserialize;
 use crate::error::ArenaError;
 
 /// The arena schema version this build understands.
-pub const ARENA_SCHEMA_VERSION: u32 = 1;
+///
+/// 2: `[run]` gained the required `openings_skip` (docs/decisions.md D-202).
+pub const ARENA_SCHEMA_VERSION: u32 = 2;
 
 /// A complete arena configuration.
 ///
@@ -61,14 +63,21 @@ pub struct ArenaConfig {
 pub struct RunSection {
     /// The openings fixture. Every opening in it is played from both seats.
     pub openings_file: PathBuf,
-    /// How many openings to take, as a PREFIX of the file.
+    /// How many openings to take, starting after `openings_skip`.
     ///
-    /// A prefix rather than a selection, because the fixture is emitted in
-    /// content-hash order precisely so that a prefix is a sample rather than a
-    /// rating tail (docs/decisions.md D-143). This is also the run's whole size:
-    /// each opening is exactly one pair, so the game cap is twice this and is
-    /// derived rather than stated again (docs/decisions.md D-157).
+    /// A contiguous window rather than a selection, because the fixture is
+    /// emitted in content-hash order precisely so that any contiguous window is
+    /// a sample rather than a rating tail (docs/decisions.md D-143). This is
+    /// also the run's whole size: each opening is exactly one pair, so the game
+    /// cap is twice this and is derived rather than stated again
+    /// (docs/decisions.md D-157).
     pub openings_take: usize,
+    /// How many openings to SKIP before taking, so two runs can draw DISJOINT
+    /// samples from one book: skip 0/take t and skip t/take t share nothing
+    /// (docs/decisions.md D-202). `skip + take` must fit inside the file, or
+    /// the run is a different experiment from the one written down. Skip
+    /// changes which games are played, so it is part of `experiment_sha256`.
+    pub openings_skip: usize,
     /// How many turns a game may run for before it is recorded `capped`.
     ///
     /// An evaluation horizon, never a game rule (CLAUDE.md game rule 6). The

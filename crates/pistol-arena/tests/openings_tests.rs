@@ -31,7 +31,7 @@ fn arena_loads_primary_book_with_digest() {
     // the bytes are the ones this test was written against, so a regenerated
     // book with a different seed cannot slip through as "still loads".
     let path = repo().join("crates/pistol-cli/tests/fixtures/random_openings_v1.txt");
-    let loaded = openings::load(&path, 2000, CAP).expect("the primary book loads");
+    let loaded = openings::load(&path, 2000, 0, CAP).expect("the primary book loads");
     assert_eq!(
         loaded.total, 2000,
         "the whole book (docs/decisions.md D-175, extended to 2000 by D-187)"
@@ -51,7 +51,7 @@ fn arena_loads_primary_book_with_digest() {
 fn a_correct_fixture_loads_and_reports_what_it_holds() {
     let scratch = Scratch::new("openings-good");
     let path = scratch.write("openings.txt", &openings_prefix(6));
-    let loaded = openings::load(&path, 4, CAP).expect("a correct fixture loads");
+    let loaded = openings::load(&path, 4, 0, CAP).expect("a correct fixture loads");
     assert_eq!(loaded.taken.len(), 4, "the prefix asked for");
     assert_eq!(
         loaded.total, 6,
@@ -77,7 +77,7 @@ fn a_body_that_does_not_match_its_digest_is_refused() {
     let tampered = good.replacen("start moves 0,0", "start moves 0,0 ", 1);
     assert_ne!(tampered, good, "the tamper actually changed the bytes");
     let path = scratch.write("openings.txt", &tampered);
-    let error = openings::load(&path, 4, CAP).expect_err("a tampered body is refused");
+    let error = openings::load(&path, 4, 0, CAP).expect_err("a tampered body is refused");
     assert_eq!(error.name(), "OpeningsDigest");
 }
 
@@ -89,7 +89,7 @@ fn a_file_with_no_digest_line_is_refused() {
     let body = committed_body();
     let unpinned = format!("# no pin here\n{}\n", body[0]);
     let path = scratch.write("openings.txt", &unpinned);
-    let error = openings::load(&path, 1, CAP).expect_err("an unpinned file is refused");
+    let error = openings::load(&path, 1, 0, CAP).expect_err("an unpinned file is refused");
     assert_eq!(error.name(), "Openings");
     assert!(error.to_string().contains("body_sha256"));
 }
@@ -102,7 +102,7 @@ fn arena_refuses_duplicate_opening_up_to_symmetry() {
     // Byte-identical first.
     let repeated = openings_fixture(&[body[0].clone(), body[1].clone(), body[0].clone()]);
     let path = scratch.write("repeated.txt", &repeated);
-    let error = openings::load(&path, 3, CAP).expect_err("a repeated opening is refused");
+    let error = openings::load(&path, 3, 0, CAP).expect_err("a repeated opening is refused");
     assert_eq!(error.name(), "Openings");
     assert!(
         error.to_string().contains("symmetry"),
@@ -117,7 +117,7 @@ fn arena_refuses_duplicate_opening_up_to_symmetry() {
     assert_ne!(mirrored, body[0], "the mirror is a different spelling");
     let both = openings_fixture(&[body[0].clone(), mirrored]);
     let path = scratch.write("mirrored.txt", &both);
-    let error = openings::load(&path, 2, CAP)
+    let error = openings::load(&path, 2, 0, CAP)
         .expect_err("a mirrored opening is the same opening (docs/decisions.md D-137)");
     assert_eq!(error.name(), "Openings");
 }
@@ -160,7 +160,7 @@ fn a_blank_or_commented_line_in_the_body_is_refused() {
     ] {
         let text = openings_fixture(&[body[0].clone(), bad, body[1].clone()]);
         let path = scratch.write(&format!("{name}.txt"), &text);
-        let Err(error) = openings::load(&path, 3, CAP) else {
+        let Err(error) = openings::load(&path, 3, 0, CAP) else {
             panic!("a {name} line in the body must be refused, not skipped");
         };
         assert_eq!(error.name(), "Openings", "a {name} line is a named refusal");
@@ -179,7 +179,7 @@ fn a_file_that_mixes_opening_lengths_is_refused() {
         .join(" ");
     let text = openings_fixture(&[body[0].clone(), short]);
     let path = scratch.write("mixed.txt", &text);
-    let error = openings::load(&path, 2, CAP).expect_err("mixed lengths are refused");
+    let error = openings::load(&path, 2, 0, CAP).expect_err("mixed lengths are refused");
     assert!(
         error.to_string().contains("horizon"),
         "the refusal says why it matters — one turn cap cannot mean two horizons: {error}"
@@ -190,10 +190,57 @@ fn a_file_that_mixes_opening_lengths_is_refused() {
 fn taking_more_openings_than_the_file_holds_is_refused() {
     let scratch = Scratch::new("openings-take");
     let path = scratch.write("openings.txt", &openings_prefix(3));
-    let error = openings::load(&path, 4, CAP)
+    let error = openings::load(&path, 4, 0, CAP)
         .expect_err("silently taking fewer would be a different experiment");
     assert_eq!(error.name(), "Config");
     assert!(error.to_string().contains("run.openings_take"));
+}
+
+#[test]
+fn openings_skip_yields_disjoint_sample() {
+    // The knob exists so a confirmatory run can draw a DISJOINT window of the
+    // SAME book — WP-1.3's confirmation had to move to the other book for want
+    // of it (wp13_results §6b, docs/decisions.md D-202).
+    let scratch = Scratch::new("openings-skip");
+    let path = scratch.write("openings.txt", &openings_prefix(5));
+
+    let head = openings::load(&path, 2, 0, CAP).expect("the first window loads");
+    let tail = openings::load(&path, 2, 2, CAP).expect("the second window loads");
+    let positions = |loaded: &pistol_arena::openings::Openings| -> Vec<String> {
+        loaded
+            .taken
+            .iter()
+            .map(|opening| opening.position_tail.clone())
+            .collect()
+    };
+    let (head, tail) = (positions(&head), positions(&tail));
+    assert!(
+        head.iter().all(|position| !tail.contains(position)),
+        "skip 0/take 2 and skip 2/take 2 share no opening:\nhead {head:?}\ntail {tail:?}"
+    );
+
+    // Indexing stays window-relative, so the schedule and the report count the
+    // same way whatever the skip; the absolute position is skip + index.
+    let reloaded = openings::load(&path, 2, 2, CAP).expect("the window loads again");
+    assert_eq!(
+        reloaded
+            .taken
+            .iter()
+            .map(|opening| opening.index)
+            .collect::<Vec<usize>>(),
+        vec![0, 1]
+    );
+
+    // A window that runs off the end of the book is refused naming both knobs,
+    // never silently shortened.
+    let error = openings::load(&path, 2, 4, CAP)
+        .expect_err("a window past the book is a different experiment");
+    assert_eq!(error.name(), "Config");
+    let text = error.to_string();
+    assert!(
+        text.contains("run.openings_take") && text.contains("run.openings_skip"),
+        "the refusal names both knobs: {text}"
+    );
 }
 
 #[test]
@@ -202,9 +249,9 @@ fn a_turn_cap_that_does_not_clear_the_opening_is_refused() {
     // before either engine moved — and the run would still print a verdict.
     let scratch = Scratch::new("openings-cap");
     let path = scratch.write("openings.txt", &openings_prefix(2));
-    let error = openings::load(&path, 2, 4).expect_err("a cap inside the opening is refused");
+    let error = openings::load(&path, 2, 0, 4).expect_err("a cap inside the opening is refused");
     assert_eq!(error.name(), "Config");
     assert!(error.to_string().contains("run.turn_cap"));
     // And one turn past it is accepted, so the bound is the stated one.
-    openings::load(&path, 2, 5).expect("a cap of one turn past the opening is a real game");
+    openings::load(&path, 2, 0, 5).expect("a cap of one turn past the opening is a real game");
 }

@@ -20,7 +20,7 @@
 
 # Schema version this document is written against. This is the ARENA's schema
 # and is unrelated to the engine config's version.
-schema_version = 1
+schema_version = 2
 
 [run]
 # The sha-pinned opening corpus WP-1.2a emitted. The arena verifies the file
@@ -32,6 +32,11 @@ openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
 # is emitted in content-hash order precisely so that a prefix is a sample
 # (docs/decisions.md D-143).
 openings_take = 4
+
+# Openings skipped before taking: this run starts at the top of the book.
+# The knob exists so a second run can draw a DISJOINT window of the SAME book
+# (docs/decisions.md D-202).
+openings_skip = 0
 
 # An evaluation horizon, never a game rule (game rule 6). Openings are four
 # turns, so this leaves six turns of actual play per game.

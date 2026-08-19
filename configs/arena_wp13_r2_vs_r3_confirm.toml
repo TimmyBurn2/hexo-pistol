@@ -36,13 +36,18 @@
 #
 # Validate this file with tools/config_check.sh.
 
-schema_version = 1
+schema_version = 2
 
 [run]
 # The disjoint sample. The whole book, 1591 openings, verified against its own
 # in-band digest before a game is played (D-148).
 openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
 openings_take = 1591
+
+# Openings skipped before taking: this run starts at the top of the book.
+# The knob exists so a second run can draw a DISJOINT window of the SAME book
+# (docs/decisions.md D-202).
+openings_skip = 0
 
 # Run 1's, unchanged.
 turn_cap = 40

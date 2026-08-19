@@ -71,6 +71,15 @@ impl ArenaConfig {
                 format!("at most {MAX_OPENINGS_TAKE}; this is a typo ceiling, not a sizing rule"),
             ));
         }
+        // Zero is the ordinary value: a run that skips nothing. Whether
+        // skip + take fits the BOOK is the openings reader's rule, because the
+        // number it must fit under is a property of that document.
+        if run.openings_skip > MAX_OPENINGS_TAKE {
+            return Err(ArenaError::config(
+                "run.openings_skip",
+                format!("at most {MAX_OPENINGS_TAKE}; this is a typo ceiling, not a sizing rule"),
+            ));
+        }
         if run.n_workers == 0 {
             return Err(ArenaError::config(
                 "run.n_workers",

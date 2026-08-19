@@ -41,7 +41,11 @@ pub const BODY_SHA_MARKER: &str = "# body_sha256 ";
 /// One opening: where it came from, and the position it is.
 #[derive(Debug, Clone)]
 pub struct Opening {
-    /// Index in the taken prefix, which is also its place in the report.
+    /// Index in the taken WINDOW, which is also its place in the report — a
+    /// consumer trap worth naming: two disjoint-window runs over one book both
+    /// label their openings `0..take`, and the absolute book position is
+    /// `openings_skip + index`, with the skip on the report's instrument block
+    /// (docs/decisions.md D-202). `line` below stays absolute.
     pub index: usize,
     /// The line of the file it was read from, for a refusal that has to say so.
     pub line: usize,
@@ -54,7 +58,7 @@ pub struct Opening {
 /// A loaded openings document.
 #[derive(Debug, Clone)]
 pub struct Openings {
-    /// The taken prefix, in file order.
+    /// The taken window, in file order.
     pub taken: Vec<Opening>,
     /// The digest the header carried, echoed into the report so a run names the
     /// book it played from by content rather than by path (D-147).
@@ -65,11 +69,20 @@ pub struct Openings {
     pub total: usize,
 }
 
-/// Read `take` openings from `path`, refusing anything that is not a fixture.
+/// Read `take` openings from `path`, starting after `skip`, refusing anything
+/// that is not a fixture.
+///
+/// A contiguous window: the book is emitted in content-hash order, so any
+/// window is as much a sample as a prefix is (docs/decisions.md D-143), and
+/// `skip t, take t` is disjoint from `skip 0, take t` by construction — which
+/// is what a confirmatory run on the SAME book needs (docs/decisions.md D-202;
+/// WP-1.3's confirmation had to move to the other book for want of this knob).
+/// The WHOLE file is still parsed, digest-verified and symmetry-deduped before
+/// the window is cut, so a defect outside the window still refuses the file.
 ///
 /// `turn_cap` is passed in because the rule it participates in — that a cap must
 /// leave room for at least one engine move — needs both documents to state it.
-pub fn load(path: &Path, take: usize, turn_cap: u32) -> Result<Openings, ArenaError> {
+pub fn load(path: &Path, take: usize, skip: usize, turn_cap: u32) -> Result<Openings, ArenaError> {
     let bytes = std::fs::read(path)
         .map_err(|io| ArenaError::openings(path, 0, format!("cannot read: {io}")))?;
     let (claimed, body_offset) = header_digest(path, &bytes)?;
@@ -110,19 +123,25 @@ pub fn load(path: &Path, take: usize, turn_cap: u32) -> Result<Openings, ArenaEr
     }
 
     let total = parsed.len();
-    if take > total {
+    if skip.saturating_add(take) > total {
         return Err(ArenaError::config(
             "run.openings_take",
             format!(
-                "{} holds {total} openings and the run asks for {take}; taking fewer silently \
-                 would make the run a different experiment from the one written down",
+                "{} holds {total} openings and the run asks for {take} after skipping {skip} \
+                 (run.openings_skip); taking fewer silently would make the run a different \
+                 experiment from the one written down",
                 path.display()
             ),
         ));
     }
-    parsed.truncate(take);
+    let mut taken: Vec<Opening> = parsed.drain(skip..skip + take).collect();
+    for (index, opening) in taken.iter_mut().enumerate() {
+        // Window-relative, so the schedule and the report index games the same
+        // way whatever the skip; the file line stays absolute for refusals.
+        opening.index = index;
+    }
     Ok(Openings {
-        taken: parsed,
+        taken,
         body_sha256: claimed,
         opening_turns,
         total,

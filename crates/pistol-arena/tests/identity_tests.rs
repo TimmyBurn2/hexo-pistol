@@ -22,10 +22,11 @@ const TURN_CAP: u32 = 10;
 /// reads values, not files.
 fn document() -> ArenaConfig {
     ArenaConfig::parse_unvalidated(
-        "schema_version = 1\n\
+        "schema_version = 2\n\
          [run]\n\
          openings_file = \"openings.txt\"\n\
          openings_take = 4\n\
+         openings_skip = 0\n\
          turn_cap = 12\n\
          n_workers = 2\n\
          hang_timeout_ms = 1000\n\

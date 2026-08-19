@@ -104,6 +104,7 @@ pub fn openings_prefix(count: usize) -> String {
 pub struct ConfigSpec<'a> {
     pub openings: &'a Path,
     pub take: usize,
+    pub skip: usize,
     pub turn_cap: u32,
     pub workers: usize,
     pub hang_ms: u64,
@@ -120,10 +121,11 @@ impl ConfigSpec<'_> {
     /// The document.
     pub fn render(&self) -> String {
         format!(
-            "schema_version = 1\n\
+            "schema_version = 2\n\
              [run]\n\
              openings_file = \"{openings}\"\n\
              openings_take = {take}\n\
+             openings_skip = {skip}\n\
              turn_cap = {turn_cap}\n\
              n_workers = {workers}\n\
              hang_timeout_ms = {hang}\n\
@@ -145,6 +147,7 @@ impl ConfigSpec<'_> {
              config = \"{cfg_b}\"\n",
             openings = self.openings.display(),
             take = self.take,
+            skip = self.skip,
             turn_cap = self.turn_cap,
             workers = self.workers,
             hang = self.hang_ms,
@@ -171,6 +174,7 @@ pub fn self_match<'a>(
     ConfigSpec {
         openings,
         take,
+        skip: 0,
         turn_cap,
         workers,
         hang_ms: 30_000,
