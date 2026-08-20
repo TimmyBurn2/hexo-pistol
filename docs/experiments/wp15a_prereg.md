@@ -27,8 +27,8 @@ suite CI already runs:
 | instrument | blob at HEAD | what it decides |
 |---|---|---|
 | `tools/solver_edge_check.sh` | `a458be69f7a07831697f86cb9369d5d45beca005` | `p = 0`, on a workspace-wide inverted normal-edge tree |
-| `tools/wp15a_h1.sh` | `e20c8eb8ee7a5b7c8ed4ecb9d0b4c4049121d3a3` | H1-a and H1-b, and every guard before them |
-| `tools/baseline_snapshot.sh` | `a7c0ed4367a6893f70b776732bd68ada77c19483` | the candidate record — **run from inside the pristine clone** |
+| `tools/wp15a_h1.sh` | `42a05ab92dcd96955b626c0059845ab157682d7f` | H1-a and H1-b, and every guard before them |
+| `tools/baseline_snapshot.sh` | `beb2463550d1e4388ce191106aa32c151d6bc726` | the candidate record — **run from inside the pristine clone** |
 
 **THE SUITE EARNED ITS PLACE ON ITS FIRST EXECUTION**, which is the one result worth reading
 twice: `the_abort_path_is_replication_stable` FAILED, because `cargo tree` prints ABSOLUTE
@@ -259,7 +259,7 @@ resolved graph and is recorded, not adjudicated on."* It is now the adjudicator.
 tools/solver_edge_check.sh <workspace-root> pistol-solver
 ```
 
-blob `a458be69f7a07831697f86cb9369d5d45beca005`, run by `tools/wp15a_h1.sh` against the
+pinned by blob in §0's instrument table, run by `tools/wp15a_h1.sh` against the
 **pristine clone at `LANDING`**. It answers on the STDOUT of a workspace-wide inverted
 normal-edge tree, and **never on an exit status**:
 
@@ -405,11 +405,19 @@ can survive it. H1-a compares two builds that differ **only** in the suspect con
 
 ### 3.1 The registered instrument
 
-**There is no block here any more.** The instrument is `tools/wp15a_h1.sh`, blob
-`e20c8eb8ee7a5b7c8ed4ecb9d0b4c4049121d3a3`, which calls `tools/solver_edge_check.sh`, blob
-`a458be69f7a07831697f86cb9369d5d45beca005`. Both are named with their revisions in §0.3 as
-D-268 requires, and a change to either reopens this review exactly as an amendment to this
-document does.
+**There is no block here any more.** The instrument is `tools/wp15a_h1.sh`, which calls
+`tools/solver_edge_check.sh`. **Both are pinned by blob in §0's instrument table and NOWHERE
+ELSE**, as D-268 requires, and a change to either reopens this review exactly as an amendment to
+this document does.
+
+**The pin lives in one place because it was wrong in two.** Revision 11 registered
+`tools/wp15a_h1.sh` at the blob of the PARENT commit — the version whose verdict ordering §6 of
+that same revision was written to replace — and repeated the hex in this section, so the document
+registered an instrument contradicting its own §6 table. Two reviewers found it independently.
+Caught before any governed run: no results document exists and no ADR records an H1 verdict, so
+no verdict inherits it. **A pin maintained by memory drifts exactly like a guard applied by
+memory**, so `the_instrument_pins_in_this_document_match_the_shipped_scripts` now compares the
+table against `git hash-object` on every commit, and the duplicate hexes are gone.
 
 **The registered invocation**, with the thirteen bindings of §0.1 in the environment:
 

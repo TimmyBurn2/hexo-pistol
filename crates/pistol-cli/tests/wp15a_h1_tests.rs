@@ -40,7 +40,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Output;
 
-use common::{repo, scratch};
+use common::{repo, repo_root, scratch};
 
 /// A two-crate workspace in a git repository with two commits, a stub snapshot
 /// instrument, and a baseline record that matches the baseline build.
@@ -680,4 +680,62 @@ fn an_unset_binding_is_a_named_refusal_and_never_a_default() {
     let ran = f.run(&[("SUBJECT_CRATE", "")]);
     assert_eq!(ran.status.code(), Some(2), "stdout: {}", out(&ran));
     assert!(err(&ran).contains("SUBJECT_CRATE unset"), "{}", err(&ran));
+}
+
+/// THE PIN IS CHECKED, NOT REMEMBERED.
+///
+/// D-268 requires the pre-registration to name each instrument WITH ITS
+/// REVISION. Revision 11 registered `tools/wp15a_h1.sh` at the blob of the
+/// PARENT commit — the version whose verdict ordering that same revision was
+/// written to replace — so the document registered an instrument that
+/// contradicted its own §6 table, and repeated the stale hex in a second
+/// section. Two reviewers found it independently; it was caught before any
+/// governed run, so no verdict inherited it.
+///
+/// A hand-copied hex in prose is wrong the moment the file changes, which is
+/// every time one of these defects is fixed. This compares §0's instrument table
+/// against `git hash-object` on the WORKING TREE — not `HEAD:path`, so a script
+/// edited without its pin fails here rather than at the next commit.
+#[test]
+fn the_instrument_pins_in_this_document_match_the_shipped_scripts() {
+    let doc = std::fs::read_to_string(repo("docs/experiments/wp15a_prereg.md"))
+        .expect("the pre-registration reads");
+    let mut checked = 0;
+    for line in doc.lines() {
+        // Only §0's instrument table: `| `tools/x.sh` | `<40 hex>` | … |`
+        let Some(rest) = line.strip_prefix("| `tools/") else {
+            continue;
+        };
+        let Some((path_tail, after)) = rest.split_once("` | `") else {
+            continue;
+        };
+        let Some((pinned, _)) = after.split_once('`') else {
+            continue;
+        };
+        if pinned.len() != 40 || !pinned.chars().all(|c| c.is_ascii_hexdigit()) {
+            continue;
+        }
+        let path = format!("tools/{path_tail}");
+        let actual = String::from_utf8_lossy(
+            &std::process::Command::new("git")
+                .current_dir(repo_root())
+                .args(["hash-object", "--", &path])
+                .output()
+                .expect("git runs")
+                .stdout,
+        )
+        .trim()
+        .to_owned();
+        assert_eq!(
+            pinned, actual,
+            "the pre-registration pins {path} at {pinned}, but the shipped file hashes to \
+             {actual}. Update §0's instrument table in the same commit as the script — D-268 \
+             makes the pin part of what governs the run."
+        );
+        checked += 1;
+    }
+    assert!(
+        checked >= 3,
+        "the instrument table must pin at least the three instruments; parsed {checked}"
+    );
 }

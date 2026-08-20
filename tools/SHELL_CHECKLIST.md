@@ -113,3 +113,43 @@ control run so a pass cannot come from a gate that refuses everything.
 zero tests until D-231. Two rounds of defects in it were found by reviewers
 running it by hand, which is why two rounds of defects in it went unbound. A
 number nothing tests is a number nothing defends.
+
+## 11. A CALLER'S PATH THAT FEEDS A DELETE OR AN OVERWRITE IS CONTAINMENT-GUARDED
+
+**Any binding consumed by `rm`, `mv`, or a write is guarded so that its resolved
+path is provably under the root the script means. ABSOLUTE-VALUE ESCAPE IS THE
+ATTACK**, and a `cd` is not a guard: `( cd "$ROOT" && rm -rf -- "$P" )` deletes
+whatever `$P` names when `$P` is absolute, because a `cd` constrains relative
+paths and nothing else.
+
+This is not hypothetical and it is not old. `tools/wp15a_h1.sh` guarded
+`SNAPSHOT_REL` against `/*` and `*..*` and left `SUBJECT_PATH` — **the one
+binding it `rm -rf`s** — unguarded. An absolute value lying inside the real
+repository passed every check above the deletion (`git diff --name-only -- <abs>`
+resolves it happily) and **removed the operator's working tree**; at the
+registered bindings that is `crates/pistol-solver`, the work package under test.
+The refusal that fired named a git pathspec error and never said a deletion had
+happened. `..` was already caught, by git refusing the pathspec — so the guard
+that existed covered the case that was already covered and missed the one that
+was not.
+
+**The overwrite direction is the same defect with a quieter blast radius.**
+`tools/baseline_snapshot.sh` `cd`s to `$ROOT` and then writes `--out`; measured,
+`--out relative_probe.txt` issued from `/tmp` wrote its record **into the
+repository root** — a file the caller never asked for, in a tree whose
+cleanliness other gates adjudicate on. A caller's relative path is resolved
+against the directory the CALLER was standing in, captured before the `cd`.
+
+**The sweep, not the instance.** This item exists because the fix for the
+deletion was scoped to one variable while its parameterised sibling — the one
+that deletes — sat one guard away. So: enumerate every destructive site in the
+script, trace each target to its ORIGIN, and classify. A target derived from
+`mktemp -d` or from `$WORK/...` is script-created and needs nothing; a target
+that came from an argument, an environment binding or a config value is
+caller-supplied and is guarded or is a finding. None of this by memory — the
+enumeration is the evidence.
+
+**Why this is item 11 and not item 10.** Items 1-10 are cited BY NUMBER in
+`docs/decisions.md`, in `docs/experiments/`, and in several scripts' own
+comments; renumbering to put this beside its siblings would silently retarget
+every one of those citations. The coverage rule stays 10 and stays the capstone.

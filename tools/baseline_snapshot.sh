@@ -155,6 +155,10 @@ set -euo pipefail
 # comparison that may not depend on who is logged in.
 export LC_ALL=C
 
+# The CALLER'S directory, captured BEFORE the `cd` below, because the `cd` is what
+# makes a relative `--out` mean something the caller did not ask for. See the
+# resolution after the argument loop.
+CALLER_PWD="$PWD"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
@@ -234,6 +238,19 @@ while [ "$#" -gt 0 ]; do
 	*) fail "unknown argument \`$1\`" ;;
 	esac
 done
+
+# A RELATIVE `--out` IS RESOLVED AGAINST THE CALLER'S DIRECTORY, NOT THE
+# REPOSITORY ROOT. This script `cd`s to `$ROOT` before it does anything, and a
+# `cd` silently redefines what every relative path the caller supplied means:
+# MEASURED before this line existed, `--out relative_probe.txt` issued from
+# `/tmp` wrote its record into the REPOSITORY ROOT — a file the caller never
+# asked for, in a tree whose cleanliness other gates then adjudicate on.
+# tools/SHELL_CHECKLIST.md item 11: a caller's path consumed by a write is
+# resolved against the root the caller meant, and a `cd` is not that root.
+case "$OUT" in
+'' | /*) ;;
+*) OUT="$CALLER_PWD/$OUT" ;;
+esac
 
 # The COUNT'S SPELLING, not just its value. `[ 010 -ge 1 ]` is true because bash
 # reads a leading zero as OCTAL, and the engine then parses the same token as

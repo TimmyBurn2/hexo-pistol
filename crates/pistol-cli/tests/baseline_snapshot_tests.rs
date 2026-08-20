@@ -1182,3 +1182,53 @@ fn a_ladder_that_reports_a_shallower_depth_than_one_already_recorded_is_refused(
         "the refusal names both depths: {stderr}"
     );
 }
+
+/// A RELATIVE `--out` BELONGS TO THE CALLER'S DIRECTORY, NOT THE REPOSITORY ROOT.
+///
+/// This script `cd`s to `$ROOT` before it does anything, and a `cd` silently
+/// redefines what every relative path the caller supplied means. MEASURED before
+/// the fix: `--out relative_probe.txt` issued from `/tmp` wrote its record into
+/// the repository root — a file the caller never asked for, in a tree whose
+/// cleanliness other gates then adjudicate on, and one directory away from the
+/// `SUBJECT_PATH` defect that deleted from the same tree for the same reason
+/// (tools/SHELL_CHECKLIST.md item 11).
+///
+/// The stray is removed before the assertion fires, so a regression fails loudly
+/// without leaving the repository dirty for every later gate in the run.
+#[test]
+fn a_relative_out_lands_in_the_callers_directory_and_not_the_repository_root() {
+    let dir = scratch("relative-out");
+    let corpus = two_band_corpus(&dir);
+    let caller = dir.join("caller");
+    std::fs::create_dir_all(&caller).expect("the caller's directory is created");
+
+    let ran = Command::new("bash")
+        .arg(repo("tools/baseline_snapshot.sh"))
+        .args(["--corpus", corpus.to_str().expect("utf-8 path")])
+        .args(["--ladder-depth", "1"])
+        .args(["--binary", env!("CARGO_BIN_EXE_pistol")])
+        .args(["--out", "record.txt"])
+        .current_dir(&caller)
+        .output()
+        .expect("bash runs the shipped script");
+    assert!(
+        ran.status.success(),
+        "the run must succeed:\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&ran.stdout),
+        String::from_utf8_lossy(&ran.stderr)
+    );
+
+    let in_root = repo("record.txt");
+    let leaked = in_root.is_file();
+    if leaked {
+        let _ = std::fs::remove_file(&in_root);
+    }
+    assert!(
+        !leaked,
+        "a relative --out must not write into the repository root"
+    );
+    assert!(
+        caller.join("record.txt").is_file(),
+        "and it must write into the directory the caller was standing in"
+    );
+}
