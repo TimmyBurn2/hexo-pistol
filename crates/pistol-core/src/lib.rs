@@ -14,6 +14,13 @@
 //!   legal region, as a pinned constant (rule 5). It is a game rule, never a
 //!   search knob, and it is never compared with the search candidate radius
 //!   that lives in the engine config (docs/decisions.md D-20);
+//! - the length-[`WINDOW_LEN`] line windows a stone sits in ([`window`]):
+//!   three axes, six offsets, eighteen per cell. The length is `WIN_LEN`
+//!   because rule 2 is about six, which is what moved this enumeration here
+//!   from the eval crate when Stage 1's threat generator came to need it —
+//!   D-67's own flip clause, firing as written (docs/decisions.md D-67,
+//!   D-253). A backend reading a different window length defines its own type
+//!   at its own length, in its own crate;
 //! - the turn as a value ([`Turn`]) and every turn a position has
 //!   ([`generate_turns`]), with [`GameState::make_turn`] /
 //!   [`GameState::unmake_turn`] playing and taking one back, and [`perft`]
@@ -63,6 +70,7 @@ pub mod state;
 pub mod symmetry;
 pub mod turn;
 pub mod win;
+pub mod window;
 pub mod zobrist;
 
 pub use axis::{Axis, NEIGHBOUR_DIRECTIONS};
@@ -78,4 +86,5 @@ pub use state::GameState;
 pub use symmetry::{Symmetry, canonical_form, canonical_sequence};
 pub use turn::{Outcome, ParseTurnError, Phase, PlyOutcome, Turn};
 pub use win::{Run, wins_at};
+pub use window::{WINDOW_LEN, WINDOWS_PER_CELL, Window, windows_through, windows_through_indexed};
 pub use zobrist::{Key128, ZOBRIST_SEED, cell_key, from_scratch_key, phase_key, side_key};

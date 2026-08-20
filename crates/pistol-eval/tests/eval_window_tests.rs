@@ -198,3 +198,26 @@ fn eval_of_an_empty_position_is_zero() {
         assert_eq!(value_from_scratch(&board, &weights, side), 0);
     }
 }
+
+#[test]
+fn eval_window_reexport_is_the_core_window() {
+    // The v0 eval window and the rules window are the SAME type, not two types
+    // that agree: `pistol_eval::window` is a re-export of `pistol_core::window`
+    // (docs/decisions.md D-67's flip, D-253). This assignment does not compile
+    // if that stops being true, which is the assertion — a value-level equality
+    // would still pass for two structurally identical types.
+    let from_core = pistol_core::window::Window::new(Axis::ConstR, Coord::ORIGIN)
+        .expect("the origin addresses a window");
+    let as_eval: Window = from_core;
+    assert_eq!(as_eval, from_core);
+
+    // And the length the eval crate exports is the rules length, which is what
+    // makes the re-export honest for v0 rather than a coincidence nobody checks.
+    assert_eq!(WINDOW_LEN, pistol_core::WIN_LEN);
+    assert_eq!(WINDOWS_PER_CELL, pistol_core::window::WINDOWS_PER_CELL);
+    assert_eq!(
+        windows_through(Coord::new(3, -2)).collect::<Vec<_>>(),
+        pistol_core::window::windows_through(Coord::new(3, -2)).collect::<Vec<_>>(),
+        "one enumeration, reachable by two paths"
+    );
+}
