@@ -80,6 +80,13 @@ radius policy as the primary candidate source (radius stays as a
 config-selectable fallback). Rules truth stays in pistol-core; threat semantics
 live in search/solver (rule 2).
 
+WP-1.5 is cut in two, and the cut is named here because two work packages once
+carried one designation (docs/decisions.md D-249): **WP-1.5a** is the
+`pistol-solver` threat generator — the crate seam, `ThreatState` and its
+queries — and **WP-1.5b** is the threat-first staged pair generation that
+consumes it in search, with its own sha-pinned `tactical_staged_v0.txt` fixture.
+Neither includes any `pistol-eval` storage refactor; that is WP-1.9.
+
 **WP-1.6 — threat-only zone-bounded quiescence**, under D-111's invariant: the
 static eval answers at turn boundaries only, so quiescence stands pat and
 extends in TURNS, never in plies.
@@ -90,6 +97,14 @@ on the completing stone and on the pair, per the report's move-ordering stack.
 
 **WP-1.8 — AND-OR solver**, upgraded to relevance-zone Deep df-pn (+1+epsilon,
 GHI).
+
+**WP-1.9 — eval window-map storage** (docs/decisions.md D-225, renumbered by
+D-249). Replace `pistol-eval`'s `BTreeMap<Window, Counts>` with the storage
+shape WP-1.5a's matrix selects. LICENSED, NOT SCHEDULED: it owes its own option
+matrix, its own pre-registration and its own `tools/bench_delta.sh` run, and it
+does not sit on the threat core's critical path. Unlike WP-1.5a its bracket IS a
+whole-engine one, because `pistol-eval` is linked by the shipped binary and
+`pistol-solver` is not.
 
 Exit: engine refutes the tactical fixture class at pre-registered thresholds;
 every landed change SPRT-positive.
