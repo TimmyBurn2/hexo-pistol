@@ -106,6 +106,18 @@ does not sit on the threat core's critical path. Unlike WP-1.5a its bracket IS a
 whole-engine one, because `pistol-eval` is linked by the shipped binary and
 `pistol-solver` is not.
 
+**WP-1.10 — `tools/` gate hardening** (docs/decisions.md D-251). What the
+`tools/`-scoped review that produced D-250 found and D-250 did not close: test
+coverage for the rest of what the gate scripts record, the `command -v` sweep at
+eight sites across seven files under the reviewer's fix-across-`tools/` ruling,
+an amendment to `tools/SHELL_CHECKLIST.md` item 8 for the fourth case bash
+admits, and two MINORs — a header claiming a sha pin the script does not
+enforce, and arguments silently ignored. LICENSED, NOT SCHEDULED: it carries no
+engine change and does not sit on the threat core's critical path. It is a
+numbered package rather than a note because these scripts are the instrument
+every Stage-1 strength claim is read through, and the defect that opened it was
+a gate reporting a pass for a binary that was never built.
+
 Exit: engine refutes the tactical fixture class at pre-registered thresholds;
 every landed change SPRT-positive.
 
