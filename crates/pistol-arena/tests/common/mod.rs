@@ -17,6 +17,16 @@ pub const ARENA: &str = env!("CARGO_BIN_EXE_arena");
 /// The misbehaving instrument.
 pub const STUB: &str = env!("CARGO_BIN_EXE_arena-stub-engine");
 
+/// The prefix every scratch directory in this workspace's test suites carries.
+///
+/// Spelled identically in `crates/pistol-cli/tests/common/mod.rs`, whose sweep
+/// is what removes the directories this `Drop` could not — a test binary that
+/// aborts or is killed runs no destructor. It is deliberately NOT `pistol-arena-`
+/// or `pistol-`: both are this workspace's own directory names, and a sweep by
+/// that prefix deleted crate directories out of a `TMPDIR` near a checkout
+/// (docs/decisions.md D-239).
+pub const SCRATCH_PREFIX: &str = "pistol-testscratch-arena-";
+
 /// A scratch directory that removes itself.
 pub struct Scratch {
     pub dir: PathBuf,
@@ -26,7 +36,7 @@ impl Scratch {
     /// A fresh directory named for the test that asked for one.
     pub fn new(name: &str) -> Scratch {
         let mut dir = std::env::temp_dir();
-        dir.push(format!("pistol-arena-{name}-{}", std::process::id()));
+        dir.push(format!("{SCRATCH_PREFIX}{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).expect("a scratch directory");
         Scratch { dir }

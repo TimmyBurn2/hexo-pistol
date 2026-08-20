@@ -30,6 +30,28 @@ pub fn repo(relative: &str) -> PathBuf {
     repo_root().join(relative)
 }
 
+/// The prefix EVERY scratch directory in this workspace's test suites carries,
+/// and the only thing the sweep below is allowed to remove.
+///
+/// It is not `pistol-`. That prefix is the WORKSPACE'S OWN NAMING SCHEME: every
+/// crate directory — `pistol-core`, `pistol-cli`, `pistol-eval`, `pistol-search`
+/// — starts with it, so a `TMPDIR` pointed anywhere near a checkout made the
+/// sweep delete source directories it never created, from a test that PASSED
+/// (REPRODUCED: one `cargo test -p pistol-cli` removed four of them). A sweep
+/// that removes by prefix must own the prefix, and `pistol-testscratch-` is a
+/// name nothing but these suites writes.
+///
+/// `crates/pistol-arena/tests/common/mod.rs` spells the same prefix: the two
+/// suites share one temp directory, and this sweep is the only thing that
+/// removes what the arena's `Drop` guard could not (a killed or aborting test
+/// binary runs no destructor).
+pub const SCRATCH_PREFIX: &str = "pistol-testscratch-";
+
+/// How old a scratch directory must be before the sweep may remove it. Generous:
+/// the longest `cargo test --workspace` on this project is minutes, so nothing
+/// this old belongs to a process that is still going.
+pub const SCRATCH_STALE_AFTER: std::time::Duration = std::time::Duration::from_secs(6 * 60 * 60);
+
 /// Remove scratch directories left behind by EARLIER test processes.
 ///
 /// Nothing ever cleaned these. A `Drop` guard is the wrong shape — a failing
@@ -43,32 +65,32 @@ pub fn repo(relative: &str) -> PathBuf {
 /// test would be worse than the litter it removes.
 fn sweep_stale_scratch() {
     static ONCE: std::sync::Once = std::sync::Once::new();
-    ONCE.call_once(|| {
-        // Generous: the longest `cargo test --workspace` on this project is
-        // minutes, so nothing this old belongs to a process that is still going.
-        const STALE_AFTER: std::time::Duration = std::time::Duration::from_secs(6 * 60 * 60);
-        let Ok(entries) = std::fs::read_dir(std::env::temp_dir()) else {
-            return;
-        };
-        for entry in entries.flatten() {
-            let name = entry.file_name();
-            // Both suites' scratch names begin with this, and nothing else in a
-            // temp directory has any business doing so.
-            if !name.to_string_lossy().starts_with("pistol-") {
-                continue;
-            }
-            let stale = entry
-                .metadata()
-                .ok()
-                .filter(std::fs::Metadata::is_dir)
-                .and_then(|meta| meta.modified().ok())
-                .and_then(|when| when.elapsed().ok())
-                .is_some_and(|age| age > STALE_AFTER);
-            if stale {
-                let _ = std::fs::remove_dir_all(entry.path());
-            }
+    ONCE.call_once(|| sweep_scratch_in(&std::env::temp_dir(), SCRATCH_STALE_AFTER));
+}
+
+/// The sweep itself, over a named directory: the destructive half, separated so
+/// a test can watch it spare what it must spare. Nothing else may call it — the
+/// `Once` above is what keeps it to one pass per process.
+pub fn sweep_scratch_in(dir: &std::path::Path, stale_after: std::time::Duration) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        if !name.to_string_lossy().starts_with(SCRATCH_PREFIX) {
+            continue;
         }
-    });
+        let stale = entry
+            .metadata()
+            .ok()
+            .filter(std::fs::Metadata::is_dir)
+            .and_then(|meta| meta.modified().ok())
+            .and_then(|when| when.elapsed().ok())
+            .is_some_and(|age| age > stale_after);
+        if stale {
+            let _ = std::fs::remove_dir_all(entry.path());
+        }
+    }
 }
 
 /// A fresh, empty directory for a test to write into, named after the test.
@@ -83,7 +105,10 @@ pub fn scratch(name: &str) -> PathBuf {
     // the directory the other is writing into.
     static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let path = std::env::temp_dir().join(format!("pistol-{}-{name}-{serial}", std::process::id()));
+    let path = std::env::temp_dir().join(format!(
+        "{SCRATCH_PREFIX}{}-{name}-{serial}",
+        std::process::id()
+    ));
     let _ = std::fs::remove_dir_all(&path);
     std::fs::create_dir_all(&path)
         .unwrap_or_else(|error| panic!("cannot create {}: {error}", path.display()));
