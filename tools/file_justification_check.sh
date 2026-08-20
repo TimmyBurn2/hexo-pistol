@@ -27,6 +27,19 @@
 #      words gets past it, and that is named here rather than implied: the check
 #      is a guard against the obvious mistake, not a proof.
 #
+# THE GATE READS THE TRACKED BYTES AND NOT THE WORKING TREE (docs/decisions.md
+# D-233's fix, applied to the sibling gate it was left out of). `git ls-files`
+# named the path and `wc -l`/`grep` then opened THE WORKTREE FILE OF THAT NAME,
+# which is a different file: staging an over-cap unjustified source file and
+# overwriting its worktree copy with two lines made this gate print `0 over the
+# cap, all justified` and exit 0 while the real file went to HEAD — the same
+# exit-0-wrong-answer the artifact gate had, reproduced here at ccba146 with one
+# `.rs` and one `.sh`. What commits is the INDEX, so the index's blob is what is
+# read: `git ls-files -s -z` names each path's object and `git cat-file blob`
+# hands over its bytes. The tracked count in the summary is now counted BY THAT
+# SAME LOOP rather than by a second `git ls-files` with its own pathspec, which
+# is how the line came to say `.rs/.sh` while an enumeration counted only `.rs`.
+#
 # The gate self-tests before it runs, over seeded files in a temporary directory:
 # a checker nobody has watched fail is not a checker, and this one is asked to
 # say "no" about a file that will not exist until somebody writes it.
@@ -53,11 +66,12 @@ MARKER='RULE9-JUSTIFICATION:'
 # through.
 verdict() {
 	local file="$1" lines line why
-	# A tracked file that is not on disk — a rename whose deletion is not staged,
-	# or a checkout mid-operation. Without this the `wc -l` below fails, `lines`
-	# is empty, the `[` test errors, and the file is then misdiagnosed as an
-	# unjustified over-cap file. That is a wrong answer where a named refusal
-	# belongs (CLAUDE.md rule 3), inside the gate that exists to give one.
+	# Nothing to read. From the tracked loop this is unreachable — the bytes it
+	# passes are an extracted blob, and an extraction that failed is refused
+	# there by name — so what this guards is the seeded self-test below and any
+	# future caller that hands over a path. Without it `wc -l` fails, `lines` is
+	# empty, the `[` test errors, and the file is misdiagnosed as an unjustified
+	# over-cap file: a wrong answer where a named refusal belongs (rule 3).
 	if [ ! -f "$file" ]; then
 		echo "missing"
 		return
@@ -132,9 +146,23 @@ echo "file_justification_check: self-test passed on 8 seeded cases (cap $SOFT_CA
 # --- the tracked file set -------------------------------------------------
 
 OVER=0
+TRACKED=0
 BAD=()
-while IFS= read -r file; do
-	case "$(verdict "$file")" in
+# Where each tracked blob is unpacked, one at a time. Inside `$SEED` so the trap
+# already set above removes it: a second `mktemp -d` would need a second trap,
+# and a second trap on EXIT REPLACES the first (docs/decisions.md D-231's leak).
+BLOB="$SEED/tracked-blob"
+# `-s -z` prints `<mode> SP <object> SP <stage> TAB <path>` per NUL-terminated
+# record — the only spelling that survives a path containing a newline.
+while IFS= read -r -d '' entry; do
+	meta="${entry%%$'\t'*}"
+	file="${entry#*$'\t'}"
+	meta="${meta#* }"
+	blob="${meta%% *}"
+	git cat-file blob "$blob" >"$BLOB" 2>/dev/null ||
+		fail "git could not read the tracked blob $blob for $file, and a file this gate cannot read is not one it may pass"
+	TRACKED=$((TRACKED + 1))
+	case "$(verdict "$BLOB")" in
 	under) ;;
 	justified)
 		OVER=$((OVER + 1))
@@ -143,13 +171,13 @@ while IFS= read -r file; do
 	unjustified) BAD+=("$file: over the cap with no $MARKER comment") ;;
 	empty) BAD+=("$file: $MARKER carries no why") ;;
 	counted) BAD+=("$file: $MARKER states a line count, and counts are derived") ;;
-	missing) BAD+=("$file: tracked by git but not on disk; stage the deletion or restore it") ;;
+	missing) BAD+=("$file: its tracked blob unpacked to nothing this gate could read") ;;
 	esac
-done < <(git ls-files '*.rs' '*.sh')
+done < <(git ls-files -s -z '*.rs' '*.sh')
 
 if [ "${#BAD[@]}" -gt 0 ]; then
 	printf 'file_justification_check: %s\n' "${BAD[@]}" >&2
 	fail "${#BAD[@]} tracked file(s) over the soft cap without a why (CLAUDE.md rule 9)"
 fi
 
-echo "file_justification_check: $(git ls-files '*.rs' '*.sh' | wc -l) tracked .rs/.sh files, $OVER over the cap, all justified"
+echo "file_justification_check: $TRACKED tracked .rs/.sh files, $OVER over the cap, all justified"
