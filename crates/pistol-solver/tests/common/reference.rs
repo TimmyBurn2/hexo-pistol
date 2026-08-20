@@ -331,9 +331,14 @@ fn universe(families: &[Vec<Coord>]) -> Vec<Coord> {
 }
 
 /// Every `size`-cell subset of `universe`, in sorted order.
+///
+/// ONE AND TWO ARE THE WHOLE DOMAIN, because [`CEILING`] is two and both callers
+/// start at one. The size-zero and size-three arms this carried were reachable
+/// from nothing once the ceiling stopped being a parameter — the same staleness
+/// as that parameter itself, in the same enumeration (docs/decisions.md D-256) —
+/// and a branch no caller can ask for is a branch no test can cover.
 fn subsets(universe: &[Coord], size: usize) -> Vec<Vec<Coord>> {
     match size {
-        0 => vec![Vec::new()],
         1 => universe.iter().map(|&cell| vec![cell]).collect(),
         2 => {
             let mut pairs = Vec::new();
@@ -344,18 +349,7 @@ fn subsets(universe: &[Coord], size: usize) -> Vec<Vec<Coord>> {
             }
             pairs
         }
-        3 => {
-            let mut triples = Vec::new();
-            for (first_index, &first) in universe.iter().enumerate() {
-                for (offset, &second) in universe[first_index + 1..].iter().enumerate() {
-                    for &third in &universe[first_index + offset + 2..] {
-                        triples.push(vec![first, second, third]);
-                    }
-                }
-            }
-            triples
-        }
-        other => panic!("this reference enumerates subsets of size at most three, not {other}"),
+        other => panic!("this reference enumerates subsets of size one or two, not {other}"),
     }
 }
 
