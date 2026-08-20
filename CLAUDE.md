@@ -115,6 +115,26 @@ that governs a run must itself pass a fresh-context review before the first run 
 governs. Reviews of superseded revisions do not transfer — an amendment reopens the
 review, however small the diff.
 
+A pre-registration's literal commands are exercised before its review passes, on an
+input of the SAME KIND as the registered workload — the same sort of artefact,
+differing only in identity — and never on the registered workload itself. A synthetic
+stand-in exercises syntax; only a real instance of the kind exercises ATTRIBUTION,
+which is where a command that counted the wrong symbols passed a synthetic dry run and
+still shipped. The dry run is not a governed sample and does not consume the
+pre-registration's first run. The pre-registration records the dry-run input and its
+output. This constrains the dry run's input; it constrains no reviewer, who may run
+anything, the registered workload included.
+
+A pre-registration states what its governed run COSTS — wall time, operator attention,
+machine hours — so the proportion between the document and the run is visible on the
+document's own face. Where the run is cheap, doubt about the instrument is answered by
+REPLICATION and by a SECOND INSTRUMENT whose agreement criterion is registered before
+either runs, never by a margin derived to defend a single sample. A derived margin is
+the instrument of a measurement that cannot be taken again, and it is the wrong
+instrument for a workload measured in seconds. Neither this rule nor the dry-run rule
+is mechanized, and neither catches a run whose answer is already known before it is
+taken — that defect is judged, not checked.
+
 REVIEW-design, REVIEW-impl and RED-TEAM are dispatched as subagents with fresh
 contexts; the implementing session never reviews its own work. A WP is not landable
 while its reviews are outstanding. A session that cannot dispatch subagents states so
