@@ -125,6 +125,12 @@ pub fn windows_through(at: Coord) -> impl Iterator<Item = Window> {
 /// what lets a consumer carry per-window occupancy masks rather than bare
 /// counts, so that *which* cells of a window are empty is answerable without a
 /// second reading of the board (docs/decisions.md D-253).
+///
+/// THIS IS THE ENUMERATION BODY, so it carries the `#[inline]` too: with the
+/// attribute on [`windows_through`] alone, the wrapper inlines across the crate
+/// boundary and the loop it wraps stays behind a call no LTO is configured to
+/// cross (D-14). Insurance, unmeasured, exactly as the other four are.
+#[inline]
 pub fn windows_through_indexed(at: Coord) -> impl Iterator<Item = (Window, u8)> {
     Axis::ALL.into_iter().flat_map(move |axis| {
         (0..WINDOW_STEPS).filter_map(move |back| {
