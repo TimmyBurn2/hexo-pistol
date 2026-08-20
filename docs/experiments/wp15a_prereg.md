@@ -1,49 +1,116 @@
-# WP-1.5a — PRE-REGISTRATION (revision 9)
+# WP-1.5a — PRE-REGISTRATION (revision 10)
 
-**Revision 9.** Revision 8 was never reviewed; it goes to review as this text. Four things
-moved, and **the first two were forced by the closure session's own commits** rather than found
-by reading:
+**Revision 10.** Revision 9 went to a governing-revision review and a red-team, in parallel, both
+fresh contexts, both against `2673da6`. **The review returned FAILS.** The two of them, with no
+shared state, **found the same BLOCKING defect** — which is the strongest evidence this document
+has produced about its own instrument, and it is why the finding is described here before the
+fixes are.
 
-- **THE EXIT TRAP REWROTE VERDICTS.** Revision 8's `cleanup() { rm -rf -- "$WORK" "$PRISTINE"; }`
-  is `SHELL_CHECKLIST` item 7 in the position where it costs everything: an EXIT trap's last
-  command decides the script's status. Measured on that exact construction with an unremovable
-  path — **requested 0 → got 1, requested 1 → got 1, requested 2 → got 1.** CONFIRMED became
-  ABORT and RUN VOID became ABORT, so the three-way disjointness §3.2 spent a whole round
-  establishing could be collapsed by *housekeeping*. The repaired trap returns 0, 1 and 2 for
-  the same three requests.
-- **THE SOLVER-DIFF GUARD ADJUDICATED A BROKEN INVOCATION AS ITS OWN CONCLUSION.**
-  `git diff --stat … | grep -q . || refuse` routes three different reasons — `grep`'s exit 1 on
-  no match, `git`'s 128 on a bad revision, a producer's 141 when its reader has left — into one
-  refusal naming only the first (`SHELL_CHECKLIST` item 3, and item 8 on top of it). Measured:
-  `deadbeef…` printed `fatal: bad object` and the run announced **"changes nothing under
-  crates/pistol-solver"** — this guard's own load-bearing claim, asserted about an invocation
-  that never answered. It is §7.1's externally derived fix for M-4 and therefore the single
-  guard between *"the WP landed"* and *"the WP never landed"*. Rewritten with no pipeline at
-  all. The 141 reading is **recorded as NOT REPRODUCING at this workload's scale** (§7.3): the
-  largest `--stat` this repository can produce is 17 879 bytes, well inside a pipe buffer, and
-  20 trials all exited 0 — the construction is defective in kind and bounded here by an accident
-  of size, which is not a guard.
-- **`HEAD` IS NO LONGER REQUIRED TO EQUAL `LANDING`**, because the closure session lands ADR
-  lines above the work package and an equality test would void every governed run over docs
-  commits that cannot reach a binary. `LANDING` still does not move. What replaces it is
-  stronger where it matters and is a diff rather than a token: `LANDING` must be an ancestor of
-  `HEAD`, and `Cargo.toml`, `Cargo.lock`, `crates`, `configs` and **`tools`** must be untouched
-  between them — `tools` because step 9 runs `tools/baseline_snapshot.sh` out of the working
-  tree, so the instrument is pinned by the same assertion as the binary.
-- **THE UNTRACKED-FILE TOLERANCE IS RETIRED (§3.3, §4 of the block).** D-266 tracked
-  `docs/research/threat_calculus_v1.md`, so `git status --porcelain` is empty and a bare
-  cleanliness test is a reachable check again rather than a clause that voids every run. The
-  two-part tolerance survives as the DIAGNOSIS, because the refusal has three reasons and one
-  combined test gives one wrong answer.
+**B-1, found twice, independently: a genuine ABORT was voided by this document's own replication
+rule.** §6 registers that the block is replicated and its stdout must be byte-identical. Line 235
+of revision 9's block was `diff -u "$WORK/inv.base" "$WORK/inv.cand"`, and `diff -u` writes both
+file PATHS and their mtimes to **stdout** — where `$WORK` is a `mktemp -d` name. On the CONFIRMED
+path stdout is empty and stable, which is why every replication ever taken passed. On the ABORT
+path three processes produce **three distinct stdouts with identical exit codes and identical diff
+bodies**, so §6 voids the run while §3.2 calls it ABORT, and §6's abort protocol attaches only to
+ABORT. That is revision 9's own headline defect with a different mechanism: a verdict rewritten by
+a temporary directory name instead of by a trap. **And the same path printed no named refusal at
+all** — a bare `set -e` on `diff`, where H1-a's failure branch prints one (rule 3;
+`SHELL_CHECKLIST` item 1's *"name the refusal"*). Fixed with `--label` and an explicit `cmp`;
+**measured after the fix: three replications, ONE distinct stdout, exit 1 each, and
+`prereg: H1-b FAILED — a behaviour line moved between …` on stderr.**
 
-**And three more, each found by answering a `SHELL_CHECKLIST` item by name rather than by
-reading for style:** a `cd "$REPO"` was missing, and every `git ls-files -- <pathspec>` resolves
-relative to the working directory — measured, from `crates/` the registered enumeration returned
-**EMPTY** while `git status --porcelain` reported the stray file, EXIT-0-WRONG-ANSWER selected by
-cwd (item 5); `echo "… $(wc -l < …) behaviour lines"` is item 1's headline example, a
-substitution whose status is an argument; and the block's own section numbers ran **0-8** while
-five prose references pointed into a **1-9** scheme, so a reviewer chasing `step 6, n = 0` landed
-in H1-a. The block is renumbered 1-9 to agree with the prose it is cited by.
+**B-2: the second-instrument agreement criterion was violated at the registered bindings, and its
+own registered consequence forbade taking a verdict.** The criterion read *"H1-b reports the
+invariant blocks identical **if and only if** instrument 2 refuses"*. `tools/bench_delta.sh:274`
+refuses only when the two sides resolve to the SAME binary; `cdbcbf0` gives `ff018398…` and
+`8618012` gives `a7f519fa…`, so it does not refuse — while H1-b confirms. TRUE ⇔ FALSE. The
+paragraph defended itself with *"H1-b is `N/A`"*, which stopped being reachable at revision 6 when
+H1-b became unconditional; the same stale sentence was still in §3.
+
+**The deeper half of B-2 is self-inflicted and is why the fix is not a rewording.** Under **D-269
+— the clause this document's own §7.1 produced** — a registered criterion must be one the named
+defect class could falsify. H1-b is a criterion H1's target defect **preserves**: a solver crate
+that is linked but never called moves no `nodes`, no `depth_turns`, no `score`, no `bestmove` and
+no ladder line. The agreement duty was anchored to the one criterion in the document that cannot
+falsify what it watches.
+
+**THE FIX, and it closes a MAJOR at the same time: `cargo tree` becomes H1-a's second instrument,
+and `p = 0` is adjudicated on the RESOLVED GRAPH rather than on manifest text.** The red-team broke
+the substring count in both directions and reproduced both: a `# … pistol-solver …` **comment** in
+an unrelated manifest produced `2 Cargo.toml files … 2 or more means an edge` — a RUN VOID naming
+an edge that does not exist — and a real `[dependencies."pistol-solve\u0072"]` edge that cargo
+resolves was **invisible** to the count. By §7.1's own rule the count shares its input, manifest
+TEXT, with the defect it must exclude, while the externally derived referent — cargo's resolved
+graph, which §2 named and the block did not call — was the one left out.
+`cargo tree -p pistol-cli --edges normal -i pistol-solver` answers by **exit status**: `101`,
+`package ID specification did not match any packages`, when the solver is absent from the shipped
+binary's graph, `0` with a reverse-dependency tree when it is present. It parses nothing, and it
+does not read the input H1-a reads.
+
+> **THE AGREEMENT CRITERION, RESTATED:** H1-a reports the two binaries bit-identical **if and only
+> if** the resolved normal-edge graph of `pistol-cli` at `LANDING` contains no `pistol-solver`.
+> Both instruments evaluate the same proposition — *does the solver reach the shipped binary* —
+> and neither reads the other's input: one compiles bytes, the other resolves a graph. The
+> registered consequence of disagreement is unchanged and is in §6.
+
+**`tools/bench_delta.sh` is demoted to a RECORDED corroboration with no adjudicating role**, and
+6 m 18 s leaves the critical path with it. Its refusal condition is digest-EQUALITY, which is not
+the proposition; it compares a different pair; and §6 already had to register that its twice-printed
+`VERDICT ABORT` belongs to D-215 and means something else. Two ABORTs meaning contradictory things
+in one transcript is a hazard this document has spent rounds removing, and the cheapest removal is
+to stop asking it a question it does not answer.
+
+**Eight more repairs, each from a reproduced finding:**
+
+- **The instrument's EXECUTED bytes are hashed** (`git hash-object tools/baseline_snapshot.sh`
+  against a registered blob). §0.3 pinned it by blob and step 6 asserts `tools` did not move — both
+  claims about COMMITTED trees, while step 10 executes the WORKTREE file.
+  `git update-index --assume-unchanged` leaves both assertions empty while the executed bytes
+  differ (`SHELL_CHECKLIST` item 5: the index is what commits, the working tree is not).
+- **All eight bindings are PRINTED.** A red-team control run **in a clone** produced stdout
+  byte-identical to the transcript of a run in the live tree — so a governed transcript could not
+  be attributed to its bindings, and §6's replication could not tell three processes run against
+  three repositories from three run against one. Of seven bindings, exactly one — `LANDING` —
+  reached the transcript, implicitly, via the attestation line's `<rev>:` prefix.
+- **`REPO` is registered as a binding.** It selects the repository the entire run measures and was
+  environment-controlled and unregistered.
+- **`LANDING` and `BASE_REV` are checked for SPELLING and identity** (item 8). A branch name
+  satisfied every git call in revision 9 while §0.1 registers a revision that does not move, and
+  the attestation then recorded `dev:` where a revision belongs.
+- **The `--locked` guard the block CLAIMED and did not have now exists.** Revision 9's step 7
+  comment said the dropped `--locked` was *"replaced by the assertion below that the lock moves in
+  exactly that one way"*; below it were an assignment with `|| true` and an `echo`. That is
+  revision 7's own M-3 defect — a cited guard absent from the registered block — transposed into
+  the block's comments. Two real assertions replace it, and the `|| true` is gone: it rendered a
+  failed probe, an absent directory and a genuinely empty delta as the same ` none`.
+- **The kind token is checked on BOTH records.** Revision 9 checked only the candidate, so an
+  incomplete BASELINE record reached the diff and was adjudicated **ABORT** where §3.2 registers
+  **RUN VOID** (D-160).
+- **Path bindings are guarded as an ALLOW-LIST** (`*[![:print:]]*`, item 4's direction, item 9's
+  subject) now that they are printed into a record.
+- **Three surviving item-1 command substitutions are guarded**: the pristine-clone status probe (a
+  FAILING probe read as CLEAN), both `rev-parse` calls, and the `rustc -vV` slice.
+
+**Two corrections to revision 9's own prose, both mine:** the trap I added **deleted**
+`$WORK/toolchain.cand` while §3.1a claimed it was *"kept as the run's own provenance record"* — the
+toolchain lines are now printed into the transcript instead, where replication can see them; and
+§7.4 said *"287 files"* where 287 was the LINE count of `git diff --stat`, which prints a summary
+line, so it was 286 files. The byte count was right and the conclusion — far inside a 64 KiB pipe
+buffer — is unaffected.
+
+**Two fair hits on revision 9's arms:** ARM H was run on a **retyped** two-line excerpt while §0.3
+claims everything is extracted by script, and the `cannot diff` row added to §3.2 has **no
+reachable producer**, because step 6's ancestor test and step 2's revision check catch both
+bad-revision inputs first. ARM H is re-run through the extracted block, and that row is gone —
+§3.2 carries rows only for refusals an input can reach, which is M-2's standard.
+
+**WHAT SURVIVED, recorded because it is the larger half.** The red-team found **no input producing
+a false CONFIRMED**. Its highest-value attack — the escaped dependency edge — passed the substring
+count and was **caught by H1-a at exit 1**. The trap repair held across twelve probes in four modes.
+No `refuse` is called inside a command substitution. The cargo JSON parse is sound (one
+`"executable"`, twenty-five `"executable":null`, correctly skipped). Both sides of H1-b cannot be
+made vacuously empty.
 
 **Nothing about H1 itself changed.** The hypothesis, the instruments, the adjudication readings
 and the abort protocol are revision 8's; what moved is the routing around them.
@@ -82,36 +149,55 @@ the landed W3 digest is `ff018398…`, distinct from this session's `daf1deb3…
 `691f7766…`, all search-identical to stock — which is what D-253 records and why only the stock
 side is ever pinned in advance.
 
-### 0.1 THE SIX VARIABLES, BOUND (rebound at revision 7; the two artifact PATHS moved at revision 9)
+### 0.1 THE EIGHT BINDINGS (six at revision 7; `REPO` and `SNAP_BLOB_PIN` registered at revision 10)
 
 Every value was verified this session rather than transcribed.
 
-**The two baseline artifacts moved, and their digests did not (revision 9).** They lived in the
-scratchpad of the session that took them, which is neither durable nor this session's to keep;
-they are copied to this session's scratchpad and **re-verified against the digests already
-registered here** — `sha256sum -c` reports `OK` for both, the record's `revision` line still reads
-`cdbcbf05…` and its `binary_sha256` still reads `ff018398…`, and the sizes are 5764 and 892 bytes
-as recorded below. **A path is a locator and the digest is the binding**, which is the whole
-reason a digest was pinned rather than a path; had the copy differed by a byte, step 2 would
-refuse before H1 asked anything.
+**`REPO` was a binding all along and was not registered (revision 10).** It selects the repository
+the entire run measures, it is read from the environment, and revision 9 validated it only by
+whether `cd` succeeded. A red-team control run **in a clone**, with `REPO` exported, produced
+stdout byte-identical to the transcript of a run in the live tree — so a governed transcript could
+not be attributed to its bindings, and §6's replication could not distinguish three processes run
+against three repositories from three run against one. It is registered here and **printed by the
+run**, along with the other seven.
+
+**`SNAP_BLOB_PIN` is new (revision 10)** and exists because §0.3's blob pin and step 6's `tools`
+drift assertion are both claims about COMMITTED trees while step 10 executes the WORKTREE file. It
+is the blob the instrument must hash to, checked with `git hash-object` against the bytes that
+will actually run.
+
+**The two baseline artifacts moved to a DURABLE location, and their digests did not (revision
+10).** Revision 9 copied them from one session-scoped `/tmp` scratchpad to another, which a
+reviewer correctly called the same property with a different UUID: `/tmp` does not survive a
+reboot and no session owns the next session's directory. They now live in `~/Work/pistol-wp15a/`,
+outside the repository (rule 8), which is WP-1.3's own idiom for run artifacts
+(`~/Work/pistol-wp13/*.matchlog`). **Re-verified against the digests already registered here** —
+`sha256sum -c` reports `OK` for both, the record's `revision` line still reads `cdbcbf05…`, its
+`binary_sha256` still reads `ff018398…`, and the sizes are 5764 and 892 bytes. **A path is a
+locator and the digest is the binding**, which is the whole reason a digest was pinned rather than
+a path; had the copy differed by a byte, step 2 would refuse before H1 asked anything.
 
 ```sh
-BASE=/tmp/claude-1000/-home-tom-Projects-HeXO-AlphaBeta/97ce0961-e0c0-4100-a7a3-03f0695ef67f/scratchpad/wp15a/w3/baseline_cdbcbf0.txt
+BASE=/home/tom/Work/pistol-wp15a/baseline_cdbcbf0.txt
 BASE_SHA=7faa074c21a2d7d28e4ca681e05ed95942436d639642c088a73032febd33159a
 BASE_REV=cdbcbf05bd9d792ac7a6af709970f11b95796b81
-BASE_TC=/tmp/claude-1000/-home-tom-Projects-HeXO-AlphaBeta/97ce0961-e0c0-4100-a7a3-03f0695ef67f/scratchpad/wp15a/w3/baseline_cdbcbf0.toolchain.txt
+BASE_TC=/home/tom/Work/pistol-wp15a/baseline_cdbcbf0.toolchain.txt
 BASE_TC_SHA=8be240559c27b2b163347cba8f2266f7877ceee0ef8d72095e2d73537a6adc2a
 LANDING=861801247df5c1a73480b5153e11c399aa752750
+REPO=/home/tom/Projects/HeXO-AlphaBeta
+SNAP_BLOB_PIN=a7c0ed4367a6893f70b776732bd68ada77c19483
 ```
 
 | variable | source, verified |
 |---|---|
-| `BASE` | the W3 baseline record, 5764 bytes; digest recomputed and matching |
+| `BASE` | the W3 baseline record, 5764 bytes, at its durable path; digest recomputed and matching |
 | `BASE_SHA` | recomputed `7faa074c…` |
-| `BASE_REV` | the record's own `revision` line; and its `binary_sha256 ff018398…` **reproduces from a pristine checkout of that revision** (§3.1 step 3) |
+| `BASE_REV` | the record's own `revision` line; and its `binary_sha256 ff018398…` **reproduces from a pristine checkout of that revision** (§3.1 step 4). Checked for 40-hex SPELLING and for `rev-parse` identity at revision 10 |
 | `BASE_TC` | the sidecar, 892 bytes: `rustc 1.97.1`, `cargo 1.97.1`, LLVM 22.1.6, `stable-x86_64-unknown-linux-gnu`. It carries `snapshot_revision` and `snapshot_binary_sha256` matching the record, which is what ties the two artifacts to each other rather than to a claim |
 | `BASE_TC_SHA` | recomputed `8be24055…` |
-| `LANDING` | `86180124…`, confirmed **equal to HEAD** at rebinding time, seventeen commits after `BASE_REV`. Revision 6 bound `7b9e904a…`; the seven fix commits between them are recorded in §0.2 |
+| `LANDING` | `86180124…`, seventeen commits after `BASE_REV`. **No longer required to equal `HEAD`** (§3.1 step 6). Checked for 40-hex SPELLING and `rev-parse` identity at revision 10, because a BRANCH NAME satisfied every git call in revision 9 — measured: `LANDING=dev` passed the ancestor test, the drift diff and the attestation, and recorded `dev:` where a revision belongs |
+| `REPO` | the repository root. Printed by the run; guarded as an ALLOW-LIST against non-printable characters, since it now reaches a record (`SHELL_CHECKLIST` items 4 and 9) |
+| `SNAP_BLOB_PIN` | `git ls-tree 8618012 tools/baseline_snapshot.sh` → `a7c0ed43…`, and the same blob at `HEAD`. The run hashes the file it is about to execute and refuses on a mismatch |
 
 ### 0.2 A SECOND READING OF `p = 0`, AND WHAT IT IS AND IS NOT WORTH
 
@@ -153,29 +239,48 @@ untracked, because `tools/baseline_snapshot.sh:417` sets that token from a bare
 a constant. D-266 tracked the file and the token is a measurement again; the baseline record
 predates that commit and still reads `dirty`, which is now a fact about WHEN it was taken rather
 than about this tree. Nothing rests on it either way: the token is replaced by a pristine rebuild
-(§3.1 step 3), which the baseline passes, and that substitution was made for exactly this reason.
+(§3.1 step 4), which the baseline passes, and that substitution was made for exactly this reason.
 
-### 0.3 THE INSTRUMENTS, NAMED WITH THEIR REVISIONS (D-268, new at revision 9)
+### 0.3 THE INSTRUMENTS, NAMED WITH THEIR REVISIONS (D-268; the pin became EXECUTABLE at revision 10)
 
-D-268 amended CLAUDE.md in the same session as this revision: *an artefact that produces a
-registered number — a `tools/` script, a scratchpad harness, or a command block the document
-prints — is NAMED IN THE PRE-REGISTRATION WITH ITS REVISION, and a change to it reopens the
-review exactly as an amendment to the document does.* This document was one of the two instances
-that produced the rule (its revision 1 declared T1 inapplicable because no `tools/` harness was
-modified, while the harness producing its number was an unpinned scratchpad bench), so it states
-its own instruments rather than being the first document to ignore the clause it caused.
+D-268 amended CLAUDE.md in the same session as revision 9: *an artefact that produces a registered
+number — a `tools/` script, a scratchpad harness, or a command block the document prints — is NAMED
+IN THE PRE-REGISTRATION WITH ITS REVISION, and a change to it reopens the review exactly as an
+amendment to the document does.* This document was one of the two instances that produced the rule,
+so it states its own instruments rather than being the first document to ignore the clause it
+caused.
 
 | instrument | what it produces | revision, pinned |
 |---|---|---|
-| the §3.1 block | H1-a's two digests, H1-b's line comparison, both verdicts | printed in this document; its revision IS this document's, and §7.2/§7.3 extract it BY SCRIPT rather than retyping it, so the thing run is the thing reviewed |
-| `tools/baseline_snapshot.sh` | the candidate invariant block at step 9 | blob `a7c0ed4367a6893f70b776732bd68ada77c19483` at `LANDING`; **held there by step 5**, which refuses if `tools` moved between `LANDING` and `HEAD` — the assertion is the pin, not a comment |
-| `tools/bench_delta.sh` | instrument 2's refuse-or-not-refuse reading (§6) | blob `130b4acbd87f1413776da7b1354f00a90bbc41d6` at `LANDING`, held by the same assertion |
+| the §3.1 block | H1-a's two digests, the `p = 0` graph verdict, H1-b's line comparison, all verdicts | printed in this document; its revision IS this document's, and §7.2/§7.3/§7.5 extract it BY SCRIPT rather than retyping it |
+| `tools/baseline_snapshot.sh` | the candidate invariant block at step 10 | blob `a7c0ed4367a6893f70b776732bd68ada77c19483`, **hashed at run time by step 3** and asserted against the registered `SNAP_BLOB_PIN` |
+| `cargo tree` | the `p = 0` verdict and H1-a's agreement comparand (§6) | the pinned toolchain, `cargo 1.97.1`; the graph it reads is the PRISTINE CLONE at `LANDING`, not the working tree |
+| `tools/bench_delta.sh` | **nothing this document adjudicates on** (demoted at revision 10, §6) | blob `130b4acbd87f1413776da7b1354f00a90bbc41d6` at `LANDING`, recorded for provenance only |
 | the baseline record + sidecar | H1-b's comparand | not a script: pinned by digest, `7faa074c…` and `8be24055…`, §0.1 |
 
-**The pin is an executable assertion and not a table.** Step 5 diffs `Cargo.toml`, `Cargo.lock`,
-`crates`, `configs` and `tools` between `LANDING` and `HEAD` and refuses on any change, so an
-instrument edit lands as a RUN VOID with the path named — which is what the clause asks for, in
-the only form that survives a session forgetting to re-read this table.
+**REVISION 9 SAID "THE PIN IS AN EXECUTABLE ASSERTION AND NOT A TABLE" AND WAS OVERSTATING BY
+EXACTLY ONE GAP, WHICH BOTH REVIEWERS FOUND.** Step 6 diffs `tools` between `LANDING` and `HEAD`
+and step 5 requires a clean tree — both are claims about COMMITTED trees, and step 10 executes the
+**worktree** file of that name (`SHELL_CHECKLIST` item 5: the index is what commits, the working
+tree is not). Measured: `git update-index --assume-unchanged tools/baseline_snapshot.sh` plus a
+worktree edit leaves `git status --porcelain` **EMPTY** and the `LANDING..HEAD` diff **EMPTY**,
+while the file that would run hashes to something else. Revision 10 hashes the bytes that run:
+
+```
+### ARM N — exit 2
+  git status --porcelain: []        <- the old guards see nothing
+prereg: the snapshot instrument on disk hashes to 42463e436f4003cebe70cc18bd487e5e23a157c1,
+        not the registered a7c0ed4367a6893f70b776732bd68ada77c19483 — the bytes that will run
+        are not the bytes that were reviewed
+```
+
+**The `LANDING..HEAD` drift assertion stays** and is not made redundant by the hash: it covers
+`Cargo.toml`, `Cargo.lock`, `crates` and `configs` as well, and it is what makes the run takeable
+at all with docs commits above `LANDING`. **One gap remains and is recorded rather than closed:**
+nothing pins the instrument on the BASELINE side — the record at `BASE_REV` was taken by whatever
+`tools/baseline_snapshot.sh` existed then. For this pair the gap is latent and not live:
+`git diff --name-only cdbcbf0 8618012 -- tools` is empty, so the same instrument took both sides.
+A future pair that straddles a `tools/` change owes a second pin.
 
 ## 1. The change under test
 
@@ -183,113 +288,157 @@ the only form that survives a session forgetting to re-read this table.
 (DESIGN.md §3, §7, §8). It takes one dependency, `pistol-core`, and **no dev-dependencies**.
 **Nothing in the engine calls it.**
 
-## 2. `p = 0`, measured — with a DETERMINISTIC command (M-1)
+## 2. `p = 0` — ADJUDICATED ON THE RESOLVED GRAPH (revision 10), attested on the manifests
 
-**Three revisions of this document printed a "verbatim" grep and three reviews found it wrong.
-The cause is not carelessness and it outlives this document.** It is now **D-265**, and
-**revision 9 corrects the attribution that line was drafted with**, because the wrong attribution
-implied a mitigation that would have done nothing.
+**The claim:** no binary in this workspace links `pistol-solver`, so the work package cannot change
+one. Revision 10 changes WHAT ANSWERS IT, because a red-team broke the previous answer in both
+directions and reproduced both.
 
-**What is true, measured at the closure session's HEAD.** In the shell an agent's tool runs,
-`type -t grep` reports `function`, and that function execs `${CLAUDE_CODE_EXECPATH:-}` under
-`exec -a ugrep` with `-G --ignore-files --hidden -I --exclude-dir=.git …` prepended. It is
-multithreaded and its output ORDER is nondeterministic: **eight runs of
-`grep -rn 'WINDOW_LEN' crates/` through the function gave EIGHT distinct sha256 sums; eight runs
-of `/usr/bin/grep` on the same query gave ONE.**
+### 2.1 Why the substring count stopped being the adjudicator
 
-**What revision 8 got wrong.** It said this was "a shell function wrapping ugrep in a shell
-initialised from the user's profile". **It is not the profile.** `~/.bashrc`, `~/.bash_profile`
-and `~/.profile` carry no `grep` alias or function, `~/.bash_aliases` does not exist, **`ugrep` is
-not on `PATH` at all**, and a genuine login-interactive shell disagrees outright:
-`bash -lic 'type grep'` reports `grep is /usr/bin/grep`. The wrapper is **injected by the tool
-harness** into the agent's own shell and by nothing else — which moves the mitigation from "do not
-use a login shell", which would have bought nothing, to **"a transcript an agent captured is not
-the output of the command a script runs"**.
+Revisions 6-9 adjudicated on `git grep -l -e 'pistol-solver' -e 'pistol_solver' "$LANDING" --
+'*Cargo.toml'` with `n == 1`. It is wrong in both directions:
 
-**And the hazard is not only order.** The injected flags change WHICH FILES ARE VISITED:
-`grep -rl pistol target` through the function reaches **1474** files where `/usr/bin/grep` reaches
-**24455**, since `--ignore-files` honours ignore files and `-I` skips binaries. An agent-shell
-COUNT and a script's count of the same command are answers to different questions — D-221/D-223's
-class arriving by a second route.
+- **A false RUN VOID on a good tree.** One line appended to `crates/pistol-engine/Cargo.toml` —
+  `# The threat generator (pistol-solver) is deliberately NOT linked here yet.` — produced
+  `2 Cargo.toml files mention pistol-solver, expected exactly 1 … 2 or more means an edge`. The run
+  is voided and the message asserts an edge that does not exist. A `[dev-dependencies]` entry,
+  which §3 relies on NOT moving the digest and calls *"why the oracle's test-tree home is safe"*,
+  trips the same wire.
+- **A real edge it cannot see.** `[dependencies."pistol-solve\u0072"]` with
+  `path = "../pistol-solve\u0072"` is valid TOML, cargo resolves it, and the count still returns
+  **1**. The block then proceeded, and H1-a caught it at exit 1 — which is the document's win and
+  is recorded as such in §7.5 — but §3.2 registered that input as *"refused at step 6, exit 2,
+  before H1-a builds anything"*, and that was false.
 
-**Why it hid for three revisions of this document:** a query with a SINGLE HIT is stable through
-both paths — ten runs of the attestation below gave one hash — so the defect is invisible on
-exactly the small outputs a document pastes, and shows up on the large ones nobody diffs.
+**By §7.1's own rule the count was the wrong instrument.** It shares its input — manifest TEXT —
+with the defect it must exclude, and manifest text is exactly what an escape or a comment perturbs
+without changing the graph. The externally derived referent was named in this section three
+revisions ago and never called: *"`cargo tree -p pistol-cli --edges normal` corroborates on the
+resolved graph and is recorded, not adjudicated on."* It is now the adjudicator.
 
-So **no fixed transcript can ever be the "exact output"** of the plain `grep -rn` this document
-kept printing, and every capture taken through that path — including the one an earlier HANDBACK
-called "the real output" — was a sample from a distribution. It collides with the determinism law
-(rule 4) and with CLAUDE.md's rule that a gate claim cites the gate's own log output, since an
-unordered instrument cannot have a log output to cite. **§3.1 is a SCRIPT** — `#!/usr/bin/env
-bash`, run as a file — so every `grep` in it is `/usr/bin/grep` and the wrapper cannot reach it;
-that is a property of how the block is invoked, and §7.2 records the block being extracted and run
-rather than pasted into a shell.
+### 2.2 The registered test
 
-**The registered command is deterministic, revision-pinned and sorted**, and it attests the
-committed state at the landing revision — which is what the `p = 0` claim is about, not the
-working tree (the tree is dirty while IMPL works):
+```sh
+cargo tree --locked -p pistol-cli --edges normal -i pistol-solver
+```
+
+It answers by **EXIT STATUS** and parses nothing:
+
+| observation | reading |
+|---|---|
+| exit `101`, `error: package ID specification 'pistol-solver' did not match any packages` | the solver is ABSENT from the shipped binary's normal-edge graph — `p = 0` |
+| exit `0`, a reverse-dependency tree | the solver IS reachable — **`p = 0` REFUTED, exit 1 = ABORT** |
+
+**Readability is a separate question with a separate refusal** (`SHELL_CHECKLIST` item 8), because
+`101` is also cargo's generic error status: the block first requires
+`cargo tree --locked -p pistol-cli --edges normal` to succeed, so *"cargo could not answer"* is a
+RUN VOID and *"there is no edge"* is a verdict, and one status cannot mean both.
+
+**A REFUTATION IS ABORT, NOT RUN VOID, AND THAT IS A DELIBERATE CHANGE FROM REVISION 9.** An
+accidental dependency edge is not an instrument failure — the instrument answered. It means `p` is
+no longer 0, which is §6's abort protocol exactly: the WP does not land, the finding is recorded,
+`cargo tree` is the first diagnostic, and this document is **wrong rather than failed**.
+
+### 2.3 The manifest attestation, RECORDED and no longer adjudicated on
 
 ```sh
 git grep -n -e 'pistol-solver' -e 'pistol_solver' "$LANDING" -- '*Cargo.toml' | LC_ALL=C sort
 ```
 
-Ten runs at `72316a7` produce one hash. Captured output at that revision:
+At `LANDING` it returns exactly one line, the crate's own `name =`:
 
 ```
-72316a7:crates/pistol-solver/Cargo.toml:2:name = "pistol-solver"
+861801247df5c1a73480b5153e11c399aa752750:crates/pistol-solver/Cargo.toml:2:name = "pistol-solver"
 ```
 
-**Exactly one line, the crate's own `name =`.** No `Cargo.toml` in the workspace declares a
-dependency on `pistol-solver`, which is the whole of the `p = 0` claim. It is checked rather
-than eyeballed:
+It is printed into the transcript as evidence and nothing turns on its count.
 
-```sh
-mapfile -t SOLVER_MANIFESTS < <(git grep -l -e 'pistol-solver' -e 'pistol_solver' "$LANDING" -- '*Cargo.toml' || true)
-n=${#SOLVER_MANIFESTS[@]}
-[ "$n" -eq 1 ] || { echo "prereg: $n Cargo.toml files mention pistol-solver, expected exactly 1" >&2; exit 2; }
-```
+### 2.4 THE ENVIRONMENT FINDING THAT MADE THIS COMMAND HARD TO RECORD — now D-265
 
-This is the form §3.1 registers, character for character. Revision 7 printed a `git grep -c …
-| wc -l` variant here while §3.1 registered `git grep -l …` — both returned 1 at this revision,
-so the discrepancy was invisible, which is exactly why it is worth removing.
+**Three revisions of this document printed a "verbatim" grep and three reviews found it wrong.**
+It is now **D-265**, and revision 9 corrected the attribution that line was drafted with, because
+the wrong attribution implied a mitigation that would have done nothing.
 
-`cargo tree -p pistol-cli --edges normal` corroborates on the resolved graph and is recorded,
-not adjudicated on. Both were re-verified independently by reviewers and are recorded in D-249.
+**What is true, measured.** In the shell an agent's tool runs, `type -t grep` reports `function`,
+and that function execs `${CLAUDE_CODE_EXECPATH:-}` under `exec -a ugrep` with
+`-G --ignore-files --hidden -I --exclude-dir=.git …` prepended. It is multithreaded and its output
+ORDER is nondeterministic: **eight runs of `grep -rn 'WINDOW_LEN' crates/` through the function gave
+EIGHT distinct sha256 sums; eight runs of `/usr/bin/grep` gave ONE.**
 
-`1/(1 − 0 + 0/k) = 1.000` for every `k`.
+**What revision 8 got wrong.** It said this was *"a shell function wrapping ugrep in a shell
+initialised from the user's profile"*. **It is not the profile.** `~/.bashrc`, `~/.bash_profile`
+and `~/.profile` carry no `grep` alias or function, `~/.bash_aliases` does not exist, **`ugrep` is
+not on `PATH` at all**, and a genuine login-interactive shell disagrees outright:
+`bash -lic 'type grep'` reports `grep is /usr/bin/grep`. The wrapper is **injected by the tool
+harness** and by nothing else — which moves the mitigation from *"do not use a login shell"*,
+which would have bought nothing, to **"a transcript an agent captured is not the output of the
+command a script runs"**.
+
+**And the hazard is not only order.** The injected flags change WHICH FILES ARE VISITED:
+`grep -rl pistol target` through the function reaches **1474** files where `/usr/bin/grep` reaches
+**24455**. An agent-shell COUNT and a script's count of the same command are answers to different
+questions — D-221/D-223's class by a second route.
+
+**Why it hid:** a query with a SINGLE HIT is stable through both paths — ten runs of the
+attestation above gave one hash — so the defect is invisible on exactly the small outputs a
+document pastes.
+
+**§3.1 is a SCRIPT** — `#!/usr/bin/env bash`, run as a file — so every `grep` in it is
+`/usr/bin/grep` and the wrapper cannot reach it; §7.2/§7.3/§7.5 record the block being extracted
+and run rather than pasted into a shell.
+
+### 2.5 What H1 can and cannot see
 
 **H1 is falsifiable by its target defect**, confirmed by a reviewer's break test: a bare
-`[dependencies] pistol-solver` edge with no call site moves the digest
-`62c102cc…` → `eeefee04…`, while a dev-dependency correctly does not — which is why the
-oracle's test-tree home is safe.
+`[dependencies] pistol-solver` edge with no call site moves the digest `62c102cc…` → `eeefee04…`,
+while a dev-dependency correctly does not.
 
-**ONE INSTRUMENT CAVEAT, carried because the document should not overclaim.**
-`binary_sha256` is **insensitive to dead code even in a linked crate**: an unreferenced
-`pub const` appended to `pistol-core` did not move the digest. H1's *target* defect does move
-it, so H1 is sound — but the instrument detects "a change that reaches codegen", not "any
-change", and a reader must not treat a CONFIRMED H1 as attesting that no code was added.
+**ONE INSTRUMENT CAVEAT, carried because the document should not overclaim.** `binary_sha256` is
+**insensitive to dead code even in a linked crate**: an unreferenced `pub const` appended to
+`pistol-core` did not move the digest. H1's *target* defect does move it, so H1 is sound — but the
+instrument detects "a change that reaches codegen", not "any change", and a reader must not treat a
+CONFIRMED H1 as attesting that no code was added.
 
-## 3. H1 — the whole-engine claim, restructured for real inputs
+## 3. H1 — the whole-engine claim, with each hypothesis's DEFECT CLASS named
 
 **The claim is unchanged: WP-1.5a adds nothing a shipped binary can observe, because `p = 0`.**
-What changed in revision 6 is the instrument, because the registered one met the real pair and
-could not attribute its own answer.
+What changed in revision 6 is the instrument; what changes in revision 10 is that each hypothesis
+**names the defect class its criterion must be able to falsify**, which is D-269 — the clause this
+document's own §7.1 produced — applied to this document's GOVERNED criteria and not only to its dry
+runs. A reviewer found them missing one revision after the clause landed, and for H1-b the absence
+was not a formality: see the note under §6.
 
-- **H1-a (PRIMARY, counterfactual).** At `LANDING`, in a pristine clone, the binary built from
-  the tree **is bit-identical** to the binary built from the same tree with
-  `crates/pistol-solver` reverted to its `BASE_REV` content. This isolates exactly the work
-  package's contribution and is immune to unrelated churn in linked crates.
-- **H1-b (SECONDARY, conditional).** *If* the `BASE_REV`→`LANDING` diff touches no
-  build-reaching path outside `crates/pistol-solver`, the invariant blocks must be
-  byte-identical excluding `revision`. **If it does touch such a path, H1-b is `N/A` — recorded
-  with the offending paths named, and adjudicating nothing.** It is not an ABORT: a digest
-  moved by a linked crate is not evidence about `pistol-solver`.
+- **H1-a (PRIMARY, counterfactual).** At `LANDING`, in a pristine clone, the binary built from the
+  tree **is bit-identical** to the binary built from the same tree with `crates/pistol-solver`
+  reverted to its `BASE_REV` content.
+  **DEFECT CLASS: solver content that reaches codegen by ANY route** — a dependency edge, an
+  `include_str!`, a build script, a path that cargo auto-discovers. **Falsifiable by it:** verified
+  at exit 1 with an `include_str!` of solver source referenced from a called path in `pistol.rs`,
+  digests `570dc5d8…` against `1ed322ea…`; and again by the red-team's escaped
+  `[dependencies."pistol-solve\u0072"]` edge. The comparand is **derived by an independent build**,
+  not read from a file, which is the externally derived referent §7.1 asks for.
+- **H1-b (SECONDARY, UNCONDITIONAL since revision 6).** The invariant blocks of the baseline record
+  and of a snapshot taken on the candidate binary must be byte-identical, excluding `revision` and
+  `binary_sha256`.
+  **DEFECT CLASS: any behaviour change in the shipped engine between `BASE_REV` and `LANDING` —
+  which is NOT H1's defect class.** A `BUCKET_ENTRIES` change in `pistol-search` is an instance.
+  **AND H1's TARGET DEFECT CANNOT FALSIFY IT**, which is why it is secondary and why it carries no
+  agreement duty (§6): a solver crate that is LINKED BUT NEVER CALLED moves `binary_sha256` — which
+  is excluded — and moves no `nodes`, `depth_turns`, `seldepth`, `hashfull`, `score`, `bestmove`,
+  `pv` or ladder line, which are the 54 that remain. Under D-269 that makes H1-b a criterion the
+  defect class PRESERVES, and a criterion like that adjudicates nothing about H1.
+
+**Revision 9 still carried revision 5's conditional wording for H1-b — "If it does touch such a
+path, H1-b is `N/A`" — in this section and in §6, three revisions after the `N/A` branch ceased to
+exist.** There is no `N/A` path in the block: step 10 runs unconditionally, `binary_sha256` is
+excluded exactly as `revision` is, and §7.2 records H1-b confirming where revision 7 declared
+`N/A`. The dead sentences are removed. This mattered: §6's agreement criterion was defending itself
+with one of them.
 
 **Why H1-a is the stronger instrument, in §7.1's own terms.** H1-b compares against a *stored
-artifact* that shares an input with the thing under suspicion — the tree — so a defect in the
-tree can survive it. H1-a compares two builds that differ **only** in the suspect content, and
-the referent is derived by an independent build rather than read from a file. It is the
-externally derived referent the rule asks for.
+artifact* that shares an input with the thing under suspicion — the tree — so a defect in the tree
+can survive it. H1-a compares two builds that differ **only** in the suspect content.
 
 ### 3.1 The registered block
 
@@ -301,13 +450,35 @@ set -euo pipefail
 
 refuse() { echo "prereg: $*" >&2; exit 2; }
 
-# ---- 1. Bindings. All six bound by §0.1; nothing here is a placeholder. ----
+# Object-name SPELLING, not just value (SHELL_CHECKLIST item 8). A branch name
+# passes every git call below while `LANDING` is registered as a fixed revision,
+# and the attestation then records `dev:` where a revision belongs.
+is_hex() { case "$2" in ''|*[!0-9a-f]*) return 1 ;; esac; [ "${#2}" -eq "$1" ]; }
+# An ALLOW-LIST, so pinning the locale makes this refuse MORE and never less
+# (SHELL_CHECKLIST item 4). A newline in a path INJECTS LINES into the record
+# these bindings are now printed into (item 9).
+printable() { case "$1" in *[![:print:]]*) return 1 ;; esac; }
+
+# ---- 1. Bindings. SEVEN, all registered in §0.1, all shape-checked, and all
+#         PRINTED — a transcript that does not name its inputs cannot be
+#         attributed to them, and §6's replication then cannot tell three
+#         processes run against three different repositories from three run
+#         against one. Measured: a red-team control run in a CLONE produced
+#         stdout byte-identical to the transcript of a run in the live tree. ----
 BASE=${BASE:-}               ; [ -n "$BASE" ]        || refuse "BASE unset"
 BASE_SHA=${BASE_SHA:-}       ; [ -n "$BASE_SHA" ]    || refuse "BASE_SHA unset"
 BASE_REV=${BASE_REV:-}       ; [ -n "$BASE_REV" ]    || refuse "BASE_REV unset"
 BASE_TC=${BASE_TC:-}         ; [ -n "$BASE_TC" ]     || refuse "BASE_TC unset"
 BASE_TC_SHA=${BASE_TC_SHA:-} ; [ -n "$BASE_TC_SHA" ] || refuse "BASE_TC_SHA unset"
 LANDING=${LANDING:-}         ; [ -n "$LANDING" ]     || refuse "LANDING unset"
+SNAP_BLOB_PIN=${SNAP_BLOB_PIN:-} ; [ -n "$SNAP_BLOB_PIN" ] || refuse "SNAP_BLOB_PIN unset"
+
+is_hex 40 "$BASE_REV" || refuse "BASE_REV is not a 40-hex object name: $BASE_REV"
+is_hex 40 "$LANDING"  || refuse "LANDING is not a 40-hex object name: $LANDING — a branch or tag \
+name satisfies every git call below while §0.1 registers a revision that does not move"
+is_hex 64 "$BASE_SHA"    || refuse "BASE_SHA is not a 64-hex digest: $BASE_SHA"
+is_hex 64 "$BASE_TC_SHA" || refuse "BASE_TC_SHA is not a 64-hex digest: $BASE_TC_SHA"
+is_hex 40 "$SNAP_BLOB_PIN" || refuse "SNAP_BLOB_PIN is not a 40-hex object name: $SNAP_BLOB_PIN"
 
 # `git rev-parse` exits 128 outside a repository, which is a fourth status the
 # adjudication table does not define; route it to 2 like every other refusal.
@@ -316,53 +487,78 @@ if [ -z "$REPO" ]; then
   REPO="$(git rev-parse --show-toplevel 2>/dev/null)" || refuse "not inside a git repository"
 fi
 [ -n "$REPO" ] || refuse "cannot resolve the repository root"
-# AND ENTER IT (revision 9). Every `git ls-files -- <pathspec>` below resolves its
-# pathspec RELATIVE TO THE CURRENT DIRECTORY, so the same command run from
-# `crates/` looks for `crates/crates` and reports "no untracked files on
-# build-reaching paths" with a stray file sitting in one. MEASURED, not argued:
-# from `crates/` with `crates/pistol-core/ZZZ_untracked_probe.rs` present,
-# `git status --porcelain` reported it and the registered enumeration returned
-# EMPTY. That is EXIT-0-WRONG-ANSWER selected by working directory, and it is
-# SHELL_CHECKLIST item 5's rule that the summary must be counted with the
-# enumeration the check used. `tools/baseline_snapshot.sh` at step 9 is a
-# relative path besides.
+for path in "$REPO" "$BASE" "$BASE_TC"; do
+  printable "$path" || refuse "a path binding contains a non-printable character and would inject \
+lines into the record it is printed into"
+done
+# AND ENTER IT. Every `git ls-files -- <pathspec>` below resolves its pathspec
+# RELATIVE TO THE CURRENT DIRECTORY, so the same command run from `crates/` looks
+# for `crates/crates` and reports "no untracked files on build-reaching paths"
+# with a stray file sitting in one. MEASURED: from `crates/` with
+# `crates/pistol-core/ZZZ_untracked_probe.rs` present, `git status --porcelain`
+# reported it and the registered enumeration returned EMPTY. EXIT-0-WRONG-ANSWER
+# selected by working directory (SHELL_CHECKLIST item 5).
 cd "$REPO" || refuse "cannot enter the repository root $REPO"
+
+echo "prereg: binding REPO          $REPO"
+echo "prereg: binding BASE          $BASE"
+echo "prereg: binding BASE_SHA      $BASE_SHA"
+echo "prereg: binding BASE_REV      $BASE_REV"
+echo "prereg: binding BASE_TC       $BASE_TC"
+echo "prereg: binding BASE_TC_SHA   $BASE_TC_SHA"
+echo "prereg: binding LANDING       $LANDING"
+echo "prereg: binding SNAP_BLOB_PIN $SNAP_BLOB_PIN"
 
 WORK="$(mktemp -d -t wp15a_inv.XXXXXX)"     || refuse "cannot create the work directory"
 PRISTINE="$(mktemp -d -t wp15a_pristine.XXXXXX)" || refuse "cannot create the pristine directory"
 # 61 MB per run, and ten runs left 605 MB behind before this trap existed.
-# SHELL_CHECKLIST item 7, and this one CHANGES VERDICTS (revision 9): revision 8
-# wrote `cleanup() { rm -rf -- "$WORK" "$PRISTINE"; }`, whose last command decides
-# the script's status, so a failed removal rewrote the answer. Measured on the
-# revision-8 construction with an unremovable path: requested 0 -> got 1,
-# requested 1 -> got 1, requested 2 -> got 1. CONFIRMED and RUN VOID both became
-# ABORT, collapsing the three-way disjointness §3.2 spent a round establishing,
-# by housekeeping. Take `rc` first, make the removal unable to fail the trap, and
-# hand `rc` back: the same three requests then return 0, 1 and 2.
+# SHELL_CHECKLIST item 7, and this one CHANGES VERDICTS: revision 8 wrote
+# `cleanup() { rm -rf -- "$WORK" "$PRISTINE"; }`, whose last command decides the
+# script's status. Measured on that construction with an unremovable path:
+# requested 0 -> got 1, requested 1 -> got 1, requested 2 -> got 1. CONFIRMED and
+# RUN VOID both became ABORT, by housekeeping. The form below returns 0, 1 and 2
+# for the same three requests, in all four modes a red-team probed (normal,
+# unremovable, already-gone, cwd-inside-WORK).
 cleanup() { local rc=$?; rm -rf -- "$WORK" "$PRISTINE" 2>/dev/null || true; return "$rc"; }
 trap cleanup EXIT
 
 # ---- 2. Baseline record: present, pinned, at the registered revision. ----
 [ -s "$BASE" ] || refuse "baseline record missing or empty at $BASE"
+# `[ -s ]` STATS and `sha256sum -c` READS: an unreadable record reached the digest
+# comparison and was reported as "does not match its registered digest" when it had
+# never been read at all (SHELL_CHECKLIST item 8, one refusal per reason).
+[ -r "$BASE" ] || refuse "baseline record at $BASE is not readable"
 printf '%s  %s\n' "$BASE_SHA" "$BASE" | sha256sum -c - >/dev/null \
   || refuse "baseline record does not match its registered digest"
 [ "$(sed -n 's/^revision //p' -- "$BASE")" = "$BASE_REV" ] \
   || refuse "baseline record is not at the registered baseline revision"
 [ -s "$BASE_TC" ] || refuse "baseline toolchain sidecar missing at $BASE_TC"
+[ -r "$BASE_TC" ] || refuse "baseline toolchain sidecar at $BASE_TC is not readable"
 printf '%s  %s\n' "$BASE_TC_SHA" "$BASE_TC" | sha256sum -c - >/dev/null \
   || refuse "baseline toolchain sidecar does not match its registered digest"
 
-# ---- 3. The baseline's cleanliness, attested by REBUILD not by its own token.
-#         The record's `timing tree` token is set from a bare `git status
-#         --porcelain` and read `dirty` for as long as the threat calculus sat
-#         untracked (D-266); what matters either way is whether anything
-#         uncommitted reached the binary, and a pristine rebuild answers that
-#         where a token cannot. ----
+# ---- 3. The INSTRUMENT'S EXECUTED BYTES, hashed. §0.3 pins
+#         `tools/baseline_snapshot.sh` by blob and step 6 asserts `tools` did not
+#         move between LANDING and HEAD — but both are claims about COMMITTED
+#         trees, and step 10 executes the WORKTREE file of that name.
+#         `git update-index --assume-unchanged` leaves both assertions empty
+#         while the executed bytes differ (SHELL_CHECKLIST item 5: the index is
+#         what commits, the working tree is not). Hash what runs. ----
+SNAP_BLOB="$(git hash-object -- tools/baseline_snapshot.sh)" \
+  || refuse "cannot hash the snapshot instrument"
+[ "$SNAP_BLOB" = "$SNAP_BLOB_PIN" ] \
+  || refuse "the snapshot instrument on disk hashes to $SNAP_BLOB, not the registered \
+$SNAP_BLOB_PIN — the bytes that will run are not the bytes that were reviewed"
+
+# ---- 4. The baseline's cleanliness, attested by REBUILD not by its own token. ----
 BASE_DIGEST_RECORDED="$(sed -n 's/^binary_sha256 //p' -- "$BASE")"
 [ -n "$BASE_DIGEST_RECORDED" ] || refuse "baseline record carries no binary_sha256"
 git clone --quiet --no-hardlinks "$REPO" "$PRISTINE/repo" || refuse "cannot clone for the rebuild attestation"
 ( cd "$PRISTINE/repo" && git checkout --quiet "$BASE_REV" ) || refuse "baseline revision not in the clone"
-[ -z "$(cd "$PRISTINE/repo" && git status --porcelain)" ] || refuse "the pristine clone is not pristine"
+# Taken into a variable so a FAILING probe cannot read as CLEAN (item 1).
+CLONE_DIRT="$(cd "$PRISTINE/repo" && git status --porcelain)" \
+  || refuse "cannot read the pristine clone's status"
+[ -z "$CLONE_DIRT" ] || refuse "the pristine clone is not pristine: $CLONE_DIRT"
 BASE_BIN="$(cd "$PRISTINE/repo" && cargo build --release --locked -p pistol-cli --bin pistol \
     --message-format=json-render-diagnostics | sed -n 's/.*"executable":"\([^"]*\)".*/\1/p' | tail -1)" \
   || refuse "baseline rebuild failed"
@@ -373,12 +569,9 @@ BASE_BIN_DIGEST="$(sha256sum -- "$BASE_BIN" | cut -d' ' -f1)" || refuse "cannot 
 something uncommitted reached the baseline binary"
 echo "prereg: baseline rebuild attests $BASE_DIGEST_RECORDED"
 
-# ---- 4. The candidate tree is CLEAN, which became a reachable state at D-266.
-#         Revisions 6-8 registered a two-part tolerance because an untracked file
-#         made a bare emptiness test void every governed run; the file is tracked
-#         and the bare test is the registered check again. The two parts survive
-#         as the DIAGNOSIS, because a single combined test gives a wrong
-#         diagnosis (SHELL_CHECKLIST item 8) and this one has three reasons. ----
+# ---- 5. The candidate tree is CLEAN, which became a reachable state at D-266.
+#         The three-way split is the DIAGNOSIS, because the refusal has three
+#         reasons and one combined test gives one wrong answer (item 8). ----
 DIRT="$(git status --porcelain)" || refuse "cannot read the working tree status"
 if [ -n "$DIRT" ]; then
   TRACKED="$(git status --porcelain --untracked-files=no)" || refuse "cannot read the tracked-file status"
@@ -389,14 +582,18 @@ if [ -n "$DIRT" ]; then
   refuse "untracked files outside the build-reaching set: $DIRT"
 fi
 
-# ---- 5. Revision assertions, including the solver-diff guard.
-#         HEAD IS NO LONGER REQUIRED TO EQUAL LANDING (revision 9). The closure
-#         session lands ADR lines above the work package, so an equality test
+# ---- 6. Revision assertions. HEAD is NOT required to equal LANDING: the closure
+#         session lands ADR lines above the work package, and an equality test
 #         would void every governed run over docs commits that cannot reach a
 #         binary. What the run needs is that nothing between LANDING and HEAD can
-#         reach the binary OR the instrument, and that is a DIFF rather than a
-#         token: `tools` is in the pathspec precisely because step 9 runs
-#         `tools/baseline_snapshot.sh` out of the working tree. ----
+#         reach the binary OR the instrument, and that is a DIFF, not a token. ----
+LAND_OBJ="$(git rev-parse --verify --quiet "$LANDING^{commit}")" \
+  || refuse "LANDING $LANDING is not a commit in this repository"
+[ "$LAND_OBJ" = "$LANDING" ] || refuse "LANDING $LANDING resolves to $LAND_OBJ"
+BASE_OBJ="$(git rev-parse --verify --quiet "$BASE_REV^{commit}")" \
+  || refuse "BASE_REV $BASE_REV is not a commit in this repository"
+[ "$BASE_OBJ" = "$BASE_REV" ] || refuse "BASE_REV $BASE_REV resolves to $BASE_OBJ"
+[ "$LANDING" != "$BASE_REV" ] || refuse "candidate and baseline are the same revision"
 anc=0
 git merge-base --is-ancestor "$LANDING" HEAD || anc=$?
 case "$anc" in
@@ -407,51 +604,52 @@ esac
 DRIFT="$(git diff --name-only "$LANDING" HEAD -- Cargo.toml Cargo.lock crates configs tools)" \
   || refuse "cannot diff $LANDING against HEAD"
 [ -z "$DRIFT" ] || refuse "build-reaching or instrument paths moved between LANDING and HEAD: $DRIFT"
-[ "$(git rev-parse "$LANDING")" != "$(git rev-parse "$BASE_REV")" ] \
-  || refuse "candidate and baseline are the same revision"
-# THE SOLVER-DIFF GUARD, REWRITTEN (revision 9). Revision 8 wrote
-# `git diff --stat … | grep -q . || refuse`, which is SHELL_CHECKLIST item 3 in
-# the position where it costs the most: this is §7.1's externally derived fix for
-# M-4 and the one guard standing between "the WP landed" and "the WP never
-# landed". `grep` exits 1 on NO MATCH, git exits 128 on a bad revision, and a
-# producer whose reader has already left exits 141 — under `pipefail` all three
-# arrive as one non-zero status routed into ONE refusal that names only the
-# first. MEASURED on the registered construction: `deadbeef…` printed
-# `fatal: bad object` and was adjudicated `changes nothing under
-# crates/pistol-solver`, this guard's own load-bearing claim asserted about an
-# invocation that never answered. Take the value first, check its SHAPE, refuse
-# by name — SHELL_CHECKLIST items 1 and 8, and no pipeline at all.
+# THE SOLVER-DIFF GUARD. Revision 8 wrote `git diff --stat … | grep -q . || refuse`,
+# which is SHELL_CHECKLIST item 3 in the position where it costs the most: this is
+# §7.1's externally derived fix for M-4 and the one guard standing between "the WP
+# landed" and "the WP never landed". MEASURED on that construction: `deadbeef…`
+# printed `fatal: bad object` and the run announced `changes nothing under
+# crates/pistol-solver` — this guard's own conclusion, about an invocation that
+# never answered. No pipeline, and the value's SHAPE is checked (items 1 and 8).
+# Its "cannot diff" arm is UNREACHABLE BY CONSTRUCTION now that both revisions are
+# verified above; it stays because unreachable-and-routed beats unreachable-and-fatal,
+# and §3.2 carries no row for it precisely because no input reaches it.
 SOLVER_DIFF="$(git diff --name-only "$BASE_REV" "$LANDING" -- crates/pistol-solver)" \
-  || refuse "cannot diff crates/pistol-solver between $BASE_REV and $LANDING — the guard did not answer, \
-which is not the same as answering that the diff is empty"
-[ -n "$SOLVER_DIFF" ] || refuse "$LANDING changes nothing under crates/pistol-solver: with p = 0 an empty diff is \
-also what 'the WP never landed' looks like"
+  || refuse "cannot diff crates/pistol-solver between $BASE_REV and $LANDING — the guard did not \
+answer, which is not the same as answering that the diff is empty"
+[ -n "$SOLVER_DIFF" ] || refuse "$LANDING changes nothing under crates/pistol-solver: with p = 0 an \
+empty diff is also what 'the WP never landed' looks like"
 
-# ---- 6. p = 0. `git grep` exits 1 on NO MATCH, which under `pipefail` killed
-#         the script before `refuse()` could speak and adjudicated the STRONGEST
-#         evidence for p = 0 as its opposite (SHELL_CHECKLIST item 3). `mapfile`
-#         off a process substitution takes the count without a pipeline status
-#         and without `grep -c`, which has the same trap at zero. ----
-mapfile -t SOLVER_MANIFESTS < <(git grep -l -e 'pistol-solver' -e 'pistol_solver' "$LANDING" -- '*Cargo.toml' || true)
-n=${#SOLVER_MANIFESTS[@]}
-[ "$n" -eq 1 ] || refuse "$n Cargo.toml files mention pistol-solver, expected exactly 1 (the \
-crate's own name field); 0 means the attestation could not be taken, 2 or more means an edge"
-# `git grep -l <rev>` prefixes each path with `<rev>:`; strip it before comparing.
-SOLVER_MANIFEST_PATH="${SOLVER_MANIFESTS[0]#*:}"
-[ "$SOLVER_MANIFEST_PATH" = "crates/pistol-solver/Cargo.toml" ] \
-  || refuse "the single match is $SOLVER_MANIFEST_PATH, not the solver's own manifest"
-# The attestation ITSELF was a bare pipeline in statement position — unreachable
-# with `n = 1` already asserted, but unreachable-and-fatal rather than
-# unreachable-and-routed, which is the shape the item-3 findings keep taking.
-# `LC_ALL=C sort` is not decoration either: D-265 records that an agent shell's
-# `grep` is a harness-injected multithreaded wrapper whose output ORDER is
+# ---- 7. p = 0, ADJUDICATED ON THE RESOLVED GRAPH.
+#         Revision 9 adjudicated on a substring count over manifest TEXT, and a
+#         red-team broke it in both directions: a `# … pistol-solver …` COMMENT in
+#         an unrelated manifest produced `2 Cargo.toml files … 2 or more means an
+#         edge` — a RUN VOID naming an edge that does not exist — while a real
+#         `[dependencies."pistol-solver"]` edge that cargo resolves was
+#         INVISIBLE to the count. By §7.1's own rule the count shares its input
+#         (manifest text) with the defect it must exclude. `cargo tree -i` asks
+#         cargo's RESOLVED graph and answers by EXIT STATUS, parsing nothing. ----
+( cd "$PRISTINE/repo" && git checkout --quiet "$LANDING" ) || refuse "landing revision not in the clone"
+# Readability first, so "cargo could not answer" and "no edge" are two reasons with
+# two refusals rather than one status 101 meaning either (item 8).
+( cd "$PRISTINE/repo" && cargo tree --locked -p pistol-cli --edges normal ) >/dev/null 2>&1 \
+  || refuse "cargo could not resolve pistol-cli's normal-edge graph at $LANDING; the p = 0 \
+attestation was not taken"
+if ( cd "$PRISTINE/repo" && cargo tree --locked -p pistol-cli --edges normal -i pistol-solver ) >/dev/null 2>&1; then
+  echo "prereg: p = 0 REFUTED — pistol-solver IS in pistol-cli's resolved normal-edge graph; \
+run 'cargo tree -p pistol-cli --edges normal -i pistol-solver' for the reverse-dependency path" >&2
+  exit 1
+fi
+echo "prereg: p = 0 — pistol-solver is absent from pistol-cli's resolved normal-edge graph"
+# The manifest attestation is RECORDED and no longer ADJUDICATED ON, for the two
+# reasons above. `LC_ALL=C sort` is not decoration: D-265 records that an agent
+# shell's `grep` is a harness-injected multithreaded wrapper whose output ORDER is
 # nondeterministic, so a recorded transcript is sorted or it is not a transcript.
 ATTEST="$(git grep -n -e 'pistol-solver' -e 'pistol_solver' "$LANDING" -- '*Cargo.toml' | LC_ALL=C sort)" \
-  || refuse "the p = 0 attestation could not be taken at $LANDING"
+  || refuse "the p = 0 manifest attestation could not be taken at $LANDING"
 printf '%s\n' "$ATTEST"
 
-# ---- 7. H1-a: build LANDING, then build it with the solver crate REMOVED. ----
-( cd "$PRISTINE/repo" && git checkout --quiet "$LANDING" ) || refuse "landing revision not in the clone"
+# ---- 8. H1-a: build LANDING, then build it with the solver crate REMOVED. ----
 CAND_BIN="$(cd "$PRISTINE/repo" && cargo build --release --locked -p pistol-cli --bin pistol \
     --message-format=json-render-diagnostics | sed -n 's/.*"executable":"\([^"]*\)".*/\1/p' | tail -1)" \
   || refuse "candidate build failed"
@@ -460,57 +658,79 @@ D_WITH="$(sha256sum -- "$CAND_BIN" | cut -d' ' -f1)" || refuse "cannot digest th
 cp -- "$CAND_BIN" "$WORK/with_solver.pistol" || refuse "cannot preserve the candidate binary"
 # `rm -rf` first: `git checkout BASE_REV -- <path>` MERGES the old files in and
 # leaves every file the WP added on disk, and cargo auto-discovers `build.rs`,
-# `src/bin/`, `benches/`, `examples/` and `tests/` by convention.
+# `src/bin/`, `benches/`, `examples/` and `tests/` by convention. The result is a
+# REVERT to the baseline's content, not an absence — §3.1a says so, and a future WP
+# that CREATES the crate cannot be measured this way at all (the checkout refuses).
 ( cd "$PRISTINE/repo" && rm -rf -- crates/pistol-solver \
     && git checkout --quiet "$BASE_REV" -- crates/pistol-solver ) \
   || refuse "cannot restore the solver crate to its baseline content"
 # `--locked` is deliberately DROPPED here and only here: removing the solver's
-# dependency edge necessarily moves Cargo.lock, so `--locked` would refuse. The
-# guard it gives up is replaced by the assertion below that the lock moves in
-# exactly that one way.
+# dependency edge necessarily moves Cargo.lock, so `--locked` would refuse.
 COUNTER_BIN="$(cd "$PRISTINE/repo" && cargo build --release -p pistol-cli --bin pistol \
     --message-format=json-render-diagnostics | sed -n 's/.*"executable":"\([^"]*\)".*/\1/p' | tail -1)" \
   || refuse "counterfactual build failed"
 [ -s "$COUNTER_BIN" ] || refuse "counterfactual build produced no binary"
 D_WITHOUT="$(sha256sum -- "$COUNTER_BIN" | cut -d' ' -f1)" || refuse "cannot digest the counterfactual build"
-# After the build, so cargo has re-resolved: this is what dropping --locked bought.
-LOCK_DELTA="$(cd "$PRISTINE/repo" && git diff --shortstat -- Cargo.lock)" || true
+# THE GUARD --locked GAVE UP, WHICH REVISION 9's COMMENT CLAIMED AND DID NOT HAVE.
+# Two assertions, after the build so cargo has re-resolved. `|| true` is gone: it
+# rendered a failed probe, an absent directory and a genuinely empty delta as the
+# same ` none` (item 8), and ` none` is a value DR-8 recorded as legitimate.
+LOCK_DELTA="$(cd "$PRISTINE/repo" && git diff --shortstat -- Cargo.lock)" \
+  || refuse "cannot read the counterfactual's Cargo.lock delta"
+case "$LOCK_DELTA" in
+  "") ;;
+  *insertion*) refuse "the counterfactual ADDED lines to Cargo.lock ($LOCK_DELTA): dropping the \
+solver's edge can only delete, so cargo re-resolved something else — which is exactly the guard \
+--locked gave up" ;;
+  *deletion*) ;;
+  *) refuse "unregistered Cargo.lock delta shape from the counterfactual: $LOCK_DELTA" ;;
+esac
+COUNTER_DIRT="$(cd "$PRISTINE/repo" && git status --porcelain -- ':(exclude)crates/pistol-solver' ':(exclude)Cargo.lock')" \
+  || refuse "cannot read the counterfactual tree's status"
+[ -z "$COUNTER_DIRT" ] || refuse "the counterfactual moved files outside the solver and Cargo.lock: $COUNTER_DIRT"
 echo "prereg: H1-a with solver    $D_WITH"
 echo "prereg: H1-a without solver $D_WITHOUT"
 echo "prereg: H1-a counterfactual lock delta:${LOCK_DELTA:- none}"
 [ "$D_WITH" = "$D_WITHOUT" ] || { echo "prereg: H1-a FAILED — the solver reaches the binary" >&2; exit 1; }
 echo "prereg: H1-a CONFIRMED — the solver contributes nothing to the shipped binary"
 
-# ---- 8. Toolchain comparison, whole-line and anchored. ----
+# ---- 9. Toolchain comparison, whole-line and anchored. ----
 # `rustc -vV | head -1` closes the pipe early, rustc takes SIGPIPE and pipefail
 # propagates it — the cmd | head trap. Capture whole, then slice.
 RUSTC_VV="$(rustc -vV)" || refuse "cannot read rustc -vV"
-RUSTC_LINE="$(printf '%s\n' "$RUSTC_VV" | sed -n '1p')"
+RUSTC_LINE="$(printf '%s\n' "$RUSTC_VV" | sed -n '1p')" || refuse "cannot slice rustc -vV"
+[ -n "$RUSTC_LINE" ] || refuse "rustc -vV produced no first line"
 CARGO_LINE="$(cargo --version)"     || refuse "cannot read cargo --version"
-{ printf '%s\n%s\n' "$RUSTC_LINE" "$CARGO_LINE"; } > "$WORK/toolchain.cand"
+# Printed into the transcript rather than written to a file under $WORK, which the
+# EXIT trap deletes — revision 9 kept both the file and §3.1a's claim that it is
+# "kept as the run's own provenance record", and the trap removed it every run.
+echo "prereg: toolchain candidate $RUSTC_LINE"
+echo "prereg: toolchain candidate $CARGO_LINE"
 if grep -Fxq -- "$RUSTC_LINE" "$BASE_TC" && grep -Fxq -- "$CARGO_LINE" "$BASE_TC"; then TC=yes; else TC=no; fi
 echo "prereg: toolchain matches baseline: $TC"
 
-# ---- 9. H1-b, UNCONDITIONAL. `binary_sha256` is excluded exactly as `revision`
-#         is: it is the ONE line a linked-crate change is guaranteed to move, and
-#         the solver's own dependency edge moves Cargo.lock, so a conditional
-#         gate on "paths outside the solver" self-disables on the very change it
-#         measures. The other 54 lines carry the behaviour. ----
+# ---- 10. H1-b, UNCONDITIONAL. `binary_sha256` is excluded exactly as `revision`
+#          is: it is the ONE line a linked-crate change is guaranteed to move. The
+#          other 54 lines carry the behaviour. H1-b IS SECONDARY and its defect
+#          class is NOT H1's — see §3. ----
 tools/baseline_snapshot.sh --binary "$WORK/with_solver.pistol" --out "$WORK/cand.snapshot" \
   || refuse "the candidate snapshot could not be taken"
-# `head -1 … | grep -qx …` was a pipeline and a `grep` where a string comparison
-# does the work (SHELL_CHECKLIST items 1 and 3). Read the line, compare the value.
-CAND_KIND="$(sed -n '1p' -- "$WORK/cand.snapshot")" || refuse "cannot read the candidate snapshot"
-[ "$CAND_KIND" = 'baseline_snapshot 1' ] \
-  || refuse "candidate snapshot is not COMPLETE: $CAND_KIND"
 inv() {
-  local f="$1" n
+  local f="$1" n kind
   [ -s "$f" ] || { echo "prereg: snapshot missing or empty at $f" >&2; return 2; }
+  # The kind token, on BOTH sides. Revision 9 checked only the candidate, so an
+  # INCOMPLETE BASELINE record reached the diff and was adjudicated ABORT where
+  # §3.2 registers RUN VOID (D-160). A bare `sed -n 1p` and a string compare,
+  # because `head -1 | grep -qx` is a pipeline and a grep where a comparison does
+  # the work (items 1 and 3).
+  kind="$(sed -n '1p' -- "$f")" || { echo "prereg: cannot read $f" >&2; return 2; }
+  [ "$kind" = 'baseline_snapshot 1' ] \
+    || { echo "prereg: $f is not a COMPLETE baseline_snapshot record: $kind" >&2; return 2; }
   # An empty result is not legitimate here: the marker's ABSENCE is the refusal.
   grep -q '^# timing' -- "$f" || { echo "prereg: no '# timing' marker in $f" >&2; return 2; }
-  # `grep -c` prints 0 AND exits 1 (SHELL_CHECKLIST item 3), so `|| true` is load
-  # bearing; and because `|| true` would equally mask a failing `sed`, the SPELLING
-  # of what came back is validated rather than only its value (item 8).
+  # `grep -c` prints 0 AND exits 1 (item 3), so `|| true` is load bearing; and
+  # because `|| true` would equally mask a failing `sed`, the SPELLING of what came
+  # back is validated rather than only its value (item 8).
   n="$(sed -n '1,/^# timing/p' -- "$f" | grep -c . || true)"
   case "$n" in ''|*[!0-9]*) echo "prereg: could not count the invariant block of $f" >&2; return 2 ;; esac
   [ "$n" -ge 50 ] || { echo "prereg: invariant block short ($n) in $f" >&2; return 2; }
@@ -518,104 +738,122 @@ inv() {
 }
 inv "$BASE" > "$WORK/inv.base" || refuse "baseline record failed its shape checks"
 inv "$WORK/cand.snapshot" > "$WORK/inv.cand" || refuse "candidate record failed its shape checks"
-# `echo "… $(wc -l < …) behaviour lines"` is SHELL_CHECKLIST item 1 exactly: the
-# substitution's status is the echo's ARGUMENT and an unreadable file prints an
-# empty field with exit 0. Take it into a variable, check its shape, and refuse.
+# `echo "… $(wc -l < …) behaviour lines"` is item 1 exactly: the substitution's
+# status is the echo's ARGUMENT and an unreadable file prints an empty field with
+# exit 0. Take it into a variable, check its shape, refuse.
 INV_LINES="$(wc -l < "$WORK/inv.base")" || refuse "cannot count the baseline behaviour lines"
 case "$INV_LINES" in ''|*[!0-9]*) refuse "the baseline behaviour-line count is not a number: $INV_LINES" ;; esac
 [ "$INV_LINES" -ge 50 ] || refuse "only $INV_LINES behaviour lines survive the exclusions; the comparison would be vacuous"
 echo "prereg: H1-b comparing $INV_LINES behaviour lines (revision and binary_sha256 excluded)"
-# Informational only, never a gate: which build-reaching paths outside the solver moved.
-OTHER="$(git diff --name-only "$BASE_REV" "$LANDING" -- Cargo.toml Cargo.lock crates configs \
+# Informational only, never a gate: which build-reaching paths outside the solver
+# moved. `tools` is in the pathspec because step 6 calls it instrument-reaching.
+OTHER="$(git diff --name-only "$BASE_REV" "$LANDING" -- Cargo.toml Cargo.lock crates configs tools \
          ':(exclude)crates/pistol-solver' | LC_ALL=C sort)" || true
 [ -z "$OTHER" ] || { echo "prereg: note — build-reaching paths outside the solver also moved:";
                      echo "$OTHER" | sed 's/^/prereg:   /'; }
-diff -u "$WORK/inv.base" "$WORK/inv.cand"
-echo "prereg: H1-b CONFIRMED — every behaviour line is byte-identical"
+# `diff -u` writes the two file PATHS and their mtimes to STDOUT, and `$WORK` is a
+# `mktemp -d` name. On the ABORT path three replications therefore produced THREE
+# DISTINCT STDOUTS with identical exit codes and identical diff bodies — measured
+# independently by two reviewers — and §6 voids a run whose replications disagree.
+# So a genuine ABORT was converted into a voided run by a temporary directory name.
+# `--label` fixes it; `cmp` gives the verdict its own named line, which revision 9's
+# bare `set -e` on `diff` did not (rule 3, item 1's "name the refusal").
+if cmp -s -- "$WORK/inv.base" "$WORK/inv.cand"; then
+  echo "prereg: H1-b CONFIRMED — every behaviour line is byte-identical"
+else
+  diff -u --label baseline --label candidate -- "$WORK/inv.base" "$WORK/inv.cand" || true
+  echo "prereg: H1-b FAILED — a behaviour line moved between $BASE_REV and $LANDING" >&2
+  exit 1
+fi
 ```
 
-### 3.1a What H1-a's second build actually does, said plainly (m-1, m-2, m-3)
+### 3.1a What H1-a's second build actually does, said plainly
 
-**The "revert" is a REMOVAL now, not a merge-in (m-1).** `git checkout BASE_REV -- <path>`
-merges the old files in and leaves every file the work package added on disk — all 14 of them
-— restoring only the two that existed at `BASE_REV`. It happened not to matter, because the
-restored `lib.rs` stops declaring the modules; but cargo auto-discovers `build.rs`, `src/bin/`,
-`benches/`, `examples/` and `tests/` by convention, so a future work package adding any of
-those would have them survive the "revert". §3.1 now does `rm -rf -- crates/pistol-solver`
-first, so the counterfactual is a genuine absence.
+**The "revert" is a REVERT, not an absence — revision 9's wording here was wrong and a red-team
+said so.** `git checkout BASE_REV -- <path>` merges the old files in and leaves every file the work
+package added on disk, so §3.1 does `rm -rf -- crates/pistol-solver` **first**; cargo auto-discovers
+`build.rs`, `src/bin/`, `benches/`, `examples/` and `tests/` by convention, and without the `rm` a
+future WP adding any of those would have them survive. But what the two steps together produce is
+the crate **at its BASELINE content**, not the crate's absence — H1-a's own statement says so
+correctly and §3.1a's summary line did not. **The structural consequence is worth writing down:
+if a future work package CREATES the crate, H1-a cannot answer at all** — measured against the
+parent of the crate's creating commit, `git checkout` refuses with
+`error: pathspec 'crates/pistol-solver' did not match any file(s) known to git`, status 1 →
+`refuse` → exit 2. That is the correct disposition (RUN VOID, not a verdict) and it is a limit on
+where this instrument can be reused.
 
-**`--locked` is dropped on the counterfactual build, deliberately and only there (m-2).**
-Removing the solver's `pistol-core` edge necessarily moves `Cargo.lock`, so `--locked` would
-refuse the build outright. The guard that gives up is replaced by **printing the lock delta**:
-the run reports `1 file changed, 3 deletions(-)`, which is exactly the three lines of the
-solver's dependency edge and nothing else. A resolution change of any other shape would show a
-different delta in the transcript.
+**`--locked` is dropped on the counterfactual build, deliberately and only there — AND THE GUARD
+THAT REPLACES IT NOW EXISTS.** Removing the solver's `pistol-core` edge necessarily moves
+`Cargo.lock`, so `--locked` would refuse the build outright. Revision 9's block comment said the
+guard was *"replaced by the assertion below that the lock moves in exactly that one way"*, and
+below it were an assignment with `|| true` and an `echo`. **That is revision 7's own M-3 defect —
+a cited guard absent from the registered block — transposed into the block's comments**, where a
+reader auditing the mechanism meets it first. Two real assertions replace it:
 
-**And when `p = 0`, the second build compiles nothing (m-3).** Cargo finds the crate graph
-unchanged — the solver is not in it — and returns `Finished release profile in 0.02s`, handing
-back **the same file** as the first build: same inode, same mtime. So `[ "$D_WITH" =
-"$D_WITHOUT" ]` compares a file's digest to its own. **The mechanism is still sound**, and that
-is not a rescue: when the solver *does* reach codegen, cargo rebuilds and the digests differ,
-demonstrated at exit 1 with `570dc5d8…` against `1ed322ea…`. But §3's prose used to say
-"compares two builds … derived by an independent build", which is not what executes on the
-confirming path, and a reader checking the mechanism deserves the true description. **What
-H1-a actually asserts is: *cargo, given the tree with the solver removed, produces a binary it
-considers identical — and when that is false it rebuilds and says so.***
+1. the `Cargo.lock` delta may be empty or may contain DELETIONS, and **any insertion refuses** —
+   dropping an edge can only remove lines, so an insertion means cargo re-resolved something else,
+   which is precisely the guard `--locked` gave up;
+2. **nothing outside the solver and `Cargo.lock` moved** in the counterfactual tree.
 
-The candidate toolchain is written to `$WORK/toolchain.cand` and kept as the run's own
-provenance record; the comparison itself reads `$BASE_TC` directly with `grep -Fxq`, whole-line
-and anchored, so a `1.97.1` prefix cannot match a hypothetical `1.97.10`. Revision 7's
-unanchored BRE failed to fire only because the `cargo --version` conjunct carried a full
-string — load-bearing and undocumented, and now neither.
+And the `|| true` is gone. It rendered a failed probe, an absent directory and a genuinely empty
+delta as the same ` none` (`SHELL_CHECKLIST` item 8) — and ` none` is a value DR-8 recorded as
+legitimate, so the substitute for a dropped guard was a printed field whose failure was
+indistinguishable from its success value.
+
+**The delta is pair-dependent, which is why the assertion is on SHAPE and not on a string.**
+`(cdbcbf0, 8618012)` and DR-9's `(72316a7, 60b5c44)` both give `1 file changed, 3 deletions(-)` —
+the three lines of the solver's `pistol-core` edge. DR-8's `(5fdbf52, 60b5c44)` gives **none**,
+because that baseline already carries the edge, so the counterfactual reverts content without
+changing the graph.
+
+**And when `p = 0`, the second build compiles nothing.** Cargo finds the crate graph unchanged —
+the solver is not in it — and returns `Finished release profile in 0.02s`, handing back **the same
+file** as the first build: same inode, same mtime. So `[ "$D_WITH" = "$D_WITHOUT" ]` compares a
+file's digest to its own. **The mechanism is still sound**, and that is not a rescue: when the
+solver *does* reach codegen, cargo rebuilds and the digests differ, demonstrated at exit 1 with
+`570dc5d8…` against `1ed322ea…`. **What H1-a actually asserts is: *cargo, given the tree with the
+solver reverted, produces a binary it considers identical — and when that is false it rebuilds and
+says so.***
+
+**The candidate toolchain is PRINTED INTO THE TRANSCRIPT, not written to a file (revision 10).**
+Revision 9 wrote it to `$WORK/toolchain.cand` and claimed it was *"kept as the run's own provenance
+record"* — while the EXIT trap added in the same round deleted `$WORK` on every exit, so the file
+was destroyed every run and the sentence was false the moment it was written. Two `prereg:
+toolchain candidate …` lines carry it instead, where §6's replication can compare them. The
+comparison itself reads `$BASE_TC` directly with `grep -Fxq`, whole-line
 
 ### 3.2 Adjudication — every row has a reachable producer, and each was RUN
 
-Revision 7's table had **five of eight rows with no reachable producer**, all downstream of
-H1-b's unconditional N/A. That is hardening converting a test into a formality. With H1-b
-unconditional the table shrinks to what can actually happen, and §7.2 records the execution of
-each.
+Revision 7's table had **five of eight rows with no reachable producer**, all downstream of H1-b's
+unconditional `N/A`. That is hardening converting a test into a formality, and **revision 9 did it
+again in miniature**: it added a `cannot diff crates/pistol-solver` row that no input can reach,
+because step 6's `merge-base --is-ancestor` and step 2's `revision`-line comparison catch an
+unresolvable `LANDING` and an unresolvable `BASE_REV` respectively, three lines earlier and one
+step earlier. **That row is gone.** The guard stays in the block — unreachable-and-routed beats
+unreachable-and-fatal — but a table row is a claim that an input produces it, and no input does.
+The table below carries only refusals something reached, and §7.5 names what reached each.
 
-| exit | Reading | Verdict | produced by |
+| exit | Reading | Verdict | produced by, and RUN |
 |---|---|---|---|
-| **0** | H1-a digests identical **and** H1-b's 54 behaviour lines identical | **CONFIRMED** | the governed pair, run 3× |
-| **1** | H1-a digests differ | **ABORT.** `p` is no longer 0; first diagnostic `cargo tree -p pistol-cli --edges normal` | solver source reaching the binary via a called path |
-| **1** | H1-b's behaviour lines differ | **ABORT** — a behaviour change the solver did not cause is still a change the run must not pass over | a `BUCKET_ENTRIES` change in `pistol-search` |
-| **2** | any `refuse` | **RUN VOID**, not a verdict in either direction | step 6 at `n = 0` and at `n = 2`; missing/misdigested baseline; truncated record; unbound binding; non-repository cwd; a failed build |
-| **2** | `cannot diff crates/pistol-solver between …` | **RUN VOID** — the guard did not answer, which is not the same as answering that the diff is empty | step 5, a `BASE_REV` or `LANDING` git cannot resolve (revision 9) |
-| **2** | `build-reaching or instrument paths moved between LANDING and HEAD: …` | **RUN VOID** — the tree is no longer the landing tree where it counts | step 5, any commit above `LANDING` touching `Cargo.toml`, `Cargo.lock`, `crates`, `configs` or `tools` (revision 9) |
-| **2** | `untracked files outside the build-reaching set: …` | **RUN VOID** | step 4, now that a clean tree is reachable (revision 9, D-266) |
+| **0** | H1-a digests identical **and** H1-b's 54 behaviour lines identical | **CONFIRMED** | DR-10a, DR-9, ARM P |
+| **1** | the resolved graph contains a `pistol-solver` edge | **ABORT** — `p` is no longer 0; the message carries its own diagnostic command | ARM Q, an escaped `[dependencies."pistol-solve\u0072"]` edge the substring count could not see |
+| **1** | H1-a digests differ | **ABORT.** Solver content reached codegen | an `include_str!` from a called path: `570dc5d8…` vs `1ed322ea…` |
+| **1** | H1-b's behaviour lines differ | **ABORT** — a behaviour change the solver did not cause is still a change the run must not pass over. **Named**, and its stdout is now replication-stable | ARM K, a mutated baseline behaviour line: exit 1 ×3, ONE distinct stdout, `prereg: H1-b FAILED — a behaviour line moved between …` |
+| **2** | `LANDING is not a 40-hex object name` | **RUN VOID** | ARM L, `LANDING=dev` — which revision 9 ACCEPTED |
+| **2** | `the snapshot instrument on disk hashes to … not the registered …` | **RUN VOID** | ARM N, `assume-unchanged` + a worktree edit, with `git status --porcelain` EMPTY |
+| **2** | `… is not a COMPLETE baseline_snapshot record: …` | **RUN VOID** (D-160) | ARM M, an incomplete BASELINE record — which revision 9 adjudicated ABORT |
+| **2** | `a path binding contains a non-printable character …` | **RUN VOID** | ARM O, a newline in `BASE` |
+| **2** | `cargo could not resolve pistol-cli's normal-edge graph …` | **RUN VOID** — cargo did not answer, which is not the same as answering that there is no edge | a manifest edge absent from `Cargo.lock`, where `--locked` refuses |
+| **2** | `build-reaching or instrument paths moved between LANDING and HEAD: …` | **RUN VOID** | ARM D |
+| **2** | `tracked files are modified: …` | **RUN VOID** | ARM G |
+| **2** | `untracked files on build-reaching paths: …` | **RUN VOID** | ARM F; and ARM J, the same input from a subdirectory |
+| **2** | `untracked files outside the build-reaching set: …` | **RUN VOID** | ARM E |
+| **2** | `LANDING … is not an ancestor of HEAD` | **RUN VOID** | ARM C |
+| **2** | `… changes nothing under crates/pistol-solver` | **RUN VOID** — with `p = 0` an empty diff is also what "the WP never landed" looks like | ARM H2 |
+| **2** | any other `refuse` | **RUN VOID**, not a verdict in either direction | missing/misdigested/unreadable baseline; unbound binding; non-repository cwd; a failed build |
 | — | `toolchain matches baseline: no` | **advisory.** H1-a rebuilds both sides on one toolchain and is immune; it bears only on H1-b | — |
-| — | kind token `baseline_snapshot_incomplete` | **RUN VOID** (D-160) | the first-line comparison at step 9 |
 
-**THE STEP NUMBERS IN THIS TABLE ARE NOW THE BLOCK'S OWN (revision 9).** They were not: the
-block labelled its sections `0`-`8` while this table and §0.1 cited a `1`-`9` scheme, so a
-reviewer chasing `step 6, n = 0` landed in H1-a and a reader chasing "§3.1 step 3" for the
-rebuild attestation landed in the cleanliness check. Nothing about the block's behaviour was
-wrong; every reference into it was off by one. The block is renumbered to match.
-
-**AND THE EXIT CODES ARE ONLY DISJOINT IF THE TRAP LETS THEM BE (revision 9).** This table
-assigns three meanings to three statuses, and revision 8's EXIT trap could return `1` for all
-three: `SHELL_CHECKLIST` item 7, measured at `requested 0 → got 1, requested 1 → got 1,
-requested 2 → got 1` on the registered construction with an unremovable path. A verdict that
-housekeeping can rewrite is not a verdict, and this is the row that would have been silently
-false — a CONFIRMED run reported as ABORT, which §6's abort protocol then attaches to. Repaired,
-the same three requests return `0`, `1` and `2`.
-
-**WHAT CATCHES AN ACCIDENTAL DEPENDENCY EDGE IS STEP 6, NOT H1 (M-2).** Revision 7's §9 said
-the edge *"is the failure it [H1] exists to catch"*. Run: a bare `path` dependency in
-`pistol-cli` with no call site is refused at **step 6, exit 2** (the `p = 0` step) —
-`2 Cargo.toml files mention pistol-solver, expected exactly 1 … 2 or more means an edge` —
-**before H1-a builds anything.** Exit 2 is RUN VOID, the same bucket as a missing baseline, and
-§6's abort protocol attaches only to ABORT. The behaviour is right and loud, so nothing ships
-silently; the sentence was wrong. **H1-a catches solver content that reaches codegen by any
-route** — verified with an `include_str!` of solver source referenced from a called path in
-`pistol.rs`, which reached **exit 1, `H1-a FAILED`**, digests `570dc5d8…` against `1ed322ea…`.
-An edge with no call site is caught earlier and more cheaply, which is a property of the
-ordering rather than a gap.
-
-**`binary_sha256` is excluded from H1-b and printed by H1-a instead.** It is the one line a
-linked-crate change is guaranteed to move, so gating on it makes H1-b unreachable; the other 54
-lines carry the behaviour — nodes, depths, scores, bestmoves, pv and the three ladders.
+**THE STEP NUMBERS IN THIS TABLE ARE THE BLOCK'S OWN.** They were not until revision 9: the
 
 ### 3.3 The untracked-file tolerance is RETIRED, and the two checks become the diagnosis
 
@@ -634,7 +872,7 @@ worse, because a token that can only take one value reads as a passing check. §
 instrument, and the pristine-rebuild attestation was carrying the whole load alone.
 
 **The two checks survive as the DIAGNOSIS, not as the gate.** The refusal has three reasons and a
-single combined test gives one wrong answer (`SHELL_CHECKLIST` item 8), so step 4 refuses on a
+single combined test gives one wrong answer (`SHELL_CHECKLIST` item 8), so step 5 refuses on a
 non-empty `git status --porcelain` and then says WHICH:
 
 1. **A tracked modification anywhere** — `git status --porcelain --untracked-files=no` non-empty.
@@ -649,7 +887,7 @@ non-empty `git status --porcelain` and then says WHICH:
 command run from `crates/` asks about `crates/crates`. Measured with
 `crates/pistol-core/ZZZ_untracked_probe.rs` present: from `crates/`, `git status --porcelain`
 reported the file and the registered enumeration returned **EMPTY**. A gate that passes because of
-where it was invoked is EXIT-0-WRONG-ANSWER with no bad input at all, and `tools/` at step 9 is a
+where it was invoked is EXIT-0-WRONG-ANSWER with no bad input at all, and `tools/` at step 10 is a
 relative path besides. The block enters `$REPO` before it enumerates anything.
 
 **What the retirement does NOT change**: H1-a rebuilds both sides in a *pristine clone* of
@@ -734,7 +972,8 @@ both were conservative, so T4 is unaffected, and both are corrected here):
 | Instrument | Unit cost, MEASURED at the governed bindings | Reps | Total |
 |---|---|---|---|
 | the §3 block, end to end | **43 s** (3 clones+builds, 1 snapshot, 2 comparisons) | 3 | **≈ 2 min 10 s** |
-| `tools/bench_delta.sh` on the governed pair | **6 min 18 s** — it does **not** refuse here, because the digests differ | 1 | ≈ 6 min |
+| ~~`tools/bench_delta.sh` on the governed pair~~ | **6 min 18 s** — DEMOTED at revision 10; it adjudicates nothing and is not on the critical path | 0 | **0** |
+| `cargo tree --locked -p pistol-cli --edges normal -i pistol-solver` | **under a second**, inside the block; no build | 3 | negligible |
 | disk, per block run | **61 MB** (`PRISTINE` + `WORK`) | 3 | 183 MB, **now reclaimed by an `EXIT` trap** |
 
 **Revision 7's cost table was wrong in both directions and is corrected (m-4).** It billed
@@ -745,10 +984,16 @@ unaffected; but proportionality asks the face of the document to be right about 
 instrument costs what. **Also previously unbilled: 61 MB of disk per run, never cleaned.** Ten
 accumulated runs had left 605 MB; §3.1 now sets `trap cleanup EXIT` and leaks nothing.
 
-**Machine hours: under 10 minutes, one workstation, single thread. Operator attention: one
-invocation, no judgement call during the run. Wall time: under 15 minutes.**
+**Machine hours: about 2 min 10 s at revision 10 (was under 10 minutes with `bench_delta` in the
+set), one workstation, single thread. Operator attention: one invocation, no judgement call during
+the run. Wall time: under 5 minutes.**
 
-**Revision 9 adds no instrument and no rep, so the cost table stands unchanged.** The four
+**Revision 10 REMOVES an instrument and adds a cheaper one, so the run got shorter.** Demoting
+`tools/bench_delta.sh` takes **6 m 18 s** off the total; the `cargo tree` probe that replaces it as
+the second instrument costs under a second and runs inside the block, so the governed run is now
+three replications of a ~43 s block and nothing else. **Total machine time: about 2 min 10 s.**
+
+**Revision 9 added no instrument and no rep, so the cost table stood unchanged then.** The four
 repairs are routing: one trap, one guard rewritten from a pipeline to a variable, one equality
 test replaced by an ancestor test and a diff, one tolerance retired. None of them builds anything
 or takes a snapshot. The one measurable difference is that the block now `cd`s to `$REPO` before
@@ -788,56 +1033,92 @@ Under H1-b's unconditional form the run *does* now take one snapshot per process
 clause is also satisfiable — but the block-level identity is the stronger statement and is the
 registered one.
 
-**Second instrument.**
+**AND AT REVISION 9 THIS CLAUSE VOIDED A GENUINE ABORT, WHICH IS B-1 AND WHICH TWO FRESH-CONTEXT
+REVIEWERS FOUND INDEPENDENTLY.** `diff -u "$WORK/inv.base" "$WORK/inv.cand"` writes both file PATHS
+and their mtimes to **stdout**, and `$WORK` is a `mktemp -d` name. On the CONFIRMED path stdout is
+empty and stable — which is why every replication ever taken passed and why reading the block did
+not find this. On the ABORT path three processes produce **three distinct stdouts with identical
+exit codes and identical diff bodies**:
 
-```sh
-# Runnable: the same bound-or-refuse form §3.1 uses. Revision 4 printed literal
-# a bare `rev:` placeholder in angle brackets, which dies "No such file or directory" — and passed
-# `bash -n` only because `<...>` parses as a redirection, so "all four blocks pass
-# bash -n" was vacuous for the one block that was not runnable.
-BASE_REV=${BASE_REV:-}; [ -n "$BASE_REV" ] || { echo "prereg: BASE_REV unset" >&2; exit 2; }
-LANDING=${LANDING:-};   [ -n "$LANDING" ]   || { echo "prereg: LANDING unset" >&2; exit 2; }
-tools/bench_delta.sh "rev:$BASE_REV" "rev:$LANDING" 5
+```
+--- /tmp/wp15a_inv.CdAOH6/inv.base   2026-08-20 20:50:47.785221010 +0200
+--- /tmp/wp15a_inv.QanZkk/inv.base   2026-08-20 20:52:20.842961647 +0200
+--- /tmp/wp15a_inv.7DrmBq/inv.base   2026-08-20 20:41:53.892759656 +0200
 ```
 
-The baseline side is **the W3 commit**, so both instruments ask the same question across the
-W3 digest change. It is genuinely independent and reviewers confirmed why by running it: the
-snapshot never builds, while `bench_delta` builds both sides itself in throwaway worktrees, so
-instrument 2 **re-derives from source** what instrument 1 **reads from a file** — which is
-§3.2's failure mode, covered by construction.
+So this clause **voids** a run that §3.2 calls **ABORT**, and §6's abort protocol attaches only to
+ABORT — a verdict rewritten by a temporary directory name, which is revision 9's own headline
+defect with a different mechanism. It also collides with the determinism law (rule 4) and with
+D-265's principle that a transcript is reproducible or it is not a transcript.
 
-**Agreement criterion, RESTATED for the H1-a / H1-b split (revision 6).** The criterion binds
-**H1-b and instrument 2**, because those two compare the same pair — `BASE_REV` against
-`LANDING`. H1-a compares a different pair (the landing tree with and without the solver), and
-has no second instrument in this configuration; what makes H1-a attributable is its own
-construction, two builds differing only in the suspect content.
+**Fixed and re-measured at revision 10:** `diff -u --label baseline --label candidate`, and the
+verdict itself moved to an explicit `cmp` so the ABORT path prints a NAMED refusal where a bare
+`set -e` on `diff` printed none (rule 3). **ARM K: three independent processes on a mutated
+baseline behaviour line — exit 1 each, ONE distinct stdout, `prereg: H1-b FAILED — a behaviour line
+moved between …` on stderr, and the diff header reading `--- baseline` / `+++ candidate`.**
 
-> **H1-b reports the invariant blocks identical if and only if instrument 2 refuses** with
-> `the two sides resolve to the same binary (… digest …)`. **When H1-b is `N/A`, instrument 2
-> is expected NOT to refuse**, and its measurement adjudicates nothing about WP-1.5a.
+**SECOND INSTRUMENT — REPLACED AT REVISION 10, BECAUSE THE REGISTERED ONE WAS VIOLATED AT THE
+REGISTERED BINDINGS AND ITS OWN CONSEQUENCE THEN FORBADE A VERDICT.**
 
-**AND IT PRINTS `VERDICT ABORT` TWICE, MEANING SOMETHING ELSE (M-6).** On the governed pair
-`bench_delta.sh` emits, for each band:
+Revisions 6-9 registered:
 
-> `band early: VERDICT ABORT — nps ratio 1.000 is below the pre-registered 1.15 abort threshold;
-> the change is reverted`
+> *H1-b reports the invariant blocks identical **if and only if** instrument 2
+> (`tools/bench_delta.sh`) refuses with `the two sides resolve to the same binary`.*
 
-That is `bench_delta`'s verdict against **D-215's `Eval::delta` bracket — a different
-pre-registration** — and a ratio of 1.000 is exactly what `p = 0` predicts. **Registered here
-because §3.2's own vocabulary is `ABORT`, and two ABORTs meaning contradictory things in one
-governed transcript is the hazard these rounds have been spent removing.** The rule: **nothing
-`bench_delta.sh` prints is a verdict of this document.** Its role here is exhausted by the
-refuse-or-not-refuse reading of the agreement criterion; its bands, ratios and the word ABORT
-belong to D-215 and are quoted by this document never.
+**Measured at the registered bindings, both sides:** `tools/bench_delta.sh:274` is
+`[ "$BASE_SHA" != "$CAND_SHA" ] || fail "the two sides resolve to the same binary …"` — it refuses
+**only when the two digests are EQUAL**. `cdbcbf0` gives `ff018398…` and `8618012` gives
+`a7f519fa…`, so it does **not** refuse, while H1-b **CONFIRMS**. TRUE ⇔ FALSE is false, the
+criterion is violated, and the registered consequence below then says in terms that no verdict may
+be taken. §6's own cost table said the same thing in the same section — *"it does **not** refuse
+here, because the digests differ"* — and the criterion was never re-read against it.
 
-**Run on the real pair, and this is the case that obtains.** Instrument 2 built both sides
-itself in throwaway worktrees and reported `cdbcbf0 -> ff018398…`, `7b9e904 -> a7f519fa…` —
-**independently reproducing both digests this session obtained from a pristine clone** — and
-therefore did **not** refuse. H1-b is `N/A`. Both sides of the biconditional are false, so the
-criterion is **satisfied**. Instrument 2's timing numbers at this pair measure the
-`pistol-core` `#[inline]` change and **are not evidence about the threat generator**; that is
-registered here so nobody quotes them as such. Read from the **message**, never the exit status — that refusal exits 1, and 1
-here is the gate working.
+**The paragraph defended itself with a sentence that had been dead for three revisions:** *"H1-b is
+`N/A`. Both sides of the biconditional are false, so the criterion is satisfied."* H1-b stopped
+being able to be `N/A` at revision 6. There is no `N/A` path in the block.
+
+**AND THE DEEPER FAULT IS THE ONE THAT DECIDES THE FIX.** Under **D-269** — the clause this
+document's own §7.1 produced — a registered criterion must be one its named defect class could
+falsify. **H1-b is a criterion H1's target defect PRESERVES** (§3): a solver crate that is linked
+but never called moves `binary_sha256`, which H1-b excludes, and moves none of the 54 lines that
+remain. The proportionality rule's second-instrument duty was anchored to the one criterion in the
+document that cannot falsify what it watches. Rewording the biconditional would have left that
+intact.
+
+**THE REGISTERED SECOND INSTRUMENT IS NOW `cargo tree`, AND IT IS H1-a's.**
+
+```sh
+cargo tree --locked -p pistol-cli --edges normal -i pistol-solver
+```
+
+> **AGREEMENT CRITERION.** H1-a reports the two binaries bit-identical **if and only if** the
+> resolved normal-edge graph of `pistol-cli` at `LANDING` contains no `pistol-solver` — that is,
+> the command above exits non-zero with `package ID specification … did not match any packages`.
+
+**Why this is a genuine second instrument and not a second reading of the first.** Both evaluate
+one proposition — *does the solver reach the shipped binary* — and **neither reads the other's
+input**: H1-a compiles and digests bytes, `cargo tree` resolves a dependency graph from manifests
+and the lockfile. Neither shares an input with the other, which is what T8 (`docs/process_readings.md`)
+observes the proportionality paragraph never required and what makes agreement mean anything. It is
+also **cheap**: no build, seconds, against the 6 m 18 s the displaced instrument cost.
+
+**Both sides were run at the registered pair's shape.** DR-10a and DR-9 give
+`p = 0 — pistol-solver is absent from pistol-cli's resolved normal-edge graph` together with
+`H1-a CONFIRMED`; ARM Q gives the other corner — an escaped `[dependencies."pistol-solve\u0072"]`
+edge invisible to a substring count, where `cargo tree -i` exits 0 with the reverse-dependency path
+and the block aborts at exit 1. **Both corners of the biconditional have producers**, which the
+displaced criterion never did.
+
+**`tools/bench_delta.sh` IS DEMOTED TO A RECORDED CORROBORATION WITH NO ADJUDICATING ROLE.** Its
+refusal condition is digest-EQUALITY, which is not the proposition; it compares a different pair
+(`BASE_REV` against `LANDING`, not the landing tree with and without the solver); and it emits
+`VERDICT ABORT` twice per run meaning **D-215's** verdict against a different pre-registration —
+two ABORTs meaning contradictory things in one governed transcript is a hazard these rounds have
+been spent removing, and the cheapest removal is to stop asking an instrument a question it does
+not answer. Its recorded reading, for provenance only: run at `(cdbcbf0, 7b9e904)` it built both
+sides in throwaway worktrees and reported `ff018398…` and `a7f519fa…`, **independently reproducing
+both digests obtained from a pristine clone**. Nothing it prints is a verdict of this document, and
+this revision removes the last place one of its outputs was read as one.
 
 **REGISTERED CONSEQUENCE OF DISAGREEMENT (D-245).** No verdict is taken; the WP lands on
 neither instrument alone; a finding names which disagreed and quotes both outputs; a bare
@@ -953,7 +1234,7 @@ distinct outputs: 1     lines each: 12
 
 | path | before the fix | after |
 |---|---|---|
-| step 6, `n = 0` (nothing matches) | **exit 1, stdout empty, stderr empty** → adjudicated ABORT | **exit 2**, `0 Cargo.toml files mention pistol-solver, expected exactly 1` |
+| step 6, `n = 0` (nothing matches) — *revision 8's numbering; the count is no longer adjudicated on (§2.1)* | **exit 1, stdout empty, stderr empty** → adjudicated ABORT | **exit 2**, `0 Cargo.toml files mention pistol-solver, expected exactly 1` |
 | step 6, `n = 2` (real edge in `pistol-cli`) | exit 2 | **exit 2**, `2 Cargo.toml files … 2 or more means an edge` |
 | `sha256sum` on an empty path | **exit 1**, unrouted | **exit 2**, `candidate build produced no binary` |
 | H1-a fails (solver reaches codegen) | — | **exit 1**, `H1-a FAILED`, `570dc5d8…` vs `1ed322ea…` |
@@ -1148,7 +1429,7 @@ producer here, which is M-2's standard applied to the rows this revision added:
 | E | an untracked file at `docs/ZZZ_stray_probe.md` | **exit 2**, `untracked files outside the build-reaching set: ?? docs/ZZZ_stray_probe.md` |
 | F | an untracked file at `crates/ZZZ_stray_probe.rs` | **exit 2**, `untracked files on build-reaching paths: crates/ZZZ_stray_probe.rs` |
 | G | a TRACKED file modified (`Cargo.toml`) | **exit 2**, `tracked files are modified:  M Cargo.toml` |
-| H1 | the solver-diff guard, `LANDING` a revision git cannot resolve | **exit 2**, `cannot diff crates/pistol-solver between … — the guard did not answer, which is not the same as answering that the diff is empty` |
+| H1 | the solver-diff guard, `LANDING` a revision git cannot resolve — **run STANDALONE, see the correction below** | **exit 2**, `cannot diff crates/pistol-solver between … — the guard did not answer, which is not the same as answering that the diff is empty` |
 | H2 | the solver-diff guard, a genuinely empty diff (`95ff602`→`2ac4286`) | **exit 2**, `… changes nothing under crates/pistol-solver: with p = 0 an empty diff is also what 'the WP never landed' looks like` |
 | H3 | the solver-diff guard, the happy path | **exit 0** |
 | I | the whole block invoked from `crates/`, clean tree | **exit 0** — the `cd "$REPO"` fix; before it the block could not even find `tools/` |
@@ -1160,6 +1441,16 @@ crates/pistol-solver"** — its own conclusion, asserted about an invocation tha
 Revision 9 names the reason instead. **J is the cwd defect's before and after** and it is the
 one that would have passed silently: the enumeration returns EMPTY from a subdirectory with a
 stray file sitting on a build-reaching path.
+
+**CORRECTION AT REVISION 10 — ARM H WAS RETYPED, NOT EXTRACTED, AND §0.3 SAYS THE OPPOSITE.** ARMs
+C-G and I-J invoke the extracted block; ARM H re-typed the guard's two lines into a standalone
+subshell, while §0.3 states that *"§7.2/§7.3 extract it BY SCRIPT rather than retyping it, so the
+thing run is the thing reviewed"* — and ARM H is the arm certifying the repair this revision's
+header calls the single guard between "the WP landed" and "the WP never landed". A reviewer found
+it. ARM H2 could not have gone through the block in any case: `BASE_REV=95ff602` has no baseline
+record, so step 2 refuses first. **§7.5's arms all go through the extracted block**, and the
+`… changes nothing under crates/pistol-solver` refusal keeps its §3.2 row on ARM H2's standalone
+evidence with that provenance stated rather than implied.
 
 **A DEFECT I INTRODUCED IN THE ARMS THEMSELVES, recorded because RULE 2's whole point is that
 running finds what reading does not.** My first ARM G appended to `README.md` — a file this
@@ -1178,9 +1469,13 @@ takes `SIGPIPE`, `pipefail` propagates it, and `|| refuse` fires on a NON-EMPTY 
 **not reproducible at any scale this workload can reach**, and is recorded as rejected rather
 than quietly folded into the fix it partly motivated.
 
-- **Attempted at the largest `--stat` this repository can produce**: the whole-history diff, 287
-  files, 17 879 bytes, well inside a 64 KiB pipe buffer. `git diff --stat … | grep -q .` under
-  `set -euo pipefail`, **20 trials, 20 × exit 0.** No SIGPIPE.
+- **Attempted at the largest `--stat` this repository can produce**: the whole-history diff,
+  **287 LINES — 286 files plus `--stat`'s summary line** — 17 879 bytes, well inside a 64 KiB pipe
+  buffer. `git diff --stat … | grep -q .` under `set -euo pipefail`, **20 trials, 20 × exit 0.** No
+  SIGPIPE. *(Revision 9 wrote "287 files"; 287 was the line count. The byte figure was right, both
+  are far inside the buffer, and the conclusion is unaffected — but a count described as the wrong
+  noun is D-221's class in miniature, and a reviewer reading it against the repository got a
+  different number and was right to.)*
 - **Control, to show the construction IS defective in kind rather than the probe being wrong**:
   the same construction with a producer that must write past the buffer (`git log -p`, 4 654 354
   bytes), **20 trials, 20 × exit 141** — which under `|| refuse` is a refusal on a non-empty
@@ -1190,6 +1485,75 @@ So the guard was bounded by an accident of output size and not by anything the d
 registered, which is a reason to remove the construction and not a reason to claim it bit. The
 exit-128 conflation (§7.3 arm H1) is the half that reproduces, and it is what the repair is
 justified by.
+
+### 7.5 REVISION 10's DRY RUNS AND ARMS — the repairs, exercised
+
+**DEFECT CLASS UNDER TEST (D-269): a repair that breaks a path it did not intend to touch**, and
+— new at revision 10 — **an adjudicator that answers a different question than the one registered**,
+which is what the substring count was doing. **CRITERION: the exit status and the named message of
+every path, against §3.2's table**, plus, for the two arms that replaced adjudicators, a
+demonstration that the OLD instrument and the NEW one give DIFFERENT answers on the same input —
+which is a criterion the defect class cannot preserve, because if both instruments agreed
+everywhere the replacement would be a no-op.
+
+**INPUT: non-registered pairs of the same kind**, in a throwaway clone. The registered workload is
+`(cdbcbf0, 8618012)`; nothing below touches it.
+
+**DR-10a — the governed shape on `(5fdbf52, 60b5c44)`. exit 0, 43 s.** All eight bindings printed,
+the graph probe answering, the toolchain in the transcript:
+
+```
+prereg: binding REPO          …/dryrun/repo
+prereg: binding BASE_REV      5fdbf52510d7f17303175d2ac34bc635b26cf7ae
+prereg: binding LANDING       60b5c44b4c18eb65c20c952223ef367aa209d1a7
+prereg: binding SNAP_BLOB_PIN a7c0ed4367a6893f70b776732bd68ada77c19483
+prereg: baseline rebuild attests ff018398a88673c6929efe875768f299358acf22b112ecfa1273e5a845e427ef
+prereg: p = 0 — pistol-solver is absent from pistol-cli's resolved normal-edge graph
+60b5c44b4c18eb65c20c952223ef367aa209d1a7:crates/pistol-solver/Cargo.toml:2:name = "pistol-solver"
+prereg: H1-a with solver    a7f519fade1124780463293b86e27cbdd0732540a84aa75acaed4de4689f03ce
+prereg: H1-a without solver a7f519fade1124780463293b86e27cbdd0732540a84aa75acaed4de4689f03ce
+prereg: H1-a counterfactual lock delta: none
+prereg: H1-a CONFIRMED — the solver contributes nothing to the shipped binary
+prereg: toolchain candidate rustc 1.97.1 (8bab26f4f 2026-07-14)
+prereg: toolchain candidate cargo 1.97.1 (c980f4866 2026-06-30)
+prereg: toolchain matches baseline: yes
+prereg: H1-b comparing 54 behaviour lines (revision and binary_sha256 excluded)
+prereg: H1-b CONFIRMED — every behaviour line is byte-identical
+```
+
+**THE ARMS, each RUN, and each with its BEFORE:**
+
+| arm | input | revision 9 | revision 10 |
+|---|---|---|---|
+| **K** | a mutated baseline behaviour line, ×3 processes | exit 1 ×3, **THREE distinct stdouts**, no named refusal | exit 1 ×3, **ONE distinct stdout**, `prereg: H1-b FAILED — a behaviour line moved between …`, header `--- baseline` / `+++ candidate` |
+| **L** | `LANDING=dev` | **ACCEPTED** — passed the ancestor test, the drift diff and the attestation, recording `dev:` where a revision belongs | **exit 2**, `LANDING is not a 40-hex object name: dev — a branch or tag name satisfies every git call below` |
+| **M** | an INCOMPLETE baseline record | **exit 1 = ABORT**, where §3.2 registers RUN VOID | **exit 2**, `… is not a COMPLETE baseline_snapshot record: baseline_snapshot_incomplete 1` |
+| **N** | `assume-unchanged` + a worktree edit to the instrument | **passes** — `git status --porcelain` is EMPTY and the `LANDING..HEAD` diff is EMPTY | **exit 2**, `the snapshot instrument on disk hashes to 42463e43…, not the registered a7c0ed43…` |
+| **O** | a newline inside `BASE` | printed nowhere, so unguarded | **exit 2**, `a path binding contains a non-printable character and would inject lines into the record it is printed into` |
+| **P** | a `# … pistol-solver …` COMMENT in `crates/pistol-engine/Cargo.toml` | **exit 2**, `2 Cargo.toml files … 2 or more means an edge` — a RUN VOID naming an edge that does not exist | **exit 0**, CONFIRMED; the comment is noted under "build-reaching paths outside the solver also moved" and adjudicates nothing |
+| **Q** | a real `[dependencies."pistol-solve\u0072"]` edge, lock re-resolved | the count returns **1** — INVISIBLE; the block proceeded and H1-a caught it at exit 1, in a bucket §3.2 said was exit 2 | **exit 1**, `p = 0 REFUTED — pistol-solver IS in pistol-cli's resolved normal-edge graph; run 'cargo tree …' for the reverse-dependency path`, before any build |
+
+**ARMS P AND Q ARE THE CRITERION THE DEFECT CLASS CANNOT PRESERVE.** On the same two inputs the old
+adjudicator and the new one give *opposite* answers in *both* directions: P is a false refusal the
+count produced and the graph does not; Q is a real edge the graph catches and the count cannot see.
+At Q's revision the substring attestation returns exactly one file — the solver's own manifest —
+while `cargo tree -i` returns
+
+```
+pistol-solver v0.0.1 (…/crates/pistol-solver)
+└── pistol-cli v0.0.1 (…/crates/pistol-cli)      exit 0
+```
+
+**ONE ARM MISMATCHED FIRST AND THE REASON IS RECORDED, because it is a finding about the harness
+rather than about the block.** My first ARM Q added the manifest edge WITHOUT re-resolving
+`Cargo.lock`, and the block exited **2** with `cargo could not resolve pistol-cli's normal-edge
+graph … the p = 0 attestation was not taken` — `--locked` refusing a manifest the lockfile does not
+reflect. That is the block behaving correctly and the arm being wrong: *"cargo could not answer"*
+and *"there is no edge"* are two reasons with two refusals, exactly as §2.2 registers, and the arm
+had constructed the first while claiming to test the second. Re-run with the lock re-resolved, it
+gives exit 1. **A refusal arm that fires for the wrong reason is indistinguishable from one that
+fires for the right one unless the message is read** — §7.3's own sentence, earning its place a
+second time.
 
 ## 8. What this document does NOT license
 
