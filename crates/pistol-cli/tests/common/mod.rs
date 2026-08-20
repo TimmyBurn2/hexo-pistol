@@ -30,12 +30,54 @@ pub fn repo(relative: &str) -> PathBuf {
     repo_root().join(relative)
 }
 
+/// Remove scratch directories left behind by EARLIER test processes.
+///
+/// Nothing ever cleaned these. A `Drop` guard is the wrong shape — a failing
+/// test's output is the first thing anybody wants to look at — and a test binary
+/// has no reliable teardown hook, so the directories simply accumulated: on the
+/// machine this was found on, thousands of them, on a `/tmp` that is RAM, which
+/// is the very hazard `tools/bench_delta.sh`'s own comment warns about
+/// (docs/decisions.md D-234). Swept here instead: once per process, at the front
+/// of the only function that makes one, and only for entries old enough that no
+/// live run can own one. Errors are ignored throughout — a sweep that failed a
+/// test would be worse than the litter it removes.
+fn sweep_stale_scratch() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        // Generous: the longest `cargo test --workspace` on this project is
+        // minutes, so nothing this old belongs to a process that is still going.
+        const STALE_AFTER: std::time::Duration = std::time::Duration::from_secs(6 * 60 * 60);
+        let Ok(entries) = std::fs::read_dir(std::env::temp_dir()) else {
+            return;
+        };
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            // Both suites' scratch names begin with this, and nothing else in a
+            // temp directory has any business doing so.
+            if !name.to_string_lossy().starts_with("pistol-") {
+                continue;
+            }
+            let stale = entry
+                .metadata()
+                .ok()
+                .filter(std::fs::Metadata::is_dir)
+                .and_then(|meta| meta.modified().ok())
+                .and_then(|when| when.elapsed().ok())
+                .is_some_and(|age| age > STALE_AFTER);
+            if stale {
+                let _ = std::fs::remove_dir_all(entry.path());
+            }
+        }
+    });
+}
+
 /// A fresh, empty directory for a test to write into, named after the test.
 ///
 /// Under the system temp directory rather than the repository, so nothing a test
 /// writes can reach the git index — an output that leaked into the tree would be
 /// an artifact nobody committed on purpose (CLAUDE.md rule 8).
 pub fn scratch(name: &str) -> PathBuf {
+    sweep_stale_scratch();
     // Tests in one binary share a process and run in parallel, so the process id
     // alone is not unique: two calls with the same name would race, one removing
     // the directory the other is writing into.
