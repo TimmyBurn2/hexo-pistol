@@ -92,8 +92,19 @@ esac
 [ "$LINES" -ge 1 ] || fail "the inverted tree for '$CRATE' is empty, which the readability \
 probe should have made impossible"
 
+# CARGO PRINTS ABSOLUTE PATHS, AND THE CALLER'S WORKSPACE IS OFTEN A `mktemp`
+# CLONE — so printing the tree verbatim puts a per-run directory name into a
+# record that a pre-registration requires to be byte-identical across
+# replications. That is the same defect class as a `diff -u` header leaking its
+# `mktemp` paths, and it would void every replicated run rather than only a
+# failing one. Caught by this script's own test suite on its first execution.
+# Bash substring replacement, not `sed`: the root is a path, and a path is not a
+# regular expression.
+ROOT_ABS="$(cd "$ROOT" && pwd)" || fail "cannot canonicalise the workspace root $ROOT"
+TREE_PRINT="${TREE//"$ROOT_ABS"/<workspace>}"
+
 printf 'solver_edge_check: inverted normal-edge tree for %s (%s lines)\n' "$CRATE" "$LINES"
-printf '%s\n' "$TREE" | sed 's/^/solver_edge_check:   /'
+printf '%s\n' "$TREE_PRINT" | sed 's/^/solver_edge_check:   /'
 
 if [ "$LINES" -eq 1 ]; then
 	echo "solver_edge_check: NO normal reverse-dependency on $CRATE anywhere in the workspace"
