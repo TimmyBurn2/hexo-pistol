@@ -13,12 +13,20 @@
 //! # The classes NEST, and membership is conditioned on LIVENESS
 //!
 //! ```text
-//! completed(side)   own == WINDOW_LEN   ⊂ hot(side)
-//! win_in_one_ply    own == 5            ⊂ hot(side)
-//! hot(side)         own >= 4
-//! live_at(Three)    own == 3            disjoint from hot
-//! live_at(Two)      own == 2            disjoint from hot
+//! completed(side)   own == WINDOW_LEN               ⊂ hot(side)
+//! win_in_one_ply    own == WINDOW_LEN - 1       (5) ⊂ hot(side)
+//! hot(side)         own >= WINDOW_LEN - TURN_STONES (4)
+//! live_at(Three)    own == 3                        disjoint from hot
+//! live_at(Two)      own == 2                        disjoint from hot
 //! ```
+//!
+//! The two counts in the middle are WRITTEN AS THEY ARE DERIVED and not as 4
+//! and 5, because D-243's flip clause is `WIN_LEN` or `TURN_STONES` and those
+//! are exactly the two numbers that move when it fires. Four is a turn's stones
+//! short of six because a turn FILLS at most that many empties, which is the
+//! counting identity the whole theorem is, and five is one stone short of six.
+//! The count-2 and count-3 labels are the classes' own names and move with
+//! nothing (docs/decisions.md D-243, D-262).
 //!
 //! Every row above means "**live for that side** AND that own count", i.e.
 //! `own == k && opp == 0`. A window holding four own stones and one opponent
@@ -34,12 +42,39 @@
 //! `opp == 0` and an opponent removal needs `opp >= 1`, which is why the bound
 //! is **two set operations per window per stone** and not four.
 
+use pistol_core::TURN_STONES;
 use pistol_core::window::{WINDOW_LEN, Window};
 
 use crate::state::THREAT_DESYNC;
 
 /// How many classes are maintained per side.
 pub(crate) const CLASS_COUNT: usize = 5;
+
+/// The own-stone count at which a window is HOT: a whole turn's stones short of
+/// the win length.
+///
+/// D-243's counting identity, not a tuned threshold — a window at this count
+/// has at most `TURN_STONES` empties and a turn places `TURN_STONES` stones, so
+/// its owner on the move fills it.
+const HOT_MIN: u32 = WINDOW_LEN - TURN_STONES;
+
+/// The own-stone count at which a SINGLE stone completes the window.
+const WIN_IN_ONE_PLY: u32 = WINDOW_LEN - 1;
+
+// The assert that is not vacuous, in `pistol_core::window`'s idiom. Both
+// constants above are DERIVED, so an assert restating a definition would pin
+// nothing; these are claims about the CLASSES. First: the greatest live count
+// this module maintains — three — stays BELOW hot, or the doc's "disjoint from
+// hot" is false and one window is in two sets that are supposed to be apart.
+// Second: exactly ONE count separates hot from a win in one ply, which is what
+// makes the sets nest the way the table above says. Both are claims about
+// `WIN_LEN` against `TURN_STONES`, and both fail if D-243's flip clause fires
+// without this module being revisited, which is the whole point of writing them
+// down here (docs/decisions.md D-262).
+const _: () = assert!(
+    3 < HOT_MIN && WIN_IN_ONE_PLY == HOT_MIN + 1,
+    "hot must sit above every maintained live count and one stone below the win"
+);
 
 /// One maintained class.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -48,9 +83,9 @@ pub(crate) enum Class {
     LiveTwo,
     /// Live with exactly three own stones.
     LiveThree,
-    /// Live with at least four own stones — D-243's HOT.
+    /// Live with at least [`HOT_MIN`] own stones — D-243's HOT.
     Hot,
-    /// Live with exactly five own stones — D-243's WIN-IN-ONE-PLY.
+    /// Live with exactly [`WIN_IN_ONE_PLY`] own stones — D-243's WIN-IN-ONE-PLY.
     WinInOnePly,
     /// Every cell own: the window is a completed run of [`WINDOW_LEN`].
     Completed,
@@ -105,10 +140,10 @@ impl ClassSet {
         if own == 3 {
             bits |= Class::LiveThree.bit();
         }
-        if own >= 4 {
+        if own >= HOT_MIN {
             bits |= Class::Hot.bit();
         }
-        if own == 5 {
+        if own == WIN_IN_ONE_PLY {
             bits |= Class::WinInOnePly.bit();
         }
         if own == WINDOW_LEN {
