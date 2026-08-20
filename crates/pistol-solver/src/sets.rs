@@ -71,9 +71,22 @@ const WIN_IN_ONE_PLY: u32 = WINDOW_LEN - 1;
 // `WIN_LEN` against `TURN_STONES`, and both fail if D-243's flip clause fires
 // without this module being revisited, which is the whole point of writing them
 // down here (docs/decisions.md D-262).
+//
+// THE THIRD CONJUNCT GUARDS THE DERIVATION AND NOT THE VALUE, and it is here
+// because the first two do not. Re-spell `HOT_MIN` as `WIN_IN_ONE_PLY - 1` and
+// nothing moves today — it is still 4 — but at `TURN_STONES = 3` the first two
+// read `3 < 4 && 5 == 5` and PASS while the hot threshold stays at 4 where
+// D-243's counting identity says it must become 3: the flip clause fires
+// silently, which is the one outcome this assert exists to prevent. The
+// counting identity itself is `HOT_MIN + TURN_STONES == WINDOW_LEN` — a turn's
+// stones fill a hot window's slack exactly — and stating it holds under ANY
+// spelling of `HOT_MIN`. At the constants as they stand it restates the
+// definition above and pins nothing; its whole content is that it survives a
+// re-derivation and fails when the flip fires (docs/decisions.md D-262).
 const _: () = assert!(
-    3 < HOT_MIN && WIN_IN_ONE_PLY == HOT_MIN + 1,
-    "hot must sit above every maintained live count and one stone below the win"
+    3 < HOT_MIN && WIN_IN_ONE_PLY == HOT_MIN + 1 && HOT_MIN + TURN_STONES == WINDOW_LEN,
+    "hot must sit above every maintained live count, one stone below the win, and a turn's \
+     stones short of it"
 );
 
 /// One maintained class.
