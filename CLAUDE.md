@@ -129,7 +129,10 @@ A pre-registration states what its governed run COSTS — wall time, operator at
 machine hours — so the proportion between the document and the run is visible on the
 document's own face. Where the run is cheap, doubt about the instrument is answered by
 REPLICATION and by a SECOND INSTRUMENT whose agreement criterion is registered before
-either runs, never by a margin derived to defend a single sample. A derived margin is
+either runs, never by a margin derived to defend a single sample. A registered
+agreement criterion carries a REGISTERED CONSEQUENCE: the pre-registration states,
+before either instrument runs, what DISAGREEMENT does to the verdict, or the criterion
+leaves standing the after-the-numbers decision it exists to forbid. A derived margin is
 the instrument of a measurement that cannot be taken again, and it is the wrong
 instrument for a workload measured in seconds. Neither this rule nor the dry-run rule
 is mechanized, and neither catches a run whose answer is already known before it is
