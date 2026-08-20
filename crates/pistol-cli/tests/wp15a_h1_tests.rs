@@ -633,6 +633,47 @@ fn a_binding_holding_a_newline_is_refused_before_it_reaches_the_record() {
     );
 }
 
+/// THE DESTRUCTIVE ONE. `SUBJECT_PATH` is the only binding this instrument
+/// `rm -rf`s, and the removal runs inside a subshell that has `cd`-ed into the
+/// pristine clone — which does not contain an ABSOLUTE path. A red-team drove an
+/// absolute value that lay inside the real repository through every guard and
+/// watched it delete the LIVE working tree, with the refusal that fired naming a
+/// git pathspec error and never a deletion.
+#[test]
+fn an_absolute_subject_path_is_refused_before_anything_is_removed() {
+    let f = fixture("h1-abspath", None);
+    let absolute = f.root.join("crates/subject").display().to_string();
+    let ran = f.run(&[("SUBJECT_PATH", &absolute)]);
+    assert_eq!(
+        ran.status.code(),
+        Some(2),
+        "an absolute SUBJECT_PATH voids the run\nstdout: {}\nstderr: {}",
+        out(&ran),
+        err(&ran)
+    );
+    assert!(
+        err(&ran).contains("must be a repository-relative path"),
+        "the refusal names the reason: {}",
+        err(&ran)
+    );
+    assert!(
+        f.root.join("crates/subject/src/lib.rs").exists(),
+        "and nothing was removed from the tree the binding pointed at"
+    );
+}
+
+#[test]
+fn a_traversing_subject_path_is_refused() {
+    let f = fixture("h1-traverse", None);
+    let ran = f.run(&[("SUBJECT_PATH", "crates/../../elsewhere")]);
+    assert_eq!(ran.status.code(), Some(2), "stdout: {}", out(&ran));
+    assert!(
+        err(&ran).contains("must be a repository-relative path"),
+        "{}",
+        err(&ran)
+    );
+}
+
 #[test]
 fn an_unset_binding_is_a_named_refusal_and_never_a_default() {
     let f = fixture("h1-unset", None);

@@ -99,6 +99,20 @@ cd "$REPO" || refuse "cannot enter the repository root $REPO"
 case "$SNAPSHOT_REL" in
 /* | *..*) refuse "SNAPSHOT_REL must be a path inside the repository, not $SNAPSHOT_REL" ;;
 esac
+# SUBJECT_PATH IS THE ONE BINDING THIS SCRIPT `rm -rf`s, AND IT WAS THE ONE WITHOUT
+# THIS GUARD. The removal runs inside `( cd "$PRISTINE/repo" && rm -rf -- … )`, and
+# a `cd` does not contain an ABSOLUTE path: an absolute SUBJECT_PATH that happens
+# to lie inside the real repository passes every check above it — `git diff
+# --name-only -- <abs>` resolves it happily — and then deletes the operator's
+# WORKING TREE. Reproduced by a red-team against the registered shape: the
+# fixture's `crates/subject` was removed from the live checkout and the refusal
+# that fired named a git pathspec error, never a deletion. `..` was already caught
+# by git refusing the pathspec; absolute was not caught by anything.
+case "$SUBJECT_PATH" in
+/* | *..*) refuse "SUBJECT_PATH must be a repository-relative path, not $SUBJECT_PATH — it is \
+the one binding this instrument removes, and an absolute value escapes the clone" ;;
+'') refuse "SUBJECT_PATH is empty" ;;
+esac
 [ -x "$REPO/$SNAPSHOT_REL" ] || refuse "the snapshot instrument is not executable: $REPO/$SNAPSHOT_REL"
 [ -x "$EDGE_CHECK" ] || refuse "the edge-check instrument is not executable: $EDGE_CHECK"
 
