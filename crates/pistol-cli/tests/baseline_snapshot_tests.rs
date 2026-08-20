@@ -254,6 +254,7 @@ fn pwned_path(dir: &Path) -> PathBuf {
 /// | `emptypv`   | reports a score with an empty `pv` after it                   |
 /// | `shortbest` | answers one `bestmove` fewer than there are positions         |
 /// | `corpusrc`  | fails the CORPUS session with a nonzero status                |
+/// | `backward`  | reports depth 2 and then depth 1, so the ladder goes SHALLOWER |
 fn stub_engine(name: &str) -> PathBuf {
     stub_engine_in(&scratch(name), "stub-engine")
 }
@@ -294,6 +295,11 @@ if grep -q '^go depth_turns ' <<<"$input"; then
 	fastcap) echo "$rung"; exit 124 ;;
 	depthx)
 		echo 'info depth_turns x seldepth 1 nodes 1843 nps 1000 time 1 hashfull 0 score cp 308 pv 0,0/0,1'
+		exit 0 ;;
+	backward)
+		echo 'info depth_turns 2 seldepth 2 nodes 3200 nps 1000 time 2 hashfull 0 score cp 291 pv 0,0/0,1'
+		echo "$rung"
+		echo 'bestmove 0,0/0,1'
 		exit 0 ;;
 	*)
 		echo "$rung"
@@ -1015,7 +1021,7 @@ fn a_corpus_name_carrying_a_newline_cannot_write_lines_into_the_record() {
     .no_out()
     .refusal();
     assert!(
-        stderr.contains("control character in its file name"),
+        stderr.contains("outside printable ASCII in its file name"),
         "the refusal names what it found: {stderr}"
     );
 }
@@ -1072,5 +1078,107 @@ fn a_budget_spelling_the_engine_would_read_differently_is_refused() {
         invariant(&record).contains("budget nodes 50000 OVERRIDE"),
         "an explicit budget is recorded as an override:\n{}",
         invariant(&record)
+    );
+}
+
+#[test]
+fn an_engine_this_script_cannot_read_is_refused_rather_than_digested_as_nothing() {
+    // `echo "binary_sha256 $(sha256sum "$BINARY" | ...)"` DISCARDS the
+    // substitution's status, because it is an argument: an engine that is
+    // executable and not readable (mode 0111) wrote the line with nothing after
+    // it, exited 0, and carried the COMPLETE kind token. `binary_sha256` is the
+    // one line separating a debug-build record from a release one, so two such
+    // records were BYTE-IDENTICAL in their whole invariant block — REPRODUCED at
+    // ccba146 with two engines whose digests differ.
+    let dir = scratch("engine-unreadable");
+    let engine = dir.join("engine");
+    std::fs::copy(env!("CARGO_BIN_EXE_pistol"), &engine).expect("the engine copies");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&engine, std::fs::Permissions::from_mode(0o111))
+            .expect("the copy is executable and not readable");
+    }
+    let run = Run::new("engine-unreadable-run", &engine);
+    let stderr = run.refusal();
+    assert!(
+        stderr.contains("cannot read the engine at"),
+        "the refusal names the engine it could not digest: {stderr}"
+    );
+    assert!(
+        stderr.contains("states nothing about which bytes ran"),
+        "and says why a missing digest is fatal to a record: {stderr}"
+    );
+    assert!(
+        !run.out.as_ref().expect("this run names a record").exists(),
+        "and no record is written at all"
+    );
+}
+
+#[test]
+fn a_corpus_name_carrying_a_unicode_separator_is_refused_like_an_ascii_newline() {
+    // The sibling of the newline case, and the one the guard MISSED: U+2028 and
+    // U+0085 are control characters by every Unicode reading, but the guard was
+    // `[[:cntrl:]]` under the `LC_ALL=C` the script pins, and that class is
+    // ASCII — so the ASCII newline was refused while these two walked into the
+    // record's invariant block (REPRODUCED at ccba146, both writing a `corpus`
+    // line and exiting 0 with the COMPLETE kind token).
+    let (early, late) = band_entries();
+    for (label, name) in [
+        ("u2028", "mini\u{2028}sep.txt"),
+        ("u0085", "mini\u{0085}nel.txt"),
+    ] {
+        let dir = scratch(&format!("snapshot-unicode-name-{label}"));
+        let corpus = dir.join(name);
+        std::fs::write(&corpus, format!("# unicode\n{early}\n{late}\n"))
+            .expect("the test corpus writes");
+        let stderr = Run::new(
+            &format!("snapshot-unicode-name-run-{label}"),
+            Path::new(env!("CARGO_BIN_EXE_pistol")),
+        )
+        .corpus(corpus)
+        .no_out()
+        .refusal();
+        assert!(
+            stderr.contains("outside printable ASCII in its file name"),
+            "{label}: the refusal names what it found: {stderr}"
+        );
+    }
+}
+
+#[test]
+fn the_invariant_block_states_the_ladder_cap_the_kind_token_depends_on() {
+    // D-232's argument for NOT giving the cap a provenance token of its own is
+    // that the cap's value is in the block for a reader to see. That argument
+    // needs the line to exist, and nothing checked that it did: a mutant
+    // deleting it survived the whole suite. The value is a NON-DEFAULT one, so a
+    // mutant nailing the line to a constant dies here too.
+    let record = Run::new(
+        "snapshot-ladder-cap-line",
+        Path::new(env!("CARGO_BIN_EXE_pistol")),
+    )
+    .ladder_cap_s("25")
+    .record();
+    let block = invariant(&record);
+    assert!(
+        block.lines().any(|line| line == "ladder_cap_s 25"),
+        "the invariant block states the cap the kind token depends on:\n{block}"
+    );
+}
+
+#[test]
+fn a_ladder_that_reports_a_shallower_depth_than_one_already_recorded_is_refused() {
+    // Iterative deepening only goes deeper. An engine re-reporting a shallower
+    // depth leaves `last` below depths the block ALREADY STATES, so the record
+    // contradicts itself one line after stating them — and the refusal written
+    // for it was unbound: a mutant deleting the comparison survived.
+    let stub = stub_engine("snapshot-ladder-backward");
+    let stderr = Run::new("snapshot-ladder-backward-run", &stub)
+        .ladder_depth("2")
+        .mode("backward")
+        .refusal();
+    assert!(
+        stderr.contains("reported depth 1 after depth 2"),
+        "the refusal names both depths: {stderr}"
     );
 }

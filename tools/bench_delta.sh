@@ -116,6 +116,28 @@ HANDSHAKE_TIMEOUT=60
 
 fail() { printf 'bench_delta: FAIL: %s\n' "$*" >&2; exit 1; }
 
+# A DIGEST THIS SCRIPT COULD NOT TAKE IS A NAMED REFUSAL. The sibling spelling in
+# tools/baseline_snapshot.sh dropped `sha256sum`'s status into an `echo` argument
+# and printed an EMPTY digest; here the assignment let `set -e` kill the run with
+# NO `bench_delta: FAIL:` line at all, which is rule 3's other failure — a death
+# that names nothing. A side that is executable and not readable (mode 0111) is
+# exactly that case, and it is the one the same-digest refusal below depends on:
+# two unreadable sides would both have digested to the empty string and been
+# refused as "the same binary", which is a wrong diagnosis. Sets a global rather
+# than printing, because a `fail` in a command substitution exits the subshell.
+DIGEST=""
+digest() { # path what -> sets DIGEST
+	local line
+	line="$(sha256sum -- "$1" 2>/dev/null)" ||
+		fail "cannot read $2 at $1 to digest it — this harness prints the digest of every byte it measured, and a run whose provenance it cannot state is not one"
+	DIGEST="${line%% *}"
+	case "$DIGEST" in
+	*[!0-9a-f]* | "") fail "sha256sum answered \`$line\` for $2 at $1, which is not a digest" ;;
+	esac
+	[ "${#DIGEST}" -eq 64 ] ||
+		fail "sha256sum answered a ${#DIGEST}-character digest for $2 at $1"
+}
+
 [ "$#" -ge 2 ] || fail "usage: tools/bench_delta.sh SIDE_A SIDE_B [REPS] (a SIDE is an executable path, or rev:<commit-ish>)"
 SIDE_BASE="$1"; SIDE_CAND="$2"; REPS="${3:-5}"
 [ "$REPS" -ge 5 ] 2>/dev/null || fail "REPS must be an integer >= 5 (pre-registered), got: $REPS"
@@ -132,6 +154,16 @@ WORK="$(mktemp -d)"
 # it, which is not a property to leave resting on an accident.
 WORKTREES=()
 cleanup() {
+	# THE STATUS THE SCRIPT WAS ALREADY EXITING WITH, taken before anything in
+	# here can overwrite it. Bash exits with the status of the LAST command run
+	# in an EXIT trap, so the `git worktree list` below — a pipeline, under
+	# `pipefail`, outside a git directory — turned a COMPLETED bench that had
+	# already printed its verdict into exit 128. A verdict printed and a run
+	# failed are the two things this script's exit status exists to tell apart,
+	# and a housekeeping listing may decide neither (REPRODUCED at ccba146: a
+	# stub-driven run in a non-git directory printed `bench_delta: done —` and
+	# exited 128).
+	local rc=$?
 	# The in-line removal in `resolve_side` is the mechanism; this is the
 	# backstop for a build that died half way (docs/decisions.md D-217, D-219:
 	# a round closes with `git worktree list` showing one checkout).
@@ -149,9 +181,18 @@ cleanup() {
 	rm -rf "$WORK"
 	git worktree prune >/dev/null 2>&1 || true
 	# The invariant D-217 and D-219 close their rounds on, printed rather than
-	# asserted, so a report can cite this script's own output for it.
-	echo "bench_delta: worktrees at exit:"
-	git worktree list | sed 's/^/bench_delta:   /'
+	# asserted, so a report can cite this script's own output for it. A listing
+	# that cannot be taken says so — rule 3 wants the reason named, and a
+	# cleanup WARNING is the right loudness for it, because the measurement
+	# above is unaffected either way.
+	local listing
+	if listing="$(git worktree list 2>&1)"; then
+		echo "bench_delta: worktrees at exit:"
+		printf '%s\n' "$listing" | sed 's/^/bench_delta:   /'
+	else
+		printf 'bench_delta: WARNING: `git worktree list` could not be taken, so this run states nothing about worktrees at exit: %s\n' "$listing" >&2
+	fi
+	return "$rc"
 }
 trap cleanup EXIT
 
@@ -225,8 +266,8 @@ resolve_side() { # label side -> sets RESOLVED
 resolve_side base "$SIDE_BASE"; BASE="$RESOLVED"
 resolve_side cand "$SIDE_CAND"; CAND="$RESOLVED"
 
-BASE_SHA="$(sha256sum "$BASE" | cut -d' ' -f1)"
-CAND_SHA="$(sha256sum "$CAND" | cut -d' ' -f1)"
+digest "$BASE" "the baseline side"; BASE_SHA="$DIGEST"
+digest "$CAND" "the candidate side"; CAND_SHA="$DIGEST"
 echo "bench_delta: baseline  $SIDE_BASE -> $BASE ($BASE_SHA)"
 echo "bench_delta: candidate $SIDE_CAND -> $CAND ($CAND_SHA)"
 [ "$BASE_SHA" != "$CAND_SHA" ] ||
@@ -234,9 +275,9 @@ echo "bench_delta: candidate $SIDE_CAND -> $CAND ($CAND_SHA)"
 
 # The instrument, by the bytes ACTUALLY ON DISK — never `git show`, which would
 # attest the committed bytes while the run reads the working tree's.
-echo "bench_delta: instrument $CONFIG $(sha256sum "$CONFIG" | cut -d' ' -f1)"
-echo "bench_delta: instrument $WEIGHTS $(sha256sum "$WEIGHTS" | cut -d' ' -f1)"
-echo "bench_delta: instrument $FIXTURE $(sha256sum "$FIXTURE" | cut -d' ' -f1)"
+digest "$CONFIG" "the instrument config"; echo "bench_delta: instrument $CONFIG $DIGEST"
+digest "$WEIGHTS" "the instrument weights"; echo "bench_delta: instrument $WEIGHTS $DIGEST"
+digest "$FIXTURE" "the bench fixture"; echo "bench_delta: instrument $FIXTURE $DIGEST"
 
 # THE HANDSHAKE GUARD. The `id` lines are emitted only in reply to the `pistol`
 # verb, so this is one extra launch per side.

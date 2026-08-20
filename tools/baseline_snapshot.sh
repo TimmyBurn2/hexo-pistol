@@ -186,6 +186,30 @@ OUT=""
 
 fail() { printf 'baseline_snapshot: FAIL: %s\n' "$*" >&2; exit 1; }
 
+# A DIGEST THIS SCRIPT COULD NOT TAKE IS A REFUSAL, NEVER AN EMPTY FIELD.
+# `echo "binary_sha256 $(sha256sum "$BINARY" | cut -d' ' -f1)"` discards the
+# substitution's status — it is an ARGUMENT — so an engine that is executable and
+# not readable (mode 0111) wrote `binary_sha256 ` with nothing after it, exited 0,
+# and carried the COMPLETE kind token; and since `binary_sha256` is the ONLY line
+# separating a debug-build record from a release one (see `--binary` above), two
+# such records were BYTE-IDENTICAL in their whole invariant block. REPRODUCED.
+# The value is taken into a variable BEFORE the block is written, because a
+# `fail` inside a command substitution exits only the subshell — the same reason
+# `argument` and `score_checked` set globals — and the 64 hex digits are checked
+# so a `sha256sum` that answered something else cannot become a digest either.
+DIGEST=""
+digest() { # path what -> sets DIGEST
+	local line
+	line="$(sha256sum -- "$1" 2>/dev/null)" ||
+		fail "cannot read $2 at $1 to digest it — a record that states no digest for it states nothing about which bytes ran"
+	DIGEST="${line%% *}"
+	case "$DIGEST" in
+	*[!0-9a-f]* | "") fail "sha256sum answered \`$line\` for $2 at $1, which is not a digest" ;;
+	esac
+	[ "${#DIGEST}" -eq 64 ] ||
+		fail "sha256sum answered a ${#DIGEST}-character digest for $2 at $1"
+}
+
 # An EMPTY value is not a value (CLAUDE.md rule 3). `--out ''` used to fall back
 # to stdout in silence, which is the skip-with-default rule 3 forbids, in the one
 # flag whose whole job is to say where the record goes.
@@ -236,9 +260,18 @@ count --ladder-cap-s "$LADDER_CAP_S"
 # `position` line with the record still exiting 0 and carrying the COMPLETE kind
 # token (REPRODUCED, docs/decisions.md D-232). `${x##*/}` and not `basename`,
 # because a command substitution strips the trailing newline the refusal is for.
+# THE CLASS IS AN ALLOW-LIST AND NOT `[[:cntrl:]]`, because that class is as wide
+# as the LOCALE says and this script pins `LC_ALL=C` above: under C it is ASCII,
+# so LF was refused while U+2028 and U+0085 — both control characters by every
+# Unicode reading, both bytes a file name may carry — walked straight through the
+# guard into the block. Inverting it fixes the direction of the locale's effect:
+# only printable ASCII is admitted, so the C pin now makes the refusal as WIDE as
+# it can be, and a locale calling fewer characters printable can only refuse more.
+# The named cost: a corpus whose file name is not printable ASCII is refused,
+# which is what an ASCII record's provenance line can honestly carry.
 for named in "$CORPUS" "$OPENINGS"; do
 	case "${named##*/}" in
-	*[[:cntrl:]]*) fail "the corpus path \`$named\` has a control character in its file name, and its name is written into the record's invariant block" ;;
+	*[![:print:]]*) fail "the corpus path \`$named\` has a character outside printable ASCII in its file name, and its name is written into the record's invariant block" ;;
 	esac
 done
 # The engine, resolved to the file that will ACTUALLY be exec'd before anything
@@ -262,6 +295,15 @@ fi
 [ -x "$BINARY" ] ||
 	fail "the engine named $BINARY_NAMED is not executable"
 BINARY="$(realpath -- "$BINARY")"
+
+# Every digest the invariant block states, taken HERE — before the engine is
+# launched and before a line of the record is written. An input this script
+# cannot read is a refusal that costs nothing, and never a hole discovered by a
+# reader of the record.
+digest "$BINARY" "the engine"; BINARY_SHA256="$DIGEST"
+digest "$CONFIG" "the config"; CONFIG_SHA256="$DIGEST"
+digest "$CORPUS" "the corpus"; CORPUS_SHA256="$DIGEST"
+digest "$OPENINGS" "the opening corpus"; OPENINGS_SHA256="$DIGEST"
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -377,11 +419,11 @@ if [ -n "$(git status --porcelain 2>/dev/null || true)" ]; then TREE=dirty; else
 {
 	echo "schema $SCHEMA"
 	echo "revision $REVISION"
-	echo "binary_sha256 $(sha256sum "$BINARY" | cut -d' ' -f1)"
-	echo "config $CONFIG $(sha256sum "$CONFIG" | cut -d' ' -f1)"
+	echo "binary_sha256 $BINARY_SHA256"
+	echo "config $CONFIG $CONFIG_SHA256"
 	sed 's/^id /engine_id /' "$WORK/id"
-	echo "corpus $(basename "$CORPUS") sha256 $(sha256sum "$CORPUS" | cut -d' ' -f1) positions $COUNT"
-	echo "openings $(basename "$OPENINGS") sha256 $(sha256sum "$OPENINGS" | cut -d' ' -f1)"
+	echo "corpus $(basename "$CORPUS") sha256 $CORPUS_SHA256 positions $COUNT"
+	echo "openings $(basename "$OPENINGS") sha256 $OPENINGS_SHA256"
 	echo "budget nodes $NODES $BUDGET_PROVENANCE"
 	echo "ladder_depth $LADDER_DEPTH"
 	echo "ladder_cap_s $LADDER_CAP_S"

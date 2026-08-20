@@ -29,6 +29,12 @@
 //! whose handshakes differ in a chosen field, which the real engine cannot be
 //! asked for. `bench_delta.sh` takes each side as a path to an executable, so
 //! nothing here patches anything.
+//!
+//! # RULE9-JUSTIFICATION: one script's control flow, over one pre-registration.
+//! Every test here is the same claim — that this harness reaches a verdict or
+//! refuses by name, and never dies saying nothing — and each needs the same two
+//! stubs and the same scratch tree. Splitting them would put the stubs in one
+//! file and the claims that depend on their exact handshake in another.
 
 mod common;
 
@@ -86,6 +92,23 @@ exit 0
 /// A git repository holding copies of exactly the paths `bench_delta.sh` reads,
 /// with `fixture` as the bench fixture's contents.
 fn scratch_repo(name: &str, fixture: &str) -> PathBuf {
+    let root = scratch_tree(name, fixture);
+    let ran = Command::new("git")
+        .current_dir(&root)
+        .args(["init", "-q"])
+        .output()
+        .expect("git runs");
+    assert!(
+        ran.status.success(),
+        "git init: {}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
+    root
+}
+
+/// The same tree with NO repository in it — the case the exit trap has to
+/// survive, since every `git` call the script makes lives in `cleanup`.
+fn scratch_tree(name: &str, fixture: &str) -> PathBuf {
     let root = scratch(name).join("repo");
     for dir in ["tools", "configs", "crates/pistol-cli/tests/fixtures"] {
         std::fs::create_dir_all(root.join(dir)).expect("the scratch tree is created");
@@ -102,19 +125,6 @@ fn scratch_repo(name: &str, fixture: &str) -> PathBuf {
         fixture,
     )
     .expect("the bench fixture writes");
-    let git = |args: &[&str]| {
-        let ran = Command::new("git")
-            .current_dir(&root)
-            .args(args)
-            .output()
-            .expect("git runs");
-        assert!(
-            ran.status.success(),
-            "git {args:?}: {}",
-            String::from_utf8_lossy(&ran.stderr)
-        );
-    };
-    git(&["init", "-q"]);
     root
 }
 
@@ -247,5 +257,79 @@ fn bench_delta_refuses_a_fixture_with_no_positions_by_name() {
     assert!(
         out.contains("bench_delta: FAIL: the fixture states no positions"),
         "and the refusal is the NAMED one, not a bare exit 1:\n{out}"
+    );
+}
+
+#[test]
+fn a_bench_that_printed_its_verdict_exits_0_even_when_the_worktree_listing_cannot_be_taken() {
+    // `cleanup` is the EXIT trap and its last command was
+    // `git worktree list | sed …` — a pipeline, under `pipefail`, whose status
+    // becomes the script's. Outside a git directory that is 128, so a COMPLETED
+    // bench that had already printed `bench_delta: done —` exited 128
+    // (REPRODUCED at ccba146). A verdict printed and a run failed are the two
+    // things this exit status exists to tell apart, and a housekeeping listing
+    // may decide neither.
+    let root = scratch_tree("bench-delta-nogit", &two_band_fixture());
+    let stubs = scratch("bench-delta-nogit-stubs");
+    let base = stub_engine(&stubs, "engine-a", "0.0.1");
+    let cand = stub_engine(&stubs, "engine-b", "0.0.1");
+    let mut body = std::fs::read_to_string(&cand).expect("the stub reads");
+    body.push_str("# a comment, so the two sides are not the same file\n");
+    std::fs::write(&cand, body).expect("the stub rewrites");
+
+    let ran = bench_delta(&root, &base, &cand);
+    let out = format!(
+        "{}{}",
+        String::from_utf8_lossy(&ran.stdout),
+        String::from_utf8_lossy(&ran.stderr)
+    );
+    assert!(
+        out.contains("bench_delta: done —"),
+        "the run reaches its verdict:\n{out}"
+    );
+    assert!(
+        ran.status.success(),
+        "and a listing it could not take does not change that:\n{out}"
+    );
+    assert!(
+        out.contains("WARNING: `git worktree list` could not be taken"),
+        "the listing that failed is named rather than swallowed:\n{out}"
+    );
+}
+
+#[test]
+fn a_side_this_harness_cannot_read_is_refused_by_name() {
+    // The sibling of tools/baseline_snapshot.sh's empty-digest defect, one
+    // spelling over: here `BASE_SHA="$(sha256sum "$BASE" | …)"` let `set -e`
+    // kill the run with NO `bench_delta: FAIL:` line at all — rule 3's other
+    // failure, a death that names nothing (REPRODUCED at ccba146, exit 128 with
+    // only `sha256sum: … Permission denied` on stderr). An executable that is
+    // not readable is exactly the case, and it matters because two unreadable
+    // sides would both have digested to the empty string and been refused as
+    // "the same binary", which is a wrong diagnosis.
+    let root = scratch_repo("bench-delta-unreadable", &two_band_fixture());
+    let stubs = scratch("bench-delta-unreadable-stubs");
+    let base = stub_engine(&stubs, "engine-a", "0.0.1");
+    let cand = stub_engine(&stubs, "engine-b", "0.0.2");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&base, std::fs::Permissions::from_mode(0o111))
+            .expect("the baseline side is executable and not readable");
+    }
+
+    let ran = bench_delta(&root, &base, &cand);
+    let out = format!(
+        "{}{}",
+        String::from_utf8_lossy(&ran.stdout),
+        String::from_utf8_lossy(&ran.stderr)
+    );
+    assert!(
+        !ran.status.success(),
+        "an undigestible side is a refusal:\n{out}"
+    );
+    assert!(
+        out.contains("bench_delta: FAIL: cannot read the baseline side at"),
+        "and the refusal is the NAMED one, naming the side:\n{out}"
     );
 }
