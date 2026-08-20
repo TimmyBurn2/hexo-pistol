@@ -1,9 +1,59 @@
-//! `pistol-solver` — RESERVED.
+//! `pistol-solver` — forcing-sequence machinery.
 //!
-//! Reserved purpose: forcing-sequence machinery — threat generation first, then
-//! threat-space search and dependency-based search, then the df-pn family. It
-//! starts life as the threat generator alone and grows only along the staged
-//! plan in docs/research/minimax_report.md.
+//! Reserved purpose: threat generation first, then threat-space search and
+//! dependency-based search, then the df-pn family. It opens here with the
+//! THREAT STATE alone and grows only along the staged plan in
+//! docs/research/minimax_report.md.
 //!
-//! This crate is intentionally empty. It carries no code until the threat
-//! generation work package opens.
+//! # What is here
+//!
+//! [`ThreatState`] is an incremental, per-window record of what each side holds
+//! — apply and undo one stone at a time — plus the ten sorted sets and the
+//! integer queries a forcing search asks of them. It composes `pistol-core` and
+//! re-implements no rule: the lattice, the win length, the window enumeration
+//! and the turn structure all come from there (CLAUDE.md rule 2). It takes one
+//! dependency and no dev-dependencies.
+//!
+//! # What is NOT here
+//!
+//! **Nothing in this crate decides a game.** The theorem it serves —
+//! docs/decisions.md D-243 — is stones-remaining conditioned and side-to-move
+//! conditioned, and both conditions live in the CALLER:
+//! [`ThreatState::can_win_this_turn`] takes the stones left as an argument
+//! rather than guessing, and [`ThreatState::unblockable_double_threat`] is a
+//! statement about hitting sets that becomes a statement about the game only
+//! under the two conditions its own doc names. A primitive that folded them in
+//! would return a mate score for the losing side in exactly the position where
+//! it matters.
+//!
+//! Nothing links this crate yet: no search, engine or binary calls it, which is
+//! deliberate for this work package (docs/decisions.md D-249).
+//!
+//! # Determinism
+//!
+//! The maintained sets are sorted `Vec<Window>` and every query hands out a
+//! sorted slice or a sorted, deduplicated `Vec<Coord>`. The window TABLE is
+//! hashed, which is legal precisely because it is never iterated on a choice
+//! path — only [`ThreatState::table_snapshot`] enumerates it, and that sorts.
+//! The hasher is splitmix64 with written-down constants and no seed state: no
+//! `RandomState`, no per-process entropy, nothing that could make two runs of
+//! the same position differ (CLAUDE.md rule 4, docs/decisions.md D-32, D-254).
+//!
+//! # Failure
+//!
+//! Being told about a stone that contradicts what this state already holds is
+//! not operator input — it means a caller's board and this state have drifted —
+//! so it panics with [`THREAT_DESYNC`] rather than returning an error nobody
+//! could handle (CLAUDE.md rule 3).
+
+pub mod cover;
+pub mod query;
+pub mod sets;
+pub mod state;
+pub mod table;
+
+pub use cover::{Cover, MinimalCover};
+pub use query::{HitBudget, LiveCount, NearHot, StonesLeft, WinWitness};
+pub use sets::Class;
+pub use state::{THREAT_DESYNC, ThreatState};
+pub use table::{WindowMasks, WindowTable};

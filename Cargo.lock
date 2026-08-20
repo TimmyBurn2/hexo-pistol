@@ -94,6 +94,9 @@ dependencies = [
 [[package]]
 name = "pistol-solver"
 version = "0.0.1"
+dependencies = [
+ "pistol-core",
+]
 
 [[package]]
 name = "proc-macro2"

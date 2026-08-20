@@ -1,0 +1,444 @@
+# pistol golden threat states, v0 — the oracle for the threat generator's whole
+# query surface (docs/decisions.md D-243, D-256).
+#
+# Pinned by SHA-256 in crates/pistol-solver/tests/threat_query_tests.rs
+# (THREAT_V0_SHA256). Editing this file without updating that constant in the
+# same commit is a red test, which is the point: a golden file that can drift
+# quietly is not golden. Pass threshold, pre-registered: every case, every
+# answer, every run. There is no partial credit on a query.
+#
+# HOW THE ANSWERS WERE OBTAINED. Every one was computed by a from-scratch
+# reference that shares only pistol-core, cross-checked on every case against an
+# independent bounding-box region scan, and then compared value for value —
+# 336 of 336 — against a reference written by a different session for the design
+# this file implements. Nothing here was read off the code it tests.
+#
+# THE POSITIONS ARE LEGAL PLY SEQUENCES. Each `plies` line is played through
+# `GameState::from_plies`, so legality, turn structure and phase come from
+# pistol-core and not from a fixture author's belief. Turn 1 is one stone at the
+# origin (rule 3), so every list starts at 0,0 — for the distant-cluster case
+# that stone is padding with a bridge out to q = 42. Padding stones sit at hex
+# distance >= WIN_LEN from every cluster cell and from each other, which is
+# exactly the condition under which no window can hold a padding stone and a
+# cluster stone at once.
+#
+# Format. One record per case; `#` to end of line is a comment. Every `expect`
+# key below is required exactly once — a record missing one is refused by name,
+# because a fixture whose expectations are silently incomplete is a fixture that
+# passes by omission (docs/decisions.md D-37).
+#
+#   case    <name>                        starts a record; the name is its identity
+#   plies   <q,r> ...                     the stones, in play order
+#   expect  <side> hot          <axis>@<q,r> ... | -    live, own >= 4
+#   expect  <side> win1         ...                     live, own == 5
+#   expect  <side> completed    ...                     own == WIN_LEN
+#   expect  <side> live3        ...                     live, own == 3
+#   expect  <side> live2        ...                     live, own == 2
+#   expect  <side> threat_cells <q,r> ... | -           empties of the hot windows
+#   expect  <side> raise_cells  <q,r> ... | -           empties of the live3 windows
+#   expect  <side> cover  <1|2> nothing | impossible | {<q,r>} {<q,r> <q,r>} ...
+#   expect  <side> canwin <1|2> none | oneply <q,r> <axis>@<q,r>
+#                                       | pair <q,r> <q,r> <axis>@<q,r>
+#   expect  state  to_move <side> phase <First|Second> stones_owed <n>
+#                  outcome ongoing | outcome win <side> turn <n>
+#   end                                   closes the record
+#
+# A `cover` or `canwin` row is read from the side that OWNS the threat: `p1
+# cover 2` is `blocking_covers(P2, Two)` — what P2 would have to play to answer
+# P1's hot windows. Keeping every row of a record about one side's threats is
+# what makes a record readable; the defender is always the other one.
+#
+# `cover` has THREE spellings because `Cover` has three variants and they are
+# not interchangeable: `nothing` is NothingToBlock, meaning there is no hot
+# window to answer; `impossible` is Impossible, meaning no cover within the
+# budget exists; a brace list is Minimal and is never empty. A fixture that
+# could not tell the first two apart could not pin the distinction the type
+# exists for.
+#
+# `canwin` carries the WITNESS WINDOW as well as the cells, because the witness
+# selection rule names it: a cell can be the single empty of more than one
+# five-window, so an implementation that picked a different window would still
+# agree on the cell.
+#
+# Axis names follow docs/decisions.md D-33 — an axis is named for the coordinate
+# that stays constant along it: ConstQ has direction (0,+1), ConstR (+1,0),
+# ConstS (+1,-1), where s = -q - r.
+
+case single_hot_window
+plies 0,0 -1,0 -5,6 1,0 2,0 1,6 3,-6 3,0
+expect p1 hot          ConstR@0,0
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstR@1,0
+expect p1 live2        ConstR@2,0
+expect p1 threat_cells 4,0 5,0
+expect p1 raise_cells  4,0 5,0 6,0
+expect p1 cover 1      {4,0} {5,0}
+expect p1 cover 2      {4,0} {5,0}
+expect p1 canwin 1     none
+expect p1 canwin 2     pair 4,0 5,0 ConstR@0,0
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        -
+expect p2 live2        -
+expect p2 threat_cells -
+expect p2 raise_cells  -
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p1 phase Second stones_owed 1 outcome ongoing
+end
+
+case overlapping_hot_windows_one_shared_cell
+plies 0,0 -1,0 -5,6 1,0 2,0 1,6 4,-6 4,0 6,0 7,6 10,-6 7,0
+expect p1 hot          ConstR@0,0 ConstR@1,0 ConstR@2,0
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstR@3,0 ConstR@4,0
+expect p1 live2        ConstR@5,0 ConstR@6,0
+expect p1 threat_cells 3,0 5,0
+expect p1 raise_cells  3,0 5,0 8,0 9,0
+expect p1 cover 1      {3,0} {5,0}
+expect p1 cover 2      {3,0} {5,0}
+expect p1 canwin 1     none
+expect p1 canwin 2     pair 3,0 5,0 ConstR@0,0
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        -
+expect p2 live2        -
+expect p2 threat_cells -
+expect p2 raise_cells  -
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p1 phase Second stones_owed 1 outcome ongoing
+end
+
+case true_double_threat
+plies 0,0 -5,6 1,-6 1,0 2,0 1,6 7,-6 3,0 0,14 -1,20 -6,26 0,20 1,20 0,26 6,14 2,20 3,20
+expect p1 hot          ConstR@-2,0 ConstR@-1,0 ConstR@0,0 ConstR@0,20
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstR@-3,0 ConstR@1,0 ConstR@1,20
+expect p1 live2        ConstR@-4,0 ConstR@2,0 ConstR@2,20
+expect p1 threat_cells -2,0 -1,0 4,0 4,20 5,0 5,20
+expect p1 raise_cells  -3,0 -2,0 -1,0 4,0 4,20 5,0 5,20 6,0 6,20
+expect p1 cover 1      impossible
+expect p1 cover 2      impossible
+expect p1 canwin 1     none
+expect p1 canwin 2     pair -2,0 -1,0 ConstR@-2,0
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        -
+expect p2 live2        -
+expect p2 threat_cells -
+expect p2 raise_cells  -
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p2 phase First stones_owed 2 outcome ongoing
+end
+
+case true_double_threat_p1_to_move
+plies 0,0 -5,6 1,-6 1,0 2,0 1,6 7,-6 3,0 0,14 -1,20 -6,26 0,20 1,20 0,26 6,14 2,20 3,20 -14,26 -14,32
+expect p1 hot          ConstR@-2,0 ConstR@-1,0 ConstR@0,0 ConstR@0,20
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstR@-3,0 ConstR@1,0 ConstR@1,20
+expect p1 live2        ConstR@-4,0 ConstR@2,0 ConstR@2,20
+expect p1 threat_cells -2,0 -1,0 4,0 4,20 5,0 5,20
+expect p1 raise_cells  -3,0 -2,0 -1,0 4,0 4,20 5,0 5,20 6,0 6,20
+expect p1 cover 1      impossible
+expect p1 cover 2      impossible
+expect p1 canwin 1     none
+expect p1 canwin 2     pair -2,0 -1,0 ConstR@-2,0
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        -
+expect p2 live2        -
+expect p2 threat_cells -
+expect p2 raise_cells  -
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p1 phase First stones_owed 2 outcome ongoing
+end
+
+case win_in_one_ply_each_side
+plies 0,0 0,8 1,8 1,0 2,0 2,8 3,8 3,0 4,0 4,8
+expect p1 hot          ConstR@-2,0 ConstR@-1,0 ConstR@0,0 ConstR@1,0
+expect p1 win1         ConstR@-1,0 ConstR@0,0
+expect p1 completed    -
+expect p1 live3        ConstR@-3,0 ConstR@2,0
+expect p1 live2        ConstR@-4,0 ConstR@3,0
+expect p1 threat_cells -2,0 -1,0 5,0 6,0
+expect p1 raise_cells  -3,0 -2,0 -1,0 5,0 6,0 7,0
+expect p1 cover 1      impossible
+expect p1 cover 2      {-1,0 5,0}
+expect p1 canwin 1     oneply -1,0 ConstR@-1,0
+expect p1 canwin 2     oneply -1,0 ConstR@-1,0
+expect p2 hot          ConstR@-2,8 ConstR@-1,8 ConstR@0,8 ConstR@1,8
+expect p2 win1         ConstR@-1,8 ConstR@0,8
+expect p2 completed    -
+expect p2 live3        ConstR@-3,8 ConstR@2,8
+expect p2 live2        ConstR@-4,8 ConstR@3,8
+expect p2 threat_cells -2,8 -1,8 5,8 6,8
+expect p2 raise_cells  -3,8 -2,8 -1,8 5,8 6,8 7,8
+expect p2 cover 1      impossible
+expect p2 cover 2      {-1,8 5,8}
+expect p2 canwin 1     oneply -1,8 ConstR@-1,8
+expect p2 canwin 2     oneply -1,8 ConstR@-1,8
+expect state  to_move p2 phase Second stones_owed 1 outcome ongoing
+end
+
+case pair_completion_win
+plies 0,0 -5,6 1,-6 1,0 3,0 1,6 7,-6 4,0
+expect p1 hot          ConstR@-1,0 ConstR@0,0
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstR@-2,0 ConstR@1,0
+expect p1 live2        ConstR@-4,0 ConstR@-3,0 ConstR@2,0 ConstR@3,0
+expect p1 threat_cells -1,0 2,0 5,0
+expect p1 raise_cells  -2,0 -1,0 2,0 5,0 6,0
+expect p1 cover 1      {2,0}
+expect p1 cover 2      {2,0} {-1,0 5,0}
+expect p1 canwin 1     none
+expect p1 canwin 2     pair -1,0 2,0 ConstR@-1,0
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        -
+expect p2 live2        -
+expect p2 threat_cells -
+expect p2 raise_cells  -
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p1 phase Second stones_owed 1 outcome ongoing
+end
+
+case counter_threat_defender_can_win
+plies 0,0 0,8 1,8 1,0 2,0 2,8 3,8 3,0 -2,14 4,8
+expect p1 hot          ConstR@-2,0 ConstR@-1,0 ConstR@0,0
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstR@-3,0 ConstR@1,0
+expect p1 live2        ConstR@-4,0 ConstR@2,0
+expect p1 threat_cells -2,0 -1,0 4,0 5,0
+expect p1 raise_cells  -3,0 -2,0 -1,0 4,0 5,0 6,0
+expect p1 cover 1      impossible
+expect p1 cover 2      {-2,0 4,0} {-1,0 4,0} {-1,0 5,0}
+expect p1 canwin 1     none
+expect p1 canwin 2     pair -2,0 -1,0 ConstR@-2,0
+expect p2 hot          ConstR@-2,8 ConstR@-1,8 ConstR@0,8 ConstR@1,8
+expect p2 win1         ConstR@-1,8 ConstR@0,8
+expect p2 completed    -
+expect p2 live3        ConstR@-3,8 ConstR@2,8
+expect p2 live2        ConstR@-4,8 ConstR@3,8
+expect p2 threat_cells -2,8 -1,8 5,8 6,8
+expect p2 raise_cells  -3,8 -2,8 -1,8 5,8 6,8 7,8
+expect p2 cover 1      impossible
+expect p2 cover 2      {-1,8 5,8}
+expect p2 canwin 1     oneply -1,8 ConstR@-1,8
+expect p2 canwin 2     oneply -1,8 ConstR@-1,8
+expect state  to_move p2 phase Second stones_owed 1 outcome ongoing
+end
+
+case double_threat_but_defender_wins_first
+plies 0,0 -5,6 1,-6 1,0 2,0 1,6 7,-6 3,0 0,14 -1,20 -6,26 0,20 1,20 0,26 6,14 2,20 3,20 0,34 0,40 -5,46 1,46 1,40 2,40 6,34 7,43 3,40 4,40
+expect p1 hot          ConstR@-2,0 ConstR@-1,0 ConstR@0,0 ConstR@0,20
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstR@-3,0 ConstR@1,0 ConstR@1,20
+expect p1 live2        ConstR@-4,0 ConstR@2,0 ConstR@2,20
+expect p1 threat_cells -2,0 -1,0 4,0 4,20 5,0 5,20
+expect p1 raise_cells  -3,0 -2,0 -1,0 4,0 4,20 5,0 5,20 6,0 6,20
+expect p1 cover 1      impossible
+expect p1 cover 2      impossible
+expect p1 canwin 1     none
+expect p1 canwin 2     pair -2,0 -1,0 ConstR@-2,0
+expect p2 hot          ConstR@-2,40 ConstR@-1,40 ConstR@0,40 ConstR@1,40
+expect p2 win1         ConstR@-1,40 ConstR@0,40
+expect p2 completed    -
+expect p2 live3        ConstR@-3,40 ConstR@2,40
+expect p2 live2        ConstR@-4,40 ConstR@3,40
+expect p2 threat_cells -2,40 -1,40 5,40 6,40
+expect p2 raise_cells  -3,40 -2,40 -1,40 5,40 6,40 7,40
+expect p2 cover 1      impossible
+expect p2 cover 2      {-1,40 5,40}
+expect p2 canwin 1     oneply -1,40 ConstR@-1,40
+expect p2 canwin 2     oneply -1,40 ConstR@-1,40
+expect state  to_move p1 phase First stones_owed 2 outcome ongoing
+end
+
+case double_threat_defender_to_move_wins_first
+plies 0,0 -5,6 1,-6 1,0 2,0 1,6 7,-6 3,0 0,14 -1,20 -6,26 0,20 1,20 0,26 6,14 2,20 3,20 0,34 0,40 -5,46 1,46 1,40 2,40 6,34 7,43 3,40 4,40 -14,26 -14,32
+expect p1 hot          ConstR@-2,0 ConstR@-1,0 ConstR@0,0 ConstR@0,20
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstR@-3,0 ConstR@1,0 ConstR@1,20
+expect p1 live2        ConstR@-4,0 ConstR@2,0 ConstR@2,20
+expect p1 threat_cells -2,0 -1,0 4,0 4,20 5,0 5,20
+expect p1 raise_cells  -3,0 -2,0 -1,0 4,0 4,20 5,0 5,20 6,0 6,20
+expect p1 cover 1      impossible
+expect p1 cover 2      impossible
+expect p1 canwin 1     none
+expect p1 canwin 2     pair -2,0 -1,0 ConstR@-2,0
+expect p2 hot          ConstR@-2,40 ConstR@-1,40 ConstR@0,40 ConstR@1,40
+expect p2 win1         ConstR@-1,40 ConstR@0,40
+expect p2 completed    -
+expect p2 live3        ConstR@-3,40 ConstR@2,40
+expect p2 live2        ConstR@-4,40 ConstR@3,40
+expect p2 threat_cells -2,40 -1,40 5,40 6,40
+expect p2 raise_cells  -3,40 -2,40 -1,40 5,40 6,40 7,40
+expect p2 cover 1      impossible
+expect p2 cover 2      {-1,40 5,40}
+expect p2 canwin 1     oneply -1,40 ConstR@-1,40
+expect p2 canwin 2     oneply -1,40 ConstR@-1,40
+expect state  to_move p2 phase First stones_owed 2 outcome ongoing
+end
+
+case distant_cluster_threat
+plies 0,0 8,0 16,0 24,0 32,0 35,3 41,0 42,0 43,0 38,6 44,-6 44,0 45,0
+expect p1 hot          ConstR@42,0
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstR@43,0
+expect p1 live2        ConstR@44,0
+expect p1 threat_cells 46,0 47,0
+expect p1 raise_cells  46,0 47,0 48,0
+expect p1 cover 1      {46,0} {47,0}
+expect p1 cover 2      {46,0} {47,0}
+expect p1 canwin 1     none
+expect p1 canwin 2     pair 46,0 47,0 ConstR@42,0
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        -
+expect p2 live2        -
+expect p2 threat_cells -
+expect p2 raise_cells  -
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p2 phase First stones_owed 2 outcome ongoing
+end
+
+case count_three_live_both_sides
+plies 0,0 0,8 1,8 1,-1 2,-2 2,8
+expect p1 hot          -
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        ConstS@-3,3 ConstS@-2,2 ConstS@-1,1 ConstS@0,0
+expect p1 live2        ConstS@-4,4 ConstS@1,-1
+expect p1 threat_cells -
+expect p1 raise_cells  -3,3 -2,2 -1,1 3,-3 4,-4 5,-5
+expect p1 cover 1      nothing
+expect p1 cover 2      nothing
+expect p1 canwin 1     none
+expect p1 canwin 2     none
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        ConstR@-3,8 ConstR@-2,8 ConstR@-1,8 ConstR@0,8
+expect p2 live2        ConstR@-4,8 ConstR@1,8
+expect p2 threat_cells -
+expect p2 raise_cells  -3,8 -2,8 -1,8 3,8 4,8 5,8
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p2 phase Second stones_owed 1 outcome ongoing
+end
+
+case overline_seven_run
+plies 0,0 -5,6 1,-6 1,0 2,0 1,6 7,-6 3,0 4,0 7,5 12,-5 6,0 5,0
+expect p1 hot          ConstR@-2,0 ConstR@-1,0 ConstR@0,0 ConstR@1,0 ConstR@2,0 ConstR@3,0
+expect p1 win1         ConstR@-1,0 ConstR@2,0
+expect p1 completed    ConstR@0,0 ConstR@1,0
+expect p1 live3        ConstR@-3,0 ConstR@4,0
+expect p1 live2        ConstR@-4,0 ConstR@5,0
+expect p1 threat_cells -2,0 -1,0 7,0 8,0
+expect p1 raise_cells  -3,0 -2,0 -1,0 7,0 8,0 9,0
+expect p1 cover 1      impossible
+expect p1 cover 2      impossible
+expect p1 canwin 1     oneply -1,0 ConstR@-1,0
+expect p1 canwin 2     oneply -1,0 ConstR@-1,0
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        -
+expect p2 live2        -
+expect p2 threat_cells -
+expect p2 raise_cells  -
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p1 phase First stones_owed 0 outcome win p1 turn 7
+end
+
+case single_hot_window_dead_when_opponent_enters
+plies 0,0 -1,0 -5,6 1,0 2,0 1,6 3,-6 3,0 -5,12 5,0
+expect p1 hot          -
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        -
+expect p1 live2        -
+expect p1 threat_cells -
+expect p1 raise_cells  -
+expect p1 cover 1      nothing
+expect p1 cover 2      nothing
+expect p1 canwin 1     none
+expect p1 canwin 2     none
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        -
+expect p2 live2        -
+expect p2 threat_cells -
+expect p2 raise_cells  -
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p2 phase Second stones_owed 1 outcome ongoing
+end
+
+case win_in_one_ply_dead_when_opponent_enters
+plies 0,0 -1,0 -5,6 1,0 2,0 1,6 5,0 3,0 4,0 -5,12
+expect p1 hot          -
+expect p1 win1         -
+expect p1 completed    -
+expect p1 live3        -
+expect p1 live2        -
+expect p1 threat_cells -
+expect p1 raise_cells  -
+expect p1 cover 1      nothing
+expect p1 cover 2      nothing
+expect p1 canwin 1     none
+expect p1 canwin 2     none
+expect p2 hot          -
+expect p2 win1         -
+expect p2 completed    -
+expect p2 live3        -
+expect p2 live2        -
+expect p2 threat_cells -
+expect p2 raise_cells  -
+expect p2 cover 1      nothing
+expect p2 cover 2      nothing
+expect p2 canwin 1     none
+expect p2 canwin 2     none
+expect state  to_move p2 phase Second stones_owed 1 outcome ongoing
+end
+

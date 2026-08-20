@@ -9,3 +9,8 @@ publish.workspace = true
 workspace = true
 
 [dependencies]
+# The lattice, the three axes, the win length and the window enumeration: this
+# crate composes rules truth and re-implements none of it (CLAUDE.md rule 2,
+# docs/decisions.md D-253). Nothing else, and no dev-dependencies — the test
+# tree carries its own SHA-256 for the same reason pistol-core's does (D-37).
+pistol-core = { workspace = true }
