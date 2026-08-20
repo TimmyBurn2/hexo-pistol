@@ -35,7 +35,7 @@ const TACTICAL_V0_FILE: &str = "tactical_v0.txt";
 /// which is the point: the suite's positions, budgets, thresholds and expectations
 /// are a pre-registration, and a pre-registration that can be edited quietly is
 /// not one.
-const TACTICAL_V0_SHA256: &str = "2d0b76532f0d9476da7b3542fcb582a73062822829b71eff7640c1339f2dde3a";
+const TACTICAL_V0_SHA256: &str = "7acb3ea39d39ea4a8ab0d560978c80f16430cfa3c62bfa18900a9c323f31c0d5";
 
 /// CLAUDE.md rule 7's ceiling on a fixture file.
 const FIXTURE_MAX_BYTES: usize = 10 * 1024 * 1024;

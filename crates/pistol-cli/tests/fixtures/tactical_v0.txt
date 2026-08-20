@@ -23,9 +23,10 @@
 # Every case states the config it is a claim about, because a threshold means
 # nothing without the search that has to meet it (CLAUDE.md rule 6):
 #
-#   configs/instrument_v0.toml   the DEPLOYMENT config, candidate radius 3. Every
-#                                mate-in-one and every must-block case runs here,
-#                                at the radius that ships.
+#   configs/instrument_v0.toml   the INSTRUMENT config, candidate radius 2 since
+#                                D-190/D-194. Every mate-in-one and every
+#                                must-block case runs here. The config that
+#                                SHIPS is configs/play_v0.toml, at radius 3.
 #   configs/gate_v0.toml         candidate radius 1. Only the cases that need a
 #                                completed depth 3, which at radius 3 costs
 #                                84-100 s each — the measured Stage-0 floor, see
