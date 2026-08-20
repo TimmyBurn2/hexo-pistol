@@ -149,6 +149,14 @@ runs in a separate git worktree, never the live tree: a mutation is a deliberate
 break, and a break left in the tree the implementing session is editing is
 indistinguishable from a regression.
 
+A change under tools/ is reviewed against tools/SHELL_CHECKLIST.md — the review
+prompt cites it and the reviewer answers its items by name — because three
+consecutive rounds found ONE class in those scripts: shell under `set -euo
+pipefail` parsing unvalidated output and failing as EXIT-0-WRONG-ANSWER. Its
+coverage rule is the binding one: any tools/ script that produces a recorded
+number carries at least one test driving the shipped script. The checklist is
+judged, not mechanized.
+
 ## Roadmap pointer
 
 Stages per the research report: 0 foundations (correct + reproducible) → 1 tactical
