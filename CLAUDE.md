@@ -152,7 +152,12 @@ REPLICATION and by a SECOND INSTRUMENT whose agreement criterion is registered b
 either runs, never by a margin derived to defend a single sample. A registered
 agreement criterion carries a REGISTERED CONSEQUENCE: the pre-registration states,
 before either instrument runs, what DISAGREEMENT does to the verdict, or the criterion
-leaves standing the after-the-numbers decision it exists to forbid. A derived margin is
+leaves standing the after-the-numbers decision it exists to forbid. AND IT NAMES THE STAGE
+UNDER DOUBT, and says how the second instrument does not share it: two instruments blind to the
+same stage are one instrument reported twice, and their agreement is invariant under a defect in
+what they are both blind to — measured, a dependency-graph check and a two-build digest
+comparison both missed what a build script READ, agreed, and confirmed a tree where the subject
+reached the binary. A derived margin is
 the instrument of a measurement that cannot be taken again, and it is the wrong
 instrument for a workload measured in seconds. Neither this rule nor the dry-run rule
 is mechanized, and neither catches a run whose answer is already known before it is

@@ -1,77 +1,128 @@
-# WP-1.5a — PRE-REGISTRATION (revision 11)
+# WP-1.5a — OBSERVATION RECORD (H1 RETIRED)
 
-**Revision 11. The instrument is no longer in this document.** Revision 10 went to a
-governing-revision review and a red-team, in parallel, both fresh contexts, both against
-`7decc35`. **The review returned FAILS**, and between them they found five BLOCKING defects
-across revisions 9 and 10 — including, at revision 9, **the same one independently**, which is
-the strongest evidence this work package has produced about anything.
+**REVISION 12. Supersedes revisions 1-11. This document registers no hypothesis, no
+threshold and no governed run, and adjudicates nothing.** Revisions 1-11 pre-registered H1 —
+that WP-1.5a adds nothing a shipped binary can observe, because `p = 0` — with a two-build
+counterfactual (H1-a), an invariant-block comparison (H1-b) and a second-instrument agreement
+criterion. **The operator retired the adjudicating version on 2026-08-21 under D-276**, on an
+OPTION MATRIX attacked by a fresh-context DECISION-RED-TEAM. What remains is this record and
+two standing CI gates that check the claim on every commit instead of once.
 
-**THE PATTERN IS THE FINDING, AND IT IS WHY THIS REVISION IS STRUCTURAL RATHER THAN ANOTHER
-REPAIR.** Revisions 7, 8, 9 and 10 each fixed a defect and shipped a new one:
+Registered across D-249 and D-263; retired under **D-276**. The claim itself is not withdrawn —
+it is now `crates/pistol-cli/tests/solver_link_check_tests.rs` and
+`crates/pistol-cli/tests/solver_edge_check_tests.rs`.
 
-| revision | fixed | shipped |
+## 0. Why the adjudicating version was retired
+
+Six fresh contexts across two sessions — three governing-revision reviews, three red-teams and
+one decision red-team — and **every one found a new defect class**. Revisions 7, 8, 9, 10 and 11
+each fixed a defect and shipped another; two of those were introduced by the fix, in the same
+commit. The findings below are recorded here rather than in the ADR line alone, because the next
+session to reach for an instrument of this shape will meet all of them again.
+
+**0.1 THE PRIMARY HYPOTHESIS WAS NOT FALSIFIABLE ACROSS PART OF ITS OWN REGISTERED DEFECT
+CLASS.** §3 named H1-a's class as *"solver content that reaches codegen by ANY route — a
+dependency edge, an `include_str!`, a build script, a path that cargo auto-discovers"*. Measured
+by the decision red-team: a build script that reads the subject without declaring
+`rerun-if-changed`, with both builds sharing one target directory — **which is how
+`tools/wp15a_h1.sh` ran them** — leaves a stale `OUT_DIR` artefact, so the second build compiles
+nothing and two identical digests are reported for a binary whose behaviour moved (`22` → `77`
+with the digest unchanged; a fresh target directory catches it). **Exit 0, CONFIRMED.** The edge
+check simultaneously reported no edge, so the registered agreement criterion was SATISFIED while
+both instruments were wrong together — which is T8's bite, instantiated on this document's own
+registered pair, and under D-242's boundary that is the EXCLUDED class rather than bucket
+material.
+
+**0.2 THE AGREEMENT CRITERION WAS UNSOUND THREE TIMES, THE THIRD TIME IN THE DIRECTION THAT
+COSTS MOST.** Revision 9's biconditional was violated at the registered bindings (TRUE ⇔ FALSE).
+Revision 10's replacement read `cargo tree -i`'s EXIT STATUS, which is not normal-edge
+membership — a `[dev-dependencies]` entry exits 0 with an empty tree, so the route this document
+elsewhere calls legitimate became a refutation. Revision 11's one-directional form rested on
+*"a crate outside the resolved graph cannot reach codegen"*, which is FALSE: reproduced by two
+independent contexts via `include_str!` with no manifest edge and via a build script. Its
+consequence is the worst available: **a genuine refutation of H1 is reported as RUN VOID**, the
+instrument blaming itself, on exactly the accidental-route case §9 kept H1 for.
+
+**0.3 THE INSTRUMENT COULD NOT BE RUN AT ITS OWN REGISTERED BINDINGS, AND WOULD BREAK AGAIN BY
+CONSTRUCTION.** The drift guard forbids movement under `crates` between `LANDING` and `HEAD`;
+the commit that promoted the instrument added its test files there. Measured: `REGISTERED RUN
+EXIT: 2`. Every future instrument fix lands in the same place, so option "repair once more" was
+never one round — it was one round per fix, forever, unless the pathspec grew an exclusion
+maintained by memory, which is D-275's own lesson.
+
+**0.4 THE TEST SUITE BOUND FAR LESS THAN THE DOCUMENT CLAIMED.** Two reviewers, independently:
+11 of 16 and 31 of 40 mutations survived. Survivors included BOTH assertions §3.1a says replace
+the dropped `--locked`, the pristine-rebuild attestation and the `BASE_SHA` digest binding. The
+promotion to `tools/` was still worth it — the suite caught two defects before any reviewer did
+— but it was not the guarantee this document asserted.
+
+**0.5 THE DOCUMENT DRIFTED FROM ITS OWN INSTRUMENT, REPEATEDLY.** A `--locked` guard the block
+did not contain; a provenance file the trap deleted; section numbers off by one against five
+prose references; a comment saying SEVEN bindings beside a block printing eight; and an
+instrument pinned at the blob of the PARENT commit — the version whose verdict ordering the same
+revision was written to replace. Caught before any governed run, so no verdict inherits it
+(D-275).
+
+**0.6 AND THE ANSWER WAS ALWAYS LARGELY KNOWN.** §9 said so from revision 3: *"`p = 0` is a
+dependency fact and a binary built from a crate nothing links is the same binary."* It kept H1
+for one thing — an accidentally created edge — and 0.1 and 0.2 are that one thing, mis-adjudicated
+in both directions.
+
+## 0a. WHAT SURVIVES AS OBSERVATION
+
+**These are measurements, not licences. Nothing below adjudicates anything.**
+
+- **The controlled repetition, which exists nowhere else.** `7b9e904` and `8618012` both rebuild
+  to `a7f519fade1124780463293b86e27cbdd0732540a84aa75acaed4de4689f03ce` in a pristine clone,
+  while `crates/pistol-solver` moved by **232 insertions and 28 deletions across 6 files**
+  between them (`cdbcbf0..7b9e904` is 4421 insertions under that path; `cdbcbf0..8618012` is
+  4625). The shipped binary was invariant not merely under removing the solver at one revision
+  but under substantively rewriting it across seven commits. Its binding limit is recorded with
+  it: `grep -c 'Compiling pistol-solver'` over the run's own stderr is **0** — cargo never
+  compiles the crate — so this is corroboration and not evidence about the rewrite.
+- **The baseline provenance** (§0.1): the W3 record at `cdbcbf05…`, 5764 bytes, digest
+  `7faa074c…`, whose `binary_sha256 ff018398…` reproduces from a pristine checkout; the sidecar,
+  892 bytes, digest `8be24055…`, `rustc 1.97.1` / LLVM 22.1.6. Both live in
+  `~/Work/pistol-wp15a/`, outside the repository (rule 8).
+- **The W3 digest is not reproducible across independent migrations** — this session's
+  `daf1deb3…`, a reviewer's `691f7766…`, the landed `ff018398…`, all search-identical to stock.
+  Only the stock side is ever pinned in advance (D-253).
+- **`binary_sha256` is insensitive to dead code even in a linked crate**: an unreferenced
+  `pub const` appended to `pistol-core` did not move the digest. Any successor reaching for a
+  digest comparison meets this first.
+- **The environment finding** (§2.4), now D-265, and **the dry-run finding** (§7.1), now D-269 and
+  a clause in CLAUDE.md. Both outlived the document that produced them.
+
+## 0b. WHAT REPLACES IT
+
+| claim | where it lives now | cost |
 |---|---|---|
-| 7 | a dry run citing a guard the block did not contain | — |
-| 8 | `git grep` under `pipefail` adjudicating the strongest evidence for `p = 0` as its opposite | `rustc -vV \| head -1` taking SIGPIPE, in the same commit |
-| 9 | that, and the SIGPIPE | an EXIT trap returning 1 for a requested 0, 1 **and** 2 |
-| 10 | that, and the solver-diff guard, and the cwd defect | an adjudicator reading a dev-dependency as a refutation, and a probe scoped to one package of a workspace-wide claim |
+| no crate in this workspace takes a normal dependency on the solver | `solver_edge_check_tests.rs`, on cargo's resolved graph, workspace-wide | 0.2 s, every commit |
+| **no solver source is an input to any of the five shipped binaries** | `solver_link_check_tests.rs`, from rustc's dep-info | 0.6 s, every commit |
 
-**Every one was found by an agent running this document by hand**, because a command block
-printed inside a pre-registration is a thing only a reader can execute. That is
-`SHELL_CHECKLIST` item 10's diagnosis — *"a number nothing tests is a number nothing
-defends"* — and D-231's precedent exactly.
+The second is strictly stronger than H1-a and covers what H1-a could not: it sees `include!`,
+`include_str!` and `include_bytes!` with no manifest edge, it covers **five** binaries where
+H1-a compared one of five, it **names the offending file** rather than printing two hexes, and
+it refuses to answer at all when the workspace grows a build script — the blind spot 0.1 is
+about, declared rather than hidden.
 
-**So the block left the document (D-272).** It is now two scripts with twenty-four tests in a
-suite CI already runs:
+**What is genuinely lost, stated plainly.** A governed run would have proved the property held
+**at a named revision, with a recorded transcript, under a document reviewed in advance**. A CI
+gate proves it holds **now, on every commit**, and carries no transcript. That is a real
+difference and the ground for accepting it is narrow: H1 was never a strength claim — §8
+de-licenses every one — it is an evidence-of-absence claim, and rule 6's judge does not reach it.
 
-| instrument | blob at HEAD | what it decides |
-|---|---|---|
-| `tools/solver_edge_check.sh` | `a458be69f7a07831697f86cb9369d5d45beca005` | `p = 0`, on a workspace-wide inverted normal-edge tree |
-| `tools/wp15a_h1.sh` | `42a05ab92dcd96955b626c0059845ab157682d7f` | H1-a and H1-b, and every guard before them |
-| `tools/baseline_snapshot.sh` | `beb2463550d1e4388ce191106aa32c151d6bc726` | the candidate record — **run from inside the pristine clone** |
+---
 
-**THE SUITE EARNED ITS PLACE ON ITS FIRST EXECUTION**, which is the one result worth reading
-twice: `the_abort_path_is_replication_stable` FAILED, because `cargo tree` prints ABSOLUTE
-PATHS and the new adjudicator was printing the `mktemp` clone's name into stdout. That is the
-same defect class two reviewers had independently graded BLOCKING one revision earlier,
-reintroduced through the instrument built to fix it — and this time on the **CONFIRMED** path,
-where it would have voided every replicated run rather than only a failing one. **A test found
-it before a reviewer did**, at a cost of one second, against four review rounds for each of its
-predecessors. The mutation evidence says the same thing from the other side: re-adjudicating on
-`cargo tree -i`'s exit status turns **four** tests red, and narrowing the probe to one member
-turns **three** — the two defects revision 10 shipped, caught in 0.3 s.
+**THE INSTRUMENT IS REMOVED.** `tools/wp15a_h1.sh` and its suite were deleted with this
+retirement: a script CI still tests, for a hypothesis nothing claims, is drift under rule 10, and
+this one carries the measured false-CONFIRMED of §0.1. It is in the history at `70103ec^`.
+`tools/solver_edge_check.sh` STAYS — its blind spots are disjoint from the link gate's (§0b), and
+both are kept for that reason. The instrument-blob table in the retained text below is therefore
+HISTORICAL and pins nothing.
 
-**What the reviews found at revision 10, all reproduced, all fixed here:**
-
-- **`cargo tree -i`'s exit status is not normal-edge membership.** A `[dev-dependencies]`
-  entry, a `[build-dependencies]` entry and an off-target entry each exit **0** with an EMPTY
-  tree, so "exit 0 means an edge" turned the dev-dependency this document elsewhere calls
-  legitimate into `p = 0 REFUTED` — on a binary measured bit-identical — with the message
-  naming a diagnostic that prints `warning: nothing to print`. **Now: the adjudicator reads the
-  captured tree's LINE COUNT and never a status**, and one line means no dependent.
-- **The probe was scoped to one package while the claim is workspace-wide.** An edge into
-  `pistol-arena`, which ships two binaries of its own, reached **exit 0 CONFIRMED** with the
-  offending manifest line printed two lines above the verdict — an edge the substring count
-  revision 10 had just demoted **would have refused**. **Now: `--workspace`**, and a test
-  proves the narrow form red.
-- **The instrument's DATA inputs had the gap its script had just had closed.**
-  `assume-unchanged` on `configs/instrument_v0.toml` left `git status`, the `LANDING..HEAD`
-  diff and the blob pin all seeing nothing, while a tampered config reached H1-b as a VERDICT
-  attributed to a defect class it does not belong to. **Now: the snapshot runs INSIDE THE
-  PRISTINE CLONE**, where its script, config and corpus are committed content at `LANDING` by
-  construction — which also makes the record's `timing tree` token a measurement and removes
-  the need for a blob pin at all. A test tampers with the worktree copy and asserts the verdict
-  does not move.
-- **`tools` leaves the build-reaching drift pathspec**, because a drift assertion cannot both
-  forbid new instruments and permit the ones this revision adds. The instruments are named with
-  their revisions instead (D-268), above.
-
-**TWO FINDINGS ARE ABOUT H1 AND NOT ITS PLUMBING, AND THIS REVISION DOES NOT CLOSE THEM.** They
-are recorded in D-273 and restated in §3 and §6, because a document that quietly carried them
-forward would be claiming a ratification it has not earned: **H1-b is a criterion H1's target
-defect PRESERVES**, and **the agreement criterion was unevaluable in exactly the branch where
-the two instruments disagree**. §6 registers a criterion that answers the second; the first is
-an open question about whether H1-b earns its place at all, and it is the operator's.
+**Everything below this line is the retired revision 11, kept unedited as the record of what was
+registered and why the findings above are findings. It licenses nothing.**
 
 ## 0. Landing order
 

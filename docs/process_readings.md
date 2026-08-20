@@ -167,9 +167,16 @@ makes agreement mean anything; (c) settle the conjunction and rank the devices e
 replication answers noise, a second instrument answers bias, and disagreement defeats the
 verdict however tight the replication set is.
 
-**STATUS: OPEN.** D-245 closed T5's missing-consequence half by requiring a registered
-consequence; T8 is the observation that a REGISTERED consequence can still be no consequence,
-and that the second instrument was never required to be independent of the first.
+**STATUS: PARTLY CLOSED BY D-277, AND IT LEFT THE BUCKET RATHER THAN BEING DISPOSED OF IN IT.**
+The independence half is now law: a pre-registration naming a second instrument NAMES THE STAGE
+UNDER DOUBT and says how the second does not share it. It was promoted because it stopped being
+a reading and became a CONSTRUCTED INSTANCE — on a build-script route the resolved-graph
+instrument reported no edge, the two-build instrument reported bit-identical, the registered
+criterion was SATISFIED, and the run exited 0 CONFIRMED on a tree where the subject reached the
+binary. D-242's boundary excludes that from the bucket and takes an immediate amendment.
+**The other two halves stay OPEN**: that replication and a second instrument are unranked, and
+that a REGISTERED consequence can still be no consequence. Neither has produced a constructed
+instance, so D-242's bite-time rule governs them.
 
 ---
 
