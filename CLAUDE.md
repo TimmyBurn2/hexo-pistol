@@ -115,6 +115,14 @@ that governs a run must itself pass a fresh-context review before the first run 
 governs. Reviews of superseded revisions do not transfer — an amendment reopens the
 review, however small the diff.
 
+THE INSTRUMENT HAS A GOVERNING REVISION TOO. An artefact that produces a registered
+number — a `tools/` script, a scratchpad harness, or a command block the document
+prints — is named in the pre-registration WITH ITS REVISION, and a change to it
+reopens the review exactly as an amendment to the document does. `tools/` is where
+such artefacts usually live; living there is not what makes the rule apply. Without
+this, a run stands on an instrument whose own review had failed and is licensed by
+argument rather than by this text.
+
 A pre-registration's literal commands are exercised before its review passes, on an
 input of the SAME KIND as the registered workload — the same sort of artefact,
 differing only in identity — and never on the registered workload itself. A synthetic
@@ -124,6 +132,16 @@ still shipped. The dry run is not a governed sample and does not consume the
 pre-registration's first run. The pre-registration records the dry-run input and its
 output. This constrains the dry run's input; it constrains no reviewer, who may run
 anything, the registered workload included.
+
+AND IT RECORDS WHAT THAT OUTPUT MUST SHOW, together with the DEFECT CLASS the
+criterion is meant to exclude. Recording without a criterion is a dry run nothing can
+fail. A criterion that is a property the named defect class PRESERVES — internal
+agreement between components sharing an input, output shape, plausible magnitude,
+exit status — passes vacuously and is not a criterion; it must be one that defect
+could falsify. An externally derived referent, a value computed by something that does
+not share the suspect input, is the operationalisation that reliably achieves this and
+is what a reviewer looks for first: sufficient, not necessary. This binds ANY
+registered criterion, dry-run or governed alike.
 
 A pre-registration states what its governed run COSTS — wall time, operator attention,
 machine hours — so the proportion between the document and the run is visible on the
