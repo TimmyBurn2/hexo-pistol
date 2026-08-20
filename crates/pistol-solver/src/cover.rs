@@ -224,14 +224,27 @@ impl ThreatState {
     /// describes the position AFTER `side` has moved. So a caller may read it as
     /// a win only when both hold:
     ///
-    /// 1. `side.opponent()` IS the side to move, i.e. `state.to_move() != side`;
-    ///    and
+    /// 1. the game is not already decided — `GameState::outcome()` — and
+    ///    `side.opponent()` is the side to move; and
     /// 2. `can_win_this_turn(side.opponent(), StonesLeft::from_state(state)?)`
     ///    is `None`.
     ///
-    /// Drop (1) and the rule is wrong in the commonest way there is: if `side`
-    /// is itself to move it simply wins now, and asking whether its opponent can
-    /// win is asking about a turn that opponent does not have.
+    /// Drop the second half of (1) and the rule is wrong in the commonest way
+    /// there is: if `side` is itself to move it simply wins now, and asking
+    /// whether its opponent can win is asking about a turn that opponent does
+    /// not have.
+    ///
+    /// THE OUTCOME CHECK IS NAMED HERE AND `state.to_move() != side` IS NOT A
+    /// SPELLING OF IT. This doc used to gloss (1) that way, and the gloss is
+    /// wrong on a class a search reaches: `GameState::to_move()` FREEZES on the
+    /// winning ply and reads as the WINNER, so on a decided position
+    /// `to_move() != side` is satisfied by the side that LOST — which can still
+    /// own hot windows admitting no two-cell cover, making this predicate `true`
+    /// for it. What stands between that and a mate score for the loser is (2)
+    /// alone, because `StonesLeft::from_state` answers `None` on a decided
+    /// position. That is correct, and it is thin: a caller that checked the
+    /// conditions in the other order, or took the stones left from anywhere but
+    /// core, would score the loser as winning (docs/decisions.md D-257).
     ///
     /// This function never consults either condition and never will. Composing
     /// them is the caller's, because a primitive that quietly answered a
