@@ -107,6 +107,14 @@ fn scratch_tree(name: &str) -> PathBuf {
 
 /// Run the SHIPPED script in `root`, saying where cargo is to build rather than
 /// inheriting it — which environment variable is set is the whole subject here.
+///
+/// The default case NAMES `root/target` rather than removing the variable.
+/// `env_remove` covers the ENVIRONMENT layer only, and a user-level
+/// `~/.cargo/config.toml` carrying `[build] target-dir` is a different layer: it
+/// would move the control build out from under this test for a reason unrelated
+/// to the code under test, on exactly the operator setup the fix under test
+/// promises to respect. Measured here: an environment `CARGO_TARGET_DIR` beats a
+/// config-file `[build] target-dir`, so naming it pins both layers.
 fn tactical_check(root: &Path, target_dir: Option<&Path>) -> Output {
     let mut command = Command::new("bash");
     command
@@ -115,7 +123,7 @@ fn tactical_check(root: &Path, target_dir: Option<&Path>) -> Output {
         .env_remove("CARGO_BUILD_TARGET");
     match target_dir {
         Some(dir) => command.env("CARGO_TARGET_DIR", dir),
-        None => command.env_remove("CARGO_TARGET_DIR"),
+        None => command.env("CARGO_TARGET_DIR", root.join("target")),
     };
     command.output().expect("the gate script runs")
 }

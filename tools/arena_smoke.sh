@@ -59,6 +59,10 @@ echo "arena_smoke: building the engine and the arena (release, locked)"
 # `target/release/pistol` then runs whatever STALE binary sits at that path while
 # the build goes elsewhere — a gate that passes for a binary nobody built
 # (REPRODUCED on tools/tactical_check.sh; docs/decisions.md D-250).
+#
+# RESOLVING THE PATH IS HALF THE JOB HERE: the arena takes its engines from the
+# config's `binary = ` lines, so for one revision both seats played the literal
+# while `$ENGINE` sat validated and unread (docs/decisions.md D-252).
 BUILD_LOG="$(cargo build --release --locked --quiet --bin pistol --bin arena \
 	--message-format=json-render-diagnostics)" || fail "the engine and the arena do not build"
 # Two bins, so each executable is taken by the name cargo gave the FILE rather
@@ -78,25 +82,42 @@ esac
 	fail "cargo named $NAMED executables and this gate could read ${#BUILT[@]} of them: a quote or a backslash in a path"
 ENGINE=""
 ARENA=""
+# Two bins means selecting by NAME, and a `case` that selects by name is
+# last-one-wins: two artifacts sharing a file name resolve silently to whichever
+# the stream emitted second. The three sibling gates build one bin and spell that
+# refusal `-eq 1`; selecting by name, this one counts for itself. REPRODUCED:
+# two workspace members each declaring `[[bin]] name = "pistol"` make cargo emit
+# two `executable` records for `--bin pistol` and exit 0.
+ENGINE_N=0
+ARENA_N=0
 for path in ${BUILT[@]+"${BUILT[@]}"}; do
 	case "${path##*/}" in
-	pistol) ENGINE="$path" ;;
-	arena) ARENA="$path" ;;
+	pistol)
+		ENGINE="$path"
+		ENGINE_N=$((ENGINE_N + 1))
+		;;
+	arena)
+		ARENA="$path"
+		ARENA_N=$((ARENA_N + 1))
+		;;
 	esac
 done
 # ONE REFUSAL PER REASON (tools/SHELL_CHECKLIST.md item 8): a bin cargo named no
-# executable for, and then a named path that is absent, is not a regular file, or
-# carries no `+x` — the last being the case `command -v` admits and exec answers
-# with 126. A helper that must refuse is called as a statement, never inside a
-# command substitution, where `fail` would exit only the subshell (item 1).
-usable() { # $1 = the bin name, $2 = the path cargo named for it
+# executable for, SEVERAL executables sharing one file name, and then a named
+# path that is absent, is not a regular file, or carries no `+x` — the last being
+# the case `command -v` admits and exec answers with 126. A helper that must
+# refuse is called as a statement, never inside a command substitution, where
+# `fail` would exit only the subshell (item 1).
+usable() { # $1 = the bin name, $2 = the path cargo named, $3 = how many it named
 	[ -n "$2" ] || fail "cargo built no executable for --bin $1"
+	[ "$3" -eq 1 ] ||
+		fail "cargo named $3 executables whose file name is \`$1\`, so the file name does not choose one: ${BUILT[*]}"
 	[ -e "$2" ] || fail "cargo named \`$2\` for --bin $1 and nothing is there"
 	[ -f "$2" ] || fail "cargo named \`$2\` for --bin $1 and it is not a regular file"
 	[ -x "$2" ] || fail "cargo named \`$2\` for --bin $1 and it is not executable"
 }
-usable pistol "$ENGINE"
-usable arena "$ARENA"
+usable pistol "$ENGINE" "$ENGINE_N"
+usable arena "$ARENA" "$ARENA_N"
 
 # What the config says, read from the config rather than restated here: a gate
 # that hard-coded the numbers would pass after somebody changed the document.
@@ -105,6 +126,63 @@ WORKERS="$(sed -n 's/^n_workers = \([0-9]*\).*/\1/p' "$CONFIG" | head -1)"
 [ -n "$TAKE" ] || fail "$CONFIG states no openings_take"
 GAMES=$((TAKE * 2))
 echo "arena_smoke: $TAKE openings, $GAMES games, $WORKERS workers, config $CONFIG"
+
+# --- the engines that PLAY are bound to the binary cargo built -----------------
+#
+# The arena has no `--binary` flag — `--config` and `--out` are its only
+# arguments — so the DOCUMENT is the seam, exactly as the one-worker run below
+# already rewrites `n_workers`. Without this the config's literal
+# `binary = "target/release/pistol"` is what every seat plays, whatever cargo
+# built and wherever it built it (REPRODUCED at 0d7682d: with `CARGO_TARGET_DIR`
+# redirected, 54 of 54 engine invocations went to a decoy sitting at that
+# literal path and this gate exited 0; docs/decisions.md D-252).
+
+# WHAT REACHES A RECORD IS CALLER-CONTROLLED (tools/SHELL_CHECKLIST.md item 9):
+# `$ENGINE` is interpolated into a TOML document the arena parses, so a newline
+# in it would INJECT LINES. The guard is an ALLOW-LIST (item 4) and the locale is
+# deliberately NOT pinned: at the ambient locale `[[:print:]]` refuses LF, TAB,
+# U+0085 and U+2028 — every character that could inject — while `LC_ALL=C` would
+# also refuse a legal `/home/tomás/…`, a FALSE refusal and the wrong direction
+# for a pin to move a guard (all six measured). A quote or a backslash cannot
+# reach here: the record cross-check above refuses those by name.
+case "$ENGINE" in
+*[![:print:]]*)
+	fail "cargo named an engine path carrying a non-printable character, which this gate will not write into a config: \`$ENGINE\`"
+	;;
+esac
+
+# How many seats the document has, counted FROM THE DOCUMENT. `grep -c` prints 0
+# and STILL exits 1 on no match (item 3), so the count is a value to refuse and
+# never a status to test, and its SPELLING is checked too (item 8).
+STANZAS="$(grep -c '^binary = ' "$CONFIG" || true)"
+case "$STANZAS" in
+*[!0-9]* | "") fail "the engine-stanza count is not a number: \`$STANZAS\`" ;;
+esac
+[ "$STANZAS" -eq 2 ] ||
+	fail "$CONFIG names $STANZAS engine binaries and a match is played by exactly two"
+
+# `awk` rather than `sed`: the replacement is built by CONCATENATION, so an `&`
+# in the path stays an `&` rather than becoming the whole match, and no delimiter
+# can collide with a `/` or a `|` in it. The value arrives through `ENVIRON`, not
+# `-v`, which processes escape sequences in what it is given.
+BOUND="$WORK/bound.toml"
+ENGINE="$ENGINE" awk '
+	/^binary = / { print "binary = \"" ENVIRON["ENGINE"] "\""; next }
+	{ print }
+' "$CONFIG" >"$BOUND" || fail "$CONFIG could not be rewritten to bind the engines"
+
+# THE REWRITE MATCHED. An `awk` that matched nothing exits 0 and writes a copy
+# with the literal still in it, which is this gate's own defect in a new
+# spelling. Counted with the SAME enumeration as the source (item 5) and matched
+# as a WHOLE LINE with `-F`, so a `.` in the path cannot let the pattern accept a
+# near miss (item 3).
+REBOUND="$(grep -c -F -x -- "binary = \"$ENGINE\"" "$BOUND" || true)"
+case "$REBOUND" in
+*[!0-9]* | "") fail "the bound-line count is not a number: \`$REBOUND\`" ;;
+esac
+[ "$REBOUND" -eq "$STANZAS" ] ||
+	fail "the rewrite bound $REBOUND of $STANZAS engine binaries to \`$ENGINE\`; $CONFIG does not spell them \`binary = \`"
+echo "arena_smoke: both seats bound to $ENGINE"
 
 run_arena() {
 	local out="$1" config="$2"
@@ -117,13 +195,27 @@ $(tail -20 "$out.stderr")"
 field() { sed -n "s/^$2 //p" "$1" | head -1; }
 
 echo "arena_smoke: run 1"
-run_arena "$WORK/a.txt" "$CONFIG"
+run_arena "$WORK/a.txt" "$BOUND"
 
 # --- the self-match's knowable answer -----------------------------------------
 
 KIND="$(head -1 "$WORK/a.txt" | awk '{print $1}')"
 [ "$KIND" = "arena_report" ] ||
 	fail "the run was abandoned: the report is an \`$KIND\`, not a verdict-carrying one"
+
+# WHICH BINARY ACTUALLY PLAYED, read off the RUN'S OWN RECORD and not off the
+# document this gate wrote — the arena records a seat's binary and digests the
+# file it ran (that digest was checked here against `sha256sum` of the file
+# actually executed). ` binary … binary_sha256 ` is delimited on both sides, so
+# this matches the FIELD and not a substring of another path (item 3). The lines
+# sit in the verdict block, so the comparisons below carry this to runs 2 and 3.
+PLAYED_BY_BUILT="$(grep -c -F -- " binary $ENGINE binary_sha256 " "$WORK/a.txt" || true)"
+case "$PLAYED_BY_BUILT" in
+*[!0-9]* | "") fail "the bound-seat count is not a number: \`$PLAYED_BY_BUILT\`" ;;
+esac
+[ "$PLAYED_BY_BUILT" -eq "$STANZAS" ] ||
+	fail "$PLAYED_BY_BUILT of $STANZAS seats played \`$ENGINE\`, the binary cargo built; the rest played something else:
+$(grep '^engine ' "$WORK/a.txt")"
 
 PLAYED="$(grep -c '^game ' "$WORK/a.txt" || true)"
 [ "$PLAYED" -eq "$GAMES" ] ||
@@ -171,7 +263,7 @@ echo "arena_smoke: $GAMES games, distinct-n $TAKE, verdict $VERDICT, compute rec
 # --- the arena's own determinism ----------------------------------------------
 
 echo "arena_smoke: run 2 (same config, compared to run 1)"
-run_arena "$WORK/b.txt" "$CONFIG"
+run_arena "$WORK/b.txt" "$BOUND"
 
 # Everything before the timing marker is the verdict block, which is
 # worker-invariant and machine-invariant by design.
@@ -186,7 +278,10 @@ $(head -40 "$WORK/diff.repeat")"
 # --- and its independence from the worker count -------------------------------
 
 echo "arena_smoke: run 3 (one worker, compared to $WORKERS)"
-sed "s/^n_workers = .*/n_workers = 1/" "$CONFIG" >"$WORK/single.toml"
+# From the BOUND document and not from $CONFIG, or the one-worker run would go
+# back to playing the literal and the comparison would be between two different
+# pairs of engines.
+sed "s/^n_workers = .*/n_workers = 1/" "$BOUND" >"$WORK/single.toml"
 run_arena "$WORK/c.txt" "$WORK/single.toml"
 verdict_block "$WORK/c.txt" >"$WORK/c.block"
 diff -u "$WORK/a.block" "$WORK/c.block" >"$WORK/diff.workers" ||
