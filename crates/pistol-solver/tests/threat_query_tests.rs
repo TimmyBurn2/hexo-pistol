@@ -1,4 +1,4 @@
-//! The threat state's answers, pinned against fourteen golden positions.
+//! The threat state's answers, pinned against sixteen golden positions.
 //!
 //! Each test below is a claim about ONE behaviour, checked on the position that
 //! exhibits it, and each was written against a MUTANT of the reference and
@@ -39,7 +39,7 @@ use pistol_solver::{
 ///
 /// Changing the fixture means changing this line, in the same commit, having
 /// looked at what changed.
-const THREAT_V0_SHA256: &str = "6b23cb48eb6d8b8a5b75de4fc3cc79b31325c15ec93d573914a98da6cfbb1e70";
+const THREAT_V0_SHA256: &str = "541609a6815b2d7024b02976c1155f859c0513b85cb23026f45b7791658fae5d";
 
 #[test]
 fn threat_v0_fixture_matches_its_pinned_sha256() {
@@ -365,6 +365,30 @@ fn win_in_one_ply_requires_five_and_live() {
     dead.win_in_one_ply_cells(Player::P1, &mut cells);
     assert!(cells.is_empty(), "and so it offers no completing cell");
     assert!(dead.hot_windows(Player::P1).is_empty());
+    // THE PRECONDITION, STATED WHERE THIS ROW CAN SEE IT. Everything above is an
+    // assertion that a set is EMPTY, so it holds just as well of a position that
+    // exhibits nothing — and the control below guards a different fixture. A
+    // reviewer edited this case's ninth ply so P1 held four rather than five,
+    // re-pinned the sha, and the whole suite stayed green: every expected answer
+    // read `-` either way and the row silently reverted to the inert state it
+    // was written to escape. So the row now states what the position must be:
+    // two windows, five own stones each, the opponent in the sixth cell, hence
+    // FULL and offering no empty cell either way (docs/decisions.md D-260).
+    for token in ["ConstR@-1,0", "ConstR@0,0"] {
+        let window = common::parse_window(token, 0);
+        let masks = dead.masks(window);
+        assert_eq!(
+            masks.own_count(Player::P1),
+            5,
+            "{token} must hold five P1 stones for this case to be about liveness"
+        );
+        assert_eq!(
+            masks.opp_count(Player::P1),
+            1,
+            "{token} must hold the opponent stone that kills it"
+        );
+        assert_eq!(masks.empties(), 0, "{token}: a dead five-window is FULL");
+    }
     // The control, so the assertion above is not vacuous: the live position DOES
     // report win-in-one-ply windows.
     assert_eq!(five.win_in_one_ply_windows(Player::P1).len(), 2);
@@ -531,7 +555,7 @@ fn min_hitting_set_exceeds_is_false_on_an_empty_hot_set() {
     }
     assert_eq!(
         instances.len(),
-        13,
+        15,
         "the empty-hot census moved: {instances:?}"
     );
     // The control: one hot window is not an empty family.
@@ -784,6 +808,106 @@ fn threat_state_answers_on_a_decided_position() {
         }),
         "asked about a turn that will never be played, it answers anyway"
     );
+}
+
+/// The SIZE-ONE CASE of the two-cell cover enumeration, which nothing else here
+/// reaches.
+///
+/// `min_hitting_set_exceeds` at `HitBudget::Two` walks pairs over
+/// `universe[index..]` — from `index`, not `index + 1` — because `second ==
+/// first` IS the one-cell cover. Where the universe holds a SINGLE cell,
+/// `universe[index + 1..]` is empty, the scan finds no pair at all, and the
+/// predicate answers "no cover within two stones" for a threat that one stone
+/// answers: a mate score for the wrong side, reached by an off-by-one in an
+/// index range.
+///
+/// That mutant survived the entire suite before this position existed, and not
+/// by luck: over the registered playout regime's 1703 plies and 805 hot
+/// side-positions, the number whose hot-window empties union to ONE cell is
+/// zero, so no floor and no longer playout could have closed it. A position
+/// where the hot set is a single five-window with both four-window extensions
+/// already dead is the configuration the regime does not produce
+/// (docs/decisions.md D-260).
+#[test]
+fn a_one_cell_hot_universe_is_covered_within_every_positive_budget() {
+    let (_, threats) = play(&threat_case("hot_universe_of_a_single_cell").plies);
+    let hot = threats.hot_windows(Player::P1);
+    // The precondition first: ONE hot window, and its empties are ONE cell, so
+    // the universe the enumeration walks has a single member.
+    assert_eq!(window_list(hot), "ConstR@-1,0");
+    let mut cells = Vec::new();
+    threats.threat_cells(Player::P1, &mut cells);
+    assert_eq!(
+        cell_list(&cells),
+        "-1,0",
+        "the hot universe must be a single cell for this row to be about anything"
+    );
+    assert!(
+        !threats.min_hitting_set_exceeds(HitBudget::One, hot),
+        "one stone hits the only window there is"
+    );
+    assert!(
+        !threats.min_hitting_set_exceeds(HitBudget::Two, hot),
+        "and so does one of two, which is the case an exclusive pair range drops"
+    );
+    assert!(
+        !threats.unblockable_double_threat(Player::P1, HitBudget::Two),
+        "a threat one stone answers is not an unblockable double threat"
+    );
+    // Both directions, so the row is not merely asserting `false` everywhere:
+    // zero stones still cover nothing, and the cover itself is that one cell.
+    assert!(threats.min_hitting_set_exceeds(HitBudget::Zero, hot));
+    assert_eq!(
+        threats.blocking_covers(Player::P2, HitBudget::Two),
+        Cover::Minimal(vec![MinimalCover::One(Coord::new(-1, 0))])
+    );
+}
+
+/// The SECOND HALF of the witness tie-break: the window, when the cell does not
+/// decide it.
+///
+/// `can_win_this_turn` returns a witness that carries a WINDOW, so where one
+/// cell is the single empty of two five-windows, two conforming implementations
+/// agree on the cell and differ on a field the oracle compares. The rule is the
+/// least window by `(axis, start)`. Across the fourteen positions this suite
+/// had before, no cell was the single empty of two five-windows — both
+/// reviewers checked independently — so a determinism-relevant tie-break was
+/// pinned by the playout oracle alone, and a shrunken regime would have unpinned
+/// it silently (docs/decisions.md D-260).
+#[test]
+fn the_witness_window_is_the_least_among_those_sharing_the_winning_cell() {
+    let case = threat_case("two_win_in_one_ply_windows_share_their_cell");
+    let (_, threats) = play(&case.plies);
+    let win1 = threats.win_in_one_ply_windows(Player::P1);
+    // The precondition: TWO live five-windows, and the same single empty cell in
+    // both. Two P1 lines crossing at 3,0.
+    assert_eq!(window_list(win1), "ConstQ@3,-3 ConstR@0,0");
+    for &window in win1 {
+        let masks = threats.masks(window);
+        assert_eq!(masks.own_count(Player::P1), 5, "{window:?}");
+        assert_eq!(masks.opp_count(Player::P1), 0, "{window:?} must be live");
+        let empties: Vec<Coord> = (0..6u8)
+            .filter(|index| masks.empties() & (1 << index) != 0)
+            .map(|index| window.cell(index))
+            .collect();
+        assert_eq!(
+            empties,
+            vec![Coord::new(3, 0)],
+            "{window:?} must be a single stone from six, at the shared cell"
+        );
+    }
+    // So the cell cannot decide the witness, and the window rule does: ConstQ
+    // precedes ConstR.
+    for left in [StonesLeft::One, StonesLeft::Two] {
+        assert_eq!(
+            threats.can_win_this_turn(Player::P1, left),
+            Some(WinWitness::OnePly {
+                at: Coord::new(3, 0),
+                window: common::parse_window("ConstQ@3,-3", 0),
+            }),
+            "at {left:?}: the least window by (axis, start) among those sharing the cell"
+        );
+    }
 }
 
 /// D-243 consequence (3)'s COMPOSITION, written here because it is the caller's

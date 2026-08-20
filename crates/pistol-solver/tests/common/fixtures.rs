@@ -1,4 +1,4 @@
-//! The golden threat fixture: fourteen positions, every query's answer for both
+//! The golden threat fixture: sixteen positions, every query's answer for both
 //! sides, sha-pinned (CLAUDE.md rule 7).
 //!
 //! # The grammar
