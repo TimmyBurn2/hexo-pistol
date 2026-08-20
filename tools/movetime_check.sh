@@ -58,8 +58,41 @@ cargo test --release --locked -p pistol-cli --test instrument_golden_tests ||
 	fail "instrument behavior diverged from the pinned golden transcripts"
 
 echo "movetime: building the engine (release, locked)"
-cargo build --release --locked --quiet --bin pistol || fail "the engine does not build"
-ENGINE="$ROOT/target/release/pistol"
+# THE BINARY THIS GATE RUNS IS THE BINARY CARGO BUILT: the path comes from cargo's
+# artifact stream, never from a literal here. `CARGO_TARGET_DIR`, `[build]
+# target-dir` and `[build] target` each move the artifact, and a hardcoded
+# `target/release/pistol` then runs whatever STALE binary sits at that path while
+# the build goes elsewhere — a gate that passes for a binary nobody built
+# (REPRODUCED on tools/tactical_check.sh; docs/decisions.md D-250).
+BUILD_LOG="$(cargo build --release --locked --quiet --bin pistol \
+	--message-format=json-render-diagnostics)" || fail "the engine does not build"
+# The artifact records that name an executable; a library artifact carries
+# `"executable":null` and cannot match. `sed` answers 0 on no match, so an empty
+# result is a VALUE to refuse below and never a status to test.
+mapfile -t BUILT < <(sed -n 's/.*"executable":"\([^"\\]*\)".*/\1/p' <<<"$BUILD_LOG")
+# What the stream NAMED, against what this gate could READ: a path carrying a
+# quote or a backslash matches neither class above and must not be mistaken for a
+# bin cargo built nothing for. `grep -c` prints 0 and STILL exits 1 on no match
+# (tools/SHELL_CHECKLIST.md item 3), so the empty count is a legitimate answer and
+# gets `|| true` rather than a death; its SPELLING is then checked, not just its
+# value (item 8).
+NAMED="$(grep -c '"executable":"' <<<"$BUILD_LOG" || true)"
+case "$NAMED" in
+*[!0-9]* | "") fail "the artifact-record count is not a number: \`$NAMED\`" ;;
+esac
+[ "$NAMED" -eq "${#BUILT[@]}" ] ||
+	fail "cargo named $NAMED executables and this gate could read ${#BUILT[@]} of them: a quote or a backslash in a path"
+# ONE REFUSAL PER REASON (tools/SHELL_CHECKLIST.md item 8): no executable at all,
+# several executables, and then a named path that is absent, is not a regular
+# file, or carries no `+x` — the last being the case `command -v` admits and exec
+# answers with 126.
+[ "${#BUILT[@]}" -ne 0 ] || fail "cargo built no executable for --bin pistol"
+[ "${#BUILT[@]}" -eq 1 ] ||
+	fail "cargo named ${#BUILT[@]} executables for --bin pistol: ${BUILT[*]}"
+ENGINE="${BUILT[0]}"
+[ -e "$ENGINE" ] || fail "cargo named \`$ENGINE\` for --bin pistol and nothing is there"
+[ -f "$ENGINE" ] || fail "cargo named \`$ENGINE\` for --bin pistol and it is not a regular file"
+[ -x "$ENGINE" ] || fail "cargo named \`$ENGINE\` for --bin pistol and it is not executable"
 
 # The positions, exactly as the fixture spells them (a fixture `position` line
 # IS a protocol line), with the stone counts they advertise.

@@ -53,12 +53,50 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 echo "arena_smoke: building the engine and the arena (release, locked)"
-cargo build --release --locked --quiet --bin pistol --bin arena ||
-	fail "the engine and the arena do not build"
-ENGINE="$ROOT/target/release/pistol"
-ARENA="$ROOT/target/release/arena"
-[ -x "$ENGINE" ] || fail "no engine binary at $ENGINE"
-[ -x "$ARENA" ] || fail "no arena binary at $ARENA"
+# THE BINARY THIS GATE RUNS IS THE BINARY CARGO BUILT: the path comes from cargo's
+# artifact stream, never from a literal here. `CARGO_TARGET_DIR`, `[build]
+# target-dir` and `[build] target` each move the artifact, and a hardcoded
+# `target/release/pistol` then runs whatever STALE binary sits at that path while
+# the build goes elsewhere — a gate that passes for a binary nobody built
+# (REPRODUCED on tools/tactical_check.sh; docs/decisions.md D-250).
+BUILD_LOG="$(cargo build --release --locked --quiet --bin pistol --bin arena \
+	--message-format=json-render-diagnostics)" || fail "the engine and the arena do not build"
+# Two bins, so each executable is taken by the name cargo gave the FILE rather
+# than by the order the artifact stream happens to emit them in.
+mapfile -t BUILT < <(sed -n 's/.*"executable":"\([^"\\]*\)".*/\1/p' <<<"$BUILD_LOG")
+# What the stream NAMED, against what this gate could READ: a path carrying a
+# quote or a backslash matches neither class above and must not be mistaken for a
+# bin cargo built nothing for. `grep -c` prints 0 and STILL exits 1 on no match
+# (tools/SHELL_CHECKLIST.md item 3), so the empty count is a legitimate answer and
+# gets `|| true` rather than a death; its SPELLING is then checked, not just its
+# value (item 8).
+NAMED="$(grep -c '"executable":"' <<<"$BUILD_LOG" || true)"
+case "$NAMED" in
+*[!0-9]* | "") fail "the artifact-record count is not a number: \`$NAMED\`" ;;
+esac
+[ "$NAMED" -eq "${#BUILT[@]}" ] ||
+	fail "cargo named $NAMED executables and this gate could read ${#BUILT[@]} of them: a quote or a backslash in a path"
+ENGINE=""
+ARENA=""
+for path in ${BUILT[@]+"${BUILT[@]}"}; do
+	case "${path##*/}" in
+	pistol) ENGINE="$path" ;;
+	arena) ARENA="$path" ;;
+	esac
+done
+# ONE REFUSAL PER REASON (tools/SHELL_CHECKLIST.md item 8): a bin cargo named no
+# executable for, and then a named path that is absent, is not a regular file, or
+# carries no `+x` — the last being the case `command -v` admits and exec answers
+# with 126. A helper that must refuse is called as a statement, never inside a
+# command substitution, where `fail` would exit only the subshell (item 1).
+usable() { # $1 = the bin name, $2 = the path cargo named for it
+	[ -n "$2" ] || fail "cargo built no executable for --bin $1"
+	[ -e "$2" ] || fail "cargo named \`$2\` for --bin $1 and nothing is there"
+	[ -f "$2" ] || fail "cargo named \`$2\` for --bin $1 and it is not a regular file"
+	[ -x "$2" ] || fail "cargo named \`$2\` for --bin $1 and it is not executable"
+}
+usable pistol "$ENGINE"
+usable arena "$ARENA"
 
 # What the config says, read from the config rather than restated here: a gate
 # that hard-coded the numbers would pass after somebody changed the document.
