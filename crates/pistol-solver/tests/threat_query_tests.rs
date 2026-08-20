@@ -1020,10 +1020,21 @@ fn the_witness_window_is_the_least_among_those_sharing_the_winning_cell() {
 /// D-243 consequence (3)'s COMPOSITION, written here because it is the caller's
 /// and not the primitive's.
 ///
-/// Both conditions, in the order they bite: `side` is NOT the one to move, and
-/// the side that is cannot win this turn. Then, and only then, an unblockable
-/// double threat is a win.
+/// The conditions, in the order they bite: the game is NOT ALREADY DECIDED,
+/// `side` is NOT the one to move, and the side that is cannot win this turn.
+/// Then, and only then, an unblockable double threat is a win.
+///
+/// THE OUTCOME CHECK IS PERFORMED AND NOT ASSUMED, and the reason is
+/// transmission rather than correctness. `StonesLeft::from_state` answers
+/// `None` on a decided position and would carry the class alone, which is what
+/// `cover.rs`'s recipe itself calls "correct, and it is thin". But this
+/// function is that recipe's ONLY worked example, and an exemplar that skips
+/// the step it names teaches the thin version to whoever copies it — WP-1.5b's
+/// author being the reader in question (docs/decisions.md D-257).
 fn composed_win(game: &GameState, threats: &ThreatState, side: Player) -> bool {
+    if game.outcome().is_decided() {
+        return false;
+    }
     if game.to_move() == side {
         return false;
     }
