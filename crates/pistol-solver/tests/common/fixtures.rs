@@ -50,7 +50,10 @@ use pistol_core::window::Window;
 use pistol_core::{Coord, Outcome, Phase, Player};
 use pistol_solver::{Cover, MinimalCover, WinWitness};
 
-use super::{fixture_text, parse_coord, parse_coords, parse_player, parse_window};
+use super::{
+    cell_list, fixture_text, parse_coord, parse_coords, parse_player, parse_window, window_list,
+    window_token,
+};
 
 /// The fixture's name under `tests/fixtures/`.
 pub const THREAT_FIXTURE_FILE: &str = "threat_v0.txt";
@@ -115,6 +118,118 @@ impl ThreatCase {
             Player::P2 => &self.sides[1],
         }
     }
+}
+
+/// One record, rendered in the fixture's own grammar — the inverse of
+/// [`parse_cases`], and here for the reason the required-key set is here: one
+/// grammar, one file.
+///
+/// It is not a convenience. `threat_v0_is_what_the_reference_prints` renders
+/// every case from the from-scratch reference in [`super::reference`] and
+/// compares the result with the pinned bytes, so the fixture's expectations are
+/// DERIVED from R1 over the committed ply lists rather than merely hashed. An
+/// edit to an expectation then has to be justified against the reference; a
+/// re-hash alone no longer makes the suite green (docs/decisions.md D-259).
+///
+/// The layout is the file's: `expect ` then the key padded to [`KEY_WIDTH`]
+/// then one space then the value, except the state row, whose key is followed
+/// by two spaces because the row's own value starts with a key of its own.
+pub fn render_case(case: &ThreatCase) -> String {
+    let mut text = String::new();
+    text.push_str(&format!("case {}\n", case.name));
+    text.push_str(&format!("plies {}\n", cell_list(&case.plies)));
+    for side in [Player::P1, Player::P2] {
+        let tag = player_token(side);
+        let want = case.side(side);
+        let mut row = |what: &str, value: String| {
+            text.push_str(&format!(
+                "expect {:<KEY_WIDTH$} {value}\n",
+                format!("{tag} {what}"),
+                KEY_WIDTH = KEY_WIDTH
+            ));
+        };
+        row("hot", window_list(&want.hot));
+        row("win1", window_list(&want.win1));
+        row("completed", window_list(&want.completed));
+        row("live3", window_list(&want.live3));
+        row("live2", window_list(&want.live2));
+        row("threat_cells", cell_list(&want.threat_cells));
+        row("raise_cells", cell_list(&want.raise_cells));
+        for (index, budget) in ["1", "2"].into_iter().enumerate() {
+            row(&format!("cover {budget}"), cover_text(&want.cover[index]));
+        }
+        for (index, budget) in ["1", "2"].into_iter().enumerate() {
+            row(
+                &format!("canwin {budget}"),
+                canwin_text(&want.canwin[index]),
+            );
+        }
+    }
+    text.push_str(&format!("expect state  {}\n", state_text(&case.state)));
+    text.push_str("end\n");
+    text
+}
+
+/// The width the `expect` key is padded to, which is the widest key there is
+/// (`p1 threat_cells`). Derived from the keys rather than written twice: a
+/// column that drifts from the file is a diff nobody can read.
+const KEY_WIDTH: usize = "p1 threat_cells".len();
+
+/// `p1` or `p2` — the fixture's spelling, which is not [`Player`]'s `Display`.
+fn player_token(side: Player) -> &'static str {
+    match side {
+        Player::P1 => "p1",
+        Player::P2 => "p2",
+    }
+}
+
+/// A cover row's value: the three spellings, and never an empty brace list.
+fn cover_text(cover: &Cover) -> String {
+    match cover {
+        Cover::NothingToBlock => String::from("nothing"),
+        Cover::Impossible => String::from("impossible"),
+        Cover::Minimal(covers) => covers
+            .iter()
+            .map(|cover| match cover {
+                MinimalCover::One(at) => format!("{{{at}}}"),
+                MinimalCover::Two { first, second } => format!("{{{first} {second}}}"),
+            })
+            .collect::<Vec<_>>()
+            .join(" "),
+    }
+}
+
+/// A canwin row's value, carrying the witness WINDOW as well as the cells.
+fn canwin_text(witness: &Option<WinWitness>) -> String {
+    match witness {
+        None => String::from("none"),
+        Some(WinWitness::OnePly { at, window }) => {
+            format!("oneply {at} {}", window_token(*window))
+        }
+        Some(WinWitness::Pair {
+            first,
+            second,
+            window,
+        }) => format!("pair {first} {second} {}", window_token(*window)),
+    }
+}
+
+/// The state row's value: the position's own facts, from `GameState` and not
+/// from the reference.
+fn state_text(state: &StateExpectation) -> String {
+    let phase = match state.phase {
+        Phase::First => "First",
+        Phase::Second => "Second",
+    };
+    let outcome = match state.outcome {
+        Outcome::Ongoing => String::from("ongoing"),
+        Outcome::Win { winner, turn } => format!("win {} turn {turn}", player_token(winner)),
+    };
+    format!(
+        "to_move {} phase {phase} stones_owed {} outcome {outcome}",
+        player_token(state.to_move),
+        state.stones_owed
+    )
 }
 
 /// Every case in the golden fixture, in file order.

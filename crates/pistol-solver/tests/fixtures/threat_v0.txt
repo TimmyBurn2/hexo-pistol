@@ -1,5 +1,5 @@
 # pistol golden threat states, v0 — the oracle for the threat generator's whole
-# query surface (docs/decisions.md D-243, D-256).
+# query surface (docs/decisions.md D-243, D-256, D-259).
 #
 # Pinned by SHA-256 in crates/pistol-solver/tests/threat_query_tests.rs
 # (THREAT_V0_SHA256). Editing this file without updating that constant in the
@@ -7,11 +7,25 @@
 # quietly is not golden. Pass threshold, pre-registered: every case, every
 # answer, every run. There is no partial credit on a query.
 #
-# HOW THE ANSWERS WERE OBTAINED. Every one was computed by a from-scratch
-# reference that shares only pistol-core, cross-checked on every case against an
-# independent bounding-box region scan, and then compared value for value —
-# 336 of 336 — against a reference written by a different session for the design
-# this file implements. Nothing here was read off the code it tests.
+# WHAT KIND OF FILE THIS IS: MACHINE-DERIVED, hand-maintained in nothing but the
+# `plies` lines. Every expectation is what the from-scratch reference in
+# `tests/common/reference.rs` prints for that ply list, and the test
+# `threat_v0_is_what_the_reference_prints` renders all of them and compares them
+# with these bytes. So the file is reproducible from the repository — no scratch
+# generator stands behind it — and an edited expectation is a red test rather
+# than a re-hash. That makes this a THIRD KIND beside its neighbours:
+# `bench_positions_v1.txt` is produced by a shipped binary, and `tactical_v0.txt`
+# is hand-authored and its content IS the specification.
+#
+# The reference shares only pistol-core and is cross-checked on every case
+# against an independent bounding-box region scan. It was also compared value for
+# value against a reference written by a different session for the design this
+# file implements: 336 of 336 AGREED, counting the values present on both sides.
+# THAT COMPARISON DID NOT REACH EVERY ROW HERE, and this says so where the claim
+# is made: the other record carries no `raise_cells`, lists win-in-one-ply CELLS
+# where this file lists windows, and names no window on a `canwin ... oneply`
+# record. Those three row kinds rest on the region scan and on the regeneration
+# above. Nothing here was read off the code it tests.
 #
 # THE POSITIONS ARE LEGAL PLY SEQUENCES. Each `plies` line is played through
 # `GameState::from_plies`, so legality, turn structure and phase come from

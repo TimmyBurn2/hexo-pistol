@@ -22,11 +22,14 @@
 
 mod common;
 
-use common::fixtures::{THREAT_FIXTURE_FILE, ThreatCase, threat_case, threat_cases};
+use common::fixtures::{
+    SideExpectation, StateExpectation, THREAT_FIXTURE_FILE, ThreatCase, render_case, threat_case,
+    threat_cases,
+};
 use common::reference::Reference;
 use common::region::region_scan;
 use common::sha256::sha256_hex;
-use common::{assert_pinned, cell_list, play, window_list};
+use common::{assert_pinned, cell_list, fixture_text, play, window_list};
 use pistol_core::{Coord, GameState, Outcome, Player};
 use pistol_solver::{
     Cover, HitBudget, LiveCount, MinimalCover, NearHot, StonesLeft, ThreatState, WinWitness,
@@ -36,7 +39,7 @@ use pistol_solver::{
 ///
 /// Changing the fixture means changing this line, in the same commit, having
 /// looked at what changed.
-const THREAT_V0_SHA256: &str = "fec6db7aedfcab717f2e972bc35a1ee04074b23be47835abed3d4c4d0fa3d990";
+const THREAT_V0_SHA256: &str = "6b23cb48eb6d8b8a5b75de4fc3cc79b31325c15ec93d573914a98da6cfbb1e70";
 
 #[test]
 fn threat_v0_fixture_matches_its_pinned_sha256() {
@@ -63,6 +66,83 @@ fn sha256_matches_published_test_vectors() {
     for (input, expected) in vectors {
         assert_eq!(sha256_hex(input), expected, "vector {input:?}");
     }
+}
+
+/// The fixture is DERIVED, and this is the derivation.
+///
+/// Every record is rendered from the from-scratch reference over the committed
+/// ply lists and compared with the pinned bytes, line for line. Three things
+/// follow, and the third is the one that was missing:
+///
+/// 1. the file is reproducible from the repository — no scratch generator, no
+///    author's transcript, nothing uncommitted stands behind it;
+/// 2. R1's own answers are compared against the file, which nothing else did:
+///    the golden test compares the SHIPPED state against the file, so without
+///    this row "computed by a from-scratch reference" was an authoring claim no
+///    gate enforced;
+/// 3. the sha pin becomes a live derivation rather than a checksum. An edit to
+///    an expectation must be justified against R1; re-hashing it is no longer
+///    enough to make the suite green, which is exactly the door a reviewer
+///    walked through to show that a fixture's PRECONDITION could be edited away
+///    without any expected answer changing.
+///
+/// Comments and blank lines are the file's own prose and are not derived; every
+/// other line is (docs/decisions.md D-259).
+#[test]
+fn threat_v0_is_what_the_reference_prints() {
+    let mut rendered = String::new();
+    for case in threat_cases() {
+        let (game, _) = play(&case.plies);
+        let reference = Reference::from_board(game.board());
+        let derived = ThreatCase {
+            name: case.name.clone(),
+            line: case.line,
+            plies: case.plies.clone(),
+            sides: [Player::P1, Player::P2].map(|side| SideExpectation {
+                hot: reference.hot(side),
+                win1: reference.win_in_one_ply(side),
+                completed: reference.completed(side),
+                live3: reference.live_at(side, LiveCount::Three),
+                live2: reference.live_at(side, LiveCount::Two),
+                threat_cells: reference.threat_cells(side),
+                raise_cells: reference.cells_raising_to_hot(side, NearHot::Three),
+                cover: [HitBudget::One, HitBudget::Two]
+                    .map(|budget| reference.blocking_covers(side.opponent(), budget)),
+                canwin: [StonesLeft::One, StonesLeft::Two]
+                    .map(|left| reference.can_win_this_turn(side, left)),
+            }),
+            state: StateExpectation {
+                to_move: game.to_move(),
+                phase: game.phase(),
+                stones_owed: game.stones_owed(),
+                outcome: game.outcome(),
+            },
+        };
+        rendered.push_str(&render_case(&derived));
+    }
+    let text = fixture_text(THREAT_FIXTURE_FILE);
+    let on_disk: Vec<&str> = text
+        .lines()
+        .filter(|line| !line.trim_start().starts_with('#') && !line.trim().is_empty())
+        .collect();
+    let derived: Vec<&str> = rendered.lines().collect();
+    for (index, (derived_line, disk_line)) in derived.iter().zip(&on_disk).enumerate() {
+        assert_eq!(
+            derived_line,
+            disk_line,
+            "record line {}: the reference prints one thing and {THREAT_FIXTURE_FILE} says \
+             another; the file is derived, so change the reference's mind or the plies, not \
+             the expectation",
+            index + 1
+        );
+    }
+    assert_eq!(
+        derived.len(),
+        on_disk.len(),
+        "{THREAT_FIXTURE_FILE} has {} derivable lines and the reference printed {}",
+        on_disk.len(),
+        derived.len()
+    );
 }
 
 /// The whole surface, on every case: the shipped state against the file.
