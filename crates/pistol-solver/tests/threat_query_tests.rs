@@ -145,6 +145,87 @@ fn threat_v0_is_what_the_reference_prints() {
     );
 }
 
+/// THE CLASS THE DERIVATION ABOVE CANNOT SEE, ENUMERATED AND CLOSED.
+///
+/// `threat_v0_is_what_the_reference_prints` catches an edited `plies` line
+/// whenever the edit MOVES a derived answer — a `plies` line is an input, so it
+/// re-derives, and the comparison objects to any answer that changed. What it
+/// cannot catch is an ANSWER-INVARIANT edit, and answer-invariance is TOTAL on
+/// a record with no positive expectation: every row reads `-`, `nothing` or
+/// `none` whatever the position turns out to be, so the precondition that makes
+/// the record the right fixture can be edited away and nothing anywhere goes
+/// red. That is not hypothetical on either member — the drift was reproduced on
+/// both before this row existed (docs/decisions.md D-260, D-264).
+///
+/// So the class is closed by admission requirement rather than by name: a
+/// record whose every row is negative names below the window that makes it the
+/// right fixture and what that window must hold. A THIRD such record fails the
+/// census until its author writes one down.
+#[test]
+fn a_record_stating_nothing_states_its_own_shape() {
+    // case, window token, own count, opp count, empties — hand-written, because
+    // a shape read out of the state is a shape the state cannot contradict.
+    const SHAPES: [(&str, &str, u32, u32, u32); 3] = [
+        (
+            "single_hot_window_dead_when_opponent_enters",
+            "ConstR@0,0",
+            4,
+            1,
+            1,
+        ),
+        (
+            "win_in_one_ply_dead_when_opponent_enters",
+            "ConstR@-1,0",
+            5,
+            1,
+            0,
+        ),
+        (
+            "win_in_one_ply_dead_when_opponent_enters",
+            "ConstR@0,0",
+            5,
+            1,
+            0,
+        ),
+    ];
+
+    let mut census: Vec<String> = threat_cases()
+        .into_iter()
+        .filter(|case| {
+            [Player::P1, Player::P2]
+                .into_iter()
+                .all(|side| case.side(side).states_nothing())
+        })
+        .map(|case| case.name)
+        .collect();
+    census.sort();
+    let mut named: Vec<String> = SHAPES
+        .iter()
+        .map(|(name, ..)| String::from(*name))
+        .collect();
+    named.sort();
+    named.dedup();
+    assert_eq!(
+        census, named,
+        "the all-negative class moved: a record every one of whose rows reads negative is \
+         invisible to the derivation, so it owes a shape in SHAPES and a row that asserts it"
+    );
+
+    for (name, token, own, opp, empties) in SHAPES {
+        let (_, threats) = play(&threat_case(name).plies);
+        let masks = threats.masks(common::parse_window(token, 0));
+        assert_eq!(
+            (
+                masks.own_count(Player::P1),
+                masks.opp_count(Player::P1),
+                masks.empties().count_ones()
+            ),
+            (own, opp, empties),
+            "{name} / {token}: the shape this record's rows are about"
+        );
+    }
+}
+
 /// The whole surface, on every case: the shipped state against the file.
 #[test]
 fn threat_state_answers_match_the_golden_fixture() {
@@ -276,6 +357,32 @@ fn hot_window_requires_four_and_live() {
     assert!(
         dead.hot_windows(Player::P1).is_empty(),
         "a window holding an opponent stone is dead however many own stones it holds"
+    );
+    // THE PRECONDITION, STATED WHERE THIS ROW CAN SEE IT — the same treatment
+    // D-260 gave the twin, and for the same reason. The assertion above is that
+    // a set is EMPTY, which holds just as well of a position exhibiting
+    // nothing: drop P1 to THREE in that window and it is non-hot on the COUNT,
+    // the row proves nothing about liveness, and no expectation in the record
+    // moves, so the derivation cannot object either. So the row states what the
+    // position must be: the window that is hot in `single_hot_window` holds THE
+    // SAME four P1 stones here, plus the opponent stone that kills it
+    // (docs/decisions.md D-264).
+    let window = common::parse_window("ConstR@0,0", 0);
+    let (live_masks, dead_masks) = (live.masks(window), dead.masks(window));
+    assert_eq!(
+        dead_masks.own_count(Player::P1),
+        4,
+        "ConstR@0,0 must hold four P1 stones for this case to be about liveness"
+    );
+    assert_eq!(
+        dead_masks.own(Player::P1),
+        live_masks.own(Player::P1),
+        "and they must be the SAME four, or the pair compares two positions"
+    );
+    assert_eq!(
+        dead_masks.opp_count(Player::P1),
+        1,
+        "ConstR@0,0 must hold the opponent stone that kills it"
     );
     // And the count is four and not three: the count-3 windows of the live
     // position are not in its hot set.

@@ -81,6 +81,35 @@ pub struct SideExpectation {
     pub canwin: [Option<WinWitness>; 2],
 }
 
+impl SideExpectation {
+    /// Whether every row for this side is one of the grammar's THREE NEGATIVE
+    /// SPELLINGS — `-`, `nothing`, `none`.
+    ///
+    /// This is a property of the RECORD and not of the state, and it is the
+    /// operational predicate for the one drift the derivation cannot see. The
+    /// regeneration in `threat_v0_is_what_the_reference_prints` catches an
+    /// edited `plies` line whenever the edit moves any derived answer; what it
+    /// cannot catch is an ANSWER-INVARIANT edit, and answer-invariance is total
+    /// exactly where there is no positive answer to move. A record every one of
+    /// whose rows reads negative therefore has no protection from the
+    /// derivation at all, and needs a row that states its own precondition
+    /// (docs/decisions.md D-259, D-260, D-264).
+    pub fn states_nothing(&self) -> bool {
+        self.hot.is_empty()
+            && self.win1.is_empty()
+            && self.completed.is_empty()
+            && self.live3.is_empty()
+            && self.live2.is_empty()
+            && self.threat_cells.is_empty()
+            && self.raise_cells.is_empty()
+            && self
+                .cover
+                .iter()
+                .all(|cover| *cover == Cover::NothingToBlock)
+            && self.canwin.iter().all(Option::is_none)
+    }
+}
+
 /// What the position itself is, so a fixture cannot silently be about a
 /// different turn or phase than it was written for.
 #[derive(Debug, Clone, PartialEq, Eq)]
