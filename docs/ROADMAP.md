@@ -86,6 +86,10 @@ carried one designation (docs/decisions.md D-249): **WP-1.5a** is the
 queries — and **WP-1.5b** is the threat-first staged pair generation that
 consumes it in search, with its own sha-pinned `tactical_staged_v0.txt` fixture.
 Neither includes any `pistol-eval` storage refactor; that is WP-1.9.
+WP-1.5b's PRE-REGISTERED HOTSPOT is already named and it is not the eval: it is
+the cover arithmetic it will call per node, whose growth shape and unmeasured
+allocation-per-call are registered in docs/decisions.md D-263 together with what
+the measurement owes.
 
 **WP-1.6 — threat-only zone-bounded quiescence**, under D-111's invariant: the
 static eval answers at turn boundaries only, so quiescence stands pat and
