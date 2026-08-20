@@ -1,8 +1,13 @@
 # pistol — the configuration the Stage-0 CI gates run.
 #
-# NOT a deployment config. That is configs/instrument_v0.toml, whose candidate
-# radius of 3 is the one every strength claim is made at. This document exists
-# because two gates have to finish in a CI run, and at radius 3 they cannot.
+# NOT a deployment config, and not the instrument config either. The config that
+# SHIPS is configs/play_v0.toml, at candidate radius 3. The config every strength
+# claim is made at is configs/instrument_v0.toml, at candidate radius 2, and has
+# been since D-190/D-194 fired WP-1.3 Run 1's pre-registered H1. This document is
+# candidate radius 1, and it exists because two gates have to finish inside a CI
+# run and neither of the other two radii lets them: at radius 3 a completed depth
+# of 4 turns costs hours and at radius 2 it costs more than 100 s. The table below
+# is that measurement, not a preference.
 #
 # The numbers, measured on the development machine in a release build, one core,
 # from an eleven-stone midgame position (docs/decisions.md D-81 measured the same
@@ -27,8 +32,10 @@
 # which is about whether two runs agree and not about how strong they are, and
 # the deep tactical cases of the fixture, which state this config by name so that
 # nobody can mistake a radius-1 result for a deployment claim. The shallow
-# tactical cases state configs/instrument_v0.toml instead and run at the radius
-# that ships.
+# tactical cases state configs/instrument_v0.toml instead and run at the
+# INSTRUMENT radius 2. No case in that fixture runs at the radius that ships, so
+# the 84-100 s in the table above is this config's reason for existing and is
+# never the cost of running the fixture.
 #
 # Validate this file with tools/config_check.sh.
 

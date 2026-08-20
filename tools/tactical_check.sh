@@ -5,11 +5,14 @@
 # §Process).
 #
 # In release, and through the engine binary rather than through `cargo test`,
-# because the deep cases need it: at the deployment candidate radius a completed
-# depth of three turns costs 84-100 s in release and an order of magnitude more in
-# a debug build (the measurement table lives in configs/gate_v0.toml). `cargo test`
-# runs the cheap half of the suite and the fixture's pin; this runs all of it. The
-# same split `tools/perft_check.sh` uses for the movegen oracle (docs/decisions.md
+# because the deep cases need it — the DEBUG cost, not the release cost. Measured
+# on the development machine: all twenty cases, each searched twice, cost 4.8 s
+# here and 63 s as the ignored debug test. No case in the fixture runs at the
+# shipping radius 3: the depth-3 cases run at configs/gate_v0.toml's radius 1 and
+# the rest at the instrument radius 2, so the 84-100 s in that file's measurement
+# table is why gate_v0 exists and is not what this script costs. `cargo test` runs
+# the cheap half of the suite and the fixture's pin; this runs all of it. The same
+# split `tools/perft_check.sh` uses for the movegen oracle (docs/decisions.md
 # D-54).
 #
 # `selftest` also searches every case twice — once from a fresh engine and once

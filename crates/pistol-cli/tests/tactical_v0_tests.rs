@@ -8,10 +8,14 @@
 //! - the fixture is pinned, and every position in it replays through the rules;
 //! - the cases that resolve at the first depth are solved, which is the plumbing
 //!   from fixture to engine to answer, end to end, in a debug build;
-//! - the whole suite meets its pre-registered threshold — `#[ignore]`, because at
-//!   the deployment candidate radius a completed depth of three turns costs
-//!   84-100 s in a *release* build (see `configs/gate_v0.toml`'s measurement
-//!   table), and a debug build is an order of magnitude slower again.
+//! - the whole suite meets its pre-registered threshold — `#[ignore]`, and the
+//!   reason is the DEBUG cost rather than the release cost. Measured on the
+//!   development machine: the twenty cases, each searched twice, cost 4.8 s
+//!   through the release binary and 63 s as this test in a debug build. No case
+//!   in this fixture runs at the shipping radius 3 — the depth-3 cases run at
+//!   `configs/gate_v0.toml`'s radius 1 and the rest at the instrument radius 2 —
+//!   so the 84-100 s in that file's measurement table is the reason gate_v0
+//!   exists and is not this suite's cost.
 //!
 //! The threshold itself is read from the fixture and is never chosen here: it was
 //! pre-registered in the file's header before the suite was first run
@@ -141,7 +145,7 @@ fn tactical_v0_fixture_is_pinned_and_every_position_is_legal() {
             String::from("configs/instrument_v0.toml"),
             String::from("configs/gate_v0.toml")
         ],
-        "the suite is a claim about the deployment config and the gate config, in that order"
+        "the suite is a claim about the instrument config and the gate config, in that order"
     );
 }
 
@@ -149,7 +153,7 @@ fn tactical_v0_fixture_is_pinned_and_every_position_is_legal() {
 fn tactical_v0_first_depth_cases_are_solved() {
     // The cases that resolve in one completed turn: a mate in one is found at
     // depth one and the deepening loop stops there, so these cost a handful of
-    // nodes each even at the deployment candidate radius, and a debug build can
+    // nodes each even at the instrument candidate radius 2, and a debug build can
     // afford them. They exercise the whole path — fixture, config, engine,
     // expectation — which is what makes the ignored test below a strength
     // question rather than a plumbing question.
@@ -172,8 +176,10 @@ fn tactical_v0_first_depth_cases_are_solved() {
 }
 
 #[test]
-#[ignore = "release only: at the deployment radius a completed depth 3 costs ~100 s; \
-            run by tools/tactical_check.sh"]
+#[ignore = "release only, on the DEBUG cost: measured, this suite is 4.8 s through \
+            the release binary and 63 s as this test in a debug build. Its depth-3 \
+            cases run at configs/gate_v0.toml's radius 1, not at the shipping \
+            radius 3; run by tools/tactical_check.sh"]
 fn tactical_v0_suite_meets_its_pre_registered_threshold() {
     let suite = suite();
     let report = selftest::run(&configs(&suite), &suite).expect("every case must be runnable");
