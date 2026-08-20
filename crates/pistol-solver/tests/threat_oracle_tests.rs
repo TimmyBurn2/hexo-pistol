@@ -54,6 +54,16 @@ const REQUIRED_UNBLOCKABLE: usize = 100;
 /// `(ply, side)` pairs whose minimal covers include a CROSS-WINDOW pair — the
 /// case a flat cell list cannot carry, and the one worth counting separately.
 const REQUIRED_CROSS_WINDOW: usize = 100;
+/// CELLS on which the legality premise is checked — not `(ply, side)` pairs.
+///
+/// Its own floor, because it counts its own thing: the legality test walks every
+/// empty of every hot window and so sees several cells per hot side-position.
+/// It borrowed [`REQUIRED_HOT_POSITIONS`] before, which is a floor on a
+/// different unit and sits about a fifth of the way to what this one measures —
+/// so the check could have shrunk by four fifths and still passed. The regime
+/// produces 3330; this is about half, the ratio the four floors above already
+/// sit at (docs/decisions.md D-256).
+const REQUIRED_HOT_CELLS: usize = 1600;
 
 /// The census one playout regime produces.
 #[derive(Debug, Default, Clone, Copy)]
@@ -330,8 +340,9 @@ fn hot_window_empties_are_always_legal_placements() {
         }
     }
     assert!(
-        checked >= REQUIRED_HOT_POSITIONS,
-        "the premise must be checked on at least {REQUIRED_HOT_POSITIONS} cells, saw {checked}"
+        checked >= REQUIRED_HOT_CELLS,
+        "the premise must be checked on at least {REQUIRED_HOT_CELLS} hot-window empty CELLS, \
+         saw {checked}"
     );
 }
 

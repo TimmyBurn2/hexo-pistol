@@ -180,23 +180,27 @@ impl Reference {
         self.union_of_empties(&windows)
     }
 
-    /// The size of a minimum hitting set of `windows`' empties, searched up to
-    /// `ceiling`, or `None` if no set that small hits them all — which includes
-    /// the genuinely unhittable case, where some window has no empty at all.
+    /// The size of a minimum hitting set of `windows`' empties, or `None` if no
+    /// set of at most [`CEILING`] cells hits them all — which includes the
+    /// genuinely unhittable case, where some window has no empty at all.
     ///
     /// Computed by TRYING SIZES, smallest first — the definition — rather than
-    /// by a per-budget predicate. THE CEILING IS AN ARGUMENT because the two
-    /// callers want different ones: the predicate below never needs more than
-    /// two, since that is the largest budget there is, while a diagnostic
-    /// reporting "the minimum is three" wants to say so rather than say
-    /// "more than two".
-    pub fn min_hitting_set(&self, windows: &[Window], ceiling: usize) -> Option<usize> {
+    /// by a per-budget predicate.
+    ///
+    /// THE CEILING IS FIXED AND IS NOT AN ARGUMENT. It was an argument, on the
+    /// stated ground that "the two callers want different ceilings"; there is
+    /// ONE caller, the predicate below, and the diagnostic that would have
+    /// wanted to report "the minimum is three" was never written. So the
+    /// parameter and the sentence justifying it were both stale, and a stale
+    /// justification in an oracle is worse than none: it describes a shape the
+    /// code no longer has.
+    pub fn min_hitting_set(&self, windows: &[Window]) -> Option<usize> {
         let families: Vec<Vec<Coord>> = windows.iter().map(|&w| self.empties(w)).collect();
         if families.is_empty() {
             return Some(0);
         }
         let universe = universe(&families);
-        (1..=ceiling).find(|&size| {
+        (1..=CEILING).find(|&size| {
             subsets(&universe, size)
                 .into_iter()
                 .any(|candidate| hits_all(&families, &candidate))
@@ -210,9 +214,7 @@ impl Reference {
             HitBudget::One => 1,
             HitBudget::Two => 2,
         };
-        // Two is the whole domain: a minimum above the largest budget exceeds
-        // every budget, so how far above is a question no caller asks.
-        match self.min_hitting_set(windows, 2) {
+        match self.min_hitting_set(windows) {
             Some(size) => size > allowed,
             None => true,
         }
@@ -312,6 +314,13 @@ impl Reference {
         })
     }
 }
+
+/// The largest hitting set this reference looks for.
+///
+/// Two, and two is the whole domain: `HitBudget` is closed at two, so a minimum
+/// above the largest budget exceeds every budget and HOW FAR above is a question
+/// no caller asks.
+const CEILING: usize = 2;
 
 /// Every cell in some family, sorted and deduplicated.
 fn universe(families: &[Vec<Coord>]) -> Vec<Coord> {
