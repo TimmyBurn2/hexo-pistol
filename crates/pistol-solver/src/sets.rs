@@ -39,11 +39,11 @@ use pistol_core::window::{WINDOW_LEN, Window};
 use crate::state::THREAT_DESYNC;
 
 /// How many classes are maintained per side.
-pub const CLASS_COUNT: usize = 5;
+pub(crate) const CLASS_COUNT: usize = 5;
 
 /// One maintained class.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Class {
+pub(crate) enum Class {
     /// Live with exactly two own stones.
     LiveTwo,
     /// Live with exactly three own stones.
@@ -59,7 +59,7 @@ pub enum Class {
 impl Class {
     /// Every class, in a fixed order. Iterating this is deterministic, which is
     /// why nothing here iterates a set of classes instead.
-    pub const ALL: [Class; CLASS_COUNT] = [
+    pub(crate) const ALL: [Class; CLASS_COUNT] = [
         Class::LiveTwo,
         Class::LiveThree,
         Class::Hot,
@@ -85,7 +85,7 @@ impl Class {
 
 /// The classes one window falls into for one side.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub struct ClassSet(u8);
+pub(crate) struct ClassSet(u8);
 
 impl ClassSet {
     /// The classes a window with these counts is in **for the side those counts
@@ -94,7 +94,7 @@ impl ClassSet {
     /// The liveness conjunct is first and applies to every class: a window
     /// holding an opponent stone is dead for this side whatever it holds of
     /// this side's, so it is in no set at all.
-    pub fn of(own: u32, opp: u32) -> ClassSet {
+    pub(crate) fn of(own: u32, opp: u32) -> ClassSet {
         if opp != 0 {
             return ClassSet(0);
         }
@@ -118,7 +118,7 @@ impl ClassSet {
     }
 
     /// Whether this window is in `class`.
-    pub fn contains(self, class: Class) -> bool {
+    pub(crate) fn contains(self, class: Class) -> bool {
         self.0 & class.bit() != 0
     }
 }
@@ -133,7 +133,7 @@ impl ClassSet {
 /// sizes (at most 21 at count 2, 6 at count 3, 4 hot) is a small memmove beside
 /// a lookup that would cost the same search anyway.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct WindowSets {
+pub(crate) struct WindowSets {
     sets: [Vec<Window>; CLASS_COUNT],
 }
 
@@ -151,7 +151,7 @@ impl WindowSets {
     /// Sorted BY CONSTRUCTION, not by sorting here: this is the ordering the
     /// determinism law cares about, and it is what lets the table underneath be
     /// hashed (CLAUDE.md rule 4).
-    pub fn windows(&self, class: Class) -> &[Window] {
+    pub(crate) fn windows(&self, class: Class) -> &[Window] {
         &self.sets[class.slot()]
     }
 
@@ -160,7 +160,7 @@ impl WindowSets {
     /// At most two operations for the reason the module doc gives; nothing here
     /// depends on that bound being two, and a wrong bound would cost time
     /// rather than correctness.
-    pub fn transition(&mut self, window: Window, before: ClassSet, after: ClassSet) {
+    pub(crate) fn transition(&mut self, window: Window, before: ClassSet, after: ClassSet) {
         for class in Class::ALL {
             match (before.contains(class), after.contains(class)) {
                 (true, false) => self.remove(window, class),

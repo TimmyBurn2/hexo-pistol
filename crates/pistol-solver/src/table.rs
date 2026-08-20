@@ -33,7 +33,7 @@ use pistol_core::window::{WINDOW_LEN, Window};
 use pistol_core::{Axis, Coord, Player};
 
 /// Every cell of a window, as a bit per cell.
-pub const FULL_MASK: u8 = (1u8 << WINDOW_LEN) - 1;
+pub(crate) const FULL_MASK: u8 = (1u8 << WINDOW_LEN) - 1;
 
 /// What one window holds: six bits per side, `1 << index` per cell.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -74,12 +74,12 @@ impl WindowMasks {
     }
 
     /// Whether the window holds no stone at all — the pruning condition.
-    pub fn is_vacant(self) -> bool {
+    pub(crate) fn is_vacant(self) -> bool {
         self.p1 == 0 && self.p2 == 0
     }
 
     /// This record with `side`'s bit at `index` set or cleared.
-    pub fn with(self, side: Player, index: u8, occupied: bool) -> WindowMasks {
+    pub(crate) fn with(self, side: Player, index: u8, occupied: bool) -> WindowMasks {
         let bit = 1u8 << index;
         let mut masks = self;
         let slot = match side {
@@ -98,7 +98,7 @@ impl WindowMasks {
 /// The empty cells of `window`, in window order, which is also `(q, r)`
 /// lexicographic order: every axis direction — `(0,1)`, `(1,0)`, `(1,-1)` —
 /// increases `q` or, where `q` is constant, `r`.
-pub fn empty_cells(window: Window, masks: WindowMasks) -> impl Iterator<Item = Coord> {
+pub(crate) fn empty_cells(window: Window, masks: WindowMasks) -> impl Iterator<Item = Coord> {
     let empties = masks.empties();
     (0..WINDOW_LEN as u8)
         .filter(move |index| empties & (1u8 << index) != 0)
@@ -111,7 +111,7 @@ pub fn empty_cells(window: Window, masks: WindowMasks) -> impl Iterator<Item = C
 /// `pack(a) < pack(b)` exactly when `a < b`. Order preservation is not needed by
 /// the hash — it is needed by [`WindowTable::snapshot`], which unpacks — and it
 /// is what makes the key a lossless renaming of the window rather than a digest.
-pub fn pack(window: Window) -> u64 {
+pub(crate) fn pack(window: Window) -> u64 {
     let axis = match window.axis {
         Axis::ConstQ => 0u64,
         Axis::ConstR => 1,
@@ -124,11 +124,19 @@ pub fn pack(window: Window) -> u64 {
 
 /// The window a key names. The inverse of [`pack`], exactly.
 ///
+/// IT BUILDS A `Window` DIRECTLY and so does not re-check addressability, which
+/// is sound over the keys [`pack`] produced — those came from windows that
+/// already passed `Window::new` — and is unsound over a key from anywhere else,
+/// because `Window`'s fields are public in `pistol-core` and its constructor's
+/// refusal is therefore not an invariant of the type. That is why this is
+/// crate-private and why it is not part of this crate's surface
+/// (docs/decisions.md D-261).
+///
 /// # Panics
 ///
 /// If `key` was not produced by [`pack`]: a key naming no axis is a bug in this
 /// crate rather than an answer to anyone's question (CLAUDE.md rule 3).
-pub fn unpack(key: u64) -> Window {
+pub(crate) fn unpack(key: u64) -> Window {
     let axis = match key >> 32 {
         0 => Axis::ConstQ,
         1 => Axis::ConstR,
@@ -153,7 +161,7 @@ pub fn unpack(key: u64) -> Window {
 /// same bucket: 27 distinct buckets and 81 per bucket over a realistic key set,
 /// at every table size (docs/decisions.md D-254).
 #[derive(Debug, Clone, Copy, Default)]
-pub struct SplitMix64 {
+pub(crate) struct SplitMix64 {
     state: u64,
 }
 
@@ -187,20 +195,20 @@ impl Hasher for SplitMix64 {
 
 /// The window table: packed key to masks, with the pruning rule.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct WindowTable {
+pub(crate) struct WindowTable {
     entries: HashMap<u64, WindowMasks, BuildHasherDefault<SplitMix64>>,
 }
 
 impl WindowTable {
     /// What `window` holds. A window with no entry holds nothing, which is the
     /// same answer as an entry of zeroes and is why there is no `Option` here.
-    pub fn masks(&self, window: Window) -> WindowMasks {
+    pub(crate) fn masks(&self, window: Window) -> WindowMasks {
         self.entries.get(&pack(window)).copied().unwrap_or_default()
     }
 
     /// Record what `window` holds, pruning the entry the moment it holds
     /// nothing (D-62).
-    pub fn set(&mut self, window: Window, masks: WindowMasks) {
+    pub(crate) fn set(&mut self, window: Window, masks: WindowMasks) {
         let key = pack(window);
         if masks.is_vacant() {
             self.entries.remove(&key);
@@ -210,12 +218,12 @@ impl WindowTable {
     }
 
     /// How many windows hold a stone.
-    pub fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.entries.len()
     }
 
     /// Whether no window holds a stone.
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
@@ -225,7 +233,7 @@ impl WindowTable {
     /// is for oracles and diagnostics. Nothing on a choice path may call it:
     /// the queries answer out of the maintained sets, which are sorted by
     /// construction, and that split is what licenses a hashed table at all.
-    pub fn snapshot(&self) -> BTreeMap<Window, WindowMasks> {
+    pub(crate) fn snapshot(&self) -> BTreeMap<Window, WindowMasks> {
         self.entries
             .iter()
             .map(|(&key, &masks)| (unpack(key), masks))

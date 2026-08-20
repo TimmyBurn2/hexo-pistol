@@ -121,12 +121,23 @@ impl ThreatState {
     /// a mate score for the wrong side, arrived at by arithmetic rather than by
     /// a missing guard.
     ///
-    /// Total over windows not in this state's table: such a window has six
-    /// empties and hits nothing, and since adding a window adds a CONSTRAINT,
-    /// the minimum hitting set is monotone non-decreasing and an extra window
-    /// can only push this predicate toward `true`. No caller in this crate
-    /// passes one — every one passes [`ThreatState::hot_windows`], whose members
-    /// hold at least four stones by construction.
+    /// Total over ADDRESSABLE windows not in this state's table: such a window
+    /// has six empties and hits nothing, and since adding a window adds a
+    /// CONSTRAINT, the minimum hitting set is monotone non-decreasing and an
+    /// extra window can only push this predicate toward `true`.
+    ///
+    /// ADDRESSABLE IS THE WHOLE OF THE QUALIFICATION AND IT IS NOT DECORATION.
+    /// `Window`'s fields are public in `pistol-core`, so `Window::new`'s refusal
+    /// belongs to that constructor and not to the type, and a window written
+    /// down at the far end of the lattice names cells that do not exist: reading
+    /// its empties panics with `COORD_OVERFLOW` through `Coord::step` rather
+    /// than answering. The earlier wording promised totality over windows
+    /// SIMPLICITER, which this is not and cannot be while the fields are public.
+    /// Nothing in this crate can reach that case — every caller passes
+    /// [`ThreatState::hot_windows`], whose members were entered by
+    /// `pistol_core::window`'s own enumeration, and the two doors that could
+    /// produce a window otherwise, the packed key's `unpack` and `empty_cells`
+    /// itself, are both crate-private (docs/decisions.md D-261).
     pub fn min_hitting_set_exceeds(&self, budget: HitBudget, windows: &[Window]) -> bool {
         if windows.is_empty() {
             return false;

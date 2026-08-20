@@ -3,15 +3,15 @@
 //! One stone touches exactly the [`WINDOWS_PER_CELL`](pistol_core::window::WINDOWS_PER_CELL)
 //! windows through its cell, less any that run off the addressable lattice.
 //! Each touch is one mask bit and at most two moves between maintained sets
-//! (see [`crate::sets`]), so the whole per-stone cost is bounded by the
-//! enumeration and not by the position.
+//! (see `crate::sets`, which is private), so the whole per-stone cost is bounded
+//! by the enumeration and not by the position.
 //!
 //! # apply then undo leaves the state EQUAL, not merely equivalent
 //!
 //! [`ThreatState`] is `PartialEq + Eq` over everything it carries, and
 //! `apply(c, p)` followed by `undo(c, p)` restores that whole state. What makes
 //! that true rather than nearly true is the pruning rule in
-//! [`WindowTable::set`]: an entry exists exactly while its window holds a stone,
+//! `WindowTable::set`: an entry exists exactly while its window holds a stone,
 //! so an undone stone leaves nothing behind. Without it the table would grow
 //! with the search PATH rather than with the position, and two states holding
 //! the same stones would compare unequal (docs/decisions.md D-62's rule for the
@@ -143,7 +143,8 @@ impl ThreatState {
 
     /// The whole window table, sorted by window — for oracles and diagnostics.
     ///
-    /// Never on a choice path: see [`WindowTable::snapshot`].
+    /// Never on a choice path: see `WindowTable::snapshot`, whose doc says why
+    /// the table underneath may be hashed at all.
     pub fn table_snapshot(&self) -> BTreeMap<Window, WindowMasks> {
         self.table.snapshot()
     }

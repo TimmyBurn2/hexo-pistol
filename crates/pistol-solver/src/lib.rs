@@ -29,6 +29,18 @@
 //! Nothing links this crate yet: no search, engine or binary calls it, which is
 //! deliberate for this work package (docs/decisions.md D-249).
 //!
+//! # The surface is the queries, and nothing under them
+//!
+//! What this crate exports is [`ThreatState`], the eleven queries on it, the
+//! closed conditioning types they take, the answers they return, and
+//! [`WindowMasks`], which two of them hand out. The STORE is not exported: the
+//! packed key, its hasher, the table type and the class sets are `pub(crate)`
+//! and the modules holding them are private. That is not tidiness — the whole
+//! ground for the table being its own file is that a different store replaces
+//! exactly that file and nothing else, and every internal name a consumer can
+//! reach is a commitment that replacement would have to unwind
+//! (docs/decisions.md D-254, D-261).
+//!
 //! # Determinism
 //!
 //! The maintained sets are sorted `Vec<Window>` and every query hands out a
@@ -48,12 +60,12 @@
 
 pub mod cover;
 pub mod query;
-pub mod sets;
 pub mod state;
-pub mod table;
+
+mod sets;
+mod table;
 
 pub use cover::{Cover, MinimalCover};
 pub use query::{HitBudget, LiveCount, NearHot, StonesLeft, WinWitness};
-pub use sets::Class;
 pub use state::{THREAT_DESYNC, ThreatState};
-pub use table::{WindowMasks, WindowTable};
+pub use table::WindowMasks;
