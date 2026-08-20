@@ -56,7 +56,9 @@ search or eval technique.
   perft, bench, selftest.
 - crates/pistol-api — RESERVED, empty until the API spec lands.
 - configs/ — explicit, complete, schema-validated configs. docs/decisions.md —
-  append-only ADR log. docs/research/ — the report. docs/ROADMAP.md — stage plan.
+  append-only ADR log. docs/process_readings.md — the T-bucket: adversarial readings
+  of the pre-registration paragraphs, with their status. docs/research/ — the report
+  and the threat calculus. docs/ROADMAP.md — stage plan.
 
 ## Hard rules
 
