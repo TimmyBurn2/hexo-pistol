@@ -122,6 +122,12 @@ fn executable(path: &Path, text: &str) {
 /// Build the fixture. `subject_section` places the app's dependency on the
 /// subject crate — `None` is the honest case, in which nothing links it.
 fn fixture(name: &str, subject_section: Option<&str>) -> Fixture {
+    fixture_with(name, subject_section, false)
+}
+
+/// `used`: the app CALLS the subject, so the subject's content change reaches
+/// codegen and the two builds genuinely differ.
+fn fixture_with(name: &str, subject_section: Option<&str>, used: bool) -> Fixture {
     let root = scratch(name).join("repo");
     std::fs::create_dir_all(&root).expect("the repository directory");
     write(
@@ -132,7 +138,14 @@ fn fixture(name: &str, subject_section: Option<&str>) -> Fixture {
         &root.join("crates/subject/Cargo.toml"),
         "[package]\nname = \"subject\"\nversion = \"0.0.1\"\nedition = \"2021\"\n",
     );
-    write(&root.join("crates/subject/src/lib.rs"), "// baseline\n");
+    write(
+        &root.join("crates/subject/src/lib.rs"),
+        if used {
+            "pub fn f() -> u64 { 1 }\n"
+        } else {
+            "// baseline\n"
+        },
+    );
     let edge = match subject_section {
         Some(section) => format!("\n[{section}]\nsubject = {{ path = \"../subject\" }}\n"),
         None => String::new(),
@@ -141,7 +154,14 @@ fn fixture(name: &str, subject_section: Option<&str>) -> Fixture {
         &root.join("crates/app/Cargo.toml"),
         &format!("[package]\nname = \"app\"\nversion = \"0.0.1\"\nedition = \"2021\"\n{edge}"),
     );
-    write(&root.join("crates/app/src/main.rs"), "fn main() {}\n");
+    write(
+        &root.join("crates/app/src/main.rs"),
+        if used {
+            "fn main() { println!(\"{}\", subject::f()); }\n"
+        } else {
+            "fn main() {}\n"
+        },
+    );
     write(&root.join("configs/stub.toml"), "# the committed config\n");
     executable(&root.join("tools/stub_snapshot.sh"), STUB_SNAPSHOT);
     write(&root.join(".gitignore"), "/target\n");
@@ -199,10 +219,16 @@ fn fixture(name: &str, subject_section: Option<&str>) -> Fixture {
     .to_owned();
     write(&sidecar, &format!("{rustc}\n{cargo_version}\n"));
 
-    // The landing commit: the subject changes, nothing else does.
+    // The landing commit: the subject changes, nothing else does. When the app
+    // CALLS it, the change reaches codegen and the two builds genuinely differ,
+    // which is what the contradiction branch needs.
     write(
         &root.join("crates/subject/src/lib.rs"),
-        "// landing\npub fn f() {}\n",
+        if used {
+            "pub fn f() -> u64 { 987_654_321 }\n"
+        } else {
+            "// landing\npub fn f() {}\n"
+        },
     );
     git(&root, &["add", "-A"]);
     git(&root, &["commit", "-qm", "landing"]);
@@ -321,8 +347,13 @@ fn a_clean_workspace_reaches_confirmed() {
     assert!(out(&ran).contains("H1-b CONFIRMED"), "{}", out(&ran));
 }
 
+/// A linked subject refutes `p = 0` — and BOTH instruments' readings must reach
+/// the record before either is acted on. Ordering the edge check to exit first
+/// made the registered agreement criterion unevaluable in exactly the branch
+/// where the two instruments can disagree, which is a refusal that should fire
+/// and cannot.
 #[test]
-fn a_normal_dependency_on_the_subject_aborts_before_any_build() {
+fn a_normal_dependency_aborts_with_both_instruments_readings_in_the_record() {
     let f = fixture("h1-edge", Some("dependencies"));
     let ran = f.run(&[]);
     assert_eq!(
@@ -332,12 +363,77 @@ fn a_normal_dependency_on_the_subject_aborts_before_any_build() {
         out(&ran),
         err(&ran)
     );
-    assert!(err(&ran).contains("p = 0 REFUTED"), "{}", err(&ran));
     assert!(
-        !out(&ran).contains("H1-a with subject"),
-        "the refutation precedes H1-a's builds: {}",
+        out(&ran).contains("p = 0 REFUTED"),
+        "the graph's reading is recorded: {}",
         out(&ran)
     );
+    assert!(
+        out(&ran).contains("H1-a reading"),
+        "and H1-a's reading is taken anyway, so a disagreement could be seen: {}",
+        out(&ran)
+    );
+    assert!(
+        err(&ran).contains("adjudicates nothing here"),
+        "and the abort says H1-a's reading does NOT adjudicate here, because a linked crate \
+         whose diff is dead code is still linked: {}",
+        err(&ran)
+    );
+}
+
+/// THE CRITERION'S CONTRADICTION BRANCH, in the ONE direction where the two
+/// instruments genuinely constrain each other: a crate absent from the resolved
+/// graph cannot reach codegen, so a moved binary means one of them is lying. It
+/// is exercised by making the edge check lie in that direction, which is the only
+/// honest way to reach a branch whose whole purpose is to catch an instrument
+/// that has stopped telling the truth.
+///
+/// The OTHER direction is deliberately not a contradiction, and this project
+/// learned that from a test rather than a reviewer: an unused dependency edge
+/// gives `edge = 1` with two bit-identical binaries, because H1-a asks whether a
+/// CONTENT CHANGE reaches codegen and the graph asks whether the crate is LINKED.
+/// A biconditional would have voided that run.
+#[test]
+fn a_moved_binary_with_no_edge_in_the_graph_voids_the_run() {
+    // The app CALLS the subject, so its landing content reaches codegen and the
+    // two builds differ. An edge check reporting NO dependent then contradicts
+    // the binaries, and the run must take no verdict.
+    let f = fixture_with("h1-contradict", Some("dependencies"), true);
+    let liar = scratch("h1-contradict-liar").join("liar.sh");
+    executable(
+        &liar,
+        "#!/usr/bin/env bash\necho \"liar: reporting no dependent\"\nexit 0\n",
+    );
+    let ran = f.run(&[("EDGE_CHECK", &liar.display().to_string())]);
+    assert_eq!(
+        ran.status.code(),
+        Some(2),
+        "a contradiction is RUN VOID, never a verdict\nstdout: {}\nstderr: {}",
+        out(&ran),
+        err(&ran)
+    );
+    assert!(
+        err(&ran).contains("CONTRADICT"),
+        "the refusal names the contradiction: {}",
+        err(&ran)
+    );
+}
+
+/// The control for the branch above: with the app CALLING the subject and the
+/// edge check telling the truth, the run is an honest ABORT rather than a
+/// contradiction — so that branch is reached by the LIE and not by the fixture.
+#[test]
+fn a_used_subject_with_a_truthful_edge_check_aborts_rather_than_contradicting() {
+    let f = fixture_with("h1-used-honest", Some("dependencies"), true);
+    let ran = f.run(&[]);
+    assert_eq!(
+        ran.status.code(),
+        Some(1),
+        "an honest linked-and-used subject is an ABORT\nstdout: {}\nstderr: {}",
+        out(&ran),
+        err(&ran)
+    );
+    assert!(out(&ran).contains("H1-a reading differs"), "{}", out(&ran));
 }
 
 /// A dev-dependency reaches no shipped binary. Revision 10's adjudicator called

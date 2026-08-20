@@ -202,14 +202,20 @@ echo "wp15a_h1: baseline rebuild attests $BASE_DIGEST_RECORDED"
 # ---- p = 0, on the RESOLVED GRAPH, workspace-wide, by a tested instrument that
 #      prints its own answer (tools/solver_edge_check.sh). ----
 ( cd "$PRISTINE/repo" && git checkout --quiet "$LANDING" ) || refuse "landing revision not in the clone"
+# BOTH READINGS ARE TAKEN BEFORE EITHER IS ACTED ON. Ordering the edge check to
+# exit on refutation made the registered agreement criterion UNEVALUABLE in the
+# one branch that matters: whenever instrument 2 said "edge", H1-a never
+# reported, so two of the biconditional's four corners had no producer and could
+# not have one — and the case where the two instruments disagree was exactly the
+# case the run decided on one of them alone. The refutation is REMEMBERED here
+# and adjudicated after H1-a, which costs one build on a run that is going to
+# abort anyway and buys a transcript that carries both readings.
 edge=0
 "$EDGE_CHECK" "$PRISTINE/repo" "$SUBJECT_CRATE" || edge=$?
 case "$edge" in
 0) echo "wp15a_h1: p = 0 — no normal reverse-dependency on $SUBJECT_CRATE at $LANDING" ;;
-1)
-	echo "wp15a_h1: p = 0 REFUTED — the lines above name the dependents" >&2
-	exit 1
-	;;
+1) echo "wp15a_h1: p = 0 REFUTED — the lines above name the dependents; H1-a is taken anyway, \
+so both instruments' readings reach the record" ;;
 *) refuse "the edge check could not answer at $LANDING (status $edge)" ;;
 esac
 
@@ -255,7 +261,40 @@ COUNTER_DIRT="$(cd "$PRISTINE/repo" && git status --porcelain -- ":(exclude)$SUB
 echo "wp15a_h1: H1-a with subject    $D_WITH"
 echo "wp15a_h1: H1-a without subject $D_WITHOUT"
 echo "wp15a_h1: H1-a counterfactual lock delta:${LOCK_DELTA:- none}"
-[ "$D_WITH" = "$D_WITHOUT" ] || { echo "wp15a_h1: H1-a FAILED — $SUBJECT_CRATE reaches the binary" >&2; exit 1; }
+h1a=identical
+[ "$D_WITH" = "$D_WITHOUT" ] || h1a=differs
+echo "wp15a_h1: H1-a reading $h1a"
+# THE REGISTERED AGREEMENT CRITERION, AND IT IS ONE-DIRECTIONAL — a biconditional
+# here would be unsound, which this script's own test suite demonstrated before
+# any reviewer saw it. THE TWO INSTRUMENTS DO NOT ASK THE SAME QUESTION: the graph
+# asks whether the subject is LINKED; H1-a asks whether the subject's CONTENT
+# CHANGE between BASE_REV and LANDING reaches codegen. A crate can be linked while
+# a change inside it does not reach the binary — which is exactly the dead-code
+# insensitivity the pre-registration already records as H1-a's instrument caveat,
+# and a synthetic fixture with an unused edge reproduces it: `edge = 1` with two
+# bit-identical binaries, which a biconditional would have called a disagreement
+# and voided. So:
+#
+#   edge present  -> p != 0. ABORT. H1-a's reading is RECORDED and adjudicates
+#                    nothing, because a linked crate whose diff happens to be dead
+#                    is still a linked crate.
+#   edge absent   -> H1-a MUST be identical. A crate outside the resolved graph
+#                    cannot reach codegen, so a difference means the two
+#                    instruments contradict each other: RUN VOID, never a verdict.
+#
+# The second line is the criterion that carries evidential weight, and it is the
+# direction in which the instruments genuinely constrain one another.
+if [ "$edge" -eq 1 ]; then
+	echo "wp15a_h1: p != 0 — ABORT. H1-a read $h1a and adjudicates nothing here: a linked crate \
+whose diff is dead code is still linked" >&2
+	exit 1
+fi
+if [ "$h1a" = differs ]; then
+	echo "wp15a_h1: the two instruments CONTRADICT each other — no dependent in the resolved \
+graph, and the binary moved anyway. A crate outside the graph cannot reach codegen. No verdict \
+is taken; both readings are above" >&2
+	exit 2
+fi
 echo "wp15a_h1: H1-a CONFIRMED — $SUBJECT_CRATE contributes nothing to the shipped binary"
 
 # ---- Toolchain, PRINTED into the transcript rather than written to a file the
