@@ -137,7 +137,11 @@ impl ThreatState {
     /// [`ThreatState::hot_windows`], whose members were entered by
     /// `pistol_core::window`'s own enumeration, and the two doors that could
     /// produce a window otherwise, the packed key's `unpack` and `empty_cells`
-    /// itself, are both crate-private (docs/decisions.md D-261).
+    /// itself, are both crate-private — which the crate root turns into
+    /// compile-fail examples rather than leaving as prose, since a sentence
+    /// about visibility is falsified by any commit that re-publishes what it
+    /// names. The one door that guard does not cover is named there
+    /// (docs/decisions.md D-261).
     pub fn min_hitting_set_exceeds(&self, budget: HitBudget, windows: &[Window]) -> bool {
         if windows.is_empty() {
             return false;
