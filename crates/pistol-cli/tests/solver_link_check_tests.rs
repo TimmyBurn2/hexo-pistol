@@ -220,7 +220,7 @@ fn a_workspace_with_a_build_script_is_refused_rather_than_answered() {
         err(&ran)
     );
     assert!(
-        err(&ran).contains("build scripts"),
+        err(&ran).contains("declares a build script"),
         "the refusal names its own blind spot: {}",
         err(&ran)
     );
@@ -247,6 +247,97 @@ fn a_crate_path_that_does_not_exist_is_refused() {
     assert!(
         err(&ran).contains("no such crate directory"),
         "{}",
+        err(&ran)
+    );
+}
+
+/// THE BLIND-SPOT REFUSAL MUST NOT DEPEND ON A FILENAME. `find -name build.rs`
+/// does not see a script named by the manifest's `build =` key, and a review
+/// drove exactly that past the guard: a `build = "custom_build.rs"` that baked
+/// the subject into the binary reached EXIT 0 through the check written to
+/// refuse it. Cargo reports a `custom-build` target for both spellings.
+#[test]
+fn a_build_script_named_by_the_manifest_key_is_refused_like_any_other() {
+    let root = workspace("link-buildkey", Reach::None);
+    let manifest = root.join("crates/app/Cargo.toml");
+    let text = std::fs::read_to_string(&manifest).expect("the manifest reads");
+    write(
+        &manifest,
+        &text.replace(
+            "edition = \"2021\"",
+            "edition = \"2021\"\nbuild = \"custom_build.rs\"",
+        ),
+    );
+    write(&root.join("crates/app/custom_build.rs"), "fn main() {}\n");
+    let ran = link_check(&root, SUBJECT);
+    assert_eq!(
+        ran.status.code(),
+        Some(2),
+        "a build script under any name voids the answer\nstdout: {}\nstderr: {}",
+        out(&ran),
+        err(&ran)
+    );
+    assert!(
+        err(&ran).contains("declares a build script"),
+        "the refusal names its blind spot: {}",
+        err(&ran)
+    );
+}
+
+/// A SYMLINKED SOURCE MUST NOT BE RESOLVED OUT OF THE CRATE IT LIVES IN.
+/// `realpath -m` follows links, so a review made `crates/subject/src/lib.rs` a
+/// symlink to `crates/shared/real.rs`, dep-info recorded the path under the
+/// crate, canonicalisation resolved it away, and the gate answered EXIT 0 on a
+/// tree whose binary observed the subject. `-ms` normalises `..` without
+/// following links.
+#[test]
+fn a_symlinked_source_under_the_crate_still_counts_as_the_crate() {
+    let root = workspace("link-symlink", Reach::IncludeStr);
+    write(
+        &root.join("crates/shared/real.rs"),
+        "pub fn f() -> u64 {\n    7\n}\n",
+    );
+    let link = root.join("crates/subject/src/lib.rs");
+    std::fs::remove_file(&link).expect("the real file is removed");
+    #[cfg(unix)]
+    std::os::unix::fs::symlink("../../shared/real.rs", &link).expect("the symlink is created");
+    let ran = link_check(&root, SUBJECT);
+    assert_eq!(
+        ran.status.code(),
+        Some(1),
+        "a symlinked source under the crate still reaches the binary\nstdout: {}\nstderr: {}",
+        out(&ran),
+        err(&ran)
+    );
+}
+
+/// THE BREADTH CLAIM IS CHECKED, NOT ASSERTED. `cargo build --workspace --bins`
+/// silently skips a bin whose `required-features` are unmet, so the gate would
+/// print a narrower count and answer 0 with no hint it had narrowed.
+#[test]
+fn a_binary_behind_an_unmet_feature_is_refused_rather_than_silently_skipped() {
+    let root = workspace("link-gated", Reach::None);
+    let manifest = root.join("crates/app/Cargo.toml");
+    let text = std::fs::read_to_string(&manifest).expect("the manifest reads");
+    write(
+        &manifest,
+        &format!(
+            "{text}\n[features]\ngated = []\n\n[[bin]]\nname = \"app\"\npath = \"src/main.rs\"\n\n\
+             [[bin]]\nname = \"gated-bin\"\npath = \"src/gated.rs\"\nrequired-features = [\"gated\"]\n"
+        ),
+    );
+    write(&root.join("crates/app/src/gated.rs"), "fn main() {}\n");
+    let ran = link_check(&root, SUBJECT);
+    assert_eq!(
+        ran.status.code(),
+        Some(2),
+        "a declared-but-unbuilt binary voids the answer\nstdout: {}\nstderr: {}",
+        out(&ran),
+        err(&ran)
+    );
+    assert!(
+        err(&ran).contains("declares 2 binary targets"),
+        "the refusal names the arithmetic: {}",
         err(&ran)
     );
 }

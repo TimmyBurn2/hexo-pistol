@@ -62,17 +62,37 @@ case "$ROOT" in *[![:print:]]*) fail "the workspace root holds a non-printable c
 [ -f "$ROOT/Cargo.toml" ] || fail "no Cargo.toml at the workspace root: $ROOT"
 command -v cargo >/dev/null || fail "cargo is not on PATH"
 command -v realpath >/dev/null || fail "realpath is not on PATH"
+command -v jq >/dev/null || fail "jq is not on PATH; the workspace's target metadata cannot be read"
 
 ROOT_ABS="$(cd "$ROOT" && pwd -P)" || fail "cannot canonicalise the workspace root"
-CRATE_ABS="$(realpath -m -- "$ROOT_ABS/$CRATE_PATH")" || fail "cannot canonicalise $CRATE_PATH"
+# `-ms`, NOT `-m`. Resolving symlinks moves a source OUT of the crate it lives
+# in: a review made `crates/subject/src/lib.rs` a symlink to `crates/shared/real.rs`,
+# dep-info recorded the path under the crate, `realpath -m` resolved it away and
+# the gate answered EXIT 0 on a tree whose binary observed the subject. `-ms`
+# normalises `..` lexically — which is what the canonicalisation was added for —
+# without following links.
+CRATE_ABS="$(realpath -ms -- "$ROOT_ABS/$CRATE_PATH")" || fail "cannot canonicalise $CRATE_PATH"
 [ -d "$CRATE_ABS" ] || fail "no such crate directory: $CRATE_PATH"
 
 # THE PREMISE, CHECKED RATHER THAN ASSUMED. Refusing (2) rather than passing (0)
 # is the difference between "no" and "I cannot tell".
-BUILD_SCRIPTS="$(cd "$ROOT_ABS" && find . -name build.rs -not -path './target/*' -print)" \
-	|| fail "cannot enumerate build scripts"
-[ -z "$BUILD_SCRIPTS" ] || fail "this workspace has build scripts and dep-info does not record \
-what a build script READ, so no answer about $CRATE_PATH was taken:$(printf ' %s' $BUILD_SCRIPTS)"
+# ENUMERATED FROM CARGO'S OWN TARGET METADATA, NOT FROM A FILENAME. `find -name
+# build.rs` does not see a script named by the manifest's `build =` key, and a
+# review drove exactly that past this check: a `build = "custom_build.rs"` that
+# baked the subject into the binary reached EXIT 0 through the guard written to
+# refuse it. Cargo reports a `custom-build` target for both spellings.
+META="$(cd "$ROOT_ABS" && cargo metadata --format-version 1 --no-deps 2>/dev/null)" \
+	|| fail "cannot read the workspace metadata at $ROOT_ABS"
+BUILD_SCRIPTS="$(printf '%s' "$META" \
+	| jq -r '.packages[] | .name as $p | .targets[] | select(.kind[] == "custom-build") | "\($p):\(.src_path)"')" \
+	|| fail "cannot enumerate the workspace's build scripts"
+# SCOPE, STATED: `--no-deps` means WORKSPACE MEMBERS. Registry dependencies of
+# this workspace do run build scripts — measured, four of them — and dep-info
+# records nothing about what any of them read either. Nothing in this check
+# speaks for those; what it speaks for is that no MEMBER of this workspace has
+# one, which is the only half a workspace author controls.
+[ -z "$BUILD_SCRIPTS" ] || fail "a workspace member declares a build script and dep-info does \
+not record what a build script READ, so no answer about $CRATE_PATH was taken: $BUILD_SCRIPTS"
 
 # THE BINARY SET IS WHAT CARGO JUST BUILT, not a glob over `target/`. An unscoped
 # `*.d` glob picks up `lib<crate>.d` — including the subject crate's own library
@@ -105,7 +125,7 @@ while IFS= read -r exe; do
 		# `crates/pistol-cli/src/bin/../../../pistol-solver/src/lib.rs`, and a
 		# plain substring match on the crate path returns ZERO hits on the very
 		# file it exists to catch — EXIT-0-WRONG-ANSWER, found by building this.
-		abs="$(realpath -m -- "$src")" || fail "cannot canonicalise a dep-info entry of $dep"
+		abs="$(realpath -ms -- "$src")" || fail "cannot canonicalise a dep-info entry of $dep"
 		case "$abs" in
 		"$CRATE_ABS"/*) HITS="$HITS$abs <- $exe"$'\n' ;;
 		esac
@@ -119,6 +139,16 @@ done < <(printf '%s\n' "$EXECUTABLES")
 
 # A count nobody checks is a count that can silently become zero.
 [ "$BIN_COUNT" -ge 1 ] || fail "no shipped binaries were examined; the enumeration is wrong"
+# THE BREADTH CLAIM, CHECKED. `cargo build --workspace --bins` SILENTLY SKIPS bin
+# targets whose `required-features` are unmet and packages under `[workspace]
+# exclude`, so the gate would print a narrower count and answer 0 with no hint it
+# had narrowed. Compare what cargo DECLARES against what it BUILT.
+DECLARED="$(printf '%s' "$META" | jq -r '[.packages[].targets[] | select(.kind[] == "bin")] | length')" \
+	|| fail "cannot count the workspace's declared binary targets"
+case "$DECLARED" in '' | *[!0-9]*) fail "the declared binary count is not a number: $DECLARED" ;; esac
+[ "$DECLARED" -eq "$BIN_COUNT" ] || fail "this workspace declares $DECLARED binary targets and \
+only $BIN_COUNT were built and examined — a bin behind an unmet required-feature or an excluded \
+package would narrow this answer silently"
 
 echo "solver_link_check: $BIN_COUNT shipped binaries, $INPUT_COUNT source inputs, subject $CRATE_PATH"
 if [ -z "$HITS" ]; then
