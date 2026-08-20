@@ -80,11 +80,12 @@ type Histogram = Vec<(u32, usize)>;
 fn reference(records: &[Record]) -> (Histogram, Histogram) {
     let mut all: Histogram = Vec::new();
     let mut order_independent: Histogram = Vec::new();
-    let bump = |counts: &mut Histogram, key: u32| {
-        match counts.iter_mut().find(|(distance, _)| *distance == key) {
-            Some((_, count)) => *count += 1,
-            None => counts.push((key, 1)),
-        }
+    let bump = |counts: &mut Histogram, key: u32| match counts
+        .iter_mut()
+        .find(|(distance, _)| *distance == key)
+    {
+        Some((_, count)) => *count += 1,
+        None => counts.push((key, 1)),
     };
     for record in records {
         let stones = record.moves.len();
@@ -124,12 +125,13 @@ fn the_rendered_block_lists_every_distance_in_range_including_the_zero_rows() {
     // to change while the content does not.
     let records = corpus("corpus_distance_v1.jsonl");
     let rendered = PlacementDistances::of(&records).to_string();
-    let row = |line: &str| -> Vec<String> {
-        line.split_whitespace().map(str::to_string).collect()
-    };
+    let row = |line: &str| -> Vec<String> { line.split_whitespace().map(str::to_string).collect() };
     let lines: Vec<Vec<String>> = rendered.lines().map(row).collect();
 
-    assert_eq!(lines[0], ["distance", "count", "of", "which", "order-independent"]);
+    assert_eq!(
+        lines[0],
+        ["distance", "count", "of", "which", "order-independent"]
+    );
     // One row per distance from the smallest observed to the largest. The 5 and
     // 6 rows are the point: the fixture observes neither, and a listing that
     // skipped them would hide a gap the module doc promises to show.
@@ -330,7 +332,10 @@ fn histogram_deterministic_across_runs() {
     assert_eq!(first.total(), second.total());
 
     for reported in [
-        first.counts().map(|(distance, _)| distance).collect::<Vec<_>>(),
+        first
+            .counts()
+            .map(|(distance, _)| distance)
+            .collect::<Vec<_>>(),
         first
             .order_independent_counts()
             .map(|(distance, _)| distance)
