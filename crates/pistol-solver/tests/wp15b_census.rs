@@ -277,10 +277,32 @@ enum Regime {
     /// the ball by the sampler rather than by depth, and it is retained only so
     /// the design's sampler-sensitivity number stays re-derivable.
     DeepenRadius8,
+    /// Long uniform playouts from an empty board, for the tail the corpus does
+    /// not reach. Not a search distribution and not offered as one; it is the
+    /// regime that shows what the staged set does when the board fills up.
+    Playouts,
 }
 
 fn sample(regime: Regime) -> Vec<Row> {
     let mut rows = Vec::new();
+    if regime == Regime::Playouts {
+        for seed in 1..=24u64 {
+            let mut rng = Rng::new(seed);
+            let mut game = GameState::new_game();
+            let mut threats = ThreatState::new();
+            for _ in 0..80 {
+                if game.outcome().is_decided() {
+                    break;
+                }
+                let at = random_ply(game.board(), &mut rng);
+                let mover = game.to_move();
+                game.place(at).expect("a sampled ply is legal");
+                threats.apply(at, mover);
+                rows.extend(census(&game, &threats));
+            }
+        }
+        return rows;
+    }
     for plies in corpus() {
         let (game, threats) = replay(&plies);
         if regime == Regime::Roots {
@@ -391,6 +413,7 @@ fn wp15b_census() {
         "+1..3 turns, radius-8 draw (SUPERSEDED)",
         &sample(Regime::DeepenRadius8),
     );
+    report("uniform playouts to 80 plies", &sample(Regime::Playouts));
 }
 
 /// The numbers the design's matrices actually rest on, TYPED OUT from

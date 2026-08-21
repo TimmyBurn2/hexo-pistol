@@ -1,5 +1,15 @@
 # WP-1.5b — staged threat-first candidate generation: DESIGN
 
+**Revision 5.** Base revision `f317385`; revisions 1–4 were `ec8f7fb`, `182f389`,
+`7ad466b`, `f762c9a`. **Revision 4 FAILED its REVIEW-design** — 3 BLOCKING, 10
+MAJOR — but with the shape changed: **no finding reopened a matrix, and there
+were no STOPs.** M0 (f), M1 C-at-threshold, M2 W-E, M3 S-E, M4 N-A and M5-E all
+survive attack on their merits. What failed was TRANSMISSION: the normative
+section contradicted itself on one rule, the instrument clause was still
+unsatisfied for this document's own instrument, and §6.2's table was not the
+instrument's output. §0.5 lists it. One finding is a correctness error and is
+redesigned, not edited.
+
 **Revision 4.** Base revision `f317385`; revisions 1–3 were `ec8f7fb`, `182f389`,
 `7ad466b`. **Revision 3 FAILED its REVIEW-design** (2 BLOCKING, 9 MAJOR) and
 **matrix M5 FELL** to its DECISION-RED-TEAM, which supplied the dominating option.
@@ -79,6 +89,17 @@ consequence of a revision-2 amendment that was not propagated.**
 | 21 | The S-E observer is a `#[cfg(debug_assertions)]` hook on `Run` | Unbuildable as written: `Run` is `pub(crate)`, `plans.rs` is another crate's integration-test module, and D-115 forbids the in-source route. And D-129 forbids the `debug_assert` demotion for a correctness invariant | **MAJOR** |
 | 22 | Tier T is a threshold "over `LiveCount`" | `LiveCount` is closed at `{Two, Three}` and cannot express ≥ 4; the ≥ 4 windows are `hot_windows`. Reachable at `Phase::Second` with an own hot-4 window | **MAJOR** |
 | 23 | D-263's cover arithmetic is this WP's hotspot | It is not the dominant one. MEASURED, Tier-T cell extraction costs about **6×** both threat queries combined on one harness — and `pistol-solver` has **no public route** to a live-2 window's empties (D-261) | **MAJOR** |
+
+### 0.5 What revision 4 got wrong
+
+| # | Revision 4 said | Revision 5 says | Severity |
+|---|---|---|---|
+| 24 | §5.3: the table move is promoted to index 0 unconditionally. §5.4: only within its own tier | Two incompatible rules, and §11 registered a test that fails under one. The failing case — Tier F empty, Tier T non-empty, table move in Tier Q — is **70.8 %** of corpus roots. **One rule now** (§5.4) | **BLOCKING** |
+| 25 | "The census is committed at a named revision" | Still no SHA anywhere, and the two cross-references resolved in a circle. Both instruments now carry theirs: census `7941775`, `tools/baseline_snapshot.sh` `e889b5b` | **BLOCKING** |
+| 26 | §6.2's population table | Not the instrument's output. Ten cells differ, and a whole "playouts" column had no regime at all. §6.2 is now re-derived from the committed census, which gained that regime | **BLOCKING** |
+| 27 | §8.3(a): "narrowing cannot invent a mate" | **FALSE, and this is the correctness error.** W-E's non-PV cut is a forward prune, and forward-pruning a defender's saving reply is exactly how a search proves a mate that is not there. Redesigned in §8.3 | **MAJOR** |
+| 28 | §8.4's mutation M4's witness | `cover.rs`'s flat-list counterexample has **no** 1-cover, so inclusion-minimal and minimum-cardinality coincide there and the mutant is an identity. Replaced with the shape that discriminates, built and verified | **MAJOR** |
+| 29 | §15 item 4 registers the `#[cfg(debug_assertions)]` seam | The seam §8.2 withdrew. The un-re-read claim, inside the ADR list itself — the fifth instance of this WP's own pattern, in the section that warns about it | **MAJOR** |
 
 ### 0.4 One correction to this session's own record
 
@@ -509,11 +530,17 @@ win-now class; on the FILTERED row it IS the cover union; on both BATCHED rows
 `can_win_this_turn` is `None`, which at `StonesLeft::Two` forbids both a
 win-in-one-ply window and a hot window at exactly four, and at `One` forbids the
 former while §5.1 withholds the pair class — so the win-now class is provably
-empty there. Three things follow and each closes a finding: "Tier F is exempt from
-the batch cut" is automatic rather than a rule; the table's move can be promoted
-to index 0 unconditionally without ever displacing a forced cell, which preserves
-`Run::salvage`'s documented ground that "the first root candidate is the table's
-move"; and S-E's "forced prefix" has an unambiguous subject.
+empty there. Two things follow and each closes a finding: "Tier F is exempt from the batch cut"
+is automatic rather than a rule, and S-E's "forced prefix" has an unambiguous
+subject.
+
+**A third thing does NOT follow, and revision 4 claimed it did.** Revision 4 wrote
+that the table's move can therefore be promoted to index 0 unconditionally,
+"which preserves `Run::salvage`'s documented ground". That is a non-sequitur: Tier
+F being EMPTY is exactly what puts Tier T first, not the table move. The failing
+case — Tier F empty, Tier T non-empty, table move in Tier Q — is **MEASURED at
+70.8 % of corpus roots**, the common case rather than a corner. §5.4 states the
+one rule, and §12 item 6 records what it costs `Run::salvage`.
 
 **Soundness of the WIN-NOW row.** At a node `k` turns from the root the best score
 any move can reach is `mate_in(k+1)`, because a mate at that distance means
@@ -548,6 +575,51 @@ path while claiming to test the pairing path.
 longest resistance among losing moves. `LAW-FORCE` licenses it — those moves lose
 — so mate distances on already-lost positions may shorten. ADR line §15 item 11.
 
+### 5.35 Where the protocol sits in `visit`, and what the generator's signature is
+
+Both were left for the implementer to invent. `pvs::visit` has four candidate
+insertion points with materially different behaviour, and the MEASURED firing
+counts in §5.2 are unattributable without one being named.
+
+**The protocol runs AFTER the transposition probe and its cutoff, and AFTER the
+`depth_plies == 0` horizon return.** After the horizon return, because before it
+an overloaded leaf would return `-mate_in(k+2)` instead of `position.value()` —
+that is a mate-detection EXTENSION at the horizon, which changes every node count
+and is not in this WP's scope. After the probe, because a table hit is cheaper
+than a threat query and because a node that fires would otherwise never take a
+cutoff it is entitled to. It runs after `should_stop()`, like everything else.
+
+**The generator's signature.** `pistol_search::staged` is public so S-E's
+expensive half can drive it (§8.2), and its entry point must reach three things:
+the board, the threat state, and a delta ranking. `Position` is `pub(crate)`
+(`lib.rs:37`), so an entry point taking `&mut Position` would be unbuildable by
+the very test it exists for. It therefore takes what it needs and no more:
+
+```
+pub fn staged_candidates(
+    state:   &GameState,
+    threats: &ThreatState,
+    eval:    &mut dyn Eval,      // the delta seam, not a Position
+    params:  StagedParams,
+    out:     &mut StagedSet,     // cells, and the count that is forced
+)
+```
+
+`visit` calls it through a `pub(crate)` accessor on `Position` that hands out
+`(&GameState, &ThreatState, &mut dyn Eval)` together — one accessor, so the three
+cannot be taken apart at a call site and drift, which is D-41's whole reason for
+the seam existing.
+
+**Two consequences, recorded rather than discovered.** The entry point puts a
+`pistol-solver` type (`ThreatState`) in `pistol-search`'s PUBLIC API, which is a
+permanent surface commitment made for a test — the trade D-115 refuses in
+general. It is taken here because the alternative is the in-source cross-crate
+comparison D-115 refuses more specifically, and because the generator is a
+legitimate public capability rather than a test hook. And `candidate_cells`
+remains public with a `(&Board, CandidatePolicy)` signature that cannot express
+`Staged`; under `Staged` it can only answer about the quiet ball, so the public
+function and the search's actual candidate set diverge. Named in §15 item 21.
+
 ### 5.4 Step 4 — staged generation
 
 1. **Tier F** — never delta-ranked, emitted ascending `(q, r)`. Delta is not
@@ -564,7 +636,18 @@ Under `Staged` the generator therefore produces the vector already ordered and
 at all, Tiers T and Q are delta-scored and stable-sorted WITHIN their own ranges,
 and the table's move is promoted only **within the tier it belongs to** — never
 across a tier boundary, so the forced prefix stays a prefix and S-E's containment
-assertion keeps its subject. A table move that is not a candidate is dropped, as
+assertion keeps its subject. **This is the one table-move rule; revision 4's
+second one is withdrawn.**
+
+**And it breaks a documented ground of shipped code, which is an ADR line and not
+a footnote.** `Run::salvage`'s doc says "The first root candidate is the table's
+move, which is the previous iteration's best, so a salvaged answer is never
+worse-informed than the last completed depth's (WP-1.4's decision, verified
+line-by-line by its decision-red-team)." Under `Staged` on a batched root that is
+false: Tier T comes first. The salvage remains SOUND — it is still a completed
+root subtree's exact score, which is the property `pvs.rs` proves — but the
+"never worse-informed" claim rests on the ordering and must be restated for
+`Staged`. §15 item 20 takes the line, and §11 registers the test. A table move that is not a candidate is dropped, as
 today. The deadline check `order` performs under a wall-clock stop moves into the
 staged scorer at the same `ORDER_CHECK_INTERVAL` stride, so the play-mode
 overshoot bound is unchanged.
@@ -657,8 +740,8 @@ so the pre-registered fallback is coherent for the first time.
 
 ### 6.2 The measurements, with their sampling regime
 
-**MEASURED** at `f317385`, release, by a census harness that revision 2 **commits
-at a named revision** (§12.4) rather than deleting with its worktree — CLAUDE.md's
+**MEASURED** at `f317385`, release, by the census harness
+`crates/pistol-solver/tests/wp15b_census.rs`, **committed at `7941775`** rather than deleting with its worktree — CLAUDE.md's
 instrument clause, and D-287's rule that an artefact recording numbers is not
 test-tree-only.
 
@@ -666,44 +749,54 @@ Three regimes. The middle one is **re-sampled** in revision 2: revision 1 deepen
 by uniform draws from the radius-**8** legal ball while the policy is radius **2**,
 which inflated the ball 78.0 → 123.7 by the sampler rather than by depth.
 
-| quantity | corpus roots | +1..3 turns (r8 draw) | +1..3 turns (r2 draw) | playouts |
+| quantity | corpus roots | +1..3 turns, **r2 draw (REPORTED)** | +1..3 turns, r8 draw (SUPERSEDED) | playouts |
 |---|---|---|---|---|
-| own hot, mean / max | 0.04 / 1 | 0.33 / 4 | — | 0.08 / 5 |
-| opponent hot, mean | 0.46 | 0.21 | **0.30** | 0.10 |
-| opponent live-3 | 1.88 | 1.47 | **1.92** | 1.87 |
-| survival filter applies | 29.2 % | 15.1 % | **19.5 %** | 4.8 % |
-| candidates when filtered | 2.17 / 3 | 2.32 / 8 | — | 2.27 / 4 |
-| radius-2 ball, mean | 78.0 | 123.5 | **93.7** | 376.5 |
-| **C vs full-width** | **2.7×** | 3.1× | **2.4×** | 6.1× |
+| own hot, mean | 0.0417 | 0.3559 | 0.3299 | 0.0833 |
+| opponent hot, mean | 0.4583 | 0.2951 | 0.2101 | 0.0958 |
+| live-2, own / opponent | 7.21 / 12.17 | 11.18 / 12.45 | 11.07 / 10.90 | 23.78 / 25.43 |
+| live-3, own / opponent | 0.75 / 1.88 | 1.78 / 1.87 | 1.61 / 1.43 | 1.71 / 1.87 |
+| **`Cover::Minimal` — the FILTERED row** | **25.0 %** | **18.4 %** | 13.7 % | 3.1 % |
+| **`Cover::Impossible`** | **4.2 %** | **1.4 %** | 1.2 % | 1.7 % |
+| **BATCHED nodes** | **70.8 %** | **61.5 %** | 65.5 % | 92.5 % |
+| radius-2 ball, mean | 77.96 | 94.50 | 123.66 | 376.47 |
 
-The radius-2-confined regime is the reported one; the radius-8 regime is retained
-as the **second instrument**, with its agreement criterion and registered
-consequence fixed before either runs (§12.4).
+**Every cell above is the committed census's output**, and revision 4's was not:
+ten cells differed, the "survival filter applies" row summed `Minimal` and
+`Impossible` into one figure while the row below it averaged over `Minimal` only,
+and a whole playouts column had no regime in the instrument at all. §5.3 routes
+`Impossible` to a BATCHED row, so the two are now separate rows — a filtered node
+and a lost node generate different sets and quoting them together was the mixture
+defect this document convicted itself of one section later.
 
 Staged-set sizes at `quiet_top_k = 16`, threshold reading:
 
-| option | Tier T cells | staged set, **all nodes** | staged set, **BATCHED nodes only** |
+| option | Tier T cells | staged set, **all nodes** | staged set, **BATCHED only** |
 |---|---|---|---|
-| A — count ≥3 both sides | 6.125 / 8.245 | 15.96 = 4.89× / 15.17 = 6.23× | 21.65 = 3.80× / 23.20 = 4.27× |
-| B — count ≥2 both sides | 46.500 / 54.625 | 45.12 = 1.73× / 44.15 = 2.14× | 62.82 = **1.31×** / 70.36 = **1.41×** |
-| **C — ≥2 for us, ≥3 for them** | 23.292 / 31.497 | 27.42 = 2.84× / 30.00 = 3.15× | **37.82 = 2.17× / 47.34 = 2.09×** |
+| A — ≥3 both sides | 6.125 / 8.245 / 6.651 | 15.96 = 4.89× / 15.17 = 6.23× / 20.07 = 18.76× | 21.65 = 3.80× / 23.20 = 4.27× / 21.44 = 17.00× |
+| B — ≥2 both sides | 46.500 / 54.625 / 88.127 | 45.12 = 1.73× / 44.15 = 2.14× / 91.04 = 4.14× | 62.82 = **1.31×** / 70.36 = **1.41×** / 98.17 = 3.71× |
+| **C — ≥2 us, ≥3 them** | 23.292 / 31.497 / 48.734 | 27.42 = 2.84× / **30.00 = 3.15×** / 56.49 = 6.66× | **37.82 = 2.17× / 47.34 = 2.09× / 60.82 = 5.99×** |
 
-*(pairs are corpus-roots / radius-2-deepened; both from
-`crates/pistol-solver/tests/wp15b_census.rs` at the revision §12.5 names.)*
+*(triples are corpus-roots / radius-2-deepened / playouts, all from
+`crates/pistol-solver/tests/wp15b_census.rs` at **`7941775`**.)*
 
-**Re-derived, because revision 3 changed the generation rules and not the column
-that rests on them** — the fourth instance of this work package's own recurring
-pattern, and the first one its author caught. Revision 3 made the WIN-NOW row emit
-only the win class and the FILTERED row only the cover union; the numbers above
-are what those rules produce.
+**Re-derived, because revision 3 changed the generation rules and revision 4 did
+not re-derive §6.2 from the instrument it had just committed** — instances four
+and five of this work package's recurring pattern.
 
-**And the column is a MIXTURE, now reported apart.** Batched nodes are **70.8 %**
-of corpus roots and **61.5 %** of the deepened sample; the rest take a forced row
-emitting two or three cells. `quiet_top_k` and `widen_schedule` govern only the
-batched population, and on it **option B's reduction is 1.41×** — its blended cell
-was flattering it by half. **Option C's honest figure is 2.09×**, and the case for
-C over B is STRONGER on the disaggregated numbers than on the blended ones this
-document quoted through three revisions.
+**The column is a MIXTURE and both populations are reported.** Batched nodes are
+**70.8 % / 61.5 % / 92.5 %** of each regime; the rest take a forced row emitting
+two or three cells. `quiet_top_k` and `widen_schedule` govern only the batched
+population, and on it **option B's reduction is 1.31–1.41×** at the corpus depths
+— its blended cell was flattering it by half. **Option C's honest figure is
+2.09–2.17×** there, and the case for C over B is STRONGER on the disaggregated
+numbers than on the blended ones this document quoted through three revisions.
+
+**Sampler sensitivity, re-taken from the instrument.** The superseded radius-8
+deepening regime gives C **4.01× (all nodes)** against the reported regime's
+**3.15×**, and a ball mean of 123.66 against 94.50 — a **21.4 %** move in the
+ratio and **23.6 %** in the ball. Revision 4 stated 3.1× → 2.4× and 23 % / 24 %
+from the pre-instrument harness. No verdict in this document turns on a quantity
+that moved by less than the sampler does.
 
 ### 6.3 The options
 
@@ -711,7 +804,7 @@ document quoted through three revisions.
 |---|---|---|---|
 | A — count ≥3 both sides | **No completeness licence.** `LAW-SUPPORT` k=2 licences windows at ≥2, and T10 adds that a window made hot this turn held ≥2 before — so count 3 misses every plan a PAIR creates from a count-2 window, which is the two-stone move this game is about | Cheapest, 4.6–17.4× | Provably k=2-incomplete. The reviewer built the position: P1 (0,0)(1,0)(2,1)(1,2)(0,3), pair {(2,0),(3,0)}, `t = 4`, `(2,0)` in own count-2 windows only |
 | B — count ≥2 both sides | Full licence both sides | Only 1.6–3.8×; at corpus roots the staged set is 61 % of the whole ball | Its opponent half buys the least, per §6.4's lemma |
-| **C — ≥2 for us, ≥3 for them** | The lemma in §6.4 | **2.4–6.1×** against the reported r2 ball; **MEASURED 29 % of C's Tier T lies OUTSIDE the radius-2 ball** (6.83 cells/node at corpus roots) | Asymmetric, so argued in §6.4. Residual: no cells blocking an opponent count-2 window; left to Tier Q's delta ranking, which is a set of 23.2 cells/node against a quiet allowance of 16 |
+| **C — ≥2 for us, ≥3 for them** | The lemma in §6.4 | **2.09–2.17× on the batched population**, 2.84–3.15× blended, from the committed census; **MEASURED 29 % of C's Tier T lies OUTSIDE the radius-2 ball** (6.83 cells/node at corpus roots) | Asymmetric, so argued in §6.4. Residual: no cells blocking an opponent count-2 window; left to Tier Q's delta ranking, which is a set of 23.2 cells/node against a quiet allowance of 16 |
 | D — a config knob instead of a choice | — | — | Rejected as a matrix answer. The knob exists (§10); what the matrix decides is what the config COMMITS |
 
 ### 6.4 The asymmetry, re-grounded
@@ -837,7 +930,10 @@ the second instance this round.
   scored at or below `original_alpha ≤ alpha`. (The argument is per direction: a
   cell scoring ≤ alpha did so via a child fail-high, whose `Bound::Lower` is valid
   even from a truncated set. Revision 1 asserted it undirected.)
-- **`Cover::Impossible` at phase 1 inherits the same schedule** (M2 MINOR-12).
+- ~~`Cover::Impossible` at phase 1 inherits the same schedule~~ — **inert under
+  revision 4 onward and struck**: §5.3 routes `Impossible` to the candidate loop
+  only at a PV node or the root, and §7.2 exempts both from every schedule. A
+  leftover from when `Impossible` could reach a non-PV loop.
 - Revision 1 recommended `[16, 0]` in §7 and committed `[0]` in §10, and its own
   validator rejects `[16, 0]`. Both are withdrawn; §10 commits one schedule.
 
@@ -974,32 +1070,56 @@ falls in neither class today.
 
 ### 8.3 The other three parts, re-scoped
 
-- **(a) tactical suite under Staged. The derivation is REDONE; revision 3's was
-  falsified by the fixture.** Revision 3 argued "Tier Q's cut is not involved
-  because the filter fires or win-now applies". FALSE for 5 of the 20 cases:
-  MEASURED from the fixture's own `position set` lines, the three
-  `mate_in_3_double_three_becomes_double_four*` cases give each side a maximum own
-  count of **3** in any window — a *double three* is by construction below D-243's
-  hot threshold of 4 — so neither `can_win_this_turn` nor a hot window exists,
-  `blocking_covers` answers `NothingToBlock`, and the BATCHED row is exactly what
-  runs. The two `quiet_*` cases say in their names that neither side has a tactic.
+- **(a) tactical suite under Staged. Revision 4's derivation contained a
+  CORRECTNESS ERROR and is redesigned.** It claimed "the `expect not-mated` cases
+  are value claims that narrowing cannot break in the dangerous direction — a mate
+  score requires a proven line, and narrowing cannot invent one."
 
-  **The correct derivation, and it rests on W-E rather than on the filter.** A
-  proof line is the principal variation, and §7.2 exempts the root and every PV
-  node from the cut — so no node on a line that proves a mate is ever truncated.
-  What must also hold is that no REFUTATION is cut, since a missed refutation
-  would let the engine claim a mate that is not there; and on these cases it does:
-  the winning move creates a double-four, after which the opponent faces hot
-  windows and every reply node takes the FILTERED row, where `LAW-FORCE` makes the
-  cover set complete for non-losing moves. The `expect not-mated` cases are
-  value claims that narrowing cannot break in the dangerous direction — a mate
-  score requires a proven line, and narrowing cannot invent one.
+  **That is false, and §7.2 says so two sections earlier**: the non-PV cut is "a
+  forward prune of the LMR family", and forward-pruning a DEFENDER's saving reply
+  is exactly how a search proves a mate that is not there. The mechanism is
+  concrete: at an opponent PV node every reply is generated, but each non-argmax
+  reply is scanned at a null window — a non-PV, capped search. If that reply's
+  saving continuation lies past the last batch boundary, the scan returns a losing
+  value, `scan <= alpha`, no re-search fires, and the opponent's true best is
+  discarded. The root then reports a mate. **A forward prune can fabricate a
+  mate, and this design's own §7.2 named the prune.**
 
-  **The threshold, pre-registered here because this is the only candidate
-  document: `require 20`.** A case the derivation does not cover would have had to
-  be named and pre-registered below 20 before the first run; the derivation covers
-  all twenty. A failure is a red gate to investigate, never a licence to re-read
-  the threshold (D-204's rule, inherited).
+  **The redesign: the two gate configs disable the cut, and the derivation becomes
+  a containment argument.** With `quiet_top_k` at or above the whole quiet pool no
+  batch boundary ever binds, so on a BATCHED row the staged set is
+  `Tier T ∪ (the whole radius ball)`, which is a **SUPERSET** of what the radius
+  policy offers. Anything the radius search finds at a given depth, Staged finds.
+  The other two rows are complete on their own terms: the FILTERED row by
+  `LAW-FORCE` (every non-losing move hits all plans), the WIN-NOW row by the
+  argmax property (nothing beats `mate_in(k+1)`). So `require 20` follows from the
+  radius suite's own 20 of 20, which D-204 already binds.
+
+  **The number is measured, not guessed.** The five `gate_v0` cases hold 11 stones
+  and their radius-1 balls are MEASURED at 22 / 22 / 22 / 18 / **30** cells. Three
+  turns deeper is at most 17 stones, and a radius-1 ball is bounded by
+  `7 × stones − stones = 6 × 17 = 102`. `quiet_top_k = 128` therefore cannot bind
+  on any position these cases reach, and `configs/gate_staged_v0.toml` commits it
+  with that arithmetic in the file.
+
+  **What this deliberately gives up, said plainly.** The tactical suite under
+  Staged then tests the THREAT MECHANISMS and not the quiet cut. That is the right
+  division — the cut is a strength knob and rule 6 makes SPRT its judge — but it
+  means gate (a) is silent about the prune, and the prune is judged instead by
+  §12 item 3's movetime measurement, by the SPRT, and by the differential in §8.2.
+  Recorded so no reader takes a green tactical suite for evidence about the cut.
+
+  **The 15 `instrument_v0` cases keep the cut and need no exemption**: MEASURED,
+  eleven are `mate_in_1` (WIN-NOW row) and four are `must_block` against a
+  five-in-a-row (the opponent holds a hot window, so the FILTERED row). None takes
+  a batched row, so `configs/instrument_staged_v0.toml` runs them at the committed
+  `quiet_top_k = 16`.
+
+  **The threshold, pre-registered here: `require 20`.** A case the derivation does
+  not cover would have had to be named and pre-registered below 20 before the
+  first run; the derivation now covers all twenty, by containment on five and by
+  completeness on fifteen. A failure is a red gate to investigate, never a licence
+  to re-read the threshold (D-204, inherited).
 
 - **The five gate_v0 cases need a staged config.** MEASURED: `tactical_v0.txt`
   is 15 cases at `configs/instrument_v0.toml` and **5 at `configs/gate_v0.toml`**
@@ -1030,11 +1150,12 @@ cannot produce one it is BUILT** (D-260's precedent and its remedy).
 |---|---|---|---|
 | M1 | Tier F drops the pair-completion class | mate | `mate_in_1_two_stones_complete_a_row` (corpus) |
 | M2 | Tier F drops `win_in_one_ply_cells` | mate | the ten single-stone mate-in-1s (corpus) |
-| M3 | The filter flattens `Cover::cells()` at phase 0 and does not regenerate at phase 1 | S-E | **BUILT**: §5.3's two sealed five-stone rows, whose only cover is `Two{(4,4),(5,0)}` |
-| M4 | Minimum-cardinality covers instead of inclusion-minimal | S-E | **BUILT**: three hot windows with empties `{a,b} {b,d} {d,e}` — `cover.rs`'s own counterexample |
-| M5 | Own win-now cells dropped from the filtered set | mate | `mate_in_1_own_win_beats_blocking_the_opponent` (corpus) |
-| M6 | The overload check drops its `can_win_this_turn` guard | S-E | **BUILT**: a position with opponent `t ≥ 3` AND mover win-now; 0 corpus positions have both |
+| M3 | The FILTERED row emits `Cover::cells()` flattened at phase 0 and does not regenerate at phase 1 | S-E | **BUILT**: §5.3's two sealed five-stone rows, whose only cover is `Two{(4,4),(5,0)}` |
+| M4 | Minimum-cardinality covers instead of inclusion-minimal | S-E | **BUILT, and revision 4's witness was inert.** The shape must have a 1-cover COEXISTING with a minimal 2-cover; `cover.rs`'s flat-list counterexample has no 1-cover, so the two notions coincide there and the mutant is an identity. VERIFIED on the shipped solver: P1 at (1,0)(2,0)(3,0)(4,0)(0,1)(0,2)(0,3)(0,4) sealed by P2 at (-1,0)(6,0)(0,-1)(0,6) gives `Minimal([One((0,0)), Two{(0,5),(5,0)}])`, and minimum-cardinality drops the pair |
+| M5 | The WIN-NOW row emits the cover union instead of the win class | **mate** | `mate_in_1_own_win_beats_blocking_the_opponent`. Revision 4 named "own win-now cells dropped from the FILTERED set", a path §5.3 deleted — on that position `can_win_this_turn` is `Some`, so the node takes the WIN-NOW row and `blocking_covers` is never called |
+| M6 | The overload return drops its `can_win_this_turn` guard | **mate**, not S-E | **BUILT**: P1 with one sealed five-run (win in one ply at (5,0)) and P2 with three disjoint sealed five-runs at rows 8 / 16 / 24 — 8 apart keeps every placement legal under rule 5 and 8 > 5 guarantees no shared window. VERIFIED: `can_win_this_turn(P1,Two) = Some(OnePly{(5,0)})` while `unblockable_double_threat(P2,Two) = true`. Its class is mate and not S-E, because the mutant RETURNS rather than emitting and S-E is blind at an `Impossible` node |
 | M7 | Tier T qualifies at ≥3 for the mover (option A) | informative | survival is a recorded finding under §6.5's second branch, with a diagnosis, per D-281 |
+| **M8** | **`visit` drops the last candidate after generation** — D-124's own reproducer, `if cells.len() > 1 { cells.pop(); }` | **the `assert!`** | **A FILTERED root**, where `forced` is the whole set and `beta = INFINITY` guarantees the loop exhausts. Revision 4 registered no mutation for the `assert!` half at all, while §8.4 opened by quoting D-295's finding that asserting an instrument's strength rather than measuring it is the defect. Registered because the honest reading is that on the 70.8 % BATCHED population `forced == 0` and the assertion is VACUOUS there — it earns its place only on forced rows, and the mutation is what shows which |
 
 ### 8.5 Floors, not printed counts
 
@@ -1125,11 +1246,15 @@ triple is taken three times.
 
 Three complete, `deny_unknown_fields`, no code-side default for any value:
 
-| document | mode | `quiet_radius` | why |
-|---|---|---|---|
-| `configs/instrument_staged_v0.toml` | instrument | 2 | the SPRT seat and the snapshot's AFTER; the incumbent is radius 2 |
-| `configs/gate_staged_v0.toml` | instrument | 1 | `tactical_v0.txt`'s five `depth_turns 3` cases run at radius 1 (§8.3) |
-| `configs/play_staged_v0.toml` | play | 3 | the movetime measurement's incumbent is `play_v0.toml` at radius 3 |
+| document | mode | `quiet_radius` | `quiet_top_k` | `widen_schedule` | why |
+|---|---|---|---|---|---|
+| `configs/instrument_staged_v0.toml` | instrument | 2 | 16 | `[32]` | the SPRT seat and the snapshot's AFTER; the incumbent is radius 2 |
+| `configs/gate_staged_v0.toml` | instrument | 1 | **128** | `[256]` | `tactical_v0.txt`'s five `depth_turns 3` cases run at radius 1, and 128 **disables the cut** on them — MEASURED balls 22/22/22/18/30 at 11 stones, bounded by 6 × 17 = 102 three turns deeper (§8.3) |
+| `configs/play_staged_v0.toml` | play | 3 | 16 | `[32]` | the movetime measurement's incumbent is `play_v0.toml` at radius 3 |
+
+Every other key is identical to the radius document it is the counterpart of, so
+each is complete under rule 1 without restating the whole schema here; revision 4
+promised "three complete documents" and printed the policy block of one.
 
 **`widen_schedule` is defined against `quiet_top_k`, in QUIET CELLS, and both
 ends are named.** Revision 2 left four questions an implementer would have had to
@@ -1170,7 +1295,10 @@ Validation, in `pistol-engine`'s validator and again in `Searcher::new` (a
 `SearchParams` can be built in code and never passes through a document):
 `quiet_radius` in `1..=MAX_CANDIDATE_RADIUS` and representable as `i16`;
 `quiet_top_k >= 1`; `widen_schedule` non-empty, strictly increasing, **every entry
-greater than `quiet_top_k`**, and **no sentinel admitted**; `tier_t_own_count` and `tier_t_opponent_count` in `{2, 3}`.
+greater than `quiet_top_k`**, and **no sentinel admitted**; `tier_t_own_count` and `tier_t_opponent_count` in `{2, 3}`; and **every
+`widen_schedule` entry strictly greater than `quiet_top_k`**, which revision 3's
+validator did not check — `quiet_top_k = 64` with `[32]` passed "non-empty and
+strictly increasing" and described a widening that NARROWS.
 
 **And the threshold is NOT "over `LiveCount`", which cannot express it.**
 `LiveCount` is closed at `{Two, Three}` (D-255, a compile error otherwise), so it
@@ -1215,9 +1343,9 @@ watches** — the INTEG lesson every new fixture inherits.
 | `survival_filter_hits_all_plans_across_both_plies` | the generated CELL SET at phase 0 and again at phase 1, against an independently computed plan family |
 | `defensive_union_covers_nonminimum_two_stone_splits` | the phase-1 set AFTER `a` — a flat-union generator offers both cells and never the pair, so the phase-0 set cannot discriminate |
 | `mate_in_1_by_pair_generated_in_tier_f_not_ranked_in` | that both empties of the count-4 window are in the FORCED prefix, with an eval whose delta ranks them LAST |
-| `own_win_now_cells_survive_survival_filter` | the win-now cell's presence where it hits nothing |
+| `the_table_move_ordering_under_staged_is_within_tier` | that a Tier-Q table move does NOT reach index 0 when Tier T is non-empty, and that `Run::salvage` still returns a completed root subtree's exact score — the property that survives, as against the ordering claim that does not |
 | `new_plan_creation_gets_no_forced_slot` | the absence of a plan-creating non-hitting cell from the forced prefix, with its delta made maximal |
-| `tier_t_qualification_matches_adopted_matrix_option` | the Tier T set against an independent `us@{2,3} ∪ them@{3}`, on a position where exact-2 and ≥2 DIFFER — without that, the test cannot catch the defect that killed revision 1 |
+| `tier_t_qualification_matches_adopted_matrix_option` | the Tier T set against an independent **`us@{2,3} ∪ threat_cells(us) ∪ them@{3} ∪ threat_cells(them)`** — the UNION reading §10 establishes, since `LiveCount` cannot express ≥ 4. On a position where exact-2 and ≥2 DIFFER, and one where the `LiveCount`-only and union readings differ. Revision 4 spelled the `LiveCount`-only referent here while §10 corrected it two sections earlier |
 | `widening_schedule_fires_on_fail_low_and_is_deterministic` | the per-class widening counters AND that a non-PV node exhausting a finite schedule while truncated exists. Two runs agreeing is a property the defect preserves and is not the criterion |
 | `the_root_and_every_pv_node_search_the_full_staged_universe` | the emitted set size at ply 0 and at PV nodes against the unbatched universe |
 | `a_truncated_fail_low_stores_no_transposition_record` | the table's contents after a node that stopped truncated |
@@ -1232,8 +1360,9 @@ watches** — the INTEG lesson every new fixture inherits.
 | `cover_impossible_at_phase_zero_still_generates_the_win_now_class` | the emitted set at a ROOT (always a PV node, so §5.2 cannot fire) with `Cover::Impossible` and a mover win available — revision 2's STOP-1 |
 | `cover_impossible_at_phase_one_with_a_win_in_one_ply_cell` | that the win cell is generated even when it lies in no Tier-T window (the reviewer's R1 construction) |
 | `stones_left_and_hit_budget_are_read_from_core_at_both_phases` | the budget at `Phase::Second`, which is the reachable class — turn 1 exists only at ply 0, always a PV node, on an empty board where the predicate is `false` at either budget, so revision 3's stated justification named an unreachable case |
+| `the_protocol_runs_after_the_horizon_return_and_the_table_cutoff` | the node count and the table hit rate against a build with the protocol placed earlier — §5.35's placement, which is otherwise unattributable |
 | `a_forced_row_emits_no_tier_t_or_tier_q_cell` | that Tier F is the WHOLE set on the WIN-NOW and FILTERED rows, which is what makes the batch cut structurally unable to touch it |
-| `the_table_move_is_first_at_the_root_under_staged` | that `Run::salvage`'s documented ground — "the first root candidate is the table's move" — still holds, which is sound only because Tier F is the whole set or empty |
+| `the_two_predicates_agree_everywhere` | `blocking_covers(us,b) == Impossible` against `unblockable_double_threat(them,b)` at ALL THREE budgets over built hard cases and seeded playouts, with a NON-VACUITY assertion that the `Impossible` branch is reached at each budget — M5-E's soundness, and a sweep that never reached a budget would agree there by not testing it |
 | `a_radius_policy_search_is_byte_identical_to_the_committed_engine` | bestmove, nodes and PV under `Radius` before and after this WP — the scoping claim of §7.2 |
 | `the_threat_state_stays_in_step_with_the_game_and_the_eval` | `THREAT_DESYNC` never fires across `place`/`undo`/`reset_to` over seeded playouts — the D-41 seam's third member |
 | `the_fallback_under_staged_answers_from_the_quiet_radius_ball` | the turn `fallback_turn` returns under a Staged policy, and that it reads no threat state — the bounded, pure property WP-1.4's movetime ceiling rests on |
@@ -1258,8 +1387,23 @@ All ADVISORY on this machine; the operator re-runs for the record.
 1. **Snapshot before / after**, both under the amended script. **Registered
    quantity: per-position `depth_turns` and `nodes` at 50 000 nodes** (above the
    marker). `depth_at_500ms` reported as context with its dead band.
-2. **Stage-share counters.** `SearchInfo` gains `stages: StageCounters`, all zero
-   under `CandidatePolicy::Radius`. `SearchInfo` has THREE construction sites in
+2. **Stage-share counters, and the seam by which anyone reads them.** `SearchInfo`
+   gains `stages: StageCounters`, all zero under `CandidatePolicy::Radius`.
+   **The line protocol does not carry them.** `report.rs` renders an explicit
+   field list, `tools/baseline_snapshot.sh` parses the handshake and the `info`
+   lines, and §2.1's claim that no protocol output changes is worth more than a
+   convenient print. So the rates are produced by a COMMITTED harness in the
+   pistol-search test tree that calls `Searcher::search` directly and reads
+   `SearchInfo.stages` — the same shape as the census, named with its revision
+   when it lands. Revision 4 registered the rates as a deliverable with no path
+   by which the operator could ever see them.
+   **And the handshake line must still say something.** `pistol.rs:131`
+   destructures the policy to emit `id candidate_policy radius <n>`, which
+   `tools/bench_delta.sh` guards and `baseline_snapshot_tests.rs` requires, and
+   §9's `--config` puts it inside the snapshot's INVARIANT block. Under `Staged`
+   it emits `id candidate_policy staged quiet_radius <n> quiet_top_k <k>` — one
+   line, whitespace-delimited, multi-token value, which is the form D-230 records
+   the record already tolerating (`id budgets depth_turns nodes`). `SearchInfo` has THREE construction sites in
    `search.rs` — the completed-depth report, the `PartialRoot` salvage and the
    `Fallback` answer — and the last two zero most fields today. The counters are
    WHOLE-SEARCH totals like `nodes`, so they are written from the `Run` at the
@@ -1310,17 +1454,31 @@ All ADVISORY on this machine; the operator re-runs for the record.
 
    **THE REAL HOTSPOT IS TIER-T EXTRACTION, and it is registered here BEFORE the
    change that touches it**, which is what rule 5 asks. **MEASURED** on one
-   harness over the 24 corpus roots: extracting Tier T's cells costs about **6×**
+   harness over the 24 corpus roots (see the population caveat below): extracting
+   Tier T's cells costs about **6×**
    both threat queries combined (533 ns with a reused buffer, 662 ns fresh,
    against 86 ns for the pair on the same harness). D-263 named the cover
    arithmetic and the measurement says otherwise — which is a pre-registration
-   doing its job, not failing it. Registered with its own bracket: the IMPL owes
-   an accessor (§15 item 16) and a before/after on the same corpus, with the
-   expected gain the allocation only, since the window walk is inherent; ABORT if
-   the accessor is slower than the mask-walk it replaces.
+   doing its job, not failing it. **Registered rule-5-shaped**, which revision 4's registration was not — it named a
+   mechanism where a bracket belongs. HOTSPOT: Tier-T cell extraction on the
+   per-node path. EXPECTED GAIN BRACKET: **[1.10×, 1.35×]** on that path, derived
+   from the only two numbers available — 662 ns fresh against 533 ns with a reused
+   buffer is 1.24×, and the accessor removes the same allocation plus the
+   per-window public-boundary crossing. ABORT THRESHOLD: below 1.05×, or any
+   regression in whole-search nps. INSTRUMENT: one IQR-gated bench reporting
+   **nps AND time-to-depth**, per rule 5, not the snapshot — which reports
+   `depth_turns` and `nodes` only. ONE CHANGE = ONE COMMIT.
+   **And the number is re-taken on the right population**: 533/662 ns were
+   measured over all 24 corpus roots, but §5.3 does not extract Tier T on the
+   **29.2 %** of them that take a forced row, so the registered figure is a
+   blended mean over two populations — the same mixture defect §6.3 was corrected
+   for. The IMPL re-takes it on BATCHED nodes only.
 
    **The surface gap behind it.** Tier T needs the empty cells of live-2 and live-3
-   windows, and after D-261 `pistol-solver` has **no public route** to them:
+   windows, and after D-261 `pistol-solver` offers **no convenience accessor** for
+   them — `live_windows_at_count`, `masks()` and `Window::cells()` are all public
+   and are the route the committed census takes, so the claim is about ergonomics
+   and per-node cost rather than reachability:
    `threat_cells` covers hot only, `cells_raising_to_hot` is closed at
    `NearHot::Three`, and `empty_cells` is crate-private. The committed census had
    to walk `masks()` bits against `Window::cells()` per window, which is exactly
@@ -1329,8 +1487,12 @@ All ADVISORY on this machine; the operator re-runs for the record.
    each. WP-1.9's instrument is the nearest candidate and is NOT one" — names this
    WP as that consumer, and §15 takes the line.
 
-5. **The census is committed** (§6.2) at a named revision, with the
-   radius-2-confined regime as the reported one.
+5. **The census is `crates/pistol-solver/tests/wp15b_census.rs` at `7941775`**,
+   and `tools/baseline_snapshot.sh` is at **`e889b5b`** — both named with their
+   revisions, which CLAUDE.md's instrument clause requires and revisions 1–4 did
+   not do. Revision 4's two cross-references resolved in a circle (§6.2 pointed at
+   §12, §12 pointed back at §6.2) and neither carried a SHA. The
+   radius-2-confined regime is the reported one.
 
    **The second-instrument framing of revision 2 is WITHDRAWN, and what actually
    happened is recorded instead.** Revision 2 registered "the two regimes must
@@ -1399,8 +1561,12 @@ are recorded rather than fixed, because they are outside this WP's mandate.
    count-3-leg lemma's two named gaps.
 3. W-E, naming the non-PV cut as a forward prune, the TT truncation rule, and the
    cut's binding under `Staged` only.
-4. S-E, its `#[cfg(debug_assertions)]` observation seam and its independent
-   referent; D-124's flip clause discharged.
+4. S-E, and D-124's flip clause discharged. Its seam is the PAIR of §8.2 — a
+   public generator driven by a test in pistol-search's own tree against an
+   independently written referent, plus an always-on `assert!` in `visit` for the
+   drop a generator test cannot see. Revision 4's line still registered the
+   `#[cfg(debug_assertions)]` observer that §8.2 had withdrawn two sections
+   earlier — the un-re-read claim, inside the ADR list itself.
 5. **M5-E**, the overload realisation — one `can_win_this_turn` and one
    `blocking_covers` per node, step 2 realised as the `!is_pv` early return on the
    `Impossible` row — with §5.6's strongest surviving attack. It records the
@@ -1464,6 +1630,21 @@ are recorded rather than fixed, because they are outside this WP's mandate.
 18. **The `!is_pv` gate's root safety is an `assert!`, not a sentence.** "Ply 0 is
     always a PV node" is a property of today's construction; Stage 4's aspiration
     windows would narrow the root. Named invariant at the return site.
+15. **The two gate configs disable the quiet cut**, so gate (a) tests the threat
+    mechanisms rather than the prune, and the prune is judged by SPRT, by the
+    movetime measurement and by S-E. The line records what a green tactical suite
+    under Staged does NOT evidence.
+20. **`Run::salvage`'s documented ground does not hold under `Staged`.** Its doc
+    says "the first root candidate is the table's move … so a salvaged answer is
+    never worse-informed than the last completed depth's"; under `Staged` on a
+    batched root Tier T comes first. The salvage stays SOUND — it is a completed
+    root subtree's exact score — but the ordering claim must be restated. Amends
+    D-207's salvage rationale.
+21. **`pistol_search::staged`'s entry point and `candidate_cells`' divergence.**
+    The public entry point takes `(&GameState, &ThreatState, &mut dyn Eval,
+    StagedParams)`, putting a `pistol-solver` type in `pistol-search`'s public
+    API; and `candidate_cells` keeps a signature that cannot express `Staged`, so
+    the public function and the search's real candidate set diverge under it.
 19. **Rule 9 and `pvs.rs`.** The file is 552 lines and carries a
     `RULE9-JUSTIFICATION` ending "Stage 1 moves candidate generation out entirely
     (D-117, WP-1.5)". This WP adds the node protocol and the batch loop INTO
@@ -1482,7 +1663,8 @@ are recorded rather than fixed, because they are outside this WP's mandate.
 | REVIEW-design | revision 2, `182f389` | **FAILS** — 2 STOP, 1 BLOCKING, 7 MAJOR, 10 MINOR, 8 findings REJECTED with their attempted reproducers |
 | DECISION-RED-TEAM, matrix M5 | revision 3, `7ad466b` | **FELL** → M5-E, supplied by the red team |
 | REVIEW-design | revision 3, `7ad466b` | **FAILS** — 2 BLOCKING, 9 MAJOR, 10 MINOR, 6 findings REJECTED with reproducers |
-| REVIEW-design | revision 4 | dispatched. **Neither revision-3 report transfers**: an amendment reopens the review, and the M5 red team said so of its own report before this document was written |
+| REVIEW-design | revision 4, `f762c9a` | **FAILS** — 3 BLOCKING, 10 MAJOR, 10 MINOR, 8 findings REJECTED with reproducers. **No matrix reopened and no STOP**: every option selection survived attack on its merits, and what failed was transmission |
+| REVIEW-design | revision 5 | dispatched |
 
 **Four matrices in one work package recommended an option a fresh context then
 dominated** — M0 (f), M2 W-E, M3 S-E, M5 E — and in three of the four the
@@ -1510,6 +1692,8 @@ and §15.
 
 ---
 
-*Revision 4. Reviews owed: a fresh REVIEW-design against this revision. Every
-matrix has now been attacked by a fresh context and four of the six changed their
-selection as a result. IMPL does not start until REVIEW-design passes.*
+*Revision 5. Reviews owed: a fresh REVIEW-design against this revision. Every
+matrix has been attacked by a fresh context and four of the six changed their
+selection; revision 4's review reopened none of them, which is the first round
+where the SELECTIONS held and only the transmission failed. IMPL does not start
+until REVIEW-design passes.*
