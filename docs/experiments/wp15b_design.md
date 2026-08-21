@@ -1900,6 +1900,75 @@ per-node caller would not discover it.
 
 ---
 
+## 18. OPERATOR-QUEUE
+
+Everything this session could not decide, or decided conservatively and owes the
+operator. Nothing here was pushed or merged; `main` is untouched.
+
+### 18.1 The SPRT pre-registration — ships as a DRAFT, both cycles spent
+
+`docs/experiments/wp15b_sprt_prereg.md` §11 carries both review verdicts and the
+twelve numbered fixes its second reviewer requires. The one that matters most:
+**its dry-run criteria pass on a mutated arena that inverts the whole verdict**,
+because revision 2 moved the referent to a different FIELD of the same `Compute`
+struct rather than to the `score_a` PATH. A criterion that works is demonstrated
+there and needs no new code.
+
+Its OPERATOR-CONFIRM slots, unfilled by design: `elo1`; both seats'
+`binary_sha256`; `openings_take` (and a binding of it at ≥ 100, which §2's own
+floor needs); the soundness gate's state at the run's revision; the calibration
+probe's registration; and — new from the second review — whether the run is judged
+cheap or expensive, which **reverses D-245's recorded disposition for this package
+and therefore needs an ADR line, not a sentence**.
+
+### 18.2 The measurements, all ADVISORY on this machine
+
+Re-run `tools/baseline_snapshot.sh` on operator hardware for the record. The
+BEFORE numbers taken here at `f317385` reproduce the pinned operator triple
+(`depth_at_500ms` 2 / 2 / 1) — **and §9 establishes that triple sits BELOW the
+record's own "excluded from every comparison" marker with a dead band of about
+2×, so it is context and not the registered quantity.** The registered quantity is
+per-position `depth_turns` and `nodes` at 50 000 nodes, above the marker.
+
+The WP-1.4 spread baseline, MEASURED here at `play_v0.toml`: completed depth
+1 / 0 / 0 / 0 at 11 / 21 / 51 / 99 stones under `go movetime 500`. That is the
+debt WP-1.5b exists to move and no AFTER exists, because no engine code was
+written.
+
+### 18.3 Conservative branches taken, each recorded rather than silent
+
+- **The committed configs do not move.** `instrument_v0.toml` and `play_v0.toml`
+  stay at `kind = "radius"`; Staged would ship as four selectable documents. The
+  SPRT is the judge and it is the operator's run — D-190/D-194's own order.
+- **WP-1.5b does not complete ROADMAP WP-1.5's supersession**, and the ROADMAP
+  changes only by ADR (§15 item 6).
+- **D-263's three remedies stay unimplemented**, on a corrected bracket and a
+  measured firing rate — and the measurement says D-263 named the wrong hotspot
+  (§12.4).
+- **The `tools/` defects this round found were recorded, not fixed** (D-302,
+  D-303): they belong to WP-1.10, whose subject is exactly that.
+
+### 18.4 Handoff to WP-1.6 (threat-only zone-bounded quiescence)
+
+- **`LAW-RIPOSTE` and `LAW-LEDGER` are yours** (§3 rows 4 and 5). The riposte
+  check on every forced reply is what makes a forcing-line prover sound; the
+  ledger's `2 − t` bank is what decides whether a `t = 1` chain terminates.
+- **The node protocol's shape is settled and attacked** even though unimplemented:
+  win-now before overload before filter, one `can_win_this_turn` and one
+  `blocking_covers` per node, and the identity that makes that possible
+  (`blocking_covers == Impossible ⟺ unblockable_double_threat`) is verified over
+  168 030 comparisons with the `Impossible` branch reached at every budget.
+- **The generalised overload verdict (`t > left`, either phase) is derived from
+  `LAW-HIT` + `DEF-T` and the calculus amendment is OWED** (§15 item 22). A
+  quiescence that reuses it inherits that debt.
+- **Quiescence stands pat and extends in TURNS, never plies** — D-111, unchanged.
+- **The census is yours to extend**: it renders population figures for any regime
+  you add, and the pin makes a document that cites them unable to drift.
+- **What WP-1.6 must not inherit**: revision 7 is UNREVIEWED. Five rounds failed
+  before it and its four BLOCKING repairs have not been attacked.
+
+---
+
 *Revision 7. IMPL did not start; the Process gates it on a REVIEW-design that has
 not passed in five attempts. Every matrix has been attacked by a fresh context and
 four of the six changed their selection as a result — a base rate recorded as
