@@ -2,7 +2,7 @@
 
 <!-- WP-1.5b CARVE MEMBER — read by crates/pistol-solver/tests/wp15b_census.rs -->
 
-**u-rev 1.** The map from `docs/experiments/wp15b_design.md` at `6feb40a`
+**u-rev 2.** The map from `docs/experiments/wp15b_design.md` at `6feb40a`
 (revision 7, never reviewed, CLOSED by D-309) to the units the restructure
 selected as option D by D-310 produced. **This table is the carve's own gate: an
 unowned line or a double-owned line is a FAILED carve, not a finding.**
@@ -17,7 +17,9 @@ the exact corruption a reviewer used against the old pin and which it now fails
 the build on.
 
 **LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this table bumps
-its u-rev.
+its u-rev. **THIS TABLE IS AT u-rev 2**: the unit-size table in §11 gained a
+re-measured `now` column, because the sizes it recorded had been made false by
+the B3 and MAJOR 8 repairs to U4.
 
 ---
 
@@ -246,14 +248,31 @@ unowned; nothing is owned twice.
 about a unit exceeding one sitting, and after the carve the largest unit is not
 the one F6 named:
 
-| Unit | lines |
-|---|---|
-| U1 gate supersession | 274 |
-| U2 node protocol | 754 |
-| U3 Tier-T and the config shape | 603 |
-| U4 soundness instrument | 701 |
-| WPQ seed (not reviewable) | 222 |
-| this table | 268 |
+| Unit | at the carve (u-rev 1) | now | u-rev now |
+|---|---|---|---|
+| U1 gate supersession | 274 | **274** | 1 |
+| U2 node protocol | 754 | **754** | 1 |
+| U3 Tier-T and the config shape | 603 | **603** | 2 |
+| U4 soundness instrument | 701 | **800** | 3 |
+| WPQ seed (not reviewable) | 222 | **222** | 1 |
+| this table | 268 | *this row is measured at the carve only — see the note* | 2 |
+
+**THE `now` COLUMN IS RE-MEASURED AT u-rev 2 OF THIS TABLE, and it exists because
+the single-column version had gone false.** `wc -l` at the commit that adds this
+column. U4 grew by **99 lines** across two commits — the B3 repair (D-316: the
+gate letters dropped for four named gates, its selection record, and the MEASURED
+correction that six cross-references retarget where the cost cell predicted
+three) and MAJOR 8's repair (both mutation witnesses rebuilt as positions a legal
+game reaches, pinned by
+`crates/pistol-solver/tests/wp15b_mutation_witnesses.rs`). U3 grew by 0 net.
+**Neither commit appended to THIS table, so D-311's bump was not owed then and is
+owed now**, by the append you are reading.
+
+**Recorded rather than quietly corrected**, because a stale MEASURED number in
+the document that calls itself the carve's own gate is the defect class this work
+package has failed on six times, and because the number was made stale by the
+repairs and not by the carve. The `at the carve` column is kept so the figure
+F6's flip clause was judged against stays retrievable.
 
 **This is a finding for the architect, not a change the carve may make.** D-310
 selected a four-unit cut; F6's arithmetic predicted unit 3 at ~425 and unit 2 at
@@ -265,4 +284,4 @@ is the architect's.
 
 ---
 
-*Carve table, u-rev 1.*
+*Carve table, u-rev 2.*
