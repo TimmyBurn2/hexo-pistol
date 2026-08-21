@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 3.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
+**u-rev 4.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
 item 1 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the
 restructure selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -106,11 +106,40 @@ at THIS u-rev, two fresh DECISION-RED-TEAMs, and a SHELL_CHECKLIST review of the
 > and an estimate that could have been measured in seconds is a finding** —
 > D-291, third occurrence in this work package (restructure red team F1).
 >
-> **The fresh DECISION-RED-TEAM is the architect's dispatch, not the carve's.**
+> **THE MATRIX WAS AUTHORED AND ATTACKED AT u-rev 4, AND EVERY OPTION FELL.**
+> `docs/experiments/matrix_M3_soundness_instrument.md` (authored `f8e73e4`) put
+> nine options — the five above plus S-F, S-G, S-H and a null row — to a
+> fresh-context DECISION-RED-TEAM, whose report is
+> `docs/experiments/matrix_M3_REDTEAM.md`. **VERDICT: every stated option falls.**
+> Under the architect's standing rule the matrix is STOPPED and no survivor is
+> forced; the second authoring round is owed and is the architect's to schedule.
+> D-317 records it.
+>
+> **THE DECISIVE ATTACK, and it lands on the text below.** S-E's criterion is an
+> EQUALITY against the union over **inclusion-minimal** covers, checked by a
+> referent "written against the plan-family definition". MEASURED: the plan-family
+> definition D-266 makes canonical, `docs/research/threat_calculus_v1.md`,
+> contains `inclusion` **zero** times, and its `DEF-T` states the OPPOSITE
+> convention — *"exact **minimum hitting set**"*. On a legally reachable FILTERED
+> node the two readings give `{(-1,0),(-1,5),(4,0)}` against `{(-1,0)}`. **So a
+> referent that is genuinely independent makes the gate RED ON A CORRECT ENGINE,
+> and one that is green has read `cover.rs` — D-295's defect.** Independence and
+> greenness are in TENSION. §8.4's own mutation M4 is the ledger's admission that
+> the two conventions differ on a reachable position, which is what the S-E text
+> below needed to read and did not.
+>
+> **AND ONE ROW WAS NEVER NEEDED TO BE WRITTEN.**
+> `crates/pistol-solver/tests/common/reference.rs:223` already implements
+> `blocking_covers` *"by the definition: every subset within budget that covers,
+> minus every one with a proper subset that also covers"* — the independent
+> referent S-E proposes to build EXISTS, in the inclusion-minimal convention, and
+> the matrix's own fact 4 ran the `ls` that printed the file without reading it.
+>
 > §8.1 through §8.7 below are carried verbatim as the RECORD of why S-C fell and
-> of what S-E was written to do. They are not a selection. Until the matrix is
-> authored and attacked, **no ADR line may cite S-E as adopted** — item 4 in U4-Z
-> is written on that footing.
+> of what S-E was written to do. **They are not a selection, and after this round
+> they are not a recommendation either.** **No ADR line may cite S-E as adopted** —
+> item 4 in U4-Z is written on that footing, and D-317 now gives that footing a
+> measured ground rather than a procedural one.
 
 
 ### 8.1 Why S-C fell
@@ -767,7 +796,7 @@ carried, not closed.
 
 ### OPEN — carried forward, not closed by the carve
 
-- **B1 / M3 — no matrix, and the fresh round is owed** (the stub at the head of §8).
+- **B1 / M3 — the matrix was authored and attacked, and EVERY OPTION FELL** (the stub at the head of §8; D-317). No instrument is selected for the DIFFERENTIAL GATE, so `tools/staged_soundness_check.sh` cannot be specified for that gate and the other three named gates are unaffected. A SECOND AUTHORING ROUND is owed, over a field that must include the four rows the red team named as missing — the S-E-plus-reduced-S-C composite the design actually writes as adopted, a calculus-lower-bound containment criterion, a per-node census, and reuse of the landed referent at `crates/pistol-solver/tests/common/reference.rs:223`. Two of those four are immune to the attack that killed S-E. **It is the architect's to schedule, not this session's to author**: a revision 2 written by the session that wrote revision 1, over options the red team supplied, is the pattern D-305 measures.
 - **B2 / M4 — no ADR line, and the selection is OPEN** (the block at the head of §9).
 - ~~**B3 — gate (b), the two shapes above.**~~ **CLOSED at u-rev 2** by the architect's selection of shape 2, recorded above and in D-316. Its RESIDUAL is not closed and is named there: the selection was not put to a fresh-context DECISION-RED-TEAM.
 - ~~**MAJOR 8 — M4's and M6's mutation witnesses are not positions a legal game
@@ -797,4 +826,4 @@ carried, not closed.
 
 ---
 
-*U4, u-rev 3. A carve, not a revision. Two selections OPEN (M3, M4); B3 CLOSED at u-rev 2, MAJOR 8's reachability half CLOSED at u-rev 3. IMPL has not started.*
+*U4, u-rev 4. A carve, not a revision. M3 ATTACKED AND STOPPED with no survivor (D-317); M4 OPEN, at matrix revision 2 under a second round. B3 CLOSED at u-rev 2, MAJOR 8's reachability half CLOSED at u-rev 3. IMPL has not started.*
