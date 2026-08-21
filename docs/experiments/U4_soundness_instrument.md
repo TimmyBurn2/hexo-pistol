@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 2.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
+**u-rev 3.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
 item 1 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the
 restructure selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -376,9 +376,9 @@ cannot produce one it is BUILT** (D-260's precedent and its remedy).
 | M1 | Tier F drops the pair-completion class | mate | `mate_in_1_two_stones_complete_a_row` (corpus) |
 | M2 | Tier F drops `win_in_one_ply_cells` | mate | the **nine** single-stone `mate_in_1` cases (corpus; eleven `mate_in_1` cases in all, two of which are two-stone and belong to M1) |
 | M3 | The FILTERED row emits `Cover::cells()` flattened at phase 0 and does not regenerate at phase 1 | S-E | **BUILT, and revision 6's witness was inert under EQUALITY too.** With a single two-cell cover the stale union minus the played cell EQUALS the correct phase-1 set, so nothing separates them. The witness must have a phase-0 union of **three or more** cells: `cover.rs`'s own `{a,b} {b,d} {d,e}` shape, whose union is `{a,b,d,e}` while the phase-1 set after any one cell is strictly smaller |
-| M4 | Minimum-cardinality covers instead of inclusion-minimal | S-E | **BUILT, and revision 4's witness was inert.** The shape must have a 1-cover COEXISTING with a minimal 2-cover; `cover.rs`'s flat-list counterexample has no 1-cover, so the two notions coincide there and the mutant is an identity. VERIFIED on the shipped solver: P1 at (1,0)(2,0)(3,0)(4,0)(0,1)(0,2)(0,3)(0,4) sealed by P2 at (-1,0)(6,0)(0,-1)(0,6) gives `Minimal([One((0,0)), Two{(0,5),(5,0)}])`, and minimum-cardinality drops the pair |
+| M4 | Minimum-cardinality covers instead of inclusion-minimal | S-E | **BUILT, and revision 4's witness was inert.** The shape must have a 1-cover COEXISTING with a minimal 2-cover; `cover.rs`'s flat-list counterexample has no 1-cover, so the two notions coincide there and the mutant is an identity. **REBUILT AT u-rev 3 AS A POSITION A LEGAL GAME REACHES (MAJOR 8).** The witness this row carried until u-rev 2 held P1 = 8 stones with no stone on the origin — MEASURED refused by the rules on three counts at once, so it was a `ThreatState::apply` construction and never a position the SEARCH could be at. The rebuilt witness, with P2 to move: **P1** `(0,0)(1,0)(2,0)(3,0)` and `(-1,1)(-1,2)(-1,3)(-1,4)` and `(0,7)`, **P2** `(-2,0)(5,0)(-1,-1)(-1,6)` and `(4,-4)(5,-4)(-4,4)(-5,5)`. Nine P1 stones and eight P2 stones is rule 3's parity; the two arms share the empty corner `(-1,0)` and each is sealed at both far ends, so exactly one window per arm is hot. **MEASURED by replaying every ply through `GameState` and then querying the shipped solver:** `can_win_this_turn(P2,Two) = None` and `blocking_covers(P2,Two) = Minimal([One((-1,0)), Two{(-1,5),(4,0)}])` — the 1-cover coexisting with the minimal 2-cover, and minimum-cardinality drops the pair. Pinned by `crates/pistol-solver/tests/wp15b_mutation_witnesses.rs` |
 | M5 | The WIN-NOW row emits the cover union instead of the win class | **mate** | `mate_in_1_own_win_beats_blocking_the_opponent`. Revision 4 named "own win-now cells dropped from the FILTERED set", a path **U2** §5.3 deleted — on that position `can_win_this_turn` is `Some`, so the node takes the WIN-NOW row and `blocking_covers` is never called |
-| M6 | The overload return drops its `can_win_this_turn` guard | **mate**, not S-E | **BUILT**: P1 with one sealed five-run (win in one ply at (5,0)) and P2 with three disjoint sealed five-runs at rows 8 / 16 / 24 — 8 apart keeps every placement legal under rule 5 and 8 > 5 guarantees no shared window. VERIFIED: `can_win_this_turn(P1,Two) = Some(OnePly{(5,0)})` while `unblockable_double_threat(P2,Two) = true`. Its class is mate and not S-E, because the mutant RETURNS rather than emitting and S-E is blind at an `Impossible` node. **The witness is driven as a NON-PV DESCENDANT, never as a root**: the overload return is `!is_pv`-gated and ply 0 is always a PV node, so as a root the mutant does not fire at all and survives. Revision 5 changed this mutation's class and did not re-read the gate it then leaned on |
+| M6 | The overload return drops its `can_win_this_turn` guard | **mate**, not S-E | **BUILT, AND REBUILT AT u-rev 3 AS A POSITION A LEGAL GAME REACHES (MAJOR 8).** The shape is unchanged and was never the defect: P1 holds one five-run sealed at one end, so exactly one cell completes it, and P2 holds three disjoint five-runs at rows 8 / 16 / 24 — 8 apart keeps every placement legal under rule 5 and 8 > 5 guarantees no shared window. What was wrong was the COUNT: P2 held 15 stones, and rule 3 gives P2 an even number at every turn boundary. The rebuilt witness, with P1 to move: **P1** `(0,0)(1,0)(2,0)(3,0)(4,0)`, the three seals `(-1,8)(-1,16)(-1,24)`, and seven further stones `(0,4)(3,4)(0,12)(3,12)(0,20)(3,20)(7,4)` placed where no window reaches four — fifteen in all; **P2** the seal `(-1,0)` and the three runs `(q,8)(q,16)(q,24)` for `q` in `0..5` — sixteen. The seven fillers are not decoration: P2's sixteen stones force P1's fifteen, and a witness that cannot be counted to cannot be replayed. **MEASURED by replaying every ply through `GameState` and then querying the shipped solver:** `can_win_this_turn(P1,Two) = Some(OnePly{ at: (5,0) })` while `unblockable_double_threat(P2,Two) = true`. Pinned by `crates/pistol-solver/tests/wp15b_mutation_witnesses.rs`. Its class is mate and not S-E, because the mutant RETURNS rather than emitting and S-E is blind at an `Impossible` node. **The witness is driven as a NON-PV DESCENDANT, never as a root**: the overload return is `!is_pv`-gated and ply 0 is always a PV node, so as a root the mutant does not fire at all and survives. Revision 5 changed this mutation's class and did not re-read the gate it then leaned on |
 | M7 | Tier T qualifies at ≥3 for the mover (option A) | informative | survival is a recorded finding under **U3** §6.5's second branch, with a diagnosis, per D-281 |
 | **M8** | **`visit` drops the last candidate after generation** — D-124's own reproducer, `if cells.len() > 1 { cells.pop(); }` | **the `assert!`** | **A FILTERED root**, where `forced` is the whole set and `beta = INFINITY` guarantees the loop exhausts. Revision 4 registered no mutation for the `assert!` half at all, while §8.4 opened by quoting D-295's finding that asserting an instrument's strength rather than measuring it is the defect. Registered because the honest reading is that on the 70.8 % BATCHED population `forced == 0` and the assertion is VACUOUS there — it earns its place only on forced rows, and the mutation is what shows which |
 
@@ -770,18 +770,21 @@ carried, not closed.
 - **B1 / M3 — no matrix, and the fresh round is owed** (the stub at the head of §8).
 - **B2 / M4 — no ADR line, and the selection is OPEN** (the block at the head of §9).
 - ~~**B3 — gate (b), the two shapes above.**~~ **CLOSED at u-rev 2** by the architect's selection of shape 2, recorded above and in D-316. Its RESIDUAL is not closed and is named there: the selection was not put to a fresh-context DECISION-RED-TEAM.
-- **MAJOR 8 — M4's and M6's mutation witnesses are not positions a legal game
-  reaches.** §8.4 says "**VERIFIED on the shipped solver**" of both. The
-  superseded §17 says both "are currently `ThreatState`-level constructions with
-  impossible stone counts", and rule 3 of CLAUDE.md's pinned rules makes them
-  unreachable: turn 1 is ONE stone and every later turn TWO by the mover, so at a
-  turn boundary P1's count is odd and P2's even — M4's witness is P1 = 8 and
-  M6's is P2 = 15 plus seals. §8.4's claim is true of `ThreatState::apply` driven
-  directly and is not a verification of the mutation dying in the SEARCH, which
-  is what the ledger claims. **Two of eight mutations are undischarged**, and
-  §8.4's own opening quotes D-295's finding that asserting an instrument's
-  strength rather than measuring it *is* the defect. Building reachable witnesses
-  is design work, not a carve repair.
+- ~~**MAJOR 8 — M4's and M6's mutation witnesses are not positions a legal game
+  reaches.**~~ **CLOSED at u-rev 3.** Both witnesses are rebuilt in §8.4 as
+  positions reached by replaying every ply through `GameState`, which is the
+  referee rule 2 names, and both are pinned by
+  `crates/pistol-solver/tests/wp15b_mutation_witnesses.rs`. The pin is not
+  vacuous: MEASURED, the superseded M4 witness is REFUSED by that replay on three
+  independent counts — P1 holds an even 8, its first stone is not the origin, and
+  P2's 4 is neither one more nor one fewer than 8. §8.4's old "VERIFIED on the
+  shipped solver" is replaced by a verification that goes through the rules
+  first, which is the distinction MAJOR 8 drew and the reason the old claim was
+  true and worthless. **THE RESIDUAL IS NAMED AND IS NOT CLOSED:** a legal
+  position is not yet a position the mutation DIES on in the SEARCH — that needs
+  the search, and the search is not built (`crates/pistol-search/src/staged.rs`
+  does not exist). What is discharged is the reachability half, which was the
+  half MAJOR 8 raised; the ledger's "dies here" claim stays owed to IMPL.
 - **The snapshot's SECOND INSTRUMENT is unregistered** (U4-M). Replication is
   registered; the second instrument, its agreement criterion, the stage under
   doubt, how the second instrument does not share that stage, and the registered
@@ -794,4 +797,4 @@ carried, not closed.
 
 ---
 
-*U4, u-rev 2. A carve, not a revision. Two selections OPEN (M3, M4); B3 CLOSED at this u-rev. IMPL has not started.*
+*U4, u-rev 3. A carve, not a revision. Two selections OPEN (M3, M4); B3 CLOSED at u-rev 2, MAJOR 8's reachability half CLOSED at u-rev 3. IMPL has not started.*
