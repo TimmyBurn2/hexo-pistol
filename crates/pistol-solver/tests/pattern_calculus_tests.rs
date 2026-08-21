@@ -476,3 +476,143 @@ fn open_five_plans_include_both_end_singletons() {
         "two disjoint singletons cannot be hit by one cell"
     );
 }
+
+/// PAT-O3 GETS THE REFERENT PAT-RHOMBUS ALREADY HAD.
+///
+/// D-287 claims the all-negative class is closed by construction: "every record
+/// carries a `support` row ... so PAT-RHOMBUS (support 2) and PAT-O3 (support 3),
+/// whose every other answer is negative, are separated by a POSITIVE claim that
+/// an answer-invariant edit cannot leave true", and the fixture header repeats
+/// it. That was false for PAT-O3, and a RED-TEAM turned one record into the
+/// other: PAT-O3's plies replaced by PAT-RHOMBUS's, re-derived through the
+/// pack's own renderer and re-pinned, suite 9 of 9 GREEN — because `support`
+/// sits on the DERIVED side of the file and so re-derives WITH the edit rather
+/// than standing against it. Only the rhombus's 2 had an independent referent,
+/// hard-coded in `rhombus_has_empty_plan_family`, which is exactly why one
+/// direction died and the other did not.
+///
+/// It compounds, and that is why this is not bookkeeping: on the pristine pack,
+/// widening the hot threshold dies on PAT-O3 ALONE; with the swap applied first,
+/// the same mutation is green. The edit the pack claimed to prevent removed the
+/// pack's only gate on the hot threshold's lower side.
+#[test]
+fn open_three_has_the_support_and_the_stones_this_record_is_about() {
+    let case = pattern_case("PAT-O3");
+    let (game, threats) = play(&case.plies);
+    let board = game.board();
+
+    // The POSITIVE claim, computed live rather than read off the file the edit
+    // would have re-derived.
+    assert_eq!(
+        support(board, case.side),
+        3,
+        "an open three has three of its own on the axis; a rhombus has two, and \
+         that difference is what separates the two all-negative records"
+    );
+    assert!(
+        plan_family(board, case.side).is_empty(),
+        "and it is still short of a plan family"
+    );
+    assert_eq!(case.t, 0, "no plan family, nothing to hit");
+    assert!(
+        threats.hot_windows(case.side).is_empty(),
+        "the shipped state agrees there is no hot window"
+    );
+
+    // The stones ARE there and they ARE collinear — otherwise every row above is
+    // true of a position holding a rhombus, which is the swap this closes.
+    let mut mine: Vec<Coord> = board
+        .stones()
+        .filter(|&(_, who)| who == case.side)
+        .map(|(at, _)| at)
+        .collect();
+    mine.sort_unstable();
+    assert_eq!(
+        mine,
+        vec![Coord::new(0, 0), Coord::new(1, 0), Coord::new(2, 0)],
+        "three in a row on one axis, which no rhombus is"
+    );
+}
+
+/// THE RIGHT HALF IS A DIFFERENT HALF FROM THE LEFT.
+///
+/// ALG-SAMELINE-RIGHT's whole role in V-P3.5 is TO BE THE RIGHT HALF of the
+/// same-line double, and it was pinned by a single integer: `t = 2`. A RED-TEAM
+/// swapped its plies for PAT-O4's — making the "right half" a copy of the LEFT
+/// half — re-derived and re-pinned, and the suite stayed 9 of 9 green, with
+/// `threat_number_is_never_additive` then asserting "each half alone is a t=2
+/// open four" about the same half twice. PAT-O4 carries a stone-identity
+/// assertion that would have caught this; its sibling, one guard away, did not.
+#[test]
+fn the_same_line_double_has_two_halves_and_they_are_not_the_same_half() {
+    let left = pattern_case("PAT-O4");
+    let right = pattern_case("ALG-SAMELINE-RIGHT");
+
+    let (left_game, _) = play(&left.plies);
+    let (right_game, _) = play(&right.plies);
+
+    let own = |board: &pistol_core::Board, side: Player| -> Vec<Coord> {
+        let mut found: Vec<Coord> = board
+            .stones()
+            .filter(|&(_, who)| who == side)
+            .map(|(at, _)| at)
+            .collect();
+        found.sort_unstable();
+        found
+    };
+    let left_stones = own(left_game.board(), left.side);
+    let right_stones = own(right_game.board(), right.side);
+
+    assert_ne!(
+        left_stones, right_stones,
+        "the two halves of the double are different positions; if they are the \
+         same, the additivity counterexample is one half counted twice"
+    );
+    // And each half is exactly where its name says. Both carry the origin
+    // stone, turn 1 being one stone at the origin by rule 3, so the halves are
+    // told apart by the RUN and not by the whole stone set.
+    assert_eq!(
+        left_stones,
+        vec![
+            Coord::new(0, 0),
+            Coord::new(1, 0),
+            Coord::new(2, 0),
+            Coord::new(3, 0)
+        ],
+        "the left half is the run at q = 0..3 on r = 0"
+    );
+    assert_eq!(
+        right_stones,
+        vec![
+            Coord::new(0, 0),
+            Coord::new(5, 0),
+            Coord::new(6, 0),
+            Coord::new(7, 0),
+            Coord::new(8, 0)
+        ],
+        "the right half is the run at q = 5..8, which is what makes it the RIGHT \
+         half rather than a second copy of the left"
+    );
+    assert_eq!(right.t, 2, "and it is a t=2 open four alone");
+}
+
+/// PAT-C4's §5 NOTE SAYS "SINGLE PLAN", AND NOTHING CHECKED IT.
+///
+/// The record was pinned by `t = 1` and by nothing else, and was swapped whole
+/// for PAT-4IFF-SHALLOW's plies with the suite green — at which point its
+/// `plans` row silently went from one plan to two and the pack held two
+/// byte-identical positions under different names, with §5's "closed four ...
+/// single plan" false on the record carrying it.
+#[test]
+fn a_closed_four_has_exactly_one_plan() {
+    let case = pattern_case("PAT-C4");
+    let (game, _) = play(&case.plies);
+    let family = plan_family(game.board(), case.side);
+    assert_eq!(
+        family.len(),
+        1,
+        "a closed four is blocked on one side, so exactly one run can still \
+         complete it — that is what makes it t=1: {family:?}"
+    );
+    assert_eq!(case.t, 1, "one plan, one cell to hit");
+}
