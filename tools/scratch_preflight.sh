@@ -26,7 +26,8 @@
 # `tools/ci.sh` gate 2, which unpacks the whole tracked file set into a temporary
 # directory and builds it: measured at d6f6cbb, `du -sk` on that directory after
 # `cargo build --workspace --locked` reports 340552 KiB — about 333 MiB, the
-# clone and its whole debug target tree together. The floor is three times that,
+# clone and its whole debug target tree together. The floor is three times that
+# rounded up to 1 GiB (1048576 KiB, i.e. 3.079x rather than 3x),
 # which leaves room for the stub workspaces the test suites build under
 # `$TMPDIR` alongside it and is still under 5% of this machine's `/tmp`.
 #
@@ -38,7 +39,7 @@
 
 set -euo pipefail
 
-# In KiB, matching `df -Pk`. See the header for where the number comes from.
+# In KiB. See the header for where the number comes from.
 MIN_SCRATCH_KIB=1048576
 
 say() { printf 'scratch_preflight: %s\n' "$*"; }
@@ -64,29 +65,53 @@ case "$DIR" in
 esac
 [ -d "$DIR" ] || void "no such directory to preflight: \`$DIR\`"
 
-command -v df >/dev/null || void "df is not on PATH, so available space cannot be read"
-command -v awk >/dev/null || void "awk is not on PATH, so df's output cannot be read"
+command -v stat >/dev/null || void "stat is not on PATH, so available space cannot be read"
 
-# `-P` is the POSIX one-line-per-filesystem format, which is what makes field
-# 4 a field rather than a guess; `-k` fixes the unit so no locale or `BLOCKSIZE`
-# can change what the number means. THE LOCALE PIN IS FOR DETERMINISM AND MOVES
-# NO GUARD (item 4): it fixes df's own column wording and its decimal separator,
-# and nothing here is a character class.
-DF_LINE="$(LC_ALL=C df -Pk -- "$DIR" | sed -n '2p')" ||
-	void "df could not read the filesystem holding \`$DIR\`"
-[ -n "$DF_LINE" ] || void "df printed no filesystem line for \`$DIR\`"
+# NOT `df`, AND THIS IS THE REASON. `df` answers in COLUMNS, and a mount source
+# containing a space shifts every column left: field 4 stops being Available and
+# becomes Used. MEASURED on a real tmpfs mounted as `my dev` — an empty 2 GiB
+# filesystem reported `0 KiB available` and VOIDED a healthy run, and the same
+# filesystem with about 1 MiB left reported `2096132 KiB available` and PASSED.
+# Both directions at once, and the spelling guard below cannot see either,
+# because Used is also a well-formed decimal. That is EXIT-0-WRONG-ANSWER, and
+# the fix is not a better parse but NO PARSE: `stat -f` answers one field per
+# `-c` directive and has no columns to shift.
+#
+# `%a` is the blocks free to an unprivileged caller — which is the number this
+# question is about — and `%S` the block size; `%c`/`%d` are total and free
+# inodes, and a filesystem out of INODES has space it cannot use.
+STAT_OUT="$(LC_ALL=C stat -f -c '%a %S %c %d' -- "$DIR")" ||
+	void "stat could not read the filesystem holding \`$DIR\`"
+read -r BLOCKS BLOCKSIZE INODES_TOTAL INODES_FREE <<<"$STAT_OUT" ||
+	void "stat's answer for \`$DIR\` could not be read: \`$STAT_OUT\`"
 
-FS="$(printf '%s\n' "$DF_LINE" | awk '{ print $1 }')"
-AVAIL="$(printf '%s\n' "$DF_LINE" | awk '{ print $4 }')"
-MOUNT="$(printf '%s\n' "$DF_LINE" | awk '{ print $NF }')"
+# ONE SPELLING PER NUMBER (item 8), on each field, before any arithmetic. A
+# leading zero is read as octal by every arithmetic context in bash.
+for FIELD in "$BLOCKS" "$BLOCKSIZE" "$INODES_TOTAL" "$INODES_FREE"; do
+	case "$FIELD" in
+	'' | *[!0-9]*) void "stat's answer for \`$DIR\` is not a number: \`$STAT_OUT\`" ;;
+	0?*) void "stat's answer for \`$DIR\` is not written in decimal: \`$STAT_OUT\`" ;;
+	esac
+done
+[ "$BLOCKSIZE" -gt 0 ] || void "stat reports a zero block size for \`$DIR\`: \`$STAT_OUT\`"
 
-# ONE SPELLING PER NUMBER (item 8). A leading zero is read as octal by every
-# arithmetic context in bash, so `08` would be a syntax error and `010` would
-# silently be eight.
-case "$AVAIL" in
-'' | *[!0-9]*) void "df's available column is not a number for \`$DIR\`: \`$AVAIL\`" ;;
-0?*) void "df's available column is not written in decimal for \`$DIR\`: \`$AVAIL\`" ;;
-esac
+AVAIL="$(( BLOCKS * BLOCKSIZE / 1024 ))"
+MOUNT="$DIR"
+# WHICH filesystem, named without a column: the device number `stat` reports for
+# the directory itself. Not a mount source — a mount source is exactly the field
+# whose spacing broke the parse this replaced.
+DEVICE="$(LC_ALL=C stat -c '%D' -- "$DIR")" ||
+	void "stat could not name the device holding \`$DIR\`"
+
+# INODES ARE SPACE TOO, and they run out separately. A filesystem reporting
+# gigabytes free and zero free inodes refuses every create, and the tool that
+# then fails describes ITSELF rather than the filesystem — the same seam this
+# script exists to close. `%c` is 0 where a filesystem does not report inodes
+# (btrfs among them), which is not an exhaustion and is not read as one.
+if [ "$INODES_TOTAL" -gt 0 ] && [ "$INODES_FREE" -eq 0 ]; then
+	void "$MOUNT has $AVAIL KiB available but NO FREE INODES, so nothing can be \
+created there; nothing was measured and nothing failed"
+fi
 
 FLOOR="$MIN_SCRATCH_KIB"
 if [ -n "${PISTOL_MIN_SCRATCH_KIB:-}" ]; then
@@ -95,13 +120,28 @@ if [ -n "${PISTOL_MIN_SCRATCH_KIB:-}" ]; then
 	'' | *[!0-9]*) bug "PISTOL_MIN_SCRATCH_KIB is not a number: \`$RAISED\`" ;;
 	0?*) bug "PISTOL_MIN_SCRATCH_KIB is not written in decimal: \`$RAISED\`" ;;
 	esac
+	# AND IT MUST FIT, or the guard fails OPEN. `[ x -le y ]` on a value above
+	# 2^63-1 is an ERROR, not a comparison, and an erroring `[` in a CONDITION is
+	# exempt from `set -e` (item 2) — so the floor silently stayed at the
+	# constant and the check passed. MEASURED: the boundary is exact,
+	# 9223372036854775807 refuses and ...808 exited 0.
+	# The boundary is EXACT and both sides are tested: 9223372036854775807 is
+	# representable and must still REFUSE (exit 2); one past it is a caller bug.
+	# Equal-length digit strings compare correctly lexicographically, and the
+	# locale is pinned so the collation cannot widen (item 4).
+	if [ "${#RAISED}" -gt 19 ] ||
+		{ [ "${#RAISED}" -eq 19 ] &&
+			[ "$(LC_ALL=C printf '%s\n' "$RAISED" "9223372036854775807" | LC_ALL=C sort | tail -n1)" = "$RAISED" ] &&
+			[ "$RAISED" != "9223372036854775807" ]; }; then
+		bug "PISTOL_MIN_SCRATCH_KIB does not fit the arithmetic that compares it: \`$RAISED\`"
+	fi
 	# MAXIMUM, so the binding tightens and never loosens.
 	[ "$RAISED" -le "$FLOOR" ] || FLOOR="$RAISED"
 fi
 
 if [ "$AVAIL" -lt "$FLOOR" ]; then
-	void "$MOUNT ($FS) has $AVAIL KiB available and this run wants $FLOOR KiB; \
+	void "$MOUNT (device $DEVICE) has $AVAIL KiB available and this run wants $FLOOR KiB; \
 nothing was measured and nothing failed — free space and take the run again"
 fi
 
-say "$MOUNT ($FS) has $AVAIL KiB available, floor $FLOOR KiB"
+say "$MOUNT (device $DEVICE) has $AVAIL KiB available, floor $FLOOR KiB"

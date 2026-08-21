@@ -159,3 +159,84 @@ fn a_floor_that_is_not_decimal_is_refused_at_the_binding() {
         );
     }
 }
+
+/// THE NUMBER THE SCRIPT PRINTS AGREES WITH A REFERENT COMPUTED OUTSIDE IT.
+///
+/// This is the guard the suite lacked, and its absence is why a column-parsing
+/// defect shipped. Every other refusal here is manufactured by raising
+/// `PISTOL_MIN_SCRATCH_KIB`, which exercises the COMPARISON and never the
+/// READING — so a script that read the wrong column satisfied all of them, its
+/// number being a well-formed decimal from a neighbouring field.
+///
+/// `df` answers in columns and a mount source containing a space shifts them
+/// left, turning Available into Used. Measured on a real tmpfs mounted as
+/// `my dev`: an empty 2 GiB filesystem reported 0 KiB and voided a healthy run,
+/// and the same filesystem with ~1 MiB left reported 2096132 KiB and PASSED.
+/// The referent below is `stat -f`, which shares the DIRECTORY with the script
+/// but not the parse, so a re-introduced column read moves the script's number
+/// and not this one.
+#[test]
+fn the_printed_available_number_agrees_with_a_referent_the_script_did_not_compute() {
+    let dir = scratch("preflight-referent");
+    let ran = preflight(&dir, None);
+    let out = said(&ran);
+    assert_eq!(ran.status.code(), Some(0), "there is room here:\n{out}");
+
+    let referent = Command::new("stat")
+        .args(["-f", "-c", "%a %S"])
+        .arg(&dir)
+        .output()
+        .expect("stat reads the filesystem");
+    let fields = String::from_utf8_lossy(&referent.stdout);
+    let mut parts = fields.split_whitespace();
+    let blocks: u64 = parts.next().expect("free blocks").parse().expect("a number");
+    let block_size: u64 = parts.next().expect("block size").parse().expect("a number");
+    let expected = blocks * block_size / 1024;
+
+    let printed: u64 = out
+        .split_whitespace()
+        .zip(out.split_whitespace().skip(1))
+        .find_map(|(value, unit)| (unit == "KiB").then(|| value.parse().ok())?)
+        .unwrap_or_else(|| panic!("the script prints a KiB figure:\n{out}"));
+
+    // A filesystem this size moves between the two reads; a column shift does
+    // not move by a percent, it moves by an order of magnitude or to zero.
+    let drift = printed.abs_diff(expected);
+    assert!(
+        drift * 100 < expected.max(1),
+        "the script says {printed} KiB and stat says {expected} KiB — a \
+         disagreement this large is a different FIELD, not a busy filesystem:\n{out}"
+    );
+}
+
+/// A FLOOR TOO LARGE FOR THE ARITHMETIC IS A CALLER BUG, NOT A PASS.
+///
+/// `[ x -le y ]` above 2^63-1 is an ERROR rather than a comparison, and an
+/// erroring `[` in a CONDITION is exempt from `set -e` — so the floor silently
+/// stayed at the constant and the check passed, which is the guard failing open
+/// in the one direction its own header says it cannot ("can only ever tighten").
+/// The boundary is exact and both sides are asserted.
+#[test]
+fn a_floor_too_large_for_the_arithmetic_is_refused_instead_of_ignored() {
+    let dir = scratch("preflight-overflow");
+
+    let biggest = preflight(&dir, Some("9223372036854775807"));
+    assert_eq!(
+        biggest.status.code(),
+        Some(2),
+        "the largest representable floor still REFUSES, it does not error:\n{}",
+        said(&biggest)
+    );
+
+    let over = preflight(&dir, Some("9223372036854775808"));
+    let out = said(&over);
+    assert_eq!(
+        over.status.code(),
+        Some(1),
+        "one past it is the caller calling this wrong (1), never a pass (0):\n{out}"
+    );
+    assert!(
+        out.contains("does not fit"),
+        "the refusal names why, rather than dying under `set -e`:\n{out}"
+    );
+}
