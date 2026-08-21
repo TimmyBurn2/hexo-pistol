@@ -91,6 +91,40 @@ the cover arithmetic it will call per node, whose growth shape and unmeasured
 allocation-per-call are registered in docs/decisions.md D-263 together with what
 the measurement owes.
 
+WP-1.5's SUPERSESSION SENTENCE ABOVE IS NOT DISCHARGED BY WP-1.5b, AND THE TWO
+HALVES IT UNDERSTATES ARE RECORDED HERE RATHER THAN LEFT TO BE REDISCOVERED.
+Both are ADR changes to this file, not editorial notes.
+
+- **The dominance-pruning half is DEFERRED, NOT DROPPED** (docs/decisions.md
+  D-313). "Staged pair generation **with dominance pruning** SUPERSEDES the radius
+  policy" is one sentence carrying two commitments; WP-1.5b's design ships the
+  staged scheme and states that it adds **no dominance pruning beyond** it. The
+  pruning half therefore has no owner in WP-1.5a or WP-1.5b and is scheduled with
+  WP-1.5c below.
+- **The supersession itself is COMPLETED BY THE OPERATOR'S SPRT, NOT BY WP-1.5b**
+  (docs/decisions.md D-314). WP-1.5b performs the PARENTHETICAL only — it makes
+  radius a config-selectable fallback and makes staged generation selectable
+  beside it. What makes staged the PRIMARY candidate source is the operator's
+  SPRT moving the committed config, and until that run clears its registered
+  bound the committed engine is still the radius one. D-204's flip clause fires
+  there, not here.
+
+**WP-1.5c — the quiet stage, its widening schedule, and dominance pruning**
+(docs/decisions.md D-315; the designation is the one §15 item 8 already cites for
+the Tier-Q ball scan). D-310 cut WP-1.5b to stages F and T; the QUIET stage
+(Tier Q) and the widening schedule that batches it were excised, not cancelled,
+and `docs/experiments/WPQ_seed.md` is the verbatim excised text kept as this
+package's input. What it owes, none of it inherited as settled: its own design,
+its own option matrix over the widening schedule — matrix **M2** has never been
+authored in the form its adopted candidate W-E takes, so it is a fresh matrix and
+not a recovery — a fresh-context DECISION-RED-TEAM before any option is selected,
+and its own SPRT. It also carries the dominance-pruning half of WP-1.5's
+supersession and the Tier-Q ball scan. THE STRENGTH DEBT IS THE REASON THIS IS
+SCHEDULED AND NOT MERELY LICENSED: WP-1.5b's SPRT delta shrinks by exactly the
+axis D-310 removed, and this is the only package where that delta can be
+recovered — D-310 flips if this WP is never scheduled. PRIORITY: after WP-1.5b,
+and it does not block WP-1.6.
+
 **WP-1.6 — threat-only zone-bounded quiescence**, under D-111's invariant: the
 static eval answers at turn boundaries only, so quiescence stands pat and
 extends in TURNS, never in plies.
