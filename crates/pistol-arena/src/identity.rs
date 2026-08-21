@@ -59,6 +59,23 @@ pub struct EngineIdentity {
 
 /// The SHA-256 of a file this run depends on.
 pub fn digest_of(path: &Path) -> Result<String, ArenaError> {
+    // A REGULAR FILE, CHECKED BEFORE IT IS READ. `fs::read` on a FIFO BLOCKS
+    // until a writer appears, and this call happens before any channel exists,
+    // so `hang_timeout_ms` does not apply and the arena waits forever with no
+    // output — a hang where a refusal belongs. Both shell gates already guard
+    // this case by name; the Rust seat did not.
+    let meta = std::fs::metadata(path)
+        .map_err(|io| ArenaError::io(format!("reading {}", path.display()), io))?;
+    if !meta.is_file() {
+        return Err(ArenaError::io(
+            format!(
+                "reading {}: not a regular file, so it is not a build this run \
+                 can be about",
+                path.display()
+            ),
+            std::io::Error::new(std::io::ErrorKind::InvalidInput, "not a regular file"),
+        ));
+    }
     let bytes = std::fs::read(path)
         .map_err(|io| ArenaError::io(format!("reading {}", path.display()), io))?;
     Ok(pistol_cli::sha256::sha256_hex(&bytes))

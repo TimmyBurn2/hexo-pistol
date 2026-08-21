@@ -214,7 +214,9 @@ impl fmt::Display for ArenaError {
                 found,
             } => write!(
                 f,
-                "EngineBinaryDigestMismatch: engine {engine}: `{binary}` hashes to {found} and                  this document binds it to binary_sha256 {expected}; the file at that path is                  not the build this run is written for, so no game was played"
+                "EngineBinaryDigestMismatch: engine {engine}: `{binary}` hashes to {found} and \
+                 this document binds it to binary_sha256 {expected}; the file at that path is \
+                 not the build this run is written for, so no game was played"
             ),
             ArenaError::Hung {
                 engine,

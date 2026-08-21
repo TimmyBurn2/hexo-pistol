@@ -287,3 +287,30 @@ fn a_binary_with_no_path_separator_is_refused_rather_than_resolved_through_path(
         "a separator-less binary is refused at its own key: {error}"
     );
 }
+
+/// A `binary` THAT IS NOT A REGULAR FILE REFUSES INSTEAD OF WEDGING THE RUN.
+///
+/// `digest_of` read the path with `fs::read`, which on a FIFO BLOCKS until a
+/// writer appears. That read happens in `identity::capture`, before any channel
+/// exists, so `run.hang_timeout_ms` does not apply: the arena waited forever and
+/// printed nothing — a hang where a named refusal belongs. Both shell gates
+/// already guard this case by name (`usable()` in `tools/arena_smoke.sh` tests
+/// `-f` as well as `-x`); the Rust seat did not.
+#[test]
+fn a_binary_that_is_not_a_regular_file_is_refused_rather_than_waited_on() {
+    let scratch = Scratch::new("bind-fifo");
+    let fifo = scratch.path("engine.fifo");
+    let made = Command::new("mkfifo")
+        .arg(&fifo)
+        .status()
+        .expect("mkfifo runs");
+    assert!(made.success(), "the fixture needs a FIFO at {fifo:?}");
+
+    let error = pistol_arena::identity::digest_of(&fifo)
+        .expect_err("a FIFO is not a build, and reading one never returns");
+    let said = error.to_string();
+    assert!(
+        said.contains("not a regular file"),
+        "the refusal says what the path is, rather than blocking: {said}"
+    );
+}
