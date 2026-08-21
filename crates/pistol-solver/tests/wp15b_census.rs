@@ -341,6 +341,137 @@ fn mean(rows: &[Row], of: impl Fn(&Row) -> f64) -> f64 {
     rows.iter().map(&of).sum::<f64>() / rows.len() as f64
 }
 
+/// The canonical markdown the design document must carry verbatim.
+///
+/// ONE renderer, so a number exists in one place. `wp15b_design.md` carries this
+/// text between the two markers below and restates none of it elsewhere; the
+/// test underneath compares the two byte for byte, which is D-259's discipline
+/// applied to a design table rather than to a fixture — an edited number is a red
+/// test rather than a drift a reviewer has to find.
+///
+/// Nine times across four revisions of that document, a repair moved a number
+/// here and left a copy of it somewhere else. That is why this exists.
+pub const BEGIN: &str =
+    "<!-- BEGIN CENSUS TABLE — rendered by crates/pistol-solver/tests/wp15b_census.rs -->";
+pub const END: &str = "<!-- END CENSUS TABLE -->";
+
+fn cell(rows: &[Row], of: impl Fn(&Row) -> f64) -> String {
+    format!("{:.4}", mean(rows, of))
+}
+
+fn render(regimes: &[(&str, Vec<Row>)]) -> String {
+    let mut out = String::new();
+    out.push_str("| quantity |");
+    for (name, _) in regimes {
+        out.push_str(&format!(" {name} |"));
+    }
+    out.push_str("\n|---|");
+    for _ in regimes {
+        out.push_str("---|");
+    }
+    out.push('\n');
+
+    let quantities: [(&str, fn(&Row) -> f64); 8] = [
+        ("own hot, mean", |r| r.hot_us as f64),
+        ("opponent hot, mean", |r| r.hot_them as f64),
+        ("live-2 own", |r| r.live2_us as f64),
+        ("live-2 opponent", |r| r.live2_them as f64),
+        ("live-3 own", |r| r.live3_us as f64),
+        ("live-3 opponent", |r| r.live3_them as f64),
+        ("radius-2 ball", |r| r.ball2 as f64),
+        ("cover union when FILTERED", |r| {
+            if r.filtered {
+                r.staged[2] as f64
+            } else {
+                f64::NAN
+            }
+        }),
+    ];
+    for (label, of) in quantities {
+        if label.starts_with("cover union") {
+            out.push_str(&format!("| {label} |"));
+            for (_, rows) in regimes {
+                let f: Vec<&Row> = rows.iter().filter(|r| r.filtered).collect();
+                let mean = if f.is_empty() {
+                    0.0
+                } else {
+                    f.iter().map(|r| r.staged[2] as f64).sum::<f64>() / f.len() as f64
+                };
+                out.push_str(&format!(" {mean:.4} |"));
+            }
+            out.push('\n');
+            continue;
+        }
+        out.push_str(&format!("| {label} |"));
+        for (_, rows) in regimes {
+            out.push_str(&format!(" {} |", cell(rows, of)));
+        }
+        out.push('\n');
+    }
+
+    for (label, pick) in [
+        ("FILTERED row (`Cover::Minimal`)", 0usize),
+        ("`Cover::Impossible`", 1),
+        ("BATCHED nodes", 2),
+    ] {
+        out.push_str(&format!("| {label} | "));
+        let mut first = true;
+        for (_, rows) in regimes {
+            if !first {
+                out.push_str(" | ");
+            }
+            first = false;
+            let n = rows.len().max(1) as f64;
+            let v = match pick {
+                0 => rows.iter().filter(|r| r.filtered).count() as f64,
+                1 => rows.iter().filter(|r| r.impossible).count() as f64,
+                _ => rows.iter().filter(|r| !r.filtered && !r.win_now).count() as f64,
+            };
+            out.push_str(&format!("{:.1} %", 100.0 * v / n));
+        }
+        out.push_str(" |\n");
+    }
+
+    for (slot, option) in OPTIONS.iter().enumerate() {
+        out.push_str(&format!("| option {} — Tier T | ", option.name));
+        let mut first = true;
+        for (_, rows) in regimes {
+            if !first {
+                out.push_str(" | ");
+            }
+            first = false;
+            out.push_str(&cell(rows, |r| r.tier_t[slot] as f64));
+        }
+        out.push_str(" |\n");
+        out.push_str(&format!(
+            "| option {} — staged, BATCHED only | ",
+            option.name
+        ));
+        let mut first = true;
+        for (_, rows) in regimes {
+            if !first {
+                out.push_str(" | ");
+            }
+            first = false;
+            let open: Vec<&Row> = rows.iter().filter(|r| !r.filtered && !r.win_now).collect();
+            let (staged, ball) = if open.is_empty() {
+                (0.0, 0.0)
+            } else {
+                (
+                    open.iter().map(|r| r.staged[slot] as f64).sum::<f64>() / open.len() as f64,
+                    open.iter().map(|r| r.ball2 as f64).sum::<f64>() / open.len() as f64,
+                )
+            };
+            out.push_str(&format!(
+                "{staged:.2} = {:.2}x",
+                if staged > 0.0 { ball / staged } else { 0.0 }
+            ));
+        }
+        out.push_str(" |\n");
+    }
+    out
+}
+
 fn report(label: &str, rows: &[Row]) {
     let ball2 = mean(rows, |r| r.ball2 as f64);
     println!("\n== {label}  (n = {})", rows.len());
@@ -414,6 +545,48 @@ fn wp15b_census() {
         &sample(Regime::DeepenRadius8),
     );
     report("uniform playouts to 80 plies", &sample(Regime::Playouts));
+}
+
+/// THE DESIGN DOCUMENT CARRIES THIS INSTRUMENT'S OUTPUT VERBATIM.
+///
+/// Nine times across four revisions, a repair moved a number in one section of
+/// `docs/experiments/wp15b_design.md` and left a copy of it in another. The
+/// document now restates no population number outside the block below, and this
+/// test is what makes that true rather than intended.
+#[test]
+fn the_design_document_carries_this_censuss_table_verbatim() {
+    let table = render(&[
+        ("corpus roots", sample(Regime::Roots)),
+        (
+            "+1..3 turns, r2 draw (REPORTED)",
+            sample(Regime::DeepenRadius2),
+        ),
+        (
+            "+1..3 turns, r8 draw (SUPERSEDED)",
+            sample(Regime::DeepenRadius8),
+        ),
+        ("playouts", sample(Regime::Playouts)),
+    ]);
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../docs/experiments/wp15b_design.md"
+    );
+    let doc = std::fs::read_to_string(path).expect("the design document");
+    let start = doc
+        .find(BEGIN)
+        .unwrap_or_else(|| panic!("the design document carries no `{BEGIN}` marker"))
+        + BEGIN.len();
+    let end = doc
+        .find(END)
+        .unwrap_or_else(|| panic!("the design document carries no `{END}` marker"));
+    assert!(end > start, "the census markers are in the wrong order");
+    let carried = doc[start..end].trim();
+    assert_eq!(
+        carried,
+        table.trim(),
+        "\n\nthe design document's census table has drifted from the instrument.\n\
+         Replace the block between the two markers with:\n\n{table}"
+    );
 }
 
 /// The numbers the design's matrices actually rest on, TYPED OUT from
