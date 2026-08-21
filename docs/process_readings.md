@@ -204,7 +204,21 @@ independently knows the stand-in's true count knows that 37 counted `pistol_sear
 This is the reading D-269 lands as law. **It was re-derived blind**, which is the corroboration
 D-269 rests on.
 
-### T-R5 → T4, sharpened. **CLOSED by docs/decisions.md D-290.**
+### T-R5 → T4, sharpened. **PARTLY REOPENED by docs/decisions.md D-292** (was CLOSED by D-290).
+
+> **STATUS, corrected after the DECISION-RED-TEAM D-290 was landed without.** The
+> RECONCILIATION half stays closed: a governed-run report states measured cost beside declared
+> cost, and that duty was not attacked. The **5x threshold half is REOPENED** — D-292 retracts
+> the number as unearned. Its own flip condition («flips on a second instance, in either
+> direction») had already fired at the moment of landing: `docs/experiments/wp15a_prereg.md`
+> records two further mismatches D-290 calls non-existent, and on the nearest-endpoint reading
+> of D-290's sole data point the ratio is 30/6.3 = **4.76**, so the threshold MISSES the one
+> instance it was derived to catch. T4's bite is also not fully removed but RELOCATED: D-290
+> closes the "honest but wrong forecast of expense" branch and leaves the "honest and correct
+> forecast of expense" branch open, where the reconciliation duty now certifies it — and the
+> expensive branch is not hypothetical, `configs/arena_wp13_r2_vs_r3.toml` costing a measured
+> ≈5.4 core-hours for a shape WP-1.5b repeats next. A replacement threshold is owed an OPTION
+> MATRIX and is not derived here.
 
 *The proportionality paragraph's only substantive obligation is gated on "where the run is
 cheap"; cheapness is decided by a cost statement the same session writes BEFORE the run, which
