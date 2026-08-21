@@ -359,7 +359,15 @@ fn cell(rows: &[Row], of: impl Fn(&Row) -> f64) -> String {
     format!("{:.4}", mean(rows, of))
 }
 
-fn render(regimes: &[(&str, Vec<Row>)]) -> String {
+/// One named sampling regime and the rows it produced. A named type because the
+/// tuple is passed as a slice and clippy's `type_complexity` is right that
+/// `&[(&str, Vec<Row>)]` reads as noise at a call site.
+type Regimes<'a> = [(&'a str, Vec<Row>)];
+
+/// A row label and the field it reads. Named for the same reason `Regimes` is.
+type Quantity = (&'static str, fn(&Row) -> f64);
+
+fn render(regimes: &Regimes<'_>) -> String {
     let mut out = String::new();
     out.push_str("| quantity |");
     for (name, _) in regimes {
@@ -371,7 +379,7 @@ fn render(regimes: &[(&str, Vec<Row>)]) -> String {
     }
     out.push('\n');
 
-    let quantities: [(&str, fn(&Row) -> f64); 8] = [
+    let quantities: [Quantity; 8] = [
         ("own hot, mean", |r| r.hot_us as f64),
         ("opponent hot, mean", |r| r.hot_them as f64),
         ("live-2 own", |r| r.live2_us as f64),
