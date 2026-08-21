@@ -12,6 +12,8 @@
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
 pub mod fixtures;
+pub mod patterns;
+pub mod plans;
 pub mod playouts;
 pub mod reference;
 pub mod region;

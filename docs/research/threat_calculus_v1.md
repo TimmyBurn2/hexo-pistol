@@ -198,10 +198,10 @@ transposition handled by the phase bit).
 | OPEN-O3 | isolated open three a forced win? | V-P3.3(b) |
 | OPEN-DISJOINT | reachability: can the defender always prevent two simultaneous open threes? | arena instrumentation V-P3.6 (count positions with ≥2 plan-disjoint live fours vs pistol defense) |
 | OPEN-VALUE | game value (draw consensus vs win) | never asserted; measured (self-play first-player rate; pairing evidence defender-ward) |
-| V-P3.0 | enumeration script (plans, exact t) | run; candidate for tools/ (then SHELL_CHECKLIST + test rules apply) |
+| V-P3.0 | enumeration script (plans, exact t) | **LANDED, TEST-TREE-ONLY** — `crates/pistol-solver/tests/common/plans.rs`: exact `t`, no ceiling, windows enumerated by position. It VERIFIES and records no number, so it does NOT move to `tools/`; promotion is a future ADR owed the day anything records from it (D-287) |
 | V-P3.1 | C1 ledger fixture (rhombus + closed-2 refusal) | tactical fixture |
-| V-P3.2 | pattern fixtures = §5 table; mutation-gate the threat oracle (Gap Trap must be caught) | CI |
-| V-P3.5 | algebra counterexamples as regression tests (t exact, never additive) | CI |
+| V-P3.2 | pattern fixtures = §5 table; mutation-gate the threat oracle (Gap Trap must be caught) | **LANDED** — `tests/fixtures/pattern_v0.txt` (sha-pinned) + `pattern_calculus_tests.rs`; every row checked by the exact reference, the from-scratch reference and the shipped `ThreatState`; §5's numbers hand-typed in `SECTION_FIVE` and compared. Gap Trap gated by two recorded mutations, GT-1 and GT-2 (D-287) |
+| V-P3.5 | algebra counterexamples as regression tests (t exact, never additive) | **LANDED** — `threat_number_is_never_additive`: crossing fours `t = 3 != 2+2` split by axis within one position, same-line double `t = 3 != 2+2` against the two halves as records. Mutation GT-3 turns it red (D-287) |
 | V-P3.7 | verify 7/36 tiling hits every 6-window; LP lower bound | offline, before ADOPT-7/36 |
 | V-P3.8 | Finisher catalog t-audit; any t<3 entry falsifies it; import survivors sha-pinned | offline, before ADOPT-FINISH |
 | V1–V9 | Phase-1 verification hooks (support-bound tests, staged-vs-full agreement, mutation gates, riposte fixtures, free-stone ablation, eval SPRT, incremental-t differential) | per Phase-1 doc; unchanged |

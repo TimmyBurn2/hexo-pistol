@@ -1,0 +1,194 @@
+# pistol golden PATTERN pack, v0 — the §5 table of
+# docs/research/threat_calculus_v1.md as positions, with the EXACT threat number
+# t of each (verification item V-P3.2), and the two enumerated counterexamples
+# LAW-OVERLOAD's addition floor rests on (V-P3.5).
+#
+# Pinned by SHA-256 in crates/pistol-solver/tests/pattern_calculus_tests.rs
+# (PATTERN_V0_SHA256). Editing this file without updating that constant in the
+# same commit is a red test.
+#
+# WHAT KIND OF FILE THIS IS: MACHINE-DERIVED, hand-maintained in nothing but the
+# `plies` and `side` lines, exactly as `threat_v0.txt` is. Every `expect` row is
+# what `tests/common/plans.rs` prints for that ply list, and
+# `pattern_v0_is_what_the_definitions_print` renders all of them and compares
+# them with these bytes.
+#
+# AND THE NUMBERS THE FILE IS FOR ARE NOT DERIVED FROM IT. The `t` this pack
+# exists to pin is the one the CALCULUS TABULATES, and that table is written out
+# by hand in `pattern_calculus_tests.rs` (`SECTION_FIVE`) and compared against
+# these rows. A derived file checked only against itself would agree with a
+# broken oracle; the hand-written table is what it has to agree with.
+#
+# THREE READINGS, and the pack asserts all three agree:
+#   - `common::plans` (R3) computes t EXACTLY and with NO CEILING, by trying
+#     hitting-set sizes smallest first. It is the only one of the three that can
+#     say `t = 3`, which is the entire content of the two ALG- records.
+#   - `common::reference` (R1) answers the shipped query surface, whose
+#     `HitBudget` is closed at two, so it reports t as one of 0, 1, 2 or
+#     "above two".
+#   - `ThreatState` — the shipped incremental state — reports the same ladder.
+#
+# THE POSITIONS ARE LEGAL PLY SEQUENCES, played through `GameState::from_plies`,
+# so legality, turn structure and phase come from pistol-core and not from a
+# fixture author's belief. Turn 1 is one stone at the origin (rule 3), so every
+# list starts at 0,0. Where the origin is not part of the shape it is a lone
+# stone that joins no window of it, which the `support` row below makes visible.
+#
+# PADDING. The opponent stones a legal ply sequence forces are placed on the
+# chain 0,-8 8,-8 0,-16 8,-16 0,-24 8,-24 0,-32 8,-32: each is within hex
+# distance 8 of a stone already down (rule 5) and at hex distance >= 8 from
+# every other padding stone AND from every cluster cell any record uses. Six is
+# the threshold that matters — two cells of one window are at most 5 apart — so
+# no padding stone can share a window with another padding stone or with the
+# shape. Three records place an opponent stone that is NOT padding, at -1,0 or
+# -2,0, and those are the point of the record.
+#
+# Format. One record per case; `#` to end of line is a comment. Every key below
+# is required exactly once and an unknown key is refused by name, because a
+# fixture whose expectations are silently incomplete is a fixture that passes by
+# omission (docs/decisions.md D-37).
+#
+#   case    <PATTERN-ID>              starts a record; the id is its identity
+#   plies   <q,r> ...                 the stones, in play order
+#   side    p1 | p2                   whose threats the rows below are about
+#   expect  support <n>               DEF-SUPPORT: max own count over open windows
+#   expect  plans   {<q,r>} {<q,r> <q,r>} ... | -    DEF-PLAN, deduplicated, sorted
+#   expect  t       <n>               DEF-T: exact minimum hitting set, no ceiling
+#   end                               closes the record
+#
+# WHY `support` IS ON EVERY RECORD AND NOT ONLY THE INTERESTING ONES. Two of
+# these records — PAT-RHOMBUS and PAT-O3 — have `plans -` and `t 0`, and a
+# record whose every answer is negative is invisible to the derivation above:
+# the precondition that makes it the RIGHT fixture can be edited away with every
+# row still true (docs/decisions.md D-260, D-264). `support` is the positive
+# shape that separates them — the rhombus holds two collinear stones anywhere
+# and the open three holds three — so an edit that turned one into the other
+# fails here rather than passing.
+
+# --- §5, the pattern audit -----------------------------------------------------
+
+# PAT-O5, open five. Both end singletons are plans and both must be hit.
+case    PAT-O5
+plies   0,0 0,-8 8,-8 1,0 2,0 0,-16 8,-16 3,0 4,0
+side    p1
+expect  support 5
+expect  plans   {-2,0 -1,0} {-1,0} {5,0} {5,0 6,0}
+expect  t       2
+end
+
+# PAT-O4, open four. Three plans, and a hitting pair exists.
+case    PAT-O4
+plies   0,0 0,-8 8,-8 1,0 2,0 0,-16 8,-16 3,0
+side    p1
+expect  support 4
+expect  plans   {-2,0 -1,0} {-1,0 4,0} {4,0 5,0}
+expect  t       2
+end
+
+# PAT-GAP, the Gap Trap: X.XXXX open to the right. The five-window's plan is the
+# SINGLETON at the gap, 1,0 — a must-hit — and hitting it does not finish the
+# job, because the four-window at 2,0..7,0 is still live. A named-shape taxonomy
+# that reads this as one broken five scores it t=1 and is wrong by one stone.
+case    PAT-GAP
+plies   0,0 0,-8 8,-8 2,0 3,0 0,-16 8,-16 4,0 5,0
+side    p1
+expect  support 5
+expect  plans   {-1,0 1,0} {1,0} {1,0 6,0} {6,0 7,0}
+expect  t       2
+end
+
+# PAT-C4, closed four: the opponent stone at -1,0 kills the two windows reaching
+# left, leaving one plan.
+case    PAT-C4
+plies   0,0 -1,0 0,-8 1,0 2,0 8,-8 0,-16 3,0
+side    p1
+expect  support 4
+expect  plans   {4,0 5,0}
+expect  t       1
+end
+
+# PAT-4IFF, the positive branch: a contiguous four with TWO-DEEP empty on both
+# sides is t=2. On ConstQ, so the pack's own axis coverage does not rest on one
+# axis; the shape is the open four's by construction, and that identity is what
+# the biconditional says.
+case    PAT-4IFF-TWO-DEEP
+plies   0,0 0,-8 8,-8 0,1 0,2 0,-16 8,-16 0,3
+side    p1
+expect  support 4
+expect  plans   {0,-2 0,-1} {0,-1 0,4} {0,4 0,5}
+expect  t       2
+end
+
+# PAT-4IFF, the negative branch: the same contiguous four with the opponent at
+# -2,0, so the left side is empty but only ONE deep. t drops to 1 — the single
+# cell 4,0 hits both surviving plans. A table that asked only "is the adjacent
+# cell empty" would score this as the record above.
+case    PAT-4IFF-SHALLOW
+plies   0,0 -2,0 0,-8 1,0 2,0 8,-8 0,-16 3,0
+side    p1
+expect  support 4
+expect  plans   {-1,0 4,0} {4,0 5,0}
+expect  t       1
+end
+
+# PAT-RHOMBUS, the four-stone diamond: at most two collinear on every axis, so
+# no window holds four and the plan family is EMPTY. Its menace is multi-turn
+# generation, not weight — the community weight layer scores it W3 (REJ-WSC).
+case    PAT-RHOMBUS
+plies   0,0 0,-8 8,-8 1,0 0,1 0,-16 8,-16 1,1
+side    p1
+expect  support 2
+expect  plans   -
+expect  t       0
+end
+
+# PAT-O3, isolated open three: no plan, so t=0. Its value is pure tempo — one
+# stone activates it to PAT-O4 above, tau = 2 - 1 = +1 (§6).
+case    PAT-O3
+plies   0,0 0,-8 8,-8 1,0 2,0
+side    p1
+expect  support 3
+expect  plans   -
+expect  t       0
+end
+
+# --- V-P3.5, the two enumerated counterexamples to weight addition -------------
+
+# CROSSING FOURS. An open four on ConstR at r=0 and an open four on ConstQ at
+# q=4, arranged so the lines meet at 4,0 — an EMPTY cell that is in a plan of
+# each. Each four alone is t=2 (the test takes those two numbers from THIS
+# record, by axis, so nothing has to trust a second position). Weight algebra
+# reads 2+2=4. The exact answer is 3: play 4,0 and both remaining plans,
+# {-2,0 -1,0} and {4,5 4,6}, are disjoint and cost one stone each.
+case    ALG-CROSS-BOTH
+plies   0,0 0,-8 8,-8 1,0 2,0 0,-16 8,-16 3,0 4,1 0,-24 8,-24 4,2 4,3 0,-32 8,-32 4,4
+side    p1
+expect  support 4
+expect  plans   {-2,0 -1,0} {-1,0 4,0} {4,-1 4,0} {4,0 4,5} {4,0 5,0} {4,5 4,6}
+expect  t       3
+end
+
+# SAME-LINE DOUBLE, the right half alone: an open four at 5,0..8,0. The origin
+# stone is on the same line and joins none of its windows, which is what
+# `support 4` says. t=2.
+case    ALG-SAMELINE-RIGHT
+plies   0,0 0,-8 8,-8 5,0 6,0 0,-16 8,-16 7,0 8,0
+side    p1
+expect  support 4
+expect  plans   {3,0 4,0} {4,0 9,0} {9,0 10,0}
+expect  t       2
+end
+
+# SAME-LINE DOUBLE, both halves: 0,0..3,0 and 5,0..8,0 with the single gap at
+# 4,0. The left half alone is PAT-O4 above (same stones, same answers) at t=2
+# and the right half alone is the record above at t=2, so weight algebra reads
+# 4. The exact answer is 3: four windows now hold FIVE stones and every one of
+# them has the same singleton plan {4,0}, which is forced; the two ends then
+# cost one stone each.
+case    ALG-SAMELINE-BOTH
+plies   0,0 0,-8 8,-8 1,0 2,0 0,-16 8,-16 3,0 5,0 0,-24 8,-24 6,0 7,0 0,-32 8,-32 8,0
+side    p1
+expect  support 5
+expect  plans   {-2,0 -1,0} {-1,0 4,0} {4,0} {4,0 9,0} {9,0 10,0}
+expect  t       3
+end
