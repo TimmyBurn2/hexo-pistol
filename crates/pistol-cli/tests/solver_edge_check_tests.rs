@@ -62,12 +62,22 @@ const SUBJECT: &str = "thecrate";
 
 /// Run the shipped script against a workspace root and a crate name.
 fn edge_check(root: &Path, crate_name: &str) -> Output {
-    std::process::Command::new("bash")
+    edge_check_env(root, crate_name, &[])
+}
+
+/// The same, with named environment bindings added to the script's environment.
+/// The record's byte-invariance is a claim about what a CALLER'S environment can
+/// do to it, so the tests that make that claim need a way to set one.
+fn edge_check_env(root: &Path, crate_name: &str, env: &[(&str, &str)]) -> Output {
+    let mut command = std::process::Command::new("bash");
+    command
         .arg(repo("tools/solver_edge_check.sh"))
         .arg(root)
-        .arg(crate_name)
-        .output()
-        .expect("bash runs the shipped script")
+        .arg(crate_name);
+    for (key, value) in env {
+        command.env(key, value);
+    }
+    command.output().expect("bash runs the shipped script")
 }
 
 /// A two-crate workspace: `thecrate` (a library) and `user` (a binary), where
@@ -283,5 +293,90 @@ fn the_shipped_workspace_has_no_normal_edge_on_the_solver() {
          stdout: {}\nstderr: {}",
         stdout(&ran),
         stderr(&ran)
+    );
+}
+
+/// `pwd -P`, AND THE RECORD IS WHAT IS UNDER TEST. The script substitutes the
+/// workspace root out of the printed tree so that two replications of a
+/// registered run compare byte for byte; cargo prints PHYSICAL paths, so a
+/// caller standing on a symlinked root gave bash's LOGICAL `pwd` a string that
+/// matched none of them and the per-run absolute path went into the record
+/// intact. That is EXIT-0-WRONG-ANSWER in the printed half: the verdict was
+/// right, the bytes were wrong, and nothing was red.
+///
+/// REPRODUCED against the shipped script before the repair: with `pwd`, this
+/// case printed `/tmp/pistol-testscratch-…/ws/crates/user` and no `<workspace>`.
+#[test]
+fn a_symlinked_workspace_root_is_still_substituted_out_of_the_printed_tree() {
+    let root = workspace("edge-symlink", Some("dependencies"));
+    let real = root
+        .parent()
+        .expect("the workspace sits inside its scratch directory");
+    let link = real.with_file_name(format!(
+        "{}-link",
+        real.file_name()
+            .expect("the scratch directory has a name")
+            .to_string_lossy()
+    ));
+    let _ = std::fs::remove_file(&link);
+    std::os::unix::fs::symlink(real, &link).expect("a symlink to the scratch directory");
+
+    let ran = edge_check_env(&link.join("ws"), SUBJECT, &[]);
+    assert_eq!(
+        ran.status.code(),
+        Some(1),
+        "1 is the answer 'there is an edge'; 2 would mean no answer was taken and \
+         there would be no tree to inspect\nstdout: {}\nstderr: {}",
+        stdout(&ran),
+        stderr(&ran)
+    );
+    let printed = stdout(&ran);
+    // THE CONTROL for this test: the tree was actually taken and printed, so the
+    // absence asserted below is a substitution rather than an empty record.
+    assert!(
+        printed.contains("<workspace>/crates/user"),
+        "the dependent is named under the substituted root: {printed}"
+    );
+    let physical = real
+        .canonicalize()
+        .expect("the scratch directory resolves")
+        .to_string_lossy()
+        .into_owned();
+    assert!(
+        !printed.contains(&physical),
+        "the physical scratch path leaked into the record through a logical `pwd`: \
+         {physical} in {printed}"
+    );
+}
+
+/// `--color never`, FOR THE SAME RECORD. `CARGO_TERM_COLOR=always` in the
+/// caller's environment makes cargo emit SGR escapes around the tree glyphs even
+/// when its output is a pipe, and the script captures that output and prints it.
+/// Escapes are invisible in a terminal and are bytes in a file, so a record
+/// compared byte for byte across replications differs for a reason no reader can
+/// see.
+///
+/// REPRODUCED against the shipped script before the repair: this case printed
+/// `\x1b[2m` around the tree glyph and exited 1 all the same.
+#[test]
+fn a_colour_forcing_environment_leaves_no_escape_sequence_in_the_printed_tree() {
+    let root = workspace("edge-colour", Some("dependencies"));
+    let ran = edge_check_env(&root, SUBJECT, &[("CARGO_TERM_COLOR", "always")]);
+    assert_eq!(
+        ran.status.code(),
+        Some(1),
+        "1 is the answer 'there is an edge'\nstdout: {}\nstderr: {}",
+        stdout(&ran),
+        stderr(&ran)
+    );
+    let printed = stdout(&ran);
+    // THE CONTROL, as above: a record with no tree in it has no escapes either.
+    assert!(
+        printed.contains("<workspace>/crates/user"),
+        "the dependent is named, so there is a tree to be coloured: {printed}"
+    );
+    assert!(
+        !printed.contains('\u{1b}'),
+        "an SGR escape reached the record: {printed:?}"
     );
 }

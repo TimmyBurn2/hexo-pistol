@@ -69,21 +69,29 @@ esac
 [ -f "$ROOT/Cargo.toml" ] || fail "no Cargo.toml at the workspace root: $ROOT"
 command -v cargo >/dev/null || fail "cargo is not on PATH"
 
+# `--color never` ON EVERY `cargo tree` BELOW. `CARGO_TERM_COLOR=always` in the
+# caller's environment puts SGR escapes around the tree glyphs even when the
+# output is a pipe or a file, and the captured tree is printed into a record a
+# pre-registration requires to be byte-identical across replications. The two
+# probes discard their output today; the flag is on them anyway, because the
+# reason a probe discards its output is not a property of the graph question and
+# a later change to either would reintroduce the leak silently.
+
 # READABILITY FIRST, so "cargo could not answer" and "there is no edge" are two
 # reasons with two refusals rather than one status meaning either (item 8). This
 # probe does NOT name the crate, so it cannot be confused by a bad crate name.
-( cd "$ROOT" && cargo tree --locked --workspace --edges normal ) >/dev/null 2>&1 \
+( cd "$ROOT" && cargo tree --color never --locked --workspace --edges normal ) >/dev/null 2>&1 \
 	|| fail "cargo cannot resolve the workspace's normal-edge graph at $ROOT"
 
 # The crate must BE in the workspace. Without this, a typo in the crate name is
 # indistinguishable from "no edge" — the failure the substring count made when it
 # answered 0 and the document read it as good news.
-( cd "$ROOT" && cargo tree --locked --workspace --edges normal -i "$CRATE" ) >/dev/null 2>&1 \
+( cd "$ROOT" && cargo tree --color never --locked --workspace --edges normal -i "$CRATE" ) >/dev/null 2>&1 \
 	|| fail "'$CRATE' is not a package in the workspace at $ROOT, or its specification is \
 ambiguous; either way no answer about its reverse-dependencies was taken"
 
 # The answer. Captured, counted, and PRINTED — never an exit status.
-TREE="$( cd "$ROOT" && cargo tree --locked --workspace --edges normal -i "$CRATE" 2>/dev/null )" \
+TREE="$( cd "$ROOT" && cargo tree --color never --locked --workspace --edges normal -i "$CRATE" 2>/dev/null )" \
 	|| fail "the inverted tree could not be taken for '$CRATE'"
 LINES="$(printf '%s\n' "$TREE" | grep -c . || true)"
 case "$LINES" in
@@ -100,7 +108,13 @@ probe should have made impossible"
 # failing one. Caught by this script's own test suite on its first execution.
 # Bash substring replacement, not `sed`: the root is a path, and a path is not a
 # regular expression.
-ROOT_ABS="$(cd "$ROOT" && pwd)" || fail "cannot canonicalise the workspace root $ROOT"
+# `pwd -P` AND NOT BASH'S LOGICAL `pwd`, as this script's sibling
+# `tools/solver_link_check.sh` already spells it. Cargo prints PHYSICAL paths; a
+# caller standing on a symlinked root gives a logical `pwd` that matches none of
+# them, so the substitution finds nothing and the record carries the per-run
+# absolute path it exists to remove — a green run whose bytes are wrong, not a
+# refusal.
+ROOT_ABS="$(cd "$ROOT" && pwd -P)" || fail "cannot canonicalise the workspace root $ROOT"
 TREE_PRINT="${TREE//"$ROOT_ABS"/<workspace>}"
 
 printf 'solver_edge_check: inverted normal-edge tree for %s (%s lines)\n' "$CRATE" "$LINES"
