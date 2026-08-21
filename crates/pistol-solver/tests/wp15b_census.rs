@@ -1,5 +1,5 @@
 //! WP-1.5b's population census: the instrument behind every number in
-//! `docs/experiments/wp15b_design.md` §6.2, §6.3 and §12.4.
+//! `docs/experiments/U3_tier_t.md` §6.2, §6.3 and §12 item 4.
 //!
 //! # Why this is committed rather than run from a worktree
 //!
@@ -64,7 +64,7 @@ const CORPUS: &str = concat!(
 const QUIET_TOP_K: usize = 16;
 
 /// Which live-window counts a Tier-T option qualifies, per side. The THRESHOLD
-/// reading of `docs/experiments/wp15b_design.md` §6.1: a count of `n` means
+/// reading of `docs/experiments/U3_tier_t.md` §6.1: a count of `n` means
 /// "at least `n` own stones", which is `LiveCount` at `n..=3` UNIONED with the
 /// hot set, since `LiveCount` is closed at `{Two, Three}` (D-255) and cannot
 /// express `>= 4` on its own.
@@ -208,7 +208,7 @@ struct Row {
 }
 
 /// What the staged generator emits at this position, per
-/// `docs/experiments/wp15b_design.md` §5.3.
+/// `docs/experiments/U2_node_protocol.md` §5.3.
 fn census(state: &GameState, threats: &ThreatState) -> Option<Row> {
     if state.outcome().is_decided() || state.phase() != Phase::First {
         return None;
@@ -370,8 +370,9 @@ fn mean(rows: &[Row], of: impl Fn(&Row) -> f64) -> f64 {
 
 /// The canonical markdown the design document must carry verbatim.
 ///
-/// ONE renderer, so a number exists in one place. `wp15b_design.md` carries this
-/// text between the two markers below and restates none of it elsewhere; the
+/// ONE renderer, so a number exists in one place. Exactly one carved unit
+/// carries this text between the two markers below, and no carved unit restates
+/// a four-decimal figure from it anywhere else; the
 /// test underneath compares the two byte for byte, which is D-259's discipline
 /// applied to a design table rather than to a fixture — an edited number is a red
 /// test rather than a drift a reviewer has to find.
@@ -616,12 +617,110 @@ fn wp15b_census() {
 /// THE DESIGN DOCUMENT CARRIES THIS INSTRUMENT'S OUTPUT VERBATIM.
 ///
 /// Nine times across four revisions, a repair moved a number in one section of
-/// `docs/experiments/wp15b_design.md` and left a copy of it in another. The
-/// document now restates no population number outside the block below, and this
-/// test is what makes that true rather than intended.
-#[test]
-fn the_design_document_carries_this_censuss_table_verbatim() {
-    let table = render(&[
+/// `docs/experiments/wp15b_design.md` and left a copy of it in another. That
+/// document was carved into the four units and the seed named in `CARVE_DOCS`
+/// below (docs/decisions.md D-310), and NONE of them restates a four-decimal
+/// population figure outside the block. This test is what makes that true
+/// rather than intended — across every one of those files, by name.
+/// THE DOCUMENTS THE CARVE PRODUCED, AND THE ONLY ONES THIS PIN READS.
+///
+/// The pin used to resolve ONE hard-coded path,
+/// `"/../../docs/experiments/wp15b_design.md"`. The restructure (docs/decisions.md
+/// D-310) split that document into these files, and a one-path pin would have
+/// stayed GREEN while blind to five of them — a pass that certifies nothing,
+/// which is `tools/SHELL_CHECKLIST.md`'s EXIT-0-WRONG-ANSWER arriving in a Rust
+/// test. The list is the pin's claim about what it covers, and
+/// `the_census_pin_reads_every_carved_document_it_names` is what makes the claim
+/// checkable rather than asserted.
+///
+/// A file named here that cannot be read is a PANIC, never a skip. A skip is how
+/// a pin goes green over a document nobody opened.
+///
+/// AND THE LIST ITSELF IS NOT SELF-CERTIFYING. Deleting entries from it shrinks
+/// what the pin covers AND what any test written over the list can check, so a
+/// coverage test that iterates this constant passes on a list of one — MEASURED:
+/// it did. `the_pins_document_list_is_the_set_of_carved_documents_on_disk`
+/// compares it against a referent the constant does not share, the set of files
+/// on disk carrying `CARVE_MARKER`.
+const CARVE_DOCS: &[&str] = &[
+    "U1_gate_supersession.md",
+    "U2_node_protocol.md",
+    "U3_tier_t.md",
+    "U4_soundness_instrument.md",
+    "WPQ_seed.md",
+    "section_owner_table.md",
+];
+
+/// The line every carved document carries, and nothing else in `docs/experiments/`
+/// does. It is what makes "which files did the carve produce" answerable from the
+/// tree rather than from the constant above.
+const CARVE_MARKER: &str =
+    "<!-- WP-1.5b CARVE MEMBER — read by crates/pistol-solver/tests/wp15b_census.rs -->";
+
+/// Where the carved documents live.
+fn carve_dir() -> String {
+    format!("{}/../../docs/experiments", env!("CARGO_MANIFEST_DIR"))
+}
+
+/// Read every document in `CARVE_DOCS`, refusing by name rather than skipping.
+fn carve_documents() -> Vec<(&'static str, String)> {
+    CARVE_DOCS
+        .iter()
+        .map(|name| {
+            let path = format!("{}/{name}", carve_dir());
+            let text = std::fs::read_to_string(&path).unwrap_or_else(|error| {
+                panic!(
+                    "this pin names {name} as a document it covers and could not read it \
+                     ({error}). A path the pin cannot resolve is a pin that goes green over \
+                     a file it never opened."
+                )
+            });
+            assert!(
+                !text.trim().is_empty(),
+                "{name} is empty, so the pin would read nothing from it and pass"
+            );
+            (*name, text)
+        })
+        .collect()
+}
+
+/// Every FOUR-DECIMAL figure of `table` that appears in a carved document
+/// OUTSIDE the census block, reported as `document: figure`.
+///
+/// Four decimals is the whole of what this scan can see, and that is narrower
+/// than "no number is restated": `70.8 %` carries a space and a percent sign,
+/// and `6.83` is a rounding. The units say so where they cite the block
+/// (U3 §6.2) rather than claiming the wider property the old §6.2 claimed and
+/// did not have.
+fn restatements_outside(table: &str, docs: &[(&'static str, String)]) -> Vec<String> {
+    let mut restated: Vec<String> = Vec::new();
+    for (name, text) in docs {
+        let outside = match (text.find(BEGIN), text.find(END)) {
+            (Some(start), Some(end)) => {
+                format!("{}{}", &text[..start], &text[end + END.len()..])
+            }
+            _ => text.clone(),
+        };
+        for line in table.lines() {
+            for field in line.split('|').map(str::trim) {
+                if field.len() >= 6
+                    && field.contains('.')
+                    && field.split('.').nth(1).is_some_and(|d| d.len() == 4)
+                    && field.chars().all(|c| c.is_ascii_digit() || c == '.')
+                    && outside.contains(field)
+                {
+                    restated.push(format!("{name}: {field}"));
+                }
+            }
+        }
+    }
+    restated.sort_unstable();
+    restated.dedup();
+    restated
+}
+
+fn census_table() -> String {
+    render(&[
         ("corpus roots", sample(Regime::Roots)),
         (
             "+1..3 turns, r2 draw (REPORTED)",
@@ -632,62 +731,55 @@ fn the_design_document_carries_this_censuss_table_verbatim() {
             sample(Regime::DeepenRadius8),
         ),
         ("playouts", sample(Regime::Playouts)),
-    ]);
-    let path = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../../docs/experiments/wp15b_design.md"
-    );
-    let doc = std::fs::read_to_string(path).expect("the design document");
-    let start = doc
-        .find(BEGIN)
-        .unwrap_or_else(|| panic!("the design document carries no `{BEGIN}` marker"))
-        + BEGIN.len();
-    let end = doc
-        .find(END)
-        .unwrap_or_else(|| panic!("the design document carries no `{END}` marker"));
-    assert!(end > start, "the census markers are in the wrong order");
-    // EXACTLY ONE PAIR. A reviewer appended a second BEGIN..END block carrying
-    // `option C — Tier T | 999.9999` and this test stayed green, because
-    // `find` takes the first pair and everything after `END` was unchecked.
+    ])
+}
+
+#[test]
+fn the_carved_design_units_carry_this_censuss_table_verbatim() {
+    let table = census_table();
+    let docs = carve_documents();
+
+    // EXACTLY ONE PAIR, ACROSS THE WHOLE SET. A reviewer appended a second
+    // `BEGIN..END` block carrying `option C — Tier T | 999.9999` and the old test
+    // stayed green, because `find` takes the first pair and everything after
+    // `END` was unchecked. After the carve the same corruption can also arrive as
+    // a second block in a DIFFERENT file, so the count is over every document the
+    // pin reads and not over one of them.
+    let begins: usize = docs.iter().map(|(_, t)| t.matches(BEGIN).count()).sum();
+    let ends: usize = docs.iter().map(|(_, t)| t.matches(END).count()).sum();
     assert_eq!(
-        doc.matches(BEGIN).count(),
-        1,
-        "the design document carries more than one census block; the pin checks the first"
+        begins, 1,
+        "the carved documents carry {begins} census BEGIN markers between them; exactly one \
+         document carries exactly one"
     );
     assert_eq!(
-        doc.matches(END).count(),
-        1,
-        "more than one census END marker"
+        ends, 1,
+        "the carved documents carry {ends} census END markers between them; exactly one \
+         document carries exactly one"
     );
-    let carried = doc[start..end].trim();
+
+    let (name, text) = docs
+        .iter()
+        .find(|(_, t)| t.contains(BEGIN))
+        .expect("one carved document carries the census block");
+    let start = text.find(BEGIN).expect("checked above") + BEGIN.len();
+    let end = text.find(END).expect("checked above");
+    assert!(
+        end > start,
+        "{name}: the census markers are in the wrong order"
+    );
+
     assert_eq!(
-        carried,
+        text[start..end].trim(),
         table.trim(),
-        "\n\nthe design document's census table has drifted from the instrument.\n\
+        "\n\n{name}'s census table has drifted from the instrument.\n\
          Replace the block between the two markers with:\n\n{table}"
     );
 
-    // AND NO NUMBER FROM THE BLOCK IS RESTATED OUTSIDE IT. §6.2 claims this in
-    // words; without the check the claim was false at eight sites and the pin was
-    // green under a corruption of every one of them.
-    let outside = format!("{}{}", &doc[..start - BEGIN.len()], &doc[end + END.len()..]);
-    let mut restated: Vec<&str> = Vec::new();
-    for line in table.lines() {
-        for field in line.split('|').map(str::trim) {
-            // Only the four-decimal renderings are unambiguous enough to grep
-            // for; a bare "16" or "2.17x" occurs in prose for other reasons.
-            if field.len() >= 6
-                && field.contains('.')
-                && field.split('.').nth(1).is_some_and(|d| d.len() == 4)
-                && field.chars().all(|c| c.is_ascii_digit() || c == '.')
-                && outside.contains(field)
-            {
-                restated.push(field);
-            }
-        }
-    }
-    restated.sort_unstable();
-    restated.dedup();
+    // AND NO FOUR-DECIMAL FIGURE FROM THE BLOCK IS RESTATED OUTSIDE IT, IN ANY
+    // OF THEM. Without the check the claim was false at eight sites and the pin
+    // was green under a corruption of every one.
+    let restated = restatements_outside(&table, &docs);
     assert!(
         restated.is_empty(),
         "these census figures are restated OUTSIDE the pinned block, where nothing checks \
@@ -695,8 +787,104 @@ fn the_design_document_carries_this_censuss_table_verbatim() {
     );
 }
 
+/// THE PIN READS WHAT IT CLAIMS TO READ, PROVED PER FILE.
+///
+/// `the_carved_design_units_carry_this_censuss_table_verbatim` passing tells you
+/// nothing about a document whose bytes never reached the scan — which is exactly
+/// the state the old one-path pin was in for five of the six files above, and
+/// the state travelling item T4' bans. So: plant a census figure in one document
+/// at a time and require the scan to name that document. A file the scan cannot
+/// see fails here rather than passing silently there.
+#[test]
+fn the_census_pin_reads_every_carved_document_it_names() {
+    let table = census_table();
+    let docs = carve_documents();
+
+    // THE CONTROL, first: unplanted, the scan is clean. Without it every
+    // assertion below is satisfied by a scan that reports everything.
+    assert!(
+        restatements_outside(&table, &docs).is_empty(),
+        "the control failed: the carved documents already restate a census figure"
+    );
+
+    // A figure the block genuinely renders, in the four-decimal form the scan
+    // can see. Asserted against the table so a renderer change cannot leave this
+    // test planting a string that is no longer a census figure.
+    const PLANTED: &str = "77.9583";
+    assert!(
+        table.contains(PLANTED),
+        "{PLANTED} is no longer rendered by the census; this test would plant a non-figure"
+    );
+
+    for index in 0..docs.len() {
+        let mut probe = docs.clone();
+        probe[index].1.push_str(&format!(
+            "\n\nthe radius-2 ball is {PLANTED} cells per node.\n"
+        ));
+        let found = restatements_outside(&table, &probe);
+        assert!(
+            found
+                .iter()
+                .any(|f| f == &format!("{}: {PLANTED}", docs[index].0)),
+            "the pin does not see {}: a census figure planted in it was not reported. \
+             That is green-over-unread — the pin would pass while blind to this file. \
+             Reported instead: {found:?}",
+            docs[index].0
+        );
+    }
+}
+
+/// THE PIN'S LIST COVERS THE CARVE, AND THE REFERENT IS NOT THE LIST.
+///
+/// `the_census_pin_reads_every_carved_document_it_names` iterates `CARVE_DOCS`,
+/// so it checks the list against itself: shrink the list and the loop shrinks
+/// with it. MEASURED in a worktree — with `CARVE_DOCS` cut back to the single
+/// path the pin resolved BEFORE travelling item T4', both of the tests above
+/// PASSED while blind to five carved documents. That is the state T4' bans,
+/// surviving the repair meant to close it.
+///
+/// So the coverage claim is checked against something the constant does not
+/// share: the set of files in `docs/experiments/` that carry `CARVE_MARKER`.
+/// A carved document dropped from the list is red here; a new one added to the
+/// carve and not listed is red here too.
+#[test]
+fn the_pins_document_list_is_the_set_of_carved_documents_on_disk() {
+    let dir = carve_dir();
+    let entries = std::fs::read_dir(&dir)
+        .unwrap_or_else(|error| panic!("the carve directory {dir} must be readable: {error}"));
+    let mut on_disk: Vec<String> = entries
+        .filter_map(Result::ok)
+        .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "md"))
+        .filter(|entry| {
+            std::fs::read_to_string(entry.path()).is_ok_and(|text| text.contains(CARVE_MARKER))
+        })
+        .map(|entry| entry.file_name().to_string_lossy().into_owned())
+        .collect();
+    on_disk.sort();
+
+    // A marker nobody carries would make BOTH sides empty on a shrunk list, so
+    // the equality alone is not enough: the carve produced units, a seed and a
+    // table, and fewer than three files carrying the marker means the marker is
+    // what drifted.
+    assert!(
+        on_disk.len() >= 3,
+        "only {} file(s) in {dir} carry the carve marker; the marker itself has drifted, and \
+         an equality between two empty sets certifies nothing: {on_disk:?}",
+        on_disk.len()
+    );
+
+    let mut named: Vec<String> = CARVE_DOCS.iter().map(|name| (*name).to_owned()).collect();
+    named.sort();
+    assert_eq!(
+        named, on_disk,
+        "this pin's CARVE_DOCS list and the carved documents on disk disagree. Files carrying \
+         the marker but not read by the pin are green-over-unread; files listed but not on \
+         disk are already a panic in carve_documents()."
+    );
+}
+
 /// The numbers the design's matrices actually rest on, TYPED OUT from
-/// `docs/experiments/wp15b_design.md` and compared against what this instrument
+/// `docs/experiments/U3_tier_t.md` §6.2 and compared against what this instrument
 /// derives. An edit to either side is a red test rather than a silent drift
 /// (D-259's discipline).
 ///
