@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 1.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
+**u-rev 2.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
 item 1 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the
 restructure selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -35,12 +35,14 @@ nothing.** §8 and §9 below are carried as the RECORD of what was argued, and
 U4-Z's ADR lines are written on that footing.
 
 **THE TEXT IS OTHERWISE A VERBATIM CARVE** apart from cross-reference retargets
-and two named repairs, each stated where it occurs: **B4** (§8.3(a)'s
-"all three staged tactical configs … not just the two gate ones", false in both
-halves, corrected to the four-config reality) and **MINOR 15** (§8.2 carried a
+and three named repairs, each stated where it occurs: **B4** (the tactical-suite
+gate's "all three staged tactical configs … not just the two gate ones", false in
+both halves, corrected to the four-config reality), **MINOR 15** (§8.2 carried a
 paragraph spliced in twice mid-sentence; the duplicate is removed and the
-sentence closes). **B3 is NOT repaired** — gate (b) has two viable shapes and the
-carve stops on it; both are in U4-Z with their MEASURED costs. Every **MEASURED**
+sentence closes), and — **since u-rev 2** — **B3**, repaired by shape 2 under
+D-316: the gate letters are dropped, the four gates are named, and the S-E
+double-list dies with them. The two-shape comparison the architect selected from
+stands unedited in U4-Z beneath its selection record. Every **MEASURED**
 and **ESTIMATED** mark is the mark the superseded text carried.
 
 **LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this unit bumps
@@ -64,7 +66,7 @@ the disagreement is an ADR line.
 |---|---|---|
 | DECISION-RED-TEAM, matrix M3 | revision 1, `ec8f7fb` | **M3 FELL.** S-C was blind to D-124's own reproducer — `cells.pop()` after `order` leaves the class gate at 28 assertions, 0 RED. **S-E was supplied by that red team and has never itself been in a matrix** |
 | DECISION-RED-TEAM, matrix M4 | revision 1, `ec8f7fb` | **M4 SURVIVES AMENDED** — at a text three of whose cells the design has since MEASURED false. See §9 |
-| REVIEW-design | revisions 2–6 | all FAIL. §8.3(a)'s derivation was redesigned **three times** (rows 17, 32 and 27 of the superseded §0), and §8.4's ledger was rebuilt once |
+| REVIEW-design | revisions 2–6 | all FAIL. The tactical-suite gate's derivation (then §8.3(a)) was redesigned **three times** (rows 17, 32 and 27 of the superseded §0), and §8.4's ledger was rebuilt once |
 | REVIEW-design | revision 7, `6feb40a` | **FAIL** — 7 BLOCKING, 7 MAJOR, 9 MINOR. **B1, B3, B4 and MINOR 15 are this unit's**, and MAJOR 8 (M4's and M6's witnesses are not positions a legal game reaches) is this unit's and is OPEN |
 
 **What this unit owes that no round has given it:** a REVIEW-design of THIS text
@@ -153,7 +155,7 @@ it: `tactical_v0.txt`'s expectations are game facts, not generator output
 (`expect cell` over `expect move`, deliberately), so a staged fixture carrying the
 same rows is not the D-287/D-295 shape.
 
-### 8.2 S-E, with a reduced S-C beside it — **SELECTION OPEN** (see the block above)
+### 8.2 THE DIFFERENTIAL GATE — S-E, with a reduced S-C beside it — **SELECTION OPEN** (see the block above)
 
 **The stage under doubt, named** — revision 1 named the defect and never the
 stage: **does the staged generator ever drop a cell a proven tactic needs?**
@@ -238,9 +240,29 @@ a corpus sweep, not radius 2, not depth 3 at radius 2. Its mate class must state
 whether `LossInTurns` roots are included or excluded **by name** — `compact_mated_in_2`
 falls in neither class today.
 
-### 8.3 The other three parts, re-scoped
+### 8.3 The other three gates, re-scoped — NAMED, NOT LETTERED
 
-- **(a) tactical suite under Staged. Revision 5's derivation rested on set
+**THE LETTERS ARE GONE. B3 IS REPAIRED HERE, BY SHAPE 2 (D-316).** The soundness
+gate has FOUR parts and each is named by what it is, so that no part can lose its
+definition the way `(b)` did — deleted with revision 2's enumeration and then
+wired into CI for five revisions as a letter naming nothing:
+
+| The four gates | Where it is specified |
+|---|---|
+| **THE TACTICAL SUITE UNDER STAGED** | §8.3 below, first bullet |
+| **THE DIFFERENTIAL GATE** — S-E, with the reduced S-C beside it | §8.2 |
+| **THE COLONY FAMILY**, ≥ 6 built cases | §8.3 below |
+| **THE PATTERN FIXTURES UNDER STAGED** | §8.3 below |
+
+**LEGACY CITATIONS RESOLVE THROUGH THIS TABLE AND ARE NOT ORPHANED**, which is
+the one cost shape 2 was charged with: `§8.3(a)` is the tactical suite,
+`(b)` is the differential gate and is §8.2's subject, `(c)` is the colony family,
+`(d)` is the pattern fixtures. The letters are retired as an ADDRESSING SCHEME;
+they are kept here as a lookup so an existing "§8.3(a)" in another unit, in the
+superseded document's history or in a landed ADR line still lands on the right
+gate. Nothing below is addressed by letter.
+
+- **THE TACTICAL SUITE UNDER STAGED** *(the superseded `(a)`)*. **Revision 5's derivation rested on set
   containment; a negamax value is not monotone in the candidate set, so it is
   redesigned again — this time on where the two searches can differ at all.**
 
@@ -324,15 +346,15 @@ falls in neither class today.
   **And it is an honest weakening from revision 5**, which claimed the suite ran
   fifteen of twenty cases at the committed `quiet_top_k = 16`. It does not.
 
-- **The five gate_v0 cases need a staged config.** MEASURED: `tactical_v0.txt`
+- **The five gate_v0 cases need a staged config — A CONFIG STATEMENT, NOT A FIFTH GATE**, and it was the unlabelled bullet whose presence beside three lettered ones helped hide that a fourth letter had gone missing. MEASURED: `tactical_v0.txt`
   is 15 cases at `configs/instrument_v0.toml` and **5 at `configs/gate_v0.toml`**
   (radius 1, the `depth_turns 3` cases, because gate_v0's table measures radius 2
   at depth 4 as > 100 s, and depth 3 at 9.7 s). Revision 1 shipped one staged config. Revision 2 shipped three; **U3** §10 states the
   number that ships and is the only place that states it (B5).
-- **(c) colony family, ≥ 6 built cases**, distant-cluster attack and defence,
+- **THE COLONY FAMILY, ≥ 6 built cases** *(the superseded `(c)`)*, distant-cluster attack and defence,
   where `LAW-DECOMP`'s star-disjointness puts the right answer in a cluster the
   delta ranking does not favour.
-- **(d) re-scoped so it is about the stage.** As written it never ran the search:
+- **THE PATTERN FIXTURES UNDER STAGED** *(the superseded `(d)`)*, **re-scoped so it is about the stage.** As written it never ran the search:
   D-295 measured the pattern pack's whole contact with `crates/pistol-solver/src`
   as 33 booleans plus four `hot_windows` assertions. Revision 2 runs the **U2** §5
   pattern positions **through the staged generator** and asserts `PAT-GAP`'s
@@ -375,25 +397,35 @@ therefore EVIDENCE and never PROOF. `REJ-DEPTHPROOF` binds us as it binds the
 community. Revision 1 asserted the test plan said this; it contained no occurrence of
 `proof`, `evidence` or `DEPTHPROOF`, and §8 cited neither.
 
-### 8.7 Gate wiring — **OPEN, and the carve STOPS here**
+### 8.7 Gate wiring — **B3 REPAIRED, shape 2, D-316**
 
-> **B3 of the revision-7 review. The sentence below names a component with no
-> definition anywhere and lists S-E twice.** MEASURED: `grep "(b)"` over the
-> superseded document returns two hits, §4.2's matrix row `(b) INVERT both as
-> declared lists` and **U2** §5.2's citation `D-257 (a)/(b)` — neither is a soundness
-> gate. §8.3 is titled "The other three parts" and defines **(a)**, **(c)**,
-> **(d)** plus one unlabelled config bullet. Revision 1 DID define it
-> (`ec8f7fb:502`): "(a) tactical suite at pre-registered thresholds under Staged;
-> **(b) a differential gate** against …", and its matrix was headed
-> `| Option | (b)'s instrument |` — **so S-E *is* gate (b)'s instrument**, and
-> "(a)–(d) plus S-E" counts it once as (b) and once as itself. Revision 2 deleted
-> the enumeration and the matrix together.
+> **THE DEFECT, kept because the wiring below is only legible against it.** B3 of
+> the revision-7 review: the superseded wiring sentence read "(a)–(d) plus S-E
+> become one script", which named a component with no definition anywhere and
+> listed S-E twice. MEASURED: `grep "(b)"` over the superseded document returns
+> two hits, §4.2's matrix row `(b) INVERT both as declared lists` and **U2** §5.2's
+> citation `D-257 (a)/(b)` — neither is a soundness gate. §8.3 was titled "The
+> other three parts" and defined **(a)**, **(c)**, **(d)** plus one unlabelled
+> config bullet. Revision 1 DID define it (`ec8f7fb:502`): "(a) tactical suite at
+> pre-registered thresholds under Staged; **(b) a differential gate** against …",
+> and its matrix was headed `| Option | (b)'s instrument |` — **so S-E *is* gate
+> (b)'s instrument**, and "(a)–(d) plus S-E" counted it once as (b) and once as
+> itself. Revision 2 deleted the enumeration and the matrix together, and five
+> revisions then shipped a CI wiring sentence addressing a gate by a letter that
+> named nothing.
 >
-> **The repair has two viable shapes and the carve does not choose between them.**
-> Both are stated in U4-Z with their MEASURED costs; the architect decides.
+> **REPAIRED by shape 2 (D-316): the letters are dropped and the four gates are
+> named.** The double-list dies with the letters — S-E is not listed beside the
+> letters it was one of, because it IS the differential gate and is named once, in
+> §8.2. The two-shape comparison the selection was made from stands unedited in
+> U4-Z, with the selection recorded beneath it.
 
-(a)–(d) plus S-E become one script, `tools/staged_soundness_check.sh`, added to
-`tools/ci.sh`. A `tools/` change: reviewed against `tools/SHELL_CHECKLIST.md`
+**THESE FOUR — the tactical suite under Staged (§8.3), the differential gate
+(§8.2: S-E with the reduced S-C beside it), the colony family (§8.3) and the
+pattern fixtures under Staged (§8.3) — become one script**,
+`tools/staged_soundness_check.sh`, added to `tools/ci.sh`. **Four parts, four
+names, each defined in exactly one place, and the script's own enumeration is
+this sentence's.** A `tools/` change: reviewed against `tools/SHELL_CHECKLIST.md`
 with every item answered by name, carrying the coverage rule's test driving the
 shipped script, and distinguishing RUN VOID from FAIL by name (item 12) with a
 scratch preflight.
@@ -599,10 +631,17 @@ D-307 keeps the second-instrument duty in either case.)
 
 ## U4-Z. ADR lines this unit owes, the OPEN decision it stops on, and what is OPEN
 
-### THE OPEN DECISION — B3, gate (b). TWO VIABLE SHAPES. THE ARCHITECT CHOOSES.
+### B3, gate (b) — SETTLED. SHAPE 2 SELECTED (D-316).
 
-The carve does not choose because both shapes are coherent, and choosing between
-them is a design act.
+**THE TWO-SHAPE COMPARISON BELOW IS THE TEXT THE ARCHITECT SELECTED FROM AND IS
+LEFT UNEDITED**, on the same discipline the restructure matrix landed under: a
+comparison corrected after the decision it fed is a comparison the decision was
+never made against. Its "the carve does not choose" is the state AT SELECTION
+TIME. The selection, and one MEASURED correction to a cost cell that execution
+falsified, are recorded AFTER it, not inside it.
+
+*(At selection time:)* The carve does not choose because both shapes are
+coherent, and choosing between them is a design act.
 
 **SHAPE 1 — RESTORE THE ENUMERATION, and put S-E inside (b).**
 Reinstate revision 1's four-part bar verbatim from `ec8f7fb:502` — "(a) tactical
@@ -636,6 +675,63 @@ document's history; after shape 2 those citations name nothing.
 gate is addressed from the other units, and the count of retargets is not the
 argument — the argument is whether a lettered enumeration is worth having at all.
 
+#### SELECTION — SHAPE 2, by architect ruling. Landed at u-rev 2. ADR line D-316.
+
+**Selected: SHAPE 2.** The letters are dropped; the four gates are named by what
+they are; §8.7's wiring enumerates the four names; the S-E double-list dies with
+the letters, because S-E is the differential gate and is named once, in §8.2.
+Executed in this unit at §8.2, §8.3 and §8.7, and in **U3** §10 at the two sites
+named below.
+
+**The ground, which is the option statement's own last clause read the way it
+asks to be read:** the argument is not the retarget count, it is whether a
+lettered enumeration is worth having. It measurably was not. `(b)` lost its
+definition when revision 2 deleted the enumeration, and the document then shipped
+FIVE further revisions wiring `(b)` into CI as a letter naming nothing, through
+five REVIEW-design rounds that did not catch it. Shape 1 reinstates exactly the
+scheme that failed that way and its own cost cell concedes the point — *"a
+lettering scheme that has already lost its own definition once, in a document
+that then shipped four revisions without noticing."* A name cannot go undefined
+while remaining in the sentence; a letter can, and did.
+
+**MEASURED CORRECTION TO SHAPE 2's COST CELL, recorded because the cell was wrong
+in the direction that favoured the option selected.** The cell says *three*
+cross-references outside §8 retarget. Executing it, the count is **SIX**:
+
+| # | Site | Was |
+|---|---|---|
+| 1 | **U3** §10, `configs/tactical_staged_v0.toml`'s "why" cell | "what **U4** §8.3(a)'s derivation requires" |
+| 2 | **U3** §10, the B5 paragraph | "Revision 6's **U4** §8.3(a) said …" |
+| 3 | This unit's §15 item 15 | "so gate (a) tests the threat mechanisms" |
+| 4 | This unit's head, the B4 sentence | "**B4** (§8.3(a)'s …)" |
+| 5 | This unit's U4-A lineage row | "§8.3(a)'s derivation was redesigned three times" |
+| 6 | This unit's U4-Z lead-in | "item 15 on §8.3(a)'s derivation" |
+
+Sites 4–6 are outside §8 and inside this unit, and the cell counted only what was
+outside the unit. **The correction does not move the selection** — the cell's own
+sentence is that the count is not the argument — but it is recorded rather than
+quietly fixed, because a cost cell understating the selected option's cost is the
+defect class this work package has been failing on, and the reviewer of this unit
+should see it stated rather than discover it.
+
+**The stated cost of shape 2 is DISCHARGED, not paid.** The cell's charge was
+that "§8.3(a)" cited from elsewhere would after shape 2 "name nothing". §8.3 now
+opens with a lookup table mapping each retired letter to its gate, so every
+legacy citation — in another unit, in the superseded document's history, or in a
+landed ADR line — still resolves. The letters are retired as an ADDRESSING
+SCHEME, not erased as a HISTORY.
+
+**THE RESIDUAL, NAMED, AND IT IS THE ARCHITECT'S.** This selection was made by
+architect ruling on the comparison above. That comparison states both options,
+both costs MEASURED, and each option's failure mode, but it carries no
+recommendation and **it was never put to a fresh-context DECISION-RED-TEAM**.
+CLAUDE.md's Process section wants a named design decision with more than one
+viable option settled by an attacked matrix, and this one was not attacked. It is
+recorded here and in D-316 rather than left implicit, because an unattacked
+selection that nobody writes down is the silent drift the rule exists to refuse,
+and an unattacked selection that IS written down is a debt the architect can
+choose to pay or to accept. The reviewer of this unit is not asked to ratify it.
+
 ### ADR lines
 
 Carried from the superseded §15. Its item numbers are retained exactly so an
@@ -643,8 +739,8 @@ existing cross-reference to "§15 item n" still resolves; this unit invents none
 and renumbers none. The superseded §15's preamble does not travel (MAJOR 10
 measured it false on both clauses); this is U4's lead-in instead: **both items
 below are this unit's own, neither has landed, and BOTH are blocked on a
-selection that is OPEN** — item 4 on M3's fresh matrix, item 15 on §8.3(a)'s
-derivation, which stands on §10's four configs and on B3's unresolved wiring.
+selection that is OPEN** — item 4 on M3's fresh matrix, item 15 on the tactical-suite gate's
+derivation (§8.3, the superseded `(a)`), which stands on §10's four configs and on B3's unresolved wiring.
 
 4. S-E, and D-124's flip clause discharged. Its seam is the PAIR of §8.2 — a
    public generator driven by a test in pistol-search's own tree against an
@@ -655,7 +751,7 @@ derivation, which stands on §10's four configs and on B3's unresolved wiring.
 
 15. **The two TACTICAL staged configs disable the quiet cut** — which needs a
     FOURTH config, `tactical_staged_v0.toml`, because the SPRT seat must keep it —
-    so gate (a) tests the threat mechanisms rather than the prune, and the prune is judged by SPRT, by the
+    so THE TACTICAL SUITE gate (the superseded `(a)`) tests the threat mechanisms rather than the prune, and the prune is judged by SPRT, by the
     movetime measurement and by S-E. The line records what a green tactical suite
     under Staged does NOT evidence.
 
@@ -673,7 +769,7 @@ carried, not closed.
 
 - **B1 / M3 — no matrix, and the fresh round is owed** (the stub at the head of §8).
 - **B2 / M4 — no ADR line, and the selection is OPEN** (the block at the head of §9).
-- **B3 — gate (b), the two shapes above.**
+- ~~**B3 — gate (b), the two shapes above.**~~ **CLOSED at u-rev 2** by the architect's selection of shape 2, recorded above and in D-316. Its RESIDUAL is not closed and is named there: the selection was not put to a fresh-context DECISION-RED-TEAM.
 - **MAJOR 8 — M4's and M6's mutation witnesses are not positions a legal game
   reaches.** §8.4 says "**VERIFIED on the shipped solver**" of both. The
   superseded §17 says both "are currently `ThreatState`-level constructions with
@@ -698,4 +794,4 @@ carried, not closed.
 
 ---
 
-*U4, u-rev 1. A carve, not a revision. Two selections OPEN. IMPL has not started.*
+*U4, u-rev 2. A carve, not a revision. Two selections OPEN (M3, M4); B3 CLOSED at this u-rev. IMPL has not started.*

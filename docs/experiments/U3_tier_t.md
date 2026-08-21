@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 1.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
+**u-rev 2.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
 4 and 5 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309), plus the two
 bullets of §7.2 that are not widening text, under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
@@ -258,12 +258,12 @@ four sites).
 | document | mode | `quiet_radius` | `quiet_top_k` | `widen_schedule` | why |
 |---|---|---|---|---|---|
 | `configs/instrument_staged_v0.toml` | instrument | 2 | 16 | `[32]` | **the SPRT seat and the snapshot's AFTER.** The cut BINDS here, because a seat with the cut disabled would make the SPRT measure nothing about the prune (rule 6, `WPQ_seed.md` §7.2) |
-| `configs/tactical_staged_v0.toml` | instrument | 2 | **1024** | `[2048]` | **NEW in revision 7.** The 15 `instrument_v0` tactical cases. The cut is DISABLED, which is what **U4** §8.3(a)'s derivation requires and what revision 6 asserted while committing `quiet_top_k = 16` for these cases |
+| `configs/tactical_staged_v0.toml` | instrument | 2 | **1024** | `[2048]` | **NEW in revision 7.** The 15 `instrument_v0` tactical cases. The cut is DISABLED, which is what **U4** §8.3's TACTICAL SUITE gate derivation requires and what revision 6 asserted while committing `quiet_top_k = 16` for these cases |
 | `configs/gate_staged_v0.toml` | instrument | 1 | **128** | `[256]` | the five `depth_turns 3` cases, at radius 1. Cut disabled — MEASURED balls 22/22/22/18/15 at 11 stones, bounded by 6 × 17 = 102 three turns deeper |
 | `configs/play_staged_v0.toml` | play | 3 | 16 | `[32]` | the movetime measurement, whose incumbent is `play_v0.toml` at radius 3. Cut binds |
 
 **The fourth document exists because three could not carry the requirement.**
-Revision 6's **U4** §8.3(a) said "all three staged tactical configs disable the quiet cut" while §10
+Revision 6's **U4** §8.3 TACTICAL SUITE gate said "all three staged tactical configs disable the quiet cut" while §10
 committed `quiet_top_k = 16` for two of them and §15 said "the two gate configs" —
 three statements of one rule, none agreeing. The tension is real and needs a
 document rather than a sentence: `instrument_staged_v0.toml` cannot be both the
@@ -600,4 +600,4 @@ only one of them** (MAJOR 13).
 
 ---
 
-*U3, u-rev 1. A carve, not a revision. IMPL has not started.*
+*U3, u-rev 2. A carve, not a revision. IMPL has not started.*
