@@ -94,6 +94,19 @@ BUILD_SCRIPTS="$(printf '%s' "$META" \
 [ -z "$BUILD_SCRIPTS" ] || fail "a workspace member declares a build script and dep-info does \
 not record what a build script READ, so no answer about $CRATE_PATH was taken: $BUILD_SCRIPTS"
 
+# SCRATCH SPACE, BEFORE THE BUILD AND IN THIS GATE'S VOCABULARY. A full
+# filesystem makes `cargo` answer `Disk quota exceeded (os error 122)`, this
+# gate's build refusal fires, and what reaches the log is `cannot build the
+# workspace's binaries` — correct, exit 2, and READ AS A SOLVER-LINK REGRESSION
+# by the standing test that drives it. That happened: `/tmp` here is RAM-backed
+# at 24 GiB and one session filled it (docs/decisions.md D-281, D-285;
+# tools/SHELL_CHECKLIST.md item 12). The preflight is a sibling script so the
+# number and its measurement live in one place.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -f "$PREFLIGHT" ] || fail "the scratch preflight is missing beside this gate: $PREFLIGHT"
+bash "$PREFLIGHT" "$ROOT_ABS" ||
+	fail "not enough scratch space under $ROOT_ABS to build this workspace; the RUN VOID above names the filesystem, and NOTHING about $CRATE_PATH was measured"
+
 # THE BINARY SET IS WHAT CARGO JUST BUILT, not a glob over `target/`. An unscoped
 # `*.d` glob picks up `lib<crate>.d` — including the subject crate's own library
 # — and reports hits on a clean tree.

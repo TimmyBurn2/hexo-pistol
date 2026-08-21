@@ -121,6 +121,32 @@ fn workspace(name: &str, reach: Reach) -> PathBuf {
     root
 }
 
+/// Assert the gate's exit code, in a message that says what the OTHER codes
+/// would have meant.
+///
+/// `tools/SHELL_CHECKLIST.md` item 12: 0 is "no", 1 is "yes, and here are the
+/// files", 2 is "no answer was taken". A bare `assert_eq!(code, Some(0))`
+/// reports a VOID as a regression, and that is not hypothetical — a full
+/// RAM-backed `/tmp` made this gate exit 2 with `cannot build the workspace's
+/// binaries`, and what a reader saw was a red solver-link gate (D-281, D-285).
+fn assert_code(ran: &Output, want: i32, what: &str) {
+    let got = ran.status.code();
+    if got == Some(want) {
+        return;
+    }
+    let meaning = match got {
+        Some(0) => "0 — no source under the subject reaches any shipped binary",
+        Some(1) => "1 — it does, and the files are named",
+        Some(2) => "2 — RUN VOID: the gate could not take an answer, which is NOT a regression",
+        _ => "a code this gate does not define, or a signal",
+    };
+    panic!(
+        "{what}: expected exit {want}, got {got:?} ({meaning})\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&ran.stdout),
+        String::from_utf8_lossy(&ran.stderr)
+    );
+}
+
 fn out(ran: &Output) -> String {
     String::from_utf8_lossy(&ran.stdout).into_owned()
 }
@@ -349,11 +375,9 @@ fn a_binary_behind_an_unmet_feature_is_refused_rather_than_silently_skipped() {
 #[test]
 fn no_solver_source_reaches_any_shipped_binary_of_this_workspace() {
     let ran = link_check(&repo_root(), "crates/pistol-solver");
-    assert_eq!(
-        ran.status.code(),
-        Some(0),
-        "no pistol-solver source may be an input to a shipped binary\nstdout: {}\nstderr: {}",
-        out(&ran),
-        err(&ran)
+    assert_code(
+        &ran,
+        0,
+        "no pistol-solver source may be an input to a shipped binary",
     );
 }

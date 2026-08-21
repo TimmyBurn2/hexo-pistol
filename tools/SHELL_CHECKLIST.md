@@ -153,3 +153,41 @@ enumeration is the evidence.
 `docs/decisions.md`, in `docs/experiments/`, and in several scripts' own
 comments; renumbering to put this beside its siblings would silently retarget
 every one of those citations. The coverage rule stays 10 and stays the capstone.
+
+## 12. A GATE DISTINGUISHES **RUN VOID** FROM **FAIL**, BY NAME
+
+**Two different things exit non-zero: "the answer is no" and "I could not take
+the answer." A gate that spells them the same way turns every environmental
+accident into a regression report**, and the reader who acts on it goes looking
+for a defect in the subject.
+
+Not hypothetical, and not old. `/tmp` on this machine is RAM-backed at 24 GiB.
+A session filled it; `cargo` then failed with `Disk quota exceeded (os error
+122)`; `tools/solver_link_check.sh` did the right thing and exited **2** with
+`cannot build the workspace's binaries` — and the standing test that drives it
+asserts `exit 0`, so what a reader saw was a red solver-link gate,
+indistinguishable in the log from the solver having been linked into a shipped
+binary. The gate was honest and the reading was wrong, because nothing carried
+the distinction across the seam (docs/decisions.md D-281, D-285).
+
+So, three obligations, and a reviewer asks for each by name:
+
+1. **A code per kind.** `0` the answer is yes, `1` the answer is no, `2` no
+   answer was taken. A gate with no void class says so in its usage block rather
+   than leaving a reader to infer it from silence.
+2. **PREFLIGHT WHAT THE RUN NEEDS AND VOID EARLY.** A gate that writes scratch
+   asks whether there is room BEFORE it does the work, and refuses as a void
+   naming the filesystem, what is available and what it wanted —
+   `tools/scratch_preflight.sh`. Discovering the shortage through a tool's own
+   error message is discovering it in the tool's vocabulary, and that vocabulary
+   describes the tool, not the gate.
+3. **THE DISTINCTION SURVIVES THE SEAM.** A test that drives a gate asserts on
+   the code it expects AND says, in the failure message, what the other codes
+   would have meant. `assert_eq!(code, Some(0))` is a test that reports a void
+   as a regression, which is exactly the reading above.
+
+**Why this is item 12 and not item 3's second half.** Items 1-11 are cited BY
+NUMBER in `docs/decisions.md`, in `docs/experiments/` and in several scripts'
+own comments; renumbering to put this beside the exit-status items would
+silently retarget every one of those citations. That is item 11's own reasoning,
+applied to the item that follows it.

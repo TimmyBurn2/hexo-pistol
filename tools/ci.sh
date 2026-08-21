@@ -4,7 +4,10 @@
 # second, truer definition of the gates living somewhere else.
 #
 # Usage: tools/ci.sh
-# Exit:  0 all gates pass, 1 a gate failed.
+# Exit:  0 all gates pass
+#        1 a gate failed
+#        2 THE RUN IS VOID — no gate was adjudicated (tools/SHELL_CHECKLIST.md
+#          item 12). A void is not a failure and must not be read as one.
 
 set -euo pipefail
 
@@ -18,6 +21,19 @@ command -v cargo >/dev/null || fail "cargo is not on PATH"
 command -v git >/dev/null || fail "git is not on PATH"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 	fail "not a git repository: one of the gates builds the git-tracked file set"
+
+# SCRATCH SPACE, ASKED FOR BEFORE ANYTHING IS BUILT (tools/SHELL_CHECKLIST.md
+# item 12, docs/decisions.md D-285). Gate 2 unpacks the whole tracked file set
+# into a temporary directory and builds it — measured at 340552 KiB — and gate
+# 3's suites build stub workspaces under the same `$TMPDIR`. A full `$TMPDIR`
+# makes `cargo` answer in ITS OWN vocabulary (`Disk quota exceeded`), which
+# reads downstream as a subject regression; on this machine `/tmp` is RAM-backed
+# and has been filled by a single session. This asks in the gate's vocabulary,
+# and a shortage is a VOID rather than a failure.
+tools/scratch_preflight.sh "${TMPDIR:-/tmp}" || {
+	printf 'ci: RUN VOID: no gate was adjudicated; the lines above name the filesystem\n' >&2
+	exit 2
+}
 
 # First because it is instant and needs no build: fastest possible feedback
 # (docs/decisions.md D-30).
