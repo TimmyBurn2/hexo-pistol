@@ -139,6 +139,16 @@ while IFS= read -r exe; do
 		# plain substring match on the crate path returns ZERO hits on the very
 		# file it exists to catch — EXIT-0-WRONG-ANSWER, found by building this.
 		abs="$(realpath -ms -- "$src")" || fail "cannot canonicalise a dep-info entry of $dep"
+		# EVERY ENTRY NAMES A FILE THAT IS THERE. rustc records the sources it
+		# READ, so an entry that is not a path is not a missing input — it is
+		# THIS PARSER having split the line in the wrong place, and the answer
+		# it would then give is about a file set nobody compiled. Without this
+		# the first-separator split and a last-separator split are
+		# indistinguishable on every well-formed line, which is exactly why a
+		# mutation from `${line#*: }` to `${line##*: }` — keeping only the last
+		# input per binary — survived eleven tests (docs/decisions.md D-281's
+		# S29).
+		[ -e "$abs" ] || fail "$dep lists \`$src\`, which names nothing on disk; a dep-info entry that is not a source path means this parse is wrong, and a wrong parse answers about a file set nobody built"
 		case "$abs" in
 		"$CRATE_ABS"/*) HITS="$HITS$abs <- $exe"$'\n' ;;
 		esac

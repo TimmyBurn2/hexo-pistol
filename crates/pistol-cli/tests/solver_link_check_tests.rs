@@ -31,6 +31,25 @@
 //! first. And an unscoped `target/*.d` glob picks up `libpistol_solver.d` — the
 //! subject's own library — so the binary set is taken from cargo's own JSON.
 //!
+//! # The three fixture classes that close D-281's surviving mutants
+//!
+//! A mutation run over this gate left ten mutants alive, and the pattern across
+//! them was not ten separate gaps: EVERY survivor was a guard whose violation
+//! THE FIXTURES COULD NOT PRODUCE. A single-package workspace cannot exhibit
+//! `--workspace` narrowing; a fixture whose dep-info is always well formed
+//! cannot exhibit a mis-parse; a fixture with one crate cannot exhibit a
+//! sibling-prefix collision. The suite tested the gate's ANSWERS and not its
+//! ENUMERATION (docs/decisions.md D-281, D-286). So three classes were added,
+//! and each names the mutants it kills:
+//!
+//!   - A SECOND PACKAGE, outside `default-members` — kills S2, dropping
+//!     `--workspace` from the build.
+//!   - A SIBLING CRATE SHARING A NAME PREFIX — kills S10, the hit match losing
+//!     its trailing slash.
+//!   - A CORRUPTED DEP-INFO FILE, in three spellings — kills S5 (the
+//!     missing-dep-info refusal), A5 (the per-binary input floor) and S29
+//!     (`${line#*: }` becoming `${line##*: }`, keeping only the LAST input).
+//!
 //! # RULE9-JUSTIFICATION: one gate's readings, over one claim.
 //! Every test is the same claim — that this gate separates "reaches a shipped
 //! binary" from "linked but unreached", from "not linked at all", and from "I
@@ -364,6 +383,345 @@ fn a_binary_behind_an_unmet_feature_is_refused_rather_than_silently_skipped() {
     assert!(
         err(&ran).contains("declares 2 binary targets"),
         "the refusal names the arithmetic: {}",
+        err(&ran)
+    );
+}
+
+// --- the three fixture classes D-281's pattern diagnosis names -----------------
+
+/// Add a member that is NOT in `default-members` and whose binary reads the
+/// subject.
+///
+/// KILLS S2 — dropping `--workspace` from the gate's build. Every fixture above
+/// is a workspace whose default members ARE all its members, so `cargo build
+/// --bins` and `cargo build --workspace --bins` do the same thing and no test
+/// can tell the two invocations apart. Here they differ: without `--workspace`
+/// the `extra` binary is never built, its dep-info never read, and the source
+/// that reaches it never seen.
+fn add_non_default_member(root: &Path) {
+    write(
+        &root.join("Cargo.toml"),
+        "[workspace]\nmembers = [\"crates/subject\", \"crates/app\", \"crates/extra\"]\n\
+         default-members = [\"crates/app\"]\nresolver = \"2\"\n",
+    );
+    write(
+        &root.join("crates/extra/Cargo.toml"),
+        "[package]\nname = \"extra\"\nversion = \"0.0.1\"\nedition = \"2021\"\n",
+    );
+    write(
+        &root.join("crates/extra/src/main.rs"),
+        "const S: &str = include_str!(\"../../subject/src/lib.rs\");\n\
+         fn main() { println!(\"{}\", S.len()); }\n",
+    );
+    relock(root);
+}
+
+fn relock(root: &Path) {
+    let ran = std::process::Command::new("cargo")
+        .current_dir(root)
+        .args(["generate-lockfile", "-q"])
+        .output()
+        .expect("cargo runs");
+    assert!(
+        ran.status.success(),
+        "cargo generate-lockfile: {}",
+        String::from_utf8_lossy(&ran.stderr)
+    );
+}
+
+#[test]
+fn a_binary_in_a_non_default_workspace_member_is_still_examined() {
+    let root = workspace("link-nondefault", Reach::None);
+    add_non_default_member(&root);
+    let ran = link_check(&root, SUBJECT);
+    assert_code(
+        &ran,
+        1,
+        "a member outside `default-members` still ships a binary, so `--workspace` is what \
+         makes the answer cover it",
+    );
+    assert!(
+        out(&ran).contains("subject/src/lib.rs"),
+        "and the file is named: {}",
+        out(&ran)
+    );
+    // The breadth arithmetic saw both, which is the half a narrowed build would
+    // have reported without saying it had narrowed.
+    assert!(
+        out(&ran).contains("2 shipped binaries"),
+        "both binaries were examined: {}",
+        out(&ran)
+    );
+}
+
+/// Add `crates/subject-x`, a crate whose directory name has the subject's as a
+/// PREFIX, and make the binary read IT and not the subject.
+///
+/// KILLS S10 — the hit match losing its trailing slash. `case "$abs" in
+/// "$CRATE_ABS"/*)` becomes `"$CRATE_ABS"*)`, and `…/crates/subject-x/src/lib.rs`
+/// then matches `…/crates/subject`. Every fixture above holds one crate under
+/// `crates/`, so no fixture could produce the collision.
+fn add_prefix_sibling(root: &Path) {
+    write(
+        &root.join("Cargo.toml"),
+        "[workspace]\nmembers = [\"crates/subject\", \"crates/subject-x\", \"crates/app\"]\n\
+         resolver = \"2\"\n",
+    );
+    write(
+        &root.join("crates/subject-x/Cargo.toml"),
+        "[package]\nname = \"subject-x\"\nversion = \"0.0.1\"\nedition = \"2021\"\n",
+    );
+    write(
+        &root.join("crates/subject-x/src/lib.rs"),
+        "pub fn g() -> u64 {\n    9\n}\n",
+    );
+    write(
+        &root.join("crates/app/src/main.rs"),
+        "const S: &str = include_str!(\"../../subject-x/src/lib.rs\");\n\
+         fn main() { println!(\"{}\", S.len()); }\n",
+    );
+    relock(root);
+}
+
+#[test]
+fn a_sibling_crate_sharing_a_name_prefix_is_not_the_subject() {
+    let root = workspace("link-prefix", Reach::None);
+    add_prefix_sibling(&root);
+
+    // The subject itself is untouched, and `crates/subject-x` is not it.
+    let ran = link_check(&root, SUBJECT);
+    assert_code(
+        &ran,
+        0,
+        "`crates/subject-x` is a different crate; a match that dropped the separator would \
+         report it as the subject",
+    );
+
+    // AND THE FIXTURE IS NOT VACUOUS: the sibling really does reach the binary,
+    // which is what makes the exit 0 above a discrimination rather than a tree
+    // where nothing reaches anything.
+    let sibling = link_check(&root, "crates/subject-x");
+    assert_code(&sibling, 1, "the sibling itself does reach the binary");
+    assert!(
+        out(&sibling).contains("subject-x/src/lib.rs"),
+        "and is named: {}",
+        out(&sibling)
+    );
+}
+
+/// How a dep-info file is broken.
+enum Corrupt {
+    /// Zero bytes.
+    Empty,
+    /// A well-formed target and separator, and no inputs after it.
+    NoInputs,
+    /// A SECOND `": "` in the first line. Real dep-info has exactly one, which
+    /// is why a first-separator split and a last-separator split agree on every
+    /// honest line and disagree only here.
+    SecondSeparator,
+}
+
+/// Break `app`'s dep-info as the gate reads it, and return the directory to put
+/// in front of `PATH`.
+///
+/// MEASURED, and it is why this is a shim rather than a `std::fs::write`: CARGO
+/// REWRITES `target/debug/app.d` ON EVERY BUILD, including one that recompiles
+/// nothing — the file is copied out of the fingerprint directory each time. A
+/// corruption written before the gate runs is gone by the time the gate looks
+/// (checked directly: write `CORRUPT`, build again, read the honest first line
+/// back). So the corruption is applied by a `cargo` shim, AFTER the real cargo
+/// has run and before it returns, which is exactly the moment a real one would
+/// arrive — a truncated write, a full filesystem, a concurrent process.
+///
+/// The shim forwards EVERY invocation to the real cargo, so `cargo metadata` —
+/// which this gate also runs, and which must keep working — is untouched; only
+/// a `build` triggers the overwrite.
+fn corrupt_dep_info(root: &Path, how: Corrupt) -> PathBuf {
+    let built = std::process::Command::new(env!("CARGO"))
+        .current_dir(root)
+        .args(["build", "--locked", "--workspace", "--bins", "-q"])
+        .output()
+        .expect("cargo runs");
+    assert!(
+        built.status.success(),
+        "the fixture builds before it is broken: {}",
+        String::from_utf8_lossy(&built.stderr)
+    );
+    let exe = root.join("target/debug/app");
+    assert!(exe.is_file(), "the fixture's binary is where cargo put it");
+    let dep = root.join("target/debug/app.d");
+    assert!(dep.is_file(), "and its dep-info is beside it");
+
+    let text = match how {
+        Corrupt::Empty => String::new(),
+        Corrupt::NoInputs => format!("{}: \n", exe.display()),
+        Corrupt::SecondSeparator => format!(
+            "{}: {}: {}\n",
+            exe.display(),
+            root.join("crates/subject/src/lib.rs").display(),
+            root.join("crates/app/src/main.rs").display()
+        ),
+    };
+    let shim_dir = root.join("shim");
+    let corrupt = shim_dir.join("corrupt.dep-info");
+    write(&corrupt, &text);
+    let shim = shim_dir.join("cargo");
+    write(
+        &shim,
+        &format!(
+            "#!/usr/bin/env bash\n\
+             set -uo pipefail\n\
+             \"{real}\" \"$@\"\n\
+             status=$?\n\
+             case \" $* \" in *\" build \"*) cp -- \"{corrupt}\" \"{dep}\" ;; esac\n\
+             exit \"$status\"\n",
+            real = env!("CARGO"),
+            corrupt = corrupt.display(),
+            dep = dep.display()
+        ),
+    );
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&shim, std::fs::Permissions::from_mode(0o755))
+            .expect("the shim is executable");
+    }
+    shim_dir
+}
+
+/// The gate, with `shim_dir` in front of `PATH`.
+fn link_check_shimmed(root: &Path, crate_path: &str, shim_dir: &Path) -> Output {
+    let path = std::env::var("PATH").unwrap_or_default();
+    std::process::Command::new("bash")
+        .arg(repo("tools/solver_link_check.sh"))
+        .arg(root)
+        .arg(crate_path)
+        .env("PATH", format!("{}:{path}", shim_dir.display()))
+        .output()
+        .expect("bash runs the shipped script")
+}
+
+/// KILLS S5 — the `[ -s "$dep" ]` refusal. Without it an empty file parses to an
+/// empty input list and the gate falls through to the per-binary floor, which
+/// refuses for a DIFFERENT reason: same exit code, wrong diagnosis, and an
+/// operator sent to look at the parse rather than at the file.
+#[test]
+fn an_empty_dep_info_file_is_refused_by_its_own_name() {
+    let root = workspace("link-dep-empty", Reach::None);
+    let shim = corrupt_dep_info(&root, Corrupt::Empty);
+    let ran = link_check_shimmed(&root, SUBJECT, &shim);
+    assert_code(&ran, 2, "an unreadable input list is a void, not a `no`");
+    assert!(
+        err(&ran).contains("no dep-info beside"),
+        "refused for what it is — an empty file, not a failed parse: {}",
+        err(&ran)
+    );
+}
+
+/// KILLS A5 — the per-binary input floor. A dep-info that is non-empty but lists
+/// nothing gets past the size check, and without the floor the gate reports
+/// `0 source inputs` for that binary and answers 0 with no hint it read nothing.
+#[test]
+fn a_dep_info_listing_no_inputs_is_refused_rather_than_counted_as_zero() {
+    let root = workspace("link-dep-noinputs", Reach::None);
+    let shim = corrupt_dep_info(&root, Corrupt::NoInputs);
+    let ran = link_check_shimmed(&root, SUBJECT, &shim);
+    assert_code(&ran, 2, "a binary with no recorded inputs is a void");
+    assert!(
+        err(&ran).contains("listed no source inputs"),
+        "and the refusal is the floor's: {}",
+        err(&ran)
+    );
+}
+
+/// KILLS S29 — `${line#*: }` becoming `${line##*: }`, which keeps only the LAST
+/// input per binary.
+///
+/// The mutation is INVISIBLE on well-formed dep-info, because rustc writes
+/// exactly one `": "` per first line (a path containing a space is escaped as
+/// `\ `, so `": "` cannot occur inside one) — first-separator and
+/// last-separator agree on every honest file, and that is why eleven tests left
+/// this alive. A second separator separates them: splitting at the FIRST yields
+/// an entry ending in `:` that names nothing on disk, which the gate now refuses
+/// by name; splitting at the LAST silently drops the subject and answers 0.
+#[test]
+fn a_dep_info_first_line_with_a_second_separator_is_refused_rather_than_half_read() {
+    let root = workspace("link-dep-separator", Reach::None);
+    let shim = corrupt_dep_info(&root, Corrupt::SecondSeparator);
+    let ran = link_check_shimmed(&root, SUBJECT, &shim);
+    assert_code(
+        &ran,
+        2,
+        "a first line this parser cannot split unambiguously is a void, and answering 0 \
+         would be an answer about a file set nobody built",
+    );
+    assert!(
+        err(&ran).contains("names nothing on disk"),
+        "refused at the entry that is not a path: {}",
+        err(&ran)
+    );
+}
+
+// --- two more of D-281's survivors, closed with the fixtures they needed -------
+
+/// KILLS S4 — dropping `--locked` from the build.
+///
+/// Every fixture above locks itself immediately after it is written, so
+/// `--locked` and its absence do the same thing and no test could tell them
+/// apart. Here the workspace gains a member and the lockfile is deliberately NOT
+/// regenerated: `--locked` refuses to update it and the gate takes no answer,
+/// while without `--locked` cargo silently relocks, builds the new binary and
+/// answers about a dependency graph the committed lockfile does not describe —
+/// which is the whole reason a gate that adjudicates builds `--locked`.
+///
+/// `cargo metadata --no-deps` runs first and does NOT resolve, so it leaves the
+/// lockfile alone; measured, not assumed.
+#[test]
+fn a_stale_lockfile_voids_the_answer_rather_than_being_relocked() {
+    let root = workspace("link-stale-lock", Reach::None);
+    // A member cargo has never resolved, and no `generate-lockfile` after it.
+    write(
+        &root.join("Cargo.toml"),
+        "[workspace]\nmembers = [\"crates/subject\", \"crates/app\", \"crates/extra\"]\n\
+         resolver = \"2\"\n",
+    );
+    write(
+        &root.join("crates/extra/Cargo.toml"),
+        "[package]\nname = \"extra\"\nversion = \"0.0.1\"\nedition = \"2021\"\n",
+    );
+    write(&root.join("crates/extra/src/main.rs"), "fn main() {}\n");
+
+    let ran = link_check(&root, SUBJECT);
+    assert_code(
+        &ran,
+        2,
+        "a lockfile that does not describe the workspace is a void; relocking it silently \
+         would answer about a graph nobody committed",
+    );
+    assert!(
+        err(&ran).contains("cannot build the workspace's binaries"),
+        "and the build is where it stops: {}",
+        err(&ran)
+    );
+}
+
+/// KILLS S11 — the root-`Cargo.toml` refusal.
+///
+/// Removing it does not make the gate answer: `cargo metadata` fails a moment
+/// later and the gate still voids. What moves is the DIAGNOSIS — "no Cargo.toml
+/// at the workspace root" becomes "cannot read the workspace metadata", which
+/// sends a reader to look at cargo rather than at the path they passed. One
+/// refusal per reason (tools/SHELL_CHECKLIST.md item 8) is a claim about the
+/// message, so the test is about the message.
+#[test]
+fn a_root_with_no_manifest_is_refused_by_the_manifest_and_not_by_cargo() {
+    let root = scratch("link-no-manifest").join("not-a-workspace");
+    std::fs::create_dir_all(root.join("crates/subject")).expect("the directory tree");
+    let ran = link_check(&root, SUBJECT);
+    assert_code(&ran, 2, "a directory that is not a workspace is a void");
+    assert!(
+        err(&ran).contains("no Cargo.toml at the workspace root"),
+        "named at the path the caller passed, not at cargo's expense: {}",
         err(&ran)
     );
 }
