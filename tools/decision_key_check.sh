@@ -50,7 +50,17 @@
 # three needs it, and why the other two do not, is the item.
 #
 # Usage: tools/decision_key_check.sh
-# Exit:  0 every key is unique, 1 a key repeats or the extraction is wrong.
+# Exit:  0 every key is unique
+#        1 a key repeats, or the extraction is wrong — AN ANSWER, and it is no
+#        2 THE RUN IS VOID: no answer was taken, the environment having refused
+#
+# THE THIRD CODE IS THE ITEM (tools/SHELL_CHECKLIST.md item 12). Absent git, a
+# directory that is not a repository, an unreadable blob and a failed `mktemp`
+# are not «a key repeats» — they are «I could not look», and spelling them 1 is
+# what makes `ci: FAIL: decision key check` indistinguishable in a log from the
+# decision log actually carrying a duplicate key. That reading is the accident
+# D-281 and D-285 record, and this gate landed in the same commits as the item
+# forbidding it.
 
 set -euo pipefail
 
@@ -60,15 +70,17 @@ cd "$ROOT"
 DOC="docs/decisions.md"
 
 fail() { printf 'decision_key_check: FAIL: %s\n' "$*" >&2; exit 1; }
+# THE VOID, NAMED. Not `fail`: no answer about the file was taken.
+void() { printf 'decision_key_check: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
 # ARGUMENTS ARE NOT SILENTLY IGNORED. Four sibling gates read `$@` not at all and
 # exit 0 on a misspelled flag, having run the default (docs/decisions.md D-251,
 # MINOR-3); this one does not join them.
 [ "$#" -eq 0 ] || fail "this gate takes no arguments and was given: $*"
 
-command -v git >/dev/null || fail "git is not on PATH"
+command -v git >/dev/null || void "git is not on PATH, so the tracked bytes cannot be read"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
-	fail "not a git repository: this gate reads the TRACKED bytes of $DOC"
+	void "not a git repository: this gate reads the TRACKED bytes of $DOC"
 
 # Every `D-<n>` at the start of a line, one per line. ANCHORED, because a
 # substring is not a token (item 3): `D-27` inside prose is not a key and `^`
@@ -83,8 +95,12 @@ keys_of() { # $1 = a file to read
 # "no" about a shape that must never appear in the file it guards — so the only
 # place it can be watched refusing is a file seeded on purpose.
 
-SEED="$(mktemp -d)"
-trap 'rm -rf "$SEED"' EXIT
+# NAMED, not a bare `set -e` death: an unwritable or full $TMPDIR is an
+# environmental refusal and reads as one (item 1's second failure).
+SEED="$(mktemp -d)" || void "mktemp could not make a scratch directory for the self-test"
+# The trap preserves the body's status rather than replacing it with `rm`'s
+# (item 7): a cleanup that fails must not turn a clean run into a refusal.
+trap 'rc=$?; rm -rf "$SEED"; exit "$rc"' EXIT
 
 printf 'D-1: a choice — a reason — what flips it\nD-2: another\nprose mentioning D-1 mid-line\n' \
 	>"$SEED/clean.md"
@@ -122,7 +138,7 @@ while IFS= read -r -d '' entry; do
 	meta="${meta#* }"
 	object="${meta%% *}"
 	git cat-file blob "$object" >"$BLOB" 2>/dev/null ||
-		fail "git could not read the tracked blob $object for $DOC"
+		void "git could not read the tracked blob $object for $DOC"
 	TRACKED=$((TRACKED + 1))
 done < <(git ls-files -s -z -- "$DOC")
 
