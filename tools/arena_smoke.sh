@@ -43,7 +43,13 @@
 # another, which is precisely the shape the second of those defects had.
 #
 # Usage: tools/arena_smoke.sh
-# Exit:  0 the gate holds, 1 it does not.
+# Exit:  0 the gate holds
+#        1 it does not — AN ANSWER, and it is no
+#        2 THE RUN IS VOID: no answer was taken, the environment having refused
+#
+# THE THIRD CODE IS tools/SHELL_CHECKLIST.md ITEM 12, and this gate needs it
+# because it BUILDS: a full scratch filesystem makes cargo answer in its own
+# vocabulary, which reads downstream as a smoke-gate regression.
 
 set -euo pipefail
 
@@ -53,6 +59,8 @@ cd "$ROOT"
 CONFIG="configs/arena_smoke_v0.toml"
 
 fail() { printf 'arena_smoke: FAIL: %s\n' "$*" >&2; exit 1; }
+# THE VOID, NAMED. Not `fail`: no answer about the arena was taken.
+void() { printf 'arena_smoke: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
 command -v cargo >/dev/null || fail "cargo is not on PATH"
 command -v sha256sum >/dev/null || fail "sha256sum is not on PATH"
@@ -60,8 +68,27 @@ command -v sha256sum >/dev/null || fail "sha256sum is not on PATH"
 
 # Never under the repository: match logs are artifacts and artifacts are not
 # committed (CLAUDE.md rule 8).
-WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+WORK="$(mktemp -d)" || void "mktemp could not make a scratch directory for the match"
+# The trap preserves the body's status rather than replacing it with `rm`'s
+# (item 7): a cleanup that fails must not turn a clean run into a refusal.
+trap 'rc=$?; rm -rf "$WORK"; exit "$rc"' EXIT
+
+# SCRATCH SPACE, BEFORE THE BUILD AND IN THIS GATE'S VOCABULARY (item 12
+# obligation 2, docs/decisions.md D-285). Both filesystems, because they are
+# two: the match log and its clone go under $WORK, and the release build goes to
+# the repository's target tree. A shortage on either otherwise reaches the log
+# as `cargo` failing, which reads as this gate refusing.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -f "$PREFLIGHT" ] || fail "the scratch preflight is missing beside this gate: $PREFLIGHT"
+for SCRATCH in "$WORK" "$ROOT"; do
+	PF_RC=0
+	bash "$PREFLIGHT" "$SCRATCH" || PF_RC=$?
+	case "$PF_RC" in
+	0) ;;
+	2) void "not enough scratch space under $SCRATCH to build and play this match; the lines above name the filesystem, and NOTHING about the arena was measured" ;;
+	*) fail "the scratch preflight refused its own arguments (exit $PF_RC)" ;;
+	esac
+done
 
 echo "arena_smoke: building the engine and the arena (release, locked)"
 # THE BINARY THIS GATE RUNS IS THE BINARY CARGO BUILT: the path comes from cargo's

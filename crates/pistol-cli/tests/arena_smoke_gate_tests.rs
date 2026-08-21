@@ -1,4 +1,4 @@
-//! `tools/arena_smoke.sh` — CI gate 12 of 14 (`tools/ci.sh:92`), the SPRT
+//! `tools/arena_smoke.sh` — CI gate 12 of 14 (`tools/ci.sh:131`), the SPRT
 //! instrument itself run end to end as a self-match.
 //!
 //! # The defect these tests pin
@@ -198,6 +198,13 @@ fn scratch_tree(name: &str) -> PathBuf {
         root.join("tools/arena_smoke.sh"),
     )
     .expect("the shipped gate copies");
+    // The gate preflights its scratch space through a SIBLING script and refuses
+    // by name when it is absent, so the scratch tree carries it too.
+    std::fs::copy(
+        repo("tools/scratch_preflight.sh"),
+        root.join("tools/scratch_preflight.sh"),
+    )
+    .expect("the sibling preflight copies");
     std::fs::copy(
         repo("configs/arena_smoke_v0.toml"),
         root.join("configs/arena_smoke_v0.toml"),
