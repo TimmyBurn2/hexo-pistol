@@ -143,11 +143,11 @@ fn a_repeated_key_outside_the_exemption_is_refused_and_named() {
     let out = said(&ran);
     assert!(!ran.status.success(), "a repeated key is a refusal:\n{out}");
     assert!(
-        out.contains("repeated key: D-273"),
+        out.contains("D-273 2"),
         "and the refusal NAMES the key rather than printing a count:\n{out}"
     );
     assert!(
-        !out.contains("repeated key: D-276"),
+        !out.contains("D-276 3"),
         "and does not blame the grandfathered pair:\n{out}"
     );
 }
@@ -168,7 +168,7 @@ fn an_exemption_with_nothing_left_to_exempt_is_refused() {
         "a stale exemption is a refusal:\n{out}"
     );
     assert!(
-        out.contains("exempted but not repeated: D-277"),
+        out.contains("exempted at a count it does not have: D-277 2"),
         "named for what it is:\n{out}"
     );
 }
@@ -196,7 +196,7 @@ fn the_key_gate_reads_the_index_and_not_the_working_tree() {
         !ran.status.success(),
         "the staged repeat is what commits, so it is what the gate must see:\n{out}"
     );
-    assert!(out.contains("repeated key: D-271"), "{out}");
+    assert!(out.contains("D-271 2"), "{out}");
 }
 
 /// A `D-<n>` mentioned MID-LINE is prose, not a key. The extraction is anchored,
@@ -257,4 +257,32 @@ fn a_log_the_extraction_finds_no_key_in_is_refused_rather_than_passed() {
         "no keys is a broken extraction, not a clean file:\n{out}"
     );
     assert!(out.contains("the EXTRACTION is wrong"), "{out}");
+}
+
+/// A THIRD TEXT UNDER A GRANDFATHERED KEY IS NOT WHAT THE EXEMPTION BOUGHT.
+///
+/// `uniq -d` prints a repeated key ONCE however many times it occurs, so a set
+/// comparison against an exempted KEY cannot tell the two copies D-279 ruled on
+/// from a third one. Reproduced against the real log before the fix: a third
+/// `D-276` with a third different text, staged, and the gate printed «no repeat
+/// outside the exemption» and exited 0 — the property the gate exists for
+/// broken, and reported as held. The exemption now carries the COUNT it was
+/// granted, so a third copy is a different record and falls outside it.
+#[test]
+fn a_third_text_under_a_grandfathered_key_is_refused_rather_than_absorbed() {
+    let root = scratch_repo("keys-third-copy");
+    let mut lines = shipped_shape();
+    lines.push(String::from("D-276: a THIRD copy, whose text differs again"));
+    write_log(&root, &lines);
+
+    let ran = gate(&root);
+    let out = said(&ran);
+    assert!(
+        !ran.status.success(),
+        "the exemption was granted for two copies, not for any number:\n{out}"
+    );
+    assert!(
+        out.contains("D-276 3"),
+        "and names the key WITH the count that exceeded its grant:\n{out}"
+    );
 }

@@ -139,17 +139,28 @@ case "$COUNT" in
 '' | *[!0-9]*) fail "the key count is not a number: \`$COUNT\`" ;;
 esac
 
-# `sort` and `uniq -d` exit 0 on empty input, so neither needs the `|| true` the
+# `sort` and `uniq` exit 0 on empty input, so neither needs the `|| true` the
 # extraction above does — which is the whole of item 3 stated precisely.
-DUPES="$(printf '%s\n' "$KEYS" | LC_ALL=C sort | uniq -d)"
+#
+# THE MULTIPLICITY, NOT THE KEY, and this is the correction D-296 makes to the
+# first spelling. `uniq -d` prints a repeated key ONCE however many times it
+# occurs, so a set comparison against an exempted KEY cannot tell the two copies
+# D-279 ruled on from a THIRD one. Reproduced: a third `D-276` with a third
+# different text, staged, and this gate printed «no repeat outside the
+# exemption» and exited 0 — the log's «one key, one text» property broken and
+# reported as held. `uniq -c` carries the count, so a third copy is a different
+# record and falls outside the exemption on its own.
+DUPES="$(printf '%s\n' "$KEYS" | LC_ALL=C sort | uniq -c |
+	awk '$1 > 1 { print $2, $1 }' | LC_ALL=C sort)"
 
 # THE CLOSED EXEMPTION. These are the two keys docs/decisions.md D-279 found
-# appended twice and ruled on rather than deleted; nothing may join them without
-# an ADR line saying why the log's «one key, one text» property is being spent
-# again. Spelled as a sorted, newline-separated list so the comparisons below are
-# on the same shape the extraction produces.
-GRANDFATHERED='D-276
-D-277'
+# appended twice and ruled on rather than deleted, WITH THE COUNT EACH WAS
+# GRANTED; nothing may join them, and neither may grow, without an ADR line
+# saying why the log's «one key, one text» property is being spent again.
+# Spelled as a sorted list of `<key> <count>` so the comparisons below are on the
+# same shape the extraction produces.
+GRANDFATHERED='D-276 2
+D-277 2'
 echo "decision_key_check: grandfathered by D-279 (ruled, not deleted): $(printf '%s' "$GRANDFATHERED" | tr '\n' ' ')"
 
 # BOTH DIRECTIONS. An unexpected repeat is the defect this gate exists for; an
@@ -159,12 +170,12 @@ UNEXPECTED="$(LC_ALL=C comm -23 <(printf '%s\n' "$DUPES") <(printf '%s\n' "$GRAN
 STALE="$(LC_ALL=C comm -13 <(printf '%s\n' "$DUPES") <(printf '%s\n' "$GRANDFATHERED"))"
 
 if [ -n "$UNEXPECTED" ]; then
-	printf 'decision_key_check: repeated key: %s\n' $UNEXPECTED >&2
+	printf 'decision_key_check: repeated key (key, times): %s\n' "$UNEXPECTED" >&2
 	fail "$DOC states the key(s) above more than once; every ADR reference in this repository is by number, so one key must denote one text (docs/decisions.md D-279, D-284)"
 fi
 if [ -n "$STALE" ]; then
-	printf 'decision_key_check: exempted but not repeated: %s\n' $STALE >&2
-	fail "the exemption above has no subject in $DOC; remove it rather than leaving a list that outlives what it was for"
+	printf 'decision_key_check: exempted at a count it does not have: %s\n' "$STALE" >&2
+	fail "the exemption above names a key/count pair $DOC does not have; an exemption that outlives its subject, or one granted for two copies where the file now holds another number, is a list that has stopped describing the file"
 fi
 
 echo "decision_key_check: $COUNT decision keys in $DOC, no repeat outside the exemption"
