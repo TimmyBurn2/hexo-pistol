@@ -31,11 +31,16 @@
 # which leaves room for the stub workspaces the test suites build under
 # `$TMPDIR` alongside it and is still under 5% of this machine's `/tmp`.
 #
-# THE FLOOR CAN BE RAISED AND NOT LOWERED. `PISTOL_MIN_SCRATCH_KIB` exists so
-# that a test can watch the refusal fire — item 10 wants a test driving the
-# SHIPPED script, and nothing else can make a 24 GiB tmpfs look full. It is
-# combined with the constant by MAXIMUM, so the binding can only ever tighten
-# this check: a caller who sets it to zero gets the constant.
+# THE FLOOR IS THE CONSTANT BELOW AND IS READ FROM NOWHERE ELSE. An environment
+# override, `PISTOL_MIN_SCRATCH_KIB`, used to exist so that a test could watch
+# the refusal fire. It was INVISIBLE CONFIG — a tunable living outside the one
+# schema place, which hard rule 1 forbids — and it made the number this script
+# applies a function of the caller's environment rather than of this file. It is
+# REMOVED (docs/decisions.md D-306). The refusal is still driven by a test, and
+# by a better one: a real filesystem too small to hold the floor, which exercises
+# the READING as well as the comparison. Every refusal the override could
+# manufacture exercised the comparison alone, which is exactly how a script
+# reading the wrong `df` column satisfied the whole suite (D-297).
 
 set -euo pipefail
 
@@ -113,35 +118,9 @@ if [ "$INODES_TOTAL" -gt 0 ] && [ "$INODES_FREE" -eq 0 ]; then
 created there; nothing was measured and nothing failed"
 fi
 
-FLOOR="$MIN_SCRATCH_KIB"
-if [ -n "${PISTOL_MIN_SCRATCH_KIB:-}" ]; then
-	RAISED="$PISTOL_MIN_SCRATCH_KIB"
-	case "$RAISED" in
-	'' | *[!0-9]*) bug "PISTOL_MIN_SCRATCH_KIB is not a number: \`$RAISED\`" ;;
-	0?*) bug "PISTOL_MIN_SCRATCH_KIB is not written in decimal: \`$RAISED\`" ;;
-	esac
-	# AND IT MUST FIT, or the guard fails OPEN. `[ x -le y ]` on a value above
-	# 2^63-1 is an ERROR, not a comparison, and an erroring `[` in a CONDITION is
-	# exempt from `set -e` (item 2) — so the floor silently stayed at the
-	# constant and the check passed. MEASURED: the boundary is exact,
-	# 9223372036854775807 refuses and ...808 exited 0.
-	# The boundary is EXACT and both sides are tested: 9223372036854775807 is
-	# representable and must still REFUSE (exit 2); one past it is a caller bug.
-	# Equal-length digit strings compare correctly lexicographically, and the
-	# locale is pinned so the collation cannot widen (item 4).
-	if [ "${#RAISED}" -gt 19 ] ||
-		{ [ "${#RAISED}" -eq 19 ] &&
-			[ "$(LC_ALL=C printf '%s\n' "$RAISED" "9223372036854775807" | LC_ALL=C sort | tail -n1)" = "$RAISED" ] &&
-			[ "$RAISED" != "9223372036854775807" ]; }; then
-		bug "PISTOL_MIN_SCRATCH_KIB does not fit the arithmetic that compares it: \`$RAISED\`"
-	fi
-	# MAXIMUM, so the binding tightens and never loosens.
-	[ "$RAISED" -le "$FLOOR" ] || FLOOR="$RAISED"
-fi
-
-if [ "$AVAIL" -lt "$FLOOR" ]; then
-	void "$MOUNT (device $DEVICE) has $AVAIL KiB available and this run wants $FLOOR KiB; \
+if [ "$AVAIL" -lt "$MIN_SCRATCH_KIB" ]; then
+	void "$MOUNT (device $DEVICE) has $AVAIL KiB available and this run wants $MIN_SCRATCH_KIB KiB; \
 nothing was measured and nothing failed — free space and take the run again"
 fi
 
-say "$MOUNT (device $DEVICE) has $AVAIL KiB available, floor $FLOOR KiB"
+say "$MOUNT (device $DEVICE) has $AVAIL KiB available, floor $MIN_SCRATCH_KIB KiB"

@@ -11,13 +11,24 @@
 //! a solver-link REGRESSION. The gate was honest; the vocabulary was cargo's,
 //! and cargo's vocabulary describes cargo.
 //!
-//! # Why the floor can be raised and not lowered
+//! # How the refusal is watched, now that nothing can raise the floor
 //!
-//! Item 10 wants a test driving the SHIPPED script with a control, and nothing
-//! else can make a 24 GiB tmpfs look full. `PISTOL_MIN_SCRATCH_KIB` is combined
-//! with the built-in constant by MAXIMUM, so the binding can only tighten the
-//! check — a caller who sets it to zero gets the constant, and that is asserted
-//! below rather than described.
+//! The script used to read `PISTOL_MIN_SCRATCH_KIB`, and every refusal in this
+//! file was manufactured by raising it. That override was INVISIBLE CONFIG — a
+//! tunable living outside the one schema place, which hard rule 1 forbids — so
+//! it is gone (docs/decisions.md D-306).
+//!
+//! Item 10 still wants a test driving the SHIPPED script with a control, so the
+//! refusal is watched against a REAL filesystem too small to hold the floor: a
+//! 1 MiB tmpfs mounted inside an unprivileged user + mount namespace, which is
+//! the facility D-297's red-team already used to reproduce the `df` column
+//! defect on a real filesystem rather than a simulated one.
+//!
+//! That is strictly the stronger instrument, and the override's removal is
+//! therefore not a loss of coverage. A raised floor exercised the COMPARISON and
+//! never the READING — which is exactly how a script reading the wrong column
+//! satisfied every refusal in this suite — and a small filesystem exercises
+//! both, its printed number being checked against the size it was made at.
 //!
 //! # RULE9-JUSTIFICATION: one probe, one script, one set of exit codes.
 
@@ -32,14 +43,41 @@ use common::{repo, scratch};
 /// file is a CHECK on the script, and agreeing by construction proves nothing.
 const MIN_SCRATCH_KIB: u64 = 1_048_576;
 
-fn preflight(dir: &Path, raised: Option<&str>) -> Output {
-    let mut command = Command::new("bash");
-    command.arg(repo("tools/scratch_preflight.sh")).arg(dir);
-    match raised {
-        Some(value) => command.env("PISTOL_MIN_SCRATCH_KIB", value),
-        None => command.env_remove("PISTOL_MIN_SCRATCH_KIB"),
-    };
-    command.output().expect("bash runs the shipped script")
+fn preflight(dir: &Path) -> Output {
+    Command::new("bash")
+        .arg(repo("tools/scratch_preflight.sh"))
+        .arg(dir)
+        .output()
+        .expect("bash runs the shipped script")
+}
+
+/// The same shipped script, run against a directory this first covers with a
+/// tmpfs of `size` inside an unprivileged user + mount namespace.
+///
+/// `unshare -m` makes the new namespace's propagation private, so the mount is
+/// invisible to this machine and to every other test in the run: the scratch
+/// directory handed over stays empty on the host.
+fn preflight_on_a_filesystem_of(dir: &Path, size: &str) -> Output {
+    let ran = Command::new("unshare")
+        .args(["-Ur", "-m", "bash", "-c"])
+        .arg(r#"set -eu; mount -t tmpfs -o size="$1" tmpfs "$2"; exec bash "$3" "$2""#)
+        .arg("harness")
+        .arg(size)
+        .arg(dir)
+        .arg(repo("tools/scratch_preflight.sh"))
+        .output();
+    // FAIL LOUD, NEVER SKIP (hard rule 3). A machine that cannot manufacture a
+    // full filesystem leaves the shortage branch of a gate untested, and that is
+    // a fact a reader needs on the record — not a green test that quietly
+    // checked nothing.
+    match ran {
+        Ok(ran) => ran,
+        Err(why) => panic!(
+            "this test drives the shipped script against a real {size} filesystem and needs \
+             `unshare` with unprivileged user namespaces to make one; it could not be run \
+             ({why}), so the SHORTAGE branch of tools/scratch_preflight.sh is UNTESTED here"
+        ),
+    }
 }
 
 fn said(ran: &Output) -> String {
@@ -55,7 +93,7 @@ fn said(ran: &Output) -> String {
 #[test]
 fn a_directory_with_room_passes_and_prints_the_number_it_read() {
     let dir = scratch("preflight-control");
-    let ran = preflight(&dir, None);
+    let ran = preflight(&dir);
     let out = said(&ran);
     assert_eq!(ran.status.code(), Some(0), "there is room here:\n{out}");
     assert!(
@@ -68,13 +106,17 @@ fn a_directory_with_room_passes_and_prints_the_number_it_read() {
     );
 }
 
-/// THE VOID, and it is spelled VOID rather than FAIL. Item 12's whole point:
-/// two different things exit non-zero and a reader has to be able to tell them
-/// apart without knowing which gate printed the line.
+/// THE VOID, and it is spelled VOID rather than FAIL. Item 12's whole point: two
+/// different things exit non-zero and a reader has to be able to tell them apart
+/// without knowing which gate printed the line.
+///
+/// The shortage is REAL — a 1 MiB filesystem under a floor of 1 GiB — so this
+/// exercises the reading and the comparison together. The removed override could
+/// only ever move the number on the right of the `<`.
 #[test]
-fn a_directory_without_room_is_a_named_run_void_and_not_a_failure() {
+fn a_filesystem_too_small_for_the_floor_is_a_named_run_void_and_not_a_failure() {
     let dir = scratch("preflight-void");
-    let ran = preflight(&dir, Some("999999999999"));
+    let ran = preflight_on_a_filesystem_of(&dir, "1M");
     let out = said(&ran);
     assert_eq!(
         ran.status.code(),
@@ -87,22 +129,21 @@ fn a_directory_without_room_is_a_named_run_void_and_not_a_failure() {
         "and it says which of the two it is:\n{out}"
     );
     assert!(
-        out.contains("999999999999"),
-        "naming what it wanted:\n{out}"
+        out.contains(&format!("wants {MIN_SCRATCH_KIB} KiB")),
+        "naming the floor it applied, which is the constant and nothing else:\n{out}"
     );
-}
-
-/// THE BINDING ONLY TIGHTENS. A value below the constant leaves the constant in
-/// force, so nothing can disable this check by setting it small.
-#[test]
-fn a_floor_below_the_constant_does_not_lower_it() {
-    let dir = scratch("preflight-tighten");
-    let ran = preflight(&dir, Some("1"));
-    let out = said(&ran);
-    assert_eq!(ran.status.code(), Some(0), "{out}");
+    // AND IT READ THE FILESYSTEM IT WAS GIVEN. A tmpfs made at 1 MiB has a
+    // little of it spent on the mount itself, so the assertion is a bracket
+    // rather than an equality — but a script reading a neighbouring field would
+    // print this machine's `/tmp`, which is three orders of magnitude away.
+    let printed: u64 = out
+        .split_whitespace()
+        .zip(out.split_whitespace().skip(1))
+        .find_map(|(value, unit)| (unit == "KiB").then(|| value.parse().ok())?)
+        .unwrap_or_else(|| panic!("the void names what it read:\n{out}"));
     assert!(
-        out.contains(&format!("floor {MIN_SCRATCH_KIB} KiB")),
-        "the constant is what was applied, not the 1:\n{out}"
+        printed <= 1024,
+        "the number is the 1 MiB filesystem's own, not another one's: {printed} KiB\n{out}"
     );
 }
 
@@ -111,7 +152,7 @@ fn a_floor_below_the_constant_does_not_lower_it() {
 #[test]
 fn a_missing_directory_is_a_void_rather_than_an_answer() {
     let dir = scratch("preflight-missing").join("nothing-here");
-    let ran = preflight(&dir, None);
+    let ran = preflight(&dir);
     let out = said(&ran);
     assert_eq!(ran.status.code(), Some(2), "{out}");
     assert!(out.contains("RUN VOID"), "{out}");
@@ -138,32 +179,41 @@ fn calling_it_wrongly_is_exit_one_and_is_not_a_void() {
     assert!(out.contains("usage"), "{out}");
 }
 
-/// ONE SPELLING PER NUMBER (item 8): a floor that is not written in decimal is a
-/// caller bug, refused before any arithmetic reads it as octal.
+/// NOTHING IN THE ENVIRONMENT MOVES THE FLOOR.
+///
+/// The name the removed override answered to is set here to a value that would
+/// have changed the verdict, and the script must not notice. Asserted rather
+/// than described, because "the override is gone" is a claim about behaviour and
+/// a deleted `if` is only evidence of it (docs/decisions.md D-306).
 #[test]
-fn a_floor_that_is_not_decimal_is_refused_at_the_binding() {
-    let dir = scratch("preflight-spelling");
-    for bad in ["", "  12", "0x10", "01048576", "1048576k"] {
-        let ran = preflight(&dir, Some(bad));
-        let out = said(&ran);
-        if bad.is_empty() {
-            // An empty binding is indistinguishable from an unset one and
-            // leaves the constant in force; that is stated rather than assumed.
-            assert_eq!(ran.status.code(), Some(0), "`{bad}`:\n{out}");
-            continue;
-        }
-        assert_eq!(ran.status.code(), Some(1), "`{bad}`:\n{out}");
-        assert!(
-            out.contains("PISTOL_MIN_SCRATCH_KIB"),
-            "`{bad}` is refused at its own binding:\n{out}"
-        );
-    }
+fn the_retired_environment_override_no_longer_moves_the_floor() {
+    let dir = scratch("preflight-no-override");
+    let ran = Command::new("bash")
+        .arg(repo("tools/scratch_preflight.sh"))
+        .arg(&dir)
+        .env("PISTOL_MIN_SCRATCH_KIB", "999999999999")
+        .output()
+        .expect("bash runs the shipped script");
+    let out = said(&ran);
+    assert_eq!(
+        ran.status.code(),
+        Some(0),
+        "a binding nothing reads cannot void a healthy directory:\n{out}"
+    );
+    assert!(
+        out.contains(&format!("floor {MIN_SCRATCH_KIB} KiB")),
+        "the constant is the floor, whatever the environment says:\n{out}"
+    );
+    assert!(
+        !out.contains("999999999999"),
+        "and the value never reaches a record:\n{out}"
+    );
 }
 
 /// THE NUMBER THE SCRIPT PRINTS AGREES WITH A REFERENT COMPUTED OUTSIDE IT.
 ///
 /// This is the guard the suite lacked, and its absence is why a column-parsing
-/// defect shipped. Every other refusal here is manufactured by raising
+/// defect shipped. Every refusal here USED to be manufactured by raising
 /// `PISTOL_MIN_SCRATCH_KIB`, which exercises the COMPARISON and never the
 /// READING — so a script that read the wrong column satisfied all of them, its
 /// number being a well-formed decimal from a neighbouring field.
@@ -178,7 +228,7 @@ fn a_floor_that_is_not_decimal_is_refused_at_the_binding() {
 #[test]
 fn the_printed_available_number_agrees_with_a_referent_the_script_did_not_compute() {
     let dir = scratch("preflight-referent");
-    let ran = preflight(&dir, None);
+    let ran = preflight(&dir);
     let out = said(&ran);
     assert_eq!(ran.status.code(), Some(0), "there is room here:\n{out}");
 
@@ -210,37 +260,5 @@ fn the_printed_available_number_agrees_with_a_referent_the_script_did_not_comput
         drift * 100 < expected.max(1),
         "the script says {printed} KiB and stat says {expected} KiB — a \
          disagreement this large is a different FIELD, not a busy filesystem:\n{out}"
-    );
-}
-
-/// A FLOOR TOO LARGE FOR THE ARITHMETIC IS A CALLER BUG, NOT A PASS.
-///
-/// `[ x -le y ]` above 2^63-1 is an ERROR rather than a comparison, and an
-/// erroring `[` in a CONDITION is exempt from `set -e` — so the floor silently
-/// stayed at the constant and the check passed, which is the guard failing open
-/// in the one direction its own header says it cannot ("can only ever tighten").
-/// The boundary is exact and both sides are asserted.
-#[test]
-fn a_floor_too_large_for_the_arithmetic_is_refused_instead_of_ignored() {
-    let dir = scratch("preflight-overflow");
-
-    let biggest = preflight(&dir, Some("9223372036854775807"));
-    assert_eq!(
-        biggest.status.code(),
-        Some(2),
-        "the largest representable floor still REFUSES, it does not error:\n{}",
-        said(&biggest)
-    );
-
-    let over = preflight(&dir, Some("9223372036854775808"));
-    let out = said(&over);
-    assert_eq!(
-        over.status.code(),
-        Some(1),
-        "one past it is the caller calling this wrong (1), never a pass (0):\n{out}"
-    );
-    assert!(
-        out.contains("does not fit"),
-        "the refusal names why, rather than dying under `set -e`:\n{out}"
     );
 }

@@ -107,8 +107,10 @@ PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight
 # TWO KINDS, NOT ONE (item 8). The preflight distinguishes its own exit 1 —
 # "the caller called this wrong" — from exit 2, "the run is void", and folding
 # them into one message asserts a space shortage where there may be none: a
-# malformed PISTOL_MIN_SCRATCH_KIB printed `the RUN VOID above names the
-# filesystem` above a line that named no filesystem and no shortage.
+# malformed floor binding printed `the RUN VOID above names the filesystem`
+# above a line that named no filesystem and no shortage. That binding is retired
+# (docs/decisions.md D-306) and the distinction is not: the preflight still exits
+# 1 on its own arguments, which is the branch the `*)` arm below catches.
 PF_RC=0
 bash "$PREFLIGHT" "$ROOT_ABS" || PF_RC=$?
 case "$PF_RC" in
