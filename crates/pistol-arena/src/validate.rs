@@ -200,6 +200,28 @@ impl ArenaConfig {
             if engine.binary.as_os_str().is_empty() {
                 return Err(ArenaError::config(format!("{key}.binary"), "no path given"));
             }
+            // A NAME IS NOT A PATH, and the two halves of the binding disagree
+            // about which file it means. `identity::digest_of` reads it with
+            // `std::fs::read`, which resolves against the working directory;
+            // `Channel::start` runs it with `Command::new`, which for a name
+            // containing no separator execs through `$PATH`. Where both resolve,
+            // the digest attests one file and the games are played by another,
+            // which is the whole defect D-283 exists to close, wearing the shape
+            // that closed it. Refused HERE because it is a spelling property of
+            // the document, checkable offline (D-21).
+            if !engine.binary.as_os_str().as_encoded_bytes().contains(&b'/') {
+                return Err(ArenaError::config(
+                    format!("{key}.binary"),
+                    format!(
+                        "a binary is named by a path, not by a bare name: `{}` would be \
+                         digested from the working directory and spawned through `$PATH`, \
+                         so the file this document binds and the file that plays the games \
+                         need not be the same file; write `./{}` or an absolute path",
+                        engine.binary.display(),
+                        engine.binary.display()
+                    ),
+                ));
+            }
             if engine.config.as_os_str().is_empty() {
                 return Err(ArenaError::config(format!("{key}.config"), "no path given"));
             }

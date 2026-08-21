@@ -257,3 +257,33 @@ fn a_misspelled_digest_is_refused_at_the_key_rather_than_at_the_comparison() {
         );
     }
 }
+
+/// A `binary` with no path separator is digested as a CWD-relative file and
+/// SPAWNED THROUGH `$PATH`, so the file weighed and the file run are two
+/// different files whenever both exist.
+///
+/// `identity::digest_of` calls `std::fs::read(path)`, which resolves against the
+/// process's working directory and never consults `$PATH`. `Channel::start`
+/// calls `Command::new(binary)`, which for a name containing no separator execs
+/// through `execvp`, i.e. through `$PATH`. The comparison therefore attests one
+/// file while the run plays another, and the report names the digest of the file
+/// that did not move a stone. This is D-226's decided class, closed in
+/// `tools/bench_delta.sh` and `tools/baseline_snapshot.sh` with `command -v` and
+/// `realpath`, and it re-entered through the Rust seat.
+#[test]
+fn a_binary_with_no_path_separator_is_refused_rather_than_resolved_through_path() {
+    let scratch = Scratch::new("bind-bare-name");
+    let honest = honest_document(&scratch);
+    let text = honest.replacen(
+        &format!("binary = \"{}\"", common::STUB),
+        "binary = \"pistol\"",
+        1,
+    );
+    let error = ArenaConfig::parse_unvalidated(&text)
+        .and_then(|config| config.validate().map(|()| config))
+        .expect_err("a bare name is digested from the CWD and spawned from $PATH");
+    assert!(
+        matches!(&error, ArenaError::Config { key, .. } if key == "engine_a.binary"),
+        "a separator-less binary is refused at its own key: {error}"
+    );
+}
