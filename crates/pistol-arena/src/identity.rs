@@ -73,6 +73,23 @@ pub fn digest_of(path: &Path) -> Result<String, ArenaError> {
 /// also fails the run early on an engine a strength claim may not come from,
 /// rather than on the first game.
 pub fn capture(engine: &EngineSection, timeout_ms: u64) -> Result<EngineIdentity, ArenaError> {
+    // THE BINARY IS BOUND BY CONTENT AND THE CHECK COMES FIRST, before the
+    // process starts. A path is not an identity — the same path is a different
+    // program after every build — and the stale-binary case is the one that
+    // exits 0: a decoy sitting where cargo did not write is a regular file, is
+    // executable, speaks the protocol, and plays every game (docs/decisions.md
+    // D-252's reproducer). Refusing here rather than at validation keeps
+    // validation pure and offline (D-21), and refusing before the spawn means a
+    // run this document does not describe never produces a game.
+    let binary_sha256 = digest_of(&engine.binary)?;
+    if binary_sha256 != engine.binary_sha256 {
+        return Err(ArenaError::EngineBinaryDigestMismatch {
+            engine: engine.label.clone(),
+            binary: engine.binary.display().to_string(),
+            expected: engine.binary_sha256.clone(),
+            found: binary_sha256,
+        });
+    }
     let mut channel = Channel::start(&engine.label, &engine.binary, &engine.config)?;
     let spoken = handshake::shake(&mut channel, timeout_ms)?;
     channel.shutdown();
@@ -82,7 +99,7 @@ pub fn capture(engine: &EngineSection, timeout_ms: u64) -> Result<EngineIdentity
         .to_string();
     Ok(EngineIdentity {
         id_lines: spoken.lines,
-        binary_sha256: digest_of(&engine.binary)?,
+        binary_sha256,
         config_sha256: digest_of(&engine.config)?,
         weights_sha256: weights,
     })

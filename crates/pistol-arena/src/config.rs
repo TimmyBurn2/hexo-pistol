@@ -187,6 +187,22 @@ pub struct EngineSection {
     pub label: String,
     /// The pistol CLI binary to run.
     pub binary: PathBuf,
+    /// The SHA-256 the file at [`EngineSection::binary`] must have, lowercase
+    /// hex.
+    ///
+    /// A PATH IS NOT AN IDENTITY. `target/release/pistol` is a different program
+    /// after every build, and a run whose engine was rebuilt — or never built,
+    /// with a stale file left at that path — is a different experiment reported
+    /// under the old one's name (docs/decisions.md D-147, D-252). This is
+    /// required rather than optional because an optional binding is a binding
+    /// nobody has, and the four operator-run SPRT documents that CLAUDE.md rule
+    /// 6 makes the judge of every search and eval change are exactly the ones
+    /// that would have gone without it.
+    ///
+    /// Checked at RUN START, before either engine is spawned, and never at
+    /// validation time: validation stays pure and offline (docs/decisions.md
+    /// D-21), so what this crate validates is the SPELLING.
+    pub binary_sha256: String,
     /// The engine config to run it with.
     pub config: PathBuf,
 }

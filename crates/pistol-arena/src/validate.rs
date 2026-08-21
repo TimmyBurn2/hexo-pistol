@@ -19,6 +19,9 @@ pub const MAX_WORKERS: usize = 4096;
 /// The largest opening count this build accepts, as a typo ceiling.
 pub const MAX_OPENINGS_TAKE: usize = 1_000_000;
 
+/// A SHA-256 written in lowercase hex is this many characters.
+pub const SHA256_HEX_LEN: usize = 64;
+
 impl ArenaConfig {
     /// Apply every rule `serde` could not.
     pub fn validate(&self) -> Result<(), ArenaError> {
@@ -199,6 +202,27 @@ impl ArenaConfig {
             }
             if engine.config.as_os_str().is_empty() {
                 return Err(ArenaError::config(format!("{key}.config"), "no path given"));
+            }
+            // SPELLING, not value (tools/SHELL_CHECKLIST.md item 8's rule, which
+            // is not only about shell): a digest is 64 lowercase hex characters
+            // and nothing else, so `0X..`, an uppercase transcription and a
+            // truncated paste are each refused HERE rather than surviving to a
+            // comparison that would report them as a mismatch and send the
+            // operator looking at the binary.
+            let digest = &engine.binary_sha256;
+            if digest.len() != SHA256_HEX_LEN
+                || !digest
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+            {
+                return Err(ArenaError::config(
+                    format!("{key}.binary_sha256"),
+                    format!(
+                        "a binary digest is {SHA256_HEX_LEN} lowercase hex characters; got \
+                         `{digest}` ({} characters)",
+                        digest.chars().count()
+                    ),
+                ));
             }
         }
         if self.engine_a.label == self.engine_b.label {

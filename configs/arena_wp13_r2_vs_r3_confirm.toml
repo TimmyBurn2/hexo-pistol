@@ -71,9 +71,21 @@ beta = 0.05
 # the pre-registered direction is H1 = "radius 2 is stronger than radius 3".
 label = "r2"
 binary = "target/release/pistol"
+# WHICH BUILD. A path is not an identity: `target/release/pistol` is a
+# different program after every build, and a run played by a binary nobody
+# built is a different experiment reported under this one's name
+# (docs/decisions.md D-147, D-252, D-283). The arena digests the file at the
+# path above BEFORE it spawns anything and refuses a mismatch by name
+# (`EngineBinaryDigestMismatch`), so this key must name the build being
+# measured. Recorded at d6f6cbb on the development machine, from
+#   cargo build --release --locked --bin pistol && sha256sum target/release/pistol
+# with rustc 1.97.1. REBUILD MEANS RE-RECORD: the digest going stale is the
+# refusal this binding exists to produce, not a defect in the document.
+binary_sha256 = "a7f519fade1124780463293b86e27cbdd0732540a84aa75acaed4de4689f03ce"
 config = "configs/instrument_r2_v0.toml"
 
 [engine_b]
 label = "r3"
 binary = "target/release/pistol"
+binary_sha256 = "a7f519fade1124780463293b86e27cbdd0732540a84aa75acaed4de4689f03ce"
 config = "configs/instrument_v0.toml"

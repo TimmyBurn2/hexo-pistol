@@ -102,6 +102,22 @@ pub enum ArenaError {
         /// What this spawn has.
         found: String,
     },
+    /// The file at an engine's `binary` path is not the one its configuration
+    /// binds it to: the document names a content digest and the file on disk
+    /// hashes to something else (docs/decisions.md D-283).
+    ///
+    /// Raised at run start, before either engine is spawned, so a stale build
+    /// never plays a game rather than playing one nobody can attribute.
+    EngineBinaryDigestMismatch {
+        /// Which side.
+        engine: String,
+        /// The path the document names.
+        binary: String,
+        /// The digest the document binds it to.
+        expected: String,
+        /// The digest the file at that path actually has.
+        found: String,
+    },
     /// A file could not be read or written.
     Io {
         /// What was being attempted.
@@ -149,6 +165,7 @@ impl ArenaError {
             ArenaError::Hung { .. } => "Hung",
             ArenaError::Killed { .. } => "Killed",
             ArenaError::IdentityDrift { .. } => "IdentityDrift",
+            ArenaError::EngineBinaryDigestMismatch { .. } => "EngineBinaryDigestMismatch",
             ArenaError::Io { .. } => "Io",
         }
     }
@@ -190,6 +207,15 @@ impl fmt::Display for ArenaError {
             ArenaError::Handshake { engine, why } => {
                 write!(f, "Handshake: engine {engine}: {why}")
             }
+            ArenaError::EngineBinaryDigestMismatch {
+                engine,
+                binary,
+                expected,
+                found,
+            } => write!(
+                f,
+                "EngineBinaryDigestMismatch: engine {engine}: `{binary}` hashes to {found} and                  this document binds it to binary_sha256 {expected}; the file at that path is                  not the build this run is written for, so no game was played"
+            ),
             ArenaError::Hung {
                 engine,
                 opening,

@@ -34,10 +34,12 @@ fn complete() -> String {
          [engine_a]\n\
          label = \"a\"\n\
          binary = \"a-bin\"\n\
+         binary_sha256 = \"aa11bb22cc33dd44ee55ff6600778899aa11bb22cc33dd44ee55ff6600778899\"\n\
          config = \"a.toml\"\n\
          [engine_b]\n\
          label = \"b\"\n\
          binary = \"b-bin\"\n\
+         binary_sha256 = \"bb11cc22dd33ee44ff5500667788990011223344556677889900aabbccddeeff\"\n\
          config = \"b.toml\"\n",
     )
 }

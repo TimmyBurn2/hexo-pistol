@@ -83,10 +83,27 @@ fn main() {
         .filter_map(|line| line.strip_prefix("binary = "))
         .map(|rest| rest.trim().trim_matches('"').to_string())
         .collect();
+    // THE SEAT'S CONTENT BINDING, read out of the document the same way. The
+    // real arena digests the file at `binary` and refuses a mismatch before it
+    // spawns anything; this stub cannot hash without a dependency, so it carries
+    // the DECLARED digest into the record the gate reads. That is enough for the
+    // gate's own claim, which is that the document it wrote named the binary
+    // cargo built — by path AND by content — and that the process at that path
+    // is the one that ran.
+    let digests: Vec<String> = text
+        .lines()
+        .filter_map(|line| line.strip_prefix("binary_sha256 = "))
+        .map(|rest| rest.trim().trim_matches('"').to_string())
+        .collect();
+    assert_eq!(
+        digests.len(),
+        seats.len(),
+        "every seat is bound by content or none is"
+    );
 
     let mut report = format!("arena_report {take}\n");
     let mut forfeits = 0;
-    for (label, binary) in ["a", "b"].iter().zip(seats.iter()) {
+    for ((label, binary), digest) in ["a", "b"].iter().zip(seats.iter()).zip(digests.iter()) {
         // LAUNCH IT. A report that merely echoed the path would assert a string
         // rewrite; this asserts a process.
         let played = std::process::Command::new(binary).arg("--id").output();
@@ -94,7 +111,7 @@ fn main() {
             forfeits += 1;
         }
         report.push_str(&format!(
-            "engine {label} label {label} binary {binary} binary_sha256 stub config stub\n"
+            "engine {label} label {label} binary {binary} binary_sha256 {digest} config stub\n"
         ));
     }
     for game in 0..take * 2 {
@@ -326,6 +343,69 @@ fn arena_smoke_plays_the_binary_cargo_built_and_not_a_stale_one_at_the_configs_l
     assert!(
         out.contains("forfeited a game"),
         "named by the reason the report actually gave:\n{out}"
+    );
+}
+
+/// THE SECOND HALF OF THE SEAT. The arena binds each engine by CONTENT and
+/// refuses a `binary` whose digest is not the one the document names
+/// (docs/decisions.md D-283), so this gate has to rewrite `binary_sha256`
+/// beside `binary` — rewriting the path alone leaves a document that refuses
+/// every run, and rewriting neither leaves the defect D-252 reproduced. Both
+/// rewrites are counted by the gate, and a document that binds one seat and not
+/// the other is refused rather than half-bound.
+#[test]
+fn arena_smoke_refuses_a_config_that_does_not_bind_every_seat_by_content() {
+    let root = scratch_tree("arena-smoke-digest");
+    let log = root.join("invocations.log");
+    let target = root.join("target");
+
+    // THE CONTROL RUN, with the shipped config as committed.
+    std::fs::write(&log, "").expect("the log starts empty");
+    let control = arena_smoke(&root, &target, &log);
+    let seen = said(&control);
+    assert!(
+        control.status.success(),
+        "the gate passes on the shipped config:\n{seen}"
+    );
+    // The rewrite is REPORTED, and what it reports is the digest of the file
+    // cargo built rather than the one committed in the document.
+    let built = root.join("target/release/pistol");
+    let bytes = std::fs::read(&built).expect("the built engine reads");
+    let digest = pistol_cli::sha256::sha256_hex(&bytes);
+    assert!(
+        seen.contains(&digest),
+        "the gate names the digest of the binary it built:\n{seen}"
+    );
+
+    // Now the document binds one seat only. The gate must refuse rather than
+    // rewrite half of it.
+    let config = root.join("configs/arena_smoke_v0.toml");
+    let text = std::fs::read_to_string(&config).expect("the shipped config reads");
+    let half: String = {
+        let mut seen_one = false;
+        text.lines()
+            .filter(|line| {
+                if line.starts_with("binary_sha256 = ") && !seen_one {
+                    seen_one = true;
+                    return false;
+                }
+                true
+            })
+            .map(|line| format!("{line}\n"))
+            .collect()
+    };
+    assert_ne!(half, text, "one digest line was removed");
+    std::fs::write(&config, &half).expect("the half-bound config writes");
+
+    let ran = arena_smoke(&root, &target, &log);
+    let out = said(&ran);
+    assert!(
+        !ran.status.success(),
+        "a half-bound document is a refusal, not a run:\n{out}"
+    );
+    assert!(
+        out.contains("every seat is bound by content or none is"),
+        "named for what it is:\n{out}"
     );
 }
 

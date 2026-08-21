@@ -69,9 +69,20 @@ beta = 0.05
 [engine_a]
 label = "a"
 binary = "target/release/pistol"
+# WHICH BUILD, AND WHY THIS ONE IS REWRITTEN. A path is not an identity, so the
+# arena digests the file at the path above before it spawns anything and refuses
+# a mismatch by name (docs/decisions.md D-283). This gate BUILDS its engine, so
+# `tools/arena_smoke.sh` rewrites both this key and the `binary` above it from
+# cargo's own artifact stream and asserts that both rewrites landed; the value
+# committed here is the digest at d6f6cbb and is not what the gate runs. Running
+# this document directly, without that rewrite, refuses unless the release build
+# on this machine happens to be that one — which is the correct answer and not a
+# defect.
+binary_sha256 = "a7f519fade1124780463293b86e27cbdd0732540a84aa75acaed4de4689f03ce"
 config = "configs/gate_v0.toml"
 
 [engine_b]
 label = "b"
 binary = "target/release/pistol"
+binary_sha256 = "a7f519fade1124780463293b86e27cbdd0732540a84aa75acaed4de4689f03ce"
 config = "configs/gate_v0.toml"

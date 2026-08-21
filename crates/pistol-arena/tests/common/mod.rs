@@ -127,6 +127,22 @@ pub struct ConfigSpec<'a> {
     pub config_b: &'a Path,
 }
 
+/// The `binary_sha256` a spec writes for a seat: the digest of the file the
+/// seat names.
+///
+/// The arena binds each engine by content and refuses a mismatch before it
+/// spawns anything (docs/decisions.md D-283), so a document a test means to be
+/// RUNNABLE has to name the digest of the stub or script it points at. Where the
+/// path names nothing on disk the document is one a test only parses or
+/// validates, and it gets a well-formed placeholder — a document that cannot be
+/// spawned cannot reach the comparison.
+pub fn binding_digest(binary: &str) -> String {
+    match std::fs::read(binary) {
+        Ok(bytes) => sha256_hex(&bytes),
+        Err(_) => "0".repeat(64),
+    }
+}
+
 impl ConfigSpec<'_> {
     /// The document.
     pub fn render(&self) -> String {
@@ -150,12 +166,16 @@ impl ConfigSpec<'_> {
              [engine_a]\n\
              label = \"a\"\n\
              binary = \"{bin_a}\"\n\
+             binary_sha256 = \"{sha_a}\"\n\
              config = \"{cfg_a}\"\n\
              [engine_b]\n\
              label = \"b\"\n\
              binary = \"{bin_b}\"\n\
+             binary_sha256 = \"{sha_b}\"\n\
              config = \"{cfg_b}\"\n",
             openings = self.openings.display(),
+            sha_a = binding_digest(self.binary_a),
+            sha_b = binding_digest(self.binary_b),
             take = self.take,
             skip = self.skip,
             turn_cap = self.turn_cap,

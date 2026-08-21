@@ -32,6 +32,16 @@
 # grows with `turn_cap` because the candidate set grows with the stone count, so
 # a change to that key in the config is a change to this gate's runtime.
 #
+# RULE9-JUSTIFICATION: one end-to-end claim about one instrument, and the larger
+# half of this file is the reasons three separately reproduced defects are
+# guarded the way they are — the binary cargo built, the document the arena
+# actually reads its seats out of, and the content each seat is bound to. Every
+# one of those was a gate that printed a verdict and exited 0 while playing
+# something nobody built, and the guard for each is only correct BECAUSE of the
+# one before it: splitting the resolution, the rebinding and the verdict
+# assertions apart would put a guard in one file and the thing it guards in
+# another, which is precisely the shape the second of those defects had.
+#
 # Usage: tools/arena_smoke.sh
 # Exit:  0 the gate holds, 1 it does not.
 
@@ -45,6 +55,7 @@ CONFIG="configs/arena_smoke_v0.toml"
 fail() { printf 'arena_smoke: FAIL: %s\n' "$*" >&2; exit 1; }
 
 command -v cargo >/dev/null || fail "cargo is not on PATH"
+command -v sha256sum >/dev/null || fail "sha256sum is not on PATH"
 [ -f "$CONFIG" ] || fail "no arena config at $CONFIG"
 
 # Never under the repository: match logs are artifacts and artifacts are not
@@ -161,13 +172,41 @@ esac
 [ "$STANZAS" -eq 2 ] ||
 	fail "$CONFIG names $STANZAS engine binaries and a match is played by exactly two"
 
+# THE SECOND HALF OF THE SEAT. The arena now binds each engine BY CONTENT and
+# refuses a `binary` whose digest is not the one the document names
+# (docs/decisions.md D-283), so rewriting the path alone leaves this gate
+# refusing every run: the committed digest belongs to the build the document was
+# written at, and this gate builds its own. Both keys are rewritten together and
+# both rewrites are counted, because a rewrite that landed on one of them is a
+# gate that either refuses everything or attests a digest nobody checked.
+DIGEST_STANZAS="$(grep -c '^binary_sha256 = ' "$CONFIG" || true)"
+case "$DIGEST_STANZAS" in
+*[!0-9]* | "") fail "the digest-stanza count is not a number: \`$DIGEST_STANZAS\`" ;;
+esac
+[ "$DIGEST_STANZAS" -eq "$STANZAS" ] ||
+	fail "$CONFIG names $STANZAS engine binaries and $DIGEST_STANZAS digests; every seat is bound by content or none is"
+
+# A COMMAND SUBSTITUTION WHOSE STATUS IS DISCARDED CANNOT FAIL
+# (tools/SHELL_CHECKLIST.md item 1): the value is taken into a variable, and
+# then its SHAPE is checked (item 8) rather than its emptiness alone — a
+# truncated digest is 63 characters and would be written into the document as
+# happily as a whole one.
+ENGINE_SHA="$(sha256sum -- "$ENGINE" | cut -d' ' -f1)" ||
+	fail "cannot digest the engine cargo built at \`$ENGINE\`"
+case "$ENGINE_SHA" in
+*[!0-9a-f]* | "") fail "the engine digest is not lowercase hex: \`$ENGINE_SHA\`" ;;
+esac
+[ "${#ENGINE_SHA}" -eq 64 ] ||
+	fail "the engine digest is ${#ENGINE_SHA} characters, not 64: \`$ENGINE_SHA\`"
+
 # `awk` rather than `sed`: the replacement is built by CONCATENATION, so an `&`
 # in the path stays an `&` rather than becoming the whole match, and no delimiter
 # can collide with a `/` or a `|` in it. The value arrives through `ENVIRON`, not
 # `-v`, which processes escape sequences in what it is given.
 BOUND="$WORK/bound.toml"
-ENGINE="$ENGINE" awk '
+ENGINE="$ENGINE" ENGINE_SHA="$ENGINE_SHA" awk '
 	/^binary = / { print "binary = \"" ENVIRON["ENGINE"] "\""; next }
+	/^binary_sha256 = / { print "binary_sha256 = \"" ENVIRON["ENGINE_SHA"] "\""; next }
 	{ print }
 ' "$CONFIG" >"$BOUND" || fail "$CONFIG could not be rewritten to bind the engines"
 
@@ -182,7 +221,13 @@ case "$REBOUND" in
 esac
 [ "$REBOUND" -eq "$STANZAS" ] ||
 	fail "the rewrite bound $REBOUND of $STANZAS engine binaries to \`$ENGINE\`; $CONFIG does not spell them \`binary = \`"
-echo "arena_smoke: both seats bound to $ENGINE"
+REDIGESTED="$(grep -c -F -x -- "binary_sha256 = \"$ENGINE_SHA\"" "$BOUND" || true)"
+case "$REDIGESTED" in
+*[!0-9]* | "") fail "the bound-digest count is not a number: \`$REDIGESTED\`" ;;
+esac
+[ "$REDIGESTED" -eq "$DIGEST_STANZAS" ] ||
+	fail "the rewrite bound $REDIGESTED of $DIGEST_STANZAS engine digests to \`$ENGINE_SHA\`; $CONFIG does not spell them \`binary_sha256 = \`"
+echo "arena_smoke: both seats bound to $ENGINE ($ENGINE_SHA)"
 
 run_arena() {
 	local out="$1" config="$2"
@@ -209,7 +254,7 @@ KIND="$(head -1 "$WORK/a.txt" | awk '{print $1}')"
 # actually executed). ` binary … binary_sha256 ` is delimited on both sides, so
 # this matches the FIELD and not a substring of another path (item 3). The lines
 # sit in the verdict block, so the comparisons below carry this to runs 2 and 3.
-PLAYED_BY_BUILT="$(grep -c -F -- " binary $ENGINE binary_sha256 " "$WORK/a.txt" || true)"
+PLAYED_BY_BUILT="$(grep -c -F -- " binary $ENGINE binary_sha256 $ENGINE_SHA " "$WORK/a.txt" || true)"
 case "$PLAYED_BY_BUILT" in
 *[!0-9]* | "") fail "the bound-seat count is not a number: \`$PLAYED_BY_BUILT\`" ;;
 esac
