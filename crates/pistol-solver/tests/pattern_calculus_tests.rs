@@ -44,7 +44,7 @@ use common::plans::{Plan, along, plan_family, plans_by_window, support, threat_n
 use common::reference::Reference;
 use common::{assert_pinned, fixture_text, play};
 use pistol_core::{Axis, Coord, Player};
-use pistol_solver::HitBudget;
+use pistol_solver::{Cover, HitBudget, MinimalCover};
 
 /// The SHA-256 of `tests/fixtures/pattern_v0.txt`.
 const PATTERN_V0_SHA256: &str = "32ead66b86a77deb83e45f07b2efcbfb5bd5ab7ed7be1c649d3424a65f38e426";
@@ -615,4 +615,118 @@ fn a_closed_four_has_exactly_one_plan() {
          complete it — that is what makes it t=1: {family:?}"
     );
     assert_eq!(case.t, 1, "one plan, one cell to hit");
+}
+
+/// THE PACK REACHES A SHIPPED SURFACE THAT CARRIES STRUCTURE, NOT ONLY A RUNG.
+///
+/// A RED-TEAM measured the pack's entire contact with `crates/pistol-solver/src`
+/// at 33 booleans — three `HitBudget` rungs across eleven records — plus four
+/// `hot_windows` assertions. Across all eleven records `exceeds(One)` is true
+/// exactly when the universe has 4 or more cells and `exceeds(Two)` exactly when
+/// there are 6 or more hot windows, so replacing the WHOLE hitting-set
+/// enumeration in `cover.rs` with those two counting thresholds left the suite
+/// 9 of 9 green with `covers()` dead. A pack registered by V-P3.2 as the
+/// artefact that mutation-gates the threat oracle did not gate its central
+/// computation.
+///
+/// `blocking_covers` is the surface that cannot be faked by counting: it returns
+/// the inclusion-minimal cover SETS, and their MEMBERSHIP is the enumeration.
+/// The referent below is computed in this file from the test-side plan families
+/// — `common::plans`, which the fixture is derived from — by brute force over
+/// pairs, so the two sides share the position and share no code.
+#[test]
+fn the_shipped_minimal_covers_are_the_hitting_sets_of_the_plan_family() {
+    for case in pattern_cases() {
+        let (game, threats) = play(&case.plies);
+        let board = game.board();
+        let family = plan_family(board, case.side);
+        let defender = case.side.opponent();
+        let shipped = threats.blocking_covers(defender, HitBudget::Two);
+
+        if family.is_empty() {
+            assert_eq!(
+                shipped,
+                Cover::NothingToBlock,
+                "{}: no plan family means nothing to block",
+                case.name
+            );
+            continue;
+        }
+
+        // THE REFERENT, by brute force over the family's own cells. A cover is a
+        // set of cells meeting every plan; minimal means no proper subset does.
+        let mut cells: Vec<Coord> = family.iter().flatten().copied().collect();
+        cells.sort_unstable();
+        cells.dedup();
+        let hits_all = |chosen: &[Coord]| {
+            family
+                .iter()
+                .all(|plan| plan.iter().any(|at| chosen.contains(at)))
+        };
+        let mut want: Vec<MinimalCover> = Vec::new();
+        for &at in &cells {
+            if hits_all(&[at]) {
+                want.push(MinimalCover::One(at));
+            }
+        }
+        for (index, &first) in cells.iter().enumerate() {
+            for &second in &cells[index + 1..] {
+                if hits_all(&[first, second]) && !hits_all(&[first]) && !hits_all(&[second]) {
+                    want.push(MinimalCover::Two { first, second });
+                }
+            }
+        }
+        want.sort_unstable();
+
+        let expected = if want.is_empty() {
+            Cover::Impossible
+        } else {
+            Cover::Minimal(want)
+        };
+        assert_eq!(
+            shipped, expected,
+            "{}: the shipped minimal covers are the hitting sets of the plan \
+             family this record pins, and a threat number reproduced by COUNTING \
+             cannot also reproduce their membership",
+            case.name
+        );
+    }
+}
+
+/// AND THE LADDER AGREES WITH THE ENUMERATION, WHICH IS WHAT CHAINS IT TO A
+/// REFERENT OUTSIDE THE CRATE.
+///
+/// `min_hitting_set_exceeds` is the shipped realisation of DEF-T and RULE-EXACT,
+/// and it is what every `t` assertion in this pack reads through. It is NOT the
+/// code `blocking_covers` runs — the two enumerate separately — so pinning the
+/// covers alone left the ladder free: a RED-TEAM replaced the whole budget
+/// dispatch with `universe.len() >= 4` and `windows.len() >= 6`, coincidences
+/// that hold on all eleven records, and the pack stayed green with `covers()`
+/// dead.
+///
+/// The invariant is exact and not a resemblance: no cover of size at most the
+/// budget exists IF AND ONLY IF the minimum hitting set exceeds it. Because the
+/// covers are themselves pinned above against a referent computed in this file,
+/// agreement here reaches the ladder from outside the crate rather than from a
+/// second component sharing its input.
+#[test]
+fn the_budget_ladder_agrees_with_the_enumeration_it_is_the_summary_of() {
+    for case in pattern_cases() {
+        let (game, threats) = play(&case.plies);
+        let windows = threats.hot_windows(case.side);
+        let defender = case.side.opponent();
+
+        for budget in [HitBudget::Zero, HitBudget::One, HitBudget::Two] {
+            let exceeds = threats.min_hitting_set_exceeds(budget, &windows);
+            let impossible = matches!(threats.blocking_covers(defender, budget), Cover::Impossible);
+            assert_eq!(
+                exceeds, impossible,
+                "{} at {budget:?}: the minimum hitting set exceeds the budget \
+                 EXACTLY when no cover within it exists; a ladder reproduced by \
+                 counting cells or windows cannot track the enumeration through \
+                 every record",
+                case.name
+            );
+        }
+    }
 }
