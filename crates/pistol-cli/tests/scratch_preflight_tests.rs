@@ -189,7 +189,11 @@ fn the_printed_available_number_agrees_with_a_referent_the_script_did_not_comput
         .expect("stat reads the filesystem");
     let fields = String::from_utf8_lossy(&referent.stdout);
     let mut parts = fields.split_whitespace();
-    let blocks: u64 = parts.next().expect("free blocks").parse().expect("a number");
+    let blocks: u64 = parts
+        .next()
+        .expect("free blocks")
+        .parse()
+        .expect("a number");
     let block_size: u64 = parts.next().expect("block size").parse().expect("a number");
     let expected = blocks * block_size / 1024;
 
