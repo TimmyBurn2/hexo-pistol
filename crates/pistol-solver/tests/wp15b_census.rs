@@ -125,6 +125,25 @@ fn empties(state: &ThreatState, window: Window) -> impl Iterator<Item = Coord> {
         .map(|(_, cell)| cell)
 }
 
+/// Every empty cell of `side`'s live windows holding EXACTLY `count` stones.
+///
+/// Not what the design commits — it commits the threshold reading below — but the
+/// number that killed revision 1 of the design's Tier-T option was the DIFFERENCE
+/// between the two readings, and a number cited in a document needs an instrument
+/// whether or not it is the adopted one.
+fn tier_cells_exact(state: &ThreatState, side: Player, count: u8) -> BTreeSet<Coord> {
+    let class = if count == 2 {
+        LiveCount::Two
+    } else {
+        LiveCount::Three
+    };
+    let mut out = BTreeSet::new();
+    for &window in state.live_windows_at_count(side, class) {
+        out.extend(empties(state, window));
+    }
+    out
+}
+
 /// Every empty cell of `side`'s live windows holding AT LEAST `count` stones —
 /// the threshold reading, hot windows included.
 fn tier_cells(state: &ThreatState, side: Player, count: u8) -> BTreeSet<Coord> {
@@ -181,6 +200,9 @@ struct Row {
     staged: [usize; 3],
     /// Tier T alone under each option, ungated by the filter.
     tier_t: [usize; 3],
+    /// The same under the EXACT-count reading the design does NOT commit — the
+    /// difference between the two is what killed revision 1's Tier-T option.
+    tier_t_exact: [usize; 3],
     /// Tier-T cells lying outside the radius-2 ball, under each option.
     outside_ball: [usize; 3],
 }
@@ -204,11 +226,15 @@ fn census(state: &GameState, threats: &ThreatState) -> Option<Row> {
 
     let mut staged = [0usize; 3];
     let mut tier_t = [0usize; 3];
+    let mut tier_t_exact = [0usize; 3];
     let mut outside_ball = [0usize; 3];
     for (slot, option) in OPTIONS.iter().enumerate() {
         let mut t = tier_cells(threats, us, option.own);
         t.extend(tier_cells(threats, them, option.opponent));
         tier_t[slot] = t.len();
+        let mut e = tier_cells_exact(threats, us, option.own);
+        e.extend(tier_cells_exact(threats, them, option.opponent));
+        tier_t_exact[slot] = e.len();
         outside_ball[slot] = t.iter().filter(|cell| !pool.contains(cell)).count();
 
         staged[slot] = if win_now {
@@ -248,6 +274,7 @@ fn census(state: &GameState, threats: &ThreatState) -> Option<Row> {
         win_now,
         staged,
         tier_t,
+        tier_t_exact,
         outside_ball,
     })
 }
@@ -418,7 +445,8 @@ fn render(regimes: &Regimes<'_>) -> String {
     }
 
     for (label, pick) in [
-        ("FILTERED row (`Cover::Minimal`)", 0usize),
+        ("WIN-NOW row", 3usize),
+        ("FILTERED row (`Cover::Minimal`)", 0),
         ("`Cover::Impossible`", 1),
         ("BATCHED nodes", 2),
     ] {
@@ -433,6 +461,7 @@ fn render(regimes: &Regimes<'_>) -> String {
             let v = match pick {
                 0 => rows.iter().filter(|r| r.filtered).count() as f64,
                 1 => rows.iter().filter(|r| r.impossible).count() as f64,
+                3 => rows.iter().filter(|r| r.win_now).count() as f64,
                 _ => rows.iter().filter(|r| !r.filtered && !r.win_now).count() as f64,
             };
             out.push_str(&format!("{:.1} %", 100.0 * v / n));
@@ -441,7 +470,10 @@ fn render(regimes: &Regimes<'_>) -> String {
     }
 
     for (slot, option) in OPTIONS.iter().enumerate() {
-        out.push_str(&format!("| option {} — Tier T | ", option.name));
+        out.push_str(&format!(
+            "| option {} — Tier T (threshold, ADOPTED) | ",
+            option.name
+        ));
         let mut first = true;
         for (_, rows) in regimes {
             if !first {
@@ -449,6 +481,19 @@ fn render(regimes: &Regimes<'_>) -> String {
             }
             first = false;
             out.push_str(&cell(rows, |r| r.tier_t[slot] as f64));
+        }
+        out.push_str(" |\n");
+        out.push_str(&format!(
+            "| option {} — Tier T (exact, NOT adopted) | ",
+            option.name
+        ));
+        let mut first = true;
+        for (_, rows) in regimes {
+            if !first {
+                out.push_str(" | ");
+            }
+            first = false;
+            out.push_str(&cell(rows, |r| r.tier_t_exact[slot] as f64));
         }
         out.push_str(" |\n");
         out.push_str(&format!(
@@ -474,6 +519,19 @@ fn render(regimes: &Regimes<'_>) -> String {
                 "{staged:.2} = {:.2}x",
                 if staged > 0.0 { ball / staged } else { 0.0 }
             ));
+        }
+        out.push_str(" |\n");
+        out.push_str(&format!(
+            "| option {} — Tier T outside the r2 ball | ",
+            option.name
+        ));
+        let mut first = true;
+        for (_, rows) in regimes {
+            if !first {
+                out.push_str(" | ");
+            }
+            first = false;
+            out.push_str(&cell(rows, |r| r.outside_ball[slot] as f64));
         }
         out.push_str(" |\n");
     }
@@ -588,12 +646,52 @@ fn the_design_document_carries_this_censuss_table_verbatim() {
         .find(END)
         .unwrap_or_else(|| panic!("the design document carries no `{END}` marker"));
     assert!(end > start, "the census markers are in the wrong order");
+    // EXACTLY ONE PAIR. A reviewer appended a second BEGIN..END block carrying
+    // `option C — Tier T | 999.9999` and this test stayed green, because
+    // `find` takes the first pair and everything after `END` was unchecked.
+    assert_eq!(
+        doc.matches(BEGIN).count(),
+        1,
+        "the design document carries more than one census block; the pin checks the first"
+    );
+    assert_eq!(
+        doc.matches(END).count(),
+        1,
+        "more than one census END marker"
+    );
     let carried = doc[start..end].trim();
     assert_eq!(
         carried,
         table.trim(),
         "\n\nthe design document's census table has drifted from the instrument.\n\
          Replace the block between the two markers with:\n\n{table}"
+    );
+
+    // AND NO NUMBER FROM THE BLOCK IS RESTATED OUTSIDE IT. §6.2 claims this in
+    // words; without the check the claim was false at eight sites and the pin was
+    // green under a corruption of every one of them.
+    let outside = format!("{}{}", &doc[..start - BEGIN.len()], &doc[end + END.len()..]);
+    let mut restated: Vec<&str> = Vec::new();
+    for line in table.lines() {
+        for field in line.split('|').map(str::trim) {
+            // Only the four-decimal renderings are unambiguous enough to grep
+            // for; a bare "16" or "2.17x" occurs in prose for other reasons.
+            if field.len() >= 6
+                && field.contains('.')
+                && field.split('.').nth(1).is_some_and(|d| d.len() == 4)
+                && field.chars().all(|c| c.is_ascii_digit() || c == '.')
+                && outside.contains(field)
+            {
+                restated.push(field);
+            }
+        }
+    }
+    restated.sort_unstable();
+    restated.dedup();
+    assert!(
+        restated.is_empty(),
+        "these census figures are restated OUTSIDE the pinned block, where nothing checks \
+         them — cite the block instead: {restated:?}"
     );
 }
 

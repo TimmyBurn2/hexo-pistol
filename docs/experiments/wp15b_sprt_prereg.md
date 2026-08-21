@@ -428,3 +428,146 @@ The claim itself flips on the run. The DOCUMENT flips if the design's §8 soundn
 gate is not green at the run's revision (§9.4), if the committed radius policy
 moves before the run (which would change what engine B is), or if the arena's
 verdict vocabulary changes.
+
+---
+
+## 11. REVIEW STATE — this document ships as a DRAFT, queued for the operator
+
+**Both review cycles this session could run have been spent, and both FAILED.**
+The session's standing instruction is that a second failure ships the draft with
+both reports attached rather than starting a third amendment cycle, so that is
+what this section is. **Nothing here has been run and this document governs
+nothing.**
+
+| Cycle | Revision | Verdict |
+|---|---|---|
+| 1 | rev 1, `af9fa4a` | **FAILS** — 4 BLOCKING, 7 MAJOR |
+| 2 | rev 2, `9c068a0` | **FAILS** — 7 BLOCKING, 8 MAJOR, 2 MINOR, 9 REJECTED with reproducers |
+
+### 11.1 The finding that matters most, because revision 2 was built to answer it and did not
+
+Revision 1's dry-run criteria passed on a mutated arena that inverted the whole
+verdict. Revision 2 moved the criterion's referent from `timing_engine … time_ms`
+(below the record's own "excluded from every comparison" marker) to per-game
+`depth_a`/`depth_b` (above it) and asserted that this widened the class to the
+SCORE path.
+
+**It did not.** Both fields live on the same `Compute` struct, indexed by engine
+slot; `GameRecord::score_a()` is a disjoint function mapping `result` through
+`a_is_p1`. Revision 2 changed which FIELD it read, not which PATH. Re-measured
+under the same mutation:
+
+```
+BASE:       0 W / 7 L for seat A   pentanomial p0 3 p1 1 p2 0 p3 0 p4 0   nelo_pair -992.879886851
+MUTATION B: 7 W / 0 L for seat A   pentanomial p0 0 p1 0 p2 0 p3 1 p4 3   nelo_pair +992.879886851
+diff of `depth_a … depth_b` across the two reports: IDENTICAL
+```
+
+The verdict inverts completely and **both criteria still pass** — as both of
+revision 1's did. The complement was built too: mutating the *print* of
+`depth_a`/`depth_b` is caught instantly and changes no verdict, so the criterion
+is sensitive to exactly one thing — a defect that cannot change the answer.
+
+This is D-305's shape, one document over: a correction applied in one place and
+not propagated to the claim that rested on it.
+
+**A criterion that WOULD work, demonstrated by the reviewer and needing no new
+code**: reconstruct seat A's per-game score from the `game … p1 <label> … result
+<token>` line (above the marker, off the `score_a` path) and require agreement
+with `counts wins_a/losses_a`, the `pair … score_a` lines and the pentanomial.
+Under Mutation B that derivation disagrees with the report. Stronger still, and
+what a reviewer looks for first: re-adjudicate each recorded `moves` line through
+`pistol-core` outside the arena — which needs a named harness carrying its own
+governing revision.
+
+### 11.2 What the operator must fix before this document governs a run
+
+Verbatim from the second review, in its order of severity. Each is BLOCKING
+unless marked.
+
+1. **Rebuild Criterion 1 on the score path** (§11.1).
+2. **Re-state Criterion 1 so it passes on an HONEST run.** MEASURED on the real
+   dry-run matchup, game 6 of 8 has `depth_a 2 depth_b 2` — a tie — so the
+   registered "GREATER" fails on a correct arena. A criterion that fails on the
+   honest instrument and passes on the broken one is worse than none.
+3. **Create `configs/arena_wp15b_dryrun.toml` and actually run §8.** It has never
+   existed in this repository. The reviewer reconstructed and ran it; this session
+   did not, and CLAUDE.md requires the literal commands exercised BEFORE the
+   review passes.
+4. **§5 row 3 must name the DIRECTION.** `Sample::is_degenerate` fires on
+   `var <= 0`, which a `p0` sweep satisfies exactly as a `p4` sweep does — so as
+   written, §5 ACCEPTS the staged policy on a total defeat. Reproduced: `wins_a 0
+   … losses_a 8`, `pentanomial p0 4`, `distinct_n == n`, `verdict
+   inconclusive_degenerate`. And the 100-pair floor is no protection, because no
+   early stop is possible on a degenerate sample so it always clears the floor.
+   `p4 == pairs` → the H1 action; `p0 == pairs` → the `h0` row.
+5. **§5 needs a row for a BALANCED degenerate sample** — `distinct_n == n` with
+   `p2 == pairs`, which is every pair splitting 1-1 and is the modal outcome for
+   two closely matched deterministic engines. Reproduced with `turn_cap = 10`:
+   `capped 8`, `pentanomial p2 4`, no registered action. And §7's "every branch is
+   in §5" must be struck until it is true.
+6. **§7A's second instrument cannot measure the staged seat at the revision it
+   names.** `tools/baseline_snapshot.sh` at `e889b5b` hard-codes
+   `CONFIG="configs/instrument_v0.toml"` and has no config flag —
+   `--config configs/gate_v0.toml` gives `FAIL: unknown argument`. **And the
+   design already knows**: its §9 MATRIX M4 ADOPTS adding `--config`, and its
+   amendment 4 says the BEFORE run is re-taken under the amended script. So this
+   document pins the SUPERSEDED revision of an instrument its own design has
+   committed to changing — the tenth instance of D-305's pattern, crossing a
+   document boundary this time. Re-point it at the amended script, at the
+   revision that lands it.
+7. **§7A's agreement criterion is invariant under the stage it names as under
+   doubt.** It is conditioned on `h1`, so a score inversion that produces a false
+   `h0` never fires it; when it does fire, the staged generator is deeper by
+   construction (its whole claim is a 2.09×–2.17× branching reduction), so
+   deeper-and-weaker SATISFIES it and a false `h1` is confirmed rather than
+   caught; and `depth_turns` is a small integer, so most positions tie and ties
+   sit in the `>=` bucket. The two instruments are independent of each other and
+   jointly blind to the score path. **The CONSEQUENCE is correct and is D-245's
+   verbatim; the criterion is what fails.**
+8. **§7A's EXPENSIVE reclassification reverses D-245 without an ADR line.** D-245
+   records this package as having judged its run CHEAP and APPLIED the replication
+   clause, and warns in the same sentence that "a package that judged itself
+   EXPENSIVE in order to escape the clause would be a different instance entirely,
+   and it is the one T4 is still waiting for". §7A quotes that warning and then
+   performs the move. The re-costing itself is sound — the ≈18 core-hour anchor
+   reproduces — but shedding a logged duty unilaterally is the breach revision 2
+   convicted revision 1 of, in the other direction. Make it an OPERATOR-CONFIRM
+   slot and an ADR line amending D-245's T4 disposition, or keep the clause.
+9. MAJOR — **§4 renders three separate report records as one line**
+   (`experiment_sha256`, `openings_body_sha256`, `bounds`), in the section whose
+   whole purpose is exact spelling and which convicts revision 1 of that same
+   error; and it **never spells the `game …` line**, which is the line Criterion 1
+   reads, nor the `pair … score_a` line.
+10. MAJOR — **§8.3's referent names no position.** The depth and node figures
+    reproduce exactly (`depth_turns 2` / `3`, `nodes 50176`); the TIMES do not —
+    MEASURED 474 ms / 285 ms against this document's 396 / 240 — which is machine
+    variance on a quantity `report.rs` declares non-comparable, and §7 bills the
+    396 ms as a MEASURED cost.
+11. MAJOR — **§3's capped-game sentence is wrong in detail**: `score::tally`
+    excludes capped games from `decided`, `wins_a` and `losses_a`, not only from
+    `decided_clean`. The load-bearing half — they score 0.5 into the pentanomial,
+    D-157's acceleration — is correct and was verified.
+12. MINOR/MAJOR — **§9.3 does not bind `openings_take >= 100`**, so §2's floor is
+    unreachable if the slot is filled below it; **§9.5's probe is not required to
+    measure worst-case per-search time** against `hang_timeout_ms`, which is
+    justified from a radius-2 measurement for a seat whose per-search cost is
+    unmeasured; and **§3 cites D-283 without D-294's qualification**.
+
+### 11.3 What survived both rounds, so the operator knows what not to redo
+
+Worker-invariance of the verdict block (MEASURED byte-identical at 1 and 4
+workers). Criterion 2 on the `engine_id` handshake — it survives, it simply does
+not cover the score path. All nine report-line spellings §4 regenerated from
+source, and the `Verdict::token` list including that `inconclusive` is not a
+token. §6's corrected `gate_v0` quote and the 1.3 s / 554 s figures. §2's D-190
+precedent and its floor arithmetic — the reviewer brute-forced the minimum
+crossings independently and got **10** pairs with no capped games and **6** with,
+both exact. §3's D-157 capped-game treatment. §7's cost anchor (16.6 core-seconds
+per game reproduced against the document's 16.3). The pre-game refusal branch
+(exit 2, named error, no report file). And the rejection of the seat-swap
+criterion, which is right and should survive any rewrite.
+
+The second reviewer's own summary is the fairest description of where this
+document stands: **"The document's engineering is much better than revision 1's.
+It fails on where it aimed, not on care."**
