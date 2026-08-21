@@ -104,8 +104,18 @@ not record what a build script READ, so no answer about $CRATE_PATH was taken: $
 # number and its measurement live in one place.
 PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
 [ -f "$PREFLIGHT" ] || fail "the scratch preflight is missing beside this gate: $PREFLIGHT"
-bash "$PREFLIGHT" "$ROOT_ABS" ||
-	fail "not enough scratch space under $ROOT_ABS to build this workspace; the RUN VOID above names the filesystem, and NOTHING about $CRATE_PATH was measured"
+# TWO KINDS, NOT ONE (item 8). The preflight distinguishes its own exit 1 —
+# "the caller called this wrong" — from exit 2, "the run is void", and folding
+# them into one message asserts a space shortage where there may be none: a
+# malformed PISTOL_MIN_SCRATCH_KIB printed `the RUN VOID above names the
+# filesystem` above a line that named no filesystem and no shortage.
+PF_RC=0
+bash "$PREFLIGHT" "$ROOT_ABS" || PF_RC=$?
+case "$PF_RC" in
+0) ;;
+2) fail "not enough scratch space under $ROOT_ABS to build this workspace; the RUN VOID above names the filesystem, and NOTHING about $CRATE_PATH was measured" ;;
+*) fail "the scratch preflight refused its own arguments (exit $PF_RC); nothing about $CRATE_PATH was measured" ;;
+esac
 
 # THE BINARY SET IS WHAT CARGO JUST BUILT, not a glob over `target/`. An unscoped
 # `*.d` glob picks up `lib<crate>.d` — including the subject crate's own library
@@ -138,7 +148,19 @@ while IFS= read -r exe; do
 		# `crates/pistol-cli/src/bin/../../../pistol-solver/src/lib.rs`, and a
 		# plain substring match on the crate path returns ZERO hits on the very
 		# file it exists to catch — EXIT-0-WRONG-ANSWER, found by building this.
-		abs="$(realpath -ms -- "$src")" || fail "cannot canonicalise a dep-info entry of $dep"
+		# ANCHORED TO THE ROOT THIS GATE WAS GIVEN, never to the caller's
+		# working directory. `realpath -ms` resolves a RELATIVE entry against
+		# the process's cwd, and this loop runs wherever the caller stood — the
+		# two `cargo` calls above `cd` only inside their own subshells. Cargo
+		# emits relative entries whenever `build.dep-info-basedir` is set, a
+		# supported config key, and the same tree then answers three different
+		# ways as a function of the caller's `cd`: exit 0 with the wrong answer
+		# before the existence check below existed, exit 2 with it, and exit 1
+		# — the correct answer — only from the root.
+		case "$src" in
+		/*) abs="$(realpath -ms -- "$src")" ;;
+		*) abs="$(realpath -ms -- "$ROOT_ABS/$src")" ;;
+		esac || fail "cannot canonicalise a dep-info entry of $dep"
 		# EVERY ENTRY NAMES A FILE THAT IS THERE. rustc records the sources it
 		# READ, so an entry that is not a path is not a missing input — it is
 		# THIS PARSER having split the line in the wrong place, and the answer

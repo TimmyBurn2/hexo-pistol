@@ -739,3 +739,51 @@ fn no_solver_source_reaches_any_shipped_binary_of_this_workspace() {
         "no pistol-solver source may be an input to a shipped binary",
     );
 }
+
+/// A RELATIVE DEP-INFO ENTRY IS ANCHORED TO THE ROOT THE GATE WAS GIVEN, NOT TO
+/// THE CALLER'S WORKING DIRECTORY.
+///
+/// `build.dep-info-basedir` is a supported cargo config key, and with it set
+/// cargo emits relative prerequisites. `realpath -ms` resolves those against the
+/// PROCESS's cwd, and the entry loop runs wherever the caller stood — the two
+/// `cargo` calls above it `cd` only inside their own subshells. Measured at
+/// 6b03899 on this exact workspace: from a foreign cwd the gate answered exit 2
+/// («names nothing on disk»), and from the workspace root it answered exit 1,
+/// the correct answer — the same tree and the same arguments, three verdicts as
+/// a function of `cd` (exit 0 with the WRONG answer before the S29 existence
+/// check landed). This drives the gate from a directory that is neither.
+///
+/// Without a fixture that sets the key, an anchored resolve and a cwd-relative
+/// one are indistinguishable on every well-formed line, which is the same shape
+/// as the S29 mutant that survived eleven tests.
+#[test]
+fn a_relative_dep_info_entry_is_resolved_against_the_given_root() {
+    let root = workspace("link-relative-depinfo", Reach::IncludeStr);
+    write(
+        &root.join(".cargo/config.toml"),
+        "[build]\ndep-info-basedir = \".\"\n",
+    );
+
+    // Driven from a directory that is neither the workspace nor the repository,
+    // so a cwd-relative resolve cannot accidentally be right.
+    let elsewhere = scratch("link-relative-depinfo-cwd");
+    let ran = std::process::Command::new("bash")
+        .arg(repo("tools/solver_link_check.sh"))
+        .arg(&root)
+        .arg(SUBJECT)
+        .current_dir(&elsewhere)
+        .output()
+        .expect("bash runs the shipped script");
+
+    assert_code(
+        &ran,
+        1,
+        "the subject reaches the binary through include_str!, and relative \
+         dep-info does not change that",
+    );
+    let said = format!("{}{}", out(&ran), String::from_utf8_lossy(&ran.stderr));
+    assert!(
+        said.contains("REACHES a shipped binary"),
+        "and the verdict is the reaching one, not a void:\n{said}"
+    );
+}
