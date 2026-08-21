@@ -1,0 +1,101 @@
+# pistol — WP-1.5b's DRY RUN. Not an experiment, and it decides nothing.
+#
+# This document exists to satisfy CLAUDE.md's dry-run rule for
+# docs/experiments/wp15b_sprt_prereg.md: "A pre-registration's literal commands
+# are exercised before its review passes, on an input of the SAME KIND as the
+# registered workload — the same sort of artefact, differing only in identity —
+# and never on the registered workload itself. A synthetic stand-in exercises
+# syntax; only a real instance of the kind exercises ATTRIBUTION."
+#
+# IT IS A REAL INSTANCE OF THE KIND: an arena config, two genuinely different
+# engines, played through the real arena over a real sha-pinned book. It is not
+# the registered workload — it differs in identity on every axis that matters:
+#
+#   - ENGINES: radius 2 against radius 1. Neither is the staged seat under test,
+#     which does not exist at this revision.
+#   - BOOK: openings_v1.txt, the realism cross-check corpus, and NOT the primary
+#     SPRT book random_openings_v1.txt the governed run draws from.
+#   - SIZE: four openings, eight games.
+#
+# WHAT IS DELIBERATELY THE SAME, because a dry run that changes everything
+# exercises nothing: the budget, the turn cap, the worker count, the hang
+# timeout and the SPRT block are the governed run's, so the commands are
+# exercised against the shapes they will meet.
+#
+# THE VERDICT THIS PRODUCES IS NOT A RESULT. Four openings cannot cross an SPRT
+# boundary at these bounds and are not meant to; what the dry run reads is the
+# pre-registration's §8.3 criteria, which are about ATTRIBUTION and not about
+# strength. Nothing in this file may be quoted as a measurement of either engine.
+#
+# Validate this file with tools/config_check.sh.
+
+# The ARENA's schema version, unrelated to the engine configs' (D-15..D-17).
+schema_version = 2
+
+[run]
+# The realism cross-check corpus, and NOT the primary SPRT book (D-175). Chosen
+# for exactly that reason: the dry run must not draw from the governed run's own
+# workload.
+openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
+
+# Four openings, eight games. Enough that every criterion in §8.3 has several
+# games to be read over, and small enough that the whole dry run is minutes.
+openings_take = 4
+
+# From the top of the book.
+openings_skip = 0
+
+# The governed run's cap (game rule 6: an evaluation horizon, never a rule).
+# Kept identical so the dry run meets capped games if the matchup produces them,
+# and so `capped_fraction` is exercised on the real report path.
+turn_cap = 40
+
+# The governed run's worker count, whose invariance WP-1.3's red-team round
+# cleared at 1, 2, 4 and 8 over a full book.
+n_workers = 4
+
+# Liveness only, never an adjudication (D-159). The governed run's value.
+hang_timeout_ms = 120000
+
+[budget]
+# The registered snapshot budget, unchanged from the governed run: the dry run
+# exercises the commands at the cost they will actually be run at.
+kind = "nodes"
+value = 50000
+
+[sprt]
+# The governed run's bounds. `elo1` here is the value D-190's runs used, and it
+# is NOT the governed run's — that one is an OPERATOR-CONFIRM slot (§9.1) and
+# this document may not fill it. Nothing is concluded from the LLR either way;
+# the block is present so the report's instrument lines are the real ones.
+elo0 = 0.0
+elo1 = 25.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# WHICH SIDE IS `engine_a` IS LOAD-BEARING and it is load-bearing HERE for a
+# different reason than in a governed run. The arena's statistic is engine A's
+# score, so in an experiment the direction of H1 decides the slot. Here nothing
+# is being hypothesised: the slot decides which label §8.3's Criterion 1 expects
+# to see attached to which measured depth, and the criterion is written against
+# THIS assignment. Swapping the two engines without rewriting the criterion
+# inverts what it asks for, which is the mistake it exists to catch.
+label = "r2"
+binary = "target/release/pistol"
+# A path is not an identity: the arena digests the file before it spawns
+# anything and refuses a mismatch by name (D-147, D-252, D-283). Recorded from
+#   cargo build --release --locked --bin pistol && sha256sum target/release/pistol
+# REBUILD MEANS RE-RECORD — the digest going stale is the refusal this binding
+# exists to produce, not a defect in the document.
+binary_sha256 = "a7f519fade1124780463293b86e27cbdd0732540a84aa75acaed4de4689f03ce"
+config = "configs/instrument_v0.toml"
+
+[engine_b]
+# Radius 1. The narrower policy, which the external referent in §8.3 measures at
+# the GREATER completed depth for the same node count — D-190's own measured
+# mechanism, and the fact Criterion 1 reads the labels against.
+label = "r1"
+binary = "target/release/pistol"
+binary_sha256 = "a7f519fade1124780463293b86e27cbdd0732540a84aa75acaed4de4689f03ce"
+config = "configs/gate_v0.toml"
