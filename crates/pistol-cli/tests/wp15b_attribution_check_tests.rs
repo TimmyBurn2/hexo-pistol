@@ -8,8 +8,15 @@
 //! PASSED on an arena mutated to invert the entire verdict. The criterion is now
 //! a chain of three links, and a chain is only worth its weakest link, so each
 //! link is driven here against a report corrupted in exactly the way that link
-//! is supposed to notice — and, for the link that could pass by accident,
-//! against the input on which it WOULD.
+//! is supposed to notice — and, for the link that can pass by accident, against
+//! the inputs on which it WOULD.
+//!
+//! That last case is not hypothetical. A REVIEW-impl round built it: link 1a's
+//! first shipped guard counted discriminating turns over the whole RUN, so a
+//! seat swap confined to games where the two engines answer every replayed turn
+//! alike passed all three links and inverted a pair (docs/decisions.md D-308).
+//! `a_seat_swap_confined_to_games_link_1a_cannot_attribute_is_rejected` is that
+//! attack, kept.
 //!
 //! # No report is committed
 //!
@@ -23,9 +30,9 @@
 //!
 //! Link 1a replays a turn and asks whether the engine the report NAMES returns
 //! the move the report RECORDS. The referent is therefore whatever binary it is
-//! handed. Here that is a shell shim answering from a table this file writes, so
-//! a case can make the two seats answer differently (1a discriminates) or
-//! identically (1a is vacuous, and must say so rather than pass).
+//! handed. Here that is a shell shim answering from a table this file writes,
+//! keyed by opening, so a case can make one opening's games distinguishable and
+//! another's not.
 //!
 //! # RULE9-JUSTIFICATION: one instrument, one file, and the corrupted reports
 //! are the test cases — splitting the builder from the cases it exists to
@@ -40,23 +47,50 @@ use std::process::{Command, Output};
 
 use common::{repo, scratch};
 
-/// The book's length in the synthetic report: turns 1 and 2 are the opening, so
-/// the two turns the instrument replays are 3 (p1's first search) and 4 (p2's).
+/// Turns 1 and 2 are the book, so the turns the instrument replays are 3 (p1's
+/// first search of the game) and 4 (p2's).
 const OPENING_TURNS: usize = 2;
 
-/// What each seat's shim answers, by the number of turns already on the board.
-/// The two seats differ at both replayed turns, so link 1a discriminates.
-const RA_AT_2: &str = "1,1/2,2";
-const RA_AT_3: &str = "3,3/4,4";
-const RB_AT_2: &str = "5,5/6,6";
-const RB_AT_3: &str = "7,7/8,8";
+/// The second turn of each opening. It is the shim's key, so two openings can
+/// be given different discriminating behaviour in one report.
+const OPENINGS: [&str; 2] = ["0,1/1,-1", "2,2/3,3"];
 
-/// An honest report over two games and one pair.
+/// One opening's answers: what `ra` plays at turn 3 and turn 4, then what `rb`
+/// plays at the same two turns. Where the two seats' pair is equal, link 1a
+/// cannot tell them apart on that opening's games.
+struct Answers {
+    ra: (&'static str, &'static str),
+    rb: (&'static str, &'static str),
+}
+
+/// Both openings distinguish the seats: every game is attributable.
+fn both_openings_discriminate() -> [Answers; 2] {
+    [
+        Answers {
+            ra: ("1,1/2,2", "3,3/4,4"),
+            rb: ("5,5/6,6", "7,7/8,8"),
+        },
+        Answers {
+            ra: ("1,2/2,3", "3,4/4,5"),
+            rb: ("5,6/6,7", "7,8/8,9"),
+        },
+    ]
+}
+
+/// The SECOND opening does not: its two games are unattributable by link 1a,
+/// whatever the labels on them say.
+fn the_second_opening_does_not() -> [Answers; 2] {
+    let mut answers = both_openings_discriminate();
+    answers[1].rb = answers[1].ra;
+    answers
+}
+
+/// An honest report over four games and two pairs, one pair per opening.
 ///
-/// Game 0: `ra` first, four turns, so the last turn is p2's and `rb` won it.
-/// Game 1: `rb` first, five turns, so the last turn is p1's and `rb` won it too.
-/// Seat A is `ra` and loses both, which is `pentanomial p0 1`.
-fn honest_report(dir: &Path) -> String {
+/// Even game: `ra` first, four turns, so the last turn is p2's and `rb` won it.
+/// Odd game: `rb` first, five turns, so the last turn is p1's and `rb` won it
+/// too. Seat A is `ra` and loses all four, which is `pentanomial p0 2`.
+fn honest_report(dir: &Path, answers: &[Answers; 2]) -> String {
     let mut out = String::from("arena_report 4\n");
     out.push_str("arena_version 0.0.1\n");
     out.push_str(
@@ -74,21 +108,39 @@ fn honest_report(dir: &Path) -> String {
         ));
         out.push_str(&format!("engine_id {slot} candidate_policy radius 2\n"));
     }
-    out.push_str(
-        "game 0 opening 0 p1 ra p2 rb result p2_win end normal forfeit_by none reason none turns \
-         4 dup_of none nodes_a 1 nodes_b 1 depth_a 2 depth_b 3 llr_game none llr_pair none\n",
-    );
-    out.push_str(&format!("moves 0 0,0 0,1/1,-1 {RA_AT_2} {RB_AT_3}\n"));
-    out.push_str(
-        "game 1 opening 0 p1 rb p2 ra result p1_win end normal forfeit_by none reason none turns \
-         5 dup_of none nodes_a 1 nodes_b 1 depth_a 2 depth_b 3 llr_game none llr_pair none\n",
-    );
-    out.push_str(&format!(
-        "moves 1 0,0 0,1/1,-1 {RB_AT_2} {RA_AT_3} 9,9/9,8\n"
-    ));
+    for (opening, answer) in answers.iter().enumerate() {
+        let book = OPENINGS[opening];
+        // Even game: ra moves at turn 3, rb at turn 4, and the game ends there.
+        out.push_str(&format!(
+            "game {0} opening {opening} p1 ra p2 rb result p2_win end normal forfeit_by none \
+             reason none turns 4 dup_of none nodes_a 1 nodes_b 1 depth_a 2 depth_b 3 llr_game \
+             none llr_pair none\n",
+            opening * 2
+        ));
+        out.push_str(&format!(
+            "moves {} 0,0 {book} {} {}\n",
+            opening * 2,
+            answer.ra.0,
+            answer.rb.1
+        ));
+        // Odd game: the seats are reversed and one more turn is played.
+        out.push_str(&format!(
+            "game {0} opening {opening} p1 rb p2 ra result p1_win end normal forfeit_by none \
+             reason none turns 5 dup_of none nodes_a 1 nodes_b 1 depth_a 2 depth_b 3 llr_game \
+             none llr_pair none\n",
+            opening * 2 + 1
+        ));
+        out.push_str(&format!(
+            "moves {} 0,0 {book} {} {} 9,9/9,8\n",
+            opening * 2 + 1,
+            answer.rb.0,
+            answer.ra.1
+        ));
+    }
     out.push_str("pair 0 opening 0 bucket p0 score_a 0.000000000\n");
-    out.push_str("counts n 2 distinct_n 2 wins_a 0 capped 0 losses_a 2 forfeits 0 decided 2\n");
-    out.push_str("pentanomial p0 1 p1 0 p2 0 p3 0 p4 0\n");
+    out.push_str("pair 1 opening 1 bucket p0 score_a 0.000000000\n");
+    out.push_str("counts n 4 distinct_n 4 wins_a 0 capped 0 losses_a 4 forfeits 0 decided 4\n");
+    out.push_str("pentanomial p0 2 p1 0 p2 0 p3 0 p4 0\n");
     out.push_str("capped_fraction 0.000000000\n");
     out.push_str("llr_pair last -1.000000000\n");
     out.push_str("verdict inconclusive_at_game_cap\n");
@@ -97,16 +149,20 @@ fn honest_report(dir: &Path) -> String {
     out
 }
 
-/// A shim engine answering from a table, so a case decides whether the two seats
-/// are distinguishable. `--config <path>` selects the table; the position line's
-/// turn count selects the row.
-fn shim(dir: &Path, ra: (&str, &str), rb: (&str, &str)) -> PathBuf {
-    for (label, (at_two, at_three)) in [("ra", ra), ("rb", rb)] {
-        fs::write(
-            dir.join(format!("cfg-{label}.toml.answers")),
-            format!("2 {at_two}\n3 {at_three}\n"),
-        )
-        .expect("the answer table is written");
+/// A shim engine answering from a table. `--config <path>` selects the table;
+/// the position line's turn count and its OPENING select the row, so one report
+/// can hold an opening the seats differ on and one they do not.
+fn shim(dir: &Path, answers: &[Answers; 2]) -> PathBuf {
+    let mut tables = [String::new(), String::new()];
+    for (opening, answer) in answers.iter().enumerate() {
+        let book = OPENINGS[opening];
+        for (table, seat) in tables.iter_mut().zip([answer.ra, answer.rb]) {
+            table.push_str(&format!("2_{book} {}\n3_{book} {}\n", seat.0, seat.1));
+        }
+    }
+    for (label, table) in ["ra", "rb"].iter().zip(&tables) {
+        fs::write(dir.join(format!("cfg-{label}.toml.answers")), table)
+            .expect("the answer table is written");
     }
     let path = dir.join("shim-engine");
     fs::write(
@@ -123,13 +179,15 @@ while [ "$#" -gt 0 ]; do
 	*) shift ;;
 	esac
 done
-# The turn count is the number of tokens after `moves` on the position line.
+# `position start moves 0,0 <opening> …`: the turn count is the token count
+# after `moves`, and the opening is the second of those tokens.
 LINE="$(grep '^position start moves ' || true)"
 [ -n "$LINE" ] || { echo "shim: no position line" >&2; exit 1; }
 set -- $LINE
 TURNS=$(( $# - 3 ))
-ANSWER="$(awk -v n="$TURNS" '$1 == n { print $2 }' "$CONFIG.answers")"
-[ -n "$ANSWER" ] || { echo "shim: no answer for $TURNS turns in $CONFIG.answers" >&2; exit 1; }
+OPENING="$5"
+ANSWER="$(awk -v k="${TURNS}_${OPENING}" '$1 == k { print $2 }' "$CONFIG.answers")"
+[ -n "$ANSWER" ] || { echo "shim: no answer for ${TURNS}_${OPENING} in $CONFIG.answers" >&2; exit 1; }
 printf 'bestmove %s\n' "$ANSWER"
 "#,
     )
@@ -149,6 +207,31 @@ fn check(report: &Path, engine: &Path) -> Output {
         .expect("python3 runs the shipped instrument")
 }
 
+/// Assert the instrument's exit code in a message that says what the OTHER
+/// codes would have meant.
+///
+/// `tools/SHELL_CHECKLIST.md` item 12, obligation 3. A bare
+/// `assert_eq!(code, Some(1))` reports a VOID — the instrument saying it could
+/// not take the answer — as "it failed to reject an inverted verdict", which
+/// sends the reader at the wrong end of it.
+fn assert_code(ran: &Output, want: i32, what: &str) {
+    let got = ran.status.code();
+    if got == Some(want) {
+        return;
+    }
+    let meaning = match got {
+        Some(0) => "0 — all three links agree with the report",
+        Some(1) => "1 — a link disagrees, and the failing records are named",
+        Some(2) => "2 — the answer could not be taken; NOT a finding about the run",
+        _ => "a code this instrument does not define, or a signal",
+    };
+    panic!(
+        "{what}: expected exit {want}, got {got:?} ({meaning})\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&ran.stdout),
+        String::from_utf8_lossy(&ran.stderr)
+    );
+}
+
 fn said(ran: &Output) -> String {
     format!(
         "{}{}",
@@ -157,13 +240,13 @@ fn said(ran: &Output) -> String {
     )
 }
 
-/// Build the honest case, apply `corrupt` to the report text, and run the
-/// shipped instrument over the result.
-fn case(name: &str, corrupt: impl Fn(String) -> String) -> (Output, String) {
+/// Build a case: choose which openings distinguish the seats, corrupt the
+/// report, and run the shipped instrument over the result.
+fn case(name: &str, answers: [Answers; 2], corrupt: impl Fn(String) -> String) -> (Output, String) {
     let dir = scratch(name);
-    let engine = shim(&dir, (RA_AT_2, RA_AT_3), (RB_AT_2, RB_AT_3));
+    let engine = shim(&dir, &answers);
     let report = dir.join("report.txt");
-    fs::write(&report, corrupt(honest_report(&dir))).expect("the report is written");
+    fs::write(&report, corrupt(honest_report(&dir, &answers))).expect("the report is written");
     let ran = check(&report, &engine);
     let out = said(&ran);
     (ran, out)
@@ -173,19 +256,15 @@ fn case(name: &str, corrupt: impl Fn(String) -> String) -> (Output, String) {
 /// that refuses everything.
 #[test]
 fn an_honest_report_passes_all_three_links() {
-    let (ran, out) = case("attribution-honest", |text| text);
-    assert_eq!(
-        ran.status.code(),
-        Some(0),
-        "nothing is wrong with it:\n{out}"
-    );
+    let (ran, out) = case("attribution-honest", both_openings_discriminate(), |t| t);
+    assert_code(&ran, 0, "nothing is wrong with this report");
     assert!(out.contains("PASS — 0 failure(s)"), "{out}");
     assert!(
-        out.contains("1a: 4 turns replayed, 4 of them discriminating"),
+        out.contains("1a: 8 turns replayed, 8 of them discriminating, 4 of 4 games attributed"),
         "and it says how much of link 1a was live:\n{out}"
     );
     assert!(
-        out.contains("1b: 2 decided non-forfeit games adjudicated"),
+        out.contains("1b: 4 decided non-forfeit games adjudicated"),
         "{out}"
     );
 }
@@ -197,28 +276,28 @@ fn an_honest_report_passes_all_three_links() {
 /// perfectly consistent document.
 #[test]
 fn a_verdict_inverted_downstream_of_the_game_lines_is_rejected() {
-    let (ran, out) = case("attribution-inverted-score", |text| {
-        text.replace(
-            "counts n 2 distinct_n 2 wins_a 0 capped 0 losses_a 2",
-            "counts n 2 distinct_n 2 wins_a 2 capped 0 losses_a 0",
-        )
-        .replace(
-            "pair 0 opening 0 bucket p0 score_a 0.000000000",
-            "pair 0 opening 0 bucket p4 score_a 1.000000000",
-        )
-        .replace(
-            "pentanomial p0 1 p1 0 p2 0 p3 0 p4 0",
-            "pentanomial p0 0 p1 0 p2 0 p3 0 p4 1",
-        )
-    });
-    assert_eq!(
-        ran.status.code(),
-        Some(1),
-        "an inverted verdict FAILS:\n{out}"
+    let (ran, out) = case(
+        "attribution-inverted-score",
+        both_openings_discriminate(),
+        |text| {
+            text.replace(
+                "counts n 4 distinct_n 4 wins_a 0 capped 0 losses_a 4",
+                "counts n 4 distinct_n 4 wins_a 4 capped 0 losses_a 0",
+            )
+            .replace(
+                "bucket p0 score_a 0.000000000",
+                "bucket p4 score_a 1.000000000",
+            )
+            .replace(
+                "pentanomial p0 2 p1 0 p2 0 p3 0 p4 0",
+                "pentanomial p0 0 p1 0 p2 0 p3 0 p4 2",
+            )
+        },
     );
-    assert!(out.contains("FAIL 1c `counts wins_a 2` against 0"), "{out}");
+    assert_code(&ran, 1, "an inverted verdict is a finding");
+    assert!(out.contains("FAIL 1c `counts wins_a 4` against 0"), "{out}");
     assert!(
-        out.contains("FAIL 1c `pentanomial p4 1` against 0"),
+        out.contains("FAIL 1c `pentanomial p4 2` against 0"),
         "{out}"
     );
 }
@@ -228,12 +307,16 @@ fn a_verdict_inverted_downstream_of_the_game_lines_is_rejected() {
 /// list alone, without adjudicating a single stone.
 #[test]
 fn a_result_credited_to_the_seat_that_did_not_move_last_is_rejected() {
-    let (ran, out) = case("attribution-inverted-result", |text| {
-        text.replace("result p2_win", "result P1WIN")
-            .replace("result p1_win", "result p2_win")
-            .replace("result P1WIN", "result p1_win")
-    });
-    assert_eq!(ran.status.code(), Some(1), "{out}");
+    let (ran, out) = case(
+        "attribution-inverted-result",
+        both_openings_discriminate(),
+        |text| {
+            text.replace("result p2_win", "result P1WIN")
+                .replace("result p1_win", "result p2_win")
+                .replace("result P1WIN", "result p1_win")
+        },
+    );
+    assert_code(&ran, 1, "a result credited to the wrong seat is a finding");
     assert!(
         out.contains("FAIL 1b game 0: 4 turns were played, so the last turn was p2's"),
         "{out}"
@@ -246,11 +329,16 @@ fn a_result_credited_to_the_seat_that_did_not_move_last_is_rejected() {
 /// consistent. Only the engine, replayed outside the arena, disagrees.
 #[test]
 fn a_seat_label_attached_to_the_wrong_engine_is_rejected() {
-    let (ran, out) = case("attribution-swapped-labels", |text| {
-        text.replace("p1 ra p2 rb", "p1 rb p2 ra")
-            .replace("p1 rb p2 ra result p1_win", "p1 ra p2 rb result p1_win")
-    });
-    assert_eq!(ran.status.code(), Some(1), "{out}");
+    let (ran, out) = case(
+        "attribution-swapped-labels",
+        both_openings_discriminate(),
+        |text| {
+            text.replace("p1 ra p2 rb", "p1 XX p2 YY")
+                .replace("p1 rb p2 ra", "p1 ra p2 rb")
+                .replace("p1 XX p2 YY", "p1 rb p2 ra")
+        },
+    );
+    assert_code(&ran, 1, "a label on the wrong engine is a finding");
     assert!(out.contains("FAIL 1a game 0"), "{out}");
     assert!(
         out.contains("answers"),
@@ -258,61 +346,129 @@ fn a_seat_label_attached_to_the_wrong_engine_is_rejected() {
     );
 }
 
-/// LINK 1a CAN PASS BY ACCIDENT, AND MUST SAY SO.
+/// **THE REVIEW FINDING, KEPT AS AN ATTACK** (docs/decisions.md D-308).
 ///
-/// Two engines that answer identically satisfy the replay under ANY labelling,
-/// so on such an input link 1a is not a criterion at all. It is required to
-/// refuse rather than report a pass — which is the defect class this whole
-/// document exists for, one level down: a check that cannot fail.
+/// A seat swap confined to the games link 1a cannot attribute is invisible to
+/// the other two links by construction: 1b does not read labels at all, and 1c
+/// DERIVES seat A's score from the very `game` line the swap corrupts, so it
+/// agrees with totals mirrored to match. The first shipped guard counted
+/// discriminating turns over the whole RUN, so the discriminating pair carried
+/// the undiscriminating one and this passed with exit 0 — a verdict inverted on
+/// one of two pairs, blessed.
+///
+/// The guard is now per game, and this is what proves it.
 #[test]
-fn a_replay_that_cannot_discriminate_the_seats_is_refused_as_vacuous() {
-    let dir = scratch("attribution-vacuous");
-    // Both seats answer the same, and the report's moves are built from those
-    // answers, so every replay agrees with the report.
-    let engine = shim(&dir, (RA_AT_2, RA_AT_3), (RA_AT_2, RA_AT_3));
-    let report = dir.join("report.txt");
-    let text = honest_report(&dir)
-        .replace(RB_AT_2, RA_AT_2)
-        .replace(RB_AT_3, RA_AT_3);
-    fs::write(&report, text).expect("the report is written");
-    let ran = check(&report, &engine);
-    let out = said(&ran);
-    assert_eq!(
-        ran.status.code(),
-        Some(1),
-        "a check that cannot fail is not a pass:\n{out}"
+fn a_seat_swap_confined_to_games_link_1a_cannot_attribute_is_rejected() {
+    let (ran, out) = case(
+        "attribution-confined-swap",
+        the_second_opening_does_not(),
+        |text| {
+            // Only the second opening's pair is corrupted, and its totals are
+            // mirrored so the document stays internally consistent.
+            text.replace(
+                "game 2 opening 1 p1 ra p2 rb",
+                "game 2 opening 1 p1 rb p2 ra",
+            )
+            .replace(
+                "game 3 opening 1 p1 rb p2 ra",
+                "game 3 opening 1 p1 ra p2 rb",
+            )
+            .replace(
+                "counts n 4 distinct_n 4 wins_a 0 capped 0 losses_a 4",
+                "counts n 4 distinct_n 4 wins_a 2 capped 0 losses_a 2",
+            )
+            .replace(
+                "pair 1 opening 1 bucket p0 score_a 0.000000000",
+                "pair 1 opening 1 bucket p4 score_a 1.000000000",
+            )
+            .replace(
+                "pentanomial p0 2 p1 0 p2 0 p3 0 p4 0",
+                "pentanomial p0 1 p1 0 p2 0 p3 0 p4 1",
+            )
+        },
     );
-    assert!(out.contains("1a is VACUOUS"), "{out}");
+    assert_code(&ran, 1, "a swap the chain cannot see is not a pass");
     assert!(
-        out.contains("1a: 4 turns replayed, 0 of them discriminating"),
-        "and the count is on the record either way:\n{out}"
+        out.contains("1a cannot attribute 2 game(s) — 2, 3"),
+        "the refusal names WHICH games it could not attribute:\n{out}"
+    );
+    assert!(
+        out.contains("1a: 8 turns replayed, 4 of them discriminating, 2 of 4 games attributed"),
+        "and the aggregate count that hid this is still printed beside the per-game one:\n{out}"
     );
 }
 
-/// A REPORT IT CANNOT READ IS A THIRD THING (tools/SHELL_CHECKLIST.md item 12).
-/// Exit 2, and deliberately not exit 1: an unreadable input has not shown that
-/// anything is wrong with the run.
+/// AND IT REFUSES AN HONEST REPORT IT CANNOT CHECK, which is the same guard
+/// seen from the other side: the instrument does not certify what it did not
+/// verify. Without this case the guard above could be satisfied by an
+/// instrument that fires only when the labels also happen to look wrong.
 #[test]
-fn an_unreadable_report_is_exit_two_and_not_a_finding() {
-    let dir = scratch("attribution-unreadable");
-    let engine = shim(&dir, (RA_AT_2, RA_AT_3), (RB_AT_2, RB_AT_3));
-
-    let aborted = dir.join("aborted.txt");
-    fs::write(&aborted, "arena_report_aborted 4\naborted Whatever\n").expect("written");
-    let ran = check(&aborted, &engine);
-    let out = said(&ran);
-    assert_eq!(ran.status.code(), Some(2), "{out}");
-    assert!(out.contains("CANNOT READ"), "{out}");
-    assert!(
-        out.contains("not a report carrying a verdict"),
-        "named for what it is:\n{out}"
+fn an_honest_report_it_cannot_attribute_is_refused_rather_than_certified() {
+    let (ran, out) = case(
+        "attribution-honest-but-blind",
+        the_second_opening_does_not(),
+        |t| t,
     );
+    assert_code(&ran, 1, "an unverifiable game is not a verified one");
+    assert!(
+        out.contains("1a cannot attribute 2 game(s) — 2, 3"),
+        "{out}"
+    );
+}
 
-    // A report whose two seats share a label carries no attribution to check.
-    let same = dir.join("same-label.txt");
-    fs::write(&same, honest_report(&dir).replace("label rb", "label ra")).expect("written");
-    let ran = check(&same, &engine);
+/// A REPORT OR AN ENGINE IT CANNOT USE IS A THIRD THING
+/// (tools/SHELL_CHECKLIST.md item 12). Exit 2, and deliberately not exit 1: no
+/// answer was taken, so nothing has been shown about the run. An engine binary
+/// that was never built must not read as a seat-attribution defect.
+#[test]
+fn an_answer_that_could_not_be_taken_is_exit_two_and_not_a_finding() {
+    let dir = scratch("attribution-void");
+    let answers = both_openings_discriminate();
+    let engine = shim(&dir, &answers);
+    let honest = honest_report(&dir, &answers);
+
+    for (name, text, expect) in [
+        (
+            "aborted.txt",
+            String::from("arena_report_aborted 4\naborted Whatever\n"),
+            "not a report carrying a verdict",
+        ),
+        (
+            "same-label.txt",
+            honest.replace("label rb", "label ra"),
+            "both seats carry the label",
+        ),
+        (
+            "movetime.txt",
+            honest.replace("budget nodes 50000", "budget movetime_ms 400"),
+            "replays only a `nodes` budget",
+        ),
+        (
+            "twice.txt",
+            honest.replace("turns 4 dup_of none", "turns 4 turns 5 dup_of none"),
+            "appears twice on one record",
+        ),
+    ] {
+        let path = dir.join(name);
+        fs::write(&path, text).expect("written");
+        let ran = check(&path, &engine);
+        let out = said(&ran);
+        assert_code(&ran, 2, name);
+        assert!(out.contains("CANNOT READ"), "{name}:\n{out}");
+        assert!(
+            out.contains(expect),
+            "{name} is named for what it is:\n{out}"
+        );
+    }
+
+    let missing = dir.join("nothing-here.txt");
+    let ran = check(&missing, &engine);
+    assert_code(&ran, 2, "a report that is not there");
+
+    let report = dir.join("report.txt");
+    fs::write(&report, &honest).expect("written");
+    let ran = check(&report, &dir.join("no-such-engine"));
     let out = said(&ran);
-    assert_eq!(ran.status.code(), Some(2), "{out}");
-    assert!(out.contains("both seats carry the label"), "{out}");
+    assert_code(&ran, 2, "an engine binary that was never built");
+    assert!(out.contains("could not be run"), "{out}");
 }

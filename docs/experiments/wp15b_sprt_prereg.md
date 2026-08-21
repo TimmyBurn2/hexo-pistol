@@ -1,6 +1,6 @@
 # WP-1.5b — SPRT pre-registration: staged threat-first generation vs the committed radius policy
 
-**Revision 3. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
+**Revision 4. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
 
 **Revision 2 (`9c068a0`) FAILED its review — 7 BLOCKING, 8 MAJOR, 2 MINOR, 9 REJECTED
 with reproducers.** Revision 3 applies all twelve numbered fixes and repairs the
@@ -15,6 +15,16 @@ the moves* to *the printed verdict*, each link carrying a referent that does not
 the path it checks. It has been RUN — on the honest dry run, which it passes, and on
 three separately mutated arenas, one per link, each of which it fails. §8.5 is that
 table.
+
+**Revision 4 is an INSTRUMENT amendment, not a document one.** A fresh-context
+REVIEW-impl of the `tools/` half of revision 3 found link 1a's non-vacuity guard
+counted discriminating turns per RUN rather than per GAME, so a seat swap confined
+to games the replay cannot attribute passed all three links — the criterion's own
+named defect class, partially applied, passing. `tools/wp15b_attribution_check.py`
+is repaired and its revision moves with it; **docs/decisions.md D-308** carries the
+finding, four further defects in the same instrument, and two corrections to D-306.
+Under §10 an instrument change reopens this review exactly as a document change
+does, which is why this is revision 4 and not an edit to revision 3.
 
 **Revision 2 also performed a reversal it had no licence for**, reclassifying this run
 EXPENSIVE against D-245's record of it as CHEAP, in a paragraph that quoted D-245's
@@ -322,11 +332,17 @@ move list; 1c's is the `game`-line path, which `conclusion.rs::games` writes fro
 three is computed by the code it checks.
 
 **THE AGREEMENT CRITERION, registered before either instrument runs:** the
-instrument exits 0 over the governed report, having reported a non-zero
-discriminating count on link 1a and a non-zero adjudicated count on link 1b. Those
-two counts are the non-vacuity guard and the instrument refuses on them itself; the
-criterion names them so that a reader does not have to take the exit code's word
-for the check having had anything to bite on.
+instrument exits 0 over the governed report, having attributed **EVERY GAME** on
+link 1a and adjudicated a non-zero count on link 1b. The instrument refuses on both
+counts itself; the criterion names them so a reader does not have to take the exit
+code's word for the check having had anything to bite on.
+
+**Per GAME and not per run, and that distinction is D-308's** — an aggregate
+discriminating count lets a pair the replay can distinguish carry one it cannot,
+and a seat swap confined to the second is invisible to the whole chain, 1b being
+label-blind and 1c deriving from the line the swap corrupts. MEASURED on the dry
+run: 8 of 16 replayed turns do not discriminate, while every one of the 8 games has
+one that does. The criterion binds the games, not the turns.
 
 **THE REGISTERED CONSEQUENCE:** a non-zero exit means **THE RUN IS NOT A
 MEASUREMENT** — not an `h0`, not an `h1`, and not a re-run. The verdict is not
@@ -598,7 +614,7 @@ configs/gate_v0.toml        ->  info totals depth_turns 3 seldepth 4 nodes 50176
 **Criterion 1**, on the honest report:
 
 ```
-attribution_check: 1a: 16 turns replayed, 8 of them discriminating
+attribution_check: 1a: 16 turns replayed, 8 of them discriminating, 8 of 8 games attributed
 attribution_check: 1b: 7 decided non-forfeit games adjudicated against the move list
 attribution_check: 1c: 8 games and 4 pairs rebuilt off the score_a path
 attribution_check: PASS — 0 failure(s)          exit 0
@@ -648,6 +664,16 @@ FAIL 1c `counts wins_a 7` against 0 rebuilt from the `game` lines
 FAIL 1a game 0 turn 6: the report attributes `4,-3/4,1` to `r2`, and `r2` (configs/instrument_v0.toml) answers `4,-4/4,1`
 FAIL 1b game 0: 36 turns were played, so the last turn was p2's, and the report records `result p1_win`
 ```
+
+**A fourth attack, at report level rather than arena level, is carried by the
+instrument's own test suite** rather than by a worktree build: a seat swap confined
+to the games link 1a cannot attribute, with the pair's totals mirrored so the
+document stays internally consistent. On one report the pre-D-308 aggregate guard
+printed `PASS — 0 failure(s)`, exit 0; the shipped per-game guard prints `2 of 4
+games attributed` and refuses by name, exit 1. It is
+`a_seat_swap_confined_to_games_link_1a_cannot_attribute_is_rejected`, with an
+honest twin asserting that an unattributable report is refused even when nothing is
+wrong with it.
 
 **Each link is load-bearing and none is redundant**: B is invisible to 1a and 1b, C
 is invisible to 1b, and 1c alone would leave C's internal consistency unchallenged
@@ -728,17 +754,19 @@ the §7A.2 criterion cannot be taken under.
 
 ## 11. REVIEW STATE
 
-**This document has never passed a review, and it does not claim to.** Two cycles
-have run and both FAILED. Revision 3 applies every finding from the second and is
-**queued for a fresh-context review at THIS revision**, which the architect
-dispatches; CLAUDE.md's rule is that the revision governing a run must pass its own
+**This document has never passed a review, and it does not claim to.** Two full
+cycles have run and both FAILED; a third covered only the `tools/` instrument and
+failed that too. Revision 3 applied every finding from the second review, revision 4
+every finding from the third, and the document is **queued for a fresh-context
+review at THIS revision**, which the architect dispatches; CLAUDE.md's rule is that the revision governing a run must pass its own
 review, and reviews of superseded revisions do not transfer.
 
 | Cycle | Revision | Verdict |
 |---|---|---|
 | 1 | rev 1, `af9fa4a` | **FAILS** — 4 BLOCKING, 7 MAJOR |
 | 2 | rev 2, `9c068a0` | **FAILS** — 7 BLOCKING, 8 MAJOR, 2 MINOR, 9 REJECTED with reproducers |
-| 3 | rev 3, this revision | **OUTSTANDING** — not self-reviewed, not run |
+| 3 | rev 3, `e9a5145` | **PARTIAL** — a fresh-context REVIEW-impl covered the `tools/` half only (the instrument and its test), and FAILED it: 1 BLOCKING, 4 MAJOR, 4 MINOR (D-308). The DOCUMENT was explicitly out of that reviewer's scope and has never been reviewed at any revision |
+| 4 | rev 4, this revision | **OUTSTANDING** — the instrument is repaired and re-run; the document is not self-reviewed and not run |
 
 **Nothing here has been run as a governed sample and this document governs
 nothing.** The dry run of §8 is not a governed sample by CLAUDE.md's own text.
@@ -784,3 +812,4 @@ operator's: the dry-run criteria first, then the rest.
 | 10 | §8.3's referent names no position; the TIMES do not reproduce | §7 and §8.2/§8.4 name bench position 1 by `src`; §8.3 Criterion 3 excludes the times by name | Three machines on one quantity: 396/240, 474/285, 388/235 ms. Depth and nodes reproduce exactly |
 | 11 | §3's capped-game sentence is wrong in detail | §3, corrected against `score.rs` | `tally`'s `decided`/`decided_clean`/`wins_a`/`losses_a` all sit in the non-capped branch; the D-157 acceleration half is unchanged |
 | 12 | §9.3 does not bind `openings_take >= 100`; §9.5's probe need not measure worst-case per-search; §3 cites D-283 without D-294 | §9.3 carries the bound; §9.5 carries the worst-search requirement with the watchdog reasoning; §3 and §9.2 cite D-294 | — |
+| — | **REVIEW-impl on the `tools/` half of revision 3: link 1a's guard was per RUN, and a confined seat swap passed all three links** | The guard is per GAME; §7A.1's criterion binds every game; §8.5 carries the report-level attack | **D-308**, with the same report through both guards: exit 0 PASS before, exit 1 naming the games after. Four further instrument defects (void exit codes, a hardcoded replay budget, the `assert_eq!` seam, two notions of "line") and two corrections to D-306 are on the same line |

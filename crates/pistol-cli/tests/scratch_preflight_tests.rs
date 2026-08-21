@@ -24,11 +24,21 @@
 //! the facility D-297's red-team already used to reproduce the `df` column
 //! defect on a real filesystem rather than a simulated one.
 //!
-//! That is strictly the stronger instrument, and the override's removal is
-//! therefore not a loss of coverage. A raised floor exercised the COMPARISON and
-//! never the READING — which is exactly how a script reading the wrong column
-//! satisfied every refusal in this suite — and a small filesystem exercises
-//! both, its printed number being checked against the size it was made at.
+//! WHAT THAT DOES AND DOES NOT BUY, measured rather than asserted — the first
+//! version of this comment claimed more than it had (docs/decisions.md D-308).
+//! A raised floor could only ever move the number on the RIGHT of the `<`, so it
+//! exercised the comparison and never the reading. The small filesystem
+//! exercises the reading in ONE respect and not another:
+//!
+//! - IT CATCHES A WRONG DIRECTORY. A script reading some other filesystem prints
+//!   this machine's `/tmp` figure against a floor of 1 GiB and passes; here it
+//!   must print at most 1024 KiB. Mutation-gated: `stat … -- /tmp` in place of
+//!   `-- "$DIR"` fails this test and passes the referent test below.
+//! - IT DOES NOT CATCH A WRONG FIELD. MEASURED on a fresh 1 MiB tmpfs,
+//!   `%a`, `%f` and `%b` are all 256 — the fields collapse, so no assertion here
+//!   can separate them. `%a` → `%f` survives this whole suite, because `/tmp` is
+//!   itself a tmpfs with no root reservation and the referent below reads the
+//!   same directory. That residual is D-308's and is not closed here.
 //!
 //! # RULE9-JUSTIFICATION: one probe, one script, one set of exit codes.
 
@@ -42,6 +52,11 @@ use common::{repo, scratch};
 /// The floor the shipped script carries, restated rather than imported: this
 /// file is a CHECK on the script, and agreeing by construction proves nothing.
 const MIN_SCRATCH_KIB: u64 = 1_048_576;
+
+/// Printed by the harness inside the namespace once the mount has SUCCEEDED, so
+/// "this machine cannot make a small filesystem" and "the gate did not void" are
+/// two different readings of a failed run rather than one.
+const MOUNTED: &str = "harness: the small filesystem is mounted";
 
 fn preflight(dir: &Path) -> Output {
     Command::new("bash")
@@ -60,24 +75,62 @@ fn preflight(dir: &Path) -> Output {
 fn preflight_on_a_filesystem_of(dir: &Path, size: &str) -> Output {
     let ran = Command::new("unshare")
         .args(["-Ur", "-m", "bash", "-c"])
-        .arg(r#"set -eu; mount -t tmpfs -o size="$1" tmpfs "$2"; exec bash "$3" "$2""#)
+        .arg(
+            r#"set -eu; mount -t tmpfs -o size="$1" tmpfs "$2"; printf '%s\n' "$MOUNTED" >&2; exec bash "$3" "$2""#,
+        )
         .arg("harness")
         .arg(size)
         .arg(dir)
         .arg(repo("tools/scratch_preflight.sh"))
+        .env("MOUNTED", MOUNTED)
         .output();
     // FAIL LOUD, NEVER SKIP (hard rule 3). A machine that cannot manufacture a
     // full filesystem leaves the shortage branch of a gate untested, and that is
     // a fact a reader needs on the record — not a green test that quietly
     // checked nothing.
-    match ran {
+    //
+    // AND THE HARNESS SAYS SO ITSELF, rather than being inferred from an exit
+    // code. `unshare` being ABSENT is an `Err`; every other way this fails —
+    // user namespaces disabled by sysctl, a hardened container, seccomp, a
+    // `size` the kernel refuses — leaves the binary present and returns `Ok`
+    // with a non-zero status, which would land on the shortage assertion below
+    // and read as the preflight gate failing to void. The sentinel is printed
+    // only after the mount has actually happened, so its absence is the harness
+    // speaking about itself (tools/SHELL_CHECKLIST.md item 12).
+    let ran = match ran {
         Ok(ran) => ran,
         Err(why) => panic!(
             "this test drives the shipped script against a real {size} filesystem and needs \
              `unshare` with unprivileged user namespaces to make one; it could not be run \
              ({why}), so the SHORTAGE branch of tools/scratch_preflight.sh is UNTESTED here"
         ),
+    };
+    let out = said(&ran);
+    assert!(
+        out.contains(MOUNTED),
+        "the harness could not mount a {size} filesystem on this machine, so the SHORTAGE branch \
+         of tools/scratch_preflight.sh is UNTESTED here — this is NOT a finding about the gate:\n{out}"
+    );
+    ran
+}
+
+/// Assert the gate's exit code in a message that says what the OTHER codes
+/// would have meant (tools/SHELL_CHECKLIST.md item 12, obligation 3).
+fn assert_code(ran: &Output, want: i32, what: &str) {
+    let got = ran.status.code();
+    if got == Some(want) {
+        return;
     }
+    let meaning = match got {
+        Some(0) => "0 — there is room, and the number is printed",
+        Some(1) => "1 — the caller called this wrong; nothing was learned about the machine",
+        Some(2) => "2 — RUN VOID: no room, or the question could not be answered",
+        _ => "a code this gate does not define, or a signal",
+    };
+    panic!(
+        "{what}: expected exit {want}, got {got:?} ({meaning})\n{}",
+        said(ran)
+    );
 }
 
 fn said(ran: &Output) -> String {
@@ -95,7 +148,7 @@ fn a_directory_with_room_passes_and_prints_the_number_it_read() {
     let dir = scratch("preflight-control");
     let ran = preflight(&dir);
     let out = said(&ran);
-    assert_eq!(ran.status.code(), Some(0), "there is room here:\n{out}");
+    assert_code(&ran, 0, "there is room here");
     assert!(
         out.contains(&format!("floor {MIN_SCRATCH_KIB} KiB")),
         "the floor it applied is on the record:\n{out}"
@@ -118,11 +171,7 @@ fn a_filesystem_too_small_for_the_floor_is_a_named_run_void_and_not_a_failure() 
     let dir = scratch("preflight-void");
     let ran = preflight_on_a_filesystem_of(&dir, "1M");
     let out = said(&ran);
-    assert_eq!(
-        ran.status.code(),
-        Some(2),
-        "a shortage is exit 2, the void class:\n{out}"
-    );
+    assert_code(&ran, 2, "a shortage is the void class");
     assert!(out.contains("RUN VOID"), "spelled as a void:\n{out}");
     assert!(
         out.contains("nothing was measured and nothing failed"),
@@ -142,8 +191,10 @@ fn a_filesystem_too_small_for_the_floor_is_a_named_run_void_and_not_a_failure() 
         .find_map(|(value, unit)| (unit == "KiB").then(|| value.parse().ok())?)
         .unwrap_or_else(|| panic!("the void names what it read:\n{out}"));
     assert!(
-        printed <= 1024,
-        "the number is the 1 MiB filesystem's own, not another one's: {printed} KiB\n{out}"
+        (1..=1024).contains(&printed),
+        "the number is the 1 MiB filesystem's own, not another one's and not zero: {printed} \
+         KiB — and `0 KiB available` is one of the two directions D-297 measured a wrong field \
+         reporting, so it is refused here rather than passing as `small enough`:\n{out}"
     );
 }
 
@@ -154,7 +205,7 @@ fn a_missing_directory_is_a_void_rather_than_an_answer() {
     let dir = scratch("preflight-missing").join("nothing-here");
     let ran = preflight(&dir);
     let out = said(&ran);
-    assert_eq!(ran.status.code(), Some(2), "{out}");
+    assert_code(&ran, 2, "a directory that is not there");
     assert!(out.contains("RUN VOID"), "{out}");
     assert!(
         out.contains("no such directory"),
@@ -171,7 +222,7 @@ fn calling_it_wrongly_is_exit_one_and_is_not_a_void() {
         .output()
         .expect("bash runs the shipped script");
     let out = said(&ran);
-    assert_eq!(ran.status.code(), Some(1), "{out}");
+    assert_code(&ran, 1, "no argument at all");
     assert!(
         !out.contains("RUN VOID"),
         "a usage error is not a void:\n{out}"
@@ -195,10 +246,10 @@ fn the_retired_environment_override_no_longer_moves_the_floor() {
         .output()
         .expect("bash runs the shipped script");
     let out = said(&ran);
-    assert_eq!(
-        ran.status.code(),
-        Some(0),
-        "a binding nothing reads cannot void a healthy directory:\n{out}"
+    assert_code(
+        &ran,
+        0,
+        "a binding nothing reads cannot void a healthy directory",
     );
     assert!(
         out.contains(&format!("floor {MIN_SCRATCH_KIB} KiB")),
@@ -230,7 +281,7 @@ fn the_printed_available_number_agrees_with_a_referent_the_script_did_not_comput
     let dir = scratch("preflight-referent");
     let ran = preflight(&dir);
     let out = said(&ran);
-    assert_eq!(ran.status.code(), Some(0), "there is room here:\n{out}");
+    assert_code(&ran, 0, "there is room here");
 
     let referent = Command::new("stat")
         .args(["-f", "-c", "%a %S"])

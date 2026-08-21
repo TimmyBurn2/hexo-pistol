@@ -39,7 +39,19 @@ Three links, each with a referent that does NOT share the suspect path:
       pentanomial — all of which come through `GameRecord::score_a`, a disjoint
       function. The referent is the other code path.
 
-Exit 0 all three pass, 1 any fail, 2 the report could not be read.
+Exit 0 all three pass, 1 any fail, 2 THE ANSWER COULD NOT BE TAKEN — an
+unreadable report, a missing or unrunnable engine, a malformed record, a budget
+this cannot replay (tools/SHELL_CHECKLIST.md item 12: a void is not a finding,
+and a reader sent hunting a seat-attribution defect by a missing binary is the
+defect that item exists to stop).
+
+LINK 1a'S GUARD IS PER GAME AND NOT PER RUN. Two engines that answer a turn
+identically leave that turn unattributed, and 1b is label-blind while 1c DERIVES
+from the very `game` line a label swap corrupts — so a swap confined to games
+where no replayed turn discriminates would pass all three. An aggregate count
+cannot see that: MEASURED on the dry run, 8 of 16 replayed turns do not
+discriminate while every one of the 8 games has one that does. The count is
+therefore taken per game and a game with none is a FAILURE, not a note.
 """
 
 import re
@@ -53,16 +65,30 @@ def die(why):
 
 
 def fields(line):
-    """`game 0 opening 3 p1 r2 …` -> {'game': '0', 'opening': '3', 'p1': 'r2', …}."""
+    """`game 0 opening 3 p1 r2 …` -> {'game': '0', 'opening': '3', 'p1': 'r2', …}.
+
+    ONE SPELLING PER NUMBER (item 8): a repeated key is refused rather than
+    silently last-wins, which would let a human read the first `result` and this
+    read the second.
+    """
     parts = line.split()
-    return {parts[i]: parts[i + 1] for i in range(0, len(parts) - 1, 2)}
+    out = {}
+    for at in range(0, len(parts) - 1, 2):
+        key, value = parts[at], parts[at + 1]
+        if key in out:
+            die(f"the key `{key}` appears twice on one record: `{line}`")
+        out[key] = value
+    return out
 
 
 def main():
     if len(sys.argv) != 3:
         die("usage: attribution_check.py <report> <engine-binary>")
     report, engine = sys.argv[1], sys.argv[2]
-    text = open(report, encoding="utf-8").read()
+    try:
+        text = open(report, encoding="utf-8").read()
+    except OSError as why:
+        die(f"{report} could not be read: {why}")
     # The verdict block only. Everything past the marker report.rs declares
     # "excluded from every comparison", and a criterion resting on it is the
     # defect revision 1 shipped.
@@ -86,8 +112,27 @@ def main():
         die("no `opening_turns` line")
     opening_turns = int(opening_turns.group(1))
 
+    # THE REPLAY MUST BE TAKEN AT THE RUN'S OWN BUDGET, and only a deterministic
+    # one can be replayed at all: link 1a's premise is that a fresh process
+    # reproduces the move exactly. `movetime_ms` does not, and a hardcoded node
+    # count silently replays a different search than the one under test.
+    budget = re.search(r"^budget (\S+) (\d+)$", text, re.M)
+    if not budget:
+        die("no `budget` line, so the replay has no budget to be taken at")
+    if budget.group(1) != "nodes":
+        die(
+            f"this replays only a `nodes` budget and the run used `{budget.group(1)}`; a budget "
+            "that is not reproducible cannot carry link 1a"
+        )
+    budget = f"go nodes {budget.group(2)}"
+
     games, moves = [], {}
-    for line in text.splitlines():
+    # `split("\n")` and NOT `splitlines()`: the latter also breaks on \r, \x0b,
+    # \x0c, U+2028 and U+0085, while every other read here is `re.M`, which
+    # breaks on \n alone. Two notions of "line" over one document is how an
+    # engine's VERBATIM refusal — free text this format copies through unquoted —
+    # injects a record (item 9).
+    for line in text.split("\n"):
         if line.startswith("game "):
             games.append(fields(line))
         elif line.startswith("moves "):
@@ -100,8 +145,10 @@ def main():
 
     # ---- 1a  LABEL -> ENGINE, by replay ------------------------------------
     checked = discriminating = 0
+    unattributed = []
     for game in games:
         index = game["game"]
+        here = 0
         played = moves.get(index)
         if played is None:
             die(f"game {index} has no `moves` line")
@@ -116,12 +163,15 @@ def main():
             prefix = " ".join(played[:free])
             answers = {}
             for label, config in by_label.items():
-                said = subprocess.run(
-                    [engine, "--config", config],
-                    input=f"position start moves {prefix}\ngo nodes 50000\nquit\n",
-                    capture_output=True,
-                    text=True,
-                )
+                try:
+                    said = subprocess.run(
+                        [engine, "--config", config],
+                        input=f"position start moves {prefix}\n{budget}\nquit\n",
+                        capture_output=True,
+                        text=True,
+                    )
+                except OSError as why:
+                    die(f"`{engine}` could not be run: {why}")
                 best = [x for x in said.stdout.splitlines() if x.startswith("bestmove ")]
                 if len(best) != 1:
                     die(
@@ -132,19 +182,27 @@ def main():
             checked += 1
             if answers[label_a] != answers[label_b]:
                 discriminating += 1
+                here += 1
             if answers[mover] != played[free]:
                 failures.append(
                     f"1a game {index} turn {free + 1}: the report attributes `{played[free]}` to "
                     f"`{mover}`, and `{mover}` ({by_label[mover]}) answers `{answers[mover]}`"
                 )
-    # NON-VACUITY. Two engines that agree everywhere satisfy 1a whichever way
-    # the labels are attached, so the count of turns on which they DISAGREE is
-    # what makes this a criterion rather than a formality.
-    notes.append(f"1a: {checked} turns replayed, {discriminating} of them discriminating")
-    if discriminating == 0:
+        if here == 0:
+            unattributed.append(index)
+    # NON-VACUITY, PER GAME. Two engines that answer a game's replayed turns
+    # identically leave THAT GAME unattributed whatever the labels say, and no
+    # other link can see a swap on it — 1b does not read labels and 1c derives
+    # from the line the swap corrupts. An aggregate count hides exactly that.
+    notes.append(
+        f"1a: {checked} turns replayed, {discriminating} of them discriminating, "
+        f"{len(games) - len(unattributed)} of {len(games)} games attributed"
+    )
+    if unattributed:
         failures.append(
-            "1a is VACUOUS on this input: the two engines answered identically on every turn "
-            "replayed, so the check passes under any labelling"
+            f"1a cannot attribute {len(unattributed)} game(s) — {', '.join(unattributed)} — "
+            "because the two engines answered every replayed turn in them identically, so a "
+            "seat swap confined to those games would pass all three links"
         )
 
     # ---- 1b  MOVES -> RESULT, by game rule 3 -------------------------------
@@ -183,6 +241,8 @@ def main():
         die("no `counts` line")
     counts = fields(counts.group(1))
     for key, value in derived.items():
+        if key not in counts:
+            die(f"the `counts` line carries no `{key}`")
         if int(counts[key]) != value:
             failures.append(
                 f"1c `counts {key} {counts[key]}` against {value} rebuilt from the `game` lines"
@@ -207,6 +267,8 @@ def main():
     pentanomial = fields(pentanomial.group(1))
     for slot in range(5):
         mine = sum(1 for bucket in buckets if bucket == slot)
+        if f"p{slot}" not in pentanomial:
+            die(f"the `pentanomial` line carries no `p{slot}`")
         if int(pentanomial[f"p{slot}"]) != mine:
             failures.append(
                 f"1c `pentanomial p{slot} {pentanomial[f'p{slot}']}` against {mine} rebuilt from "
@@ -223,4 +285,12 @@ def main():
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    # A FIELD THAT IS NOT THERE, OR IS NOT A NUMBER, IS A VOID AND NOT A FINDING
+    # (item 12). Every read above names its record, so the refusal names the key;
+    # what this catches is the reads too numerous to guard one at a time, and it
+    # catches them into exit 2 rather than letting a traceback exit 1 and read as
+    # "the run's seats are mis-attributed".
+    try:
+        raise SystemExit(main())
+    except (KeyError, ValueError, IndexError) as why:
+        die(f"a record in the report is malformed: {why!r}")
