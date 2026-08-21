@@ -1,6 +1,20 @@
 # WP-1.5b — SPRT pre-registration: staged threat-first generation vs the committed radius policy
 
-**Revision 1. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
+**Revision 2. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
+
+**Revision 1 (`af9fa4a`) FAILED its review — 4 BLOCKING, 7 MAJOR.** The finding of
+the round was built rather than argued: the reviewer mutated the arena's SCORE
+attribution path, producing a completely inverted verdict (`nelo_pair` −992.88 →
++992.88, `wins_a 0` → `wins_a 7`, pentanomial mirrored), and **both of revision
+1's registered dry-run criteria PASSED on it**. The class revision 1 named —
+"attributes one seat's games, SCORE or compute to the other seat's label … the
+most damaging way, silently" — was covered only on the compute half. §8 is
+rebuilt around a referent that sits above the timing marker and discriminates the
+seats deterministically.
+
+Revision 1 also dropped a commitment already on the ADR log: **D-245 names this
+document by name** and pre-commits its second instrument and its consequence.
+Revision 1 provided neither. §7A is that repair.
 
 It names `configs/instrument_staged_v0.toml`, which does not exist at this
 revision, so it cannot govern a run and no run has been taken under it. It becomes
@@ -58,10 +72,16 @@ them would need an experiment this document does not describe.
   reversed, and the pentanomial pair outcome is the sample. This is the unit
   D-190's runs used and the one `sprt.rs` implements.
 
-**The pair floor: 100 pairs.** No H1 action fires below it. This is not caution
-for its own sake — D-190 records the smallest possible crossing at this
-alternative as **ten pairs**, and a config change resting on twenty games is not
-one this project makes. D-190's own Run 1 crossed at 37 pairs, the action was
+**The pair floor: 100 pairs.** No H1 action fires below it. Its ground, stated
+with the conditions revision 1 stripped off: D-190 records the smallest possible
+crossing as **ten pairs** — and that number holds only at `elo1 = 25` (which §9.1
+leaves OPEN, and which §9.1 itself contemplates lowering) **and only with no
+capped game**. With capped pairs in play it falls to **six**, because a mass point
+at a half shrinks the variance and ACCELERATES the LLR, which is D-157's measured
+mechanism. This run sets `turn_cap = 40` and a same-kind dry run MEASURED
+`capped_fraction 0.125`, so six is the live number. The floor of 100 is safe under
+either, but a quoted number carries its conditions and this one had been stripped
+of them in a document that then sets a cap and reports the cap count. D-190's own Run 1 crossed at 37 pairs, the action was
 WITHHELD, and a confirmatory run on a disjoint book decided it. That precedent is
 adopted here in advance rather than discovered again.
 
@@ -79,7 +99,7 @@ adopted here in advance rather than discovered again.
 | `openings_take` | **OPERATOR-CONFIRM** (§9.3) |
 | `openings_skip` | 0 |
 | budget | `kind = "nodes"`, `value = 50000` — the registered snapshot budget and D-190's, so the number is comparable with the runs already on the record |
-| `turn_cap` | 40, as D-190's runs. A capped game has no winner and is excluded from the decided denominator, so a cap that BOUND would silently shrink the sample; the cap count is reported |
+| `turn_cap` | 40, as D-190's runs. **A capped game is NOT excluded from the SPRT sample** — it scores 0.5 into the pentanomial, and D-157 MEASURES that adding capped games ACCELERATES the LLR for a fixed decisive record (a 100-80 record scores 0.2198 with none and 1.1109 with 16000). It is excluded only from `decided_clean`, the first-player-rate denominator. Revision 1 had this backwards. `capped_fraction` and the cap count are reported |
 | `n_workers` | 4 — cleared by WP-1.3's own red-team round, which got byte-identical verdict blocks at 1, 2, 4 and 8 workers over a full book through a real early stop |
 | `hang_timeout_ms` | 120000 — liveness only, never an adjudication (D-159) |
 
@@ -96,19 +116,32 @@ file's path (D-147, D-161).
 
 ## 4. What the run reports, and which lines are read
 
-From `crates/pistol-arena/src/report.rs`, above the `# timing` marker and
-therefore worker-invariant and byte-comparable:
+**Taken from `crates/pistol-arena/src/conclusion.rs` and `sprt.rs`, not from
+memory.** Revision 1 misspelled six of eight lines and keyed §5 on a verdict token
+that does not exist; the spellings below are read off the source and the token
+list off `Verdict::token`. Above the `# timing` marker, therefore worker-invariant
+and byte-comparable:
 
 ```
-verdict <token>            h1 | h0 | inconclusive | inconclusive_degenerate | invalid_forfeit
-llr_pair <x>   bounds h0 <a> h1 <b>
-nelo_pair <x> ci95 +/- <y>
-pentanomial <a>/<b>/<c>/<d>/<e>
-n <games>   distinct_n <games>   forfeits <k>
-first_player_wins <k> of <n> decided
-engine a label … config … config_sha256 …
-engine b label … config … config_sha256 …
+verdict <token>        h1 | h0 | inconclusive_at_game_cap | inconclusive_degenerate | invalid_forfeit
+verdict_unit pair
+verdict_if_clean <token> pairs_dropped <k>
+counts n <n> distinct_n <d> wins_a <w> capped <c> losses_a <l> forfeits <f> decided <k>
+capped_fraction <x>
+pentanomial p0 <a> p1 <b> p2 <c> p3 <d> p4 <e>
+first_player_wins <k> of <n> decided_non_forfeit forfeits <f>[ conditional]
+llr_pair last <x>
+nelo_pair <x> ci95 <y>
+experiment_sha256 <hex>   openings_body_sha256 <hex>   bounds h0 <a> h1 <b>
+engine <slot> label … config <path> config_sha256 <hex> weights_sha256 <hex>
+engine_id <slot> <line>          — the ENGINE's own handshake, one line per field
 ```
+
+`inconclusive` is **not** a token. `bounds h0 … h1 …` is a separate line in the
+instrument block, not a tail of `llr_pair`. `first_player_wins` is over decided
+NON-FORFEIT games with the forfeit count adjacent (D-201), which revision 1 wrote
+in its pre-D-201 spelling — apparently copied from a comment in
+`configs/arena_wp13_fair_random.toml` rather than from the source it cited.
 
 and below it, machine-dependent and excluded from comparison:
 `timing_engine a|b time_ms <t> searches <s>`.
@@ -126,10 +159,12 @@ Fixed here so that no reading is chosen after the numbers.
 |---|---|
 | `verdict h1` **at or above 100 pairs** | The staged policy is accepted as stronger AT THIS BUDGET AND BOOK. The committed config moves to staged in a separate commit, after the run, exactly as D-194 did — never during a live sample |
 | `verdict h1` **below 100 pairs** | The action is WITHHELD. A confirmatory run on a DISJOINT sample decides it: the same document with `openings_file` changed to `openings_v1.txt` and `openings_take` re-stated, which is D-190's own instrument. Both intervals are then reported together and both are read as optimistic — D-190 MEASURED coverage at a sequential stop at 0.868 against 0.978 for a run reaching the cap |
+| `verdict inconclusive_degenerate` **with `distinct_n == n`** (no duplicate games) and a one-sided pentanomial | **A CLEAN SWEEP, and revision 1 had no action for it.** `Sample::is_degenerate` is `n == 0 \|\| var <= 0` — every pair scoring the SAME, which includes one seat winning every pair. Reproduced by the reviewer with two genuinely different configs and zero duplicate games. This is the strongest possible positive result and revision 1 routed it to "investigate the instrument". The action: treat it as `h1` for the purposes of §5's first two rows, subject to the same 100-pair floor, and record that no LLR exists (`llr_pair last none`) so the crossing cannot be quoted |
+| `verdict inconclusive_degenerate` **with `distinct_n == n/2`** | The two seats really did play identical games. For two DIFFERENT configs that is a document or digest error. Investigate the instrument, not the engine. **No early stop is possible on a degenerate sample**, so either row costs the whole book |
 | `verdict h0` | The staged policy is NOT accepted. **This is a planning finding, never a threshold move.** See §6 |
-| `inconclusive` at the game cap | Reported as inconclusive. No action. The sample is reported with its LLR and its distance from both bounds |
-| `inconclusive_degenerate` | The two seats played identical games — which for two DIFFERENT configs would mean the configs are not different, i.e. a document or digest error. Investigate the instrument, not the engine |
+| `verdict inconclusive_at_game_cap` | Reported as inconclusive. No action. The sample is reported with its LLR and its distance from both bounds |
 | `invalid_forfeit`, or `forfeits > 0` at any verdict | **The run is not a measurement.** It is reported rather than discarded, and re-run only after the forfeit's cause is found. D-158 keeps the result and the manner of it separate; a forfeit is a decided result, so a rate computed over forfeits prints on the very line the run exists to produce |
+| A PRE-GAME refusal — `EngineBinaryDigestMismatch`, an openings-digest mismatch, a config refusal, or an `--out` path that exists | **exit 2 and NO REPORT AT ALL.** Revision 1 had no row and asserted in §7 that "every branch is in §5". §9.2 makes the stale-digest branch live by construction: any rebuild at the run's revision changes it. The action is to re-record the digest and re-launch; nothing has been measured |
 | `arena_report_aborted` | No verdict exists. The games are a diagnostic and explicitly not a sample (report.rs's own header) |
 
 **The turn cap and the book are part of the claim.** A verdict is about
@@ -142,8 +177,14 @@ them would be a claim nobody measured (D-190's own discipline).
 
 **This is the change the whole stage exists for.** `docs/ROADMAP.md` Stage 1 is
 built around threat-first generation superseding the radius policy, and
-`configs/gate_v0.toml`'s committed measurement table — radius 2 reaching depth 3
-in "> 100 s" — is the floor it exists to move.
+`configs/gate_v0.toml`'s committed measurement table is the floor it exists to
+move. **Quoted correctly, which revision 1 did not do**: that table reads radius 2
+at `depth_turns 3` as **9.7 s** and `> 100 s` at `depth_turns 4`. Revision 1
+attributed the `> 100 s` cell to depth 3 — one column left — and the design
+document inherits the same misread. The cost is also strongly position-dependent:
+MEASURED, radius 2 reaches depth 3 in **1.3 s** on bench position 1, while the
+design measures 554 s for a full-width REFERENCE at the same radius and depth on
+another position.
 
 **And the design's own measurements do not promise a large effect.** MEASURED from
 the committed census, on the BATCHED node population that the quiet cut actually
@@ -174,11 +215,58 @@ not).
 |---|---|---|
 | One search at the registered budget | ~0.4 s | **396 ms** (radius 2, 50 000 nodes, release, one bench position) |
 | One game, both seats, 40-turn cap | ESTIMATED 30–60 s | to be MEASURED by the operator's calibration probe |
-| The governed run | ESTIMATED from the above and `openings_take`: at 4 workers, **OPERATOR-CONFIRM** (§9.3) decides it. For scale, `configs/arena_wp13_r2_vs_r3.toml`'s 2000-opening shape is recorded by D-292 at **5.44 core-hours, about 82 minutes wall** | the operator's |
+| The governed run | ESTIMATED; **OPERATOR-CONFIRM** (§9.3) decides it. For scale D-292 records `arena_wp13_r2_vs_r3.toml`'s 2000-opening shape at **5.44 core-hours, ~82 min wall** — **and that anchor does not transfer**. Its 4.9 s/game came from a probe whose games were ≤ 13 turns; a same-kind reconstruction of THIS document's dry-run matchup MEASURED **16.3 core-seconds per game** over games of 26–40 turns, 3.3× higher, scaling to ≈18 core-hours at the same shape. Per-game cost is matchup- and length-dependent by a factor of three, which is why §9.3 is a slot and not a number | the operator's |
+| The calibration probe that fills §9.3 | ESTIMATED ~5 min | **Registered as an instrument** (§9.6), because it produces a number this document registers and CLAUDE.md's clause is not about where an artefact lives |
 | The dry run (§8) | ~3 min | to be MEASURED at execution |
 | Operator attention | one launch, one report read; no mid-run decision exists — every branch is in §5 | — |
 
 ---
+
+## 7A. The second instrument, its agreement criterion, and its consequence
+
+**This is a commitment already on the ADR log, and revision 1 dropped it.** D-245
+names this document: *"WP-1.5b's SPRT pre-registration, whose second instrument is
+the baseline snapshot's completed-depth change and whose registered consequence is
+that on disagreement the work package does not land on the SPRT alone."* Revision
+1 provided no second instrument, no criterion, no consequence and no stage under
+doubt — which under rule 10 is dropping a recorded commitment silently.
+
+**Is the run cheap or expensive?** Stated in words, because D-245 warns that "a
+package that judged itself EXPENSIVE in order to escape the clause would be a
+different instance entirely". **This run is EXPENSIVE** — §7's anchor is 82
+minutes wall at the 2000-opening shape and §7's own caveat measures a same-kind
+matchup at 3.3× that per game. The proportionality rule's replication clause is
+written for cheap runs; it does not apply, and this document does not pretend it
+does. **The second-instrument duty applies regardless**, because D-245 registers
+it for this document by name and because CLAUDE.md's clause is about a doubt, not
+about a price.
+
+**THE STAGE UNDER DOUBT**, which CLAUDE.md (D-277) requires be named: everything
+between the two engine processes and the printed verdict — the arena's seat
+bookkeeping, its pairing, its referee and its scoring. That is the stage the
+reviewer's Mutation B lives in, and it is the stage an SPRT number cannot see past
+on its own.
+
+**THE SECOND INSTRUMENT: `tools/baseline_snapshot.sh` at `e889b5b`**, reporting
+the design's §12.1 registered quantity — per-position `depth_turns` and `nodes` at
+50 000 nodes, above the record's `# timing` marker and therefore invariant. **It
+does not share the stage under doubt**: the snapshot drives one engine through the
+line protocol and reads its own output. No seat, no pairing, no referee, no
+scoring.
+
+**THE AGREEMENT CRITERION, registered before either instrument runs**: the staged
+seat must not be BOTH SPRT-positive and snapshot-negative. Concretely — if the
+SPRT returns `h1`, the snapshot's completed `depth_turns` must be greater than or
+equal to the radius config's on at least as many of the 24 bench positions as it
+is less than. The two instruments answer different questions (strength against an
+opponent; depth at a fixed budget) so exact agreement is not the criterion and
+would be the wrong one; DIRECTIONAL disagreement is.
+
+**THE REGISTERED CONSEQUENCE**, verbatim from D-245: on disagreement **the work
+package does not land on the SPRT alone**. Concretely: the committed config does
+not move, the disagreement is reported with both numbers, and the next step is an
+investigation of the stage under doubt — not a re-run and not a re-reading of
+either threshold.
 
 ## 8. The dry run
 
@@ -223,41 +311,68 @@ externally derived referent, a value computed by something that does not share t
 suspect input, is the operationalisation that reliably achieves this and is what a
 reviewer looks for first".
 
-**Criterion 1 — DEFECT CLASS: SEAT/LABEL ATTRIBUTION INVERSION.** The report
-attributes one seat's games, score or compute to the other seat's label, so a
-positive result is read for the wrong engine. This is the class that would make
-the governed run's verdict wrong in the most damaging way, silently.
+**Criterion 1 — DEFECT CLASS: SEAT/LABEL ATTRIBUTION INVERSION**, covering the
+SCORE path and not only the compute path. The report attributes one seat's games,
+score or compute to the other seat's label, so a positive result is read for the
+wrong engine.
 
-*The criterion*: the report's `timing_engine a time_ms` and `timing_engine b
-time_ms`, mapped through the `engine a|b label … config …` lines, must place the
-`gate_v0` seat BELOW the `instrument_v0` seat in total time.
+**Revision 1's criterion failed this class and the failure was BUILT, not
+argued.** Mutating `record.rs::score_a`'s `a_is_p1` branches inverts the whole
+verdict — `nelo_pair` −992.88 → +992.88, `wins_a 0` → `wins_a 7`, the pentanomial
+mirrored — and revision 1's two criteria both PASSED, because both looked only at
+`timing_engine` and `config_sha256`. Revision 1 also chose a referent BELOW the
+`# timing` marker, which `report.rs` itself declares "excluded from every
+comparison".
 
-*The referent, computed outside the arena*: at the same fixed node budget on one
-bench position, **MEASURED** at the base revision, release —
-`configs/instrument_v0.toml` **396 ms** (nps 126 644) and `configs/gate_v0.toml`
-**240 ms** (nps 209 036), both at `nodes 50176`. Radius 1's nodes are cheaper
-because there are fewer candidates to order, so it spends less time for the same
-node count. Nothing in that measurement passes through the arena's seat
-bookkeeping.
+*The criterion*: for every game, the report's per-game `depth_a` and `depth_b`,
+mapped through the `engine <slot> label … config …` lines, must place the
+`gate_v0` seat at the GREATER completed depth. These fields are above the timing
+marker and are deterministic and worker-invariant.
 
-*Why the defect could falsify it*: under attribution inversion the arena's
-label→time mapping inverts relative to the direct measurement, and the criterion
-fails. Note what was REJECTED as a criterion and why: running the config twice
-with the seats swapped and requiring the sign to flip is **invariant** under a
-consistent inversion — it maps `(seat, label)` the same wrong way in both runs —
-so it would have passed while the defect was present. That is the vacuity
-CLAUDE.md forbids, and it was the first criterion this document reached for.
+*The referent, computed outside the arena.* **MEASURED** at the base revision,
+release, one bench position at `go nodes 50000`, both reaching `nodes 50176`:
 
-**Criterion 2 — DEFECT CLASS: DOCUMENT BINDING.** The arena plays a config other
-than the one its report names, so the run measures an engine nobody registered.
+```
+configs/instrument_v0.toml  ->  info totals depth_turns 2  time 396  nps 126644
+configs/gate_v0.toml        ->  info totals depth_turns 3  time 240  nps 209036
+```
 
-*The criterion*: each `engine <slot> … config <path> config_sha256 <hex>` line's
-digest equals `sha256sum <path>` taken separately.
+The narrower policy completes a deeper iteration at the same node count — which is
+D-190's own measured mechanism, and is why radius 2 beat radius 3 there. Nothing
+in that measurement passes through the arena.
 
-*The referent*: `sha256sum`, which does not share the arena's reading of the file.
+*Why the defect could falsify it*: under attribution inversion on EITHER path the
+label→depth mapping inverts relative to the direct measurement. `depth_a`/`depth_b`
+is written per game from the seat that produced it, so a score-path inversion that
+leaves `score_a` crediting the wrong label is visible here as a game whose deeper
+seat carries the shallower label.
 
-*Why the defect could falsify it*: a report naming a document it did not digest
-disagrees with the external digest.
+*What was REJECTED as a criterion, and why*: running the config twice with the
+seats swapped and requiring the sign to flip is **invariant** under a consistent
+inversion — it maps `(seat, label)` the same wrong way both times. That reasoning
+survived review and is kept. What did NOT survive is revision 1's replacement,
+which covered one half of the class it named.
+
+**Criterion 2 — DEFECT CLASS: THE ENGINE LOADED A DIFFERENT DOCUMENT THAN THE
+REPORT NAMES.**
+
+**Revision 1's version of this was vacuous and the arena already refuses its
+class.** It compared the report's `config_sha256` against `sha256sum <path>` — but
+the arena's digest and its spawn both read the same path string out of the same
+document, so the comparison tests `digest_of`, not which file the engine opened:
+internal agreement between components sharing the suspect input. And the class as
+revision 1 stated it is caught by name: spawning seat b with seat a's config gives
+`IdentityDrift … exit 1`, on which revision 1's criterion still passed.
+
+*The criterion*: the **engine's own handshake** — `engine_id <slot>
+candidate_policy …`, `engine_id <slot> config <path>`, `engine_id <slot>
+tt_bytes <n>` — must differ between the seats in the way the two documents differ.
+For the dry run that is `candidate_policy radius 2` against `radius 1`; for the
+governed run it is `candidate_policy staged quiet_radius <n> quiet_top_k <k>`
+against `candidate_policy radius 2`.
+
+*The referent*: the engine process, which produces those lines from the file it
+actually loaded and does not share the arena's reading of the document.
 
 ### 8.4 What the dry run records
 
@@ -293,7 +408,12 @@ the 2000-opening shape at about 82 minutes wall at 4 workers.
 this run measures, and the operator confirms it rather than this document assuming
 it — because a green SPRT over an unsound generator measures nothing (§1).
 
-**9.5 The run's revision.** The commit the games are played at, recorded before the
+**9.5 The calibration probe.** The command, its positions, its budget and its
+revision, recorded before it is run — it decides §9.3 and therefore the whole cost
+and sensitivity, and revision 1 billed it in §7 while registering it nowhere. It
+is NOT part of the sample, as WP-1.3's probe was not.
+
+**9.6 The run's revision.** The commit the games are played at, recorded before the
 first game, so the report's `experiment_sha256` has something to be compared with.
 
 ---

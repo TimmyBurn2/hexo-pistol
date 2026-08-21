@@ -72,7 +72,7 @@ document itself marked **MEASURED**.
 | 5 | "A live-2 window's empties reach up to 5 cells from a stone" (unmarked) | 4. Five is the arbitrary-cell bound | M1 |
 | 6 | W-A "is the schedule that most directly meets 'never a bare hard cap'" | The root can never widen (`original_alpha = -INFINITY` is unreachable) and non-PV nodes can never truncate, so W-A caps only the root and the PV | M2 |
 | 7 | A node returning "an exact score inside the window is unaffected" | An exact score over a SUBSET is a lower bound only, and it is stored as `Bound::Exact` and consumed unconditionally | M2 |
-| 8 | The soundness gate costs "60–180 s, dominated by the reference at depth 3, whose cost is gate 10's today" | `configs/gate_v0.toml`'s own committed table measures radius 2 / depth 3 at **> 100 s for the engine alone**; the reference at radius 2 depth 3 on the corpus's cheapest branching position is **243 363 538 nodes in 554.2 s**. Gate 10 runs depth 3 at radius **1** | M3 |
+| 8 | The soundness gate costs "60–180 s, dominated by the reference at depth 3, whose cost is gate 10's today" | the reference at radius 2 depth 3 on the corpus's cheapest branching position is **243 363 538 nodes in 554.2 s**, and gate 10 runs depth 3 at radius **1**. *(Revisions 2–5 supported this with "`gate_v0.toml`'s table measures radius 2 / depth 3 at > 100 s"; **that reads the table one column left** — it says 9.7 s at depth 3 and > 100 s at depth 4. MEASURED, the ENGINE reaches depth 3 at radius 2 in 1.3 s on bench position 1. The finding stands on the 554.2 s reference measurement, which is the relevant one, and the misquote is struck.)* | M3 |
 | 9 | S-C is the instrument D-124's blindness demands | S-C is blind to D-124's own reproducer: `cells.pop()` after `order` leaves the whole class gate at **28 assertions, 0 RED** | M3 |
 
 ### 0.2 What revision 2 got wrong
@@ -1013,8 +1013,8 @@ Four more findings, each measured:
   nothing. M6 has no root witness: 0 corpus positions with `t ≥ 3` AND win-now.
   Three of seven mutations are killable.
 - **The registered workload is not runnable.** `configs/gate_v0.toml`'s own
-  committed table measures radius 2 at depth 3 as **"> 100 s" for the engine
-  alone**, which is why that config exists; the full-width reference on the
+  committed table measures radius 2 at **depth 4** as "> 100 s" — depth 3 is 9.7 s
+  there, and revisions 2–5 of this document read that table one column left; the full-width reference on the
   corpus's cheapest branching position at radius 2 depth 3 is **243 363 538 nodes
   in 554.2 s** — one position of thirty-one. Revision 1 attributed the cost to
   gate 10, which runs depth 3 at radius **1** on three fixtures.
@@ -1151,7 +1151,7 @@ falls in neither class today.
 - **The five gate_v0 cases need a staged config.** MEASURED: `tactical_v0.txt`
   is 15 cases at `configs/instrument_v0.toml` and **5 at `configs/gate_v0.toml`**
   (radius 1, the `depth_turns 3` cases, because gate_v0's table measures radius 2
-  at depth 3 as > 100 s). Revision 1 shipped one staged config. Revision 2 ships
+  at depth 4 as > 100 s, and depth 3 at 9.7 s). Revision 1 shipped one staged config. Revision 2 ships
   **three** (§10).
 - **(c) colony family, ≥ 6 built cases**, distant-cluster attack and defence,
   where `LAW-DECOMP`'s star-disjointness puts the right answer in a cluster the
