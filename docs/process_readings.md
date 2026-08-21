@@ -128,8 +128,12 @@ first submission and its recording is part of the revision reviewed, so no amend
 clean, but it forbids a reviewer from demanding a re-run without a full amendment cycle;
 (c) leave it and pay the cycles, which is affordable exactly once.
 
-**STATUS: OPEN.** It is a live cost right now — the WP-1.5a pre-registration is at revision 9
-and every revision since 3 has re-run its own blocks.
+**STATUS: OPEN, AND THIS INSTANCE WAS ESCAPED RATHER THAN RESOLVED.** It was a live cost through
+revision 11 — every revision since 3 re-ran its own blocks — and it stopped being one when the
+pre-registration was RETIRED (D-276), not when the question was answered. **A successor must not
+read the retirement as precedent**: the loop is still there for the next document that enters it,
+and nothing in D-276 rules on whether a dry run transfers across an amendment that leaves the
+commands and the instrument unchanged.
 
 ### T8 — the second instrument has no independence condition, and the pair is unranked
 
