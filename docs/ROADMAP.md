@@ -106,26 +106,36 @@ GHI).
 D-249). Replace `pistol-eval`'s `BTreeMap<Window, Counts>` with the storage
 shape WP-1.5a's matrix selects. LICENSED, NOT SCHEDULED: it owes its own option
 matrix, its own pre-registration and its own `tools/bench_delta.sh` run, and it
-does not sit on the threat core's critical path. Unlike WP-1.5a its bracket IS a
+does not sit on the threat core's critical path. PRIORITY: after WP-1.5b and
+after WP-1.10 (D-289), because its recorded stake is a table-only reading that
+D-258 forbids quoting as a whole-engine bracket. Unlike WP-1.5a its bracket IS a
 whole-engine one, because `pistol-eval` is linked by the shipped binary and
 `pistol-solver` is not.
 
-**WP-1.10 — `tools/` gate hardening** (docs/decisions.md D-251, D-252). What
-the `tools/`-scoped reviews that produced D-250 and D-252 found and neither
-closed: test coverage for the rest of what the gate scripts record, the
-`command -v` sweep at eight sites across seven files under the reviewer's
-fix-across-`tools/` ruling, an amendment to `tools/SHELL_CHECKLIST.md` item 8
-for the fourth case bash admits, and two MINORs — a header claiming a sha pin
-the script does not enforce, and arguments silently ignored. Added by D-252: an
-explicit engine binding for the four operator-run SPRT configs whose `binary` is
-still a path literal (`configs/arena_wp13_*.toml`), which no gate runs, which
-rule 6 makes the judge of every search and eval change, and whose exposure a
-report discloses only to a reader who compares the `binary_sha256` it already
-records. LICENSED, NOT SCHEDULED: it carries no engine change and does not sit
-on the threat core's critical path. It is a numbered package rather than a note
-because these scripts are the instrument every Stage-1 strength claim is read
-through, and the defect that opened it was a gate reporting a pass for a binary
-that was never built.
+**WP-1.10 — `tools/` gate hardening** (docs/decisions.md D-251, D-252, and
+D-289 for each item's owner). What the `tools/`-scoped reviews that produced
+D-250 and D-252 found and neither closed: test coverage for the rest of what the
+gate scripts record — still FIVE undriven gate scripts (`config_check.sh`,
+`determinism.sh`, `movetime_check.sh`, `perft_check.sh`,
+`search_oracle_check.sh`), since the two landing with D-284 and D-285 are new
+scripts that carry their own suites and remove nothing from that list; the `command -v` sweep, RE-COUNTED at
+this revision to SIXTEEN sites across ELEVEN files (D-251's eight-across-seven
+predates two scripts that landed with D-276, and four more sites land now,
+knowingly carrying the terse idiom so the sweep's own enumeration stays right); an amendment to `tools/SHELL_CHECKLIST.md`
+item 8 for the fourth case bash admits; two MINORs — a header claiming a sha pin
+the script does not enforce, and arguments silently ignored by four scripts (not
+by the two landing now, which refuse them by name with a test); and, added by
+D-285, the SEVEN `mktemp -d` scripts that do not preflight their scratch space
+and are covered under CI only because `tools/ci.sh` preflights once before all
+of them.
+D-252's fifth item is SPENT: the explicit engine binding for the four
+operator-run SPRT configs landed at D-283, and it is struck from this list
+rather than carried, because a WP that ships an item already fixed is a list
+that outlives its subject. LICENSED, NOT SCHEDULED: it carries no engine change
+and does not sit on the threat core's critical path. PRIORITY: after WP-1.5b,
+and BEFORE WP-1.9 — these scripts are the instrument every Stage-1 strength
+claim is read through, and the defect that opened the package was a gate
+reporting a pass for a binary that was never built.
 
 Exit: engine refutes the tactical fixture class at pre-registered thresholds;
 every landed change SPRT-positive.

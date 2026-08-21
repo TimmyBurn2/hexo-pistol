@@ -204,7 +204,7 @@ independently knows the stand-in's true count knows that 37 counted `pistol_sear
 This is the reading D-269 lands as law. **It was re-derived blind**, which is the corroboration
 D-269 rests on.
 
-### T-R5 → T4, sharpened. **OPEN, AND OWED A RULING.**
+### T-R5 → T4, sharpened. **CLOSED by docs/decisions.md D-290.**
 
 *The proportionality paragraph's only substantive obligation is gated on "where the run is
 cheap"; cheapness is decided by a cost statement the same session writes BEFORE the run, which
@@ -226,7 +226,18 @@ observed cost beside forecast cost, and a run that proves cheap owes the cheap-b
 before its verdict counts. The remedy is retroactive and affordable by construction, since
 replicating a cheap run is cheap.
 
-**Why it is not amended in the same round as T1 and T2, stated rather than assumed.** The
+**THE RULING, docs/decisions.md D-290.** The forecast is RECONCILED: a report carrying a governed
+number states MEASURED cost beside DECLARED cost, and a run that proves cheap owes the
+cheap-branch duties before its verdict counts. A mismatch greater than **5x** is a **FINDING, not
+a violation** — a forecast is a forecast, and treating a wrong number as a breach would teach the
+next session to write a range instead of a number. THE EXPENSIVE BRANCH STAYS UNLEGISLATED until
+an expensive governed run exists, because legislating a branch nothing has taken is how the last
+five rounds went; that is D-228's own reasoning applied to D-228's sibling clause. The ruling
+lands as an ADR line and NOT in CLAUDE.md, on the operator's instruction, and D-290 names the
+cost of that in its own text: it moves into the proportionality paragraph the first governed run
+taken under it.
+
+**Why it was not amended in the same round as T1 and T2, stated rather than assumed.** The
 closure session was dispatched to land T1 and T2 and this reading is neither; it arrived from a
 re-derivation the same session commissioned, and a session promoting its own subagent's grading
 straight into CLAUDE.md is the shape D-242's bite-time rule exists to slow down. **The exposure
@@ -234,8 +245,8 @@ is prospective, not live**: the two documents that would be governed by it alrea
 asks — the WP-1.5a pre-registration's §6 states MEASURED costs and corrects two rows that were
 labelled measured and did not reproduce, and D-236 states its cost before the run (7–9 minutes,
 no operator attention) and confirms it after (433.3 s and 433.9 s). No standing verdict in this
-project rests on a forecast that was never reconciled. See D-270 for the ruling this is waiting
-on.
+project rests on a forecast that was never reconciled — which is what made a retroactive remedy
+affordable when the ruling came.
 
 ---
 

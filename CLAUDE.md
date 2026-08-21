@@ -110,7 +110,10 @@ A named design decision with more than one viable option is settled by an OPTION
 MATRIX — options, costs, failure modes, recommendation — attacked by a fresh-context
 DECISION-RED-TEAM subagent BEFORE selection; the surviving option's ADR line records
 the strongest surviving attack. An option adopted without a matrix, or a matrix never
-attacked, is the same breach as silent architecture drift.
+attacked, is the same breach as silent architecture drift. EVERY NUMERIC CLAIM IN
+THE MATRIX IS MARKED **MEASURED** OR **ESTIMATED**, and an estimate that could have
+been measured in seconds is a finding — twice in one round a matrix argued that
+unmeasured claims are the failure mode while resting on one (D-291).
 
 A pre-registration is reviewed at the revision that GOVERNS the run: the revision
 that governs a run must itself pass a fresh-context review before the first run it
