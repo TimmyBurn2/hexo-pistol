@@ -214,7 +214,11 @@ fn the_key_gate_reads_the_index_and_not_the_working_tree() {
 
     let ran = gate(&root);
     let out = said(&ran);
-    assert_code(&ran, 1, "the staged repeat is what commits, so it is what the gate must see");
+    assert_code(
+        &ran,
+        1,
+        "the staged repeat is what commits, so it is what the gate must see",
+    );
     assert!(out.contains("D-271 2"), "{out}");
 }
 
@@ -229,7 +233,6 @@ fn a_key_mentioned_mid_line_is_prose_and_not_a_second_appearance() {
     ));
     write_log(&root, &lines);
     let ran = gate(&root);
-    let out = said(&ran);
     assert_code(&ran, 0, "a citation is not an appearance");
 }
 
@@ -285,12 +288,18 @@ fn a_log_the_extraction_finds_no_key_in_is_refused_rather_than_passed() {
 fn a_third_text_under_a_grandfathered_key_is_refused_rather_than_absorbed() {
     let root = scratch_repo("keys-third-copy");
     let mut lines = shipped_shape();
-    lines.push(String::from("D-276: a THIRD copy, whose text differs again"));
+    lines.push(String::from(
+        "D-276: a THIRD copy, whose text differs again",
+    ));
     write_log(&root, &lines);
 
     let ran = gate(&root);
     let out = said(&ran);
-    assert_code(&ran, 1, "the exemption was granted for two copies, not for any number");
+    assert_code(
+        &ran,
+        1,
+        "the exemption was granted for two copies, not for any number",
+    );
     assert!(
         out.contains("D-276 3"),
         "and names the key WITH the count that exceeded its grant:\n{out}"

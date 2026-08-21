@@ -712,12 +712,12 @@ fn the_shipped_minimal_covers_are_the_hitting_sets_of_the_plan_family() {
 #[test]
 fn the_budget_ladder_agrees_with_the_enumeration_it_is_the_summary_of() {
     for case in pattern_cases() {
-        let (game, threats) = play(&case.plies);
+        let (_game, threats) = play(&case.plies);
         let windows = threats.hot_windows(case.side);
         let defender = case.side.opponent();
 
         for budget in [HitBudget::Zero, HitBudget::One, HitBudget::Two] {
-            let exceeds = threats.min_hitting_set_exceeds(budget, &windows);
+            let exceeds = threats.min_hitting_set_exceeds(budget, windows);
             let impossible = matches!(threats.blocking_covers(defender, budget), Cover::Impossible);
             assert_eq!(
                 exceeds, impossible,
