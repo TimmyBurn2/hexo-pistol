@@ -113,7 +113,18 @@ retargets and the following, each stated where it occurs.
   **THE THREE u-rev 7 MAJORs ARE REPAIRED AT THEIR SITES AND NOT BY RE-DERIVATION** —
   re-derivation was u-rev 7's instrument and it shipped three fresh instances of the
   class; what changed at u-rev 8 is that each repair removes a restatement rather than
-  correcting one.
+  correcting one. **`D-334` is folded too, and it is the round's largest single fact:
+  the micro-matrix authored to restructure this unit's status matter STOPPED with no
+  selection after two fields fell, and the reason recorded is that these repairs
+  executed the null row while that matrix was out for attack.** See U4-Z.
+
+**u-rev 8 IS ONE ROUND IN SEVERAL COMMITS, AND THE REVIEWED REVISION IS THE LAST OF
+THEM.** D-311 bumps the label on any append; this round appends more than once, and
+labelling each commit separately would create exactly the revision-to-label ambiguity
+D-311 exists to remove. **No review has been dispatched against any intermediate
+commit of this round.** The revision a review is dispatched against is named in the
+REVIEW STATUS block by its SHA, and that is the binding identifier; `u-rev 8` names
+the round.
 
 **The sentence this block replaces named three repairs and omitted the u-rev 4 and
 u-rev 5 folds entirely — the two largest non-verbatim additions in the unit.** That is
@@ -1886,6 +1897,32 @@ silently drop, and the false premise was new at u-rev 7, in the section that u-r
 re-derived in full.)*
 
 ### OPEN — carried forward, not closed by the carve
+
+- **THE RESTRUCTURE OF THIS UNIT'S STATUS MATTER IS STOPPED WITH NO SELECTION — `D-334`
+  — AND THE QUESTION IT WAS ASKED TO ANSWER IS STILL OPEN.** Micro-matrix U4-R was
+  authored twice (`matrix_U4R_restructure.md` at `4d84694`,
+  `matrix_U4R_restructure_rev2.md` at `97aa4d6`) and attacked twice by fresh contexts
+  (`matrix_U4R_REDTEAM.md` at `53c0c0b`, 6 KILL / 8 MAJOR / 11 MINOR;
+  `matrix_U4R_REDTEAM_round2.md` at `1e70f81`, 6 KILL / 10 MAJOR / 11 MINOR). **Both
+  fields fell. No row is selectable, and D-334 forbids citing either recommendation as
+  adopted.** **WHY THE STOP AND NOT A THIRD REVISION:** round 2 measured that this
+  round's repairs — landing while its attack ran — discharged all eight findings the
+  matrix's cost column scores and rewrote this unit's REVIEW STATUS block to pointers,
+  which was the recommended row's own second half, taken in place without extraction,
+  companion file, matrix or selection. **So the eight findings are DISCHARGED and the
+  restructure question is SEPARATED from them, not answered by them.** What is still
+  open is the question `docs/experiments/section_owner_table.md` §11 hands to the
+  architect, and this round made it sharper rather than softer: **the repairs are NET
+  ADDITIVE, because each one discloses what it replaced.** A revision 3, if one is
+  authored, is re-grounded on the review of THIS u-rev and not on
+  `wp15b_U4_REVIEW_urev7.md`; round 2's report enumerates six things it must contain,
+  of which the two no field has yet carried are round 1's `(e)` as round 1 wrote it and
+  **the DERIVED-ENUMERATION row on the landed `7dfd047` precedent** — a rule plus a
+  derived command replacing every hand-held enumeration and completeness universal in
+  this unit, which round 2 measured to be the only candidate whose prevention claim is
+  a mechanism rather than an assertion. **This unit does not restructure itself and may
+  not: an option adopted without a matrix is the same breach as silent architecture
+  drift.**
 
 - **D-331 DOES NOT REACH A NEIGHBOURING CLASS THAT HAS NOW FAILED THREE UNITS, AND
   THAT IS THE ARCHITECT'S.** The CLAIM-HOME law requires every claim to have one home
