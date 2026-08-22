@@ -12,8 +12,8 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 6.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
-`6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it; the counts are D-309's and are not restated here) under the restructure
+**u-rev 7.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
+`6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it, and is that review's home) under the restructure
 selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
 in the tree: it is retrievable at `6feb40a` and nowhere else.
@@ -31,7 +31,8 @@ from it.
 | 3 | `d85b049` | `docs/experiments/wp15b_U2_REVIEW_urev3.md` | FAIL |
 | 4 | `7473a6f` | `docs/experiments/wp15b_U2_REVIEW_urev4.md` | FAIL |
 | 5 | `f0ae14c` | `docs/experiments/wp15b_U2_REVIEW_urev5.md` | FAIL |
-| **6** | *this text* | **NOT YET REVIEWED** | — |
+| 6 | `3543a7f` | — | **NOT REVIEWED — no round was dispatched against it** |
+| **7** | *this text* | **NOT YET REVIEWED** | — |
 
 **THE CARVE-PROVENANCE CLAUSE ABOVE WAS FALSE FROM THE CARVE UNTIL u-rev 6.** It read
 *"revision 7, **never reviewed**, CLOSED by D-309"*. `6feb40a` WAS reviewed, by a
@@ -41,7 +42,10 @@ unit's own **U2-A** table has reported all along, a few lines below the false se
 The clause was written once at the carve and propagated VERBATIM into all four units
 and the owner table; **no review of any of the five raised it**
 (`docs/experiments/wp15b_U2_REVIEW_urev5.md`, H1). It is corrected in all five in one
-commit, and **the counts now live only in D-309**, which is their home (D-331).
+commit. *~~And the counts now live only in D-309, which is their home (D-331).~~
+**WITHDRAWN AS FALSE AT u-rev 7** — **U2-A**'s revision-7 row restates them, and has
+since the carve. D-309 is still where a reader is sent; what is struck is this
+sentence's claim that nothing else states them.*
 
 **u-rev 4 answered `wp15b_U2_REVIEW_urev3.md`, u-rev 5 answered that round's own
 re-review, and u-rev 6 answers the round after that; none changes anything else.** u-rev 4 rewrote the head's
@@ -143,7 +147,14 @@ BEEN REVIEWED.**
 | Finding, `wp15b_U2_REVIEW_urev4.md` | Where it is answered at u-rev 5 |
 |---|---|
 | **G1** (MINOR) — the "four already existed, one is new" count is asserted independently at two sites with no pointer between them | **ANSWERED BY DELETING BOTH COPIES.** Neither site needs the number; it is a historical count of an already-closed transition, derivable from one `git diff`, and keeping either copy would have kept the drift risk the finding names. The head says so explicitly rather than silently dropping it |
-| **G2** (MINOR) — an unmarked `168 030 comparisons` sits unreconciled beside a thrice-repeated MEASURED `343 344 comparisons` | **NOT REPAIRED, AND RECORDED AS OPEN RATHER THAN ABSORBED.** The reviewer traced it unchanged to the pre-carve document at `6feb40a`, outside this repair's diff, and recorded that it is *"not chargeable against u-rev 4 specifically"*. Its ground is stated in U2-Z's OPEN bullet, which is where it lives — **and that ground is CORRECTED at u-rev 6**, see H2 below |
+| **G2** (MINOR) — an unmarked `168 030 comparisons` sits unreconciled beside a thrice-repeated MEASURED `343 344 comparisons` | **RECORDED AS OPEN AT u-rev 5, AND DISPOSED OF AT u-rev 7 BY STRIKE** (`D-346`) — the smaller figure is unverifiable and is deleted rather than chosen against. The reviewer traced it unchanged to the pre-carve document at `6feb40a`, outside that repair's diff, and recorded that it is *"not chargeable against u-rev 4 specifically"*. Its ground is stated in U2-Z's OPEN bullet, which is where it lives — **and that ground is CORRECTED at u-rev 6**, see H2 below |
+
+**u-rev 7 ANSWERS NO REVIEW REPORT.** No round has been dispatched against u-rev 6.
+u-rev 7 is a repair under `D-346` of two claims this unit made about its own state and
+that were false or unverifiable at u-rev 6: the *"counts now live only in D-309"*
+sentence, which **U2-A** falsifies, and the unmarked M5-E population figure
+`wp15b_U2_REVIEW_urev4.md` G2 raised and u-rev 5 registered OPEN. Both are STRUCK; the
+`D-309` pointer and the §5.2 pointer are what replace them. Nothing else moved.
 
 | Finding, `wp15b_U2_REVIEW_urev5.md` | Where it is answered at u-rev 6 |
 |---|---|
@@ -860,8 +871,15 @@ a correction to a landed line, and none has landed.**
 - **The node protocol's shape is settled and attacked** even though unimplemented:
   win-now before overload before filter, one `can_win_this_turn` and one
   `blocking_covers` per node, and the identity that makes that possible
-  (`blocking_covers == Impossible ⟺ unblockable_double_threat`) is verified over
-  168 030 comparisons with the `Impossible` branch reached at every budget.
+  (`blocking_covers == Impossible ⟺ unblockable_double_threat`) is verified with the
+  `Impossible` branch reached at every budget, over the population **§5.2** states and
+  marks MEASURED — which is that measurement's one home. *(~~168 030 comparisons~~ —
+  **WITHDRAWN AS UNVERIFIABLE AT u-rev 7** under `D-346`. It was inherited unchanged
+  from the superseded document at `6feb40a`, it carried no MEASURED or ESTIMATED mark,
+  no instrument in this tree re-takes it, and it disagreed with the thrice-stated
+  MEASURED figure with no arithmetic relating the two: `wp15b_U2_REVIEW_urev4.md` G2.
+  A number nobody can re-take and nobody can reconcile is struck rather than chosen
+  between.)*
 - **The generalised overload verdict (`t > left`, either phase) is derived from
   `LAW-HIT` + `DEF-T` and the calculus amendment is OWED** (item 22 above). A
   quiescence that reuses it inherits that debt.
@@ -883,27 +901,29 @@ a correction to a landed line, and none has landed.**
 
 ### OPEN — carried forward, not closed by the carve
 
-- **TWO POPULATION FIGURES FOR THE M5-E EQUIVALENCE ARE UNRECONCILED, AND THE
-  SMALLER ONE CARRIES NO MARK** — `wp15b_U2_REVIEW_urev4.md`, G2. The handoff bullet
-  below states **168 030 comparisons** with no MEASURED or ESTIMATED mark, while §5.2,
-  the M5-E matrix row and the quoted red-team sentence all state **343 344
-  comparisons** and are marked MEASURED. The reviewer traced the smaller figure
-  UNCHANGED to the superseded document at `6feb40a` — it is inherited, it is outside
-  this repair's diff, and eight prior review rounds did not raise it. **This unit does
-  not reconcile them, and the reason is corrected at u-rev 6 to the one that actually
-  holds** (`docs/experiments/wp15b_U2_REVIEW_urev5.md`, H2): whether the two figures
+- **THE SMALLER OF THE TWO M5-E POPULATION FIGURES IS WITHDRAWN BY STRIKE AT u-rev 7,
+  NOT RECONCILED** — `wp15b_U2_REVIEW_urev4.md`, G2. The handoff bullet below stated an
+  unmarked figure against the MEASURED one §5.2, the M5-E matrix row and the quoted
+  red-team sentence all carry; the reviewer traced the smaller one UNCHANGED to the
+  superseded document at `6feb40a`, and no arithmetic relates the two. **RECONCILING
+  THEM REMAINS IMPOSSIBLE FOR THE REASON u-rev 6 GAVE, AND THAT REASON IS WHY THE
+  STRIKE IS THE DISPOSITION RATHER THAN A CHOICE BETWEEN THEM** (`D-346`): the smaller
+  figure is unverifiable, so it is deleted and nothing replaces it, and the handoff now
+  points at §5.2. **IF THE PROBE IS EVER RE-RUN, WHAT COMES BACK IS THE NUMBER THAT
+  STANDS**, and neither figure here constrains it. *(The reason u-rev 6 states, kept
+  because the strike rests on it (`docs/experiments/wp15b_U2_REVIEW_urev5.md`, H2): whether the two figures
   count the same thing over different populations, or the same population differently,
   **is answerable only by RE-RUNNING the equivalence probe.** That is a measurement act
   with a registered instrument, and choosing between two measured numbers without
-  re-taking either is exactly what a repair round may not do. *(u-rev 5 gave the
+  re-taking either is exactly what a repair round may not do — which is why one is
+  struck rather than preferred.)* *(u-rev 5 gave the
   CARVED-CONTENT scope as the reason instead — "a design act on carved content, the
   carve repairs transcription only". That was wrong: this bullet's subject sits in
   U2-Z, carried from the superseded §15/§18, and the carved-content scope this unit
   defines is §2, §3, §5 and §14. The practical decision was sound and is unchanged; the
-  ground under it was not.)* **What is owed:** either an
-  instrument re-run that reconciles them and marks both, or an ADR line recording
-  which population the M5-E claim rests on. Registered here so the next round does not
-  re-discover it.
+  ground under it was not.)* **What is owed after the strike:** an instrument re-run
+  that takes the population fresh and marks it, if any later round wants a figure at
+  the handoff at all. Registered here so the next round does not re-discover it.
 
 - **RULE 5 IS UNDISCHARGED FOR THE NODE PROTOCOL ITSELF** (revision-7 review
   MAJOR 9, and the superseded §17's own list). D-263 pre-registered the hotspot
@@ -920,6 +940,6 @@ a correction to a landed line, and none has landed.**
 
 ---
 
-*U2, u-rev 6. A repair, answering `docs/experiments/wp15b_U2_REVIEW_urev5.md`.
-**IT IS UNREVIEWED, and the round that produced it did not dispatch a sixth review —
-see the REVIEW STATUS block.** IMPL has not started.*
+*U2, u-rev 7. Which round produced each u-rev, and which of them were reviewed, is
+the head block's table — this line restates neither and carries the u-rev label alone,
+so it cannot go one behind the head independently of it. IMPL has not started.*
