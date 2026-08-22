@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 2.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
+**u-rev 3.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
 4 and 5 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309), plus the two
 bullets of §7.2 that are not widening text, under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
@@ -24,15 +24,22 @@ in the tree: it is retrievable at `6feb40a` and nowhere else.
 unit is Tier T only. `quiet_top_k` and `widen_schedule` still appear in §10's
 config documents because a `deny_unknown_fields` document is complete or it is
 nothing; **whether the D-scope shipped surface keeps those two keys at all is
-OPEN and is the architect's, not the carve's** — see U3-Z.
+OPEN and is the architect's, not the carve's** — see U3-Z. **And that OPEN
+question is not confined to the config documents (MAJOR 3):** MATRIX M1's ADOPTED
+option mitigates its own residual with the deferred stage, and the matrix's whole
+cost column is computed with the deferred stage inside it. U3-Z lists what the
+decision moves; the RANKING that selects C is what survives it.
 
-**THE TEXT IS A VERBATIM CARVE** apart from cross-reference retargets and two
-named repairs, each stated where it occurs: **B5** (§10's lead-in — the config
-count, which the superseded document stated three different ways across four
-sites, is stated once here and cited everywhere else) and **B7** (§6.2's
-no-restatement claim, which was absolute and false, is stated at the strength the
-pin actually has). Every **MEASURED** and **ESTIMATED** mark is the mark the
-superseded text carried; no number moved, and none gained or lost a mark.
+**THE TEXT IS A VERBATIM CARVE** apart from cross-reference retargets and the
+named repairs, each stated where it occurs. At u-rev 1: **B5** (§10's lead-in —
+the config count, which the superseded document stated three different ways
+across four sites, is stated once here and cited everywhere else) and **B7**
+(§6.2's no-restatement claim, which was absolute and false, is stated at the
+strength the pin actually has). At **u-rev 3**: the repairs answering
+`docs/experiments/wp15b_U3_REVIEW.md`, listed finding by finding in the REVIEW
+STATUS block below and marked again at each site. Every **MEASURED** and
+**ESTIMATED** mark is the mark the superseded text carried; no number carried
+from the superseded text moved, and none gained or lost a mark.
 
 **LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this unit bumps
 its u-rev, however small the diff. A review is dispatched against a named
@@ -41,7 +48,30 @@ document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
 
-**THIS UNIT HAS NOT BEEN REVIEWED** at this u-rev.
+**REVIEW STATUS — u-rev 2 WAS REVIEWED AND FAILED; u-rev 3 IS THE REPAIR.**
+`docs/experiments/wp15b_U3_REVIEW.md`, REVIEW-design, fresh context, dispatched
+against the named revision **`1b645ac`** — **VERDICT FAIL**, 2 BLOCKING, 5 MAJOR,
+4 MINOR. Both BLOCKING findings were D-305's class (a repair landed in one place,
+the claim resting on it left un-re-read in another) reproduced inside the carve
+that exists to stop it. **THIS u-rev — u-rev 3 — HAS NOT BEEN REVIEWED**, and
+u-rev 2's review does not transfer to it: an amendment reopens the review, however
+small the diff (D-311, and CLAUDE.md's own words).
+
+| Finding, `wp15b_U3_REVIEW.md` | Disposition at u-rev 3 |
+|---|---|
+| **BLOCKING 1** — B5 recurs; the config count asserted a second time, in U3-Z | **REPAIRED** — U3-Z's D-scope bullet cites §10 instead of stating a cardinality |
+| **BLOCKING 2** — §12 item 5 discharges CLAUDE.md's instrument clause by naming a test D-312 DELETED, and the command "verifying" it exits 0 running 0 tests | **REPAIRED** — the LIVE gate is named, at the carve's scope, with the two companion gates D-312 landed, and the naming is verified by a run pasted at the site |
+| **MAJOR 3** — the D-scope OPEN item omits M1's own dependence on the deferred stage | **REPAIRED** — U3-Z's bullet now names option C's residual mitigation, option B's cost cell, the `staged, BATCHED only` rows and the instrument's `QUIET_TOP_K = 16`, and records what survives (the ranking) |
+| **MAJOR 4** — B7's residual list is incomplete by four further sites inside this unit | **REPAIRED** — the residual is stated as a CLASS, and every site known at this u-rev is LISTED site by site in U3-Z; §6.2's three-shape list is corrected with them |
+| **MAJOR 5** — §6.4's falsifier self-attributes a measurement this unit does not carry | **REPAIRED** — retargeted to **U4** (u-rev 5) §12 item 1, with U4's below-marker CONTEXT treatment stated |
+| **MAJOR 6** — the owed-list omits a fresh DECISION-RED-TEAM against M1 AS AMENDED | **REPAIRED AS OPEN** — added to U3-A's owed-list and to U3-Z's OPEN section, and U3-Z item 2's ADR line is GATED on it. The attack itself is not run here |
+| **MAJOR 7** — §10 states the deferred schedule's semantics as settled, on the non-reviewable seed's authority | **REPAIRED AS OPEN** — the widening bullets are marked as RECORDING the seed's unselected text, not as settled design; the present-tense ADR citation is corrected. The semantics are not moved into U3, which would be a design act |
+| **MINOR 8** — §6.2 undercounts the finding it repairs | **REPAIRED** — six restatements at five lines, re-measured at u-rev 3 |
+| **MINOR 9** — U3-Z names a `§8.5` restatement site that does not exist | **REPAIRED** — non-existence verified by grep, the false site deleted |
+| **MINOR 10** — a citation into DROPPED §0 with no retrieval pointer | **REPAIRED** — "the superseded §0", with where it is retrievable |
+| **MINOR 11** — §6.2 understates the pin's coverage by one file and two gates | **REPAIRED** — the six documents `CARVE_DOCS` names, and both companion gates |
+| revision-7 review **MAJOR 12** — the unmarked `23.2` | **OPEN, at the u-rev 2 reviewer's own recorded call**: *"NO FINDING as such. It is recorded OPEN in U3-Z with a reason that survives scrutiny … Its scoping is incomplete, which is finding 3."* The reason stands unchanged; the SCOPING is repaired under MAJOR 3 |
+| revision-7 review **MAJOR 9** — rule 5 undischarged for the change D-263 was written about | **IMPL-GATE ITEM, not discharged here and not discharged by this unit.** It is not a finding of `wp15b_U3_REVIEW.md`; `wp15b_U4_REVIEW.md` records that "its non-discharge is an IMPL gate and is not reported as a design defect". **U2** (u-rev 1) carries the same item OPEN for the node protocol itself |
 
 Theory citations are calculus IDs from `docs/research/threat_calculus_v1.md`
 (D-266). This unit restates no theory; where it appears to, the calculus wins and
@@ -57,10 +87,21 @@ the disagreement is an ADR line.
 | REVIEW-design | revisions 2–6 | all FAIL; **M1 was never reopened on its merits.** §6.3's cost column was re-derived twice for transmission defects, and §6.2 became the instrument's output rather than a typed table |
 | REVIEW-design | revision 7, `6feb40a` | **FAIL** — 7 BLOCKING, 7 MAJOR, 9 MINOR. **B5 and B7 are this unit's** and are repaired here. **MAJOR 12 is this unit's and is NOT repaired here** — it is a design question, recorded OPEN in U3-Z |
 | DECISION-RED-TEAM, restructure | matrix at `eea480b` | F6: after M2's restoration unit 3 would have been the largest unit in option A's cut. Under D, M2 is not restored here at all |
+| REVIEW-design, this unit | u-rev 2, `1b645ac` | **FAIL** — 2 BLOCKING, 5 MAJOR, 4 MINOR (`docs/experiments/wp15b_U3_REVIEW.md`). Both BLOCKINGs are D-305's class inside the carve that exists to stop it: B5 recurring at a site the carve itself wrote, and an instrument-clause discharge naming a test D-312 deleted. **Every finding is dispositioned in the head's REVIEW STATUS block; u-rev 3 is the answer to it.** M1 itself is again NOT reopened on its merits — see the owed-list below |
 
-**What this unit owes that no round has given it:** a REVIEW-design of THIS text
-at THIS u-rev, and the census's registered replication and second instrument
-(U3-Z, OPEN).
+**What this unit owes that no round has given it:**
+
+- a REVIEW-design of THIS text at THIS u-rev — u-rev 2's ran, FAILED, and does
+  not transfer to u-rev 3;
+- **a fresh DECISION-RED-TEAM against MATRIX M1 AS AMENDED (MAJOR 6).** The
+  attack in row 1 ran against revision 1 at `ec8f7fb`. §6.1 has since flipped the
+  ADOPTED reading from exact to threshold — changing what the config commits and
+  re-deriving every option row — and §6.5 SELECTED C under the new reading, which
+  postdates the attack. Row 2 records that M1 "was never reopened on its merits"
+  across revisions 2–6. U3-Z item 2's ADR line is GATED on this attack, because
+  CLAUDE.md requires that line to record the strongest attack surviving against
+  the option AS ADOPTED;
+- and the census's registered replication and second instrument (U3-Z, OPEN).
 
 ---
 
@@ -132,18 +173,38 @@ which inflated the ball 78.0 → 123.7 by the sampler rather than by depth.
 **This block is the instrument's output and is not typed by hand.** It is
 rendered by `crates/pistol-solver/tests/wp15b_census.rs` and pinned by
 `the_carved_design_units_carry_this_censuss_table_verbatim`, which fails the
-build if the two drift, and which reads **every carved unit and the seed** by an
-enumerated path list rather than by one hard-coded path (travelling item T4').
+build if the two drift, and which reads — **MEASURED**, `CARVE_DOCS` in that file
+— the **SIX** documents of the carve by an enumerated path list rather than by
+one hard-coded path (travelling item T4'): the four units, `WPQ_seed.md` **and
+`docs/experiments/section_owner_table.md`**, which u-rev 2's description here
+omitted (MINOR 11). D-312 landed two companion gates beside it, which u-rev 2
+also did not name: `the_census_pin_reads_every_carved_document_it_names`, which
+plants a census figure in one document at a time and requires the scan to name
+that document, so a file whose bytes never reach the scan fails rather than
+passing silently; and `the_pins_document_list_is_the_set_of_carved_documents_on_disk`,
+which compares the path list against the set of files on disk carrying
+`CARVE_MARKER` — a referent the constant does not share, and the answer to "the
+list is not self-certifying".
 
 **What the pin refuses, stated at the strength it actually has.** No FOUR-DECIMAL
 figure from the block is restated anywhere outside it, in any carved unit or in
 the seed, and the pin fails the build if one is. **That is narrower than "no
 section restates a number from it" — and the superseded §6.2 made the wider claim
-while the document contained four counter-examples to it** (revision-7 review
-B7). The wider claim is not made here. Rounded and percentage renderings —
-`70.8 %`, `6.83`, `23.2` — are the shape prose actually uses, the pin cannot see
-them, and the sites that survive the carve are listed in U3-Z as OPEN. Everything
-else cites the block.
+while the document contained SIX counter-examples to it, at five distinct lines**
+(revision-7 review B7, whose own heading says six, as does D-309; u-rev 2 said
+"four" here and so undercounted the finding it repairs — MINOR 8). **MEASURED**
+at `6feb40a`, pinned block at lines 797–824: `grep -n "70\.8\|6\.83\|23\.2"`
+outside the block returns lines 139, 584, 853 (twice on that line), 1260 and
+1442. The wider claim is not made here.
+
+**And what the pin cannot see is a CLASS, not a list (MAJOR 4):** *any rounded,
+percentage or otherwise derived rendering of a census cell*. `70.8 %`, `6.83` and
+`23.2` are the three shapes u-rev 2 named here; four further sites inside THIS
+unit carry renderings none of those three covers — the sampler sentence two lines
+above the `BEGIN CENSUS TABLE` marker, §6.1's threshold-repair deltas, the `29 %`
+in §6.3 and §10, and §12 item 4's `29.2 %`. The class is what cannot go stale when
+a site is added; U3-Z states it as a class and LISTS every site known at this
+u-rev as OPEN. Everything else cites the block.
 
 Why it exists as a mechanism rather than a resolution: across four revisions this
 document moved a number in one section nine times and left a copy of it in
@@ -172,9 +233,20 @@ blended mean — a blend flattered option B by half.
 ### 6.4 The asymmetry, re-grounded
 
 Revision 1's ground was "a defence against the opponent's two-turn win is what
-SEARCH DEPTH and the filter are for". **That is falsified by this document's own
-MEASURED `depth_at_500ms` = 2 / 2 / 1**: the opponent's second turn is depth 4,
-and the engine reaches 2. The sentence is deleted.
+SEARCH DEPTH and the filter are for". That is falsified by **U4** (u-rev 5) §12
+item 1's **MEASURED `depth_at_500ms` = 2 / 2 / 1**: the opponent's second turn is
+depth 4, and the engine reaches 2. The sentence is deleted.
+
+**Where that measurement lives, and how U4 treats it (MAJOR 5).** Until u-rev 3
+this paragraph said "this document's own", which the carve made false — the
+measurement went to **U4** and U3 carries no other occurrence of it — and that
+phrase is exactly what licenses a reader of U3 alone not to look elsewhere. It is
+**U4**'s, and **U4** §9 amendment 1 records that the triple sits BELOW the
+snapshot record's own "excluded from every comparison" marker with a dead band of
+about 2×, so it is CONTEXT and not that unit's registered quantity; D-310 records
+the same demotion. The ground here uses the depth NUMBER — 2 against the 4 the
+refuted sentence needs — which is not a difference inside that dead band; a
+reviewer checking it must read it in **U4** and read it as context.
 
 The replacement is the reviewer's **count-3-leg lemma**, marked as a DERIVATION
 and not a measurement: every k=2 win through `LAW-OVERLOAD` requires at least one
@@ -282,6 +354,20 @@ promised "three complete documents" and printed the policy block of one.
 ends are named.** Revision 2 left four questions an implementer would have had to
 answer by invention.
 
+**WHAT THE FIVE BULLETS BELOW ARE, AND ARE NOT — MAJOR 7.** They **RECORD** the
+semantics `WPQ_seed.md` carries for a stage D-310 DEFERS and D-315 schedules into
+WP-1.5c. **They do not state settled design, and nothing may be adopted from
+them.** The seed's own header says nothing in it is selected and nothing in it may
+be cited as adopted, and D-315 records W-E — naming the non-PV cut as a forward
+prune — as never having been attacked as an option among options. Every citation
+in this section that reaches into the seed rests on that unselected text: these
+bullets, the `instrument_staged_v0.toml` row's `WPQ_seed.md` §7.2 clause and the
+TOML comment's `WPQ_seed.md` §7 clause, both carried verbatim. u-rev 2 asserted
+the bullets as settled ("Correct, and now stated"); at u-rev 3 that is scoped, not
+withdrawn — the carve does not get to decide them either way. Moving the semantics
+into a unit where they CAN be attacked is a design act belonging to whoever
+decides the D-scope (U3-Z, OPEN).
+
 - The **first** batch is `quiet_top_k` quiet cells. Tier F and Tier T are always
   emitted whole and are not counted against it (**U2** §5.4).
 - The schedule's entries are **cumulative counts of QUIET cells**, not indices
@@ -290,8 +376,10 @@ answer by invention.
   counted in the widening schedule's registered denominator (`WPQ_seed.md`
   §7.2). Correct, and now stated.
 - A pool **longer** than the last boundary is cut there permanently. That is what
-  a finite last entry is FOR, and it is the forward prune the deferred schedule's ADR line names
-  (`WPQ_seed.md`, item 3).
+  a finite last entry is FOR, and it is the forward prune **the ADR line the seed
+  records as OWED** would name (`WPQ_seed.md`, item 3, which that file records as
+  unwritable while M2 is an open selection — so there is no such line to name in
+  the present tense, as u-rev 2 did).
 - Cross-field validation, which revision 2's validator lacked: every entry must
   exceed `quiet_top_k`. `quiet_top_k = 64` with `widen_schedule = [32]` passes
   revision 2's "non-empty and strictly increasing" and describes a widening that
@@ -322,7 +410,10 @@ Validation, in `pistol-engine`'s validator and again in `Searcher::new` (a
 greater than `quiet_top_k`**, and **no sentinel admitted**; `tier_t_own_count` and `tier_t_opponent_count` in `{2, 3}`; and **every
 `widen_schedule` entry strictly greater than `quiet_top_k`**, which revision 3's
 validator did not check — `quiet_top_k = 64` with `[32]` passed "non-empty and
-strictly increasing" and described a widening that NARROWS.
+strictly increasing" and described a widening that NARROWS. The cross-field rule
+is the last bullet's and carries the same status the lead-in gives it: it
+validates two keys whose D-scope is OPEN, against semantics that are the seed's
+unselected text (MAJOR 7, U3-Z).
 
 **And the threshold is NOT "over `LiveCount`", which cannot express it.**
 `LiveCount` is closed at `{Two, Three}` (D-255, a compile error otherwise), so it
@@ -339,7 +430,11 @@ win-in-one-ply, `can_win_this_turn` is `None`, the node takes a BATCHED row, and
 that window's empties are in Tier T under the union reading and absent under the
 `LiveCount`-only one. Revision 3 said "threshold over `LiveCount`" in §10 and
 spelled the EXACT-count union in the test plan's referent (U3-T) — two different sets in one
-document, which is §0 row 4's class recurring in the opposite direction. The
+document, which is **the superseded §0**'s row 4 class recurring in the opposite
+direction — §0 is DROPPED by the carve, is owned by no unit, and is retrievable
+only at `6feb40a` (MINOR 10; the header's `§n` resolution rule prefixes the OWNING
+unit and there is none here, so it is said in words, as with "the superseded §11"
+and "the superseded §15" below). The
 committed census implements the union reading, so §6.3's numbers are the union's.
 
 `instrument_r2_v0.toml` is value-identical to the committed `instrument_v0.toml`
@@ -441,24 +536,67 @@ readable alone; it is a condition, not a datum.)
    WP as that consumer, and item 16 (U3-Z) takes the line.
 
 
-5. **The census is `crates/pistol-solver/tests/wp15b_census.rs`, coupled to this
-   document by a TEST rather than by a SHA**, and `tools/baseline_snapshot.sh` is
-   at **`e889b5b`**.
+5. **The census is `crates/pistol-solver/tests/wp15b_census.rs`, coupled to the
+   CARVED DOCUMENTS — all six of them, not this one — by a TEST rather than by a
+   SHA**, and `tools/baseline_snapshot.sh` is at **`e889b5b`**.
 
    The instrument clause asks that a change to the instrument reopen the review.
    A recorded SHA does that only if someone re-reads it: revision 5 named the
    census at `7941775`, a revision emitting THREE regimes, while a whole column of
    its own tables came from a fourth added in the same commit as the document —
    the SHA went stale in the commit that wrote it.
-   `the_design_document_carries_this_censuss_table_verbatim` does it mechanically
-   instead: change the instrument and the build fails until the document is
-   re-rendered. That is a stronger discharge than a SHA, not a weaker one, and it
-   is the same substitution D-284 made for this log's own integrity — a property
-   nobody was checking became a gate.
+   **`the_carved_design_units_carry_this_censuss_table_verbatim`** does it
+   mechanically instead: change the instrument and the build fails until the
+   block is re-rendered — and the gate is at the CARVE's scope, not one path's.
+   It reads the six documents `CARVE_DOCS` names (the four units, `WPQ_seed.md`
+   and `section_owner_table.md`), it requires exactly ONE `BEGIN`/`END` pair
+   across the whole set, and it fails on any FOUR-DECIMAL figure from the block
+   restated outside it in any of them. D-312 landed two companion gates with it:
+   `the_census_pin_reads_every_carved_document_it_names`, which plants a census
+   figure in one document at a time and requires the scan to name that document,
+   so a file the scan cannot see fails here rather than passing silently there;
+   and `the_pins_document_list_is_the_set_of_carved_documents_on_disk`, which
+   compares the path list against the `CARVE_MARKER` set on disk — a referent the
+   list does not share, and the answer to "the list is not self-certifying". That
+   is a stronger discharge than a SHA, not a weaker one, and it is the same
+   substitution D-284 made for this log's own integrity — a property nobody was
+   checking became a gate.
+
+   **BLOCKING 2, repaired at u-rev 3, and recorded because it is this WP's
+   standing class.** Until u-rev 3 this paragraph named
+   `the_design_document_carries_this_censuss_table_verbatim` — the ONE-PATH gate
+   D-312 renamed — and kept its singular scope ("until *the document* is
+   re-rendered"), which is the framing D-312 calls the defect. §6.2 had been
+   repaired to the live name; this claim, resting on it and living in the same
+   file, was not re-read. The command that would have "verified" the old name
+   exits 0 while running nothing, which is `tools/SHELL_CHECKLIST.md`'s
+   EXIT-0-WRONG-ANSWER: a claim that a test discharges something must name a test
+   that RUNS. So it is verified here, **MEASURED at u-rev 3** — the gate's own
+   output, not a wrapper's exit status:
+
+   ```
+   $ grep -n "fn the_carved_design_units_carry\|fn the_census_pin_reads_every\|fn the_pins_document_list" crates/pistol-solver/tests/wp15b_census.rs
+   738:fn the_carved_design_units_carry_this_censuss_table_verbatim() {
+   799:fn the_census_pin_reads_every_carved_document_it_names() {
+   851:fn the_pins_document_list_is_the_set_of_carved_documents_on_disk() {
+
+   $ cargo test -p pistol-solver --test wp15b_census
+   running 5 tests
+   test wp15b_census ... ignored, a measurement, not a gate; run with --ignored --nocapture
+   test the_pins_document_list_is_the_set_of_carved_documents_on_disk ... ok
+   test wp15b_census_reproduces_the_registered_populations ... ok
+   test the_carved_design_units_carry_this_censuss_table_verbatim ... ok
+   test the_census_pin_reads_every_carved_document_it_names ... ok
+
+   test result: ok. 4 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out
+   ```
 
    The residual, stated: the pin covers the TABLE. Prose claims about the census —
    its sampling regimes, what a column means — remain judged, and so does
-   `tools/baseline_snapshot.sh`, whose output this document does not carry.
+   `tools/baseline_snapshot.sh`, whose output this document does not carry; and so
+   does every rounded, percentage or otherwise derived rendering of a cell, which
+   is a CLASS the four-decimal scan cannot see (§6.2, and U3-Z, which lists the
+   sites known at this u-rev).
 
    **The second-instrument framing of revision 2 is WITHDRAWN, and what actually
    happened is recorded instead.** Revision 2 registered "the two regimes must
@@ -529,7 +667,12 @@ to LANDED lines and have themselves LANDED, which the superseded list said of
 only one of them** (MAJOR 13).
 
 2. Tier-T option C at the threshold reading, with §6.5's surviving attack and the
-   count-3-leg lemma's two named gaps.
+   count-3-leg lemma's two named gaps. **GATED — MAJOR 6: this line may not be
+   written until a fresh DECISION-RED-TEAM has attacked M1 AS AMENDED.** CLAUDE.md
+   requires the surviving option's ADR line to record the strongest attack
+   surviving against the option **as adopted**; §6.5 records the attack against
+   the option as it stood at revision 1, `ec8f7fb`, before §6.1 flipped the reading
+   from exact to threshold and before C was selected under the flipped reading.
 
 7. **D-263's three remedies stay unimplemented, and revision 3's adoption of the
    first is WITHDRAWN** — it needs three disjoint families and 1 of 24 corpus
@@ -575,14 +718,37 @@ only one of them** (MAJOR 13).
   Either the figure is wrong or it is an unmarked estimate with a committed
   instrument standing beside it, which is D-291's clause. **A repair here is a
   design act, not a carve act.**
-- **B7's residual, four sites the pin cannot see.** The pin refuses four-decimal
-  restatements only. Rounded and percentage renderings survive the carve at:
-  **U2** §5.3's `70.8 %` (**U2**), §6.3's `6.83` and `23.2`, §10's `6.83`, and
-  §8.4/§8.5's `70.8 %` (**U4**). Each is carried verbatim; none is repaired,
-  because deciding whether `70.8 %` is the same quantity as the block's `BATCHED
-  nodes` row is a design question and not a transcription one. Widening the pin's
-  scan past four decimals is likewise an instrument change, not a re-target, and
-  T4' does not license it.
+- **B7's residual is a CLASS, and here is every site of it known at this u-rev
+  (MAJOR 4).** The pin refuses FOUR-DECIMAL restatements only. What survives it is
+  **any rounded, percentage or otherwise derived rendering of a census cell** —
+  stated as a class because u-rev 2 stated it as an ENUMERATION ("four sites"), a
+  reader takes an enumeration for the boundary of the question, and that
+  enumeration was short by four sites inside this unit alone. Each site below is
+  **LISTED, not repaired**: deciding whether `70.8 %` is the same quantity as the
+  block's `BATCHED nodes` row is a design question and not a transcription one, and
+  the carve repairs transcription only.
+
+  | site | rendering | census cell it derives from |
+  |---|---|---|
+  | **U2** (u-rev 1) §5.3 | `70.8 %` | `BATCHED nodes`, corpus roots |
+  | **U4** (u-rev 5) §8.4 | `70.8 %` | `BATCHED nodes`, corpus roots |
+  | §6.3, option C's cost and failure-mode cells | `6.83`, `23.2` | `option C — Tier T outside the r2 ball`; `option C — Tier T (threshold, ADOPTED)` |
+  | §10, the withdrawn config comment | `6.83` | `option C — Tier T outside the r2 ball` |
+  | **§6.2, the sampler sentence — u-rev 2 omitted it** | `78.0 → 123.7` | `radius-2 ball`, corpus roots and the r8 draw |
+  | **§6.1, the threshold-repair cost — u-rev 2 omitted it** | `+0.17`, `+0.04` | `option B — Tier T` threshold minus exact; `option C — Tier T` threshold minus exact |
+  | **§6.3 and §10, the outside-the-ball share — u-rev 2 omitted it** | `29 %` | `option C — Tier T outside the r2 ball` over `option C — Tier T (threshold, ADOPTED)` |
+  | **§12 item 4, the forced-row share — u-rev 2 omitted it** | `29.2 %` | 100 minus `BATCHED nodes`; equally `WIN-NOW` plus `FILTERED` |
+
+  The derivations reproduce — **MEASURED** at u-rev 3 from the block's own cells,
+  and the values are read from the block rather than restated here because that is
+  what the pin exists to enforce. The first omitted site sits **two lines above the
+  `BEGIN CENSUS TABLE` marker**, inside the very paragraph that repairs B7, which
+  is how an enumeration goes stale. Widening the pin's scan past four decimals is
+  an instrument change, not a re-target, and T4' does not license it — so the CLASS
+  statement, not the table, is what stops this list going stale when a site is
+  added. **MINOR 9, repaired:** u-rev 2 also named a `70.8 %` in **U4** §8.5.
+  There is none — MEASURED, `grep -n "70\.8" docs/experiments/U4_soundness_instrument.md`
+  returns one line, and it is inside §8.4; the §8.5 claim is deleted.
 - **The census owes a registered REPLICATION and a SECOND INSTRUMENT** (the
   superseded §17's own list). It runs in under a second, so CLAUDE.md's clause
   gives it no room to argue: the agreement criterion is registered before either
@@ -591,13 +757,62 @@ only one of them** (MAJOR 13).
   records that the criterion which WORKED was independent re-derivation by a
   fresh context and the one this document invented was a set-inclusion identity —
   that is a record of what happened, not a registration for next time.
-- **The D-scope of `quiet_top_k` and `widen_schedule`.** §10's four documents each
-  commit both keys, and D-310 defers the stage they govern. Whether the shipped
+- **The D-scope of `quiet_top_k` and `widen_schedule`.** **§10's config documents
+  each commit both keys** — §10 is the one place their number is stated and this
+  bullet cites §10 rather than restating it (**B5**; u-rev 2 asserted the
+  cardinality here, which is the same defect as **U2** §2.2's "three" going stale when
+  §10's list grew, and it was introduced by the repair, not inherited — BLOCKING
+  1). D-310 defers the stage those keys govern. Whether the shipped
   `Staged` surface keeps them (validated, inert, and set wide), narrows to Tier F
   ∪ Tier T with no quiet tier at all, or something else, changes the config
   documents, the validator and the SPRT seat. **The carve does not choose.**
-- **No REVIEW-design has run against this text at this u-rev** (U3-A).
+
+  **AND THE DECISION REACHES INTO M1 ITSELF, which u-rev 2's bullet did not say
+  (MAJOR 3).** The list, so that a reader takes the whole question and not part of
+  it:
+  - **The ADOPTED option's own stated mitigation.** §6.3's option C answers its
+    residual — no cells blocking an opponent count-2 window — by leaving them to
+    **Tier Q's delta ranking against a quiet allowance of 16**. D-315 schedules
+    Tier Q into WP-1.5c. Under this bullet's own second branch there is no quiet
+    tier at all; then C's stated mitigation does not exist in the shipped engine
+    and the cells C omits are generated by nothing. That moves the B-against-C
+    comparison, not only the config documents.
+  - **Option B's cost cell** points the reader at the census row "whose BATCHED
+    figure is the one `quiet_top_k` governs".
+  - **The matrix's cost evidence itself.** **MEASURED**,
+    `crates/pistol-solver/tests/wp15b_census.rs`: it holds
+    `const QUIET_TOP_K: usize = 16`, commented *"The design's committed quiet cut,
+    so the staged-set column is the set the config actually produces"*, and each
+    `option X — staged, BATCHED only` row is Tier T whole plus the quiet cells
+    capped at that constant. **Every staged figure and every `= N.NNx` multiplier
+    in the pinned block therefore has the deferred stage inside it**, and under
+    D-310 the shipped engine's candidate count is not that figure.
+  - **What survives, recorded because it errs toward the document:** the RANKING.
+    §12 item 5 establishes `A ⊆ C ⊆ B` as a set-inclusion identity under the
+    threshold reading, so the Tier-T rows order the options exactly as the staged
+    rows do, and the SELECTION of C over A and B does not turn on the quiet cut.
+    What does not survive the deferral is the MAGNITUDE of the reduction the
+    matrix reports, and C's stated mitigation.
+  - **This is also where MAJOR 12's scoping belongs.** The bullet above states the
+    MARK question on `23.2`; the other half of that cell — "against a quiet
+    allowance of 16" — is a deferred-stage quantity, so the D-scope decision moves
+    it too.
+- **M1 AS AMENDED HAS NEVER BEEN ATTACKED (MAJOR 6).** The DECISION-RED-TEAM in
+  U3-A's first row ran against revision 1 at `ec8f7fb`. §6.1 has since flipped the
+  ADOPTED reading from exact to threshold — which changed what the config commits
+  and re-derived every option row — and §6.5 selected C under the flipped reading;
+  U3-A's second row records that M1 "was never reopened on its merits" across
+  revisions 2–6. CLAUDE.md: reviews of superseded revisions do not transfer, and a
+  matrix never attacked is the same breach as silent architecture drift. A fresh
+  DECISION-RED-TEAM against §6.3 as it now stands is therefore owed, item 2 above
+  is GATED on it, and the carve does not run it. **U4** (u-rev 5) states the
+  parallel duty for its own matrices, which is why this reads as an omission at
+  u-rev 2 rather than as a scope decision.
+- **No REVIEW-design has run against this text at THIS u-rev** (U3-A). u-rev 2's
+  ran and FAILED — `docs/experiments/wp15b_U3_REVIEW.md` at `1b645ac`, 2 BLOCKING,
+  5 MAJOR, 4 MINOR — and does not transfer to u-rev 3, which is the repair
+  answering it. The head's REVIEW STATUS block dispositions every finding.
 
 ---
 
-*U3, u-rev 2. A carve, not a revision. IMPL has not started.*
+*U3, u-rev 3. A carve, plus the repairs answering `docs/experiments/wp15b_U3_REVIEW.md`. IMPL has not started.*
