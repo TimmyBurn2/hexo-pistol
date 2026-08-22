@@ -68,7 +68,11 @@
 #   recorded as a NAMED RESIDUAL in D-232 rather than closed, because the record
 #   format is pinned by a three-run byte-identical result two reviews verified.
 #   What IS closed is the sharp end: a name containing a control character
-#   injected attacker-chosen LINES into the invariant block, and is now refused.
+#   injected attacker-chosen LINES into the invariant block, and a name
+#   containing a SPACE shifted every field after it on its own line — the
+#   digest a reader took from `corpus … sha256 …` was the string `sha256`.
+#   Both are now refused at the guard below, and the second is why the rule
+#   above says a VALUE may hold a space while a field BEFORE one may not.
 #
 # WHY `newgame` PRECEDES EVERY CORPUS POSITION. It is a determinism requirement,
 # not a tidiness one: a table carried across positions lets one search's node
@@ -145,6 +149,14 @@
 #                   would read the cwd-relative file, and a digest that attests
 #                   a file which never ran is worse than no digest at all.
 # Exit:  0 the record was written, 1 a precondition or the run failed.
+#        THERE IS NO VOID CLASS, stated rather than left to be inferred from
+#        silence (tools/SHELL_CHECKLIST.md item 12 obligation 1). This is not a
+#        gate and adjudicates nothing: it either wrote a record or it did not,
+#        and every way of not writing one — a missing input, an engine that
+#        would not answer, a refused name — is a 1 with a named reason on
+#        stderr. A test that drives it therefore asserts the CODE and not merely
+#        `!success`, because a 2 from here is bash's own or a signal's, and
+#        would mean the script died somewhere it has no refusal for.
 
 set -euo pipefail
 
@@ -285,10 +297,38 @@ count --ladder-cap-s "$LADDER_CAP_S"
 # only printable ASCII is admitted, so the C pin now makes the refusal as WIDE as
 # it can be, and a locale calling fewer characters printable can only refuse more.
 # The named cost: a corpus whose file name is not printable ASCII is refused,
-# which is what an ASCII record's provenance line can honestly carry.
+# which is what an ASCII record's provenance line can honestly carry. THAT COST
+# STANDS UNCHANGED — the arm below is an ADDITION to that allow-list and narrows
+# nothing it admitted for a reason.
+#
+# AND A SPACE IS THE ONE PRINTABLE CHARACTER THE ALLOW-LIST ADMITS BY
+# CONSTRUCTION AND THE RECORD CANNOT CARRY. `[:print:]` INCLUDES the space, in C
+# and in every other locale, so the guard above let it through by definition
+# rather than by oversight — and the record is whitespace-token-delimited with
+# nothing quoted, so a spaced basename does not corrupt one field, it SHIFTS
+# every field after it: `corpus mini corpus.txt sha256 <hex> positions 2` gives a
+# reader taking the digest from the line's fourth token the literal string
+# `sha256`, with exit 0 and the COMPLETE kind token (REPRODUCED at 369d43a
+# against the shipped script). The defect class is the header's own — a line that
+# quietly stopped being what the block says it is — and it is exit-0-wrong-answer
+# (tools/SHELL_CHECKLIST.md items 4 and 9).
+#
+# REFUSED AND NOT SUPPORTED, deliberately. Making a spaced name WORK means
+# quoting or delimiting this line, which is a change to the record SCHEMA and to
+# every reader of it, against a format the header pins to a three-run
+# byte-identical result — and the record's leading-tokens rule is the same rule
+# that lets the engine's own handshake carry multi-token VALUES, so a value may
+# hold a space and a field before one may not. Refusing is one guard, costs the
+# caller a `mv`, and keeps `corpus`/`openings` parsable by the rule the header
+# states. The named cost, stated the way the line above states its own: a corpus
+# whose file name contains a space cannot be snapshotted under that name. Only
+# the BASENAME is guarded, because only the basename reaches the record — a
+# corpus inside a spaced DIRECTORY still runs, and a test pins that so this
+# refusal cannot quietly widen into one that refuses everything.
 for named in "$CORPUS" "$OPENINGS"; do
 	case "${named##*/}" in
 	*[![:print:]]*) fail "the corpus path \`$named\` has a character outside printable ASCII in its file name, and its name is written into the record's invariant block" ;;
+	*' '*) fail "the corpus path \`$named\` has a SPACE in its file name, and its name is written into a whitespace-delimited field of the record's invariant block, where it would shift every field after it" ;;
 	esac
 done
 # The engine, resolved to the file that will ACTUALLY be exec'd before anything
@@ -437,10 +477,20 @@ if [ -n "$(git status --porcelain 2>/dev/null || true)" ]; then TREE=dirty; else
 	echo "schema $SCHEMA"
 	echo "revision $REVISION"
 	echo "binary_sha256 $BINARY_SHA256"
+	# `$CONFIG` is a constant of this script and no flag sets it, so it is not
+	# caller-named and the guard above does not cover it. If a `--config` flag is
+	# ever added, this line joins that guard in the same commit: it has the same
+	# shape as the two below and would shift its digest the same way.
 	echo "config $CONFIG $CONFIG_SHA256"
 	sed 's/^id /engine_id /' "$WORK/id"
-	echo "corpus $(basename "$CORPUS") sha256 $CORPUS_SHA256 positions $COUNT"
-	echo "openings $(basename "$OPENINGS") sha256 $OPENINGS_SHA256"
+	# `${x##*/}` and NOT `$(basename "$x")`, so the string written here is the
+	# same expression the guard above checked — character for character. Two
+	# spellings of "the basename" is how a guard comes to guard a value the record
+	# does not write: the substitution strips the trailing newline the control-
+	# character refusal exists for, and its status is an argument to `echo` and so
+	# is discarded outright (tools/SHELL_CHECKLIST.md items 1 and 9).
+	echo "corpus ${CORPUS##*/} sha256 $CORPUS_SHA256 positions $COUNT"
+	echo "openings ${OPENINGS##*/} sha256 $OPENINGS_SHA256"
 	echo "budget nodes $NODES $BUDGET_PROVENANCE"
 	echo "ladder_depth $LADDER_DEPTH"
 	echo "ladder_cap_s $LADDER_CAP_S"

@@ -1232,3 +1232,94 @@ fn a_relative_out_lands_in_the_callers_directory_and_not_the_repository_root() {
         "and it must write into the directory the caller was standing in"
     );
 }
+
+/// A SPACE IN A CORPUS FILE NAME SHIFTS EVERY FIELD AFTER IT ON ITS OWN RECORD
+/// LINE, AND THE PRINTABLE-ASCII GUARD ADMITTED IT BY CONSTRUCTION.
+///
+/// `[:print:]` includes the space — in `LC_ALL=C` and in every other locale — so
+/// the sibling guard that refuses U+2028 and an ASCII newline let this through by
+/// definition rather than by oversight. The record is whitespace-token-delimited
+/// with nothing quoted, so REPRODUCED at 369d43a against the shipped script:
+/// `--corpus '/…/mini corpus.txt'` wrote
+/// `corpus mini corpus.txt sha256 70b3402… positions 2`, exit 0, under the
+/// COMPLETE kind token, and a reader taking the digest from the line's fourth
+/// token got the literal string `sha256` (docs/decisions.md D-324).
+///
+/// Refused rather than supported: making it work is a change to the record SCHEMA
+/// and to every reader of it, where refusing is one guard.
+///
+/// The CONTROL is the second half. Only the BASENAME reaches the record, so a
+/// corpus inside a SPACED DIRECTORY must still produce one — without it this test
+/// would pass just as well against a guard that refused everything, which
+/// tools/SHELL_CHECKLIST.md item 10 names as the way a coverage test comes to
+/// prove nothing.
+#[test]
+fn a_corpus_name_carrying_a_space_is_refused_rather_than_shift_the_records_fields() {
+    let (early, late) = band_entries();
+    let body = format!("# spaced\n{early}\n{late}\n");
+
+    let dir = scratch("snapshot-spaced-name");
+    let spaced = dir.join("mini corpus.txt");
+    std::fs::write(&spaced, &body).expect("the test corpus writes");
+    let run = Run::new(
+        "snapshot-spaced-name-run",
+        Path::new(env!("CARGO_BIN_EXE_pistol")),
+    )
+    .corpus(spaced)
+    .no_out();
+    let ran = run.go();
+    let stderr =
+        String::from_utf8_lossy(&ran.stdout).into_owned() + &String::from_utf8_lossy(&ran.stderr);
+    // The CODE and not merely `!success` (tools/SHELL_CHECKLIST.md item 12
+    // obligation 3): this script has no void class, so 1 is its only refusal
+    // code. A 0 is the defect itself — the record was written with its fields
+    // shifted. Anything else is bash or a signal killing it somewhere it has no
+    // named refusal for, which is a different finding and must not be read as
+    // this one.
+    assert_eq!(
+        ran.status.code(),
+        Some(1),
+        "a spaced corpus name is refused with the script's only refusal code; \
+         0 would mean the record was written with its `corpus` fields shifted, \
+         and any other code that it died without a named refusal:\n{stderr}"
+    );
+    assert!(
+        stderr.contains("has a SPACE in its file name"),
+        "the refusal names what it found: {stderr}"
+    );
+
+    // The control: the same space, one directory up, where it never reaches the
+    // record. This must still be a complete record naming the unspaced basename.
+    let held = scratch("snapshot-spaced-dir").join("corpus dir");
+    std::fs::create_dir_all(&held).expect("the spaced directory is created");
+    let inside = held.join("mini.txt");
+    std::fs::write(&inside, &body).expect("the test corpus writes");
+    let record = Run::new(
+        "snapshot-spaced-dir-run",
+        Path::new(env!("CARGO_BIN_EXE_pistol")),
+    )
+    .corpus(inside)
+    .record();
+    let block = invariant(&record);
+    let corpus_line = block
+        .lines()
+        .find(|line| line.starts_with("corpus "))
+        .unwrap_or_else(|| panic!("the invariant block states a corpus line:\n{block}"));
+    let fields: Vec<&str> = corpus_line.split_whitespace().collect();
+    assert_eq!(
+        fields.get(1).copied(),
+        Some("mini.txt"),
+        "a spaced DIRECTORY is not a spaced name and still runs: {corpus_line}"
+    );
+    assert_eq!(
+        fields.get(2).copied(),
+        Some("sha256"),
+        "and the digest keyword still sits where the record's own parse rule puts it: {corpus_line}"
+    );
+    assert!(
+        fields.get(3).is_some_and(
+            |digest| digest.len() == 64 && digest.chars().all(|c| c.is_ascii_hexdigit())
+        ),
+        "so the fourth token is the digest and not a shifted keyword: {corpus_line}"
+    );
+}
