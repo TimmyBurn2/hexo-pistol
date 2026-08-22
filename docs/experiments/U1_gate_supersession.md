@@ -12,8 +12,8 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 3.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
-(revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it; the counts are D-309's and are not restated here) under the restructure selected as
+**u-rev 4.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
+(revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it, and is that review's home) under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`; no line of the superseded
 document is owned twice and none is unowned. The superseded document is not in
@@ -26,17 +26,21 @@ document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
 
-**THIS UNIT HAS BEEN REVIEWED, AT u-rev 1, AND FAILED.**
-`docs/experiments/wp15b_U1_REVIEW.md`, pinned at `38f21b9`, returned FAIL (1
-BLOCKING, 0 MAJOR, 1 MINOR) against u-rev 1 of this document. This u-rev is the
-repair answering that review: BLOCKING finding 1 (stale MEASURED test counts
-in §4.1 and §4.2) and MINOR finding 2 (the lineage table silently resolving an
-unresolved SHA dispute) are both addressed below, at the sites the review
-named. Per CLAUDE.md's label discipline, this repair bumps the u-rev, and the
-repaired text is itself unreviewed until a fresh REVIEW-design runs against
-u-rev 2 — the prior FAIL does not transfer as a PASS, only the findings it
-raised are answered. §4's own matrix M0 was attacked at `ec8f7fb` and FELL to
+**THIS UNIT'S REVIEW HISTORY IS NOT RESTATED HERE.** Each round's pinned revision,
+verdict and findings live in that round's report, `docs/experiments/wp15b_U1_REVIEW*.md`,
+which is their home under D-331. **NO REVIEW-design HAS RUN AGAINST THIS u-rev**, and a
+review of a superseded revision does not transfer — an amendment reopens the review,
+however small the diff. §4's own matrix M0 was attacked at `ec8f7fb` and FELL to
 option (f) — see U1-A.
+
+*(~~This unit has been reviewed, at u-rev 1, and failed … the repaired text is itself
+unreviewed until a fresh REVIEW-design runs against u-rev 2.~~ **STRUCK AT u-rev 4**
+under `D-346`. It was written at u-rev 2 and never re-read: u-rev 2 **was** reviewed
+and it **PASSED** (`docs/experiments/wp15b_U1_REVIEW_urev2.md`), so a head describing
+this unit as awaiting that review was false from `f81706a` onward and named the one
+PASS in this work package nowhere at all. `docs/decisions.md` D-342 records it as the
+open half of `matrix_META1_REDTEAM.md` M3; this is that half, answered by deletion
+rather than by a fourth hand-kept copy of a history the reports already hold.)*
 
 Theory citations are calculus IDs from `docs/research/threat_calculus_v1.md`
 (D-266). This unit restates no theory; where it appears to, the calculus wins and
@@ -51,6 +55,7 @@ the disagreement is an ADR line.
 | DECISION-RED-TEAM, matrix M0 | revision 1, `ec8f7fb` | **M0 FELL** → option (f), supplied by the red team that killed (e) |
 | REVIEW-design ×5 | revisions 2–6, `182f389` `7ad466b` `f762c9a` `64af80c` `2d07ff6` | all FAIL, none on M0's merits; no round reopened M0 |
 | REVIEW-design | revision 7, `6feb40a` | **FAIL** — 7 BLOCKING, 7 MAJOR, 9 MINOR. **B6 is M0's** and is discharged below; no other finding is §4's |
+| REVIEW-design, **this unit** | every u-rev that has been reviewed | **THIS TABLE DOES NOT RESTATE THIS UNIT'S OWN REVIEW HISTORY.** Each round's pinned revision, verdict and findings are in that round's report, `docs/experiments/wp15b_U1_REVIEW*.md`, which is their home. It carried no row for them at all until u-rev 4, which is how the one PASS in this work package went uncited by the unit that earned it (`docs/decisions.md` D-342) |
 | DECISION-RED-TEAM, restructure | matrix at `eea480b` | F10: option B's cost cell called M0 clean against the matrix's own Facts block. **M0 was not clean — B6 was live.** It is now not live |
 
 **"Revision 6" above is `2d07ff6` — an unresolved dispute, disclosed, not
@@ -324,7 +329,7 @@ This unit has no governed run.
 
 ---
 
-*U1, u-rev 3. What each u-rev of this unit did is the head block's and U1-A's,
+*U1, u-rev 4. What each u-rev of this unit did is the head block's and U1-A's,
 and this line restates neither — it carries the u-rev label and nothing else, so
 that it cannot go stale against the head independently of them. IMPL has not
 started.*
