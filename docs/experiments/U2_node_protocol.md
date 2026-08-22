@@ -12,57 +12,79 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 3.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
+**u-rev 4.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
 `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the restructure
 selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
 in the tree: it is retrievable at `6feb40a` and nowhere else.
 
-**u-rev 2 was a REPAIR, not a new carve.** It answered
-`docs/experiments/wp15b_U2_REVIEW.md`'s FAIL against u-rev 1 (pinned `38f21b9`):
-F2 (MAJOR, §5.3's unreachable fixture) and F1 (MINOR, §5.4's undisclosed
-citation correction), plus a one-sentence architect ruling (R5, Tier Q).
-Nothing else in that text changed.
+**EVERY u-rev AFTER THE FIRST IS A REPAIR, NOT A NEW CARVE, AND THE TABLE BELOW
+POINTS AT THE REPORT THAT CAUSED EACH RATHER THAN RESTATING WHAT IT SAID (D-331).**
+Each report is in the tree; a reader who wants a finding's content reads it there,
+where it has its home, and this unit does not carry a second copy that can drift
+from it.
 
-**u-rev 3 is a REPAIR of u-rev 2's own review, not a new carve.** It answers
-`docs/experiments/wp15b_U2_REVIEW_urev2.md`'s FAIL against u-rev 2 (pinned
-`56b0bec`, byte-identical at HEAD `e3f0bc3` when that review ran): F3 (MAJOR,
-the "exceptions" paragraph's own count went stale the moment F2 landed — it
-omitted F2's own §5.3 rewrite, the largest exception) and F4 (MINOR, the D-257
-quotation at §5.3 carried a second, unmarked elision). Nothing else in this
-text changed.
+| u-rev | pinned revision reviewed | report | verdict |
+|---|---|---|---|
+| 1 | `38f21b9` | `docs/experiments/wp15b_U2_REVIEW.md` | FAIL |
+| 2 | `56b0bec` (byte-identical at HEAD `e3f0bc3` when that review ran) | `docs/experiments/wp15b_U2_REVIEW_urev2.md` | FAIL |
+| 3 | `d85b049` | `docs/experiments/wp15b_U2_REVIEW_urev3.md` | FAIL |
+| **4** | *this text* | **NOT YET REVIEWED** | — |
+
+**u-rev 4 answers `wp15b_U2_REVIEW_urev3.md` and changes nothing else.** It
+rewrites the head's exceptions paragraph and adds `CARVE-EXCEPTION` markers at
+the five sites the exceptions occur at — four of those markers already existed
+in another wording and one is new. **The markers sit inside §2.2, §5.3, §5.4 and
+§12, but they are DISCLOSURE APPARATUS and not design content**: no sentence of
+the carried prose is rewritten by them, no number moves, and each says only what
+already happened at the site it sits at. Where each finding is answered is in the
+REVIEW STATUS block below.
 
 **THE TEXT IS A VERBATIM CARVE.** Every change made to it is a CROSS-REFERENCE
 RETARGET — a `§n` that pointed inside the superseded document now names the unit
 that owns that section, or names `WPQ_seed.md` where the referent is stage Q —
-plus one B5 repair in §2.2 (below). No sentence of §3, §5 or §14 was rewritten,
+plus the exceptions the markers name (next paragraph). No sentence of §3, §5 or §14 was rewritten,
 extended or re-derived, and no number moved. Every **MEASURED** and **ESTIMATED**
 mark is the mark the superseded text carried.
 
-**Four exceptions, all stated where they occur rather than only here. Each is a
-change to this unit's CARVED CONTENT — prose carried over from the superseded
-document's §2, §3, §5 or §14. This list, the u-rev label, and the rest of the
-head's own apparatus are NOT carved content; they are new text the carve itself
-writes and are expected to change every u-rev (LABEL DISCIPLINE, above) — so an
-edit to this paragraph, including u-rev 3's addition of the fourth item below,
-is not a further exception the list owes itself:** §2.2's config-count sentence
-became a citation of U3 §10 (B5 — the count was stated three different ways and
-is now stated once, there); §12 item 2's rate list hands the widening rate and
-the declined-TT-entry count to `WPQ_seed.md` with stage Q, keeping the counter
-SEAM here because the seam is what a later WP reads them through; §5.3's
-`Run::salvage`-cost sentence silently repointed a dangling citation — the
-superseded text read "§12 item 6", which never existed (§12 had five items at
-`6feb40a`) — to its actual referent, "U2-Z item 20" (i.e. superseded §15 item
-20), a content correction rather than a retarget, found by the u-rev 1 review
-(`docs/experiments/wp15b_U2_REVIEW.md`, F1) and disclosed at the point of
-occurrence in this u-rev; and §5.3's two-ply-illustration rewrite (F2, found by
-the same u-rev 1 review) — roughly sixteen new lines of new prose, not a
-`§n`-retarget: the "ILLUSTRATION ONLY; … WITHDRAWN" heading clause, the
-withdrawal of the "VERIFIED on the shipped solver" sentence, a new D-257
-blockquote, the rule-3 arithmetic (`1 + 2(k − 1) = 2k − 1`), and a rewritten
-D-243(4)-discharge sentence — the largest of the four, and the one this list
-omitted until the u-rev-2 confirmation re-review caught the omission (u-rev
-2 → 3, F3).
+**THE EXCEPTIONS ARE STATED AT THEIR OWN SITES AND NOWHERE ELSE, AND THIS
+PARAGRAPH ENUMERATES NONE OF THEM.** An exception is a change to this unit's
+CARVED CONTENT — prose carried over from the superseded document's §2, §3, §5 or
+§14 — that is not a `§n`-retarget. **THE RULE, which is what this paragraph
+states:** every such change carries, at the point where it occurs, a marker
+opening with the token `CARVE-EXCEPTION` and naming the u-rev that made it and
+the finding or ruling that caused it. **The marker is the claim's HOME (D-331);
+this paragraph is a POINTER to the markers and asserts no set, no count and no
+completeness.** The enumeration is DERIVED, by the command below, and is never
+asserted here:
+
+```
+$ grep -n "(CARVE-EXCEPTION" docs/experiments/U2_node_protocol.md
+```
+
+Every marker opens with an opening parenthesis immediately before the token, so
+the parenthesis is what separates a marker from a bare mention of it. **One line
+of this head matches the pattern too — the command above matches itself — and
+that is stated rather than worked around**: the alternative is a pattern written
+to dodge its own document, and that is the kind of instrument this project has
+already had fail (a scan narrowed until it was blind over exactly the file it was
+about, `matrix_M4_REDTEAM_round2.md` R11). A reader discounts one line of head
+apparatus; a blind scan cannot be discounted at all.
+
+**Why this paragraph no longer counts.** It counted three, and F2's own §5.3
+rewrite — the largest change in the unit — was not among them (u-rev 2 → 3, F3).
+It then counted four, and architect ruling R5's addition to §5.4 was not among
+them (u-rev 3 → 4, F5). Both times the paragraph was actively edited in the
+round that landed the change it failed to name. **A hand-enumerated set inside a
+document that keeps being repaired goes stale at the moment of the next repair,
+and that is the generator D-331 names**; a rule plus a derived enumeration
+cannot, because adding an exception without its marker is a breach of a stated
+rule rather than a silent omission from a list nothing checks.
+
+**This paragraph, the u-rev label, and the rest of the head's own apparatus are
+NOT carved content**; they are new text the carve itself writes and are expected
+to change every u-rev (LABEL DISCIPLINE, below), so an edit to them is not an
+exception and carries no marker.
 
 **WHY THIS UNIT'S REVIEW IS A CONFIRMATION PASS.** Five fresh-context
 REVIEW-designs and two DECISION-RED-TEAMs have run over this text and **none
@@ -82,17 +104,27 @@ document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
 
-**THIS UNIT HAS BEEN REVIEWED TWICE, AND BOTH REVIEWS FAILED.** u-rev 1 (pinned
-`38f21b9`) was reviewed by `docs/experiments/wp15b_U2_REVIEW.md`, a CONFIRMATION
-PASS: **VERDICT FAIL**, 1 MAJOR (F2, §5.3's unreachable fixture) and 1 MINOR (F1,
-§5.4's undisclosed citation correction). u-rev 2 — the repair answering those two
-findings, plus one architect ruling (R5) — was reviewed by
-`docs/experiments/wp15b_U2_REVIEW_urev2.md`, again a CONFIRMATION PASS:
-**VERDICT FAIL**, 1 MAJOR (F3, the exceptions paragraph did not name F2's own
-§5.3 rewrite) and 1 MINOR (F4, the D-257 quotation's unmarked second elision).
-This u-rev (3) is the repair answering F3 and F4. It is unreviewed at ITS OWN
-revision — a repair reopens the review exactly as any other amendment does — and
-a WP is not landable while a review is outstanding.
+**REVIEW STATUS — u-rev 3 WAS REVIEWED AND FAILED; u-rev 4 IS THE REPAIR.**
+`docs/experiments/wp15b_U2_REVIEW_urev3.md`, REVIEW-design, fresh context,
+against **`d85b049`** — **VERDICT FAIL, 1 MAJOR (F5), 1 MINOR (F6)**. **THIS
+u-rev — u-rev 4 — HAS NOT BEEN REVIEWED**, and u-rev 3's review does not transfer
+to it: an amendment reopens the review, however small the diff (D-311). A WP is
+not landable while a review is outstanding. **The rows below say WHERE each
+finding is answered and do not restate what it said** (D-331); the report is in
+the tree.
+
+| Finding, `wp15b_U2_REVIEW_urev3.md` | Where it is answered at u-rev 4 |
+|---|---|
+| **F5** (MAJOR) | **ANSWERED BY REMOVING THE ENUMERATION, NOT BY EXTENDING IT.** The head paragraph that carried the list now states a RULE and a derived command and asserts no set; the missing disclosure is added at its own site, `§5.4`'s architect-ruling paragraph, as a `CARVE-EXCEPTION` marker. The four disclosures that already existed carry the same token, so one command enumerates every one of them |
+| **F6** (MINOR) | **ANSWERED BY DELETION.** The unmarked numeric claim was inside the enumeration F5 removed, and it went with it. No line count of the diff is stated anywhere in this unit |
+
+**WHY F5's REPAIR IS NOT ANOTHER ITEM ON THE LIST.** The reviewer's own fix scope
+offered *"add a fifth exception … and/or an inline disclosure marker"*. The first
+half is declined and the reason is recorded rather than assumed: the list had
+already been extended once, from three to four, in the round that answered F3 —
+and it was that extended list which F5 then found incomplete. Extending it again
+is the instrument that has now failed twice. **D-331 (R15) landed at `c9d4e64`
+between the two rounds and is the law this repair is taken under.**
 
 **BUILD ORDER.** This unit's IMPL is the commit that gives `pistol-search` a
 normal dependency on `pistol-solver` — MEASURED at `08cf4f7`, `pistol-solver` is
@@ -156,7 +188,9 @@ was false and is withdrawn.
 
 `configs/instrument_v0.toml` and `configs/play_v0.toml` stay at `kind =
 "radius"`. Staged ships as config-selectable documents; **U3 §10 states how many,
-and is the only place that states it** (B5). The committed
+and is the only place that states it** (B5). **(CARVE-EXCEPTION, u-rev 1 / B5:**
+the superseded text stated the count here as well, three different ways; this
+sentence now cites the owner and states no cardinality.) The committed
 default moves only when SPRT rules — the operator's run, after this session.
 This is the CONSERVATIVE/INCUMBENT branch, and it is what D-190/D-194 did: the
 H1 action that moved the committed radius landed *after* the games.
@@ -393,11 +427,13 @@ that the table's move can therefore be promoted to index 0 unconditionally,
 F being EMPTY is exactly what puts Tier T first, not the table move. The failing
 case — Tier F empty, Tier T non-empty, table move in Tier Q — is **MEASURED at
 70.8 % of corpus roots**, the common case rather than a corner. §5.4 states the
-one rule, and U2-Z item 20 records what it costs `Run::salvage`. **(Citation
+one rule, and U2-Z item 20 records what it costs `Run::salvage`. **(CARVE-EXCEPTION, citation
 disclosure, u-rev 2 / F1:** the superseded text cited "§12 item 6" here, which
 never existed — §12 had five items at `6feb40a` — and the carve silently
-repointed it to its actual referent, "U2-Z item 20" (superseded §15 item 20);
-disclosed as this unit's third stated exception in the head.)
+repointed it to its actual referent, "U2-Z item 20" (superseded §15 item 20).
+*Until u-rev 4 this marker also called itself "this unit's third stated exception
+in the head" — an ordinal into a hand-enumerated list, which is the restatement
+the head no longer carries.*)
 
 **Soundness of the WIN-NOW row.** At a node `k` turns from the root the best score
 any move can reach is `mate_in(k+1)`, because a mate at that distance means
@@ -414,7 +450,7 @@ one established by the `None` arm rather than assumed, which is the repair
 revision 3 made and revision 4 keeps.
 
 **The two-ply realisation — ILLUSTRATION ONLY; "VERIFIED on the shipped solver"
-is WITHDRAWN (u-rev 2 / F2).** `Cover::Minimal` carries SETS because the union
+is WITHDRAWN (CARVE-EXCEPTION, u-rev 2 / F2).** `Cover::Minimal` carries SETS because the union
 is provably insufficient. The load-bearing ground for that claim is D-257's own
 abstract, position-free example, which needs no reachability claim at all:
 
@@ -504,7 +540,12 @@ function and the search's actual candidate set diverge. Named in U2-Z item 21.
 **Architect ruling R5 (settled).** Tier Q stays in this unit's node protocol,
 SPECIFIED BUT UNARMED: the D-scope WP-1.5b ships is stages F and T only, this
 unit's protocol scope for Tier Q is unchanged by that scope, and the
-pre-registration registers F+T only.
+pre-registration registers F+T only. **(CARVE-EXCEPTION, u-rev 2, one sentence,
+per D-311.** This marker is owed from u-rev 2 and is added at u-rev 4: the
+paragraph is new prose inside a carved section and was disclosed only in the
+head's historical summary, which is not a point-of-occurrence disclosure —
+`docs/experiments/wp15b_U2_REVIEW_urev3.md`, F5. Its sibling paragraph in
+`WPQ_seed.md` carried its marker from the start.)
 
 **The forced prefix and `ordering::order` — specified, because they conflict as
 shipped.** `order` stable-sorts the WHOLE candidate vector by `Eval::delta` and
@@ -666,6 +707,9 @@ readable alone; it is a condition, not a datum.)
    entries the truncation rule declines to store are stage Q's quantities and
    DEFER with it** (`WPQ_seed.md` §7.2); the counter seam described above is
    what a later WP reads them through, so the seam is not deferred.
+   **(CARVE-EXCEPTION, u-rev 1, D-310's stage-Q deferral:** the superseded rate
+   list named these two quantities here; the carve hands them to `WPQ_seed.md`
+   and keeps the seam.)
 
 ### Cost
 
@@ -790,14 +834,13 @@ a correction to a landed line, and none has landed.**
   `LAW-HIT` + `DEF-T` and the calculus amendment is OWED** (item 22 above). A
   quiescence that reuses it inherits that debt.
 - **Quiescence stands pat and extends in TURNS, never plies** — D-111, unchanged.
-- **What WP-1.6 must not inherit:** this text is UNREVIEWED at this u-rev (u-rev
-  3, this repair). Five rounds failed before the restructure, and the carve
-  itself has now been attacked twice post-carve — a CONFIRMATION PASS at u-rev 1
-  (`docs/experiments/wp15b_U2_REVIEW.md`, pinned `38f21b9`) returned **FAIL**, 1
-  MAJOR + 1 MINOR, repaired at u-rev 2; a second CONFIRMATION PASS at u-rev 2
-  (`docs/experiments/wp15b_U2_REVIEW_urev2.md`, pinned `56b0bec`) again returned
-  **FAIL**, 1 MAJOR (F3) + 1 MINOR (F4), repaired here. u-rev 3 has not yet been
-  reviewed.
+- **What WP-1.6 must not inherit:** this text is UNREVIEWED at this u-rev. Five
+  rounds failed before the restructure, and the carve itself has been attacked
+  three times post-carve, every one returning FAIL. **The u-rev table in this
+  unit's head is the one place that states which review ran against which
+  revision (D-331); this bullet points at it and states no second copy**, because
+  a chronology restated at the foot of a document is a chronology that goes stale
+  at the next bump — which is what happened to this bullet's own predecessor.
 
 ### The conservative branch this unit records
 
@@ -823,5 +866,5 @@ a correction to a landed line, and none has landed.**
 
 ---
 
-*U2, u-rev 3. A repair, answering `docs/experiments/wp15b_U2_REVIEW_urev2.md`'s
-FAIL against u-rev 2. IMPL has not started.*
+*U2, u-rev 4. A repair, answering `docs/experiments/wp15b_U2_REVIEW_urev3.md`.
+IMPL has not started.*
