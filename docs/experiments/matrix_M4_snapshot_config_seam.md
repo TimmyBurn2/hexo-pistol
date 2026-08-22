@@ -1,3 +1,153 @@
+# MATRIX M4 — the snapshot's config seam — **STOPPED AFTER TWO ROUNDS, NOTHING SELECTED**
+
+**Status: TWO REVISIONS, TWO FRESH-CONTEXT DECISION-RED-TEAMS, NO SELECTION.**
+Revision 1 authored `77f7397`, attacked in
+`docs/experiments/matrix_M4_REDTEAM.md`. Revision 2 authored `cb16f7c`, attacked
+in `docs/experiments/matrix_M4_REDTEAM_round2.md`. Owning unit:
+`docs/experiments/U4_soundness_instrument.md` §9. **D-318 records the stop.**
+
+> **REVISION 2 IS BELOW, VERBATIM AS ATTACKED, AND IS NOT EDITED** — and revision 1
+> is quoted verbatim inside it, likewise unedited (round 2 verified 165/165 lines
+> identical to `git show 77f7397:`). Everything in this STOP RECORD is above the
+> body. A matrix corrected after its attack is a matrix that was never attacked.
+
+## WHY THIS STOPS RATHER THAN SELECTING, when options DID survive
+
+Round 2 did **not** kill every option — N-J survives, and N-E, N-K, N-L and N-F
+survive wounded — so the architect's "kills every option" stop rule is **not**
+what fires here. Three other things do, and each alone would be enough:
+
+**1. REVISION 2'S OWN REASON FOR EXISTING IS FALSE, and the tree contains a
+landed ADR line warning against precisely the error it made.** Revision 2
+declined to select from revision 1's field because that field omitted "the seam
+this project's own D-252 option matrix SELECTED … after its own red team, and
+which D-283 landed". **Neither conjunct is true, and both are checkable in
+seconds:**
+
+```
+$ grep -o "^D-288:.\{0,260\}" docs/decisions.md
+D-288: D-252's OPTION (c) IS RELABELLED — IT WAS A DEFERRAL AND IT SAID "ADOPTED",
+AND THE LABEL HAD TEETH. The line reads «(c) ADOPTED: leave the literal, register
+the exposure, and schedule the binding», and what (c) actually did was decline to
+bind … That is a DEFERRAL.
+```
+
+D-252's option (c) is **N-L's shape** — leave the literal, register the exposure,
+schedule the binding — not a document seam. **D-288 exists in this tree for the
+sole purpose of relabelling it "DEFERRED … and NO OPTION SELECTED"**, and it
+states the harm in terms that describe revision 2 exactly: *"a successor picking
+up WP-1.10 and reading (c) as adopted would have found the decision already
+taken, the matrix already spent, and no red-team owed, on a choice that had never
+been attacked."* Revision 2 is that successor. And D-283 says of its own
+sub-choices, in its own text, that **they have not been attacked by a
+fresh-context DECISION-RED-TEAM**.
+
+**2. EVERY PRECEDENT GROUND IS VOID, so no ground discriminates.** The tree holds
+**no attacked selection** for how an instrument binds a per-run input: D-252
+selected nothing (D-288), D-283's own review is outstanding by its own text, and
+U4-Z's B3 shape comparison says of itself that it was never attacked (D-316's
+recorded residual). Grounds 1, 3 and 4 of the recommendation fall with the
+precedents they read. **What survives is ground 2 — refuse the silent-wrong-config
+record — and ground 2 argues equally for N-E, N-J, N-K, N-L and N-F, none of
+which has a default.** Selecting one of five on a ground that does not
+discriminate between them is forcing a survivor by another name, which is the
+thing the stop rule exists to prevent.
+
+**3. THE FIELD IS STILL INCOMPLETE AT THE SECOND REVISION, and one missing row
+dominates the recommended option on the matrix's own trigger.** Rule 1's
+mechanism, which ground 1 invokes, is a **closed enum** — `Budget` is
+`{depth_turns, nodes, movetime_ms}`. A required `--config {instrument|staged}`
+**selector over the committed set** satisfies grounds 1 and 2 identically to N-E
+while owing far fewer guards, because guards (i) caller-relative resolution and
+(iii) the three path refusals exist only because a caller can name an ARBITRARY
+path. The matrix's framing — "any option that **lets a caller name the path**", "an
+argv string" — excludes it by presupposition, **for the second revision running**.
+A sixth row is also missing: binding the config through the corpus fixture, which
+is already caller-named by an existing flag and already digested above the marker,
+and which reaches N-J's "strictly stronger property" with no new document and no
+new flag.
+
+## THE AUTHOR'S OWN DEFECTS, recorded because they are the pattern and not the incident
+
+- **F7 REPEATED ONE LEVEL UP.** Round 1 found that revision 1's self-disclosure
+  pointed the red team away from where its own error was. Revision 2 spent a
+  paragraph on that finding — and then committed **F5's and F7's class fresh in
+  the two new facts carrying grounds 1 and 3**: fact 12's command reads only D-283
+  and cannot see D-252 or D-288, and fact 10's command reads only `pistol.rs`
+  while the fact asserts something about `arena.rs`. **Candour about a past error
+  is not a control on the present one**, and this is the second round in which
+  candour did the work of concealment.
+- **A THIRD MEASURED NUMBER THAT DOES NOT REPRODUCE.** Fact 6d's five-site
+  enumeration contains a non-site: MEASURED by round 2, with `go()` and test 1205
+  patched and 1036 left alone, the suite is **29/29 green**. Revision 2 corrected
+  revision 1's false "three" and put a different wrong number in its place, still
+  driving flip clause 1. With M3's fact 5 and M4's fact 6b, that is **three
+  MEASURED cells from this author in one session that did not reproduce, all in
+  cells supporting a recommendation.**
+- **N-L's "Zero code change" is MEASURED FALSE**, and N-L is the remedy of two
+  flip clauses on the stated ground that it "changes no caller at all".
+  Re-pinning the literal alone turns
+  `snapshot_deterministic_across_a_clean_and_a_dirty_working_tree` red, because
+  the fixture at `crates/pistol-cli/tests/baseline_snapshot_tests.rs:385` copies
+  `configs/instrument_v0.toml` **by name**. Verified by reading that file.
+- **"Revision 2 marks every number" is false** in the exact cell round 1 named
+  (N-D′'s "Zero"), plus N-B′'s "Zero", N-L's "Zero code change", and an unmarked
+  "15".
+- **D-283's condition is read BACKWARDS by grounds 3 and 4.** They turn on D-283
+  choosing the document *"because the arena had no flag surface at all"*. The
+  arena takes `--config` and `--out` (`crates/pistol-arena/src/bin/arena.rs:77`),
+  and D-283's condition is about the **INPUT BEING BOUND** — *"the arena has no
+  `--binary` flag"*. Applied as written it puts the snapshot, whose config has no
+  flag, in the **same** case as the arena, which is the opposite of what the
+  taxonomy concluded.
+
+## WHAT THE THIRD ROUND IS OWED — the architect's, not this session's
+
+Both rounds warned about the same thing and D-305 measured it: **the red team
+supplied the surviving option in four of six matrices in this work package.** A
+third field authored by the session that wrote the first two, now populated with
+rows both red teams supplied, is that pattern completed rather than broken. The
+round is owed, and it owes:
+
+1. The two missing rows named above — the **closed-enum selector** and the
+   **corpus-fixture binding** — the first of which dominates N-E on the matrix's
+   own trigger.
+2. A field framed without the "caller names a path" presupposition that excluded
+   them twice.
+3. Costs that are MEASURED where a command settles them in seconds, and marks on
+   every number including the zeros.
+4. **No precedent ground that has not itself been attacked.** D-252 selected
+   nothing, D-283 is unattacked by its own admission, and B3's shape comparison is
+   unattacked by D-316's own residual. Any third-round ground resting on one of
+   those must say so on its face.
+
+## WHAT THIS BLOCKS
+
+`tools/baseline_snapshot.sh` gains no config seam, so **no Staged snapshot can be
+taken** and the registered above-marker quantity has a BEFORE and no AFTER. U4-Z
+item 15 stays blocked and **B2 — M4 has no ADR line — stays open**, now for a
+measured reason. The pre-registration contradiction below is unchanged.
+
+## OPEN — escalated, NOT repaired
+
+`docs/experiments/wp15b_sprt_prereg.md` asserts *"MATRIX M4 **ADOPTS** adding
+`--config`"*. This session is barred from editing the pre-registration. Round 2
+completes the record revision 2 left incomplete: that document is **Revision 4, a
+DRAFT, "GOVERNS NOTHING YET", never reviewed, with an OPERATOR-CONFIRM slot** — so
+the contradiction is a draft's forward reference and not a governing claim. It
+still must be re-read against whatever the third round selects, and it currently
+names a mechanism no matrix supports.
+
+---
+---
+
+# REVISION 2 — VERBATIM AS ATTACKED at `cb16f7c`
+
+*Everything below this line is the text the round-2 DECISION-RED-TEAM was
+dispatched against, unedited, and it contains revision 1 quoted verbatim inside
+it. Its "Status: AUTHORED, NOT SELECTED" is the state at attack time and remains
+true. The corrections are above.*
+
 # MATRIX M4 — the snapshot's config seam — **REVISION 2**
 Status: **AUTHORED, NOT SELECTED.** Awaits a SECOND fresh-context
 DECISION-RED-TEAM. Subject: `tools/baseline_snapshot.sh`. Owning unit:

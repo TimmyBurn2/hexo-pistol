@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 4.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
+**u-rev 5.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
 item 1 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the
 restructure selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -500,6 +500,32 @@ scratch preflight.
 >
 > ### VERDICT: **DIFFERS. SELECTION OPEN. The carve does not select N-A.**
 >
+> **UPDATE AT u-rev 5 — THE FRESH ROUNDS RAN, TWICE, AND STILL SELECT NOTHING
+> (D-318).** `docs/experiments/matrix_M4_snapshot_config_seam.md` was authored
+> fresh (revision 1, `77f7397`), attacked, re-authored over a ten-option field
+> (revision 2, `cb16f7c`) and attacked again. Options SURVIVED both rounds, so
+> this is not M3's "every option fell" stop — it stops for three other reasons,
+> each sufficient. **(i)** Revision 2's stated reason for existing is FALSE: it
+> claimed D-252's matrix selected the document seam and D-283 landed it, and
+> **D-288 exists in this tree solely to relabel D-252's option (c) "DEFERRED …
+> NO OPTION SELECTED"**, warning against a successor who reads it as adopted and
+> finds "the matrix already spent, and no red-team owed, on a choice that had
+> never been attacked". **(ii)** Every precedent ground is therefore void — the
+> tree holds NO attacked selection for how an instrument binds a per-run input,
+> since D-252 selected nothing, D-283 states its own choices were never attacked,
+> and D-316's residual says the same of B3's shape comparison — leaving one ground
+> that argues equally for five options and discriminates between none.
+> **(iii)** The field is STILL incomplete at revision 2: a required
+> `--config {instrument|staged}` **closed-enum selector** — rule 1's own mechanism,
+> which the recommendation invokes — dominates the recommended option on the
+> matrix's own guard trigger and was excluded by the framing "lets a caller name
+> the path" for two revisions running.
+>
+> **So B2 is not discharged and the reason is now measured rather than
+> procedural.** No ADR line may cite N-A, N-A′ or N-E as adopted. Item 15 in U4-Z
+> stays blocked, and `tools/baseline_snapshot.sh` has no config seam, so the
+> registered above-marker quantity has a BEFORE and no AFTER.
+>
 > T1' is explicit — "identical = attack stands, differs = fresh round". It
 > differs. **The fresh DECISION-RED-TEAM is the architect's dispatch, not the
 > carve's**, and until it runs no ADR line may cite N-A as adopted — item 15 in
@@ -797,7 +823,7 @@ carried, not closed.
 ### OPEN — carried forward, not closed by the carve
 
 - **B1 / M3 — the matrix was authored and attacked, and EVERY OPTION FELL** (the stub at the head of §8; D-317). No instrument is selected for the DIFFERENTIAL GATE, so `tools/staged_soundness_check.sh` cannot be specified for that gate and the other three named gates are unaffected. A SECOND AUTHORING ROUND is owed, over a field that must include the four rows the red team named as missing — the S-E-plus-reduced-S-C composite the design actually writes as adopted, a calculus-lower-bound containment criterion, a per-node census, and reuse of the landed referent at `crates/pistol-solver/tests/common/reference.rs:223`. Two of those four are immune to the attack that killed S-E. **It is the architect's to schedule, not this session's to author**: a revision 2 written by the session that wrote revision 1, over options the red team supplied, is the pattern D-305 measures.
-- **B2 / M4 — no ADR line, and the selection is OPEN** (the block at the head of §9).
+- **B2 / M4 — no ADR line, and after TWO authored revisions and TWO fresh-context DECISION-RED-TEAMs the selection is STILL OPEN** (the block at the head of §9; D-318). It is not open for want of a round; it is open because every precedent ground the recommendation rested on turned out to be unattacked or misread, and because the field was measurably incomplete at both revisions. A THIRD round is owed and is the architect's: it must carry the closed-enum selector and the corpus-fixture binding, drop the "caller names a path" framing that excluded them twice, and rest on no precedent that has not itself been attacked.
 - ~~**B3 — gate (b), the two shapes above.**~~ **CLOSED at u-rev 2** by the architect's selection of shape 2, recorded above and in D-316. Its RESIDUAL is not closed and is named there: the selection was not put to a fresh-context DECISION-RED-TEAM.
 - ~~**MAJOR 8 — M4's and M6's mutation witnesses are not positions a legal game
   reaches.**~~ **CLOSED at u-rev 3.** Both witnesses are rebuilt in §8.4 as
@@ -826,4 +852,4 @@ carried, not closed.
 
 ---
 
-*U4, u-rev 4. A carve, not a revision. M3 ATTACKED AND STOPPED with no survivor (D-317); M4 OPEN, at matrix revision 2 under a second round. B3 CLOSED at u-rev 2, MAJOR 8's reachability half CLOSED at u-rev 3. IMPL has not started.*
+*U4, u-rev 5. A carve, not a revision. BOTH selections remain OPEN and both are now STOPPED rather than pending: M3 attacked once, every option fell (D-317); M4 attacked twice over two authored fields, options survived but no ground discriminates and the field is still incomplete (D-318). B3 CLOSED at u-rev 2, MAJOR 8's reachability half CLOSED at u-rev 3. IMPL has not started.*
