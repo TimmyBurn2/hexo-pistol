@@ -60,10 +60,10 @@ done
 
 # First because it is instant and needs no build: fastest possible feedback
 # (docs/decisions.md D-30).
-step "gate 1/14: cargo fmt --all --check"
+step "gate 1/15: cargo fmt --all --check"
 cargo fmt --all --check || fail "formatting: run \`cargo fmt --all\`"
 
-step "gate 2/14: build from the git-tracked file set"
+step "gate 2/15: build from the git-tracked file set"
 # The point of this gate is to catch a build that depends on a file nobody
 # tracked. The tracked set is the git index: it equals HEAD on a fresh checkout,
 # and equals the about-to-be-committed tree when work is staged, so the gate
@@ -78,30 +78,30 @@ echo "ci: building $(git ls-files | wc -l) tracked files in $WORK/repo"
 rm -rf "$WORK"
 trap - EXIT
 
-step "gate 3/14: cargo test --workspace --locked"
+step "gate 3/15: cargo test --workspace --locked"
 cargo test --workspace --locked || fail "tests"
 
 # --all-targets so tests and examples are linted too, which is strictly more
 # than CLAUDE.md asks for and costs nothing.
-step "gate 4/14: cargo clippy --workspace --all-targets -- -D clippy::all"
+step "gate 4/15: cargo clippy --workspace --all-targets -- -D clippy::all"
 cargo clippy --workspace --all-targets --locked -- -D clippy::all || fail "clippy"
 
-step "gate 5/14: artifact rejection"
+step "gate 5/15: artifact rejection"
 gate "artifact check" tools/artifact_check.sh
 
-step "gate 6/14: config validation"
+step "gate 6/15: config validation"
 gate "config check" tools/config_check.sh
 
-step "gate 7/14: perft oracle"
+step "gate 7/15: perft oracle"
 gate "perft oracle" tools/perft_check.sh
 
 # The determinism law's executable form (CLAUDE.md rule 4, docs/decisions.md D-7).
 # It runs last of the two engine gates because it is the slowest: two processes
 # over the whole sha-pinned fixture set at two budgets.
-step "gate 8/14: tactical fixture at its pre-registered threshold"
+step "gate 8/15: tactical fixture at its pre-registered threshold"
 gate "tactical fixture" tools/tactical_check.sh
 
-step "gate 9/14: cross-process determinism"
+step "gate 9/15: cross-process determinism"
 gate "determinism" tools/determinism.sh
 
 # The search's oracle, and the last of the correctness gates because it is the
@@ -110,7 +110,7 @@ gate "determinism" tools/determinism.sh
 # determinism gate for the same reason that one runs after the tactical gate —
 # the cheapest thing that can fail should fail first (docs/decisions.md D-106,
 # D-120).
-step "gate 10/14: differential search oracle"
+step "gate 10/15: differential search oracle"
 gate "search oracle" tools/search_oracle_check.sh
 
 # The play-mode ceiling (WP-1.4, superseding docs/decisions.md D-95): release
@@ -118,7 +118,7 @@ gate "search oracle" tools/search_oracle_check.sh
 # the sha-pinned spread fixture with every measured overshoot checked against
 # N + play.movetime_epsilon_ms. After the instrument gates because it reuses
 # their release build.
-step "gate 11/14: movetime ceiling on the D-95 reproducer class"
+step "gate 11/15: movetime ceiling on the D-95 reproducer class"
 gate "movetime ceiling" tools/movetime_check.sh
 
 # The judge itself. It runs after the engine gates because it USES the engine:
@@ -127,13 +127,13 @@ gate "movetime ceiling" tools/movetime_check.sh
 # in advance and is asserted exactly, and it repeats the run to cover the
 # arena's own determinism — which nothing else in this suite does
 # (docs/decisions.md D-169).
-step "gate 12/14: arena self-match smoke"
+step "gate 12/15: arena self-match smoke"
 gate "arena smoke" tools/arena_smoke.sh
 
 # CLAUDE.md rule 9's soft cap. Last because it is the only gate that reads the
 # tracked files rather than building them, so it costs nothing to put it where a
 # reader looks for the summary (docs/decisions.md D-131).
-step "gate 13/14: file-justification check"
+step "gate 13/15: file-justification check"
 gate "file justification" tools/file_justification_check.sh
 
 # The decision log's own integrity, and the last gate for the same reason the
@@ -141,7 +141,17 @@ gate "file justification" tools/file_justification_check.sh
 # and `D-277` were each appended TWICE with different text and nothing detected
 # it (docs/decisions.md D-279, D-284), and every ADR reference in this repository
 # is by number.
-step "gate 14/14: decision-key uniqueness"
+step "gate 14/15: decision-key uniqueness"
 gate "decision key check" tools/decision_key_check.sh
+
+# The carve documents' own self-state, and the last gate for the reason the two
+# above it are last: it reads tracked bytes rather than building anything. A
+# one-line shell loop found two live head/foot disagreements in the six frozen
+# WP-1.5b documents that ten review rounds had not recorded, in a class the
+# matrix under attack asserted only a fresh reviewer's hand inventory could
+# reach — and the loop MISSED A THIRD, because it read a fixed-depth tail
+# (docs/decisions.md D-338 row R4, matrix_META1_REDTEAM.md M2 and M3).
+step "gate 15/15: carve-document label consistency"
+gate "label consistency" tools/label_consistency_check.sh
 
 printf '\nci: all gates passed\n'
