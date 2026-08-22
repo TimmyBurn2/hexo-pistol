@@ -18,7 +18,7 @@ use pistol_cli::count::plain_count;
 use pistol_cli::fixture_loader;
 use pistol_cli::perft;
 use pistol_cli::selftest;
-use pistol_cli::{Session, serve};
+use pistol_cli::{Session, report, serve};
 use pistol_engine::{Config, Pistol};
 
 /// What this program does, and what it refuses to guess.
@@ -95,7 +95,7 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
 /// Speak the protocol on stdin and stdout.
 fn protocol_command(words: &[&str]) -> Result<ExitCode, String> {
     let flags = flags(words)?;
-    let path = PathBuf::from(one(&flags, "--config")?);
+    let path = echoable_config(one(&flags, "--config")?)?;
     only(&flags, &["--config"])?;
 
     let config = Config::load(&path).map_err(|error| error.to_string())?;
@@ -116,6 +116,30 @@ fn protocol_command(words: &[&str]) -> Result<ExitCode, String> {
     serve(&mut session, &mut input, &mut output).map_err(|io| format!("i/o: {io}"))?;
     output.flush().map_err(|io| format!("i/o: {io}"))?;
     Ok(ExitCode::SUCCESS)
+}
+
+/// The config path — or a named refusal, never a path the handshake would fold.
+///
+/// `id config <path>` is PROVENANCE (docs/decisions.md D-198): a record states
+/// which document ran so the run can be taken again. `tools/baseline_snapshot.sh`
+/// writes that line into its invariant block beside its OWN raw copy of the same
+/// path, and the escape every answer passes through rewrote a control character to
+/// `?` on one side only — so one record's two `config` lines disagreed at exit 0
+/// for a reason that has nothing to do with the config, and the engine's copy named
+/// a file that does not exist (docs/decisions.md D-324). Refused here rather than
+/// escaped there, on THE EXPRESSION THAT IS WRITTEN — [`identity_lines`]'s own
+/// `path.display()` — asked with [`report::travels_verbatim`], the predicate the
+/// escape itself decides on. One canonicalization, both sides.
+fn echoable_config(stated: &str) -> Result<PathBuf, String> {
+    let path = PathBuf::from(stated);
+    if !report::travels_verbatim(&path.display().to_string()) {
+        return Err(format!(
+            "--config `{}`: the path holds a control character, and the `id config` \
+             line of the handshake has to be the path a reader can re-run this with",
+            stated.escape_debug()
+        ));
+    }
+    Ok(path)
 }
 
 /// The handshake lines that make a transcript reproducible: which document, and

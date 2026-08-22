@@ -145,10 +145,31 @@ pub fn score_token(score: i32) -> String {
     }
 }
 
+/// Whether [`one_line`] would leave this text exactly as it is.
+///
+/// The folding below is LOSSY and not reversible: a control character becomes
+/// `?`, and `?` is a character a path may legitimately contain. That is the
+/// right trade for a refusal's free-form explanation, which is prose and only
+/// has to reach the driver on one line. It is the wrong one for an identity
+/// VALUE, which somebody re-runs the engine from — `id config inst?v0.toml`
+/// names a document that does not exist, and `tools/baseline_snapshot.sh`
+/// writes that line into a record beside its own RAW copy of the same path, so
+/// the two disagree for a reason that has nothing to do with the config
+/// (docs/decisions.md D-198, D-324).
+///
+/// So this predicate is exported rather than the escape: a caller whose value
+/// must survive verbatim asks BEFORE handing it over and refuses by name
+/// (CLAUDE.md rule 3), and because the question and the fold read the one
+/// expression here, a guard cannot come to guard something other than what is
+/// written.
+pub fn travels_verbatim(text: &str) -> bool {
+    !text.chars().any(char::is_control)
+}
+
 /// Collapse anything multi-line into one line, and escape what would otherwise
 /// travel down the pipe as a control byte.
 fn one_line(text: &str) -> String {
-    if !text.chars().any(|c| c.is_control()) {
+    if travels_verbatim(text) {
         return text.to_string();
     }
     let folded = text
