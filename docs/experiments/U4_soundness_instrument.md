@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 7.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
+**u-rev 8.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
 item 1 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the
 restructure selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -96,14 +96,31 @@ retargets and the following, each stated where it occurs.
   shipped-instrument defects at `b067d47` and `a102c6a` with the REVIEW-impl PASS at
   `84ff8d7`. **U4-Z was RE-DERIVED IN FULL against the ADR log rather than patched at
   the sentences the review named**, because it is the section that has now twice
-  shipped a claim falsified by a line landed in a commit this unit folds.
+  shipped a claim falsified by a line landed in a commit this unit folds. *(The
+  re-derivation did not close the class: `wp15b_U4_REVIEW_urev7.md` found three more
+  inside the section it rewrote in full, one of them falsified by D-329 — the line the
+  same commit existed to fold.)*
+- **u-rev 8** — **the repair of `docs/experiments/wp15b_U4_REVIEW_urev7.md`** (0
+  BLOCKING, 4 MAJOR, 4 MINOR), finding by finding in the REVIEW STATUS block below;
+  and the fold of the four ADR lines that have landed since u-rev 7. **`D-331` (R15,
+  the CLAIM-HOME law) is the round's governing law and is folded wherever this unit
+  restates a claim that has a home elsewhere.** **`D-332` (R17)** records that a
+  multi-unit repair round lands serially and that this round did — U2, then U3, then
+  U4 last — which is why this unit is the one that can cite the others correctly.
+  **`D-333` (R18)** rules on N-E's unattacked-in-its-own-right residual and is folded
+  at that bullet in U4-Z. **`D-329`'s relative-base residual is CLOSED**, not by this
+  unit but by architect ruling R19 at `63eac4c`, whose REVIEW-impl PASSED at `d59f0de`.
+  **THE THREE u-rev 7 MAJORs ARE REPAIRED AT THEIR SITES AND NOT BY RE-DERIVATION** —
+  re-derivation was u-rev 7's instrument and it shipped three fresh instances of the
+  class; what changed at u-rev 8 is that each repair removes a restatement rather than
+  correcting one.
 
 **The sentence this block replaces named three repairs and omitted the u-rev 4 and
 u-rev 5 folds entirely — the two largest non-verbatim additions in the unit.** That is
 BLOCKING 1 of the u-rev 5 review, at the surface a reader meets first. Every
 **MEASURED** and **ESTIMATED** mark carried from the superseded text is the mark that
-text carried; a mark added at u-rev 6 names the command that took it and pastes its
-complete output.
+text carried; a mark added at u-rev 6 or later names the command that took it and
+pastes its complete output.
 
 **LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this unit bumps
 its u-rev, however small the diff. A review is dispatched against a named
@@ -144,7 +161,39 @@ statement that names what it has not done is the alternative that round establis
 Under D-331 the cited unit's CURRENT u-rev has exactly one home — that unit's own
 head — and this unit points at it rather than keeping a second copy.
 
-**REVIEW STATUS — u-rev 6 WAS REVIEWED AND FAILED; u-rev 7 IS THE REPAIR.**
+**REVIEW STATUS — u-rev 7 WAS REVIEWED AND FAILED; u-rev 8 IS THE REPAIR.**
+`docs/experiments/wp15b_U4_REVIEW_urev7.md`, REVIEW-design, fresh context, dispatched
+against the named revision **`0f49c90`** (which was HEAD, tree clean, when it ran) —
+**VERDICT FAIL**, **0 BLOCKING, 4 MAJOR, 4 MINOR**. **THIS u-rev — u-rev 8 — HAS NOT
+BEEN REVIEWED.**
+
+**THE ROWS BELOW SAY WHERE EACH FINDING IS ANSWERED AND DO NOT RESTATE WHAT IT SAID
+(D-331).** The report is in the tree and is the home of its own findings.
+
+| Finding, `wp15b_U4_REVIEW_urev7.md` | Where it is answered at u-rev 8 |
+|---|---|
+| **MAJOR 1** — §8.7 still identifies the differential gate as S-E in the present tense, so the REVIEW STATUS universal denying any such sentence is false | §8.7's clause, corrected in place as carve prose. **AND THE UNIVERSAL IS WITHDRAWN WITH NO NARROWER ONE REPLACING IT** — see the MAJOR 3 row of the u-rev 6 table below |
+| **MAJOR 2** — the SHELL_CHECKLIST engagement set is re-counted in U4-Z and D-329 removes item 11 | U4-Z's `tools/`-review bullet, which now CITES §9.1 and §9's F13 paragraph instead of re-counting. §9.1 is the set's one home |
+| **MAJOR 3** — the relative-base residual is attributed to D-329, which records nothing of the kind | U4-Z's four-conditions bullet, re-attributed to `matrix_M4_axisA_selection.md` condition 4. **And the residual is CLOSED at `63eac4c` by R19**, so N-E has nothing to inherit |
+| **MAJOR 4** — travelling item T2 is said to be named in no tree document; two name it | U4-Z's B2 head. T2 is DISCHARGED, on the two documents from which this unit already resolves T5 |
+| **MINOR 5** — U4-M item 1 mis-describes one of the four `--config` occurrences | U4-M item 1, re-taken with the full `grep` output pasted, since the script has moved at `63eac4c` |
+| **MINOR 6** — the "every abbreviated citation" universal is false at §8.7:854 | §8.7's citation, converted; **and the universal withdrawn** — see the MINOR 7 row below |
+| **MINOR 7** — `91 test lines` is unmarked at two sites and measurable in one command | §9's fold, MEASURED with its command and output. The second site is U4-Z's four-conditions bullet, which cites rather than restates |
+| **MINOR 8** — the assembled attack blockquote drops the record's closing sentence unmarked | §9's fold. The quotation is completed and verified character-identical to `matrix_M4_axisA_selection.md` |
+
+**WHAT CHANGED IN THE INSTRUMENT, AND IT IS THE POINT OF THE ROUND.** u-rev 7's answer
+to the same class was to RE-DERIVE U4-Z in full; the re-derivation shipped three fresh
+instances, one falsified by the ADR line the same commit folded. **u-rev 8 does not
+re-derive.** Each repair above removes a restatement — a re-count becomes a citation,
+an attribution becomes a pointer, a universal is withdrawn rather than narrowed —
+which is D-331's remedy rather than more care. **Whether that is sufficient is not
+this unit's to claim**, and the sibling units' rounds under the same law found the law
+silent about a neighbouring class: a universal about the document's own state, which
+is at its home and restates nothing. See U4-Z's OPEN list.
+
+---
+
+**THE PRIOR ROUND — u-rev 6's review; u-rev 7 was its repair.**
 `docs/experiments/wp15b_U4_REVIEW_urev6.md`, REVIEW-design, fresh context, dispatched
 against the named revision **`7358a07`** (which was HEAD, tree clean, when it ran) —
 **VERDICT FAIL**, **1 BLOCKING, 2 MAJOR, 4 MINOR**. **THIS u-rev — u-rev 7 — HAS NOT
@@ -1837,6 +1886,20 @@ silently drop, and the false premise was new at u-rev 7, in the section that u-r
 re-derived in full.)*
 
 ### OPEN — carried forward, not closed by the carve
+
+- **D-331 DOES NOT REACH A NEIGHBOURING CLASS THAT HAS NOW FAILED THREE UNITS, AND
+  THAT IS THE ARCHITECT'S.** The CLAIM-HOME law requires every claim to have one home
+  and every other occurrence to be a pointer. **A UNIVERSAL ABOUT THIS DOCUMENT'S OWN
+  STATE IS AT ITS HOME AND RESTATES NOTHING**, so the law is silent about it — and it
+  is exactly what MAJOR 1 and MINOR 6 of `wp15b_U4_REVIEW_urev7.md` are (this unit's
+  REVIEW STATUS table certifying properties of a body it does not own), and what
+  MAJOR A, B and C of **U3** (u-rev 6, landed `13621d3`) are, all three found in
+  consecutive rounds, the last of them written under D-331 by the session that landed
+  D-331. **What u-rev 8 does about it is a REMEDY and not a rule:** every universal in
+  this unit's REVIEW STATUS table is withdrawn and none is replaced by a narrower one,
+  and the head's citation claim states its bound instead of asserting a set.
+  **Whether a self-completeness claim owes a derivation the way a matrix cell owes a
+  command is a project-level question this unit may not settle.**
 
 - **CROSS-UNIT CITATIONS IN LIVE CARVE PROSE THAT NAME NO u-rev ARE NOT CONVERTED.**
   u-rev 8 adopted the `(u-rev N, landed <sha>)` form (head, beside D-311's label
