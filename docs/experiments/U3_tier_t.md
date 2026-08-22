@@ -12,8 +12,8 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 7.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
-4 and 5 at `6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it; the counts are D-309's and are not restated here), plus the two
+**u-rev 8.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
+4 and 5 at `6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it, and is that review's home), plus the two
 bullets of §7.2 that are not widening text, under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -95,12 +95,27 @@ exceptions to it:** the two in the paragraph above quote the OLD bare form as th
 defect being described, and §10's *"Revision 6's §8.3"* names the SUPERSEDED document
 at `6feb40a`, which has no u-rev and is not **U4**.
 
+**u-rev 8 ANSWERS NO REVIEW REPORT.** No round has been dispatched against u-rev 7.
+u-rev 8 is a repair under `D-346` of three claims this unit made about its own state
+and that were false at u-rev 7: the head's *"the counts are D-309's and are not
+restated here"*, which **U3-A**'s revision-7 row falsifies; §12's *"and are not
+restated here"*, which the same sentence falsifies by printing the figures two clauses
+earlier; and the MAJOR D row's *"this head asserts no universal about its own
+citations at all"*, which is itself a universal about this document's own state and is
+false of a head that states which two citations are deliberately not in the form. All
+three are STRUCK and nothing replaces them. **THE HEAD'S OWN NARROWER SENTENCE IS
+LEFT** — *"this head asserts no universal about HOW MANY SITES OBEY THE RULE"* — because
+it is true, it is the honest re-scope u-rev 6's reviewer asked for, and `D-346` reaches
+claims found false or unverifiable, not disclosures that hold.
+
+---
+
 **REVIEW STATUS — u-rev 6 WAS REVIEWED AND FAILED; u-rev 7 IS THE REPAIR, AND THE
 ROUND STOPPED THERE RATHER THAN DISPATCHING A SIXTH REVIEW.**
 `docs/experiments/wp15b_U3_REVIEW_urev6.md`, REVIEW-design (re-review), fresh
 context, dispatched against the named revision **`f0ae14c`** — **VERDICT FAIL**,
-**0 BLOCKING, 2 MAJOR, 0 MINOR**. **THIS u-rev — u-rev 7 — HAS NOT BEEN REVIEWED**,
-and u-rev 6's review does not transfer to it.
+**0 BLOCKING, 2 MAJOR, 0 MINOR**. **NEITHER u-rev 7 NOR u-rev 8 HAS BEEN REVIEWED**,
+and u-rev 6's review does not transfer to either.
 
 **WHY NO SIXTH REVIEW WAS DISPATCHED, STATED HERE BECAUSE AN UNREVIEWED u-rev IS
 OTHERWISE INDISTINGUISHABLE FROM A FORGOTTEN ONE.** This document has now failed FOUR
@@ -121,7 +136,7 @@ this block is about the round that is being answered.
 
 | Finding, `wp15b_U3_REVIEW_urev6.md` | Where it is answered at u-rev 7 |
 |---|---|
-| **MAJOR D** — a tenth live citation at §10 was unbolded and un-u-rev'd, and the derived command registered at u-rev 6 was structurally blind to it, so *"the rule and the tree now agree"* was false in the commit that wrote it | §10's citation, converted. **AND THE INSTRUMENT IS REPLACED RATHER THAN WIDENED INTO A NEW UNIVERSAL** — see the paragraph beside D-311's label discipline. The command is now wider than the form, returns noise a reader triages, and is labelled a FINDING AID; **this head asserts no universal about its own citations at all**, because both previous attempts to state one — direct, then laundered through a grep — were false |
+| **MAJOR D** — a tenth live citation at §10 was unbolded and un-u-rev'd, and the derived command registered at u-rev 6 was structurally blind to it, so *"the rule and the tree now agree"* was false in the commit that wrote it | §10's citation, converted. **AND THE INSTRUMENT IS REPLACED RATHER THAN WIDENED INTO A NEW UNIVERSAL** — see the paragraph beside D-311's label discipline. The command is now wider than the form, returns noise a reader triages, and is labelled a FINDING AID. *~~This head asserts no universal about its own citations at all~~ — **WITHDRAWN AT u-rev 8** under `D-346`: a claim that this document asserts no universal is itself a universal about this document's own state, which is the class this row is about. What the head does is state the RULE and offer the aid; whether any universal survives anywhere is a reviewer's sweep, not this row's to certify* |
 | **MAJOR E** — the OPEN bullet claimed D-331 *"does not reach"* and *"is silent about"* MAJOR A, B and C; D-331 names A and B by citation as grounding instances, and B is a textbook restatement under its own diagnosis | The OPEN bullet, rewritten. It now splits the three: **B is a D-331 restatement**; **A and C are the neighbouring class**; and D-331 is **not silent** about any of them — what it lacks is a RULE, not a mention |
 
 *(The u-rev 6 round answered `wp15b_U3_REVIEW_urev5.md`'s MAJOR C by converting nine sites and registering a derived command. That repair is what MAJOR D then broke.)*
@@ -385,9 +400,11 @@ re-sampled from the radius-2 ball the search actually uses — see the census
 block's own `option C — staged, BATCHED only` row, `45.82 = 2.78x` on the r8
 draw against `47.34 = 2.09x` on the r2 draw, a one-second run the document did
 not take at the time. Revision 1's own figures for this, `3.1× to 2.4×`, are
-WITHDRAWN (the superseded §0 row 34, `6feb40a`) and are not restated here, which
-is the rule the block exists to enforce (§12 item 5; MAJOR 2,
-`wp15b_U3_REVIEW_urev3.md`).* Both halves are repaired in revision
+WITHDRAWN (the superseded §0 row 34, `6feb40a`). *~~and are not restated here, which
+is the rule the block exists to enforce~~ — **STRUCK AT u-rev 8** under `D-346`: the
+same sentence prints them. The rule the block enforces is at §12 item 5 and the
+finding is `wp15b_U3_REVIEW_urev3.md` MAJOR 2; what is withdrawn is this sentence's
+claim about itself, not the withdrawal of the figures.* Both halves are repaired in revision
 2; what survives is that neither repair was found by the author.
 
 ---
@@ -984,7 +1001,7 @@ only one of them** (MAJOR 13).
 
 ---
 
-*U3, u-rev 7. A carve, plus the repairs answering its five review rounds — see the
-REVIEW STATUS block and U3-A, which are where those rounds are recorded. **IT IS
-UNREVIEWED, AND THE ROUND THAT PRODUCED IT DID NOT DISPATCH A SIXTH REVIEW: see the
-REVIEW STATUS block for why.** IMPL has not started.*
+*U3, u-rev 8. What each u-rev of this unit did, and which rounds attacked it, are the
+REVIEW STATUS block's and U3-A's — this line restates neither and carries the u-rev
+label alone, so it cannot go one behind the head independently of them. IMPL has not
+started.*
