@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 4.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
+**u-rev 5.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
 `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the restructure
 selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -29,16 +29,20 @@ from it.
 | 1 | `38f21b9` | `docs/experiments/wp15b_U2_REVIEW.md` | FAIL |
 | 2 | `56b0bec` (byte-identical at HEAD `e3f0bc3` when that review ran) | `docs/experiments/wp15b_U2_REVIEW_urev2.md` | FAIL |
 | 3 | `d85b049` | `docs/experiments/wp15b_U2_REVIEW_urev3.md` | FAIL |
-| **4** | *this text* | **NOT YET REVIEWED** | — |
+| 4 | `7473a6f` | `docs/experiments/wp15b_U2_REVIEW_urev4.md` | FAIL |
+| **5** | *this text* | **NOT YET REVIEWED** | — |
 
-**u-rev 4 answers `wp15b_U2_REVIEW_urev3.md` and changes nothing else.** It
-rewrites the head's exceptions paragraph and adds `CARVE-EXCEPTION` markers at
-the five sites the exceptions occur at — four of those markers already existed
-in another wording and one is new. **The markers sit inside §2.2, §5.3, §5.4 and
-§12, but they are DISCLOSURE APPARATUS and not design content**: no sentence of
-the carried prose is rewritten by them, no number moves, and each says only what
-already happened at the site it sits at. Where each finding is answered is in the
-REVIEW STATUS block below.
+**u-rev 4 answered `wp15b_U2_REVIEW_urev3.md` and u-rev 5 answers that round's
+own re-review; neither changes anything else.** u-rev 4 rewrote the head's
+exceptions paragraph and put `CARVE-EXCEPTION` markers at the sites the exceptions
+occur at. **The markers sit inside §2.2, §5.3, §5.4 and §12, but they are DISCLOSURE
+APPARATUS and not design content**: no sentence of the carried prose is rewritten by
+them, no number moves, and each says only what already happened at the site it sits
+at. **Which markers pre-dated u-rev 4 and which was new is not stated here or
+anywhere else in this unit** — it is one `git diff d85b049 7dfd047` away, it serves
+no live purpose, and a hand-maintained historical count is the thing this unit spent
+three rounds removing (`wp15b_U2_REVIEW_urev4.md`, G1). Where each finding is
+answered is in the REVIEW STATUS block below.
 
 **THE TEXT IS A VERBATIM CARVE.** Every change made to it is a CROSS-REFERENCE
 RETARGET — a `§n` that pointed inside the superseded document now names the unit
@@ -115,8 +119,20 @@ the tree.
 
 | Finding, `wp15b_U2_REVIEW_urev3.md` | Where it is answered at u-rev 4 |
 |---|---|
-| **F5** (MAJOR) | **ANSWERED BY REMOVING THE ENUMERATION, NOT BY EXTENDING IT.** The head paragraph that carried the list now states a RULE and a derived command and asserts no set; the missing disclosure is added at its own site, `§5.4`'s architect-ruling paragraph, as a `CARVE-EXCEPTION` marker. The four disclosures that already existed carry the same token, so one command enumerates every one of them |
+| **F5** (MAJOR) | **ANSWERED BY REMOVING THE ENUMERATION, NOT BY EXTENDING IT.** The head paragraph that carried the list now states a RULE and a derived command and asserts no set; the missing disclosure is added at its own site, `§5.4`'s architect-ruling paragraph, as a `CARVE-EXCEPTION` marker. Every disclosure in the unit carries the same token, so one command enumerates them |
 | **F6** (MINOR) | **ANSWERED BY DELETION.** The unmarked numeric claim was inside the enumeration F5 removed, and it went with it. No line count of the diff is stated anywhere in this unit |
+
+**REVIEW STATUS — u-rev 4 WAS REVIEWED AND FAILED ON TWO MINORS; u-rev 5 IS THE
+REPAIR.** `docs/experiments/wp15b_U2_REVIEW_urev4.md`, REVIEW-design (re-review),
+fresh context, against **`7473a6f`** — **VERDICT FAIL, 0 BLOCKING, 0 MAJOR, 2 MINOR**.
+It confirmed F5's substitution structural on the merits, having diffed every
+intermediate revision, and F6 cleanly discharged. **THIS u-rev — u-rev 5 — HAS NOT
+BEEN REVIEWED.**
+
+| Finding, `wp15b_U2_REVIEW_urev4.md` | Where it is answered at u-rev 5 |
+|---|---|
+| **G1** (MINOR) — the "four already existed, one is new" count is asserted independently at two sites with no pointer between them | **ANSWERED BY DELETING BOTH COPIES.** Neither site needs the number; it is a historical count of an already-closed transition, derivable from one `git diff`, and keeping either copy would have kept the drift risk the finding names. The head says so explicitly rather than silently dropping it |
+| **G2** (MINOR) — an unmarked `168 030 comparisons` sits unreconciled beside a thrice-repeated MEASURED `343 344 comparisons` | **NOT REPAIRED AT u-rev 5, AND RECORDED AS OPEN RATHER THAN ABSORBED.** The reviewer traced it unchanged to the pre-carve document at `6feb40a`, outside this repair's diff and missed by all eight prior rounds, and recorded that it is *"not chargeable against u-rev 4 specifically"*. **Reconciling two population figures for the M5-E equivalence is a design act on carved content, not a carve act**, and this unit's standing discipline is that the carve repairs transcription only. It is in U2-Z's OPEN list |
 
 **WHY F5's REPAIR IS NOT ANOTHER ITEM ON THE LIST.** The reviewer's own fix scope
 offered *"add a fifth exception … and/or an inline disclosure marker"*. The first
@@ -851,6 +867,22 @@ a correction to a landed line, and none has landed.**
 
 ### OPEN — carried forward, not closed by the carve
 
+- **TWO POPULATION FIGURES FOR THE M5-E EQUIVALENCE ARE UNRECONCILED, AND THE
+  SMALLER ONE CARRIES NO MARK** — `wp15b_U2_REVIEW_urev4.md`, G2. The handoff bullet
+  below states **168 030 comparisons** with no MEASURED or ESTIMATED mark, while §5.2,
+  the M5-E matrix row and the quoted red-team sentence all state **343 344
+  comparisons** and are marked MEASURED. The reviewer traced the smaller figure
+  UNCHANGED to the superseded document at `6feb40a` — it is inherited, it is outside
+  this repair's diff, and eight prior review rounds did not raise it. **This unit does
+  not reconcile them, and the reason is its own standing discipline rather than
+  convenience:** whether the two figures count the same thing over different
+  populations, or the same population differently, is answerable only by re-running
+  the equivalence probe, and re-deriving a carried MEASURED figure is a design act on
+  carved content. The carve repairs transcription. **What is owed:** either an
+  instrument re-run that reconciles them and marks both, or an ADR line recording
+  which population the M5-E claim rests on. Registered here so the next round does not
+  re-discover it.
+
 - **RULE 5 IS UNDISCHARGED FOR THE NODE PROTOCOL ITSELF** (revision-7 review
   MAJOR 9, and the superseded §17's own list). D-263 pre-registered the hotspot
   precisely so the first per-node caller would not discover it, and its flip
@@ -866,5 +898,5 @@ a correction to a landed line, and none has landed.**
 
 ---
 
-*U2, u-rev 4. A repair, answering `docs/experiments/wp15b_U2_REVIEW_urev3.md`.
+*U2, u-rev 5. A repair, answering `docs/experiments/wp15b_U2_REVIEW_urev4.md`.
 IMPL has not started.*
