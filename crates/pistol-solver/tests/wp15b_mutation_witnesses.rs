@@ -40,8 +40,17 @@ fn c(q: i16, r: i16) -> Coord {
 /// not fit this structure there is no ply list at all, and `play` never gets a
 /// chance to complain.
 fn replay(p1: &[Coord], p2: &[Coord]) -> (GameState, ThreatState) {
-    assert_eq!(p1[0], Coord::ORIGIN, "turn 1 is one stone, the origin (rule 3)");
-    assert_eq!(p1.len() % 2, 1, "p1 holds an odd number of stones, got {}", p1.len());
+    assert_eq!(
+        p1[0],
+        Coord::ORIGIN,
+        "turn 1 is one stone, the origin (rule 3)"
+    );
+    assert_eq!(
+        p1.len() % 2,
+        1,
+        "p1 holds an odd number of stones, got {}",
+        p1.len()
+    );
     assert!(
         p2.len() == p1.len() + 1 || p2.len() + 1 == p1.len(),
         "p2 holds one more or one fewer stone than p1, got {} against {}",
@@ -79,18 +88,34 @@ fn replay(p1: &[Coord], p2: &[Coord]) -> (GameState, ThreatState) {
 #[test]
 fn the_m4_witness_is_a_position_a_legal_game_reaches_and_separates_the_two_cover_notions() {
     let p1 = [
-        c(0, 0), c(1, 0), c(2, 0), c(3, 0),
-        c(-1, 1), c(-1, 2), c(-1, 3), c(-1, 4),
+        c(0, 0),
+        c(1, 0),
+        c(2, 0),
+        c(3, 0),
+        c(-1, 1),
+        c(-1, 2),
+        c(-1, 3),
+        c(-1, 4),
         c(0, 7),
     ];
     let p2 = [
-        c(-2, 0), c(5, 0), c(-1, -1), c(-1, 6),
-        c(4, -4), c(5, -4), c(-4, 4), c(-5, 5),
+        c(-2, 0),
+        c(5, 0),
+        c(-1, -1),
+        c(-1, 6),
+        c(4, -4),
+        c(5, -4),
+        c(-4, 4),
+        c(-5, 5),
     ];
 
     let (game, threats) = replay(&p1, &p2);
 
-    assert_eq!(game.to_move(), Player::P2, "the defender is the side to move");
+    assert_eq!(
+        game.to_move(),
+        Player::P2,
+        "the defender is the side to move"
+    );
     assert_eq!(StonesLeft::from_state(&game), Some(StonesLeft::Two));
     assert_eq!(
         threats.can_win_this_turn(Player::P2, StonesLeft::Two),
@@ -101,7 +126,10 @@ fn the_m4_witness_is_a_position_a_legal_game_reaches_and_separates_the_two_cover
         threats.blocking_covers(Player::P2, HitBudget::Two),
         Cover::Minimal(vec![
             MinimalCover::One(c(-1, 0)),
-            MinimalCover::Two { first: c(-1, 5), second: c(4, 0) },
+            MinimalCover::Two {
+                first: c(-1, 5),
+                second: c(4, 0)
+            },
         ]),
         "a one-cell cover coexisting with a minimal two-cell one is what the \
          mutant collapses"
@@ -117,10 +145,18 @@ fn the_m4_witness_is_a_position_a_legal_game_reaches_and_separates_the_two_cover
 /// eight apart, so no window is shared and no two cells block all three.
 #[test]
 fn the_m6_witness_is_a_position_a_legal_game_reaches_and_holds_win_now_beside_an_unblockable_double()
-{
+ {
     let mut p1 = vec![c(0, 0), c(1, 0), c(2, 0), c(3, 0), c(4, 0)];
     p1.extend([c(-1, 8), c(-1, 16), c(-1, 24)]);
-    p1.extend([c(0, 4), c(3, 4), c(0, 12), c(3, 12), c(0, 20), c(3, 20), c(7, 4)]);
+    p1.extend([
+        c(0, 4),
+        c(3, 4),
+        c(0, 12),
+        c(3, 12),
+        c(0, 20),
+        c(3, 20),
+        c(7, 4),
+    ]);
 
     let mut p2 = vec![c(-1, 0)];
     for row in [8i16, 16, 24] {
@@ -131,7 +167,11 @@ fn the_m6_witness_is_a_position_a_legal_game_reaches_and_holds_win_now_beside_an
 
     let (game, threats) = replay(&p1, &p2);
 
-    assert_eq!(game.to_move(), Player::P1, "the mover is the side that can win now");
+    assert_eq!(
+        game.to_move(),
+        Player::P1,
+        "the mover is the side that can win now"
+    );
     assert_eq!(StonesLeft::from_state(&game), Some(StonesLeft::Two));
 
     let witness = threats
