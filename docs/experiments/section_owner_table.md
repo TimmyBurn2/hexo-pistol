@@ -2,8 +2,8 @@
 
 <!-- WP-1.5b CARVE MEMBER — read by crates/pistol-solver/tests/wp15b_census.rs -->
 
-**u-rev 5.** The map from `docs/experiments/wp15b_design.md` at `6feb40a`
-(revision 7, never reviewed, CLOSED by D-309) to the units the restructure
+**u-rev 6.** The map from `docs/experiments/wp15b_design.md` at `6feb40a`
+(revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it; the counts are D-309's and are not restated here) to the units the restructure
 selected as option D by D-310 produced. **This table is the carve's own gate: an
 unowned line or a double-owned line is a FAILED carve, not a finding.**
 

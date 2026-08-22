@@ -12,8 +12,8 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 6.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
-4 and 5 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309), plus the two
+**u-rev 7.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
+4 and 5 at `6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it; the counts are D-309's and are not restated here), plus the two
 bullets of §7.2 that are not widening text, under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -67,20 +67,30 @@ u-rev was current at — `(u-rev N, landed <sha>)` — which is a historical fac
 cannot go stale. Under D-331 the cited unit's CURRENT u-rev has exactly one home,
 that unit's own head, and this unit points at it rather than keeping a second copy.
 
-**WHETHER EVERY SITE OBEYS THE RULE IS DERIVED, NOT ASSERTED HERE.** A live
-citation that does not obey it is what this command returns, and the command is
-the claim's instrument rather than a sentence in this head:
+**THIS HEAD ASSERTS NO UNIVERSAL ABOUT HOW MANY SITES OBEY THE RULE, AND THE REASON
+IS THAT BOTH PREVIOUS ATTEMPTS TO STATE ONE WERE FALSE.** u-rev 5 asserted it
+directly, and it was false at nine sites (`wp15b_U3_REVIEW_urev5.md`, MAJOR C).
+u-rev 6 replaced the assertion with a DERIVED COMMAND and said *"the rule and the tree
+now agree"* — **and that was false too, because the command was blind**: its pattern
+required bold markdown, and a tenth live citation at §10 had none
+(`wp15b_U3_REVIEW_urev6.md`, MAJOR D). **A universal laundered through a grep is still
+a universal, and a grep narrowed until it cannot see the case it is about is the
+failure this project has already recorded once** (`matrix_M4_REDTEAM_round2.md` R11).
+
+**WHAT IS OFFERED INSTEAD IS A FINDING AID, LABELLED AS ONE.** The command below is
+WIDER than the citation form — it deliberately returns head apparatus, quotations of
+the old form, and prose that names a unit without citing it, all of which a reader
+triages. It is offered because a wide instrument that returns noise can be checked,
+and a narrow one that returns nothing cannot:
 
 ```
-$ grep -n '\*\*U[124]\*\* §' docs/experiments/U3_tier_t.md | grep -v "landed"
+$ grep -nE '\*\*U[1234]\*\*|(^|[^A-Za-z])U[1234] §' docs/experiments/U3_tier_t.md | grep -v 'landed'
 ```
 
-**u-rev 5 asserted the universal instead, and the universal was false at nine
-sites** — `docs/experiments/wp15b_U3_REVIEW_urev5.md`, MAJOR C, the THIRD
-completeness claim in this document falsified in the commit that wrote it. The nine
-were the inherited sites three consecutive rounds had scoped out of repair; u-rev 6
-converts all nine rather than re-introducing the scoping caveat, so the rule and the
-tree now agree. **Two citations are deliberately NOT in the form and are not
+**THIS UNIT DOES NOT CLAIM THAT COMMAND IS COMPLETE EITHER.** A citation shape neither
+the bold form nor the `§` form matches would be invisible to it as well, and nothing
+here has established that no such shape exists. What the head states is the RULE; what
+the tree contains is what the reader checks. **Two citations are deliberately NOT in the form and are not
 exceptions to it:** the two in the paragraph above quote the OLD bare form as the
 defect being described, and §10's *"Revision 6's §8.3"* names the SUPERSEDED document
 at `6feb40a`, which has no u-rev and is not **U4**.
@@ -399,9 +409,13 @@ it is why that test's claim has a reviewable home rather than a home in the seed
 ## 10. The config shape
 
 **FOUR** complete documents, `deny_unknown_fields`, no code-side default for
-any value. **This is the one place the count is stated; U2 §2.2 and U3-Q cite it
-and do not restate it** (B5, which found it stated three different ways across
-four sites).
+any value. **This is the one place the count is stated; **U2** (u-rev 5, landed
+`f0ae14c`) §2.2 and U3-Q cite it and do not restate it** (B5, which found it stated
+three different ways across four sites). *(This citation was UNBOLDED and carried no
+u-rev from u-rev 2 until u-rev 7. It survived every sweep of the nine known bare sites
+and was structurally invisible to the derived command u-rev 6 registered, whose
+pattern required the bold markdown this one lacks —
+`docs/experiments/wp15b_U3_REVIEW_urev6.md`, MAJOR D.)*
 
 | document | mode | `quiet_radius` | `quiet_top_k` | `widen_schedule` | why |
 |---|---|---|---|---|---|
@@ -787,21 +801,28 @@ only one of them** (MAJOR 13).
 
 ### OPEN — carried forward, not closed by the carve
 
-- **D-331 DOES NOT REACH THE DEFECT THAT HAS NOW FAILED THIS UNIT THREE ROUNDS
-  RUNNING, AND THAT IS FOR THE ARCHITECT AND NOT FOR THIS UNIT.** MAJOR A, MAJOR B
-  and MAJOR C are one class: **a universal claim about THIS document's own state,
-  asserted by its author and false in the commit that asserts it** — the B7 table's
-  *"here is every site"*, the *"U2 is at u-rev 2"* correction, and the *"every
-  cross-unit citation now reads …"* universal that answered it. D-331 (R15) requires
-  every claim to have ONE HOME and every other occurrence to be a pointer. **All
-  three of these were at their home.** They were not restatements of anything; they
-  were assertions about a set the author had not enumerated. So the CLAIM-HOME law,
-  as landed, is silent about them — and MAJOR C was written under it, by the session
-  that landed it, one commit after landing it. **What this unit does about it, and it
-  is a remedy and not a rule:** the citation universal is now DERIVED by a command
-  stated in the head, and the B7 list is explicitly not a boundary. Whether that
-  generalises — whether a self-completeness claim owes a derivation the way a matrix
-  cell owes a command — is a project-level question this unit may not settle.
+- **A SELF-COMPLETENESS CLAIM IS A NEIGHBOURING CLASS TO THE ONE D-331 FORBIDS, AND
+  D-331 NAMES IT AS GROUND WITHOUT BINDING IT. THAT GAP IS THE ARCHITECT'S.** This
+  unit has now failed FOUR consecutive rounds on it: the B7 table's *"here is every
+  site"* (MAJOR A), the *"U2 is at u-rev 2"* correction (MAJOR B), the *"every
+  cross-unit citation now reads …"* universal that answered it (MAJOR C), and the
+  derived command registered to replace THAT, which was blind to a tenth site
+  (MAJOR D). **THE THREE ARE NOT ALL THE SAME THING, AND u-rev 6 SAID THEY WERE**
+  (`wp15b_U3_REVIEW_urev6.md`, MAJOR E, which is what this bullet is being corrected
+  by). **MAJOR B IS A TEXTBOOK D-331 RESTATEMENT**: U2's current u-rev has its home in
+  U2's own head, and this unit held a second copy that went false — D-331's diagnosis
+  in D-331's own words. **MAJOR A and MAJOR C are the neighbouring class**: assertions
+  about a set the author had not enumerated, made at their own home, restating
+  nothing. **AND D-331 IS NOT SILENT ABOUT ANY OF THEM** — u-rev 6 said it was, and
+  that was wrong. D-331 cites `wp15b_U3_REVIEW_urev4.md` MAJOR A and MAJOR B BY NAME
+  as grounding instances of the recurrence it rests on. What it does not do is state a
+  RULE that a self-completeness claim owes a derivation, the way the Process section
+  states that a matrix cell owes a command. **What this unit does about it is a remedy
+  and not a rule:** it asserts no universal about its own citations, the B7 list is
+  explicitly not a boundary, and the instrument it offers is labelled a finding aid
+  rather than a proof — because u-rev 6 tried the derivation and the derivation was
+  blind. **Whether a self-completeness claim owes an instrument, and what makes an
+  instrument for one adequate, is a project-level question this unit may not settle.**
 
 - **MAJOR 12 — the unmarked `23.2` in §6.3's option-C failure-mode cell.** It
   carries neither **MEASURED** nor **ESTIMATED**, on the cell that states the
@@ -947,6 +968,7 @@ only one of them** (MAJOR 13).
 
 ---
 
-*U3, u-rev 6. A carve, plus the repairs answering its four review rounds — see the
-REVIEW STATUS block and U3-A, which are where those rounds are recorded. IMPL has not
-started.*
+*U3, u-rev 7. A carve, plus the repairs answering its five review rounds — see the
+REVIEW STATUS block and U3-A, which are where those rounds are recorded. **IT IS
+UNREVIEWED, AND THE ROUND THAT PRODUCED IT DID NOT DISPATCH A SIXTH REVIEW: see the
+REVIEW STATUS block for why.** IMPL has not started.*

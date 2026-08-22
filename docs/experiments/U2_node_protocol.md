@@ -12,8 +12,8 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 5.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
-`6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the restructure
+**u-rev 6.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
+`6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it; the counts are D-309's and are not restated here) under the restructure
 selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
 in the tree: it is retrievable at `6feb40a` and nowhere else.
@@ -30,10 +30,21 @@ from it.
 | 2 | `56b0bec` (byte-identical at HEAD `e3f0bc3` when that review ran) | `docs/experiments/wp15b_U2_REVIEW_urev2.md` | FAIL |
 | 3 | `d85b049` | `docs/experiments/wp15b_U2_REVIEW_urev3.md` | FAIL |
 | 4 | `7473a6f` | `docs/experiments/wp15b_U2_REVIEW_urev4.md` | FAIL |
-| **5** | *this text* | **NOT YET REVIEWED** | — |
+| 5 | `f0ae14c` | `docs/experiments/wp15b_U2_REVIEW_urev5.md` | FAIL |
+| **6** | *this text* | **NOT YET REVIEWED** | — |
 
-**u-rev 4 answered `wp15b_U2_REVIEW_urev3.md` and u-rev 5 answers that round's
-own re-review; neither changes anything else.** u-rev 4 rewrote the head's
+**THE CARVE-PROVENANCE CLAUSE ABOVE WAS FALSE FROM THE CARVE UNTIL u-rev 6.** It read
+*"revision 7, **never reviewed**, CLOSED by D-309"*. `6feb40a` WAS reviewed, by a
+fresh-context REVIEW-design, and it FAILED — which is the ground D-309 gives for
+closing revision 7 and restructuring rather than revising in place, and which this
+unit's own **U2-A** table has reported all along, a few lines below the false sentence.
+The clause was written once at the carve and propagated VERBATIM into all four units
+and the owner table; **no review of any of the five raised it**
+(`docs/experiments/wp15b_U2_REVIEW_urev5.md`, H1). It is corrected in all five in one
+commit, and **the counts now live only in D-309**, which is their home (D-331).
+
+**u-rev 4 answered `wp15b_U2_REVIEW_urev3.md`, u-rev 5 answered that round's own
+re-review, and u-rev 6 answers the round after that; none changes anything else.** u-rev 4 rewrote the head's
 exceptions paragraph and put `CARVE-EXCEPTION` markers at the sites the exceptions
 occur at. **The markers sit inside §2.2, §5.3, §5.4 and §12, but they are DISCLOSURE
 APPARATUS and not design content**: no sentence of the carried prose is rewritten by
@@ -132,7 +143,12 @@ BEEN REVIEWED.**
 | Finding, `wp15b_U2_REVIEW_urev4.md` | Where it is answered at u-rev 5 |
 |---|---|
 | **G1** (MINOR) — the "four already existed, one is new" count is asserted independently at two sites with no pointer between them | **ANSWERED BY DELETING BOTH COPIES.** Neither site needs the number; it is a historical count of an already-closed transition, derivable from one `git diff`, and keeping either copy would have kept the drift risk the finding names. The head says so explicitly rather than silently dropping it |
-| **G2** (MINOR) — an unmarked `168 030 comparisons` sits unreconciled beside a thrice-repeated MEASURED `343 344 comparisons` | **NOT REPAIRED AT u-rev 5, AND RECORDED AS OPEN RATHER THAN ABSORBED.** The reviewer traced it unchanged to the pre-carve document at `6feb40a`, outside this repair's diff and missed by all eight prior rounds, and recorded that it is *"not chargeable against u-rev 4 specifically"*. **Reconciling two population figures for the M5-E equivalence is a design act on carved content, not a carve act**, and this unit's standing discipline is that the carve repairs transcription only. It is in U2-Z's OPEN list |
+| **G2** (MINOR) — an unmarked `168 030 comparisons` sits unreconciled beside a thrice-repeated MEASURED `343 344 comparisons` | **NOT REPAIRED, AND RECORDED AS OPEN RATHER THAN ABSORBED.** The reviewer traced it unchanged to the pre-carve document at `6feb40a`, outside this repair's diff, and recorded that it is *"not chargeable against u-rev 4 specifically"*. Its ground is stated in U2-Z's OPEN bullet, which is where it lives — **and that ground is CORRECTED at u-rev 6**, see H2 below |
+
+| Finding, `wp15b_U2_REVIEW_urev5.md` | Where it is answered at u-rev 6 |
+|---|---|
+| **H1** (MAJOR) — the carve-provenance clause says revision 7 was never reviewed; it was reviewed and it failed, and the clause is verbatim in five documents | The head's provenance sentence, corrected here and in **U1**, **U3**, **U4** and `section_owner_table.md` in one commit. The counts are not restated anywhere; D-309 is their home |
+| **H2** (MINOR) — G2's stated reason misapplies this unit's own CARVED-CONTENT scope | U2-Z's OPEN bullet, whose ground is restated as a MEASUREMENT one: the two figures are measurements and reconciling them means re-running the probe. The practical decision — register OPEN rather than reconcile — is unchanged, and the reviewer agreed it was sound |
 
 **WHY F5's REPAIR IS NOT ANOTHER ITEM ON THE LIST.** The reviewer's own fix scope
 offered *"add a fifth exception … and/or an inline disclosure marker"*. The first
@@ -874,11 +890,17 @@ a correction to a landed line, and none has landed.**
   comparisons** and are marked MEASURED. The reviewer traced the smaller figure
   UNCHANGED to the superseded document at `6feb40a` — it is inherited, it is outside
   this repair's diff, and eight prior review rounds did not raise it. **This unit does
-  not reconcile them, and the reason is its own standing discipline rather than
-  convenience:** whether the two figures count the same thing over different
-  populations, or the same population differently, is answerable only by re-running
-  the equivalence probe, and re-deriving a carried MEASURED figure is a design act on
-  carved content. The carve repairs transcription. **What is owed:** either an
+  not reconcile them, and the reason is corrected at u-rev 6 to the one that actually
+  holds** (`docs/experiments/wp15b_U2_REVIEW_urev5.md`, H2): whether the two figures
+  count the same thing over different populations, or the same population differently,
+  **is answerable only by RE-RUNNING the equivalence probe.** That is a measurement act
+  with a registered instrument, and choosing between two measured numbers without
+  re-taking either is exactly what a repair round may not do. *(u-rev 5 gave the
+  CARVED-CONTENT scope as the reason instead — "a design act on carved content, the
+  carve repairs transcription only". That was wrong: this bullet's subject sits in
+  U2-Z, carried from the superseded §15/§18, and the carved-content scope this unit
+  defines is §2, §3, §5 and §14. The practical decision was sound and is unchanged; the
+  ground under it was not.)* **What is owed:** either an
   instrument re-run that reconciles them and marks both, or an ADR line recording
   which population the M5-E claim rests on. Registered here so the next round does not
   re-discover it.
@@ -898,5 +920,6 @@ a correction to a landed line, and none has landed.**
 
 ---
 
-*U2, u-rev 5. A repair, answering `docs/experiments/wp15b_U2_REVIEW_urev4.md`.
-IMPL has not started.*
+*U2, u-rev 6. A repair, answering `docs/experiments/wp15b_U2_REVIEW_urev5.md`.
+**IT IS UNREVIEWED, and the round that produced it did not dispatch a sixth review —
+see the REVIEW STATUS block.** IMPL has not started.*

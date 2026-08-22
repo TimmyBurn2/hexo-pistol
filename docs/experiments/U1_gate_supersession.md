@@ -12,8 +12,8 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 2.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
-(revision 7, never reviewed, CLOSED by D-309) under the restructure selected as
+**u-rev 3.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
+(revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it; the counts are D-309's and are not restated here) under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`; no line of the superseded
 document is owned twice and none is unowned. The superseded document is not in

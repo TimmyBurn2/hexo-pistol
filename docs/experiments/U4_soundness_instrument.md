@@ -13,7 +13,7 @@ its owner, and that is what it is for.
 
 
 **u-rev 8.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
-item 1 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the
+item 1 at `6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it; the counts are D-309's and are not restated here) under the
 restructure selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
 in the tree: it is retrievable at `6feb40a` and nowhere else.
