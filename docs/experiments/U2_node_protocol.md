@@ -12,17 +12,25 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 2.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
+**u-rev 3.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
 `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the restructure
 selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
 in the tree: it is retrievable at `6feb40a` and nowhere else.
 
-**u-rev 2 is a REPAIR, not a new carve.** It answers
+**u-rev 2 was a REPAIR, not a new carve.** It answered
 `docs/experiments/wp15b_U2_REVIEW.md`'s FAIL against u-rev 1 (pinned `38f21b9`):
 F2 (MAJOR, §5.3's unreachable fixture) and F1 (MINOR, §5.4's undisclosed
 citation correction), plus a one-sentence architect ruling (R5, Tier Q).
-Nothing else in this text changed.
+Nothing else in that text changed.
+
+**u-rev 3 is a REPAIR of u-rev 2's own review, not a new carve.** It answers
+`docs/experiments/wp15b_U2_REVIEW_urev2.md`'s FAIL against u-rev 2 (pinned
+`56b0bec`, byte-identical at HEAD `e3f0bc3` when that review ran): F3 (MAJOR,
+the "exceptions" paragraph's own count went stale the moment F2 landed — it
+omitted F2's own §5.3 rewrite, the largest exception) and F4 (MINOR, the D-257
+quotation at §5.3 carried a second, unmarked elision). Nothing else in this
+text changed.
 
 **THE TEXT IS A VERBATIM CARVE.** Every change made to it is a CROSS-REFERENCE
 RETARGET — a `§n` that pointed inside the superseded document now names the unit
@@ -31,17 +39,30 @@ plus one B5 repair in §2.2 (below). No sentence of §3, §5 or §14 was rewritt
 extended or re-derived, and no number moved. Every **MEASURED** and **ESTIMATED**
 mark is the mark the superseded text carried.
 
-**Three exceptions, all stated where they occur rather than only here:** §2.2's
-config-count sentence became a citation of U3 §10 (B5 — the count was stated
-three different ways and is now stated once, there); §12 item 2's rate list
-hands the widening rate and the declined-TT-entry count to `WPQ_seed.md` with
-stage Q, keeping the counter SEAM here because the seam is what a later WP reads
-them through; and §5.3's `Run::salvage`-cost sentence silently repointed a
-dangling citation — the superseded text read "§12 item 6", which never existed
-(§12 had five items at `6feb40a`) — to its actual referent, "U2-Z item 20" (i.e.
-superseded §15 item 20), a content correction rather than a retarget, found by
-the u-rev 1 review (`docs/experiments/wp15b_U2_REVIEW.md`, F1) and disclosed at
-the point of occurrence in this u-rev.
+**Four exceptions, all stated where they occur rather than only here. Each is a
+change to this unit's CARVED CONTENT — prose carried over from the superseded
+document's §2, §3, §5 or §14. This list, the u-rev label, and the rest of the
+head's own apparatus are NOT carved content; they are new text the carve itself
+writes and are expected to change every u-rev (LABEL DISCIPLINE, above) — so an
+edit to this paragraph, including u-rev 3's addition of the fourth item below,
+is not a further exception the list owes itself:** §2.2's config-count sentence
+became a citation of U3 §10 (B5 — the count was stated three different ways and
+is now stated once, there); §12 item 2's rate list hands the widening rate and
+the declined-TT-entry count to `WPQ_seed.md` with stage Q, keeping the counter
+SEAM here because the seam is what a later WP reads them through; §5.3's
+`Run::salvage`-cost sentence silently repointed a dangling citation — the
+superseded text read "§12 item 6", which never existed (§12 had five items at
+`6feb40a`) — to its actual referent, "U2-Z item 20" (i.e. superseded §15 item
+20), a content correction rather than a retarget, found by the u-rev 1 review
+(`docs/experiments/wp15b_U2_REVIEW.md`, F1) and disclosed at the point of
+occurrence in this u-rev; and §5.3's two-ply-illustration rewrite (F2, found by
+the same u-rev 1 review) — roughly sixteen new lines of new prose, not a
+`§n`-retarget: the "ILLUSTRATION ONLY; … WITHDRAWN" heading clause, the
+withdrawal of the "VERIFIED on the shipped solver" sentence, a new D-257
+blockquote, the rule-3 arithmetic (`1 + 2(k − 1) = 2k − 1`), and a rewritten
+D-243(4)-discharge sentence — the largest of the four, and the one this list
+omitted until the u-rev-2 confirmation re-review caught the omission (u-rev
+2 → 3, F3).
 
 **WHY THIS UNIT'S REVIEW IS A CONFIRMATION PASS.** Five fresh-context
 REVIEW-designs and two DECISION-RED-TEAMs have run over this text and **none
@@ -61,11 +82,15 @@ document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
 
-**THIS UNIT HAS BEEN REVIEWED, AND THAT REVIEW FAILED.** u-rev 1 (pinned
+**THIS UNIT HAS BEEN REVIEWED TWICE, AND BOTH REVIEWS FAILED.** u-rev 1 (pinned
 `38f21b9`) was reviewed by `docs/experiments/wp15b_U2_REVIEW.md`, a CONFIRMATION
 PASS: **VERDICT FAIL**, 1 MAJOR (F2, §5.3's unreachable fixture) and 1 MINOR (F1,
-§5.4's undisclosed citation correction). This u-rev (2) is the repair answering
-those two findings, plus one architect ruling (R5). It is unreviewed at ITS OWN
+§5.4's undisclosed citation correction). u-rev 2 — the repair answering those two
+findings, plus one architect ruling (R5) — was reviewed by
+`docs/experiments/wp15b_U2_REVIEW_urev2.md`, again a CONFIRMATION PASS:
+**VERDICT FAIL**, 1 MAJOR (F3, the exceptions paragraph did not name F2's own
+§5.3 rewrite) and 1 MINOR (F4, the D-257 quotation's unmarked second elision).
+This u-rev (3) is the repair answering F3 and F4. It is unreviewed at ITS OWN
 revision — a repair reopens the review exactly as any other amendment does — and
 a WP is not landable while a review is outstanding.
 
@@ -394,7 +419,7 @@ is provably insufficient. The load-bearing ground for that claim is D-257's own
 abstract, position-free example, which needs no reachability claim at all:
 
 > three hot windows with empties {a,b}, {b,d}, {d,e} have no one-cell cover…
-> {a,e} covers nothing in the middle
+> {a,e} …covers nothing in the middle
 
 The board below is kept only as a concrete illustration of the same shape. It is
 **not a position a legal game reaches**: "two disjoint sealed five-stone P1
@@ -766,10 +791,13 @@ a correction to a landed line, and none has landed.**
   quiescence that reuses it inherits that debt.
 - **Quiescence stands pat and extends in TURNS, never plies** — D-111, unchanged.
 - **What WP-1.6 must not inherit:** this text is UNREVIEWED at this u-rev (u-rev
-  2, this repair). Five rounds failed before the restructure, and the carve
-  itself has now been attacked once — a CONFIRMATION PASS at u-rev 1
+  3, this repair). Five rounds failed before the restructure, and the carve
+  itself has now been attacked twice post-carve — a CONFIRMATION PASS at u-rev 1
   (`docs/experiments/wp15b_U2_REVIEW.md`, pinned `38f21b9`) returned **FAIL**, 1
-  MAJOR + 1 MINOR, both repaired here. u-rev 2 has not yet been reviewed.
+  MAJOR + 1 MINOR, repaired at u-rev 2; a second CONFIRMATION PASS at u-rev 2
+  (`docs/experiments/wp15b_U2_REVIEW_urev2.md`, pinned `56b0bec`) again returned
+  **FAIL**, 1 MAJOR (F3) + 1 MINOR (F4), repaired here. u-rev 3 has not yet been
+  reviewed.
 
 ### The conservative branch this unit records
 
@@ -795,5 +823,5 @@ a correction to a landed line, and none has landed.**
 
 ---
 
-*U2, u-rev 2. A repair, answering `docs/experiments/wp15b_U2_REVIEW.md`'s FAIL
-against u-rev 1. IMPL has not started.*
+*U2, u-rev 3. A repair, answering `docs/experiments/wp15b_U2_REVIEW_urev2.md`'s
+FAIL against u-rev 2. IMPL has not started.*
