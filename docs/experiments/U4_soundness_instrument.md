@@ -2173,15 +2173,11 @@ re-derived in full.)*
   inside site and missed three others"*, that **the COUNT SIX stands** with no seventh
   site, and that D-316's selection, its residual and its flip clause are all unaffected.
   Nothing here is owed to the architect any more.
-- **THE u-rev LABEL BUMPS PER LANDED COMMIT, AND WHETHER A ROUND-LABEL MAY REPLACE
-  THAT IS THE ARCHITECT'S.** u-rev 8 read D-311 as permitting one label across a
-  multi-commit round; `wp15b_U4_REVIEW_urev8.md` MAJOR 7 MEASURED that reading against
-  D-311's own recorded ground — one label naming two texts 69 lines apart is the
-  ambiguity D-311 removes, and the round-label made `u-rev 8` name six texts 289 lines
-  apart. The reading is struck and the per-commit bump is restored. **A ROUND-LABEL IS
-  NOT RE-PROPOSED HERE AND THIS UNIT MAY NOT GRANT ITSELF THE EXEMPTION:** if one is
-  wanted it is an amendment to D-311, taken by the architect, and this bullet is the
-  request rather than the amendment.
+- ~~**THE u-rev LABEL BUMPS PER LANDED COMMIT, AND WHETHER A ROUND-LABEL MAY REPLACE
+  THAT IS THE ARCHITECT'S.**~~ **CLOSED BY `D-311`'s APPENDED AMENDMENT.** The
+  round-label reading is rejected as an AGGREGATION — the self-state-claim class
+  D-346 and D-338 already narrow — and the per-commit bump stands unchanged. This
+  bullet's own request is answered there and is not restated here.
 
 - **No REVIEW-design has run against this text at THIS u-rev**, and a review of a
   superseded revision does not transfer — an amendment reopens the review, however
