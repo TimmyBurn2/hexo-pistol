@@ -324,6 +324,7 @@ This unit has no governed run.
 
 ---
 
-*U1, u-rev 2. u-rev 1 was a carve, not a revision; u-rev 2 is a repair of
-u-rev 1's REVIEW-design FAIL (`docs/experiments/wp15b_U1_REVIEW.md`, pinned
-`38f21b9`). IMPL has not started.*
+*U1, u-rev 3. What each u-rev of this unit did is the head block's and U1-A's,
+and this line restates neither — it carries the u-rev label and nothing else, so
+that it cannot go stale against the head independently of them. IMPL has not
+started.*
