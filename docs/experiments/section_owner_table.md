@@ -17,7 +17,11 @@ the exact corruption a reviewer used against the old pin and which it now fails
 the build on.
 
 **LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this table bumps
-its u-rev. **THIS TABLE IS AT u-rev 5**: §11's unit-size table gains a FIFTH
+its u-rev. **THIS TABLE IS AT u-rev 6**: the `now` column is DELETED and replaced by
+the command that derives it, discharging by deletion the standing duty that had gone
+stale three times; §11's question is re-posed on the measured u-rev-6 numbers; and the
+carve-provenance sentence above is corrected (it said revision 7 was *never reviewed*;
+D-309 records that it was reviewed and FAILED). **At u-rev 5**: §11's unit-size table gains a FIFTH
 column, re-measured at `161e6d3` after the design-closure round moved three of the
 five units — U2 to 827, U3 to 846 and U4 to 1886. The u-rev 4 column, re-measured
 at `7358a07` after U4's own repair moved it from 855 to 1413,
@@ -255,14 +259,44 @@ unowned; nothing is owned twice.
 about a unit exceeding one sitting, and after the carve the largest unit is not
 the one F6 named:
 
-| Unit | at the carve (u-rev 1) | at u-rev 2 of this table | at u-rev 3 (`0af32fb`) | at u-rev 4 (`7358a07`) | now, MEASURED at `161e6d3` | u-rev now |
-|---|---|---|---|---|---|---|
-| U1 gate supersession | 274 | 274 | 329 | 329 | **329** | 2 |
-| U2 node protocol | 754 | 754 | 799 | 799 | **827** | 3 |
-| U3 Tier-T and the config shape | 603 | 603 | 818 | 818 | **846** | 4 |
-| U4 soundness instrument | 701 | 800 | 855 | 1413 | **1886** | 7 |
-| WPQ seed (not reviewable) | 222 | 222 | 227 | 227 | **227** | 2 |
-| this table | 268 | *not measured* | 287 | 321 | **337** (before this append) | 5 |
+| Unit | at the carve (u-rev 1) | at u-rev 2 of this table | at u-rev 3 (`0af32fb`) | at u-rev 4 (`7358a07`) | at u-rev 5 (`161e6d3`) |
+|---|---|---|---|---|---|
+| U1 gate supersession | 274 | 274 | 329 | 329 | 329 |
+| U2 node protocol | 754 | 754 | 799 | 799 | 827 |
+| U3 Tier-T and the config shape | 603 | 603 | 818 | 818 | 846 |
+| U4 soundness instrument | 701 | 800 | 855 | 1413 | 1886 |
+| WPQ seed (not reviewable) | 222 | 222 | 227 | 227 | 227 |
+| this table | 268 | *not measured* | 287 | 321 | 337 |
+
+**THERE IS NO `now` COLUMN AT u-rev 6, AND ITS REMOVAL IS THE POINT OF THIS APPEND.**
+Every column above is a MEASUREMENT PINNED TO A REVISION and is true forever at that
+revision. A `now` column is a claim about the working tree, it is false the moment any
+unit is appended to, and **this table has had to disclose it going stale three
+times** — at u-rev 3, at u-rev 4, and at u-rev 5, each time as a batch correction taken
+after the fact rather than in the commit that falsified it, which the table itself
+recorded as the weaker discipline. **The standing duty that produced those corrections
+is DISCHARGED BY DELETION rather than by another correction.** What replaces it is the
+command:
+
+```
+$ wc -l docs/experiments/U{1_gate_supersession,2_node_protocol,3_tier_t,4_soundness_instrument}.md \
+        docs/experiments/WPQ_seed.md docs/experiments/section_owner_table.md
+$ for f in U1_gate_supersession U2_node_protocol U3_tier_t U4_soundness_instrument WPQ_seed section_owner_table; do
+    printf '%-28s ' "$f"; grep -m1 -o '^\*\*u-rev [0-9]*' docs/experiments/$f.md; done
+```
+
+This is the same substitution `docs/experiments/U2_node_protocol.md` (u-rev 6, landed
+`3543a7f`) made for its exceptions list at `7dfd047` — a hand-maintained set replaced
+by a rule and a derived enumeration — which is the precedent
+`docs/experiments/matrix_U4R_REDTEAM_round2.md` identifies as *"the only candidate
+whose prevention claim is a mechanism rather than an assertion"* (D-334). **AND THIS
+TABLE CLAIMS NO MORE FOR IT THAN THAT.** The command is an instrument, not a proof:
+the sibling unit registered a derived command for a different claim at its u-rev 6 and
+the command turned out to be BLIND to a case it was about
+(`docs/experiments/wp15b_U3_REVIEW_urev6.md`, MAJOR D). What makes this one safer is
+narrower than a general argument — `wc -l` over an explicit file list cannot miss a
+file the list names, and the list is the same one `CARVE_DOCS` pins — and that is the
+whole of the claim.
 
 **THE THIRD COLUMN IS RE-MEASURED AT u-rev 3 OF THIS TABLE, AND THE SECOND HAD
 GONE FALSE AGAIN BEFORE IT WAS READ.** Command, at `0af32fb`:
@@ -350,6 +384,41 @@ THE CUT WAS JUDGED.** U4 is **1886** against the largest-at-the-carve U2 at
 carve replaced. The unit that the restructure existed to make reviewable in one
 sitting is now within ninety lines of the document it was carved out of. This
 table states that and does not resolve it; it is the architect's.
+
+**AT u-rev 6 THE ANSWER IS WORSE, AND THE ROUND THAT WAS SUPPOSED TO FIX IT IS THE
+ROUND THAT MADE IT WORSE.** MEASURED at `a2b50bf`:
+
+```
+$ wc -l docs/experiments/U{1_gate_supersession,2_node_protocol,3_tier_t,4_soundness_instrument}.md \
+        docs/experiments/WPQ_seed.md docs/experiments/section_owner_table.md
+   329 docs/experiments/U1_gate_supersession.md
+   925 docs/experiments/U2_node_protocol.md
+   990 docs/experiments/U3_tier_t.md
+  2105 docs/experiments/U4_soundness_instrument.md
+   227 docs/experiments/WPQ_seed.md
+   371 docs/experiments/section_owner_table.md
+  4947 total
+```
+
+**U4 IS 2105 — it PASSED the 1975-line document it was carved out of**, and it is
+**179 % larger** than the largest unit the four-way cut was judged against. U2 and U3
+grew too, by roughly a hundred and fifty each. **THE ROUND THAT PRODUCED THESE NUMBERS
+WAS THE ROUND CONVENED TO SHRINK U4's STATUS MATTER**, under the CLAIM-HOME law
+(D-331): a micro-matrix was authored twice to restructure it, **both fields were killed
+by fresh-context red teams, and D-334 stopped it with no selection**. What happened
+instead is that every unit's findings were repaired in place — and **every repair is
+net additive, because each one discloses what it replaced.**
+
+**THAT IS THE FINDING, AND IT IS NOT A COMPLAINT ABOUT DISCLOSURE.** The disclosures
+are why four consecutive rounds could each name the previous round's defect. But it
+means the property the restructure was bought for — *reviewable in one sitting* — has
+now moved against the project in every round since the carve, **and it still has no
+instrument**: nothing in this project defines it, measures it, or can say whether 2105
+lines fails it while 1886 passed. Every number above is a PROXY for an undefined
+property, which `docs/experiments/matrix_U4R_REDTEAM_round2.md` charged against the
+matrix that tried to use them to rank options. **This table states the numbers, states
+that they are proxies, and states that the question is unanswerable as posed. Defining
+the property is the architect's, and it is the prior question to any revision 3.**
 
 **THIS RE-MEASUREMENT WAS OWED BY A RULE AND NOT BY A REMINDER**, which is the
 difference from the two rounds that went stale. U4's u-rev 7 replaced its own
