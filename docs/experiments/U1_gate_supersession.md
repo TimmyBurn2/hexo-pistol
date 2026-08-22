@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 4.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
+**u-rev 5.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
 (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it, and is that review's home) under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`; no line of the superseded
@@ -37,8 +37,8 @@ option (f) — see U1-A.
 unreviewed until a fresh REVIEW-design runs against u-rev 2.~~ **STRUCK AT u-rev 4**
 under `D-346`. It was written at u-rev 2 and never re-read: u-rev 2 **was** reviewed
 and it **PASSED** (`docs/experiments/wp15b_U1_REVIEW_urev2.md`), so a head describing
-this unit as awaiting that review was false from `f81706a` onward and named the one
-PASS in this work package nowhere at all. `docs/decisions.md` D-342 records it as the
+this unit as awaiting that review was false from `f81706a` onward and named
+U1's own PASS nowhere at all. `docs/decisions.md` D-342 records it as the
 open half of `matrix_META1_REDTEAM.md` M3; this is that half, answered by deletion
 rather than by a fourth hand-kept copy of a history the reports already hold.)*
 
@@ -55,7 +55,7 @@ the disagreement is an ADR line.
 | DECISION-RED-TEAM, matrix M0 | revision 1, `ec8f7fb` | **M0 FELL** → option (f), supplied by the red team that killed (e) |
 | REVIEW-design ×5 | revisions 2–6, `182f389` `7ad466b` `f762c9a` `64af80c` `2d07ff6` | all FAIL, none on M0's merits; no round reopened M0 |
 | REVIEW-design | revision 7, `6feb40a` | **FAIL** — 7 BLOCKING, 7 MAJOR, 9 MINOR. **B6 is M0's** and is discharged below; no other finding is §4's |
-| REVIEW-design, **this unit** | every u-rev that has been reviewed | **THIS TABLE DOES NOT RESTATE THIS UNIT'S OWN REVIEW HISTORY.** Each round's pinned revision, verdict and findings are in that round's report, `docs/experiments/wp15b_U1_REVIEW*.md`, which is their home. It carried no row for them at all until u-rev 4, which is how the one PASS in this work package went uncited by the unit that earned it (`docs/decisions.md` D-342) |
+| REVIEW-design, **this unit** | every u-rev that has been reviewed | **THIS TABLE DOES NOT RESTATE THIS UNIT'S OWN REVIEW HISTORY.** Each round's pinned revision, verdict and findings are in that round's report, `docs/experiments/wp15b_U1_REVIEW*.md`, which is their home. It carried no row for them at all until u-rev 4, which is how U1's own PASS went uncited by the unit that earned it (`docs/decisions.md` D-342) |
 | DECISION-RED-TEAM, restructure | matrix at `eea480b` | F10: option B's cost cell called M0 clean against the matrix's own Facts block. **M0 was not clean — B6 was live.** It is now not live |
 
 **"Revision 6" above is `2d07ff6` — an unresolved dispute, disclosed, not
@@ -329,7 +329,7 @@ This unit has no governed run.
 
 ---
 
-*U1, u-rev 4. What each u-rev of this unit did is the head block's and U1-A's,
+*U1, u-rev 5. What each u-rev of this unit did is the head block's and U1-A's,
 and this line restates neither — it carries the u-rev label and nothing else, so
 that it cannot go stale against the head independently of them. IMPL has not
 started.*
