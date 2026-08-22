@@ -202,6 +202,96 @@ OUT=""
 
 fail() { printf 'baseline_snapshot: FAIL: %s\n' "$*" >&2; exit 1; }
 
+# THE USAGE TEXT IS THE HOME OF THE PATH-RESOLUTION CLAIM (docs/decisions.md
+# D-331). Before this text existed the rule was stated in a comment beside ONE
+# flag's implementation and was true of that flag alone, so a caller had no
+# statement to read and the script had no single place where the rule lived.
+usage() {
+	cat <<'USAGE'
+usage: tools/baseline_snapshot.sh [--out PATH] [--corpus PATH] [--binary PATH|NAME]
+                                  [--nodes N] [--ladder-depth N] [--ladder-cap-s N]
+                                  [--help]
+
+Takes the registered baseline snapshot (docs/decisions.md D-230) and writes the
+record to --out, or to stdout when --out is not given.
+
+HOW A RELATIVE PATH IS RESOLVED. THERE IS ONE BASE AND IT IS YOURS.
+
+  Every path YOU pass on the command line -- --out, --corpus, --binary -- is
+  resolved against THE DIRECTORY YOU RAN THIS SCRIPT FROM. Not against the
+  repository root. This script cd's to the repository root before it does
+  anything, and a cd may not redefine what your own words meant.
+
+  This script's OWN defaults are repository paths and are resolved against the
+  repository root, because they are the script's words and not yours. They are
+  configs/instrument_v0.toml, the fixture corpus, the opening corpus and
+  target/release/pistol.
+
+  A --binary with no `/` in it is a bare NAME, not a path: it is resolved by
+  PATH at exec time, and PATH is already yours.
+
+  WHERE THE TWO READINGS WOULD DISAGREE, THIS SCRIPT REFUSES AND DOES NOT
+  CHOOSE. If a relative --corpus or --binary names an existing file under the
+  repository root and a DIFFERENT existing file under your directory, or names
+  one only under the repository root, you get a named refusal telling you both
+  paths. Pass an absolute path to settle it. Silently preferring either reading
+  is how a record comes to attest a file the caller never named.
+
+EXIT STATUS. This script declares no VOID class (tools/SHELL_CHECKLIST.md item
+12): 0 is a record written, and every refusal is a FAIL at exit 1, named on
+stderr. Nothing here distinguishes "the answer is no" from "I could not take the
+answer", because this instrument has no answer to give -- it either wrote a
+record or it refused to.
+USAGE
+}
+
+# ONE BASE, APPLIED AT THE FLAG. tools/SHELL_CHECKLIST.md item 11: a caller's
+# path consumed by a write is resolved against the root the caller meant, and a
+# cd is not that root. MEASURED before any of this existed, `--out
+# relative_probe.txt` issued from /tmp wrote its record into the REPOSITORY ROOT
+# -- a file the caller never asked for, in a tree whose cleanliness other gates
+# then adjudicate on. That was fixed for `--out` alone, which left the script
+# resolving `--out` against the caller and `--corpus` and `--binary` against the
+# root: two bases, one flag apart, and the same defect standing in the flags
+# whose paths reach the record's digest lines.
+#
+# The refusals below are the "fail loud" rule (CLAUDE.md rule 3) applied to a
+# base CHANGE rather than to a bad value: a caller who relied on the old
+# root-relative reading of `--corpus` must be told, not silently redirected.
+#
+# It sets a global rather than printing, for the reason `argument` gives above:
+# a `fail` inside a command substitution exits only the subshell.
+#
+# THE BARE-NAME EXEMPTION IS A PROPERTY OF THE FLAG, NOT OF THE VALUE. Only
+# `--binary` is PATH-resolved (`command -v` below), so only `exec` may treat a
+# value with no `/` as a name rather than a path. Written the other way round —
+# exempting every slashless value — it silently exempted `--out record.txt`,
+# which is a relative path and the one this whole rule was first written for.
+caller_path() { # flag value read|write|exec -> sets ARG to the resolved path
+	local flag="$1" value="$2" kind="$3" here there
+	case "$value" in
+	/*) ARG="$value"; return 0 ;;
+	esac
+	if [ "$kind" = exec ]; then
+		case "$value" in
+		*/*) ;;
+		*) ARG="$value"; return 0 ;;
+		esac
+	fi
+	here="$CALLER_PWD/$value"
+	there="$ROOT/$value"
+	if [ "$CALLER_PWD" != "$ROOT" ] && [ "$kind" != write ]; then
+		if [ -e "$there" ] && [ ! -e "$here" ]; then
+			fail "$flag \`$value\` is a relative path and this script resolves yours against the directory you ran it from, which is $CALLER_PWD, where nothing of that name exists. It DOES exist at $there. This script will not silently read the repository's copy when you named your own — pass an absolute path, or run from the directory your path is relative to (--help states the rule)"
+		fi
+		if [ -e "$there" ] && [ -e "$here" ] && [ ! "$here" -ef "$there" ]; then
+			fail "$flag \`$value\` is AMBIGUOUS: it names one file at $here and a DIFFERENT file at $there. This script resolves your relative paths against the directory you ran it from, so the two readings disagree about which bytes this record would attest — pass an absolute path (--help states the rule)"
+		fi
+	fi
+	ARG="$here"
+	return 0
+}
+
 # A DIGEST THIS SCRIPT COULD NOT TAKE IS A REFUSAL, NEVER AN EMPTY FIELD.
 # `echo "binary_sha256 $(sha256sum "$BINARY" | cut -d' ' -f1)"` discards the
 # substitution's status — it is an ARGUMENT — so an engine that is executable and
@@ -240,29 +330,17 @@ argument() { # flag remaining-count value -> sets ARG
 }
 while [ "$#" -gt 0 ]; do
 	case "$1" in
-	--out) argument --out "$#" "${2:-}"; OUT="$ARG"; shift 2 ;;
+	--out) argument --out "$#" "${2:-}"; caller_path --out "$ARG" write; OUT="$ARG"; shift 2 ;;
 	--nodes)
 		argument --nodes "$#" "${2:-}"; NODES="$ARG"; BUDGET_PROVENANCE="OVERRIDE"; shift 2 ;;
-	--corpus) argument --corpus "$#" "${2:-}"; CORPUS="$ARG"; shift 2 ;;
+	--corpus) argument --corpus "$#" "${2:-}"; caller_path --corpus "$ARG" read; CORPUS="$ARG"; shift 2 ;;
 	--ladder-depth) argument --ladder-depth "$#" "${2:-}"; LADDER_DEPTH="$ARG"; shift 2 ;;
 	--ladder-cap-s) argument --ladder-cap-s "$#" "${2:-}"; LADDER_CAP_S="$ARG"; shift 2 ;;
-	--binary) argument --binary "$#" "${2:-}"; BINARY="$ARG"; shift 2 ;;
-	*) fail "unknown argument \`$1\`" ;;
+	--binary) argument --binary "$#" "${2:-}"; caller_path --binary "$ARG" exec; BINARY="$ARG"; shift 2 ;;
+	--help) usage; exit 0 ;;
+	*) usage >&2; fail "unknown argument \`$1\`" ;;
 	esac
 done
-
-# A RELATIVE `--out` IS RESOLVED AGAINST THE CALLER'S DIRECTORY, NOT THE
-# REPOSITORY ROOT. This script `cd`s to `$ROOT` before it does anything, and a
-# `cd` silently redefines what every relative path the caller supplied means:
-# MEASURED before this line existed, `--out relative_probe.txt` issued from
-# `/tmp` wrote its record into the REPOSITORY ROOT — a file the caller never
-# asked for, in a tree whose cleanliness other gates then adjudicate on.
-# tools/SHELL_CHECKLIST.md item 11: a caller's path consumed by a write is
-# resolved against the root the caller meant, and a `cd` is not that root.
-case "$OUT" in
-'' | /*) ;;
-*) OUT="$CALLER_PWD/$OUT" ;;
-esac
 
 # The COUNT'S SPELLING, not just its value. `[ 010 -ge 1 ]` is true because bash
 # reads a leading zero as OCTAL, and the engine then parses the same token as

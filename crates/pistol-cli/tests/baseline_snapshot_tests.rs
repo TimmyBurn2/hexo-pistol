@@ -1323,3 +1323,166 @@ fn a_corpus_name_carrying_a_space_is_refused_rather_than_shift_the_records_field
         "so the fourth token is the digest and not a shifted keyword: {corpus_line}"
     );
 }
+
+/// Run the shipped script FROM A DIRECTORY THAT IS NOT THE REPOSITORY ROOT, with
+/// the arguments given exactly as written — the only shape in which the caller's
+/// base and the repository root are distinguishable at all.
+fn from_directory(dir: &Path, args: &[&str]) -> Output {
+    Command::new("bash")
+        .arg(repo("tools/baseline_snapshot.sh"))
+        .args(args)
+        .current_dir(dir)
+        .output()
+        .expect("the snapshot script runs")
+}
+
+#[test]
+fn a_relative_out_and_a_relative_corpus_resolve_from_the_same_base() {
+    // ONE BASE, AND IT IS THE CALLER'S. `--out` was resolved against the caller's
+    // directory and `--corpus` and `--binary` against the repository root, one
+    // flag apart, so the same relative word meant two different files depending
+    // on which flag it followed. This is the control run as well as the claim: it
+    // SUCCEEDS, so a guard that refused everything could not produce it.
+    let dir = scratch("snapshot-one-base");
+    let stub = stub_engine_in(&dir, "stub-engine");
+    two_band_corpus(&dir);
+    let ran = from_directory(
+        &dir,
+        &[
+            "--corpus",
+            "./corpus.txt",
+            "--binary",
+            "./stub-engine",
+            "--ladder-depth",
+            "1",
+            "--out",
+            "./record.txt",
+        ],
+    );
+    assert!(
+        ran.status.success(),
+        "every relative argument names a file in the caller's own directory:\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&ran.stdout),
+        String::from_utf8_lossy(&ran.stderr)
+    );
+    let record = std::fs::read_to_string(dir.join("record.txt"))
+        .expect("the record is written beside the caller, not into the repository root");
+    assert!(
+        !repo("record.txt").exists(),
+        "and nothing of that name is written into the repository root"
+    );
+    let block = invariant(&record);
+    let corpus_line = block
+        .lines()
+        .find(|line| line.starts_with("corpus "))
+        .unwrap_or_else(|| panic!("the invariant block states a corpus line:\n{block}"));
+    let stub_digest =
+        pistol_cli::sha256::sha256_hex(&std::fs::read(&stub).expect("the stub engine reads"));
+    let corpus_digest = pistol_cli::sha256::sha256_hex(
+        &std::fs::read(dir.join("corpus.txt")).expect("the caller's corpus reads"),
+    );
+    assert!(
+        corpus_line.contains(&corpus_digest),
+        "the corpus digested is the caller's file: {corpus_line}"
+    );
+    assert!(
+        block.contains(&format!("binary_sha256 {stub_digest}")),
+        "and so is the engine:\n{block}"
+    );
+}
+
+#[test]
+fn a_relative_input_that_exists_only_under_the_repository_root_is_refused_not_silently_read() {
+    // The base CHANGED for `--corpus` and `--binary`, and a caller who relied on
+    // the old root-relative reading must be TOLD (CLAUDE.md rule 3), not quietly
+    // redirected to a file they did not name. The refusal states both paths.
+    let dir = scratch("snapshot-root-only-input");
+    let stub = stub_engine_in(&dir, "stub-engine");
+    let ran = from_directory(
+        &dir,
+        &[
+            "--corpus",
+            "crates/pistol-cli/tests/fixtures/bench_positions_v1.txt",
+            "--binary",
+            stub.to_str().expect("utf-8 path"),
+            "--ladder-depth",
+            "1",
+        ],
+    );
+    let stderr = String::from_utf8_lossy(&ran.stderr);
+    assert!(
+        !ran.status.success(),
+        "this is a refusal, not a record:\n{}",
+        String::from_utf8_lossy(&ran.stdout)
+    );
+    assert!(
+        stderr.contains("--corpus") && stderr.contains("It DOES exist at"),
+        "and the refusal names the flag and the path it did NOT read: {stderr}"
+    );
+    assert!(
+        stderr.contains(dir.to_str().expect("utf-8 path")),
+        "and states the base it did resolve against: {stderr}"
+    );
+}
+
+#[test]
+fn a_relative_input_naming_two_different_files_is_refused_as_ambiguous() {
+    // Both readings exist and disagree about which bytes the record would attest.
+    // Choosing either silently is how a digest line comes to name a file the
+    // caller never meant, so the script refuses and says so.
+    let dir = scratch("snapshot-ambiguous-input");
+    let stub = stub_engine_in(&dir, "stub-engine");
+    let twin = dir.join("crates/pistol-cli/tests/fixtures");
+    std::fs::create_dir_all(&twin).expect("the twin path is created");
+    std::fs::write(twin.join("bench_positions_v1.txt"), "# not the fixture\n")
+        .expect("the twin corpus writes");
+    let ran = from_directory(
+        &dir,
+        &[
+            "--corpus",
+            "crates/pistol-cli/tests/fixtures/bench_positions_v1.txt",
+            "--binary",
+            stub.to_str().expect("utf-8 path"),
+            "--ladder-depth",
+            "1",
+        ],
+    );
+    let stderr = String::from_utf8_lossy(&ran.stderr);
+    assert!(
+        !ran.status.success(),
+        "this is a refusal, not a record:\n{}",
+        String::from_utf8_lossy(&ran.stdout)
+    );
+    assert!(
+        stderr.contains("is AMBIGUOUS"),
+        "and the refusal says which defect it is: {stderr}"
+    );
+    assert!(
+        stderr.contains(twin.to_str().expect("utf-8 path"))
+            && stderr.contains(
+                repo("crates/pistol-cli/tests/fixtures/bench_positions_v1.txt")
+                    .to_str()
+                    .expect("utf-8 path")
+            ),
+        "and names BOTH readings, since naming one is what it refuses to do: {stderr}"
+    );
+}
+
+#[test]
+fn the_usage_text_states_the_resolution_base_and_the_exit_status_classes() {
+    // The usage text is the HOME of the resolution claim (docs/decisions.md
+    // D-331). Before it existed the rule was stated in a comment beside one
+    // flag's implementation and was true of that flag alone.
+    let dir = scratch("snapshot-usage");
+    let ran = from_directory(&dir, &["--help"]);
+    let stdout = String::from_utf8_lossy(&ran.stdout);
+    assert!(ran.status.success(), "--help is not a refusal");
+    assert!(
+        stdout.contains("THE DIRECTORY YOU RAN THIS SCRIPT FROM"),
+        "the usage text states the base: {stdout}"
+    );
+    assert!(
+        stdout.contains("no VOID class") && stdout.contains("exit 1"),
+        "and answers SHELL_CHECKLIST item 12 by name: {stdout}"
+    );
+}
