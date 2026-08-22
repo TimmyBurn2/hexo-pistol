@@ -12,14 +12,15 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 6.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
+**u-rev 7.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
 item 1 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the
 restructure selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
 in the tree: it is retrievable at `6feb40a` and nowhere else.
 
 **THE CARVE FOUND BOTH OF THIS UNIT'S SELECTIONS OPEN AND DID NOT MAKE EITHER OF THEM
-SO. AT u-rev 6 ONE IS SELECTED AND THE OTHER IS STOPPED FOR THE THIRD TIME.**
+SO. AT u-rev 7 BOTH HAVE A SELECTION — M3's AT u-rev 6, M4's AXIS A AT u-rev 7 — AND
+NEITHER IS BUILT.**
 
 - **M3 (the soundness instrument) — SELECTED. THE OPTION IS S-M, AND IT IS NOT S-E.**
   `docs/experiments/matrix_M3_soundness_instrument_rev2.md` (revision 2, thirteen rows,
@@ -33,27 +34,40 @@ SO. AT u-rev 6 ONE IS SELECTED AND THE OTHER IS STOPPED FOR THE THIRD TIME.**
   DEPENDS-OPEN-THEORY** under **D-321** — the `DEF-T` convention question is OPEN and
   the calculus is NOT amended — and carries five registered conditions. See the head of
   §8.
-- **M4 (the snapshot's config seam) — STOPPED, NOTHING SELECTED, FOR THE THIRD TIME
-  (D-324).** Three authored revisions, three fresh-context DECISION-RED-TEAMs. **This is
-  the RECORDED-TIE stop and not the every-option-fell stop** that M3's round 1 was:
-  N-E, N-J, N-K, N-F and N-L all survive. The cause is that **the field has two
-  orthogonal axes and has been scored as one** — how the config is NAMED (axis A)
-  against how many RECORDS one invocation produces (axis B) — so its rows were never
-  alternatives. **N-K's flip clause has fired on axis B; N-Q is the missing row on axis
-  A.** **§9's slot stays SELECTION OPEN.** See
-  `docs/experiments/matrix_M4_stop_round3.md`.
+- **M4 (the snapshot's config seam) — AXIS A IS SELECTED AT u-rev 7. THE OPTION IS N-E,
+  AND IT IS NOT THE ROW THE MATRIX RECOMMENDED (D-329).** Rounds 1 and 2 stopped
+  (D-318) and round 3 stopped on the RECORDED TIE (D-324), whose cause was that **the
+  field had two orthogonal axes and was being scored as one** — how the config is
+  NAMED (axis A) against how many RECORDS one invocation produces (axis B). D-324's
+  own stop clause authorised **a fourth round scoped to axis A alone with N-Q authored
+  into it**; that round is `docs/experiments/matrix_M4_axisA_round4.md` (`7866bcf`,
+  field {N-E, N-M, N-Q}, every MEASURED cell produced by a separate measurement agent
+  under D-328), its attack is `docs/experiments/matrix_M4_axisA_REDTEAM.md`, and the
+  selection record is `docs/experiments/matrix_M4_axisA_selection.md` (selected at
+  `7e0a328`, landed at `d56a898`). **N-E is a REQUIRED `--config PATH`, NO DEFAULT,
+  with a NEW WHOLE-PATH GUARD.** The matrix recommended **N-Q** and **its own red team
+  killed that recommendation**; **N-M was eliminated before the ladder ran, on
+  registered ground**; the ladder's first rung was **SILENT ACROSS THE WHOLE FIELD**,
+  so the selection was taken at rung (b). **AXIS B IS NOT REOPENED** — D-324 records
+  its flip clause as already fired toward N-K, and N-K COMPOSES with the naming
+  mechanism selected here rather than rivalling it (D-329). **A SELECTION IS NOT AN
+  IMPLEMENTATION:** no line of N-E is written, four conditions ride with it, and
+  `configs/instrument_staged_v0.toml` still does not exist. See the head of §9.
 
-**§9's selection is the architect's and this unit does not make it.** §8 and §9 below
-are carried as the RECORD of what was argued — §8's record now read against a selection
-that exists, §9's against a stop that does not — and U4-Z's ADR lines are written on
-that footing.
+**NEITHER SELECTION WAS THE CARVE'S TO MAKE, AND THE CARVE MADE NEITHER.** §8 and §9
+below are carried as the RECORD of what was argued, and each is now read against a
+selection that exists — **S-M** for §8 (D-323) and **N-E** for §9's axis A (D-329).
+U4-Z's ADR lines are written on that footing. **What no selection covers, and what
+U4-Z therefore still carries as OPEN:** the DIFFERENTIAL GATE's seam (D-323 records it
+as a separate named decision it does not make), the four conditions riding with N-E,
+and every part of IMPL for either.
 
 **WHAT IS NOT A VERBATIM CARVE, u-rev BY u-rev — the change log, RE-READ at u-rev 6
 rather than appended to.** The text is a verbatim carve apart from cross-reference
 retargets and the following, each stated where it occurs.
 
 - **u-rev 1** — **B4** (the tactical-suite gate's "all three staged tactical configs …
-  not just the two gate ones", false in both halves, corrected against **U3** (u-rev 3)
+  not just the two gate ones", false in both halves, corrected against **U3** (u-rev 4)
   §10's config table) and **MINOR 15** (§8.2 carried a paragraph spliced in twice
   mid-sentence; the duplicate is removed and the sentence closes).
 - **u-rev 2** — **B3**, repaired by shape 2 under **D-316**: the gate letters are
@@ -71,6 +85,18 @@ retargets and the following, each stated where it occurs.
   finding in the REVIEW STATUS block below and marked again at each site; **the M3
   SELECTION fold** (S-M, **D-323**, with D-321's mark and D-322's corrected figure);
   and **the M4 round-3 STOP fold** (**D-324**).
+- **u-rev 7** — **the repair of `docs/experiments/wp15b_U4_REVIEW_urev6.md`** (1
+  BLOCKING, 2 MAJOR, 4 MINOR), finding by finding in the REVIEW STATUS block below;
+  **the M4 AXIS-A SELECTION fold** (**N-E**, **D-329**, with **D-330**'s amendment to
+  D-328 recorded where it bears); the fold of **D-320** (B3's residual: breach
+  recorded, retro-matrix WAIVED, debt paid by disclosure, flip clause carried) and of
+  **D-325** (D-316's false diagnosis corrected in the log at `81180b8`). **D-320 landed
+  at `0af32fb`, in the same commit as the D-321 u-rev 6 folds, and u-rev 6 missed it**;
+  D-325 landed after u-rev 6. Also folded: the closure of the two
+  shipped-instrument defects at `b067d47` and `a102c6a` with the REVIEW-impl PASS at
+  `84ff8d7`. **U4-Z was RE-DERIVED IN FULL against the ADR log rather than patched at
+  the sentences the review named**, because it is the section that has now twice
+  shipped a claim falsified by a line landed in a commit this unit folds.
 
 **The sentence this block replaces named three repairs and omitted the u-rev 4 and
 u-rev 5 folds entirely — the two largest non-verbatim additions in the unit.** That is
@@ -86,33 +112,57 @@ document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
 
-**REVIEW STATUS — u-rev 5 WAS REVIEWED AND FAILED; u-rev 6 IS THE REPAIR.**
-`docs/experiments/wp15b_U4_REVIEW.md`, REVIEW-design, fresh context, dispatched
-against the named revision **`35aab95`** (which was HEAD, tree clean, when it ran) —
-**VERDICT FAIL**, **3 BLOCKING, 3 MAJOR, 5 MINOR**. The reviewer's own summary of the
-failure class is the one this unit keeps failing on: *"a change landed in one place
-with the claims resting on it left un-re-read elsewhere."* **THIS u-rev — u-rev 6 —
-HAS NOT BEEN REVIEWED**, and u-rev 5's review does not transfer to it: an amendment
-reopens the review, however small the diff (D-311, and CLAUDE.md's own words). u-rev 6
-also folds two matrix outcomes that landed AFTER that report was written — M3's
-SELECTION (D-323) and M4's third STOP (D-324) — so it is a larger diff than the report
-alone would produce.
+**REVIEW STATUS — u-rev 6 WAS REVIEWED AND FAILED; u-rev 7 IS THE REPAIR.**
+`docs/experiments/wp15b_U4_REVIEW_urev6.md`, REVIEW-design, fresh context, dispatched
+against the named revision **`7358a07`** (which was HEAD, tree clean, when it ran) —
+**VERDICT FAIL**, **1 BLOCKING, 2 MAJOR, 4 MINOR**. **THIS u-rev — u-rev 7 — HAS NOT
+BEEN REVIEWED**, and u-rev 6's review does not transfer to it: an amendment reopens
+the review, however small the diff (D-311, and CLAUDE.md's own words). u-rev 7 also
+folds M4's AXIS-A SELECTION (D-329), which landed after that report was written, so
+it is a larger diff than the report alone would produce.
+
+**THE FAILURE CLASS THE u-rev 6 REVIEWER NAMED IS THE SAME ONE u-rev 5's DID**, one
+level in: u-rev 6's head claimed the fold-in was *"re-run across the whole unit"* and
+then enumerated the sites re-read; U4-Z's B3 section was not in the enumeration, and
+**D-320 — a landed line that disposes of exactly the residual U4-Z was still calling
+the architect's open choice — went unread even though it landed in the same commit as
+the D-321 u-rev 6 folds.** u-rev 7's answer is not a patch at the two sentences the
+report names: **U4-Z is re-derived in full against `docs/decisions.md` as it now
+stands**, which is how D-325 (landed after u-rev 6, correcting D-316's diagnosis in
+the log) was caught in the same pass.
+
+| Finding, `wp15b_U4_REVIEW_urev6.md` | Disposition at u-rev 7 |
+|---|---|
+| **BLOCKING 1** — D-320 has landed and closes B3's residual; U4-Z's residual paragraph and the OPEN list both describe the pre-D-320 state, and D-320 is named nowhere | **REPAIRED BY RE-DERIVATION, NOT BY PATCH.** U4-Z was re-read claim by claim against the ADR log. D-320 is now carried at both sites the report names and at the OPEN list: the breach is acknowledged, **the retro-matrix is WAIVED on its two stated grounds** (proportionality; and the independent verification the fresh-context REVIEW-design already supplied), the debt is recorded as **PAID by disclosure**, and **D-320's flip clause — a GATE-NAMING DEFECT surfacing — is carried in this unit, which is where such a defect would surface.** The re-derivation also caught **D-325**, which the report did not raise: it corrects D-316's false diagnosis in the log, so U4-Z's "carried to the architect" residual is DISCHARGED and is restated as closed |
+| **MAJOR 2** — the record stamp at the head of §8 says everything to the end of §8.7 is record and "none of it is the state now", which is false of four blocks inside the span | **REPAIRED — THE STAMP IS SCOPED IN BOTH DIRECTIONS.** It now lists what IS record (the u-rev 1 stub and its five-row table, §8.1, §8.2's S-E body prose, the prose carried into §8.3 and §8.4) and what IS NOT (§8.2's `FOLDED AT u-rev 6` block, §8.3's four-gate table, §8.3's live **U3** §10 sentence, §8.4's `RE-READ AT u-rev 6` block and its u-rev 6 ledger marks, §8.7's wiring sentence and its fold). The prior stamp was widened to answer u-rev 5's BLOCKING 2, which found it too NARROW, and over-reached in the other direction |
+| **MAJOR 3** — U4-Z's u-rev 2 SELECTION block still asserts "S-E **is** the differential gate" in present tense while its two siblings were retargeted at u-rev 6 | **REPAIRED.** The SELECTION block — which is carve prose recorded AFTER the comparison, not the selected-from text — now states that it records the u-rev 2 EXECUTION and that **the differential gate's instrument since D-323 is S-M**. **NO LIVE SENTENCE IN THIS UNIT IDENTIFIES THE DIFFERENTIAL GATE AS S-E.** The two-shape comparison at the SHAPE 1 / SHAPE 2 cells is left unedited, on the unit's stated discipline, and the report agrees that is right |
+| **MINOR 4** — U4-M item 1 says the amendment is carried "below"; §9.1 amendment 4 is above and carries no note at its own site | **REPAIRED AT BOTH ENDS.** The direction word is corrected to **ABOVE**, and §9.1 amendment 4 now carries a marked pointer at its own site, so a reader meeting it first does not read an unqualified MEASURED 34.5 s attributed to a script that has never existed |
+| **MINOR 5** — §8.3's "this unit states no such number anywhere" is falsified by the record quotation four lines later | **REPAIRED BY BOTH REMEDIES the report offered.** The absolute claim narrows to *"states no such number as a live claim"*, AND the record quotation is replaced by a DESCRIPTION of the deleted clause, so the count is no longer restated one level up |
+| **MINOR 6** — the REVIEW STATUS row for the prior reviewer's "one observation for the architect" describes a state `a0f241b` fixed | **REPAIRED, AND STATED SO IT CANNOT GO STALE AGAIN.** See the row at the foot of the u-rev 5 table below: the observation was discharged at `a0f241b`, and what is recorded now is the STANDING DUTY (a re-measurement is owed to the owner table after every u-rev bump of this unit, including this one) rather than any particular size or u-rev. **This unit still asserts no line count of itself** (rule 9) |
+| **MINOR 7** — the selection SHA is cited two ways and only one of four sites disambiguates | **REPAIRED by one convention applied at all four.** Every abbreviated citation now reads **"S-M SELECTED at `af8082a` (taken at `809b5db`)"**, which matches `matrix_M3_selection.md`'s own header. The same convention is applied to the new M4 axis-A citations: **selected at `7e0a328`, landed at `d56a898`** |
+
+**THE PRIOR ROUND — u-rev 5's review, `docs/experiments/wp15b_U4_REVIEW.md`**,
+REVIEW-design, fresh context, against **`35aab95`** — **VERDICT FAIL**, **3 BLOCKING,
+3 MAJOR, 5 MINOR**; u-rev 6 was its repair. Its reviewer's summary of the failure class
+is the one this unit keeps failing on: *"a change landed in one place with the claims
+resting on it left un-re-read elsewhere."* The dispositions below are u-rev 6's and are
+kept because each names a site.
 
 | Finding, `wp15b_U4_REVIEW.md` | Disposition at u-rev 6 |
 |---|---|
-| **BLOCKING 1** — the head block, U4-A, the change log, §8's stub and §9's closing paragraph still describe the u-rev 1 state; six named sites | **REPAIRED at all six, and the fold-in was then re-run across the whole unit.** The head's two bullets are rewritten to the current state; the change log is re-read u-rev by u-rev instead of appended to; U4-A gains a row for each of the five DECISION-RED-TEAM rounds and for the u-rev 5 review; §8's stub and its "fresh matrix" sentence are STAMPED as the u-rev 1 state and superseded; §9's pre-u-rev-5 closing paragraph is DELETED and replaced by the u-rev 6 fold. Sites beyond the six the report names — §8.2's heading, §8.3's gate table, §8.7's wiring, §11.6, U4-T, U4-M, U4-Z's lead-in, items 4 and 15, the OPEN list and the closing line — were re-read and repaired in the same pass |
+| **BLOCKING 1** — the head block, U4-A, the change log, §8's stub and §9's closing paragraph still describe the u-rev 1 state; six named sites | **REPAIRED at all six**, and the fold-in was re-run at the sites enumerated below. *~~"across the whole unit"~~ — **that claim is WITHDRAWN AS FALSE at u-rev 7.** The enumeration that follows is what actually happened, and **U4-Z's B3 section is not in it**; the u-rev 6 reviewer found D-320 disposing of a residual that section still called the architect's open choice. A claim of completeness beside an enumeration that is not complete is the same defect one level up, and it is deleted rather than argued.* The head's two bullets are rewritten to the current state; the change log is re-read u-rev by u-rev instead of appended to; U4-A gains a row for each of the five DECISION-RED-TEAM rounds and for the u-rev 5 review; §8's stub and its "fresh matrix" sentence are STAMPED as the u-rev 1 state and superseded; §9's pre-u-rev-5 closing paragraph is DELETED and replaced by the u-rev 6 fold. Sites beyond the six the report names — §8.2's heading, §8.3's gate table, §8.7's wiring, §11.6, U4-T, U4-M, U4-Z's lead-in, items 4 and 15, the OPEN list and the closing line — were re-read and repaired in the same pass |
 | **BLOCKING 2** — U4-T registers S-E's two tests and U4-M prices the gate on S-E, with no caveat; the head's disclaimer does not reach them | **REPAIRED, and it is the same edit as the M3 fold.** S-E is superseded by **S-M** (D-323). U4-T's half-one row is restated against S-M with the referent REUSED not rewritten, the DEPENDS-OPEN-THEORY mark and the OPEN seam; U4-T's half-two row (the `visit` `assert!`) is marked **OPEN — not selected and not rejected**, because S-M is a criterion over the emitted set alone. U4-M's cost row is marked UNGROUNDED at its dominant term. §8.3's gate table, §8.7's wiring and §8.2's heading are retargeted with it. **Nothing is silently re-labelled: each site states what changed** |
-| **BLOCKING 3** — the staged-config count restated at four sites, one of them inside the clause naming U3 §10 as the only place it may be stated | **REPAIRED at every one.** The change-log site now cites **U3** (u-rev 3) §10 and states no cardinality; §8.3's B4 clause that stated the count *while* naming elsewhere as the only place it may be stated is DELETED, which the report's own fix shape says the derivation does not need; U4-Z's lead-in is rewritten without its cardinality; item 15 names `tactical_staged_v0.toml` as its own document instead of by ordinal. Two further staged-config cardinalities the scan reaches were removed in passing, at §8.3's derivation and at §8.3's config bullet. **Verified by re-running the reviewer's own line-break-tolerant scan: no live statement of the count survives** |
-| **MAJOR 4** — U4-Z's lead-in blocks item 15 on "B3's unresolved wiring", which U4-Z records as CLOSED ninety lines above | **REPAIRED.** The false reason is DELETED, not argued; so is the stale "M3's fresh matrix". Item 4 is no longer blocked on M3 (selected) but on the SEAM; item 15 stays blocked on **D-324's** ground. **The reviewer's residual observation — that item 15's subject has no evident dependency on the snapshot's seam — is UNRECONCILED and is recorded in the OPEN list for the architect**, because this unit may not overrule a landed ADR line and may not hide the disagreement either |
+| **BLOCKING 3** — the staged-config count restated at four sites, one of them inside the clause naming U3 §10 as the only place it may be stated | **REPAIRED at every one.** The change-log site now cites **U3** (u-rev 4) §10 and states no cardinality; §8.3's B4 clause that stated the count *while* naming elsewhere as the only place it may be stated is DELETED, which the report's own fix shape says the derivation does not need; U4-Z's lead-in is rewritten without its cardinality; item 15 names `tactical_staged_v0.toml` as its own document instead of by ordinal. Two further staged-config cardinalities the scan reaches were removed in passing, at §8.3's derivation and at §8.3's config bullet. **Verified by re-running the reviewer's own line-break-tolerant scan: no live statement of the count survives** |
+| **MAJOR 4** — U4-Z's lead-in blocks item 15 on "B3's unresolved wiring", which U4-Z records as CLOSED ninety lines above | **REPAIRED.** The false reason is DELETED, not argued; so is the stale "M3's fresh matrix". Item 4 is no longer blocked on M3 (selected) but on the SEAM; item 15 stays blocked on **D-324's** ground. *At u-rev 7 item 15's ground is RESTATED, not lifted: D-324's reason was that no seam was selected, and axis A now selects **N-E** (D-329), so what blocks it is that the seam is **SELECTED AND NOT BUILT** plus the missing `configs/instrument_staged_v0.toml`. Item 4's seam is a different decision and no selection has touched it.* **The reviewer's residual observation — that item 15's subject has no evident dependency on the snapshot's seam — is UNRECONCILED and is recorded in the OPEN list for the architect**, because this unit may not overrule a landed ADR line and may not hide the disagreement either |
 | **MAJOR 5** — §8.4's M3 row declares its witness BUILT and names an abstract doc-comment shape, not a position | **REPAIRED.** The cell's "BUILT" is **WITHDRAWN AS FALSE**; the shape is restated as the REQUIRED PROPERTY of a witness; the row states that a position a legal game reaches is OWED, and it is named in the OPEN list rather than left inside a cell that says BUILT |
-| **MAJOR 6** — U4-M item 1 registers the snapshot under "the amended script", which does not exist at HEAD or at any commit | **REPAIRED.** Item 1 now names **`tools/baseline_snapshot.sh` at `f317385`** — the pre-`--config` script, the only one that exists — as the BEFORE instrument, states that the AFTER is blocked twice over (no selected seam, D-324; and `configs/instrument_staged_v0.toml` does not exist, with the `ls` output pasted), and records that §9.1 amendment 4's MEASURED 34.5 s attributes a real wall time to an instrument that does not exist |
+| **MAJOR 6** — U4-M item 1 registers the snapshot under "the amended script", which does not exist at HEAD or at any commit | **REPAIRED.** Item 1 now names **`tools/baseline_snapshot.sh` at `f317385`** — the pre-`--config` script, the only one that exists — as the BEFORE instrument, states that the AFTER is blocked twice over (no selected seam, D-324; and `configs/instrument_staged_v0.toml` does not exist, with the `ls` output pasted), and records that §9.1 amendment 4's MEASURED 34.5 s attributes a real wall time to an instrument that does not exist. *At u-rev 7 the first blocker is restated: the seam is **SELECTED (N-E, D-329) AND NOT BUILT**. The second is unchanged and re-measured. And the §9.1 note now sits at the amendment's own site too — **MINOR 4** of the u-rev 6 review* |
 | **MINOR 7** — the stubbed matrix's column header is a live letter-address in the slot a future author copies | **REPAIRED** — the column reads "the differential gate's instrument", with the retirement noted |
-| **MINOR 8** — the u-rev 2 correction's diagnosis is false, and the same false diagnosis is in the landed D-316 | **REPAIRED IN THIS UNIT ONLY.** The paragraph withdraws the diagnosis, states what the cell actually counted, and keeps the COUNT SIX. **`docs/decisions.md` is append-only and is not this unit's to edit: the D-316 residual is carried to the architect and is in the OPEN list** |
+| **MINOR 8** — the u-rev 2 correction's diagnosis is false, and the same false diagnosis is in the landed D-316 | **REPAIRED IN THIS UNIT ONLY.** The paragraph withdraws the diagnosis, states what the cell actually counted, and keeps the COUNT SIX. **`docs/decisions.md` is append-only and is not this unit's to edit: the D-316 residual is carried to the architect and is in the OPEN list**. *At u-rev 7 that residual is CLOSED: `D-325` landed at `81180b8` and corrects the log by a new line, which is the remedy this row asked for* |
 | **MINOR 9** — "reinstate revision 1's four-part bar **verbatim**" is a paraphrase, at two sites | **REPAIRED at one site, RECORDED at the other.** §8.7's copy is corrected in place because it is carve prose. U4-Z's copy is inside the two-shape comparison the architect selected from, which this unit's own discipline leaves UNEDITED — so the correction is recorded immediately after it, beside the cost-cell correction, on that same discipline |
 | **MINOR 10** — §9's fold (ii) puts D-316's residual into a list about a question D-316 is not about | **REPAIRED** — the conjunct is DELETED. The stop stands on the two conjuncts that are the red team's |
 | **MINOR 11** — MAJOR 8's residual attributes the whole remaining gap to "the search is not built", but M6 owes a second construction independent of that | **REPAIRED** — the residual now has two parts, and part (ii) is the PARENT position from which M6's pinned witness is reached as a non-PV descendant at a null window, which is not gated on `staged.rs` existing |
 | revision-7 review **MAJOR 12** (the unmarked `23.2`) and **MAJOR 9** (rule 5 / D-263) | **NOT REPAIRED, and not findings here.** The u-rev 5 reviewer verified both absent from this unit — `grep -n "23\\.2"` returns nothing, and the only rule-5 mention is game rule 5 at §8.4's M6 row — and recorded MAJOR 9's non-discharge as an IMPL gate, not a design defect |
-| the reviewer's **"one observation for the architect"** — `section_owner_table.md` §11 records U4 at a stale size and u-rev | **NOT THIS UNIT'S TO FIX.** The owner table is another document; it is named here so the observation is not lost. This unit asserts no line count of itself (rule 9) |
+| the reviewer's **"one observation for the architect"** — `section_owner_table.md` §11 recorded U4 at a stale size and u-rev | **DISCHARGED AT `a0f241b`, AND IT RE-OPENS WITH EVERY BUMP OF THIS UNIT — including this one.** The owner table re-measured its rows there and its U4 row was current for u-rev 6. u-rev 7 supersedes that measurement, so a re-measurement is owed to the owner table again. **What is recorded here is that STANDING DUTY, not a size and not a u-rev**, because a number stated here would be stale at the next bump — which is how the row this replaces went stale. The owner table is another document and this unit does not edit it, and **this unit asserts no line count of itself** (rule 9) |
 
 Theory citations are calculus IDs from `docs/research/threat_calculus_v1.md`
 (D-266). This unit restates no theory; where it appears to, the calculus wins and
@@ -129,18 +179,26 @@ the disagreement is an ADR line.
 | REVIEW-design | revisions 2–6 | all FAIL. The tactical-suite gate's derivation (then §8.3(a)) was redesigned **three times** (rows 17, 32 and 27 of the superseded §0), and §8.4's ledger was rebuilt once |
 | REVIEW-design | revision 7, `6feb40a` | **FAIL** — 7 BLOCKING, 7 MAJOR, 9 MINOR. **B1, B3, B4 and MINOR 15 are this unit's**, and MAJOR 8 (M4's and M6's witnesses are not positions a legal game reaches) is this unit's and is OPEN |
 | DECISION-RED-TEAM, matrix M3, **round 1** | matrix revision 1, `f8e73e4` | **EVERY STATED OPTION FELL** (`docs/experiments/matrix_M3_REDTEAM.md`; **D-317**). Nine options; the decisive attack is the convention tension that makes an independent referent RED on a correct engine. Four missing rows named, two of them immune to the attack that killed S-E |
-| DECISION-RED-TEAM, matrix M3, **round 2** | matrix revision 2, `d48824f` | **ATTACKED at `809b5db`; all eight facts reproduced; the recommendation S-K DIED on measurement.** **S-M SELECTED at `af8082a`** (`docs/experiments/matrix_M3_selection.md`; **D-323**), marked DEPENDS-OPEN-THEORY (D-321), with five registered conditions and an owed S-N flip trigger |
+| DECISION-RED-TEAM, matrix M3, **round 2** | matrix revision 2, `d48824f` | **ATTACKED at `809b5db`; all eight facts reproduced; the recommendation S-K DIED on measurement.** **S-M SELECTED at `af8082a` (taken at `809b5db`)** (`docs/experiments/matrix_M3_selection.md`, whose own header reads *"Selected at `809b5db`"* — the revision carrying the attack; the record file exists only from `af8082a`; **D-323**), marked DEPENDS-OPEN-THEORY (D-321), with five registered conditions and an owed S-N flip trigger |
 | DECISION-RED-TEAM, matrix M4, **round 1** | matrix revision 1, `77f7397` | the recommended option survives on repaired grounds; **no selection** (D-318) |
 | DECISION-RED-TEAM, matrix M4, **round 2** | matrix revision 2, `cb16f7c` | **STOPPED.** Options survive; revision 2's reason for existing is false, one ground argues equally for five options, and the field omits the closed-enum selector that dominates the recommendation (D-318) |
 | DECISION-RED-TEAM, matrix M4, **round 3** | matrix revision 3, `9ce863f` | **STOPPED — and this is the RECORDED TIE, not the every-option-fell stop** (`docs/experiments/matrix_M4_stop_round3.md`; **D-324**). Cause: the field has two orthogonal axes and has been scored as one. N-K's flip clause fires on axis B; N-Q is the missing row on axis A |
-| REVIEW-design, **this unit** | u-rev 5, `35aab95` | **FAIL** — 3 BLOCKING, 3 MAJOR, 5 MINOR (`docs/experiments/wp15b_U4_REVIEW.md`). BLOCKING 1 is D-305's class at this unit's most-read surfaces: the u-rev 4 and u-rev 5 folds landed without re-reading the head, this table, the change log, §8's stub, §9's closing paragraph, U4-T or U4-M. **Every finding is dispositioned in the head's REVIEW STATUS block; u-rev 6 is the answer to it** |
+| DECISION-RED-TEAM, matrix M4, **round 4 — AXIS A ALONE** | `docs/experiments/matrix_M4_axisA_round4.md`, `7866bcf` | **THE MATRIX'S OWN RECOMMENDATION (N-Q) IS KILLED** (`docs/experiments/matrix_M4_axisA_REDTEAM.md`, at `7e0a328`; thirteen findings, nine of ten facts reproducing). The round was authored under the D-328 split — its author wrote no MEASURED cell — and the attack still broke FACT 5, its own headline, which pasted the wrong field of a three-field record line. **That is D-328's flip clause firing on the first round it governed (D-330)**, and the amended rule is three-part: author writes no cell, a stakeless measurer runs every command, **and the attacker RE-RUNS the inline evidence rather than reading it** |
+| ARCHITECT-DELEGATED SELECTION, matrix M4, **axis A** | the field at `7866bcf` read against the attack at `7e0a328` | **N-E SELECTED at `7e0a328` (landed at `d56a898`)** (`docs/experiments/matrix_M4_axisA_selection.md`; **D-329**) — a required `--config PATH`, no default, with a NEW whole-path guard. **N-M eliminated on registered ground before the ladder ran** (`wp15b_sprt_prereg.md` §7A.2 registers `--config configs/gate_v0.toml` and N-M refuses it at exit 1); **rung (a) SILENT across the field**; selection taken at **rung (b)**. Four conditions ride with it, and its strongest surviving attack is **ASSEMBLED, NOT QUOTED** — a residual D-329 records, because no fresh context has been asked to break N-E |
+| REVIEW-design, **this unit** | u-rev 5, `35aab95` | **FAIL** — 3 BLOCKING, 3 MAJOR, 5 MINOR (`docs/experiments/wp15b_U4_REVIEW.md`). BLOCKING 1 is D-305's class at this unit's most-read surfaces: the u-rev 4 and u-rev 5 folds landed without re-reading the head, this table, the change log, §8's stub, §9's closing paragraph, U4-T or U4-M. **Every finding is dispositioned in the head's REVIEW STATUS block; u-rev 6 was the answer to it** |
+| REVIEW-design, **this unit** | u-rev 6, `7358a07` | **FAIL** — 1 BLOCKING, 2 MAJOR, 4 MINOR (`docs/experiments/wp15b_U4_REVIEW_urev6.md`). Both folds passed; the failure is the SAME class at the one section the u-rev 6 fold-in pass did not enumerate — **U4-Z**, which was open in the editor for two other findings and was not re-read against the ADR log it was citing. **u-rev 7 is the answer, and it re-derives U4-Z in full rather than patching the sentences the report names** |
 
 **What this unit owes that no round has given it:** a REVIEW-design of THIS text at
 THIS u-rev; **the differential gate's SEAM decision**, which D-323 records as separate
-and OPEN and which D-115 makes a decision rather than a detail; **an architect
-selection on M4's recorded tie, or a fourth M4 round scoped to axis A alone with N-Q
-authored into it**; a POSITION for §8.4's M3 witness and a PARENT position for M6's;
-and a SHELL_CHECKLIST review of the `tools/` change §8.7 and §9 each carry.
+and OPEN and which D-115 makes a decision rather than a detail — *this is M3's seam and
+is NOT the snapshot's config seam that D-329 selects*; **a fresh-context attack on N-E
+in its own right**, which D-329 records as its own residual because the red team was
+dispatched to break N-Q and was never asked to break the row it recommends; a POSITION
+for §8.4's M3 witness and a PARENT position for M6's; and a SHELL_CHECKLIST review of
+the `tools/` change §8.7 and §9 each carry, now with **four conditions riding on §9's**
+(D-329). **What this unit no longer owes:** an architect selection on M4's recorded
+tie, or a fourth M4 round scoped to axis A with N-Q authored into it — the round ran
+at `7866bcf`, was attacked at `7e0a328`, and the selection landed at `d56a898`.
 
 ---
 
@@ -198,7 +256,7 @@ and a SHELL_CHECKLIST review of the `tools/` change §8.7 and §9 each carry.
 > 22 of 174 FILTERED nodes, 12.6 %** — the figure **D-322** lands, and **NOT** D-321's
 > original 84 of 300 / 28.0 %, which was taken over BOTH SIDES at a fixed
 > `StonesLeft::Two` and `HitBudget::Two` instead of over the mover at the phase-derived
-> budget **U2** (u-rev 1) §5.3 specifies. Command and complete output at the foot of
+> budget **U2** (u-rev 3) §5.3 specifies. Command and complete output at the foot of
 > this block.
 >
 > **THE FIVE REGISTERED CONDITIONS BIND. Each is a red-team finding that would otherwise
@@ -231,11 +289,15 @@ and a SHELL_CHECKLIST review of the `tools/` change §8.7 and §9 each carry.
 >    D-322's and D-323's figures is committed in full inside the selection record, which
 >    is what gives it one. Red-team F7 found it had existed only as prose.
 >
-> **WHY THIS SELECTED WHERE M4 STOPPED, on a field its own red team also found
+> **WHY THIS SELECTED WHERE M4 HAD NOT YET, on a field its own red team also found
 > incomplete: DOMINANCE.** In M4 the missing closed-enum row satisfied the
 > recommendation's own grounds identically while owing fewer guards — it dominated the
 > recommended option outright. Here S-N dominates only the row that is **already dead**
-> (S-K) and does not dominate the survivor.
+> (S-K) and does not dominate the survivor. *(Written at u-rev 6, when M4 had stopped
+> three times. **M4's axis A has since SELECTED N-E at `7e0a328`, D-329** — on a fourth
+> round whose own recommendation its red team killed, which is the same shape this
+> paragraph describes for M3. The contrast the paragraph draws is between the ROUNDS,
+> not between the matrices' final states.)*
 >
 > **WHAT D-323 DOES NOT DECIDE, and this unit may not write as though it did.**
 > **(a)** The **SEAM** by which a test observes the emitted set: every row needed one,
@@ -278,13 +340,38 @@ and a SHELL_CHECKLIST review of the `tools/` change §8.7 and §9 each carry.
 > session's, so it is a REPLICATION and not a second instrument** — stated so it is not
 > mistaken for one, which is condition 2's own lesson one level up.
 
-> ## THE RECORD OF THE EARLIER STATES — kept, STAMPED, and SUPERSEDED at u-rev 6
+> ## THE RECORD OF THE EARLIER STATES — kept, STAMPED at u-rev 6, and RE-SCOPED at u-rev 7
 >
-> **EVERYTHING FROM HERE TO THE END OF §8.7 IS RECORD.** Each part was true at the
-> revision that wrote it and none of it is the state now: the matrix was authored
-> (u-rev 4), every option fell (D-317), a second field of thirteen rows was authored and
-> attacked, and **S-M IS SELECTED** (D-323 — the block above). Read the stub, the
-> five-row table and every "S-E" below as the state AT THE REVISION THAT WROTE THEM.
+> **THE STAMP IS SCOPED, IN BOTH DIRECTIONS, BECAUSE THE BLANKET ONE IT REPLACES WAS
+> FALSE OF BLOCKS THE SAME u-rev WROTE.** Until u-rev 7 this read *"EVERYTHING FROM
+> HERE TO THE END OF §8.7 IS RECORD … none of it is the state now"*, and that was
+> **MAJOR 2** of `wp15b_U4_REVIEW_urev6.md`: the span it governed contains the u-rev 6
+> folds and the carve-authored blocks this unit itself names, three paragraphs below,
+> as RETARGETED. The prior round had found the older disclaimer too NARROW (it did not
+> reach U4-T, U4-M or the U4-Z lead-in); widening it to a blanket over-reached the
+> other way and told IMPL that the current specification of three of the four gates was
+> superseded record.
+>
+> **WHAT IS RECORD BELOW — true at the revision that wrote it, superseded now, and to
+> be read as the state AT THAT REVISION:** the u-rev 1 **SELECTION OPEN** heading, the
+> stub and its five-row table; **§8.1**; **§8.2's BODY PROSE** from *"The stage under
+> doubt, named"* to the end of §8.2 — S-E's criterion, its two halves, its seam
+> respecification and the reduced S-C; the prose **§8.3** and **§8.4** carry from the
+> superseded document; and every bare "S-E" inside all of that. The path since u-rev 1:
+> the matrix was authored (u-rev 4), every option fell (D-317), a second field of
+> thirteen rows was authored and attacked, and **S-M IS SELECTED** (D-323 — the block
+> above).
+>
+> **WHAT IS NOT RECORD — these are the state now, and IMPL reads them as such:**
+> **(i)** §8.2's opening `FOLDED AT u-rev 6` block, which states the selected
+> instrument, the mark and the flip clause; **(ii)** §8.3's four-gate table, which is
+> carve-authored at u-rev 2 under D-316 and retargeted at u-rev 6 — its differential-gate
+> row states what that gate's instrument **IS**; **(iii)** §8.3's live sentence naming
+> **U3** §10 as the one place the staged-config count is stated; **(iv)** §8.4's
+> `RE-READ AT u-rev 6` block and the u-rev 6 marks inside the ledger's M3, M4 and M6
+> cells; **(v)** §8.7's four-name wiring sentence and the `FOLDED AT u-rev 6` paragraph
+> beneath it, **which is the live specification `tools/staged_soundness_check.sh` is
+> taken from**. Each of the five says at its own site which it is.
 >
 > ### u-rev 1 — SELECTION OPEN — M3 HAS NO MATRIX, AND S-E IS NOT SELECTED HERE
 >
@@ -584,15 +671,19 @@ gate. Nothing below is addressed by letter.
   configs disable the quiet cut** (`quiet_top_k` above the whole pool):
   `tactical_staged_v0.toml` for the fifteen `instrument_v0` cases and
   `gate_staged_v0.toml` for the five gate cases. The remaining staged documents —
-  the SPRT seat and the play config — keep the cut. **U3** (u-rev 3) §10 is the one
-  place the number of staged config documents is stated, and this unit states no such
-  number anywhere. *The clause that stood here until u-rev 6 — "which is why there are
-  four and not three (**U3** §10, the one place that count is stated)" — stated the
-  count inside the very clause naming elsewhere as the only place it may be stated.
-  That is **BLOCKING 3** of `wp15b_U4_REVIEW.md`, and it is B5's class reproduced
-  inside B4's own repair for the second consecutive revision of this sentence. It is
-  deleted: the sentence above already names both tactical staged documents and what
-  each covers, which is all the derivation below needs.* *Revision 7
+  the SPRT seat and the play config — keep the cut. **U3** (u-rev 4) §10 is the one
+  place the number of staged config documents is stated, and **this unit states no such
+  number as a live claim**. *The clause that stood here until u-rev 6 gave that count as
+  a cardinal and, in the same breath, cited **U3** §10 as the only place the count may
+  be stated — the count stated inside the very clause naming elsewhere as its only home.
+  That is **BLOCKING 3** of `wp15b_U4_REVIEW.md`, and it is B5's class reproduced inside
+  B4's own repair for the second consecutive revision of this sentence. It is deleted:
+  the sentence above already names both tactical staged documents and what each covers,
+  which is all the derivation below needs. **The clause was QUOTED here until u-rev 7
+  and is now DESCRIBED instead** — quoting it restated the deleted count four lines
+  after the sentence saying the unit states it nowhere, which is **MINOR 5** of
+  `wp15b_U4_REVIEW_urev6.md`: the same defect one level up, in the third consecutive
+  revision of this one sentence.* *Revision 7
   repaired §10 and §15 item 15 and left this sentence saying "all three staged
   tactical configs … not just the two gate ones", which was false in both halves
   and had no referent for "the two gate ones" — B4 of the revision-7 review, the
@@ -662,7 +753,7 @@ gate. Nothing below is addressed by letter.
   is 15 cases at `configs/instrument_v0.toml` and **5 at `configs/gate_v0.toml`**
   (radius 1, the `depth_turns 3` cases, because gate_v0's table measures radius 2
   at depth 4 as > 100 s, and depth 3 at 9.7 s). Earlier revisions shipped fewer staged
-  documents than this derivation needs; **U3** (u-rev 3) §10 states the number that
+  documents than this derivation needs; **U3** (u-rev 4) §10 states the number that
   ships and is the only place that states it (B5).
 - **THE COLONY FAMILY, ≥ 6 built cases** *(the superseded `(c)`)*, distant-cluster attack and defence,
   where `LAW-DECOMP`'s star-disjointness puts the right answer in a cluster the
@@ -771,7 +862,142 @@ what D-316's naming was for.
 
 ---
 
-## 9. MATRIX M4 — the snapshot's config seam — **SELECTION OPEN**
+## 9. MATRIX M4 — the snapshot's config seam — **AXIS A SELECTED AT u-rev 7: N-E (D-329)**
+
+> ## **SELECTED — N-E, AND IT IS NOT THE ROW THE MATRIX RECOMMENDED (D-329)**
+>
+> **THE OPTION IS N-E: a REQUIRED `--config PATH`, NO DEFAULT, with a NEW WHOLE-PATH
+> GUARD.** Field: `docs/experiments/matrix_M4_axisA_round4.md` — round 4, **scoped to
+> axis A alone with N-Q authored into it**, which is the disposition D-324's own stop
+> clause authorised; three rows, {N-E, N-M, N-Q}; authored `7866bcf` by the session
+> dispatching WP-1.5b design closure, **under D-328 (R11): its author wrote NO MEASURED
+> CELL and every one was produced by a separate measurement agent with no stake.**
+> Attack: `docs/experiments/matrix_M4_axisA_REDTEAM.md`, fresh context, at `7e0a328` —
+> thirteen findings, **nine of ten facts reproducing**. Selection record, with the
+> ladder run in full: `docs/experiments/matrix_M4_axisA_selection.md` (**selected at
+> `7e0a328`**, the revision carrying the attack, **landed at `d56a898`**). **ADR line:
+> D-329.**
+>
+> **AXIS B IS NOT REOPENED.** D-324 records that axis B's flip clause has already FIRED
+> toward **N-K**, measured at 8 added lines, 0 removed, ~2× wall (2 × 33 s), and D-329
+> states that **N-K COMPOSES with the naming mechanism selected here rather than
+> rivalling it**. This round decided axis A and nothing else.
+>
+> **THE MATRIX RECOMMENDED N-Q AND ITS OWN RED TEAM KILLED THAT RECOMMENDATION.** The
+> ground round 4 selected on — hard rule 1's *"one schema home"* — is a rule about
+> **DEFAULTS**, and **MEASURED, none of the three rows has one**: all three refuse an
+> absent `--config` by name at exit 1. The round-3 red team had already ruled that
+> clause *"a WOUND, not a KILL"* for exactly that reason, and `configs/` is not one
+> schema — it holds four engine configs, six arena match configs and a weights table,
+> with the engine exiting 2 on two of three sampled. **So RUNG (a) OF THE LADDER IS
+> SILENT ACROSS THE WHOLE FIELD**, and this unit does not repeat the reading that made
+> it look decisive.
+>
+> **N-M IS ELIMINATED BEFORE THE LADDER RUNS, AND NOT BY IT.** Red-team F10, MEASURED:
+> `docs/experiments/wp15b_sprt_prereg.md` §7A.2 registers this script as DOUBT 2's
+> instrument and names the invocation `tools/baseline_snapshot.sh --config
+> configs/gate_v0.toml`, and §10 registers that document's flip *"if
+> `tools/baseline_snapshot.sh` lands `--config` in a shape the §7A.2 criterion cannot
+> be taken under."* Driven against all three rows, N-E and N-Q take that invocation at
+> exit 0 and **N-M refuses it at exit 1** — ``--config takes `instrument` or `staged`,
+> got `configs/gate_v0.toml` ``. **That is an elimination on REGISTERED GROUND, not a
+> tiebreak preference**, and the matrix never states it.
+>
+> **THE SELECTION IS TAKEN AT RUNG (b) — fewest MEASURED added lines — and it is not
+> close.** N-E 22 added / **7 CODE** against N-Q's 32 / 12; both owe the same **4**
+> whole-path guard lines; N-Q owes **5** containment lines on top; the item-10 driving
+> tests owed are **2 classes** for N-E against 5 classes plus an unpinned normalisation
+> for N-Q. Every cell was produced by a stakeless measurer under D-328 and
+> independently re-derived by the attacker, which reproduced all twelve cells of the
+> line-count table exactly. **Rung (c), recorded-arbitrary, is not reached.**
+>
+> **AND THREE MEASURED FINDINGS MAKE RUNG (b)'s ANSWER RIGHT ON SUBSTANCE RATHER THAN
+> MERELY CHEAP.** *(i)* **N-Q's own selling property is FALSE (F4):** `.gitignore:7` is
+> `*.bin` under rule 8, so `configs/ghost_v0.bin` is invisible to `git status
+> --porcelain`, passes containment, and reaches the invariant block at **exit 0** beside
+> a revision at which no commit contains it — containment bounds by DIRECTORY, never by
+> COMMIT. *(ii)* **N-Q is the only row that ADDS a defect (F5):** `ROOT` is bash's
+> logical `pwd` while `realpath -m` is physical, so through a symlinked checkout N-Q
+> refuses the repository's own `configs/instrument_v0.toml` on an invocation N-E
+> completes — a VOID reported as a FAIL, `SHELL_CHECKLIST` items 8 and 12. *(iii)*
+> **N-Q's extra lines are required by no rule in this tree (F13):** item 11's scope is
+> *"any binding consumed by `rm`, `mv`, or a write"* and `$CONFIG` is a READ, so item 9
+> governs it and is discharged by the whole-path guard **both** rows owe.
+>
+> **THE FOUR CONDITIONS THAT RIDE WITH THIS SELECTION BIND, and none of them was costed
+> for any row:**
+>
+> 1. **THE `config` LINE'S DIGEST IS `$3`, NOT `$4`.** That line is `config <path>
+>    <sha>` — three fields. The four-token reasoning belongs to the differently shaped
+>    `corpus` line. Any future guard, test or reader of the `config` line uses `$3` and
+>    re-derives the index for the line it is actually reading.
+> 2. **N-E's WHOLE-PATH GUARD MAY NOT BE SPELLED AS A REUSE OF THE LINE-289 BASENAME
+>    LOOP.** MEASURED twice — by the measurer and again by the attacker — that spelling
+>    leaves `configs/spaced dir/instrument_v0.toml` reaching the record at exit 0.
+> 3. **AN ITEM-10 DRIVING TEST IS OWED for both new refusal classes**, in two halves
+>    with a control, per the coverage rule. The precedent is one commit old: `b067d47`
+>    paid 91 test lines for ONE guard arm.
+> 4. **AN ITEM-12 SENTENCE IS OWED** in the usage block saying that a config refusal is
+>    a **FAIL**, this script having declared no void class.
+>
+> **WHAT D-329 SUPERSEDES IN D-324, stated because this unit carried D-324's version:**
+> D-324's remedy *"closes with THREE LINES copying the guard already at
+> `tools/baseline_snapshot.sh:289`"* is **wrong in COUNT — four, measured at
+> `b067d47`** — **and wrong in KIND: the line-289 loop guards a BASENAME while the
+> record writes a WHOLE PATH**, so it is a new guard and not a copy. D-329 also corrects
+> D-324's framing of the missing `configs/instrument_staged_v0.toml` as an N-M cost: it
+> **blocks all three rows equally**.
+>
+> **THE STRONGEST SURVIVING ATTACK AGAINST N-E IS ASSEMBLED, NOT QUOTED, AND THAT IS
+> ITSELF A RECORDED RESIDUAL.** The red team was dispatched to break N-Q and the tied
+> set's interaction with it; it recommends N-E and **was never asked to break N-E**. The
+> selection record assembles the paragraph from the round's own measured findings and
+> records the difference rather than smoothing it:
+>
+> > N-E is selected because it is the cheapest row that adds no defect — not because it
+> > delivers what the record's `config` line exists for. That line is provenance: a
+> > reader re-runs the run from it. N-E bounds the admissible set nowhere, so a record
+> > may name a document outside the repository that no other reader can obtain, and its
+> > provenance rests on caller discipline plus a digest of bytes nobody else holds. The
+> > round measured that the one row which tried to fix this does not fix it either — a
+> > gitignored file inside `configs/` reaches the invariant block at exit 0 — so the
+> > weakness is not resolved by this selection, only left where it was.
+>
+> **RESIDUAL, OPEN AND THE ARCHITECT'S: N-E HAS NOT BEEN ATTACKED BY A FRESH-CONTEXT
+> DECISION-RED-TEAM IN ITS OWN RIGHT.** The matrix law is satisfied for the FIELD — a
+> matrix was authored and attacked before selection — and D-329 claims no more than
+> that. It is in U4-Z's OPEN list.
+>
+> **A SELECTION IS NOT AN IMPLEMENTATION, AND THIS UNIT MAY NOT WRITE AS THOUGH IT
+> WERE.** No line of N-E is written; `tools/baseline_snapshot.sh` still has no
+> `--config` flag; the four conditions above are unpaid; and **`configs/instrument_staged_v0.toml`
+> STILL DOES NOT EXIST** (MEASURED, output pasted at U4-M item 1), which blocks the
+> snapshot's AFTER independently of the seam. **What u-rev 6 recorded as blocked ON THE
+> SEAM is now blocked on the seam's IMPLEMENTATION**, which is a narrower and different
+> statement, and U4-Z carries it that way.
+>
+> **AND ONE PROCESS LINE CAME OUT OF THIS ROUND, recorded because it bears on every
+> number this unit registers: D-330.** D-328's flip clause fired on the very first round
+> it governed. Round 4's own headline FACT 5 pasted *"4th token a reader would take as
+> the digest"* for a line that has three fields; the author wrote no cell and the
+> measurer had no stake, and **both were reading the same mislabelled probe.** What
+> caught it was the third mechanism — **a fresh-context adversary RE-RUNNING the inline
+> evidence rather than reading it (R7)**. D-330 amends D-328 to a three-part rule and
+> records that the split is NECESSARY AND NOT SUFFICIENT. The concrete lesson: **a field
+> index is not portable between record lines of different shapes.**
+
+> ## THE RECORD OF THE EARLIER STATES OF §9 — kept, STAMPED, and SUPERSEDED IN PART AT u-rev 7
+>
+> **WHAT IS RECORD BELOW AND WHAT IS NOT.** RECORD, true at the revision that wrote it:
+> the T1' recovery and its two DIFFs; the recovered matrix and §9.1's five amendments;
+> the u-rev 5 update (D-318); and the u-rev 6 update (D-324) **in everything it says
+> about rounds 1–3** — which stop each was, the two orthogonal axes, N-K's fired flip,
+> the author's-own-defects paragraph, and the two shipped-instrument defects as they
+> stood then. **NOT RECORD, and superseded by the block above:** every sentence below
+> that says nothing is selected on axis A, that no ADR line may cite N-E, that the guard
+> residue closes with three lines, or that item 15 and B2 are blocked because no seam is
+> selected. Each such sentence carries a u-rev 7 mark at its own site; none is deleted,
+> because the ROUNDS are the record and the record is what D-329 was selected from.
 
 > ## THE RECOVERY (T1'), THE DIFF, AND WHY THE SELECTION DOES NOT STAND
 >
@@ -810,6 +1036,10 @@ what D-316's naming was for.
 >
 > ### VERDICT: **DIFFERS. SELECTION OPEN. The carve does not select N-A.**
 >
+> *(u-rev 1's verdict, and it STANDS as to N-A: N-A was never selected and is not what
+> D-329 selects. **"SELECTION OPEN" is superseded at u-rev 7** — axis A selects **N-E**,
+> a required path with no default, which is a different row from N-A's optional one.)*
+>
 > **UPDATE AT u-rev 5 — THE FRESH ROUNDS RAN, TWICE, AND STILL SELECT NOTHING
 > (D-318).** `docs/experiments/matrix_M4_snapshot_config_seam.md` was authored
 > fresh (revision 1, `77f7397`), attacked, re-authored over a ten-option field
@@ -842,10 +1072,17 @@ what D-316's naming was for.
 > stays blocked, and `tools/baseline_snapshot.sh` has no config seam, so the
 > registered above-marker quantity has a BEFORE and no AFTER. *(u-rev 5's list. The
 > u-rev 6 update immediately below EXTENDS it to N-K, N-M, N-L and N-Q, which the
-> third round's field added, and adds a second, independent blocker for the AFTER.)*
+> third round's field added, and adds a second, independent blocker for the AFTER.
+> **SUPERSEDED IN PART AT u-rev 7 as to N-E**: a fourth round was authored and attacked
+> and **D-329 cites N-E as adopted**, so the prohibition survives only for the rows
+> that round did not select. `tools/baseline_snapshot.sh` still has no config seam
+> BUILT, which is why the AFTER is still missing.)*
 >
 > **UPDATE AT u-rev 6 — A THIRD ROUND RAN AND STOPPED AGAIN, NOTHING IS SELECTED
-> (D-324), AND THIS SLOT STAYS `SELECTION OPEN`.** Revision 3 is
+> (D-324), AND THIS SLOT STAYS `SELECTION OPEN`.** *(**SUPERSEDED AT u-rev 7 as to the
+> slot**: the fourth round D-324's own stop clause authorised has since run, and axis A
+> selects **N-E** (D-329, the block at the head of §9). Everything this update states
+> about round 3 itself is RECORD and stands.)* Revision 3 is
 > `docs/experiments/matrix_M4_snapshot_config_seam_rev3.md` (authored `9ce863f` under
 > R9, by a session that authored neither prior revision); its attack is
 > `docs/experiments/matrix_M4_REDTEAM_round3.md`; the stop record, with the tie stated
@@ -903,11 +1140,40 @@ what D-316's naming was for.
 > **ITEM 11** under this project's own name, in a round bound to that checklist that
 > answered no item of it by name.
 >
+> *(**THIS PARAGRAPH IS SUPERSEDED AT u-rev 7 IN THREE PLACES, and each was a MEASURED
+> claim that a later measurement falsified — they are marked rather than deleted,
+> because D-329 was selected against this text.** **(1) The tie is broken.** Round 4
+> ran on axis A alone; **N-M was eliminated on registered ground** — `wp15b_sprt_prereg.md`
+> §7A.2 registers `--config configs/gate_v0.toml` and N-M refuses it at exit 1 — and
+> rung (b) then separated N-E from N-Q on MEASURED added lines. The judgement this
+> paragraph leaves standing was therefore never reached: **N-M did not survive to be
+> judged.** **(2) The "three lines copying the guard at `tools/baseline_snapshot.sh:289`"
+> remedy is SUPERSEDED by D-329, in COUNT and in KIND** — four lines measured at
+> `b067d47`, and the line-289 loop guards a **BASENAME** while the record's `config`
+> line writes a **WHOLE PATH**, so copying it leaves `configs/spaced dir/instrument_v0.toml`
+> reaching the record at exit 0. It is a NEW guard, and N-E and N-Q owe the same four
+> lines of it. **(3) N-Q is no longer "missing", and the two claims made for it here are
+> both MEASURED false by round 4:** it does not dominate N-E on guard surface — both owe
+> the identical whole-path guard — and it is **not `SHELL_CHECKLIST` item 11**, whose
+> scope is a binding consumed by `rm`, `mv` or a write, where `$CONFIG` is a READ
+> governed by item 9 and discharged by the guard both rows owe. N-Q was authored into
+> round 4, recommended by it, and its recommendation was killed by that round's own red
+> team.)*
+>
 > **THIS UNIT SELECTS NOTHING FOR §9 AND MAY NOT WRITE AS THOUGH ANYTHING WERE
 > SELECTED.** The architect either selects on the recorded tie — N-K on axis B plus one
 > of {N-E with three guard lines, N-M, N-Q} on axis A — or orders a fourth round scoped
 > to axis A ALONE with N-Q authored into it. **No ADR line may cite N-A, N-A′, N-E,
 > N-K, N-M, N-L or N-Q as adopted.**
+>
+> *(**SUPERSEDED AT u-rev 7.** The second of the two dispositions this paragraph offered
+> is the one that was taken: **a fourth round scoped to axis A alone, with N-Q authored
+> into it**, at `7866bcf`, attacked at `7e0a328`. **D-329 cites N-E as adopted**, so the
+> prohibition no longer binds for N-E; it still binds for N-A, N-A′, N-M, N-L and N-Q,
+> none of which any ADR line adopts. N-K is not adopted either — D-324 records its flip
+> clause as fired and D-329 records that it COMPOSES with N-E rather than rivalling it,
+> and neither is a selection of N-K. **This unit still selects nothing itself**; it
+> carries what D-329 selected.)*
 >
 > **WHAT STAYS BLOCKED, unchanged from D-318 and now for a third round.**
 > `tools/baseline_snapshot.sh` still has no config seam, so no Staged snapshot can be
@@ -918,6 +1184,19 @@ what D-316's naming was for.
 > fact 6; re-taken at u-rev 6 with the `ls` output pasted at U4-M item 1) **and which
 > no row of any revision produces.**
 >
+> *(**RE-DERIVED AT u-rev 7, and two of these three change while the practical state
+> does not.** **(a) The BLOCKAGE'S GROUND is narrower.** The seam is no longer
+> unselected — it is **SELECTED AND NOT BUILT** (N-E, D-329). `tools/baseline_snapshot.sh`
+> still resolves its config from the literal `CONFIG="configs/instrument_v0.toml"` at
+> `tools/baseline_snapshot.sh:182` and takes no `--config` argument of its own, so no
+> Staged snapshot can still be taken — but what is owed is now IMPL against a named
+> option plus its four conditions, not another matrix round. **(b) B2's reason is gone**: an ADR line for M4
+> exists and it is D-329 — see U4-Z, where B2 is re-derived. **(c) The
+> `configs/instrument_staged_v0.toml` blocker is UNCHANGED and re-MEASURED at u-rev 7**
+> (output at U4-M item 1), and D-329 corrects D-324's framing of it: it is not an N-M
+> cost, it **blocks all three axis-A rows equally**, and no row of round 4 produces it
+> either.)*
+>
 > **TWO SHIPPED-INSTRUMENT DEFECTS the round found in passing, owned by no row and
 > OPEN** — `tools/` findings, not matrix questions: a SPACE in a caller-named
 > `--corpus` path reaches the record unescaped at exit 0 under the COMPLETE kind token,
@@ -925,6 +1204,17 @@ what D-316's naming was for.
 > and `crates/pistol-cli/src/report.rs:151-162` rewrites control characters to `?` in
 > the engine's handshake while the script writes its own copy raw, so one record's two
 > config lines can disagree for a reason that has nothing to do with the config.
+>
+> *(**BOTH ARE CLOSED AT u-rev 7.** The `--corpus` space is fixed at **`b067d47`** —
+> which also swaps `basename` for `${X##*/}`, and which is why round 4's measurements
+> are pinned there — and the control-character canonicalisation at **`a102c6a`**, where
+> the engine now refuses a config path its handshake cannot echo verbatim. A
+> fresh-context **REVIEW-impl covering both as one defect class PASSED at `84ff8d7`**,
+> 0 BLOCKING / 0 MAJOR / **3 MINOR**, on mutation-checked controls — it restored the
+> pre-fix sources and re-ran both tests, then mutated both guards to refuse everything
+> and confirmed each control half kills the mutant. **THE THREE MINORS (F1, F2, F3) ARE
+> OPEN** and were deliberately not repaired in that commit, because an amendment
+> reopens the review that passed; they are in U4-Z's OPEN list.)*
 >
 > **AND THE ROUND RECORDS ITS OWN AUTHOR'S DEFECTS, first-person**, because D-318 had
 > already ruled that the recurrence and not the instance is the finding: fact 4's
@@ -1023,6 +1313,16 @@ D-190/D-194 precedent, and D-204's flip being the operator's to fire.
 pre-`--config` script — is re-taken under the amended one. **MEASURED 34.5 s.**
 Not worth an argument.
 
+> **MARKED AT u-rev 7, AT THIS SITE AND NOT ONLY ELSEWHERE (MINOR 4 of
+> `wp15b_U4_REVIEW_urev6.md`).** The amendment above is RECORD, and its
+> **MEASURED 34.5 s is ATTRIBUTED TO AN INSTRUMENT THAT HAS NEVER EXISTED AT ANY
+> COMMIT**: there is no amended `tools/baseline_snapshot.sh`, and there is none at
+> HEAD. **The seconds are real; the attribution is not.** The BEFORE run was taken
+> under the pre-`--config` script at **`f317385`**, which is the only script that
+> exists. **U4-M item 1 carries the full note**; until u-rev 7 it sat a hundred lines
+> below this text and pointed at it as though it were below, so a reader meeting this
+> amendment first met an unqualified MEASURED figure with nothing against it.
+
 **5. Replicate.** The run is 34.5 s and CLAUDE.md says a cheap doubt is answered
 by replication, never by a margin defending a single sample. The below-marker
 triple is taken three times.
@@ -1055,7 +1355,7 @@ U3-T and `WPQ_seed.md`, and no row is in two places.
 | `colony_family_passes_under_staged` | the move played on ≥ 6 built distant-cluster positions |
 | `tactical_suite_holds_at_its_rederived_thresholds_under_staged` | the `require` count of `tactical_staged_v0.txt`, at the **two tactical** staged configs — `tactical_staged_v0.toml` for fifteen cases and `gate_staged_v0.toml` for five |
 | `staged_filtered_set_equals_the_minimal_cover_union` | **THE DIFFERENTIAL GATE'S CRITERION — AND IT IS NOW S-M, NOT S-E (D-323).** The emitted set at every FILTERED node, asserted **EQUAL** — not contained; containment is exactly what an over-generating mutation preserves, which §8.2 established and revision 6 then left this row registering — to the inclusion-minimal cover union computed by the **LANDED** referent **R1**, `crates/pistol-solver/tests/common/reference.rs`, **REUSED by a `#[path]` include and NOT rewritten**. *Until u-rev 6 this row read "the public generator's forced prefix against an independently written plan-family referent in pistol-search's own test tree", which was **S-E half one**; S-E FELL in M3 round 1 — its referent's independence and its greenness were in tension (F2) — and D-323 condition 1 now **FORBIDS** a second, freshly written referent for this criterion without a registered agreement criterion and a registered consequence for disagreement. This is a change of referent, not a re-labelling of S-E.* **THE ROW SHIPS MARKED `DEPENDS-OPEN-THEORY` (D-321)** — MEASURED, the two conventions differ on 22 of 174 FILTERED nodes, 12.6 % (§8, re-taken at u-rev 6) — **and `0 of 3406` may not be cited as evidence about the convention** (condition 2). **ITS SEAM IS OPEN:** how a test observes the emitted set is a separate named decision D-323 does not make, and D-115's constraint on widening `pistol_search::staged` (round-1 F4) applies to S-M as it applied to S-E |
-| `visit_searches_every_forced_candidate` | **OPEN AT u-rev 6 — NOT SELECTED AND NOT REJECTED, AND IMPL MAY NOT READ IT AS REGISTERED.** This was **S-E, half two**: the always-on `assert!` in `visit`, which is what sees a drop made AFTER generation — D-124's own reproducer, and §8.2's own words are that no test of the generator can see it. **S-E fell, and S-M is a criterion over the EMITTED SET ALONE**, so nothing in D-323 carries this half; the selection record's "what this selection does not decide" is where it lands. The gap is live rather than academic: M3 round 2's F1 measured that the recommended row's 72 % against D-124's `pop()` mutant is 0 % in the shape its own cost ground pays for, and §8.4 keeps **M8** registered against exactly this half. It is in U4-Z's OPEN list |
+| `visit_searches_every_forced_candidate` | **OPEN AT u-rev 7, AS AT u-rev 6 — NOT SELECTED AND NOT REJECTED, AND IMPL MAY NOT READ IT AS REGISTERED.** *(Re-checked at u-rev 7: D-329 decides the SNAPSHOT's config seam and touches nothing here, and no ADR line since D-323 carries this half.)* This was **S-E, half two**: the always-on `assert!` in `visit`, which is what sees a drop made AFTER generation — D-124's own reproducer, and §8.2's own words are that no test of the generator can see it. **S-E fell, and S-M is a criterion over the EMITTED SET ALONE**, so nothing in D-323 carries this half; the selection record's "what this selection does not decide" is where it lands. The gap is live rather than academic: M3 round 2's F1 measured that the recommended row's 72 % against D-124's `pop()` mutant is 0 % in the shape its own cost ground pays for, and §8.4 keeps **M8** registered against exactly this half. It is in U4-Z's OPEN list |
 
 ---
 
@@ -1078,37 +1378,53 @@ readable alone; it is a condition, not a datum.)
      pre-`--config` script, which is the only script that exists. That is the
      instrument, and it now has a revision, which is what CLAUDE.md's instrument clause
      asks for and what "the amended script" could not supply.
-   - **AFTER DOES NOT EXIST, AND IT IS BLOCKED TWICE OVER.** Once on M4: after three
-     authored revisions and three fresh-context DECISION-RED-TEAMs there is no selected
-     config seam (D-324, §9), so no Staged snapshot can be taken. And independently of
-     the seam, on the config document itself — **MEASURED at `46c58ac`:**
+   - **AFTER DOES NOT EXIST, AND IT IS BLOCKED TWICE OVER — AND AT u-rev 7 THE FIRST
+     BLOCKER HAS CHANGED SHAPE WITHOUT LIFTING.** Once on M4's seam: at u-rev 6 there
+     was no selected config seam after three rounds (D-324). **A fourth round has since
+     run on axis A alone and N-E IS SELECTED (D-329)** — a required `--config PATH`, no
+     default, with a new whole-path guard — **so the seam is now SELECTED AND NOT
+     BUILT.** MEASURED at `8690ad6`: `tools/baseline_snapshot.sh:182` still reads
+     `CONFIG="configs/instrument_v0.toml"` and the script takes no `--config` argument
+     of its own (the four `--config` occurrences in it are the ENGINE's flag on
+     invocation lines, not the script's). Four conditions ride with the selection and
+     none is paid. **So no Staged snapshot can be taken, for a narrower reason than at
+     u-rev 6: what is owed is IMPL against a named option, not another matrix round.**
+     And independently of the seam, on the config document itself — **MEASURED at
+     `46c58ac` and RE-TAKEN at `8690ad6`, identical output:**
 
      ```
      $ ls configs/instrument_staged_v0.toml
      ls: cannot access 'configs/instrument_staged_v0.toml': No such file or directory
      ```
 
-     No row of any M4 revision produces it (D-324, revision 3 fact 6).
+     No row of any M4 revision produces it, round 4's three included — **and D-329
+     corrects D-324's framing of this blocker as an N-M cost: it blocks every axis-A
+     row equally** (D-324, revision 3 fact 6; D-329).
    - **THEREFORE §9.1 AMENDMENT 4's "the BEFORE run … is re-taken under the amended one
      — MEASURED 34.5 s" ATTRIBUTES A REAL WALL TIME TO AN INSTRUMENT THAT DOES NOT
      EXIST.** The seconds are real; the attribution is not. The amendment is carried
-     below as RECORD with this note against it. Both it and this item are verbatim
-     carries from `6feb40a`, so the defect is inherited rather than created — but the
-     u-rev 5 fold re-read §9 and did not re-read this item, which is BLOCKING 1's class.
+     **ABOVE**, at §9.1, as RECORD, **and at u-rev 7 it carries a marked note at its own
+     site as well as this one** — until then this sentence said "below", pointing a
+     reader the wrong way past the amendment it was meant to qualify (**MINOR 4** of
+     `wp15b_U4_REVIEW_urev6.md`). Both the amendment and this item are verbatim carries
+     from `6feb40a`, so the defect is inherited rather than created — but the u-rev 5
+     fold re-read §9 and did not re-read this item, which is BLOCKING 1's class.
 
 The BEFORE numbers taken at `f317385` reproduce the pinned operator triple
 (`depth_at_500ms` 2 / 2 / 1) — **and §9 amendment 1 establishes that the triple
 sits BELOW the record's own "excluded from every comparison" marker with a dead
 band of about 2×, so it is context and not the registered quantity.** No AFTER
-exists: no engine code was written, no config seam is selected after three rounds
-(D-324), and `configs/instrument_staged_v0.toml` does not exist.
+exists: no engine code was written, **the config seam is SELECTED (N-E, D-329) and
+NOT BUILT**, and `configs/instrument_staged_v0.toml` does not exist. *(Until u-rev 7
+this sentence read "no config seam is selected after three rounds (D-324)", which the
+fourth round falsified.)*
 
 ### Cost
 
 | Item | DECLARED | MEASURED |
 |---|---|---|
 | One baseline snapshot | ~35 s | **34.0 / 34.5 s** |
-| The soundness gate per CI run | **ESTIMATED 40–90 s — and at u-rev 6 the estimate is UNGROUNDED AT ITS DOMINANT TERM.** It was priced on **S-E's** one traversal per fixture plus the reduced S-C's **MEASURED 17.89 s**, and neither survives: S-E FELL in M3 round 1, and the composite row that carried the reduced S-C beside it (**S-J**) fell in round 2, inheriting every one of S-E's four kills. **D-323 selects S-M and explicitly does NOT decide the gate's corpus or its per-CI cost** — the selection record states that this 40–90 s figure is CARRIED from this table and is not that round's measurement, so it is not independent corroboration of itself. Revision 1's 60–180 s priced a workload that is days | **RE-DERIVED FOR S-M FIRST, then MEASURED when it lands, and reconciled here.** S-M's per-node cost is a walk against R1 reused by `#[path]` include, which is a different shape from S-E's per-fixture traversal; U4-Z carries the re-derivation as OPEN |
+| The soundness gate per CI run | **ESTIMATED 40–90 s — UNGROUNDED AT ITS DOMINANT TERM since u-rev 6, and still ungrounded at u-rev 7.** It was priced on **S-E's** one traversal per fixture plus the reduced S-C's **MEASURED 17.89 s**, and neither survives: S-E FELL in M3 round 1, and the composite row that carried the reduced S-C beside it (**S-J**) fell in round 2, inheriting every one of S-E's four kills. **D-323 selects S-M and explicitly does NOT decide the gate's corpus or its per-CI cost** — the selection record states that this 40–90 s figure is CARRIED from this table and is not that round's measurement, so it is not independent corroboration of itself. Revision 1's 60–180 s priced a workload that is days | **RE-DERIVED FOR S-M FIRST, then MEASURED when it lands, and reconciled here.** S-M's per-node cost is a walk against R1 reused by `#[path]` include, which is a different shape from S-E's per-fixture traversal; U4-Z carries the re-derivation as OPEN |
 
 **The proportionality clause, and what it now says here.** The snapshot run is
 34.5 s, so a doubt about it is answered by REPLICATION and by a SECOND INSTRUMENT
@@ -1124,7 +1440,20 @@ D-307 keeps the second-instrument duty in either case.)
 
 ## U4-Z. ADR lines this unit owes, the OPEN decision it stops on, and what is OPEN
 
-### B3, gate (b) — SETTLED. SHAPE 2 SELECTED (D-316).
+> **RE-DERIVED IN FULL AT u-rev 7, NOT PATCHED.** This section is where the u-rev 6
+> fold-in pass stopped: the head claimed the fold was *"re-run across the whole unit"*
+> and then enumerated the sites it re-read, and U4-Z's B3 section was not among them —
+> **BLOCKING 1** of `wp15b_U4_REVIEW_urev6.md`. So at u-rev 7 every claim below whose
+> truth depends on an ADR line was re-read against `docs/decisions.md` as it now
+> stands, item by item, rather than the two sentences the report names being edited.
+> **Two landed lines were found disposing of residuals this section still carried as
+> the architect's open choice: D-320 (B3's residual, landed at `0af32fb` — in the SAME
+> COMMIT as the D-321 that u-rev 6 folded) and D-325 (D-316's false diagnosis, landed
+> at `81180b8`, after u-rev 6).** The report raised the first; the second came out of
+> the re-derivation and is the reason a re-derivation was the instruction rather than a
+> patch.
+
+### B3, gate (b) — SETTLED. SHAPE 2 SELECTED (D-316); ITS RESIDUAL IS DISPOSED OF BY D-320.
 
 **THE TWO-SHAPE COMPARISON BELOW IS THE TEXT THE ARCHITECT SELECTED FROM AND IS
 LEFT UNEDITED**, on the same discipline the restructure matrix landed under: a
@@ -1171,10 +1500,21 @@ argument — the argument is whether a lettered enumeration is worth having at a
 #### SELECTION — SHAPE 2, by architect ruling. Landed at u-rev 2. ADR line D-316.
 
 **Selected: SHAPE 2.** The letters are dropped; the four gates are named by what
-they are; §8.7's wiring enumerates the four names; the S-E double-list dies with
-the letters, because S-E is the differential gate and is named once, in §8.2.
-Executed in this unit at §8.2, §8.3 and §8.7, and in **U3** §10 at the two sites
-named below.
+they are; §8.7's wiring enumerates the four names; **the double-list dies with the
+letters, because the differential gate is named ONCE, in §8.2.** Executed in this unit
+at §8.2, §8.3 and §8.7, and in **U3** §10 at the two sites named below.
+
+**MARKED AT u-rev 7.** This block records the u-rev 2 EXECUTION, and at that execution
+the gate named once in §8.2 was **S-E**. It read "because S-E **is** the differential gate" in the present
+tense until u-rev 7 — **MAJOR 3** of `wp15b_U4_REVIEW_urev6.md`, which found it standing
+unmarked six hundred lines after the head says S-M is selected, while its two sibling
+sentences (§8.3's table cell and §8.7's wiring) were both retargeted at u-rev 6.
+**S-E FELL in M3 round 1 and the differential gate's instrument since D-323 is S-M.**
+It is corrected in place, not merely annotated, because this block is carve prose
+recorded AFTER the comparison — the discipline that leaves the comparison unedited does
+not reach it, which is the same reading applied to §8.7's copy under MINOR 9 below.
+The shape-2 selection is untouched by the change: **it decided how the gate is
+ADDRESSED, never which instrument it carries.**
 
 **The ground, which is the option statement's own last clause read the way it
 asks to be read:** the argument is not the retarget count, it is whether a
@@ -1220,10 +1560,20 @@ INSIDE the unit. So the cell did not count only what was outside the unit: **it 
 one inside site and missed three others.** The **COUNT SIX stands** — the u-rev 5
 reviewer reconstructed it independently from the superseded document's own letter
 occurrences and found no seventh — and only the explanation was wrong, in a paragraph
-whose subject is the accuracy of cost cells. **THE SAME FALSE DIAGNOSIS IS IN THE
+whose subject is the accuracy of cost cells. **THE SAME FALSE DIAGNOSIS WAS IN THE
 LANDED D-316** (*"the cell counted only the sites outside the unit and missed three
-inside it"*), and `docs/decisions.md` is append-only and is not this unit's to edit:
-**the D-316 residual is carried to the architect and is in the OPEN list below.**
+inside it"*), and `docs/decisions.md` is append-only and is not this unit's to edit, so
+u-rev 6 carried the residual to the architect. **IT HAS SINCE BEEN DISPOSED OF, AND
+THIS UNIT IS CATCHING UP TO IT: `D-325` LANDED AT `81180b8`** — after u-rev 6 — and
+corrects the log by a new line rather than an edit, which is the remedy this unit asked
+for. D-325 records that the cell *"counted one inside site and missed three others"*,
+that **THE COUNT SIX STANDS** and there is no seventh site, and that D-316's
+conclusion — the correction errs toward the selected option and does not move the
+selection — is untouched. It names this unit's own repaired copy as the reason a line
+was still worth its space: *"the paragraph the false sentence sits in is ABOUT THE
+ACCURACY OF COST CELLS … and a mis-diagnosis of how a cell went wrong is how the next
+cell goes wrong the same way."* **So nothing here is owed to the architect any more**,
+and the OPEN list below records it CLOSED rather than carried.
 **The correction does not move the selection** — the cell's own
 sentence is that the count is not the argument — but it is recorded rather than
 quietly fixed, because a cost cell understating the selected option's cost is the
@@ -1237,16 +1587,54 @@ legacy citation — in another unit, in the superseded document's history, or in
 landed ADR line — still resolves. The letters are retired as an ADDRESSING
 SCHEME, not erased as a HISTORY.
 
-**THE RESIDUAL, NAMED, AND IT IS THE ARCHITECT'S.** This selection was made by
-architect ruling on the comparison above. That comparison states both options,
-both costs MEASURED, and each option's failure mode, but it carries no
-recommendation and **it was never put to a fresh-context DECISION-RED-TEAM**.
-CLAUDE.md's Process section wants a named design decision with more than one
-viable option settled by an attacked matrix, and this one was not attacked. It is
-recorded here and in D-316 rather than left implicit, because an unattacked
-selection that nobody writes down is the silent drift the rule exists to refuse,
-and an unattacked selection that IS written down is a debt the architect can
-choose to pay or to accept. The reviewer of this unit is not asked to ratify it.
+**THE RESIDUAL, AND IT IS NO LONGER OPEN: D-320 DISPOSED OF IT, AND THE DEBT IS
+RECORDED AS PAID.** This selection was made by architect ruling on the comparison
+above. That comparison states both options, both costs MEASURED, and each option's
+failure mode, but it carries no recommendation and **it was never put to a
+fresh-context DECISION-RED-TEAM**. CLAUDE.md's Process section wants a named design
+decision with more than one viable option settled by an attacked matrix, and this one
+was not attacked, so **adopting shape 2 without a matrix IS A BREACH OF THE MATRIX
+LAW** — which is how **D-320** (`docs/decisions.md`, landed at `0af32fb`) opens, in
+those terms, *"recorded here rather than left implicit"*.
+
+**WHAT D-320 RULES, in its own load-bearing parts, because this unit is the document it
+is about and the document where its flip clause would fire:**
+
+- **THE BREACH IS ACKNOWLEDGED, NOT ARGUED AWAY**, and D-316's own naming of the
+  residual is quoted back into it.
+- **THE RETRO-MATRIX IS WAIVED — "on two grounds stated together because neither
+  carries it alone".** *(i)* **PROPORTIONALITY:** the decision is a naming scheme for
+  four gates that already exist as gates, and the whole of what a matrix would add is a
+  red team's attack on a comparison whose two cost cells were already MEASURED and
+  whose LOSING option's own cell conceded the ground the selection turned on. *(ii)*
+  **INDEPENDENT VERIFICATION ALREADY HAPPENED**, which D-320 calls "the part that makes
+  this a waiver rather than an excuse": the fresh-context REVIEW-design at
+  `docs/experiments/wp15b_U4_REVIEW.md` verified the six-site retarget the correction
+  predicted, independently and against the tree, and its scope-1 verdict on the
+  named-gate wiring is **PASS** — so the thing a retro-matrix would most plausibly have
+  caught, a gate silently lost between the lettered bar and the named one, was checked
+  by a session that did not make the choice.
+- **WHAT D-320 DOES NOT DO**, stated because a reader may not take the waiver wider
+  than it goes: *"it does not license adoption-without-matrix as a practice, and it does
+  not convert D-316's residual into a clean record."*
+- **THE DEBT IS PAID.** D-320's words: it *"converts an unattacked selection that nobody
+  wrote down into a debt the architect has now **paid** in the only currency available
+  after the fact, which is **disclosure**."*
+- **THE FLIP CLAUSE, AND THIS UNIT IS WHERE IT WOULD FIRE.** D-320 *"flips if a
+  **GATE-NAMING DEFECT** surfaces — a part of the soundness gate that the four names do
+  not reach, a citation that resolves under the retired letters and not under the names,
+  or a fifth gate appended as a letter — at which point the waiver was wrong, the matrix
+  is owed retroactively, and this line is superseded by the round that runs it."* **Any
+  reviewer or IMPL session that finds one of those three things in §8.3, §8.7 or a
+  citing unit has fired D-320's flip**, and the retro-matrix becomes owed.
+
+**THE TWO DOCUMENTS ARE LOAD-BEARING ON EACH OTHER, AND UNTIL u-rev 7 ONLY ONE OF THEM
+KNEW IT.** D-320's waiver rests on THIS unit's review history; this unit told the
+architect the opposite — that the debt was theirs *"to choose to pay or to accept"* and
+that the residual was *"not closed"* — in the list an architect reads to learn what is
+owed. That is **BLOCKING 1** of `wp15b_U4_REVIEW_urev6.md`, and D-320 landed in the
+same commit as the D-321 this unit folds. **The reviewer of this unit is not asked to
+ratify the selection; it is asked to look for the gate-naming defect D-320's flip names.**
 
 ### ADR lines
 
@@ -1266,14 +1654,26 @@ attacked twice and selected from.)*
 - **Item 4 is NO LONGER BLOCKED ON M3.** M3 is SELECTED — S-M, D-323 — so the
   instrument exists and the item is rewritten against it. It is blocked instead on the
   **SEAM**, which D-323 records as a separate named decision it does not make.
-- **Item 15 STAYS BLOCKED**, and the binding statement of what blocks it is **D-324's**:
-  no config seam is selected after three rounds, so no Staged snapshot can be taken,
-  and the AFTER is additionally blocked on `configs/instrument_staged_v0.toml`, which
-  does not exist. **UNRECONCILED and recorded rather than resolved:** MAJOR 4 observes
-  that item 15's own subject — the two TACTICAL staged configs and THE TACTICAL SUITE
-  gate (§8.3, the superseded `(a)`) — has no evident dependency on the *snapshot's*
-  config seam. This unit may not overrule a landed ADR line and may not hide the
-  disagreement either; it is in the OPEN list for the architect.
+  **RE-CHECKED AT u-rev 7, AND THIS SEAM IS NOT THE ONE D-329 SELECTS.** Item 4's seam
+  is *how a TEST observes the staged generator's emitted set*, constrained by D-115's
+  bar on widening `pistol_search::staged` to `pub`. D-329's seam is *how
+  `tools/baseline_snapshot.sh` is told which CONFIG to run under*. The two share a word
+  and nothing else, and **no selection has touched item 4's**.
+- **Item 15 STAYS BLOCKED, AND AT u-rev 7 THE GROUND IS NARROWER AND IS NOT THE ONE
+  D-324 GAVE.** D-324 blocked it because **no config seam was selected**. That is no
+  longer true: **axis A selects N-E (D-329)**. What blocks item 15 now is that **the
+  seam is SELECTED AND NOT BUILT** — no line of N-E is written, four registered
+  conditions ride with it unpaid — and, independently, that
+  `configs/instrument_staged_v0.toml` does not exist, which D-329 records as blocking
+  every axis-A row equally rather than being N-M's cost. **A SELECTION IS NOT AN
+  IMPLEMENTATION, and this unit does not write item 15 as though the snapshot were
+  takeable.** **UNRECONCILED and recorded rather than resolved, and UNCHANGED by the
+  selection:** MAJOR 4 of `wp15b_U4_REVIEW.md` observes that item 15's own subject — the
+  two TACTICAL staged configs and THE TACTICAL SUITE gate (§8.3, the superseded `(a)`) —
+  has no evident dependency on the *snapshot's* config seam at all, so a selection on
+  that seam neither creates nor removes the dependency in question. This unit may not
+  overrule a landed ADR line and may not hide the disagreement either; it is in the OPEN
+  list for the architect.
 
 4. **The differential gate's instrument, and D-124's flip clause discharged.
    REWRITTEN AT u-rev 6: THE OPTION IS S-M (D-323), NOT S-E.** Per-node **EQUALITY**
@@ -1284,7 +1684,9 @@ attacked twice and selected from.)*
    line still cannot be written, and the reason has CHANGED**: it is no longer that no
    option is selected — one is — it is that the SEAM by which a test observes the
    emitted set is a separate named decision D-323 leaves OPEN, and D-115 (round-1 F4,
-   which forbids S-E's primary mechanism by name) is what makes it a decision.
+   which forbids S-E's primary mechanism by name) is what makes it a decision. *That
+   remains true at u-rev 7: D-329 selects the SNAPSHOT's config seam and decides nothing
+   about how a test reaches the emitted set.*
    *Until u-rev 6 this item read "S-E, and D-124's flip clause discharged. Its seam is
    the PAIR of §8.2 — a public generator driven by a test in pistol-search's own tree
    against an independently written referent, plus an always-on `assert!` in `visit`
@@ -1297,7 +1699,7 @@ attacked twice and selected from.)*
 
 15. **The two TACTICAL staged configs disable the quiet cut** — which needs its own
     document, `tactical_staged_v0.toml`, because the SPRT seat must keep the cut.
-    **U3** (u-rev 3) §10 is the one place the number of staged config documents is
+    **U3** (u-rev 4) §10 is the one place the number of staged config documents is
     stated and this line does not restate it. *Until u-rev 6 this line
     named that document by an ordinal and so stated the count — BLOCKING 3 of
     `wp15b_U4_REVIEW.md`, B5's class.* So THE
@@ -1306,23 +1708,45 @@ attacked twice and selected from.)*
     differential gate (§8.2 — **S-M** since D-323, S-E until u-rev 6). The line records
     what a green tactical suite under Staged does NOT evidence.
 
-**AND B2 IS NOT DISCHARGED HERE.** The revision-7 review found **M4 has no ADR
-line at all**: §15 contains zero occurrences of `N-A`, `baseline_snapshot`,
-`--config` or `snapshot`, while §9 adopts N-A, changes a shipped `tools/`
-instrument and changes the registered quantity of the snapshot. Rule 10 requires
-one line; the Process section requires it to record the strongest surviving
-attack. **The carve cannot write that line, because §9's selection is OPEN and a
-line citing an unattacked selection is the breach it exists to prevent.** **THREE
-fresh DECISION-RED-TEAM rounds have now run against M4 and B2 IS STILL NOT ANSWERED**,
-because all three stopped: rounds 1 and 2 under D-318, round 3 under D-324, and
-D-324's is the RECORDED TIE with nothing selected. Travelling item T2 is therefore
-carried, not closed.
+**AND B2 IS ANSWERED AT u-rev 7 — BY A LANDED ADR LINE THAT IS NOT THIS UNIT'S, AND
+THE ANSWER CARRIES A RESIDUAL.** The revision-7 review found **M4 has no ADR line at
+all**: §15 contained zero occurrences of `N-A`, `baseline_snapshot`, `--config` or
+`snapshot`, while §9 adopted N-A, changed a shipped `tools/` instrument and changed the
+registered quantity of the snapshot. Rule 10 requires one line; the Process section
+requires it to record the strongest surviving attack. **The carve could not write that
+line for six u-revs, because §9's selection was OPEN and a line citing an unattacked
+selection is the breach it exists to prevent** — three fresh DECISION-RED-TEAM rounds
+ran and all three stopped (rounds 1 and 2 under D-318, round 3 under D-324's RECORDED
+TIE).
+
+**THAT REASON IS GONE. A FOURTH ROUND WAS AUTHORED AND ATTACKED, AND `D-329` IS M4's
+ADR LINE.** It records the field (`7866bcf`, axis A alone, N-Q authored in), the attack
+(`7e0a328`), the selection (**N-E**, rung (b), after N-M's elimination on registered
+ground and rung (a) found silent), four binding conditions, and what it supersedes in
+D-324. **What rule 10 asked for exists in the log.**
+
+**WHAT IS NOT DISCHARGED, AND IT IS D-329's OWN RESIDUAL RATHER THAN THIS UNIT'S
+EVASION: THE STRONGEST SURVIVING ATTACK AGAINST N-E IS ASSEMBLED AND NOT QUOTED.** The
+red team was dispatched to break **N-Q**; it recommends N-E and **was never asked to
+break it**, and no fresh context has been. D-329 records the difference rather than
+smoothing it. The Process section's requirement that the line record the strongest
+surviving attack is therefore met by an assembled paragraph, which is weaker than a
+quoted one, and **a fresh-context attack on N-E in its own right is OPEN and is in the
+list below**.
+
+**AND B2's PRACTICAL CONSEQUENCE IS UNCHANGED:** nothing of N-E is built, so the
+snapshot still has a BEFORE and no AFTER. *(Travelling item T2 is carried under this
+head. It is named in no document now in the tree — it comes from the superseded §16's
+travelling list — so this unit records the ADR state, which is what a reader can check,
+and does not assert a disposition for a label it cannot resolve.)*
 
 ### OPEN — carried forward, not closed by the carve
 
-- ~~**B1 / M3 — no matrix, then a matrix in which every option fell.**~~ **CLOSED AT u-rev 6 BY SELECTION: S-M, D-323** (the block at the head of §8; record at `docs/experiments/matrix_M3_selection.md`). Round 1 (`f8e73e4`, D-317) stopped with every stated option fallen and named four missing rows; revision 2 (`d48824f`) authored thirteen rows including those four, was attacked at `809b5db` — all eight facts reproduced — and **S-M was selected at `af8082a`. The matrix's own recommendation, S-K, is dead, killed by its own attack.** **THE RESIDUALS ARE NOT CLOSED and each is named where it lives:** the gate ships MARKED **DEPENDS-OPEN-THEORY** (D-321, condition 3) and turns RED on a correct engine if the convention settles toward `DEF-T`, at which point the CRITERION is re-derived and not the engine; **S-N** — the rules-derived row the red team found missing — is OWED and is a FLIP TRIGGER (condition 4); the SEAM is a separate named decision and is OPEN; the gate's corpus and per-CI cost are not decided; `0 of 3406` may not be cited as evidence about the convention (condition 2); and a second freshly-written referent is FORBIDDEN without a registered agreement criterion and a registered consequence for disagreement (condition 1). Each has its own bullet below.
-- **B2 / M4 — no ADR line, and after THREE authored revisions and THREE fresh-context DECISION-RED-TEAMs the selection is STILL OPEN** (the block at the head of §9; D-318, then D-324). **The third stop is the RECORDED TIE, not the every-option-fell stop** — N-E, N-J, N-K, N-F and N-L all survive — and it arrives with a cause the two earlier rounds did not have: **the field has TWO ORTHOGONAL AXES and has been scored as one.** Axis A is how the config is NAMED; axis B is how many RECORDS one invocation produces. N-K is not a rival of the naming rows, it composes with one of them, which is why every round found its recommendation resting on a ground that argues equally for four or five rows. **N-K's flip clause has FIRED on axis B**, on a cost the red team measured at 8 added lines and about 2x wall. **Axis A is a tie** between N-E, N-M and N-Q that no measurement these rounds could identify separates — the one differential ground revision 3 offered was measured away — and **N-Q is the missing row**, `tools/SHELL_CHECKLIST.md` item 11 under this project's own name, absent from all three revisions and all three attacks. The architect selects on the recorded tie — N-K on axis B plus one of {N-E with three guard lines, N-M, N-Q} on axis A — or orders a fourth round scoped to axis A alone with N-Q authored into it. **This unit selects nothing here and writes nothing as though anything were selected.**
-- ~~**B3 — gate (b), the two shapes above.**~~ **CLOSED at u-rev 2** by the architect's selection of shape 2, recorded above and in D-316. Its RESIDUAL is not closed and is named there: the selection was not put to a fresh-context DECISION-RED-TEAM.
+- ~~**B1 / M3 — no matrix, then a matrix in which every option fell.**~~ **CLOSED AT u-rev 6 BY SELECTION: S-M, D-323** (the block at the head of §8; record at `docs/experiments/matrix_M3_selection.md`). Round 1 (`f8e73e4`, D-317) stopped with every stated option fallen and named four missing rows; revision 2 (`d48824f`) authored thirteen rows including those four, was attacked at `809b5db` — all eight facts reproduced — and **S-M was selected at `af8082a` (taken at `809b5db`, the revision carrying the attack; the record file exists only from `af8082a`). The matrix's own recommendation, S-K, is dead, killed by its own attack.** **THE RESIDUALS ARE NOT CLOSED and each is named where it lives:** the gate ships MARKED **DEPENDS-OPEN-THEORY** (D-321, condition 3) and turns RED on a correct engine if the convention settles toward `DEF-T`, at which point the CRITERION is re-derived and not the engine; **S-N** — the rules-derived row the red team found missing — is OWED and is a FLIP TRIGGER (condition 4); the SEAM is a separate named decision and is OPEN; the gate's corpus and per-CI cost are not decided; `0 of 3406` may not be cited as evidence about the convention (condition 2); and a second freshly-written referent is FORBIDDEN without a registered agreement criterion and a registered consequence for disagreement (condition 1). Each has its own bullet below.
+- ~~**B2 / M4 — no ADR line, and after THREE authored revisions and THREE fresh-context DECISION-RED-TEAMs the selection is STILL OPEN.**~~ **ANSWERED AT u-rev 7 BY SELECTION ON AXIS A: N-E, D-329** (the block at the head of §9; record at `docs/experiments/matrix_M4_axisA_selection.md`, selected at `7e0a328`, landed at `d56a898`). Rounds 1 and 2 stopped (D-318); round 3 stopped on the RECORDED TIE (D-324), whose cause was that **the field had TWO ORTHOGONAL AXES and was being scored as one** — axis A is how the config is NAMED, axis B is how many RECORDS one invocation produces, and N-K composes with a naming row rather than rivalling it. D-324's own stop clause authorised **a fourth round scoped to axis A alone with N-Q authored into it**; that round ran at `7866bcf` under the D-328 split, was attacked at `7e0a328`, and **its own recommendation (N-Q) was killed by its red team.** **N-M was eliminated on registered ground** — `wp15b_sprt_prereg.md` §7A.2 registers `--config configs/gate_v0.toml` and N-M refuses it at exit 1 — **rung (a) was SILENT across the whole field**, and the selection was taken at **rung (b)**: N-E 22 added / 7 CODE against N-Q's 32 / 12, both owing the same 4 whole-path guard lines and N-Q owing 5 containment lines on top. **AXIS B IS NOT REOPENED** (D-329): D-324 records its flip clause already fired toward N-K, and no ADR line adopts N-K. **THE RESIDUALS ARE NOT CLOSED, and each has its own bullet below:** N-E has never been attacked by a fresh-context DECISION-RED-TEAM in its own right, so **D-329's strongest surviving attack is ASSEMBLED, not quoted**; the four conditions riding with the selection are unpaid; and **the seam is SELECTED AND NOT BUILT**, so the snapshot still has a BEFORE and no AFTER.
+- **N-E HAS NOT BEEN ATTACKED IN ITS OWN RIGHT** (D-329's own recorded residual). The round-4 red team was dispatched to break **N-Q** and the tied set's interaction with it; it recommends N-E and was never asked to break it. The matrix law is satisfied for the FIELD — a matrix was authored and attacked before selection — and D-329 claims no more. The assembled paragraph's own point is the one to attack first: **N-E bounds the admissible set nowhere**, so a record may name a document outside the repository that no other reader can obtain, and its provenance rests on caller discipline plus a digest of bytes nobody else holds. The round MEASURED that N-Q does not fix this either (a gitignored `configs/*.bin` passes containment into the invariant block at exit 0), so the weakness is left where it was rather than resolved.
+- **THE FOUR CONDITIONS RIDING WITH N-E ARE UNPAID, AND EACH BINDS IMPL** (D-329). **(1)** The `config` line's digest is **`$3`, not `$4`** — that line is `config <path> <sha>`, three fields, and the four-token reasoning belongs to the differently shaped `corpus` line. **(2)** N-E's whole-path guard **may NOT be spelled as a reuse of the `tools/baseline_snapshot.sh:289` basename loop** — MEASURED twice, that spelling leaves `configs/spaced dir/instrument_v0.toml` reaching the record at exit 0. **(3)** An **item-10 driving test** is owed for both new refusal classes, in two halves with a control, against a precedent of 91 test lines for one arm at `b067d47`; no row of round 4 was costed for it. **(4)** An **item-12 sentence** is owed saying a config refusal is a **FAIL**, this script having declared no void class. *(A fifth thing is recorded by D-329 and is not a condition: the relative-base inconsistency — a relative `--config` resolves against `$ROOT` while a relative `--out` resolves against `$CALLER_PWD` — which N-E inherits without making it load-bearing for a refusal. OPEN.)*
+- ~~**B3 — gate (b), the two shapes above.**~~ **CLOSED at u-rev 2** by the architect's selection of shape 2, recorded above and in D-316. ~~**Its RESIDUAL is not closed**~~ — **THE RESIDUAL IS DISPOSED OF TOO, BY `D-320` (landed `0af32fb`), AND THIS UNIT SAID OTHERWISE UNTIL u-rev 7.** The selection was not put to a fresh-context DECISION-RED-TEAM, which D-320 records as **a breach of the matrix law**, acknowledged and not argued away. **D-320 WAIVES the retro-matrix on two grounds stated together because neither carries it alone** — PROPORTIONALITY (a naming scheme for four gates that already exist, over a comparison whose two cost cells were already MEASURED and whose losing option's own cell conceded the ground the selection turned on) and **INDEPENDENT VERIFICATION THAT ALREADY HAPPENED** (the fresh-context REVIEW-design at `wp15b_U4_REVIEW.md` verified the six-site retarget against the tree and returned PASS on the named-gate wiring, so a session that did not make the choice checked the one thing a retro-matrix would most plausibly have caught). **The debt is recorded as PAID "in the only currency available after the fact, which is disclosure."** **NOTHING HERE IS THE ARCHITECT'S TO DECIDE ANY MORE.** **WHAT IS STILL LIVE IS D-320's FLIP CLAUSE, AND THIS UNIT IS WHERE IT WOULD FIRE:** it flips if a **GATE-NAMING DEFECT** surfaces — a part of the soundness gate the four names do not reach, a citation that resolves under the retired letters and not under the names, or a fifth gate appended as a letter — at which point the waiver was wrong, **the matrix is owed retroactively**, and D-320 is superseded by the round that runs it. *(Until u-rev 7 this bullet said the residual was not closed and the section above told the architect the debt was theirs "to choose to pay or to accept" — **BLOCKING 1** of `wp15b_U4_REVIEW_urev6.md`, on a line that had already landed in the same commit as the D-321 this unit folds.)*
 - ~~**MAJOR 8 — M4's and M6's mutation witnesses are not positions a legal game
   reaches.**~~ **CLOSED at u-rev 3.** Both witnesses are rebuilt in §8.4 as
   positions reached by replaying every ply through `GameState`, which is the
@@ -1336,8 +1760,8 @@ carried, not closed.
   true and worthless. **THE RESIDUAL IS NAMED AND IS NOT CLOSED, AND IT HAS TWO
   PARTS AND NOT ONE (MINOR 11).** (i) A legal position is not yet a position the
   mutation DIES on in the SEARCH — that needs the search, and the search is not
-  built (`crates/pistol-search/src/staged.rs` does not exist; MEASURED at `46c58ac`,
-  `ls` returns *No such file or directory*). (ii) **M6 owes a SECOND construction
+  built (`crates/pistol-search/src/staged.rs` does not exist; MEASURED at `46c58ac`
+  and RE-TAKEN at `8690ad6`, `ls` returns *No such file or directory* at both). (ii) **M6 owes a SECOND construction
   that does not depend on the search existing at all.** §8.4's own M6 row states that
   the witness is driven as a NON-PV DESCENDANT and never as a root, because the
   overload return is `!is_pv`-gated and ply 0 is always a PV node — so as a root the
@@ -1355,16 +1779,40 @@ carried, not closed.
   doubt, how the second instrument does not share that stage, and the registered
   consequence of disagreement are not.
 - **The `tools/` changes this unit implies have had no SHELL_CHECKLIST review.**
-  §8.7's `staged_soundness_check.sh` is a new script; §9's `--config` reopens
-  `tools/baseline_snapshot.sh` with **eight of twelve** items ENGAGED by its own
-  count. Both reviews are owed at IMPL, and the coverage rule binds each. **AND TWO
-  SHIPPED-INSTRUMENT DEFECTS ARE NOW OPEN AGAINST THAT SCRIPT**, found in passing by
-  M4's round-3 red team and owned by no matrix row (D-324): a SPACE in a caller-named
-  `--corpus` path reaches the record unescaped at exit 0 under the COMPLETE kind token,
-  breaking the record's own leading-tokens parse rule and shifting the digest field;
-  and `crates/pistol-cli/src/report.rs:151-162` rewrites control characters to `?` in
-  the engine's handshake while the script writes its own copy raw, so one record's two
-  config lines can disagree for a reason unrelated to the config.
+  §8.7's `staged_soundness_check.sh` is a new script; §9's `--config` — **now a
+  SELECTED shape, N-E under D-329** — reopens `tools/baseline_snapshot.sh` with **eight
+  of twelve** items ENGAGED by its own count, plus D-329's four conditions on top. Both
+  reviews are owed at IMPL, and the coverage rule binds each.
+- ~~**TWO SHIPPED-INSTRUMENT DEFECTS ARE OPEN AGAINST `tools/baseline_snapshot.sh`.**~~
+  **BOTH CLOSED, AND THE FIX IS REVIEWED.** They were found in passing by M4's round-3
+  red team and owned by no matrix row (D-324): a SPACE in a caller-named `--corpus` path
+  reaching the record unescaped at exit 0 under the COMPLETE kind token, breaking the
+  record's own leading-tokens parse rule and shifting the digest field; and
+  `crates/pistol-cli/src/report.rs:151-162` rewriting control characters to `?` in the
+  engine's handshake while the script wrote its own copy raw. **The first is fixed at
+  `b067d47`** — which also replaced `basename` with `${X##*/}`, which is why round 4's
+  measurements are pinned there — **and the second at `a102c6a`**, where the engine now
+  refuses a config path its handshake cannot echo verbatim. **A fresh-context REVIEW-impl
+  covering both as ONE defect class PASSED at `84ff8d7`**, 0 BLOCKING / 0 MAJOR / 3
+  MINOR (`docs/experiments/wp15b_trackC_REVIEW_impl.md`), and it is a real pass rather
+  than a restated one: the reviewer restored the pre-fix sources and re-ran both tests,
+  then **mutated both guards to refuse everything and confirmed each test's CONTROL half
+  kills the mutant**, so neither control is vacuous.
+- **THE THREE MINORS FROM THAT REVIEW-impl ARE OPEN** (F1, F2, F3 of
+  `docs/experiments/wp15b_trackC_REVIEW_impl.md`), and they were deliberately NOT
+  repaired in the reviewed commit, because an amendment reopens the review however small
+  the diff. **F1** — the usage block `b067d47` added asserts a universal that one command
+  falsifies: it says every way of not writing a record is *"a 1 with a named reason on
+  stderr"*, and a scratch failure is a fourth way with no named reason (`WORK="$(mktemp
+  -d)"` carries no `|| fail`), which is `SHELL_CHECKLIST` item 12 obligation 2's own
+  defect asserted against in the paragraph citing item 12. **F2** — the `$CONFIG` comment
+  states the guard's criterion as *"caller-named"*, which is not the criterion the loop
+  applies (`$OPENINGS` is equally not caller-named and IS guarded); the real criterion is
+  *"reaches the record as a whitespace-delimited field"*. **F3** — the same usage block
+  says a test driving the script *"asserts the CODE and not merely `!success`"*; the new
+  test does, but `Run::refusal()` does not, and it backs 18 of the suite's 19 refusal
+  assertions. **F1 bears directly on D-329's condition 4**, which owes an item-12
+  sentence for the config refusal in this same block.
 - **§8.4's M3 WITNESS IS NOT BUILT** (MAJOR 5). Until u-rev 6 the cell said BUILT and
   named an abstract window-empties shape from `crates/pistol-solver/src/cover.rs`'s
   module doc comment — no coordinates, no stone counts, no parity, no legality, no pin.
@@ -1378,36 +1826,61 @@ carried, not closed.
   round-1 F4, which named S-E's primary mechanism by name — applies to S-M as it
   applied to S-E. **`tools/staged_soundness_check.sh` cannot be specified for this gate
   until that decision is made**, and the other three named gates are unaffected.
+  **RE-CHECKED AT u-rev 7 AND STILL OPEN — AND IT IS NOT THE SEAM D-329 SELECTED.** Two
+  different decisions in this unit are called a seam: this one is *how a TEST observes
+  the emitted set*; D-329's is *how `tools/baseline_snapshot.sh` is told which CONFIG to
+  run under*. **No matrix has ever been authored for THIS one**, and no ADR line
+  decides it.
 - **S-E's SECOND HALF — the always-on `assert!` in `visit` — IS NOT SELECTED AND NOT
   REJECTED.** S-M is a criterion over the emitted set alone. §8.4 still registers M8
   against it and U4-T still names the test; **no attacked matrix row carries it at
-  u-rev 6**, and IMPL may not read it as registered.
+  u-rev 7 either**, and IMPL may not read it as registered. *(Re-checked against the
+  log at u-rev 7: D-329 decides the snapshot's config seam, not this.)*
 - **THE GATE'S PER-CI COST IS UNGROUNDED AT ITS DOMINANT TERM.** U4-M's ESTIMATED
   40-90 s was priced on S-E's traversal plus the reduced S-C's MEASURED 17.89 s; S-E
   fell, and the composite row that carried the reduced S-C (S-J) fell with it. D-323
   does not re-price the gate — the selection record says this figure is CARRIED from
   here and is not that round's measurement — so a re-derivation for S-M is owed.
 - **`configs/instrument_staged_v0.toml` DOES NOT EXIST**, so the snapshot's AFTER is
-  blocked independently of M4's seam and no row of any M4 revision produces it (D-324;
-  MEASURED at u-rev 6, output at U4-M item 1).
+  blocked independently of M4's seam and no row of any M4 revision produces it — **round
+  4's three rows included** (D-324; MEASURED at u-rev 6 and RE-TAKEN at u-rev 7, output
+  at U4-M item 1). **D-329 corrects D-324's framing of this blocker as an N-M cost: it
+  blocks every axis-A row equally.**
+- **THE SNAPSHOT'S CONFIG SEAM IS SELECTED AND NOT BUILT.** N-E is the selected shape
+  (D-329) and no line of it is written: MEASURED at `8690ad6`,
+  `tools/baseline_snapshot.sh:182` still reads `CONFIG="configs/instrument_v0.toml"` and
+  the script takes no `--config` argument of its own. **A SELECTION IS NOT AN
+  IMPLEMENTATION**, and nothing in this unit may be read as though the Staged snapshot
+  were takeable.
 - **ITEM 15's BLOCKAGE IS UNRECONCILED BETWEEN A LANDED ADR AND A LANDED REVIEW, and
-  it is the architect's.** D-324 (and D-318 before it) states that U4-Z item 15 stays
-  blocked on the snapshot's config seam. MAJOR 4 of `wp15b_U4_REVIEW.md` observes that
-  item 15's subject — the two TACTICAL staged configs and THE TACTICAL SUITE gate — has
-  no evident dependency on the *snapshot's* seam, and that on this document's own
-  evidence item 15 may not be blocked at all. This unit records the ADR's ruling as
-  binding and the disagreement as open; it overrules neither.
-- **D-316 CARRIES A FALSE DIAGNOSIS AND `docs/decisions.md` IS NOT THIS UNIT'S TO
-  EDIT.** D-316 says *"the cell counted only the sites outside the unit and missed three
-  inside it"*; the cell counted item 15, which is inside the unit (MINOR 8, corrected in
-  this unit's own copy above). The COUNT SIX is correct and there is no seventh site.
-  **The residual is the architect's to amend, in an append-only log, by a new line and
-  not by an edit.**
-- **No REVIEW-design has run against this text at THIS u-rev** (U4-A). u-rev 5 was
-  reviewed and FAILED (`docs/experiments/wp15b_U4_REVIEW.md`, pinned revision
-  `35aab95`, 3 BLOCKING / 3 MAJOR / 5 MINOR); u-rev 6 is the repair of that report
-  plus the two matrix folds, and a review of a superseded revision does not transfer.
+  it is the architect's. THE SELECTION DID NOT RESOLVE IT.** D-324 (and D-318 before it)
+  states that U4-Z item 15 stays blocked on the snapshot's config seam. MAJOR 4 of
+  `wp15b_U4_REVIEW.md` observes that item 15's subject — the two TACTICAL staged configs
+  and THE TACTICAL SUITE gate — has no evident dependency on the *snapshot's* seam, and
+  that on this document's own evidence item 15 may not be blocked at all. **D-329
+  selects that seam and changes neither side of the disagreement**: the blockage's
+  ground narrows from *"no seam is selected"* to *"the seam is selected and not built"*,
+  and the question MAJOR 4 raises — whether item 15 depends on that seam at all — is
+  untouched by which option was chosen. This unit records the ADR's ruling as binding
+  and the disagreement as open; it overrules neither.
+- ~~**D-316 CARRIES A FALSE DIAGNOSIS AND `docs/decisions.md` IS NOT THIS UNIT'S TO
+  EDIT.**~~ **CLOSED BY `D-325`, LANDED AT `81180b8` — AFTER u-rev 6, AND THIS UNIT IS
+  CATCHING UP TO IT AT u-rev 7.** D-316 said *"the cell counted only the sites outside
+  the unit and missed three inside it"*; the cell counted item 15, which is inside the
+  unit (MINOR 8 of `wp15b_U4_REVIEW.md`, corrected in this unit's own copy above).
+  **D-325 is the correction, and it took exactly the remedy this bullet asked for — a
+  NEW LINE in an append-only log, not an edit.** It records that the cell *"counted one
+  inside site and missed three others"*, that **the COUNT SIX stands** with no seventh
+  site, and that D-316's selection, its residual and its flip clause are all unaffected.
+  Nothing here is owed to the architect any more.
+- **No REVIEW-design has run against this text at THIS u-rev** (U4-A). **u-rev 6 was
+  reviewed and FAILED** (`docs/experiments/wp15b_U4_REVIEW_urev6.md`, pinned revision
+  `7358a07`, **1 BLOCKING / 2 MAJOR / 4 MINOR**), as u-rev 5 had before it
+  (`docs/experiments/wp15b_U4_REVIEW.md`, `35aab95`, 3 BLOCKING / 3 MAJOR / 5 MINOR).
+  **u-rev 7 is the repair of the u-rev 6 report plus the M4 axis-A selection fold**, and
+  a review of a superseded revision does not transfer — an amendment reopens the review,
+  however small the diff.
 
 ---
 
-*U4, u-rev 6. A carve, not a revision. **M3 IS SELECTED AND M4 IS NOT.** M3: attacked once with every option fallen (D-317), then re-authored over thirteen rows, attacked again, and **S-M SELECTED at `af8082a` (D-323)** — marked DEPENDS-OPEN-THEORY under D-321, with five registered conditions, an owed S-N flip trigger and an OPEN seam. M4: attacked THREE times over three authored fields; options survive but the field has two orthogonal axes scored as one, so nothing is selected and §9's slot stays SELECTION OPEN (D-324). B3 CLOSED at u-rev 2; MAJOR 8's reachability half CLOSED at u-rev 3 for M4 and M6 and NOT for M3, whose witness is not built. IMPL has not started, and this u-rev has not been reviewed.*
+*U4, u-rev 7. A carve, not a revision. **BOTH MATRICES NOW HAVE A SELECTION AND NEITHER IS BUILT.** M3: attacked once with every option fallen (D-317), then re-authored over thirteen rows, attacked again, and **S-M SELECTED at `af8082a` (taken at `809b5db`; D-323)** — marked DEPENDS-OPEN-THEORY under D-321, with five registered conditions, an owed S-N flip trigger and an OPEN SEAM that no selection has touched. M4: stopped three times over three authored fields (D-318, then D-324's RECORDED TIE, whose cause was two orthogonal axes scored as one), then a fourth round scoped to **AXIS A** alone with N-Q authored into it — attacked at `7e0a328`, its own recommendation killed by that attack, **N-E SELECTED (landed `d56a898`; D-329)** after N-M's elimination on registered ground and rung (a) found silent, with four conditions riding and its strongest surviving attack ASSEMBLED rather than quoted. Axis B is not reopened. B3 CLOSED at u-rev 2 and **its residual DISPOSED OF by D-320's waiver, whose flip clause — a gate-naming defect — this unit is where it would fire**; D-316's false diagnosis CLOSED in the log by D-325. MAJOR 8's reachability half CLOSED at u-rev 3 for M4 and M6 and NOT for M3, whose witness is not built. **IMPL has not started, and this u-rev has not been reviewed; u-rev 6's review FAILED (1 BLOCKING / 2 MAJOR / 4 MINOR)** and this u-rev is its answer.*
