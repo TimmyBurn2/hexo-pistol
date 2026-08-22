@@ -657,26 +657,53 @@ const CARVE_DOCS: &[&str] = &[
 const CARVE_MARKER: &str =
     "<!-- WP-1.5b CARVE MEMBER — read by crates/pistol-solver/tests/wp15b_census.rs -->";
 
+/// How far into a document the carve marker may sit and still be its HEAD
+/// marker. MEASURED: every one of the six members carries it on line 3, and the
+/// nearest quotation of it in any other document is at line 304.
+const CARVE_MARKER_HEAD_LINES: usize = 5;
+
 /// Does this document CARRY the marker, as opposed to QUOTING it?
 ///
-/// A carve member carries `CARVE_MARKER` as a LINE OF ITS OWN — which is what the
-/// constant's own doc comment above has always said it is. The test asked
-/// `text.contains(..)` instead, and a substring match cannot tell a member from a
-/// document that prints the marker as evidence.
+/// A carve member carries `CARVE_MARKER` as a LINE OF ITS OWN, IN ITS HEAD —
+/// which is what the constant's own doc comment above has always said it is.
 ///
-/// **That is not hypothetical and it is not old.** A fresh-context DECISION-RED-TEAM
-/// pasted this very constant's definition into its report to prove a point about
-/// census membership; the report landed under `docs/experiments/`, the substring
-/// matched inside the pasted source line, and the pin went RED declaring two
-/// argument documents to be carved design units. The reviewer of a sibling unit hit
-/// the same red gate and had to isolate it before it could report on its own
-/// subject. A pin whose membership rule is wider than its own definition turns
-/// every document that discusses the carve into a member of it.
+/// **The rule has now been narrowed twice, by two different reports, and the
+/// second narrowing is the one that matters.** The test first asked
+/// `text.contains(..)`: a fresh-context DECISION-RED-TEAM pasted the constant's
+/// Rust definition into its report to prove a point about census membership, the
+/// substring matched inside the pasted source line, and the pin went RED
+/// declaring two argument documents to be carved design units. The fix was line
+/// equality — strictly tighter, and it refuses nothing the six real members do,
+/// because a Rust source line is indented and quoted and is therefore not equal
+/// to the marker.
 ///
-/// Line equality is strictly tighter than `contains` and refuses nothing the six
-/// real members do: each carries the marker on its own line, third line of the file.
+/// **THE NEXT RED TEAM DEFEATED THAT ONE IMMEDIATELY, AND NOT BY BEING CLEVER.**
+/// `docs/experiments/matrix_META1_REDTEAM.md` K5 attacks the proposition that a
+/// deletion-only strip can be applied to line 3 of the subject documents, and to
+/// show what is on line 3 it pastes the OUTPUT of `sed -n '3p'` into a fenced
+/// block. Command output of a bare line IS that bare line: line-equal, at line
+/// 304, inside a fence, in a document that is manifestly not a carve member. The
+/// pin went red on landing the report — which is to say the previous fix was
+/// scoped to the SHAPE the first instance happened to take (a quoted Rust
+/// string) rather than to the property that actually distinguishes a member.
+///
+/// **The property is POSITION, and it always was.** The marker is a HEAD
+/// comment: a machine consumer reads it to answer "is this file a carve member",
+/// and a file answers that at its top or not at all. A quotation of it appears
+/// wherever the argument needed it, which is in the body. So membership is the
+/// marker on its own line within the head, and the allowance above is measured
+/// rather than guessed — two lines of slack over every real member, against a
+/// nearest quotation two hundred and ninety-nine lines further down.
+///
+/// This is strictly tighter than line equality and refuses nothing the six real
+/// members do. What it does NOT do is make quoting safe in general: a document
+/// that put the marker alone on one of its own first five lines would be a
+/// member by this rule, and that is a shape no report has ever had and one this
+/// rule would rather be red about than silently admit.
 fn carries_marker(text: &str) -> bool {
-    text.lines().any(|line| line.trim() == CARVE_MARKER)
+    text.lines()
+        .take(CARVE_MARKER_HEAD_LINES)
+        .any(|line| line.trim() == CARVE_MARKER)
 }
 
 /// Where the carved documents live.
@@ -1011,6 +1038,48 @@ fn a_document_quoting_the_carve_marker_is_not_a_carve_member() {
     assert!(
         !carries_marker(&quoting),
         "but quoting the marker inside a source line does not make a report a carve member"
+    );
+
+    // THE SECOND INSTANCE, and the one line equality could not refuse: the
+    // marker as the bare OUTPUT of `sed -n '3p'`, inside a fenced block, in the
+    // body of a report arguing about what sits on line 3. Command output of a
+    // bare line IS that bare line, so it is line-equal — and it is at line 304,
+    // which is what the head rule answers.
+    // (`docs/experiments/matrix_META1_REDTEAM.md` K5, which turned this pin red
+    // on landing.)
+    let mut pasting = String::from("# A red-team report\n\n**SUBJECT REVISION.**\n\n");
+    for _ in 0..40 {
+        pasting.push_str("Argument, at length, about the head block.\n");
+    }
+    pasting.push_str(&format!(
+        "```\n$ sed -n '3p' docs/experiments/U4_soundness_instrument.md\n{CARVE_MARKER}\n```\n"
+    ));
+    assert!(
+        pasting.lines().any(|line| line.trim() == CARVE_MARKER),
+        "the pasting document really does carry the marker as a WHOLE LINE — \
+         otherwise this test would pass for the wrong reason, and line equality \
+         would still have been enough"
+    );
+    assert!(
+        !carries_marker(&pasting),
+        "but pasting command output of the marker into a report's BODY does not \
+         make the report a carve member"
+    );
+
+    // The head allowance is a bound, not a door: the marker below it is not a head
+    // marker however few lines separate them.
+    let just_past = format!("{}{CARVE_MARKER}\n", "x\n".repeat(CARVE_MARKER_HEAD_LINES));
+    assert!(
+        !carries_marker(&just_past),
+        "the marker one line past the head allowance is not a head marker"
+    );
+    let just_inside = format!(
+        "{}{CARVE_MARKER}\n",
+        "x\n".repeat(CARVE_MARKER_HEAD_LINES - 1)
+    );
+    assert!(
+        carries_marker(&just_inside),
+        "and the last line of the head allowance still is one"
     );
 
     // Prose that names the marker mid-sentence is not a member either.
