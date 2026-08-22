@@ -657,6 +657,28 @@ const CARVE_DOCS: &[&str] = &[
 const CARVE_MARKER: &str =
     "<!-- WP-1.5b CARVE MEMBER — read by crates/pistol-solver/tests/wp15b_census.rs -->";
 
+/// Does this document CARRY the marker, as opposed to QUOTING it?
+///
+/// A carve member carries `CARVE_MARKER` as a LINE OF ITS OWN — which is what the
+/// constant's own doc comment above has always said it is. The test asked
+/// `text.contains(..)` instead, and a substring match cannot tell a member from a
+/// document that prints the marker as evidence.
+///
+/// **That is not hypothetical and it is not old.** A fresh-context DECISION-RED-TEAM
+/// pasted this very constant's definition into its report to prove a point about
+/// census membership; the report landed under `docs/experiments/`, the substring
+/// matched inside the pasted source line, and the pin went RED declaring two
+/// argument documents to be carved design units. The reviewer of a sibling unit hit
+/// the same red gate and had to isolate it before it could report on its own
+/// subject. A pin whose membership rule is wider than its own definition turns
+/// every document that discusses the carve into a member of it.
+///
+/// Line equality is strictly tighter than `contains` and refuses nothing the six
+/// real members do: each carries the marker on its own line, third line of the file.
+fn carries_marker(text: &str) -> bool {
+    text.lines().any(|line| line.trim() == CARVE_MARKER)
+}
+
 /// Where the carved documents live.
 fn carve_dir() -> String {
     format!("{}/../../docs/experiments", env!("CARGO_MANIFEST_DIR"))
@@ -856,7 +878,7 @@ fn the_pins_document_list_is_the_set_of_carved_documents_on_disk() {
         .filter_map(Result::ok)
         .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "md"))
         .filter(|entry| {
-            std::fs::read_to_string(entry.path()).is_ok_and(|text| text.contains(CARVE_MARKER))
+            std::fs::read_to_string(entry.path()).is_ok_and(|text| carries_marker(&text))
         })
         .map(|entry| entry.file_name().to_string_lossy().into_owned())
         .collect();
@@ -948,4 +970,54 @@ fn wp15b_census_reproduces_the_registered_populations() {
         "the `Minimal` row is taken at 6 of the 24 roots"
     );
     assert_eq!(impossible, 1, "`Cover::Impossible` at exactly one root");
+}
+
+/// A DOCUMENT THAT QUOTES THE CARVE MARKER IS NOT A CARVE MEMBER, AND A MEMBER IS
+/// STILL A MEMBER.
+///
+/// The membership rule is the one thing standing between `CARVE_DOCS` and a
+/// green-over-unread pin, so it needs a test of its own rather than being exercised
+/// only through the six files that happen to be on disk. Both directions are
+/// asserted here, because a rule tightened until it admits nothing would pass the
+/// negative half alone — and the equality in
+/// `the_pins_document_list_is_the_set_of_carved_documents_on_disk` would then be an
+/// equality between two empty sets, which that test's own comment says certifies
+/// nothing.
+#[test]
+fn a_document_quoting_the_carve_marker_is_not_a_carve_member() {
+    // How a member carries it: its own line, with the surrounding document.
+    let member = format!("# A carved unit\n\n{CARVE_MARKER}\n\nBody.\n");
+    assert!(
+        carries_marker(&member),
+        "a document carrying the marker on its own line IS a member"
+    );
+    // Leading whitespace is still carrying it — markdown admits indented HTML
+    // comments, and a member is not un-membered by an editor's indentation.
+    assert!(
+        carries_marker(&format!("  {CARVE_MARKER}\n")),
+        "an indented marker line still carries it"
+    );
+
+    // How a report QUOTES it: inside a fenced block, as the Rust source line that
+    // defines it. This is the exact shape that turned the pin red.
+    let quoting = format!(
+        "# A red-team report\n\n```\n$ sed -n '656,659p' crates/pistol-solver/tests/wp15b_census.rs\nconst CARVE_MARKER: &str =\n    \"{CARVE_MARKER}\";\n```\n"
+    );
+    assert!(
+        quoting.contains(CARVE_MARKER),
+        "the quoting document really does contain the marker as a substring — \
+         otherwise this test would pass for the wrong reason"
+    );
+    assert!(
+        !carries_marker(&quoting),
+        "but quoting the marker inside a source line does not make a report a carve member"
+    );
+
+    // Prose that names the marker mid-sentence is not a member either.
+    assert!(
+        !carries_marker(&format!(
+            "The pin looks for `{CARVE_MARKER}` in each file.\n"
+        )),
+        "naming the marker in a sentence does not make that sentence a member"
+    );
 }
