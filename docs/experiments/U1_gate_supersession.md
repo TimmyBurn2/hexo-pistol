@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 1.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
+**u-rev 2.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
 (revision 7, never reviewed, CLOSED by D-309) under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`; no line of the superseded
@@ -26,9 +26,16 @@ document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
 
-**THIS UNIT HAS NOT BEEN REVIEWED.** Its content survived attack as part of a
-document whose REVIEW-design failed five times; the carve is not a review and
-does not transfer one. §4's own matrix M0 was attacked at `ec8f7fb` and FELL to
+**THIS UNIT HAS BEEN REVIEWED, AT u-rev 1, AND FAILED.**
+`docs/experiments/wp15b_U1_REVIEW.md`, pinned at `38f21b9`, returned FAIL (1
+BLOCKING, 0 MAJOR, 1 MINOR) against u-rev 1 of this document. This u-rev is the
+repair answering that review: BLOCKING finding 1 (stale MEASURED test counts
+in §4.1 and §4.2) and MINOR finding 2 (the lineage table silently resolving an
+unresolved SHA dispute) are both addressed below, at the sites the review
+named. Per CLAUDE.md's label discipline, this repair bumps the u-rev, and the
+repaired text is itself unreviewed until a fresh REVIEW-design runs against
+u-rev 2 — the prior FAIL does not transfer as a PASS, only the findings it
+raised are answered. §4's own matrix M0 was attacked at `ec8f7fb` and FELL to
 option (f) — see U1-A.
 
 Theory citations are calculus IDs from `docs/research/threat_calculus_v1.md`
@@ -45,6 +52,17 @@ the disagreement is an ADR line.
 | REVIEW-design ×5 | revisions 2–6, `182f389` `7ad466b` `f762c9a` `64af80c` `2d07ff6` | all FAIL, none on M0's merits; no round reopened M0 |
 | REVIEW-design | revision 7, `6feb40a` | **FAIL** — 7 BLOCKING, 7 MAJOR, 9 MINOR. **B6 is M0's** and is discharged below; no other finding is §4's |
 | DECISION-RED-TEAM, restructure | matrix at `eea480b` | F10: option B's cost cell called M0 clean against the matrix's own Facts block. **M0 was not clean — B6 was live.** It is now not live |
+
+**"Revision 6" above is `2d07ff6` — an unresolved dispute, disclosed, not
+settled here.** `wp15b_design_rev7_REVIEW.md` MAJOR finding 11 recorded that
+the superseded document was self-contradictory about which SHA revision 6 is:
+its own §16 cited `9c068a0` for the revision-6 REVIEW-design round, while its
+header listed `2d07ff6` (the two differ by 4 lines, §0 row 8 and §8.1), and
+that reviewer explicitly declined to pick a side. The row above uses `2d07ff6`
+(the header's SHA). Finding 11's dispute is not discharged anywhere in the
+tree and is not this unit's to resolve — U1-A states which SHA this row uses
+and that the dispute stands, and takes no position on which of `2d07ff6` /
+`9c068a0` is the correct referent for "revision 6."
 
 **What §4 owes that no round has given it:** a REVIEW-design of THIS text at
 THIS u-rev. That review is outstanding and this unit is not landable while it is.
@@ -72,15 +90,50 @@ the exit 1 the expiry predicts.
 
 **MEASURED, and it is what killed revision 1's option:** the gate SCRIPTS do not
 expire. Both take the workspace root and the subject as ARGUMENTS. Of
-`solver_edge_check_tests.rs`'s **9** tests and `solver_link_check_tests.rs`'s
-**19** (revision 1 said 8 and 20 — transposed), exactly ONE each is an assertion
+`solver_edge_check_tests.rs`'s **11** tests and `solver_link_check_tests.rs`'s
+**19** (revision 1 said 8 and 20 — transposed; this count was itself stale at
+9/19 as of u-rev 1, per `docs/experiments/wp15b_U1_REVIEW.md`'s BLOCKING
+finding 1 against `38f21b9` — the edge count rose from 9 to 11 when B6's fix
+(§4.4) added two tests,
+`a_colour_forcing_environment_leaves_no_escape_sequence_in_the_printed_tree`
+and
+`a_symlinked_workspace_root_is_still_substituted_out_of_the_printed_tree`,
+without this line being updated to match), exactly ONE each is an assertion
 about this workspace. What expires is two test functions.
+
+**RE-MEASURED at this u-rev** (working tree, HEAD `4a23677`, unchanged from
+the review's pinned `38f21b9` for every file this claim touches):
+
+```
+$ cargo test -p pistol-cli --test solver_edge_check_tests -- --list 2>&1 | tail -3
+the_shipped_workspace_has_no_normal_edge_on_the_solver: test
+
+11 tests, 0 benchmarks
+```
+
+```
+$ cargo test -p pistol-cli --test solver_link_check_tests -- --list 2>&1 | tail -3
+no_solver_source_reaches_any_shipped_binary_of_this_workspace: test
+
+19 tests, 0 benchmarks
+```
+
+```
+$ grep -n "repo_root()" crates/pistol-cli/tests/solver_edge_check_tests.rs \
+                          crates/pistol-cli/tests/solver_link_check_tests.rs
+crates/pistol-cli/tests/solver_edge_check_tests.rs:288:    let ran = edge_check(&repo_root(), "pistol-solver");
+crates/pistol-cli/tests/solver_link_check_tests.rs:735:    let ran = link_check(&repo_root(), "crates/pistol-solver");
+```
+
+11 and 19, confirming the review's reproducer exactly; exactly one `repo_root()`
+call in each file, confirming "exactly ONE each is an assertion about this
+workspace" is still true.
 
 ### 4.2 MATRIX M0 — the two live-workspace assertions
 
 | Option | What it does | Cost | Failure modes |
 |---|---|---|---|
-| (a) RETIRE both | Delete both live assertions; keep both scripts and their 26 scratch tests | **MEASURED** 2 test functions, 0 lines of `tools/` | Loses the standing guard against an accidental edge in a world where a deliberate one exists |
+| (a) RETIRE both | Delete both live assertions; keep both scripts and their **28** scratch tests (**DERIVED**, MEASURED (11−1)+(19−1) per §4.1's re-measurement above; the superseded "26" was §4.1's since-corrected "9" left un-propagated, per `wp15b_U1_REVIEW.md` BLOCKING finding 1) | **MEASURED** 2 test functions, 0 lines of `tools/` | Loses the standing guard against an accidental edge in a world where a deliberate one exists |
 | (b) INVERT both as declared lists | Both become "linked exactly where declared" | Edge test-only; link needs `<workspace>` substitution in the script | D-282's caveat: a list maintained by memory (D-275's lesson) |
 | (c) INVERT the edge, RETIRE the link | Edge becomes "direct dependents are exactly {`pistol-search`}" | **MEASURED** 0 lines of `tools/` | Still a memory list, and pins only depth 1 |
 | (d) KEEP BOTH RED, marked expected-fail | `#[ignore]`, or `assert!(!status.success())` | Trivial | `assert!(!success)` is satisfied by exit **2** — the VOID code — which is the class `assert_code` exists to kill (D-299(2)). *Rejected, but see §4.4: revision 1 rejected the option's weakest formulation and never considered `assert_code(&ran, 1, …)`, which is not satisfied by exit 2* |
@@ -271,4 +324,6 @@ This unit has no governed run.
 
 ---
 
-*U1, u-rev 1. A carve, not a revision. IMPL has not started.*
+*U1, u-rev 2. u-rev 1 was a carve, not a revision; u-rev 2 is a repair of
+u-rev 1's REVIEW-design FAIL (`docs/experiments/wp15b_U1_REVIEW.md`, pinned
+`38f21b9`). IMPL has not started.*
