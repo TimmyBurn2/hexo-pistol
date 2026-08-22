@@ -23,6 +23,16 @@
 # tail of fixed depth; it reads the CLOSING BLOCK, and it refuses a foot whose
 # label is not resolvable rather than reporting nothing.
 #
+# AND THE SECOND SPELLING WAS WORSE THAN THE FIRST. Reading "the block after the
+# last line starting with an asterisk and a capital" fixed U4 and opened an
+# EXIT-0-WRONG-ANSWER: a document whose true closing paragraph is STALE, followed
+# by a trailing italic aside naming the HEAD's u-rev, reported `foot=u-rev 4 OK`
+# and exited 0 — the defect this gate exists for, passing, in the one code path
+# whose whole job is to prevent it (REVIEW-impl BLOCKING-1 against `908a2f7`,
+# reproduced). So the unit is neither a tail nor a paragraph but the CLOSING
+# REGION: everything below the document's last `---` rule, which must name
+# exactly one u-rev. MEASURED: all six subject documents name exactly one there.
+#
 # THE FOLD LAW IS WHAT MAKES THE FOOT RESOLVABLE (docs/decisions.md D-331). A
 # closing line that carries the u-rev LABEL and nothing else cannot go stale
 # against the head independently of the head. A closing line that also recounts
@@ -45,6 +55,14 @@
 #   2. THE GROUP-COUNT LINE — `**U2 (20):**` introducing a backtick-quoted list.
 #      The stated number must equal the number of names in the group. Four live
 #      instances.
+#   3. THE SUMMANDS AGAINST THE TABLE ABOVE THEM. Where a summand line sits under
+#      a table with one data row per summand, each summand must equal what its
+#      row enumerates. Five live instances, all in `section_owner_table.md` §7.
+#      THIS IS THE ONLY CHECK THAT REACHES §7 AT ALL, whose owners' items live in
+#      table CELLS rather than in a backtick group — and without it the other two
+#      checks are a property the defect PRESERVES, since a row that loses an item
+#      leaves both the arithmetic and the heading untouched (REVIEW-impl MAJOR-2,
+#      reproduced).
 #
 # NOT VACUOUS, AND MEASURED SO. CLAUDE.md forbids a criterion that the defect it
 # names cannot falsify. Run against `1f834ca`, the revision before this round's
@@ -128,86 +146,131 @@ trap 'rc=$?; rm -rf "$WORK"; exit "$rc"' EXIT
 # copy.
 
 cat >"$WORK/extract.awk" <<'AWKEOF'
-BEGIN { head = ""; headline = 0; sum_seen = 0; group_seen = 0; heading_n = ""; footstart = 0 }
-
-# The governing heading, for the SUM form. Reset at every heading so a summand
-# line is only ever paired with the heading it sits under.
-/^#+ / {
-	heading_n = ""
-	if (match($0, /the [0-9]+ /)) heading_n = substr($0, RSTART + 4, RLENGTH - 5)
-}
-
-# CHECK A, the head label. FIRST match only: the head is the document's own
-# u-rev, and later prose mentioning a u-rev is not it.
-head == "" && /^\*\*u-rev [0-9]+/ {
-	s = $0
-	sub(/^\*\*u-rev /, "", s)
-	sub(/[^0-9].*$/, "", s)
-	head = s
-	headline = NR
-}
-
-# CHECK B1, the summand line.
-/^[0-9]+( \+ [0-9]+)+ = \*\*[0-9]+\*\*/ {
-	stated = $0
-	sub(/^.* = \*\*/, "", stated)
-	sub(/\*\*.*$/, "", stated)
-	terms = $0
-	sub(/ = .*$/, "", terms)
-	n = split(terms, part, / \+ /)
-	total = 0
-	for (i = 1; i <= n; i++) total += part[i] + 0
-	printf "SUM %d %d %d %s\n", NR, total, stated + 0, (heading_n == "" ? "-" : heading_n)
-	sum_seen++
-}
-
-# CHECK B2, the group-count line. The group runs to the next blank line.
-/^\*\*[A-Za-z0-9 ]+ \([0-9]+\):\*\*/ {
-	if (g_label != "") emit_group()
-	g_label = $0
-	sub(/^\*\*/, "", g_label)
-	sub(/ \(.*$/, "", g_label)
-	g_stated = $0
-	sub(/^\*\*[A-Za-z0-9 ]+ \(/, "", g_stated)
-	sub(/\):\*\*.*$/, "", g_stated)
-	g_line = NR
-	g_ticks = gsub(/`/, "`")
-	group_seen++
-	next
-}
-g_label != "" && /^[[:space:]]*$/ { emit_group() }
-g_label != "" { g_ticks += gsub(/`/, "`") }
-
-function emit_group() {
-	printf "GROUP %d %s %d %d\n", g_line, g_label, g_stated + 0, int(g_ticks / 2)
-	g_label = ""
-	g_ticks = 0
-}
-
-# CHECK A, the closing block. THE FOOT IS A BLOCK, NOT A LINE — three of the six
-# documents wrap it and one is a single very long line behind a rule, which is
-# how the loop this gate is built from missed U4 entirely.
-/^\*[A-Z]/ { footstart = NR; foot = $0; infoot = 1; next }
-infoot == 1 { if ($0 ~ /[^[:space:]]/) foot = foot " " $0 }
+# Every line is buffered and the work is done in END. A streaming pass carried
+# state across paragraph boundaries — `infoot` was set and never reset, so the
+# "closing block" became whatever followed the LAST asterisk-uppercase line in
+# the file, and a trailing italic aside naming a DIFFERENT u-rev masked a stale
+# foot at exit 0 (REVIEW-impl BLOCKING-1 against 908a2f7, reproduced). Buffering
+# costs nothing at these sizes and removes the class.
+{ L[NR] = $0 }
 
 END {
-	if (g_label != "") emit_group()
-	printf "HEAD %s %d\n", (head == "" ? "NONE" : head), headline
-	if (footstart == 0) {
-		printf "FOOTBAD 0 0\n"
-	} else {
-		rest = foot; k = 0; first = ""
-		# match(), not a greedy sub(): `sub(/^.*u-rev /, ...)` takes the LAST
-		# occurrence, which on U4's repaired foot ("u-rev 8 … each u-rev of")
-		# silently yielded an EMPTY label. Measured, during this gate's own build.
-		while (match(rest, /u-rev [0-9]+/)) {
-			tok = substr(rest, RSTART + 6, RLENGTH - 6)
-			if (k == 0) first = tok
-			k++
-			rest = substr(rest, RSTART + RLENGTH)
+	n = NR
+	head = ""; headline = 0; sum_seen = 0; group_seen = 0
+
+	# --- CHECK A, the head label ---------------------------------------------
+	# FIRST match only: the head is the document's own u-rev, and later prose
+	# mentioning a u-rev is not it.
+	for (i = 1; i <= n && head == ""; i++) {
+		if (L[i] ~ /^\*\*u-rev [0-9]+/) {
+			s = L[i]
+			sub(/^\*\*u-rev /, "", s)
+			sub(/[^0-9].*$/, "", s)
+			head = s
+			headline = i
 		}
-		if (k == 1) printf "FOOT %s %d\n", first, footstart
-		else printf "FOOTBAD %d %d\n", k, footstart
+	}
+	printf "HEAD %s %d\n", (head == "" ? "NONE" : head), headline
+
+	# --- CHECK A, the CLOSING REGION -----------------------------------------
+	# NOT "the last paragraph", and NOT a tail of fixed depth. The closing region
+	# is everything after the document's LAST horizontal rule, and it must name
+	# exactly ONE u-rev.
+	#
+	# A fixed tail was the first spelling and it missed U4 entirely, whose
+	# closing paragraph is one very long line. "The block after the last
+	# asterisk-uppercase line" was the second and it is worse: a trailing aside
+	# that happens to name the head's u-rev makes a stale foot read as clean, at
+	# exit 0. The REGION is the honest unit — a document says its u-rev once,
+	# below the rule, or it does not say it resolvably at all. MEASURED: all six
+	# subject documents carry exactly one `u-rev <n>` after their last rule.
+	rule = 0
+	for (i = n; i >= 1; i--) {
+		if (L[i] ~ /^---[[:space:]]*$/) { rule = i; break }
+	}
+	if (rule == 0) {
+		printf "FOOTNORULE 0 0\n"
+	} else {
+		k = 0; first = ""; firstline = 0
+		for (i = rule + 1; i <= n; i++) {
+			rest = L[i]
+			# match(), not a greedy sub(): `sub(/^.*u-rev /, ...)` takes the LAST
+			# occurrence, which on U4's repaired closing line silently yielded an
+			# EMPTY label. Measured, during this gate's build.
+			while (match(rest, /u-rev [0-9]+/)) {
+				tok = substr(rest, RSTART + 6, RLENGTH - 6)
+				if (k == 0) { first = tok; firstline = i }
+				k++
+				rest = substr(rest, RSTART + RLENGTH)
+			}
+		}
+		if (k == 1) printf "FOOT %s %d\n", first, firstline
+		else printf "FOOTBAD %d %d\n", k, rule
+	}
+
+	# --- CHECK B, the counted forms ------------------------------------------
+	heading_n = ""
+	for (i = 1; i <= n; i++) {
+		if (L[i] ~ /^#+ /) {
+			heading_n = ""
+			if (match(L[i], /the [0-9]+ /)) heading_n = substr(L[i], RSTART + 4, RLENGTH - 5)
+			continue
+		}
+
+		# B2, the group-count line: `**Label (n):**` over a backtick list.
+		if (L[i] ~ /^\*\*[A-Za-z0-9 ]+ \([0-9]+\):\*\*/) {
+			label = L[i]; sub(/^\*\*/, "", label); sub(/ \(.*$/, "", label)
+			stated = L[i]
+			sub(/^\*\*[A-Za-z0-9 ]+ \(/, "", stated); sub(/\):\*\*.*$/, "", stated)
+			ticks = gsub(/`/, "`", L[i])
+			for (j = i + 1; j <= n && L[j] ~ /[^[:space:]]/; j++) ticks += gsub(/`/, "`", L[j])
+			# THE LABEL IS LAST. The extraction's own character class admits a
+			# space in a label, and a positionally-read record then misaligns
+			# every field after it: a CORRECT two-word group was refused with
+			# `group New states Plan and enumerates 4 4` (REVIEW-impl MAJOR-3,
+			# reproduced). Last field absorbs the spaces.
+			printf "GROUP %d %d %d %s\n", i, stated + 0, int(ticks / 2), label
+			group_seen++
+			continue
+		}
+
+		# B1, the summand line: `3 + 11 + 5 + 2 + 2 = **23**`.
+		if (L[i] ~ /^[0-9]+( \+ [0-9]+)+ = \*\*[0-9]+\*\*/) {
+			stated = L[i]; sub(/^.* = \*\*/, "", stated); sub(/\*\*.*$/, "", stated)
+			terms = L[i]; sub(/ = .*$/, "", terms)
+			parts = split(terms, part, / \+ /)
+			total = 0
+			for (t = 1; t <= parts; t++) total += part[t] + 0
+			printf "SUM %d %d %d %s\n", i, total, stated + 0, (heading_n == "" ? "-" : heading_n)
+			sum_seen++
+
+			# AND THE SUMMANDS AGAINST WHAT THE TABLE ABOVE ENUMERATES. The
+			# arithmetic and the heading agreeing with each other is a property
+			# the named defect PRESERVES — a table row that loses an item leaves
+			# both untouched (REVIEW-impl MAJOR-2, reproduced). `section_owner_table.md`
+			# §7 is reachable only this way: its owners' items live in table
+			# CELLS, not in a backtick group.
+			r = i - 1
+			while (r >= 1 && L[r] !~ /[^[:space:]]/) r--
+			rows = 0
+			while (r >= 1 && L[r] ~ /^\|/) { rowline[rows] = L[r]; rows++; r-- }
+			# Drop the separator and the header it follows, counting only data.
+			data = 0
+			for (t = rows - 1; t >= 0; t--) {
+				if (rowline[t] ~ /^\|[ :|-]+\|[[:space:]]*$/) { data = 0; continue }
+				datarow[data] = rowline[t]; data++
+			}
+			if (data == parts) {
+				for (t = 0; t < data; t++) {
+					cell = datarow[t]
+					sub(/^\|[^|]*\|/, "", cell)   # drop the owner column
+					sub(/\|[[:space:]]*$/, "", cell)
+					gsub(/[[:space:]]/, "", cell)
+					items = (cell == "" ? 0 : split(cell, it, /,/))
+					printf "SUMROW %d %d %d %d\n", i, t + 1, part[t + 1] + 0, items
+				}
+			}
+		}
 	}
 	printf "SEEN %d %d\n", sum_seen, group_seen
 }
@@ -220,39 +283,53 @@ AWKEOF
 # "yes" about the shape the real documents have — a refusal without a control is
 # satisfied by a gate that refuses everything.
 
-seed_head_foot() { # $1 = head u-rev, $2 = foot text
+seed_head_foot() { # $1 = head u-rev, $2 = closing region text
 	printf '# T\n\n**u-rev %s.** A seeded document.\n\n---\n\n*T, %s*\n' "$1" "$2"
 }
 
 SEED_OK="$(seed_head_foot 4 'u-rev 4. The label alone.' | awk -f "$WORK/extract.awk")"
 case "$SEED_OK" in
-*'HEAD 4 3'*) ;;
-*) fail "self-test: the clean seed's head is u-rev 4 and the extraction said: $SEED_OK" ;;
-esac
-case "$SEED_OK" in
-*'FOOT 4 7'*) ;;
-*) fail "self-test: the clean seed's foot is u-rev 4 and the extraction said: $SEED_OK" ;;
+*'HEAD 4 3'*'FOOT 4 7'*) ;;
+*) fail "self-test: the clean seed is head 4 / foot 4 and the extraction said: $SEED_OK" ;;
 esac
 
 SEED_STALE="$(seed_head_foot 4 'u-rev 3. The label alone.' | awk -f "$WORK/extract.awk")"
 case "$SEED_STALE" in
-*'HEAD 4 3'*FOOT' 3 7'*) ;;
+*'HEAD 4 3'*'FOOT 3 7'*) ;;
 *) fail "self-test: a foot one behind the head must extract as 4 and 3; it gave: $SEED_STALE" ;;
 esac
 
 SEED_AMBIG="$(seed_head_foot 4 'u-rev 4. u-rev 3 was a carve.' | awk -f "$WORK/extract.awk")"
 case "$SEED_AMBIG" in
-*'FOOTBAD 2 7'*) ;;
-*) fail "self-test: a foot naming two u-revs must be FOOTBAD 2; it gave: $SEED_AMBIG" ;;
+*'FOOTBAD 2 5'*) ;;
+*) fail "self-test: a closing region naming two u-revs must be FOOTBAD 2; it gave: $SEED_AMBIG" ;;
 esac
 
-# The wrapped closing block, which is the case the loop this gate replaces got
-# wrong. The label sits on the FIRST line of the block and the block runs on.
+# THE MASKING ASIDE — REVIEW-impl BLOCKING-1 against `908a2f7`, reproduced and
+# then pinned here. A stale foot followed by a trailing italic note naming the
+# HEAD's u-rev read as `foot=u-rev 4 OK` at exit 0 under the previous spelling,
+# which located the foot by the LAST asterisk-uppercase line. The closing REGION
+# sees both labels and refuses.
+SEED_MASK="$(printf '# T\n\n**u-rev 4.** x\n\n---\n\n*T, u-rev 3. The label alone.*\n\n*Folded into u-rev 4 of the seed, see its own foot.*\n' |
+	awk -f "$WORK/extract.awk")"
+case "$SEED_MASK" in
+*'FOOTBAD 2 5'*) ;;
+*) fail "self-test: a stale foot masked by a trailing aside must be FOOTBAD 2, not a pass; it gave: $SEED_MASK" ;;
+esac
+
+# The wrapped closing block, and the long single line behind a rule: the two
+# shapes a fixed-depth tail could not both read.
 SEED_WRAP="$(printf '# T\n\n**u-rev 9.** x\n\n---\n\n*T, u-rev 9. What each\nrevision did is the head block'"'"'s, and this\nline restates none of it.*\n' |
 	awk -f "$WORK/extract.awk")"
 case "$SEED_WRAP" in
 *'FOOT 9 7'*) ;;
-*) fail "self-test: a WRAPPED closing block must still resolve to u-rev 9; it gave: $SEED_WRAP" ;;
+*) fail "self-test: a WRAPPED closing block must resolve to u-rev 9; it gave: $SEED_WRAP" ;;
+esac
+
+SEED_NORULE="$(printf '# T\n\n**u-rev 4.** x\n\n*T, u-rev 4.*\n' | awk -f "$WORK/extract.awk")"
+case "$SEED_NORULE" in
+*'FOOTNORULE'*) ;;
+*) fail "self-test: a document with no closing rule has no closing region; it gave: $SEED_NORULE" ;;
 esac
 
 SEED_SUM="$(printf '## 4. S — the 32 test rows\n\n**A (2):** `x`, `y`.\n\n**B (30):** `z`.\n\n20 + 12 = **32**\n' |
@@ -262,10 +339,28 @@ case "$SEED_SUM" in
 *) fail "self-test: a summand line totalling 32 under a heading stating 32 must extract as 32 32 32; it gave: $SEED_SUM" ;;
 esac
 case "$SEED_SUM" in
-*'GROUP 3 A 2 2'*'GROUP 5 B 30 1'*) ;;
-*) fail "self-test: the group form must count backticked names — A 2 2 and B 30 1; it gave: $SEED_SUM" ;;
+*'GROUP 3 2 2 A'*'GROUP 5 30 1 B'*) ;;
+*) fail "self-test: the group form must count backticked names, LABEL LAST; it gave: $SEED_SUM" ;;
 esac
-echo "label_consistency_check: self-test passed — a clean pair, a stale foot, an ambiguous foot, a WRAPPED foot, a summand line and two group counts"
+
+# A MULTI-WORD LABEL — REVIEW-impl MAJOR-3, reproduced. The extraction's own
+# character class admits a space, and the record's label therefore goes LAST so a
+# positionally-read field never absorbs half of it.
+SEED_LABEL="$(printf '**New Plan (2):** `x`, `y`.\n' | awk -f "$WORK/extract.awk")"
+case "$SEED_LABEL" in
+*'GROUP 1 2 2 New Plan'*) ;;
+*) fail "self-test: a two-word group label must land in the record's LAST field; it gave: $SEED_LABEL" ;;
+esac
+
+# THE SUMMANDS AGAINST THE TABLE — REVIEW-impl MAJOR-2, reproduced. Arithmetic
+# and heading agreeing is a property a table row that loses an item PRESERVES.
+SEED_ROWS="$(printf '## 7. S — the 6 items\n\n| Owner | Items |\n|---|---|\n| **A** | 1, 2, 3 |\n| **B** | 4, 5 |\n\n3 + 3 = **6**\n' |
+	awk -f "$WORK/extract.awk")"
+case "$SEED_ROWS" in
+*'SUMROW 8 1 3 3'*'SUMROW 8 2 3 2'*) ;;
+*) fail "self-test: the second summand is 3 against a row enumerating 2 and must be reported; it gave: $SEED_ROWS" ;;
+esac
+echo "label_consistency_check: self-test passed — a clean pair, a stale foot, an ambiguous region, a MASKING ASIDE, a wrapped block, a missing rule, a summand line, a two-word label and a summand against its table row"
 
 # --- the tracked bytes -------------------------------------------------------
 #
@@ -286,6 +381,7 @@ DOCS_SEEN=0
 # any of the parsing the checklist warns about.
 SUM_COUNT=0
 GROUP_COUNT=0
+ROW_COUNT=0
 
 while IFS= read -r doc; do
 	[ -n "$doc" ] || continue
@@ -309,7 +405,7 @@ while IFS= read -r doc; do
 	DOCS_SEEN=$((DOCS_SEEN + 1))
 	RECORDS="$(awk -f "$WORK/extract.awk" "$BLOB")"
 
-	head=""; headline=""; foot=""; footline=""; footbad=""
+	head=""; headline=""; foot=""; footline=""; footbad=""; footnorule=""
 	# ONE pass over the records, split to the WIDEST record's field count. Read
 	# with four fields, a SUM record's fourth and fifth collapse into one and the
 	# arithmetic comparison is then `32` against `32 32` — measured, on this
@@ -332,20 +428,31 @@ while IFS= read -r doc; do
 				BAD=$((BAD + 1))
 			fi
 			;;
-		GROUP)
-			GROUP_COUNT=$((GROUP_COUNT + 1))
+		SUMROW)
+			ROW_COUNT=$((ROW_COUNT + 1))
 			if [ "$f4" != "$f5" ]; then
-				printf 'label_consistency_check: %s:%s group %s states %s and enumerates %s\n' "$doc" "$f2" "$f3" "$f4" "$f5" >&2
+				printf 'label_consistency_check: %s:%s summand %s is %s and the table row above enumerates %s\n' "$doc" "$f2" "$f3" "$f4" "$f5" >&2
 				BAD=$((BAD + 1))
 			fi
 			;;
+		GROUP)
+			GROUP_COUNT=$((GROUP_COUNT + 1))
+			if [ "$f3" != "$f4" ]; then
+				printf 'label_consistency_check: %s:%s group %s states %s and enumerates %s\n' "$doc" "$f2" "$f5" "$f3" "$f4" >&2
+				BAD=$((BAD + 1))
+			fi
+			;;
+		FOOTNORULE) footnorule=1 ;;
 		SEEN) ;;
 		*) fail "$doc: the extraction emitted a record kind this gate does not define: \`$kind\`" ;;
 		esac
 	done <<<"$RECORDS"
 
-	if [ -n "$footbad" ]; then
-		printf 'label_consistency_check: %s: the closing block at line %s names %s u-rev labels; exactly one is resolvable\n' "$doc" "$footline" "$footbad" >&2
+	if [ -n "$footnorule" ]; then
+		printf 'label_consistency_check: %s: no closing `---` rule, so the document has no CLOSING REGION and its u-rev label is not locatable\n' "$doc" >&2
+		BAD=$((BAD + 1))
+	elif [ -n "$footbad" ]; then
+		printf 'label_consistency_check: %s: the closing region below the rule at line %s names %s u-rev labels; exactly one is resolvable\n' "$doc" "$footline" "$footbad" >&2
 		printf 'label_consistency_check: %s: the fold law (docs/decisions.md D-331) is the repair — the closing line carries the LABEL and points at its home for the rest\n' "$doc" >&2
 		BAD=$((BAD + 1))
 	elif [ "$head" = "NONE" ]; then
@@ -370,10 +477,12 @@ EXPECT_DOCS="$(printf '%s\n' "$DOCS" | wc -l)"
 	fail "the subject list names $EXPECT_DOCS documents and $DOCS_SEEN were read"
 [ "$SUM_COUNT" -ge 2 ] ||
 	fail "the summand-line check found $SUM_COUNT lines to check; it had 2 live subjects when it landed, so a smaller number is the EXTRACTION drifting off its subject, not the documents going clean"
+[ "$ROW_COUNT" -ge 5 ] ||
+	fail "the summand-against-table check found $ROW_COUNT row(s) to check; it had 5 live subjects when it landed, so a smaller number is the EXTRACTION drifting off its subject, not the documents going clean"
 [ "$GROUP_COUNT" -ge 4 ] ||
 	fail "the group-count check found $GROUP_COUNT groups to check; it had 4 live subjects when it landed, so a smaller number is the EXTRACTION drifting off its subject, not the documents going clean"
 
 [ "$BAD" -eq 0 ] ||
 	fail "$BAD self-state disagreement(s) above; a document that misdescribes its own state is docs/decisions.md D-335's generator (2), and D-338 records this gate as the row that reaches it"
 
-echo "label_consistency_check: $DOCS_SEEN documents, $SUM_COUNT summand line(s), $GROUP_COUNT group count(s) — every document agrees with itself"
+echo "label_consistency_check: $DOCS_SEEN documents, $SUM_COUNT summand line(s), $ROW_COUNT summand row(s), $GROUP_COUNT group count(s) — every document agrees with itself"

@@ -54,6 +54,7 @@ const DOCS: [&str; 6] = [
 /// smaller number is its extraction drifting off its subject rather than the
 /// documents going clean.
 const SUMMAND_FLOOR: usize = 2;
+const ROW_FLOOR: usize = 5;
 const GROUP_FLOOR: usize = 4;
 
 fn scratch_repo(name: &str) -> PathBuf {
@@ -132,16 +133,32 @@ fn document(head: u32, body: &str, foot: &str) -> String {
 /// The two counted forms, carrying the gate's floors exactly: two summand lines
 /// under headings that state the same totals, and four backtick-quoted groups.
 fn counted_body() -> String {
-    String::from(
-        "## 4. §11 — the 5 test rows\n\n\
-         **U2 (2):** `alpha`, `beta`.\n\n\
-         **U3 (1):** `gamma`.\n\n\
-         **U4 (1):** `delta`.\n\n\
-         **SEED (1):** `epsilon`.\n\n\
-         2 + 1 + 1 + 1 = **5**. The map.\n\n\
-         ## 5. §12 — the 7 cost rows\n\n\
-         3 + 4 = **7**. The other map.\n",
-    )
+    [
+        "## 4. §11 — the 5 test rows",
+        "",
+        "**U2 (2):** `alpha`, `beta`.",
+        "",
+        "**U3 (1):** `gamma`.",
+        "",
+        "**U4 (1):** `delta`.",
+        "",
+        "**SEED (1):** `epsilon`.",
+        "",
+        "2 + 1 + 1 + 1 = **5**. The map.",
+        "",
+        "## 5. §15 — the 15 ADR items",
+        "",
+        "| Owner | Items |",
+        "|---|---|",
+        "| **U1** | 1, 2, 3 |",
+        "| **U2** | 4, 5, 6, 7 |",
+        "| **U3** | 8, 9, 10 |",
+        "| **U4** | 11, 12, 13 |",
+        "| **SEED** | 14, 15 |",
+        "",
+        "3 + 4 + 3 + 3 + 2 = **15**. The other map.",
+    ]
+    .join("\n")
 }
 
 /// The shipped shape: six consistent documents, the counted forms in the owner
@@ -196,7 +213,7 @@ fn six_documents_that_agree_with_themselves_are_accepted() {
     );
     assert!(
         out.contains(&format!(
-            "{SUMMAND_FLOOR} summand line(s), {GROUP_FLOOR} group count(s)"
+            "{SUMMAND_FLOOR} summand line(s), {ROW_FLOOR} summand row(s), {GROUP_FLOOR} group count(s)"
         )),
         "and reports the counted forms it actually checked, at the floors it refuses below:\n{out}"
     );
@@ -258,7 +275,7 @@ fn a_foot_naming_two_u_revs_is_refused_as_unresolvable() {
     let out = said(&ran);
     assert_code(&ran, 1, "an unresolvable foot is a refusal");
     assert!(
-        out.contains("docs/experiments/U1_gate_supersession.md: the closing block")
+        out.contains("docs/experiments/U1_gate_supersession.md: the closing region")
             && out.contains("names 2 u-rev labels"),
         "named for what it is:\n{out}"
     );
@@ -354,7 +371,7 @@ fn a_group_that_states_more_names_than_it_enumerates_is_refused() {
 fn a_summand_line_that_does_not_total_its_stated_number_is_refused() {
     let root = scratch_repo("label-summand");
     let mut docs = shipped_shape();
-    let body = counted_body().replace("3 + 4 = **7**", "3 + 5 = **7**");
+    let body = counted_body().replace("3 + 4 + 3 + 3 + 2 = **15**", "3 + 5 + 3 + 3 + 2 = **15**");
     with_doc(
         &mut docs,
         "section_owner_table",
@@ -366,7 +383,7 @@ fn a_summand_line_that_does_not_total_its_stated_number_is_refused() {
     let out = said(&ran);
     assert_code(&ran, 1, "arithmetic that does not hold is a refusal");
     assert!(
-        out.contains("the summands total 8 and the line states 7"),
+        out.contains("the summands total 16 and the line states 15"),
         "stating both numbers:\n{out}"
     );
 }
@@ -376,7 +393,10 @@ fn a_summand_line_that_does_not_total_its_stated_number_is_refused() {
 fn a_heading_count_the_total_below_it_contradicts_is_refused() {
     let root = scratch_repo("label-heading");
     let mut docs = shipped_shape();
-    let body = counted_body().replace("## 5. §12 — the 7 cost rows", "## 5. §12 — the 9 cost rows");
+    let body = counted_body().replace(
+        "## 5. §15 — the 15 ADR items",
+        "## 5. §15 — the 19 ADR items",
+    );
     with_doc(
         &mut docs,
         "section_owner_table",
@@ -388,7 +408,7 @@ fn a_heading_count_the_total_below_it_contradicts_is_refused() {
     let out = said(&ran);
     assert_code(&ran, 1, "a heading disagreeing with its total is a refusal");
     assert!(
-        out.contains("the heading states 9 and the stated total is 7"),
+        out.contains("the heading states 19 and the stated total is 15"),
         "stating both numbers:\n{out}"
     );
 }
@@ -495,6 +515,141 @@ fn an_argument_is_refused_rather_than_run_as_the_default() {
     assert!(
         out.contains("takes no arguments and was given: --all"),
         "quoted back:\n{out}"
+    );
+}
+
+/// THE MASKING ASIDE — REVIEW-impl BLOCKING-1 against `908a2f7`, reproduced and
+/// pinned. The previous spelling located the foot at the LAST line starting with
+/// an asterisk and an uppercase letter, and accumulated from there; a stale foot
+/// followed by a trailing italic note naming the HEAD's u-rev therefore read as
+/// `foot=u-rev 4 OK` AT EXIT 0, in the one code path whose whole job is to
+/// prevent an exit-0-wrong-answer. The closing REGION sees both labels.
+#[test]
+fn a_stale_foot_masked_by_a_trailing_aside_is_refused_not_passed() {
+    let root = scratch_repo("label-masking-aside");
+    let mut docs = shipped_shape();
+    with_doc(
+        &mut docs,
+        "U3_tier_t",
+        format!(
+            "{}\n*Folded into u-rev 4 of the seed document, see its own foot.*\n",
+            document(4, "Normative content.", "u-rev 3. The label alone.")
+        ),
+    );
+    write_docs(&root, &docs);
+
+    let ran = gate(&root);
+    let out = said(&ran);
+    assert_code(&ran, 1, "an aside masking a stale foot is a refusal");
+    assert!(
+        out.contains("docs/experiments/U3_tier_t.md: the closing region")
+            && out.contains("names 2 u-rev labels"),
+        "the whole region below the rule is read, not the last asterisk line:\n{out}"
+    );
+    assert!(
+        !out.contains("U3_tier_t.md       head=u-rev 4   foot=u-rev 4   OK"),
+        "and it is NOT reported clean:\n{out}"
+    );
+}
+
+/// A document with no closing rule has no closing region, and that is a refusal
+/// rather than a label read from wherever a `u-rev` happens to appear.
+#[test]
+fn a_document_with_no_closing_rule_is_refused() {
+    let root = scratch_repo("label-norule");
+    let mut docs = shipped_shape();
+    with_doc(
+        &mut docs,
+        "WPQ_seed",
+        String::from("# T\n\n**u-rev 4.** A carve.\n\n*T, u-rev 4. The label alone.*\n"),
+    );
+    write_docs(&root, &docs);
+
+    let ran = gate(&root);
+    let out = said(&ran);
+    assert_code(&ran, 1, "no closing rule is a refusal");
+    assert!(
+        out.contains("docs/experiments/WPQ_seed.md: no closing `---` rule"),
+        "named for what it is:\n{out}"
+    );
+}
+
+/// THE MULTI-WORD LABEL — REVIEW-impl MAJOR-3, reproduced and pinned. The
+/// extraction's own character class admits a space in a group label, and a
+/// positionally-read record then absorbed half of it: a CORRECT two-word group
+/// was refused with `group New states Plan and enumerates 4 4`. The label is the
+/// record's LAST field, so it may hold spaces.
+#[test]
+fn a_correct_group_with_a_two_word_label_is_accepted_and_not_garbled() {
+    let root = scratch_repo("label-two-word");
+    let mut docs = shipped_shape();
+    let body = counted_body().replace("**U3 (1):**", "**New Plan (1):**");
+    with_doc(
+        &mut docs,
+        "section_owner_table",
+        document(4, &body, "u-rev 4. The label alone."),
+    );
+    write_docs(&root, &docs);
+
+    let ran = gate(&root);
+    let out = said(&ran);
+    assert_code(&ran, 0, "a correct two-word label is not a defect");
+    assert!(
+        !out.contains("group New states"),
+        "and the record's fields are not misaligned by the space:\n{out}"
+    );
+}
+
+/// And the same label, genuinely wrong, is still named in full.
+#[test]
+fn a_two_word_label_that_miscounts_is_named_in_full() {
+    let root = scratch_repo("label-two-word-bad");
+    let mut docs = shipped_shape();
+    let body = counted_body().replace("**U3 (1):**", "**New Plan (7):**");
+    with_doc(
+        &mut docs,
+        "section_owner_table",
+        document(4, &body, "u-rev 4. The label alone."),
+    );
+    write_docs(&root, &docs);
+
+    let ran = gate(&root);
+    let out = said(&ran);
+    assert_code(&ran, 1, "a miscounted group is a refusal");
+    assert!(
+        out.contains("group New Plan states 7 and enumerates 1"),
+        "with the whole label and both numbers:\n{out}"
+    );
+}
+
+/// THE SUMMANDS AGAINST THE TABLE — REVIEW-impl MAJOR-2, reproduced and pinned.
+/// A table row that loses an item leaves the arithmetic AND the heading
+/// untouched, so checking those two against each other is a property the named
+/// defect PRESERVES — which CLAUDE.md says is not a criterion at all. This is the
+/// only check that reaches `section_owner_table.md` §7, whose owners' items live
+/// in table CELLS rather than in a backtick group.
+#[test]
+fn a_table_row_that_lost_an_item_is_refused_though_the_arithmetic_still_holds() {
+    let root = scratch_repo("label-summand-row");
+    let mut docs = shipped_shape();
+    let body = counted_body().replace("| **U2** | 4, 5, 6, 7 |", "| **U2** | 4, 5, 6 |");
+    with_doc(
+        &mut docs,
+        "section_owner_table",
+        document(4, &body, "u-rev 4. The label alone."),
+    );
+    write_docs(&root, &docs);
+
+    let ran = gate(&root);
+    let out = said(&ran);
+    assert_code(&ran, 1, "a row disagreeing with its summand is a refusal");
+    assert!(
+        out.contains("summand 2 is 4 and the table row above enumerates 3"),
+        "naming which summand and both numbers:\n{out}"
+    );
+    assert!(
+        !out.contains("the summands total"),
+        "and the arithmetic is untouched, which is the point:\n{out}"
     );
 }
 
