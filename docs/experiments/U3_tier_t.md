@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 3.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
+**u-rev 4.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
 4 and 5 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309), plus the two
 bullets of §7.2 that are not widening text, under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
@@ -36,10 +36,13 @@ the config count, which the superseded document stated three different ways
 across four sites, is stated once here and cited everywhere else) and **B7**
 (§6.2's no-restatement claim, which was absolute and false, is stated at the
 strength the pin actually has). At **u-rev 3**: the repairs answering
-`docs/experiments/wp15b_U3_REVIEW.md`, listed finding by finding in the REVIEW
-STATUS block below and marked again at each site. Every **MEASURED** and
-**ESTIMATED** mark is the mark the superseded text carried; no number carried
-from the superseded text moved, and none gained or lost a mark.
+`docs/experiments/wp15b_U3_REVIEW.md`, finding by finding (see U3-A for the
+one-line record now that u-rev 4 has superseded that fold-in table). At
+**u-rev 4**: the repairs answering `docs/experiments/wp15b_U3_REVIEW_urev3.md`,
+listed finding by finding in the REVIEW STATUS block below and marked again at
+each site. Every **MEASURED** and **ESTIMATED** mark is the mark the superseded
+text carried; no number carried from the superseded text moved, and none gained
+or lost a mark.
 
 **LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this unit bumps
 its u-rev, however small the diff. A review is dispatched against a named
@@ -48,30 +51,27 @@ document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
 
-**REVIEW STATUS — u-rev 2 WAS REVIEWED AND FAILED; u-rev 3 IS THE REPAIR.**
-`docs/experiments/wp15b_U3_REVIEW.md`, REVIEW-design, fresh context, dispatched
-against the named revision **`1b645ac`** — **VERDICT FAIL**, 2 BLOCKING, 5 MAJOR,
-4 MINOR. Both BLOCKING findings were D-305's class (a repair landed in one place,
-the claim resting on it left un-re-read in another) reproduced inside the carve
-that exists to stop it. **THIS u-rev — u-rev 3 — HAS NOT BEEN REVIEWED**, and
-u-rev 2's review does not transfer to it: an amendment reopens the review, however
-small the diff (D-311, and CLAUDE.md's own words).
+**REVIEW STATUS — u-rev 3 WAS REVIEWED AND FAILED; u-rev 4 IS THE REPAIR.**
+`docs/experiments/wp15b_U3_REVIEW_urev3.md`, REVIEW-design (re-review), fresh
+context, dispatched against the named revision **`7d5d39c`** — **VERDICT FAIL**,
+0 BLOCKING, 2 MAJOR, 3 MINOR. Both BLOCKING findings of the u-rev 2 round, and
+nine of its eleven MAJOR/MINOR findings, were confirmed genuinely repaired and
+still holding; the two MAJORs that failed are both numeric-provenance defects in
+§6 — the section that feeds U3-Z item 2's ADR line. u-rev 2's review is answered
+in full at u-rev 3 and does not appear again here; see U3-A for its one-line
+record. **THIS u-rev — u-rev 4 — HAS NOT BEEN REVIEWED**, and u-rev 3's review
+does not transfer to it: an amendment reopens the review, however small the diff
+(D-311, and CLAUDE.md's own words).
 
-| Finding, `wp15b_U3_REVIEW.md` | Disposition at u-rev 3 |
+| Finding, `wp15b_U3_REVIEW_urev3.md` | Disposition at u-rev 4 |
 |---|---|
-| **BLOCKING 1** — B5 recurs; the config count asserted a second time, in U3-Z | **REPAIRED** — U3-Z's D-scope bullet cites §10 instead of stating a cardinality |
-| **BLOCKING 2** — §12 item 5 discharges CLAUDE.md's instrument clause by naming a test D-312 DELETED, and the command "verifying" it exits 0 running 0 tests | **REPAIRED** — the LIVE gate is named, at the carve's scope, with the two companion gates D-312 landed, and the naming is verified by a run pasted at the site |
-| **MAJOR 3** — the D-scope OPEN item omits M1's own dependence on the deferred stage | **REPAIRED** — U3-Z's bullet now names option C's residual mitigation, option B's cost cell, the `staged, BATCHED only` rows and the instrument's `QUIET_TOP_K = 16`, and records what survives (the ranking) |
-| **MAJOR 4** — B7's residual list is incomplete by four further sites inside this unit | **REPAIRED** — the residual is stated as a CLASS, and every site known at this u-rev is LISTED site by site in U3-Z; §6.2's three-shape list is corrected with them |
-| **MAJOR 5** — §6.4's falsifier self-attributes a measurement this unit does not carry | **REPAIRED** — retargeted to **U4** (u-rev 5) §12 item 1, with U4's below-marker CONTEXT treatment stated |
-| **MAJOR 6** — the owed-list omits a fresh DECISION-RED-TEAM against M1 AS AMENDED | **REPAIRED AS OPEN** — added to U3-A's owed-list and to U3-Z's OPEN section, and U3-Z item 2's ADR line is GATED on it. The attack itself is not run here |
-| **MAJOR 7** — §10 states the deferred schedule's semantics as settled, on the non-reviewable seed's authority | **REPAIRED AS OPEN** — the widening bullets are marked as RECORDING the seed's unselected text, not as settled design; the present-tense ADR citation is corrected. The semantics are not moved into U3, which would be a design act |
-| **MINOR 8** — §6.2 undercounts the finding it repairs | **REPAIRED** — six restatements at five lines, re-measured at u-rev 3 |
-| **MINOR 9** — U3-Z names a `§8.5` restatement site that does not exist | **REPAIRED** — non-existence verified by grep, the false site deleted |
-| **MINOR 10** — a citation into DROPPED §0 with no retrieval pointer | **REPAIRED** — "the superseded §0", with where it is retrievable |
-| **MINOR 11** — §6.2 understates the pin's coverage by one file and two gates | **REPAIRED** — the six documents `CARVE_DOCS` names, and both companion gates |
-| revision-7 review **MAJOR 12** — the unmarked `23.2` | **OPEN, at the u-rev 2 reviewer's own recorded call**: *"NO FINDING as such. It is recorded OPEN in U3-Z with a reason that survives scrutiny … Its scoping is incomplete, which is finding 3."* The reason stands unchanged; the SCOPING is repaired under MAJOR 3 |
-| revision-7 review **MAJOR 9** — rule 5 undischarged for the change D-263 was written about | **IMPL-GATE ITEM, not discharged here and not discharged by this unit.** It is not a finding of `wp15b_U3_REVIEW.md`; `wp15b_U4_REVIEW.md` records that "its non-discharge is an IMPL gate and is not reported as a design defect". **U2** (u-rev 1) carries the same item OPEN for the node protocol itself |
+| **MAJOR 1** — U3-Z certifies **MEASURED** that "the derivations reproduce"; the `23.2` row does not, and two other block cells do | **REPAIRED** — the U3-Z table's `23.2` row is split from `6.83`'s and re-attributed to the two cells that reproduce it (`option C — Tier T (exact, NOT adopted)`, rounds; `option A — staged, BATCHED only` at the r2-draw column, literal), naming that `option C — Tier T (threshold, ADOPTED)` only TRUNCATES to it; the MEASURED stamp is corrected to cover what reproduces and record the correction; the MAJOR-12 OPEN bullet's attribution is corrected the same way. Which cell is the true provenance remains OPEN, undecided, per revision-7 MAJOR 12 |
+| **MAJOR 2** — §6.5's ADR-bound attack still carries the withdrawn `3.1× to 2.4×`, against the rule §12 item 5 states in the same file | **REPAIRED — §6.5 is the surviving carrier.** §6.5 now cites the census block's own `option C — staged, BATCHED only` row (`2.78x` r8 draw → `2.09x` r2 draw) instead of restating revision 1's WITHDRAWN pair, which is named and dated (§0 row 34, `6feb40a`); §12 item 5 is rewritten to point at §6.5 as where the rule is carried, rather than stating a rule §6.5 broke |
+| **MINOR 3** — B7's class covers §10's "under 400"; the list omits it | **REPAIRED** — a row added to the U3-Z table for §10's `1024` derivation, and §6.2's site-count sentence corrected from four to five |
+| **MINOR 4** — the head's disposition of revision-7 review MAJOR 9 truncates the U4 reviewer's sentence in a way that changes its scope | **REPAIRED** — quoted in full below, with the disposition attributed to **U2**'s OPEN item and U3-M item 4's declared substitution rather than to the truncated quote |
+| **MINOR 5** — new text introduced at u-rev 3 cites other units without their u-rev | **REPAIRED** — the u-rev label is added at the three sites this repair wrote (§6.4's cross-reference, U3-Z's MINOR-9 note, U3-Z's D-scope bullet); the nine sites inherited from u-rev 2 are unchanged, per the review's own scope. **Separately found while fixing this: U4 is at u-rev 6 and U2 is at u-rev 2, not the u-rev 5 / u-rev 1 this unit's existing labels said — every existing cross-unit u-rev citation is corrected to the cited unit's current u-rev** |
+| revision-7 review **MAJOR 12** — the unmarked `23.2` | **STILL OPEN.** At the u-rev 2 reviewer's own recorded call: *"NO FINDING as such. It is recorded OPEN in U3-Z with a reason that survives scrutiny … Its scoping is incomplete, which is finding 3."* The reason stands unchanged; the scoping was repaired under MAJOR 3 at u-rev 3, and the ATTRIBUTION is repaired under MAJOR 1 at u-rev 4 — from one candidate cell that does not reproduce to three that are named and left undecided. Deciding between them remains a design act |
+| revision-7 review **MAJOR 9** — rule 5 undischarged for the change D-263 was written about | **IMPL-GATE ITEM, not discharged here and not discharged by this unit — MINOR 4's repair.** It is not a finding of `wp15b_U3_REVIEW.md`. `wp15b_U4_REVIEW.md`'s MAJOR 9 (itself labelled **U3's**, by that reviewer) records in full: "**No finding, and *per the brief* its non-discharge is an IMPL gate and is not reported as a design defect *anywhere in this report*.**" That is a disclaimer scoped to U4's own report, not a project ruling. The disposition instead rests on **U2** (u-rev 2), which carries the same item OPEN for the node protocol itself (`RULE 5 IS UNDISCHARGED FOR THE NODE PROTOCOL ITSELF`), and on U3-M item 4's declared hotspot substitution under D-263's flip clause |
 
 Theory citations are calculus IDs from `docs/research/threat_calculus_v1.md`
 (D-266). This unit restates no theory; where it appears to, the calculus wins and
@@ -87,12 +87,13 @@ the disagreement is an ADR line.
 | REVIEW-design | revisions 2–6 | all FAIL; **M1 was never reopened on its merits.** §6.3's cost column was re-derived twice for transmission defects, and §6.2 became the instrument's output rather than a typed table |
 | REVIEW-design | revision 7, `6feb40a` | **FAIL** — 7 BLOCKING, 7 MAJOR, 9 MINOR. **B5 and B7 are this unit's** and are repaired here. **MAJOR 12 is this unit's and is NOT repaired here** — it is a design question, recorded OPEN in U3-Z |
 | DECISION-RED-TEAM, restructure | matrix at `eea480b` | F6: after M2's restoration unit 3 would have been the largest unit in option A's cut. Under D, M2 is not restored here at all |
-| REVIEW-design, this unit | u-rev 2, `1b645ac` | **FAIL** — 2 BLOCKING, 5 MAJOR, 4 MINOR (`docs/experiments/wp15b_U3_REVIEW.md`). Both BLOCKINGs are D-305's class inside the carve that exists to stop it: B5 recurring at a site the carve itself wrote, and an instrument-clause discharge naming a test D-312 deleted. **Every finding is dispositioned in the head's REVIEW STATUS block; u-rev 3 is the answer to it.** M1 itself is again NOT reopened on its merits — see the owed-list below |
+| REVIEW-design, this unit | u-rev 2, `1b645ac` | **FAIL** — 2 BLOCKING, 5 MAJOR, 4 MINOR (`docs/experiments/wp15b_U3_REVIEW.md`). Both BLOCKINGs are D-305's class inside the carve that exists to stop it: B5 recurring at a site the carve itself wrote, and an instrument-clause discharge naming a test D-312 deleted. **Every finding was dispositioned finding-by-finding at u-rev 3, in the head's REVIEW STATUS block at the time (since superseded there by the u-rev 3 review below); u-rev 3 is the answer to it, and the u-rev 3 review confirmed nine of eleven repairs holding.** M1 itself is again NOT reopened on its merits — see the owed-list below |
+| REVIEW-design, this unit | u-rev 3, `7d5d39c` | **FAIL** — 0 BLOCKING, 2 MAJOR, 3 MINOR (`docs/experiments/wp15b_U3_REVIEW_urev3.md`). Both BLOCKINGs of the u-rev 2 round and nine of its eleven MAJOR/MINOR findings were confirmed genuinely repaired. The two surviving MAJORs are both numeric-provenance defects in §6, the section that feeds U3-Z item 2's ADR line: a MEASURED derivation stamp that does not reproduce on the `23.2` cell (MAJOR 1), and the withdrawn `3.1× to 2.4×` still standing in §6.5 while §12 item 5 states the rule it breaks (MAJOR 2). **Every finding is dispositioned in the head's REVIEW STATUS block; u-rev 4 is the answer to it.** M1 itself is again NOT reopened on its merits — see the owed-list below |
 
 **What this unit owes that no round has given it:**
 
-- a REVIEW-design of THIS text at THIS u-rev — u-rev 2's ran, FAILED, and does
-  not transfer to u-rev 3;
+- a REVIEW-design of THIS text at THIS u-rev — u-rev 3's ran, FAILED, and does
+  not transfer to u-rev 4;
 - **a fresh DECISION-RED-TEAM against MATRIX M1 AS AMENDED (MAJOR 6).** The
   attack in row 1 ran against revision 1 at `ec8f7fb`. §6.1 has since flipped the
   ADOPTED reading from exact to threshold — changing what the config commits and
@@ -199,12 +200,14 @@ outside the block returns lines 139, 584, 853 (twice on that line), 1260 and
 
 **And what the pin cannot see is a CLASS, not a list (MAJOR 4):** *any rounded,
 percentage or otherwise derived rendering of a census cell*. `70.8 %`, `6.83` and
-`23.2` are the three shapes u-rev 2 named here; four further sites inside THIS
+`23.2` are the three shapes u-rev 2 named here; five further sites inside THIS
 unit carry renderings none of those three covers — the sampler sentence two lines
 above the `BEGIN CENSUS TABLE` marker, §6.1's threshold-repair deltas, the `29 %`
-in §6.3 and §10, and §12 item 4's `29.2 %`. The class is what cannot go stale when
-a site is added; U3-Z states it as a class and LISTS every site known at this
-u-rev as OPEN. Everything else cites the block.
+in §6.3 and §10, §12 item 4's `29.2 %`, and §10's `under 400` bound on the
+radius-2 ball's largest regime mean (MINOR 3, `wp15b_U3_REVIEW_urev3.md`, repaired
+at u-rev 4). The class is what cannot go stale when a site is added; U3-Z states
+it as a class and LISTS every site known at this u-rev as OPEN. Everything else
+cites the block.
 
 Why it exists as a mechanism rather than a resolution: across four revisions this
 document moved a number in one section nine times and left a copy of it in
@@ -233,7 +236,7 @@ blended mean — a blend flattered option B by half.
 ### 6.4 The asymmetry, re-grounded
 
 Revision 1's ground was "a defence against the opponent's two-turn win is what
-SEARCH DEPTH and the filter are for". That is falsified by **U4** (u-rev 5) §12
+SEARCH DEPTH and the filter are for". That is falsified by **U4** (u-rev 6) §12
 item 1's **MEASURED `depth_at_500ms` = 2 / 2 / 1**: the opponent's second turn is
 depth 4, and the engine reaches 2. The sentence is deleted.
 
@@ -241,7 +244,7 @@ depth 4, and the engine reaches 2. The sentence is deleted.
 this paragraph said "this document's own", which the carve made false — the
 measurement went to **U4** and U3 carries no other occurrence of it — and that
 phrase is exactly what licenses a reader of U3 alone not to look elsewhere. It is
-**U4**'s, and **U4** §9 amendment 1 records that the triple sits BELOW the
+**U4**'s, and **U4** (u-rev 6) §9 amendment 1 records that the triple sits BELOW the
 snapshot record's own "excluded from every comparison" marker with a dead band of
 about 2×, so it is CONTEXT and not that unit's registered quantity; D-310 records
 the same demotion. The ground here uses the depth NUMBER — 2 against the 4 the
@@ -283,9 +286,14 @@ the results rather than read as a confirmation of C.
 paragraph is in the round record): *the matrix's MEASURED Tier-T column was
 produced by a census reading count ≥2 while its config clause spelled count ==2 —
 the threshold reading against the exact one — so the option committed was not the option measured;
-and the reduction it is bought with shrinks from 3.1× to 2.4× the moment the
-depth stand-in is re-sampled from the radius-2 ball the search actually uses, a
-one-second run the document did not take.* Both halves are repaired in revision
+and the reduction it is bought with shrinks the moment the depth stand-in is
+re-sampled from the radius-2 ball the search actually uses — see the census
+block's own `option C — staged, BATCHED only` row, `45.82 = 2.78x` on the r8
+draw against `47.34 = 2.09x` on the r2 draw, a one-second run the document did
+not take at the time. Revision 1's own figures for this, `3.1× to 2.4×`, are
+WITHDRAWN (the superseded §0 row 34, `6feb40a`) and are not restated here, which
+is the rule the block exists to enforce (§12 item 5; MAJOR 2,
+`wp15b_U3_REVIEW_urev3.md`).* Both halves are repaired in revision
 2; what survives is that neither repair was found by the author.
 
 ---
@@ -621,10 +629,15 @@ readable alone; it is a condition, not a datum.)
 
    **What is registered forward**, for the deepening sampler: the radius-2 regime
    is the reported one, and the radius-8 regime's numbers are retained as
-   SUPERSEDED with the delta stated — both regimes' figures are in the census block and the
-   sensitivity is read from it rather than restated here, which is the rule the
-   block exists to enforce. No verdict in this document turns on a quantity that
-   moves by less than the sampler does between those two columns.
+   SUPERSEDED with the delta stated — both regimes' figures are in the census
+   block, and **§6.5's STRONGEST SURVIVING ATTACK is where the sensitivity is
+   read from it**: it cites the block's own `option C — staged, BATCHED only` row
+   rather than restating revision 1's WITHDRAWN `3.1× to 2.4×` pair, which is the
+   rule the block exists to enforce. Until u-rev 4 §6.5 restated that withdrawn
+   pair instead of following this rule (MAJOR 2, `wp15b_U3_REVIEW_urev3.md`); it
+   now carries the rule rather than breaking it. No verdict in this document
+   turns on a quantity that moves by less than the sampler does between those two
+   columns.
 
 ---
 
@@ -709,13 +722,17 @@ only one of them** (MAJOR 13).
 - **MAJOR 12 — the unmarked `23.2` in §6.3's option-C failure-mode cell.** It
   carries neither **MEASURED** nor **ESTIMATED**, on the cell that states the
   ADOPTED option's residual risk, and the review found it is not a census row at
-  all: the block renders no Tier-Q quantity, and `23.2` is the rounding of the
-  block's own `option C — Tier T (threshold, ADOPTED)` row at corpus roots —
-  cited by name, because restating its four decimals here is what the pin
-  refuses — which is Tier T and not Tier Q. **The carve
-  preserves marks and does not add them** — adding one would decide whether the
-  figure is measured, and the review's finding is that it may be mis-attributed.
-  Either the figure is wrong or it is an unmarked estimate with a committed
+  all: the block renders no Tier-Q quantity. **Its provenance is not settled to
+  one cell (MAJOR 1, `wp15b_U3_REVIEW_urev3.md`):** `23.2` is the ROUNDING of the
+  block's own `option C — Tier T (exact, NOT adopted)` row at corpus roots, the
+  LITERAL `option A — staged, BATCHED only` figure at the r2-draw column (23.20),
+  or the TRUNCATION — not the rounding, which is 23.3 — of `option C — Tier T
+  (threshold, ADOPTED)` at corpus roots; all three are cited by name rather than
+  restated in decimals, which is what the pin
+  refuses, and under every one of them the figure is Tier T and not Tier Q. **The
+  carve preserves marks and does not add them** — adding one would decide which
+  of the three cells the figure comes from, which is a design act, not a carve
+  act. Either the figure is wrong or it is an unmarked estimate with a committed
   instrument standing beside it, which is D-291's clause. **A repair here is a
   design act, not a carve act.**
 - **B7's residual is a CLASS, and here is every site of it known at this u-rev
@@ -730,24 +747,34 @@ only one of them** (MAJOR 13).
 
   | site | rendering | census cell it derives from |
   |---|---|---|
-  | **U2** (u-rev 1) §5.3 | `70.8 %` | `BATCHED nodes`, corpus roots |
-  | **U4** (u-rev 5) §8.4 | `70.8 %` | `BATCHED nodes`, corpus roots |
-  | §6.3, option C's cost and failure-mode cells | `6.83`, `23.2` | `option C — Tier T outside the r2 ball`; `option C — Tier T (threshold, ADOPTED)` |
+  | **U2** (u-rev 2) §5.3 | `70.8 %` | `BATCHED nodes`, corpus roots |
+  | **U4** (u-rev 6) §8.4 | `70.8 %` | `BATCHED nodes`, corpus roots |
+  | §6.3, option C's cost cell | `6.83` | `option C — Tier T outside the r2 ball` |
+  | §6.3, option C's failure-mode cell | `23.2` | **NOT ONE CELL (MAJOR 1, `wp15b_U3_REVIEW_urev3.md`).** Reproduces from `option C — Tier T (exact, NOT adopted)` at corpus roots (rounds) and from `option A — staged, BATCHED only` at the r2-draw column (23.20, literal); `option C — Tier T (threshold, ADOPTED)` only TRUNCATES to it and does not round — see the MAJOR-12 bullet above |
   | §10, the withdrawn config comment | `6.83` | `option C — Tier T outside the r2 ball` |
   | **§6.2, the sampler sentence — u-rev 2 omitted it** | `78.0 → 123.7` | `radius-2 ball`, corpus roots and the r8 draw |
   | **§6.1, the threshold-repair cost — u-rev 2 omitted it** | `+0.17`, `+0.04` | `option B — Tier T` threshold minus exact; `option C — Tier T` threshold minus exact |
   | **§6.3 and §10, the outside-the-ball share — u-rev 2 omitted it** | `29 %` | `option C — Tier T outside the r2 ball` over `option C — Tier T (threshold, ADOPTED)` |
   | **§12 item 4, the forced-row share — u-rev 2 omitted it** | `29.2 %` | 100 minus `BATCHED nodes`; equally `WIN-NOW` plus `FILTERED` |
+  | **§10, the `1024` tactical config derivation — MINOR 3, `wp15b_U3_REVIEW_urev3.md`** | `under 400` | `radius-2 ball`, playouts |
 
-  The derivations reproduce — **MEASURED** at u-rev 3 from the block's own cells,
+  The derivations reproduce — **MEASURED at u-rev 4** from the block's own cells,
   and the values are read from the block rather than restated here because that is
-  what the pin exists to enforce. The first omitted site sits **two lines above the
+  what the pin exists to enforce, **with one correction (MAJOR 1,
+  `wp15b_U3_REVIEW_urev3.md`): at u-rev 3 this sentence covered a table that
+  attributed `23.2` solely to `option C — Tier T (threshold, ADOPTED)`
+  and stamped the whole row MEASURED, but that cell's four-decimal value has no
+  rounding equal to 23.2 — it only TRUNCATES to it, and rounds to 23.3. The table above now
+  cites the two cells that DO reproduce it exactly; deciding which of the three
+  candidate cells is the true provenance remains MAJOR 12's open design act, and
+  every candidate is a Tier-T quantity, so "which is Tier T and not Tier Q"
+  stands regardless.** The first omitted site sits **two lines above the
   `BEGIN CENSUS TABLE` marker**, inside the very paragraph that repairs B7, which
   is how an enumeration goes stale. Widening the pin's scan past four decimals is
   an instrument change, not a re-target, and T4' does not license it — so the CLASS
   statement, not the table, is what stops this list going stale when a site is
-  added. **MINOR 9, repaired:** u-rev 2 also named a `70.8 %` in **U4** §8.5.
-  There is none — MEASURED, `grep -n "70\.8" docs/experiments/U4_soundness_instrument.md`
+  added. **MINOR 9, repaired:** u-rev 2 also named a `70.8 %` in **U4** (u-rev 6)
+  §8.5. There is none — MEASURED, `grep -n "70\.8" docs/experiments/U4_soundness_instrument.md`
   returns one line, and it is inside §8.4; the §8.5 claim is deleted.
 - **The census owes a registered REPLICATION and a SECOND INSTRUMENT** (the
   superseded §17's own list). It runs in under a second, so CLAUDE.md's clause
@@ -760,7 +787,7 @@ only one of them** (MAJOR 13).
 - **The D-scope of `quiet_top_k` and `widen_schedule`.** **§10's config documents
   each commit both keys** — §10 is the one place their number is stated and this
   bullet cites §10 rather than restating it (**B5**; u-rev 2 asserted the
-  cardinality here, which is the same defect as **U2** §2.2's "three" going stale when
+  cardinality here, which is the same defect as **U2** (u-rev 2) §2.2's "three" going stale when
   §10's list grew, and it was introduced by the repair, not inherited — BLOCKING
   1). D-310 defers the stage those keys govern. Whether the shipped
   `Staged` surface keeps them (validated, inert, and set wide), narrows to Tier F
@@ -805,14 +832,15 @@ only one of them** (MAJOR 13).
   revisions 2–6. CLAUDE.md: reviews of superseded revisions do not transfer, and a
   matrix never attacked is the same breach as silent architecture drift. A fresh
   DECISION-RED-TEAM against §6.3 as it now stands is therefore owed, item 2 above
-  is GATED on it, and the carve does not run it. **U4** (u-rev 5) states the
+  is GATED on it, and the carve does not run it. **U4** (u-rev 6) states the
   parallel duty for its own matrices, which is why this reads as an omission at
   u-rev 2 rather than as a scope decision.
-- **No REVIEW-design has run against this text at THIS u-rev** (U3-A). u-rev 2's
-  ran and FAILED — `docs/experiments/wp15b_U3_REVIEW.md` at `1b645ac`, 2 BLOCKING,
-  5 MAJOR, 4 MINOR — and does not transfer to u-rev 3, which is the repair
-  answering it. The head's REVIEW STATUS block dispositions every finding.
+- **No REVIEW-design has run against this text at THIS u-rev** (U3-A). u-rev 3's
+  ran and FAILED — `docs/experiments/wp15b_U3_REVIEW_urev3.md` at `7d5d39c`, 0
+  BLOCKING, 2 MAJOR, 3 MINOR — and does not transfer to u-rev 4, which is the
+  repair answering it. The head's REVIEW STATUS block dispositions every
+  finding.
 
 ---
 
-*U3, u-rev 3. A carve, plus the repairs answering `docs/experiments/wp15b_U3_REVIEW.md`. IMPL has not started.*
+*U3, u-rev 4. A carve, plus the repairs answering `docs/experiments/wp15b_U3_REVIEW.md` and `docs/experiments/wp15b_U3_REVIEW_urev3.md`. IMPL has not started.*
