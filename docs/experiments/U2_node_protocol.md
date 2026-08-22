@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 7.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
+**u-rev 8.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
 `6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it, and is that review's home) under the restructure
 selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -32,7 +32,8 @@ from it.
 | 4 | `7473a6f` | `docs/experiments/wp15b_U2_REVIEW_urev4.md` | FAIL |
 | 5 | `f0ae14c` | `docs/experiments/wp15b_U2_REVIEW_urev5.md` | FAIL |
 | 6 | `3543a7f` | — | **NOT REVIEWED — no round was dispatched against it** |
-| **7** | *this text* | **NOT YET REVIEWED** | — |
+| 7 | `1964026` | `docs/experiments/wp15b_U2_REVIEW_urev7.md` | FAIL |
+| **8** | *this text* | **NOT YET REVIEWED** | — |
 
 **THE CARVE-PROVENANCE CLAUSE ABOVE WAS FALSE FROM THE CARVE UNTIL u-rev 6.** It read
 *"revision 7, **never reviewed**, CLOSED by D-309"*. `6feb40a` WAS reviewed, by a
@@ -141,8 +142,7 @@ the tree.
 REPAIR.** `docs/experiments/wp15b_U2_REVIEW_urev4.md`, REVIEW-design (re-review),
 fresh context, against **`7473a6f`** — **VERDICT FAIL, 0 BLOCKING, 0 MAJOR, 2 MINOR**.
 It confirmed F5's substitution structural on the merits, having diffed every
-intermediate revision, and F6 cleanly discharged. **THIS u-rev — u-rev 5 — HAS NOT
-BEEN REVIEWED.**
+intermediate revision, and F6 cleanly discharged.
 
 | Finding, `wp15b_U2_REVIEW_urev4.md` | Where it is answered at u-rev 5 |
 |---|---|
@@ -941,6 +941,6 @@ a correction to a landed line, and none has landed.**
 
 ---
 
-*U2, u-rev 7. Which round produced each u-rev, and which of them were reviewed, is
+*U2, u-rev 8. Which round produced each u-rev, and which of them were reviewed, is
 the head block's table — this line restates neither and carries the u-rev label alone,
 so it cannot go one behind the head independently of it. IMPL has not started.*
