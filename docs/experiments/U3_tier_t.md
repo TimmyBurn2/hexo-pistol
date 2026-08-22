@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 5.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
+**u-rev 6.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
 4 and 5 at `6feb40a` (revision 7, never reviewed, CLOSED by D-309), plus the two
 bullets of §7.2 that are not widening text, under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
@@ -40,7 +40,8 @@ strength the pin actually has). At **u-rev 3**: the repairs answering
 one-line record now that u-rev 4 has superseded that fold-in table). At
 **u-rev 4**: the repairs answering `docs/experiments/wp15b_U3_REVIEW_urev3.md`.
 At **u-rev 5**: the repairs answering `docs/experiments/wp15b_U3_REVIEW_urev4.md`,
-and the removal of two restating surfaces those findings came out of. **Which
+and the removal of two restating surfaces those findings came out of. At **u-rev 6**:
+the repairs answering `docs/experiments/wp15b_U3_REVIEW_urev5.md`. **Which
 round is which is stated once, in `U3-A`; the REVIEW STATUS block below covers the
 round being answered and no other (D-331).** Every **MEASURED** and **ESTIMATED** mark is the mark the superseded
 text carried; no number carried from the superseded text moved, and none gained
@@ -59,17 +60,36 @@ rule as written manufactures the staleness it exists to prevent: a bare
 false the moment that document is bumped, and nothing in this unit re-reads it.
 That is exactly what happened — this unit asserted `**U2** (u-rev 2)` at four
 sites while U2 had already reached u-rev 3 in an ancestor commit and had already
-FAILED its review (`docs/experiments/wp15b_U3_REVIEW_urev4.md`, MAJOR B). **So
-every cross-unit citation in this unit now reads `(u-rev N, landed <sha>)`, which
-is a historical fact and cannot go stale.** Under D-331 the cited unit's CURRENT
-u-rev has exactly one home — that unit's own head — and this unit points at it
-rather than keeping a second copy.
+FAILED its review (`docs/experiments/wp15b_U3_REVIEW_urev4.md`, MAJOR B). **THE
+RULE, and it is a rule rather than a claim about how many sites obey it:** a live
+cross-unit citation in this unit names the unit, the u-rev, and the revision that
+u-rev was current at — `(u-rev N, landed <sha>)` — which is a historical fact and
+cannot go stale. Under D-331 the cited unit's CURRENT u-rev has exactly one home,
+that unit's own head, and this unit points at it rather than keeping a second copy.
 
-**REVIEW STATUS — u-rev 4 WAS REVIEWED AND FAILED; u-rev 5 IS THE REPAIR.**
-`docs/experiments/wp15b_U3_REVIEW_urev4.md`, REVIEW-design (re-review), fresh
-context, dispatched against the named revision **`6f2dfe6`** — **VERDICT FAIL**,
-**0 BLOCKING, 2 MAJOR, 0 MINOR**. **THIS u-rev — u-rev 5 — HAS NOT BEEN
-REVIEWED**, and u-rev 4's review does not transfer to it: an amendment reopens
+**WHETHER EVERY SITE OBEYS THE RULE IS DERIVED, NOT ASSERTED HERE.** A live
+citation that does not obey it is what this command returns, and the command is
+the claim's instrument rather than a sentence in this head:
+
+```
+$ grep -n '\*\*U[124]\*\* §' docs/experiments/U3_tier_t.md | grep -v "landed"
+```
+
+**u-rev 5 asserted the universal instead, and the universal was false at nine
+sites** — `docs/experiments/wp15b_U3_REVIEW_urev5.md`, MAJOR C, the THIRD
+completeness claim in this document falsified in the commit that wrote it. The nine
+were the inherited sites three consecutive rounds had scoped out of repair; u-rev 6
+converts all nine rather than re-introducing the scoping caveat, so the rule and the
+tree now agree. **Two citations are deliberately NOT in the form and are not
+exceptions to it:** the two in the paragraph above quote the OLD bare form as the
+defect being described, and §10's *"Revision 6's §8.3"* names the SUPERSEDED document
+at `6feb40a`, which has no u-rev and is not **U4**.
+
+**REVIEW STATUS — u-rev 5 WAS REVIEWED AND FAILED; u-rev 6 IS THE REPAIR.**
+`docs/experiments/wp15b_U3_REVIEW_urev5.md`, REVIEW-design (re-review), fresh
+context, dispatched against the named revision **`7473a6f`** — **VERDICT FAIL**,
+**0 BLOCKING, 1 MAJOR, 0 MINOR**. **THIS u-rev — u-rev 6 — HAS NOT BEEN
+REVIEWED**, and u-rev 5's review does not transfer to it: an amendment reopens
 the review, however small the diff (D-311, and CLAUDE.md's own words).
 
 **THE ROWS BELOW SAY WHERE EACH FINDING IS ANSWERED AND DO NOT RESTATE WHAT IT
@@ -78,16 +98,26 @@ reads it there, where it has its home. The dispositions of the u-rev 3 round are
 not repeated here either — `U3-A` carries the one-line record of every round, and
 this block is about the round that is being answered.
 
-| Finding, `wp15b_U3_REVIEW_urev4.md` | Where it is answered at u-rev 5 |
+| Finding, `wp15b_U3_REVIEW_urev5.md` | Where it is answered at u-rev 6 |
 |---|---|
-| **MAJOR A** — the u-rev 4 MAJOR-2 repair created a B7-class site in §6.5 that its own site table does not list, falsifying that table's completeness claim in the commit that wrote it | **ANSWERED IN TWO PLACES, AND THE COMPLETENESS CLAIM IS THE ONE THAT GOES.** The §6.5 site gains its row in the U3-Z table, which is the list's ONE HOME. **And the bullet no longer claims the table is complete** — that claim has been false at every u-rev that made it, and the class sentence, which the bullet already relied on four paragraphs down, is what a reader now tests a site against. §6.2's *"five further sites"* count is deleted and replaced by a pointer to the table, because a count restated one section away from the list it counts is stale as soon as the list grows |
-| **MAJOR B** — the MINOR-5 repair's own correction, *"U2 is at u-rev 2"*, was already false at an ancestor commit, and is asserted at four sites | **ANSWERED BY CHANGING THE CITATION FORM, NOT ONLY THE FOUR VALUES.** Every cross-unit citation in this unit now reads `(u-rev N, landed <sha>)` — a historical fact that cannot go stale — and the reason is stated beside D-311's own label-discipline paragraph above. The four sites are corrected, and so are the four `**U4** (u-rev 6)` citations the u-rev-4 round left standing, which were stale by one u-rev by the same mechanism |
+| **MAJOR C** — the head's *"every cross-unit citation in this unit now reads `(u-rev N, landed <sha>)`"* was false at nine sites, the third completeness claim in this document falsified in the commit that wrote it | **ANSWERED BY THE REVIEWER'S OWN RECOMMENDED FIX (a), PLUS THE ONE THING (a) DOES NOT DO.** All nine sites are converted, so the debt three rounds had scoped out is gone rather than re-disclosed. **AND THE UNIVERSAL IS REPLACED BY A RULE AND A DERIVED COMMAND** — see the paragraph beside D-311's label discipline above. Converting the nine makes today's universal true; deriving it is what stops the next append making it false again, which is what (a) alone would not have done |
 
-**WHY THE FOUR INHERITED `U4` SITES ARE FIXED THOUGH NO FINDING NAMED THEM.**
-The u-rev 4 round scoped MINOR 5's repair to *"the three sites this repair
-wrote"*, leaving the inherited ones. That scope is what let MAJOR B happen one
-round later. Fixing the form without fixing every site it applies to would leave
-the same trap set.
+**WHY THE UNIVERSAL WAS THE DEFECT AND NOT ONLY THE NINE SITES.** The reviewer
+offered two fixes: convert the nine, or re-scope the claim honestly as u-rev 4's
+disposition table had. **Both are half-measures on their own.** Re-scoping keeps a
+hand-maintained count of inherited debt, which is the shape that went stale in U2
+twice and in this unit's B7 table three times. Converting alone leaves an asserted
+universal that the next citation added without the form falsifies silently. The
+answer taken is: convert all nine, and make the universal derivable, so the claim
+has an instrument instead of an author.
+
+**AND THIS IS THE THIRD RECURRENCE, WHICH IS RECORDED RATHER THAN ABSORBED.** MAJOR
+A, MAJOR B and MAJOR C are one class — *a completeness claim false in the commit that
+writes it* — and MAJOR C was written by the repair answering MAJOR A and MAJOR B,
+under D-331, by a session that had just landed D-331. **D-331 forbids restating a
+claim whose home is elsewhere; it does not forbid asserting a universal about this
+document's own state, which is what all three of these were.** That gap is a finding
+for the architect and is in the OPEN list; it is not something this unit may settle.
 
 **THE u-rev 4 ROUND'S OWN DISPOSITION TABLE IS REMOVED AT u-rev 5.** It restated
 the content of seven findings of `docs/experiments/wp15b_U3_REVIEW_urev3.md`
@@ -124,12 +154,13 @@ the disagreement is an ADR line.
 | DECISION-RED-TEAM, restructure | matrix at `eea480b` | F6: after M2's restoration unit 3 would have been the largest unit in option A's cut. Under D, M2 is not restored here at all |
 | REVIEW-design, this unit | u-rev 2, `1b645ac` | **FAIL** — 2 BLOCKING, 5 MAJOR, 4 MINOR (`docs/experiments/wp15b_U3_REVIEW.md`). Both BLOCKINGs are D-305's class inside the carve that exists to stop it: B5 recurring at a site the carve itself wrote, and an instrument-clause discharge naming a test D-312 deleted. **Every finding was dispositioned finding-by-finding at u-rev 3, in the head's REVIEW STATUS block at the time (since superseded there by the u-rev 3 review below); u-rev 3 is the answer to it, and the u-rev 3 review confirmed nine of eleven repairs holding.** M1 itself is again NOT reopened on its merits — see the owed-list below |
 | REVIEW-design, this unit | u-rev 3, `7d5d39c` | **FAIL** — 0 BLOCKING, 2 MAJOR, 3 MINOR (`docs/experiments/wp15b_U3_REVIEW_urev3.md`). u-rev 4 was the answer to it. M1 itself is again NOT reopened on its merits — see the owed-list below |
-| REVIEW-design, this unit | u-rev 4, `6f2dfe6` | **FAIL** — 0 BLOCKING, 2 MAJOR, 0 MINOR (`docs/experiments/wp15b_U3_REVIEW_urev4.md`). **Both MAJORs were created by the u-rev 4 repair itself**, which is the class D-331 landed for: a completeness claim falsified in the commit that wrote it, and a cross-unit u-rev correction that was already false at an ancestor commit. u-rev 5 is the answer to it, and it answers both by removing the restating surface rather than by correcting the values on it. M1 itself is again NOT reopened on its merits — see the owed-list below |
+| REVIEW-design, this unit | u-rev 4, `6f2dfe6` | **FAIL** — 0 BLOCKING, 2 MAJOR, 0 MINOR (`docs/experiments/wp15b_U3_REVIEW_urev4.md`). **Both MAJORs were created by the u-rev 4 repair itself.** u-rev 5 was the answer to it. M1 itself is again NOT reopened on its merits — see the owed-list below |
+| REVIEW-design, this unit | u-rev 5, `7473a6f` | **FAIL** — 0 BLOCKING, 1 MAJOR, 0 MINOR (`docs/experiments/wp15b_U3_REVIEW_urev5.md`). **THE THIRD CONSECUTIVE ROUND WHOSE MAJOR WAS MANUFACTURED BY THE PREVIOUS ROUND'S REPAIR**, and all three are one class: a completeness claim about this document's own state, false in the commit that wrote it. The B7 site table's completeness claim (MAJOR A), the cross-unit u-rev correction (MAJOR B), and the citation-form universal that answered MAJOR B (MAJOR C). u-rev 6 is the answer, and it is the first of the three to replace an asserted universal with a DERIVED one. The reviewer confirmed the B7 sweep clean at u-rev 5, breaking that half of the pattern |
 
 **What this unit owes that no round has given it:**
 
-- a REVIEW-design of THIS text at THIS u-rev — u-rev 4's ran, FAILED, and does
-  not transfer to u-rev 5;
+- a REVIEW-design of THIS text at THIS u-rev — u-rev 5's ran, FAILED, and does
+  not transfer to u-rev 6;
 - **a fresh DECISION-RED-TEAM against MATRIX M1 AS AMENDED (MAJOR 6).** The
   attack in row 1 ran against revision 1 at `ec8f7fb`. §6.1 has since flipped the
   ADOPTED reading from exact to threshold — changing what the config commits and
@@ -255,7 +286,7 @@ the project already applies to a derived fixture, applied to a design table for
 the same reason: an edited number becomes a red test rather than a reviewer's
 finding.
 
-**How to read it.** The FILTERED and BATCHED rows are separate because **U2** §5.3 emits
+**How to read it.** The FILTERED and BATCHED rows are separate because **U2** (u-rev 4, landed `7dfd047`) §5.3 emits
 different sets on them: a filtered node emits the cover union alone, a batched one
 emits Tier T plus the quiet cut. `quiet_top_k` and `widen_schedule` govern only
 the batched population, which is why the staged rows report it rather than a
@@ -311,10 +342,10 @@ currently searches at depth 2.
 ### 6.5 ADOPTED: C at the threshold reading
 
 **Pre-registered consequence, fixed before any gate runs.** If the soundness
-instrument (**U4** §8) shows C dropping a cell a proven tactic needs, C is replaced by
+instrument (**U4** (u-rev 7, landed `0f49c90`) §8) shows C dropping a cell a proven tactic needs, C is replaced by
 B — which under the threshold reading is strictly wider — and the exchange is an
 amendment with its own review, never a threshold move. **And the branch revision
-1 omitted:** if the instrument is GREEN while mutation M7 (**U4** §8.4; Tier T at ≥3 for the
+1 omitted:** if the instrument is GREEN while mutation M7 (**U4** (u-rev 7, landed `0f49c90`) §8.4; Tier T at ≥3 for the
 mover — option A) also SURVIVES, then the instrument has demonstrated it cannot
 tell A from C, C's entire ground is unmeasured, and that is recorded as such in
 the results rather than read as a confirmation of C.
@@ -356,7 +387,7 @@ here verbatim because a unit needs them and the seed is not reviewable.
 - **And the two SPRT seats therefore differ on a THIRD axis**, named here beside
   the other two (§10 withdrew one such claim already): not only in what they
   SELECT and in what they can SEE, but in SEARCH VALUE — the overload return and
-  **U2** §5.3's licensed shortening of mate distances on lost positions both change what
+  **U2** (u-rev 4, landed `7dfd047`) §5.3's licensed shortening of mate distances on lost positions both change what
   a node reports. A reader of the SPRT verdict must not read it as a pure
   generation experiment.
 
@@ -375,12 +406,12 @@ four sites).
 | document | mode | `quiet_radius` | `quiet_top_k` | `widen_schedule` | why |
 |---|---|---|---|---|---|
 | `configs/instrument_staged_v0.toml` | instrument | 2 | 16 | `[32]` | **the SPRT seat and the snapshot's AFTER.** The cut BINDS here, because a seat with the cut disabled would make the SPRT measure nothing about the prune (rule 6, `WPQ_seed.md` §7.2) |
-| `configs/tactical_staged_v0.toml` | instrument | 2 | **1024** | `[2048]` | **NEW in revision 7.** The 15 `instrument_v0` tactical cases. The cut is DISABLED, which is what **U4** §8.3's TACTICAL SUITE gate derivation requires and what revision 6 asserted while committing `quiet_top_k = 16` for these cases |
+| `configs/tactical_staged_v0.toml` | instrument | 2 | **1024** | `[2048]` | **NEW in revision 7.** The 15 `instrument_v0` tactical cases. The cut is DISABLED, which is what **U4** (u-rev 7, landed `0f49c90`) §8.3's TACTICAL SUITE gate derivation requires and what revision 6 asserted while committing `quiet_top_k = 16` for these cases |
 | `configs/gate_staged_v0.toml` | instrument | 1 | **128** | `[256]` | the five `depth_turns 3` cases, at radius 1. Cut disabled — MEASURED balls 22/22/22/18/15 at 11 stones, bounded by 6 × 17 = 102 three turns deeper |
 | `configs/play_staged_v0.toml` | play | 3 | 16 | `[32]` | the movetime measurement, whose incumbent is `play_v0.toml` at radius 3. Cut binds |
 
 **The fourth document exists because three could not carry the requirement.**
-Revision 6's **U4** §8.3 TACTICAL SUITE gate said "all three staged tactical configs disable the quiet cut" while §10
+Revision 6's §8.3 TACTICAL SUITE gate — the SUPERSEDED document at `6feb40a`, NOT **U4** as it now stands — said "all three staged tactical configs disable the quiet cut" while §10
 committed `quiet_top_k = 16` for two of them and §15 said "the two gate configs" —
 three statements of one rule, none agreeing. The tension is real and needs a
 document rather than a sentence: `instrument_staged_v0.toml` cannot be both the
@@ -414,7 +445,7 @@ into a unit where they CAN be attacked is a design act belonging to whoever
 decides the D-scope (U3-Z, OPEN).
 
 - The **first** batch is `quiet_top_k` quiet cells. Tier F and Tier T are always
-  emitted whole and are not counted against it (**U2** §5.4).
+  emitted whole and are not counted against it (**U2** (u-rev 4, landed `7dfd047`) §5.4).
 - The schedule's entries are **cumulative counts of QUIET cells**, not indices
   into the whole vector.
 - A pool **shorter** than the first boundary never truncates, so the node is not
@@ -533,7 +564,7 @@ readable alone; it is a condition, not a datum.)
    WITHDRAWN.** Revision 3 implemented the three-pairwise-disjoint-families
    early-out. Two measurements retire it: it needs three families and **1 of 24**
    corpus roots has them (17 roots have none, five have one, one has two); and it
-   accelerates `min_hitting_set_exceeds`, which under M5-E (**U2** §5.2) is **no longer
+   accelerates `min_hitting_set_exceeds`, which under M5-E (**U2** (u-rev 4, landed `7dfd047`) §5.2) is **no longer
    called per node at all**. M5-E delivers **−29.1 % / −41.3 % / −41.5 %** of the
    registered per-node threat cost by deleting the redundant query — a larger cut
    in the same hotspot than any remedy D-263 names, and it needs no new code in
@@ -562,7 +593,7 @@ readable alone; it is a condition, not a datum.)
    **nps AND time-to-depth**, per rule 5, not the snapshot — which reports
    `depth_turns` and `nodes` only. ONE CHANGE = ONE COMMIT.
    **And the number is re-taken on the right population**: 533/662 ns were
-   measured over all 24 corpus roots, but **U2** §5.3 does not extract Tier T on the
+   measured over all 24 corpus roots, but **U2** (u-rev 4, landed `7dfd047`) §5.3 does not extract Tier T on the
    **29.2 %** of them that take a forced row, so the registered figure is a
    blended mean over two populations — the same mixture defect §6.3 was corrected
    for. The IMPL re-takes it on BATCHED nodes only.
@@ -756,6 +787,22 @@ only one of them** (MAJOR 13).
 
 ### OPEN — carried forward, not closed by the carve
 
+- **D-331 DOES NOT REACH THE DEFECT THAT HAS NOW FAILED THIS UNIT THREE ROUNDS
+  RUNNING, AND THAT IS FOR THE ARCHITECT AND NOT FOR THIS UNIT.** MAJOR A, MAJOR B
+  and MAJOR C are one class: **a universal claim about THIS document's own state,
+  asserted by its author and false in the commit that asserts it** — the B7 table's
+  *"here is every site"*, the *"U2 is at u-rev 2"* correction, and the *"every
+  cross-unit citation now reads …"* universal that answered it. D-331 (R15) requires
+  every claim to have ONE HOME and every other occurrence to be a pointer. **All
+  three of these were at their home.** They were not restatements of anything; they
+  were assertions about a set the author had not enumerated. So the CLAIM-HOME law,
+  as landed, is silent about them — and MAJOR C was written under it, by the session
+  that landed it, one commit after landing it. **What this unit does about it, and it
+  is a remedy and not a rule:** the citation universal is now DERIVED by a command
+  stated in the head, and the B7 list is explicitly not a boundary. Whether that
+  generalises — whether a self-completeness claim owes a derivation the way a matrix
+  cell owes a command — is a project-level question this unit may not settle.
+
 - **MAJOR 12 — the unmarked `23.2` in §6.3's option-C failure-mode cell.** It
   carries neither **MEASURED** nor **ESTIMATED**, on the cell that states the
   ADOPTED option's residual risk, and the review found it is not a census row at
@@ -829,7 +876,7 @@ only one of them** (MAJOR 13).
   is how an enumeration goes stale. Widening the pin's scan past four decimals is
   an instrument change, not a re-target, and T4' does not license it — so the CLASS
   statement, not the table, is what stops this list going stale when a site is
-  added. **MINOR 9, repaired:** u-rev 2 also named a `70.8 %` in **U4** §8.5.
+  added. **MINOR 9, repaired:** u-rev 2 also named a `70.8 %` in **U4** (u-rev 7, landed `0f49c90`) §8.5.
   There is none — MEASURED, `grep -n "70\.8" docs/experiments/U4_soundness_instrument.md`
   returns one line, and it is inside §8.4; the §8.5 claim is deleted.
   **RE-TAKEN at u-rev 5 against U4** (u-rev 7, landed `0f49c90`): the same command
@@ -900,6 +947,6 @@ only one of them** (MAJOR 13).
 
 ---
 
-*U3, u-rev 5. A carve, plus the repairs answering its three review rounds — see
-the REVIEW STATUS block and U3-A, which are where those rounds are recorded. IMPL
-has not started.*
+*U3, u-rev 6. A carve, plus the repairs answering its four review rounds — see the
+REVIEW STATUS block and U3-A, which are where those rounds are recorded. IMPL has not
+started.*
