@@ -135,11 +135,11 @@ the log) was caught in the same pass.
 |---|---|
 | **BLOCKING 1** — D-320 has landed and closes B3's residual; U4-Z's residual paragraph and the OPEN list both describe the pre-D-320 state, and D-320 is named nowhere | **REPAIRED BY RE-DERIVATION, NOT BY PATCH.** U4-Z was re-read claim by claim against the ADR log. D-320 is now carried at both sites the report names and at the OPEN list: the breach is acknowledged, **the retro-matrix is WAIVED on its two stated grounds** (proportionality; and the independent verification the fresh-context REVIEW-design already supplied), the debt is recorded as **PAID by disclosure**, and **D-320's flip clause — a GATE-NAMING DEFECT surfacing — is carried in this unit, which is where such a defect would surface.** The re-derivation also caught **D-325**, which the report did not raise: it corrects D-316's false diagnosis in the log, so U4-Z's "carried to the architect" residual is DISCHARGED and is restated as closed |
 | **MAJOR 2** — the record stamp at the head of §8 says everything to the end of §8.7 is record and "none of it is the state now", which is false of four blocks inside the span | **REPAIRED — THE STAMP IS SCOPED IN BOTH DIRECTIONS.** It now lists what IS record (the u-rev 1 stub and its five-row table, §8.1, §8.2's S-E body prose, the prose carried into §8.3 and §8.4) and what IS NOT (§8.2's `FOLDED AT u-rev 6` block, §8.3's four-gate table, §8.3's live **U3** §10 sentence, §8.4's `RE-READ AT u-rev 6` block and its u-rev 6 ledger marks, §8.7's wiring sentence and its fold). The prior stamp was widened to answer u-rev 5's BLOCKING 2, which found it too NARROW, and over-reached in the other direction |
-| **MAJOR 3** — U4-Z's u-rev 2 SELECTION block still asserts "S-E **is** the differential gate" in present tense while its two siblings were retargeted at u-rev 6 | **REPAIRED.** The SELECTION block — which is carve prose recorded AFTER the comparison, not the selected-from text — now states that it records the u-rev 2 EXECUTION and that **the differential gate's instrument since D-323 is S-M**. **NO LIVE SENTENCE IN THIS UNIT IDENTIFIES THE DIFFERENTIAL GATE AS S-E.** The two-shape comparison at the SHAPE 1 / SHAPE 2 cells is left unedited, on the unit's stated discipline, and the report agrees that is right |
+| **MAJOR 3** — U4-Z's u-rev 2 SELECTION block still asserts "S-E **is** the differential gate" in present tense while its two siblings were retargeted at u-rev 6 | **REPAIRED.** The SELECTION block — which is carve prose recorded AFTER the comparison, not the selected-from text — now states that it records the u-rev 2 EXECUTION and that **the differential gate's instrument since D-323 is S-M**. *~~NO LIVE SENTENCE IN THIS UNIT IDENTIFIES THE DIFFERENTIAL GATE AS S-E.~~ **THAT UNIVERSAL IS WITHDRAWN AS FALSE AT u-rev 8** — MAJOR 1 of `wp15b_U4_REVIEW_urev7.md` found the sibling sentence at §8.7 saying exactly that, and the repair here had never reached it. §8.7 is corrected at u-rev 8. **NO UNIVERSAL REPLACES IT:** what this row records is that a named site was repaired, and whether any other site says it is a question for a reviewer's sweep, not a claim this table may assert about a body it does not own.* The two-shape comparison at the SHAPE 1 / SHAPE 2 cells is left unedited, on the unit's stated discipline, and the report agrees that is right |
 | **MINOR 4** — U4-M item 1 says the amendment is carried "below"; §9.1 amendment 4 is above and carries no note at its own site | **REPAIRED AT BOTH ENDS.** The direction word is corrected to **ABOVE**, and §9.1 amendment 4 now carries a marked pointer at its own site, so a reader meeting it first does not read an unqualified MEASURED 34.5 s attributed to a script that has never existed |
 | **MINOR 5** — §8.3's "this unit states no such number anywhere" is falsified by the record quotation four lines later | **REPAIRED BY BOTH REMEDIES the report offered.** The absolute claim narrows to *"states no such number as a live claim"*, AND the record quotation is replaced by a DESCRIPTION of the deleted clause, so the count is no longer restated one level up |
 | **MINOR 6** — the REVIEW STATUS row for the prior reviewer's "one observation for the architect" describes a state `a0f241b` fixed | **REPAIRED, AND STATED SO IT CANNOT GO STALE AGAIN.** See the row at the foot of the u-rev 5 table below: the observation was discharged at `a0f241b`, and what is recorded now is the STANDING DUTY (a re-measurement is owed to the owner table after every u-rev bump of this unit, including this one) rather than any particular size or u-rev. **This unit still asserts no line count of itself** (rule 9) |
-| **MINOR 7** — the selection SHA is cited two ways and only one of four sites disambiguates | **REPAIRED by one convention applied at all four.** Every abbreviated citation now reads **"S-M SELECTED at `af8082a` (taken at `809b5db`)"**, which matches `matrix_M3_selection.md`'s own header. The same convention is applied to the new M4 axis-A citations: **selected at `7e0a328`, landed at `d56a898`** |
+| **MINOR 7** — the selection SHA is cited two ways and only one of four sites disambiguates | **REPAIRED at the four sites the report named**, to the convention `matrix_M3_selection.md`'s own header uses: **"S-M SELECTED at `af8082a` (taken at `809b5db`)"**. The same convention is applied to the new M4 axis-A citations: **selected at `7e0a328`, landed at `d56a898`**. *~~Every abbreviated citation now reads …~~ **THAT UNIVERSAL IS WITHDRAWN AS FALSE AT u-rev 8** — MINOR 6 of `wp15b_U4_REVIEW_urev7.md` found §8.7:854 outside it. **THE UNIVERSAL IS NOT RE-ASSERTED AND IS NOT REPLACED BY A NARROWER ONE.** §8.7's site is corrected at u-rev 8; the set of sites is what a reader derives, not what this row certifies. **THIS IS THE SECOND UNIVERSAL IN THIS TABLE WITHDRAWN AS FALSE, AND THE THIRD IN THIS UNIT'S HISTORY** (BLOCKING 1's "across the whole unit" went at u-rev 7). A REVIEW STATUS row that certifies a property of the whole document is the shape all three had.* |
 
 **THE PRIOR ROUND — u-rev 5's review, `docs/experiments/wp15b_U4_REVIEW.md`**,
 REVIEW-design, fresh context, against **`35aab95`** — **VERDICT FAIL**, **3 BLOCKING,
@@ -831,10 +831,23 @@ community. Revision 1 asserted the test plan said this; it contained no occurren
 > named nothing.
 >
 > **REPAIRED by shape 2 (D-316): the letters are dropped and the four gates are
-> named.** The double-list dies with the letters — S-E is not listed beside the
-> letters it was one of, because it IS the differential gate and is named once, in
-> §8.2. The two-shape comparison the selection was made from stands unedited in
-> U4-Z, with the selection recorded beneath it.
+> named.** The double-list dies with the letters — the row was not listed beside the
+> letters it was one of, because **the differential gate is named ONCE, in §8.2**. The
+> two-shape comparison the selection was made from stands unedited in U4-Z, with the
+> selection recorded beneath it.
+>
+> *(CORRECTED AT u-rev 8 — MAJOR 1 of `wp15b_U4_REVIEW_urev7.md`. Until u-rev 7 this
+> sentence read "because **it IS the differential gate** and is named once", in the
+> present tense and in this unit's own voice, of **S-E** — a row that FELL in M3 round
+> 1 and has not been the differential gate's instrument since D-323 selected S-M. It
+> is the same sentence MAJOR 3 of `wp15b_U4_REVIEW_urev6.md` charged at U4-Z's copy;
+> u-rev 7 repaired that copy and did not reach this one. It is corrected IN PLACE, not
+> annotated, because this block is carve prose — the unit edited inside this very
+> blockquote at u-rev 6 under MINOR 9, four lines above — and the record discipline
+> that leaves the two-shape comparison unedited does not reach it. **The paragraph
+> above it, which reads "so S-E *is* gate (b)'s instrument", is REPORTED SPEECH about
+> revision 1's own matrix heading and is left as it stands; it is marked here so a
+> wording-independent sweep does not have to decide that twice.*)
 
 **THESE FOUR — the tactical suite under Staged (§8.3), the differential gate
 (§8.2: S-M — per-node EQUALITY of the emitted set against the LANDED referent R1,
@@ -851,8 +864,10 @@ scratch preflight.
 **FOLDED AT u-rev 6 — WHAT THIS SENTENCE SAID AND WHAT IT CAN AND CANNOT SPECIFY
 NOW.** From u-rev 2 to u-rev 5 the differential gate above read *"S-E with the reduced
 S-C beside it"*; **S-E fell in M3 round 1 and the composite that carried the reduced
-S-C (S-J) fell in round 2**, and the instrument selected at `af8082a` is **S-M**
-(D-323). This paragraph is the sentence `tools/staged_soundness_check.sh`'s own
+S-C (S-J) fell in round 2**, and the instrument **S-M SELECTED at `af8082a` (taken at
+`809b5db`)** is the one this sentence now names (D-323) — the convention MINOR 7 of
+`wp15b_U4_REVIEW_urev6.md` settled, applied here at u-rev 8 to the one live site its
+repair had not reached (**MINOR 6**, `wp15b_U4_REVIEW_urev7.md`). This paragraph is the sentence `tools/staged_soundness_check.sh`'s own
 enumeration is taken from, so the retarget is not cosmetic. **THREE OF THE FOUR PARTS
 CAN BE SPECIFIED AND ONE CANNOT:** the differential gate's CRITERION is selected, but
 the SEAM by which a test observes the emitted set is a separate named decision D-323
@@ -935,8 +950,17 @@ what D-316's naming was for.
 >    LOOP.** MEASURED twice — by the measurer and again by the attacker — that spelling
 >    leaves `configs/spaced dir/instrument_v0.toml` reaching the record at exit 0.
 > 3. **AN ITEM-10 DRIVING TEST IS OWED for both new refusal classes**, in two halves
->    with a control, per the coverage rule. The precedent is one commit old: `b067d47`
->    paid 91 test lines for ONE guard arm.
+>    with a control, per the coverage rule. The precedent is **MEASURED** — the mark is
+>    added at u-rev 8, MINOR 7 of `wp15b_U4_REVIEW_urev7.md`, which found the figure
+>    unmarked at two sites and measurable in one command:
+>
+>    ```
+>    $ git show b067d47 --numstat -- crates/pistol-cli/tests/baseline_snapshot_tests.rs tools/baseline_snapshot.sh
+>    91	0	crates/pistol-cli/tests/baseline_snapshot_tests.rs
+>    54	4	tools/baseline_snapshot.sh
+>    ```
+>
+>    **MEASURED 91 test lines for ONE guard arm at `b067d47`.**
 > 4. **AN ITEM-12 SENTENCE IS OWED** in the usage block saying that a config refusal is
 >    a **FAIL**, this script having declared no void class.
 >
@@ -961,7 +985,18 @@ what D-316's naming was for.
 > > provenance rests on caller discipline plus a digest of bytes nobody else holds. The
 > > round measured that the one row which tried to fix this does not fix it either — a
 > > gitignored file inside `configs/` reaches the invariant block at exit 0 — so the
-> > weakness is not resolved by this selection, only left where it was.
+> > weakness is not resolved by this selection, only left where it was. N-E therefore
+> > ships a seam whose provenance guarantee is exactly as strong as the caller, and this
+> > round chose it knowing that and having measured that the alternative bought nothing
+> > for its five extra lines except a new false refusal.
+>
+> *(COMPLETED AT u-rev 8 — MINOR 8 of `wp15b_U4_REVIEW_urev7.md`. Until u-rev 7 this
+> quotation stopped at "only left where it was" and dropped the record's closing
+> sentence with no elision mark, while D-323's fold in this same document marks its
+> elisions with `…`. The dropped sentence is the ROUND'S OWN DEFENCE, so the omission
+> ran in the attack's favour and softened nothing — which is why the finding is MINOR
+> and why the remedy is to quote it rather than to mark the gap. Text presented as a
+> verbatim quotation should be one.)*
 >
 > **RESIDUAL, OPEN AND THE ARCHITECT'S: N-E HAS NOT BEEN ATTACKED BY A FRESH-CONTEXT
 > DECISION-RED-TEAM IN ITS OWN RIGHT.** The matrix law is satisfied for the FIELD — a
@@ -1383,10 +1418,29 @@ readable alone; it is a condition, not a datum.)
      was no selected config seam after three rounds (D-324). **A fourth round has since
      run on axis A alone and N-E IS SELECTED (D-329)** — a required `--config PATH`, no
      default, with a new whole-path guard — **so the seam is now SELECTED AND NOT
-     BUILT.** MEASURED at `8690ad6`: `tools/baseline_snapshot.sh:182` still reads
-     `CONFIG="configs/instrument_v0.toml"` and the script takes no `--config` argument
-     of its own (the four `--config` occurrences in it are the ENGINE's flag on
-     invocation lines, not the script's). Four conditions ride with the selection and
+     BUILT.** MEASURED at `8690ad6` and **RE-TAKEN at u-rev 8** because the script has
+     moved since (`63eac4c`, architect ruling R19, one base for every caller-supplied
+     path): `tools/baseline_snapshot.sh:182` still reads
+     `CONFIG="configs/instrument_v0.toml"` and the script still takes no `--config`
+     argument of its own. **THE FOUR `--config` OCCURRENCES ARE NOT ALL THE SAME THING,
+     and u-rev 7 said they were** — MINOR 5 of `wp15b_U4_REVIEW_urev7.md`. Three are the
+     ENGINE's flag on invocation lines; the fourth is inside a COMMENT, and it is the
+     one line in the tree that binds the next `--config` change, so it is worth citing
+     correctly in the unit that owes that change. RE-TAKEN:
+
+     ```
+     $ grep -n -- "--config" tools/baseline_snapshot.sh
+     543:printf 'pistol\nquit\n' | timeout "$HANDSHAKE_TIMEOUT" "$BINARY" --config "$CONFIG" >"$WORK/hs" 2>/dev/null || HANDSHAKE_RC=$?
+     559:	# caller-named and the guard above does not cover it. If a `--config` flag is
+     592:timeout "$CORPUS_TIMEOUT" "$BINARY" --config "$CONFIG" <"$WORK/corpus.session" >"$WORK/corpus.out" || CORPUS_RC=$?
+     659:		timeout "$LADDER_CAP_S" "$BINARY" --config "$CONFIG" >"$out" 2>/dev/null || rc=$?
+     $ grep -n 'CONFIG="configs' tools/baseline_snapshot.sh
+     182:CONFIG="configs/instrument_v0.toml"
+     ```
+
+     The comment at 559 says a `--config` flag would join the guard above it in the same
+     commit, which STRENGTHENS this item's conclusion rather than weakening it: the
+     script's own text records that the flag does not exist. Four conditions ride with the selection and
      none is paid. **So no Staged snapshot can be taken, for a narrower reason than at
      u-rev 6: what is owed is IMPL against a named option, not another matrix round.**
      And independently of the seam, on the config document itself — **MEASURED at
