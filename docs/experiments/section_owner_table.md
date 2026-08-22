@@ -437,4 +437,6 @@ is the architect's.
 
 ---
 
-*Carve table, u-rev 5.*
+*Carve table, u-rev 6. What each u-rev of this table did is the LABEL DISCIPLINE
+block's, and this line restates none of it — it carries the u-rev label alone, so it
+cannot go one behind the head independently of that block.*
