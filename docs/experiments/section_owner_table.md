@@ -2,7 +2,7 @@
 
 <!-- WP-1.5b CARVE MEMBER — read by crates/pistol-solver/tests/wp15b_census.rs -->
 
-**u-rev 4.** The map from `docs/experiments/wp15b_design.md` at `6feb40a`
+**u-rev 5.** The map from `docs/experiments/wp15b_design.md` at `6feb40a`
 (revision 7, never reviewed, CLOSED by D-309) to the units the restructure
 selected as option D by D-310 produced. **This table is the carve's own gate: an
 unowned line or a double-owned line is a FAILED carve, not a finding.**
@@ -17,8 +17,10 @@ the exact corruption a reviewer used against the old pin and which it now fails
 the build on.
 
 **LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this table bumps
-its u-rev. **THIS TABLE IS AT u-rev 4**: §11's unit-size table gains a fourth
-column, re-measured at `7358a07` after U4's own repair moved it from 855 to 1413,
+its u-rev. **THIS TABLE IS AT u-rev 5**: §11's unit-size table gains a FIFTH
+column, re-measured at `161e6d3` after the design-closure round moved three of the
+five units — U2 to 827, U3 to 846 and U4 to 1886. The u-rev 4 column, re-measured
+at `7358a07` after U4's own repair moved it from 855 to 1413,
 which is the re-measurement the u-rev 3 append promised in writing. At u-rev 3 it
 gained a third column, re-measured at `0af32fb` after the repair round moved every
 unit, and it recorded that the discipline of correcting a size in the commit that
@@ -253,14 +255,14 @@ unowned; nothing is owned twice.
 about a unit exceeding one sitting, and after the carve the largest unit is not
 the one F6 named:
 
-| Unit | at the carve (u-rev 1) | at u-rev 2 of this table | at u-rev 3 (`0af32fb`) | now, MEASURED at `7358a07` | u-rev now |
-|---|---|---|---|---|---|
-| U1 gate supersession | 274 | 274 | 329 | **329** | 2 |
-| U2 node protocol | 754 | 754 | 799 | **799** | 2 |
-| U3 Tier-T and the config shape | 603 | 603 | 818 | **818** | 3 |
-| U4 soundness instrument | 701 | 800 | 855 | **1413** | 6 |
-| WPQ seed (not reviewable) | 222 | 222 | 227 | **227** | 2 |
-| this table | 268 | *not measured* | 287 | **321** (before this append) | 4 |
+| Unit | at the carve (u-rev 1) | at u-rev 2 of this table | at u-rev 3 (`0af32fb`) | at u-rev 4 (`7358a07`) | now, MEASURED at `161e6d3` | u-rev now |
+|---|---|---|---|---|---|---|
+| U1 gate supersession | 274 | 274 | 329 | 329 | **329** | 2 |
+| U2 node protocol | 754 | 754 | 799 | 799 | **827** | 3 |
+| U3 Tier-T and the config shape | 603 | 603 | 818 | 818 | **846** | 4 |
+| U4 soundness instrument | 701 | 800 | 855 | 1413 | **1886** | 7 |
+| WPQ seed (not reviewable) | 222 | 222 | 227 | 227 | **227** | 2 |
+| this table | 268 | *not measured* | 287 | 321 | **337** (before this append) | 5 |
 
 **THE THIRD COLUMN IS RE-MEASURED AT u-rev 3 OF THIS TABLE, AND THE SECOND HAD
 GONE FALSE AGAIN BEFORE IT WAS READ.** Command, at `0af32fb`:
@@ -296,8 +298,8 @@ M3's SELECTION of S-M (D-323) and M4's third STOP (D-324). No other unit moved.
 
 **AND IT MAKES §11's QUESTION SHARPER RATHER THAN ANSWERING IT.** The property
 the whole restructure was bought for is "reviewable in one sitting". At the carve
-the largest unit was U2 at 754; the largest is now U4 at 1413, which is 87 %
-larger than anything the four-way cut was judged against and 72 % of the 1975-line
+the largest unit was U2 at 754; at u-rev 4 the largest was U4 at 1413, which was
+87 % larger than anything the four-way cut was judged against and 72 % of the 1975-line
 document the carve replaced. **That is a finding for the architect and not a
 change this table may make** — it is the same question §11 already hands over,
 posed on a number that has since nearly doubled.
@@ -323,15 +325,47 @@ package has failed on six times, and because the number was made stale by the
 repairs and not by the carve. The `at the carve` column is kept so the figure
 F6's flip clause was judged against stays retrievable.
 
+**THE FIFTH COLUMN IS THIS RE-MEASUREMENT, AND U4's OWN u-rev 7 RECORDS THE DUTY
+THAT PRODUCED IT.** Command, at `161e6d3`:
+
+```
+$ wc -l docs/experiments/U{1_gate_supersession,2_node_protocol,3_tier_t,4_soundness_instrument}.md \
+        docs/experiments/WPQ_seed.md docs/experiments/section_owner_table.md
+   329 docs/experiments/U1_gate_supersession.md
+   827 docs/experiments/U2_node_protocol.md
+   846 docs/experiments/U3_tier_t.md
+  1886 docs/experiments/U4_soundness_instrument.md
+   227 docs/experiments/WPQ_seed.md
+   337 docs/experiments/section_owner_table.md
+```
+
+**Three of the five units moved in one round** — U2 to u-rev 3 (`d85b049`), U3 to
+u-rev 4 (`6f2dfe6`), U4 to u-rev 7 (`0f49c90`) — and U1 and the seed did not move
+at all. The row that matters is U4's: **1413 → 1886**, the repair of a FAIL that
+carried a BLOCKING plus the fold of M4's axis-A selection (D-329) and D-330.
+
+**AND §11's QUESTION IS NOW POSED ON A NUMBER THAT HAS MORE THAN DOUBLED SINCE
+THE CUT WAS JUDGED.** U4 is **1886** against the largest-at-the-carve U2 at
+**754** — **150 % larger**, and **95 %** of the 1975-line document the four-way
+carve replaced. The unit that the restructure existed to make reviewable in one
+sitting is now within ninety lines of the document it was carved out of. This
+table states that and does not resolve it; it is the architect's.
+
+**THIS RE-MEASUREMENT WAS OWED BY A RULE AND NOT BY A REMINDER**, which is the
+difference from the two rounds that went stale. U4's u-rev 7 replaced its own
+stale owner-table row with a STANDING DUTY — the row re-opens on every bump of
+that unit rather than recording a size that will be wrong at the next one — and
+this append is the first discharge of it.
+
 **This is a finding for the architect, not a change the carve may make.** D-310
 selected a four-unit cut; F6's arithmetic predicted unit 3 at ~425 and unit 2 at
 355. Measured after the carve, with the remainder F3 found unowned now assigned,
-**U2 was 754 lines at the carve and U3 was 603 — and at `7358a07` they are 799
-and 818, with U4 at 1413** — the remainder was 923 lines and it had to go
+**U2 was 754 lines at the carve and U3 was 603 — and at `161e6d3` they are 827
+and 846, with U4 at 1886** — the remainder was 923 lines and it had to go
 somewhere. Whether "reviewable in one sitting", which is the property the whole
 restructure was bought for, survives at those sizes is a selection question and
 is the architect's.
 
 ---
 
-*Carve table, u-rev 4.*
+*Carve table, u-rev 5.*
