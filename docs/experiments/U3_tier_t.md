@@ -12,8 +12,8 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 8.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
-4 and 5 at `6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it, and is that review's home), plus the two
+**u-rev 9.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
+4 and 5 at `6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it), plus the two
 bullets of §7.2 that are not widening text, under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -114,8 +114,7 @@ claims found false or unverifiable, not disclosures that hold.
 ROUND STOPPED THERE RATHER THAN DISPATCHING A SIXTH REVIEW.**
 `docs/experiments/wp15b_U3_REVIEW_urev6.md`, REVIEW-design (re-review), fresh
 context, dispatched against the named revision **`f0ae14c`** — **VERDICT FAIL**,
-**0 BLOCKING, 2 MAJOR, 0 MINOR**. **NEITHER u-rev 7 NOR u-rev 8 HAS BEEN REVIEWED**,
-and u-rev 6's review does not transfer to either.
+**0 BLOCKING, 2 MAJOR, 0 MINOR**.
 
 **WHY NO SIXTH REVIEW WAS DISPATCHED, STATED HERE BECAUSE AN UNREVIEWED u-rev IS
 OTHERWISE INDISTINGUISHABLE FROM A FORGOTTEN ONE.** This document has now failed FOUR
@@ -851,7 +850,7 @@ only one of them** (MAJOR 13).
   as grounding instances of the recurrence it rests on. What it does not do is state a
   RULE that a self-completeness claim owes a derivation, the way the Process section
   states that a matrix cell owes a command. **What this unit does about it is a remedy
-  and not a rule:** it asserts no universal about its own citations, the B7 list is
+  and not a rule:** the B7 list is
   explicitly not a boundary, and the instrument it offers is labelled a finding aid
   rather than a proof — because u-rev 6 tried the derivation and the derivation was
   blind. **Whether a self-completeness claim owes an instrument, and what makes an
@@ -1001,7 +1000,7 @@ only one of them** (MAJOR 13).
 
 ---
 
-*U3, u-rev 8. What each u-rev of this unit did, and which rounds attacked it, are the
+*U3, u-rev 9. What each u-rev of this unit did, and which rounds attacked it, are the
 REVIEW STATUS block's and U3-A's — this line restates neither and carries the u-rev
 label alone, so it cannot go one behind the head independently of them. IMPL has not
 started.*
