@@ -1,6 +1,6 @@
 # WP-1.5b — SPRT pre-registration: staged threat-first generation vs the committed radius policy
 
-**Revision 4. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
+**Revision 5. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
 
 **Revision 2 (`9c068a0`) FAILED its review — 7 BLOCKING, 8 MAJOR, 2 MINOR, 9 REJECTED
 with reproducers.** Revision 3 applies all twelve numbered fixes and repairs the
@@ -31,6 +31,21 @@ EXPENSIVE against D-245's record of it as CHEAP, in a paragraph that quoted D-24
 warning about exactly that move. The reclassification is now the operator's, on the
 ADR log, as **D-307**; §7A cites it rather than performing it.
 
+**Revision 5 is a DRAFT EDIT, not an amendment reopen — this document has never
+passed review at any revision, so there is no standing review to reopen.** It fixes
+the two defects the architect's GROUNDWORK dispatch named as this run's launch
+condition, both pre-existing since at least revision 3. **§1's claim citation** named
+`docs/experiments/wp15b_design.md`, deleted from the tree by the carve at `6feb40a`;
+it now names the carve's four units and the retrievable pre-carve SHA, the same
+pattern D-309/D-311 already use elsewhere in this WP. **§7A.2's `--config` paragraph**
+said *"its §9 MATRIX M4 ADOPTS adding `--config`"* — false: matrix M4's own
+recommendation was **N-Q**, and its own red team killed that recommendation; the
+option actually selected, **N-E**, was chosen by **D-329** at axis A's tiebreak rung
+(b), not adopted by the matrix. The paragraph now cites D-329 directly. D-311 bumps
+the label on any append to a document a review is dispatched against, however small;
+revision 4 was never itself reviewed, so this edit closes no review — it only moves
+the label so a future review's header names one unambiguous text.
+
 It names `configs/instrument_staged_v0.toml`, which does not exist at this revision, so
 it cannot govern a run and no run has been taken under it. It becomes governing when
 three things hold together: the config exists, every **OPERATOR-CONFIRM** slot in §9 is
@@ -46,9 +61,11 @@ review state; it plays no game.
 
 ## 1. What is being judged, and what is not
 
-**The claim.** Staged threat-first candidate generation
-(`docs/experiments/wp15b_design.md`) is stronger than the committed radius-2
-full-width policy at a fixed node budget.
+**The claim.** Staged threat-first candidate generation — carved by D-310's option D
+into `docs/experiments/U1_gate_supersession.md` through `U4_soundness_instrument.md`;
+the pre-carve document is not in the tree, retrievable at `6feb40a` and nowhere
+else — is stronger than the committed radius-2 full-width policy at a fixed node
+budget.
 
 **What this run cannot judge, said first because rule 6 is about what a number
 means.** SPRT judges STRENGTH, not soundness — a pruning change that quietly
@@ -361,11 +378,13 @@ different question from Doubt 1. It is kept, with its criterion rebuilt.
 **cannot measure the staged seat at all**: MEASURED at this document's revision,
 `tools/baseline_snapshot.sh --config configs/gate_v0.toml` answers
 `baseline_snapshot: FAIL: unknown argument --config`, the script hard-coding
-`CONFIG="configs/instrument_v0.toml"` with no flag to move it. The design already knows — its §9 MATRIX M4
-ADOPTS adding `--config` and its amendment 4 re-takes the BEFORE run under the
-amended script — so revision 2 pinned the superseded revision of an instrument its
-own design had committed to changing. The slot is a revision and not a path for
-exactly that reason.
+`CONFIG="configs/instrument_v0.toml"` with no flag to move it. The design already
+knows — **D-329** selects **N-E**, a required `--config PATH` with no default and a
+new whole-path guard, at axis A's tiebreak rung (b) — not matrix M4 itself, whose own
+recommendation was N-Q and whose own red team killed it — and amendment 4 re-takes the
+BEFORE run under the amended script. So revision 2 pinned the superseded revision of
+an instrument this WP had already committed to changing. The slot is a revision and
+not a path for exactly that reason.
 
 **HOW IT DOES NOT SHARE THE STAGE:** the snapshot drives ONE engine through the
 line protocol and reads its own output. No seat, no pairing, no referee, no
@@ -766,7 +785,8 @@ review, and reviews of superseded revisions do not transfer.
 | 1 | rev 1, `af9fa4a` | **FAILS** — 4 BLOCKING, 7 MAJOR |
 | 2 | rev 2, `9c068a0` | **FAILS** — 7 BLOCKING, 8 MAJOR, 2 MINOR, 9 REJECTED with reproducers |
 | 3 | rev 3, `e9a5145` | **PARTIAL** — a fresh-context REVIEW-impl covered the `tools/` half only (the instrument and its test), and FAILED it: 1 BLOCKING, 4 MAJOR, 4 MINOR (D-308). The DOCUMENT was explicitly out of that reviewer's scope and has never been reviewed at any revision |
-| 4 | rev 4, this revision | **OUTSTANDING** — the instrument is repaired and re-run; the document is not self-reviewed and not run |
+| 4 | rev 4, `ca0d331` | **NEVER REVIEWED** — superseded by revision 5's draft edit before any round targeted it |
+| 5 | rev 5, this revision | **OUTSTANDING** — the launch-condition defects are fixed; the document is not self-reviewed and not run; queued for the fresh-context review this document has never had |
 
 **Nothing here has been run as a governed sample and this document governs
 nothing.** The dry run of §8 is not a governed sample by CLAUDE.md's own text.
