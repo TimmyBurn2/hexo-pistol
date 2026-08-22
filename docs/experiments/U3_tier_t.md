@@ -95,12 +95,23 @@ exceptions to it:** the two in the paragraph above quote the OLD bare form as th
 defect being described, and §10's *"Revision 6's §8.3"* names the SUPERSEDED document
 at `6feb40a`, which has no u-rev and is not **U4**.
 
-**REVIEW STATUS — u-rev 5 WAS REVIEWED AND FAILED; u-rev 6 IS THE REPAIR.**
-`docs/experiments/wp15b_U3_REVIEW_urev5.md`, REVIEW-design (re-review), fresh
-context, dispatched against the named revision **`7473a6f`** — **VERDICT FAIL**,
-**0 BLOCKING, 1 MAJOR, 0 MINOR**. **THIS u-rev — u-rev 6 — HAS NOT BEEN
-REVIEWED**, and u-rev 5's review does not transfer to it: an amendment reopens
-the review, however small the diff (D-311, and CLAUDE.md's own words).
+**REVIEW STATUS — u-rev 6 WAS REVIEWED AND FAILED; u-rev 7 IS THE REPAIR, AND THE
+ROUND STOPPED THERE RATHER THAN DISPATCHING A SIXTH REVIEW.**
+`docs/experiments/wp15b_U3_REVIEW_urev6.md`, REVIEW-design (re-review), fresh
+context, dispatched against the named revision **`f0ae14c`** — **VERDICT FAIL**,
+**0 BLOCKING, 2 MAJOR, 0 MINOR**. **THIS u-rev — u-rev 7 — HAS NOT BEEN REVIEWED**,
+and u-rev 6's review does not transfer to it.
+
+**WHY NO SIXTH REVIEW WAS DISPATCHED, STATED HERE BECAUSE AN UNREVIEWED u-rev IS
+OTHERWISE INDISTINGUISHABLE FROM A FORGOTTEN ONE.** This document has now failed FOUR
+consecutive re-reviews, and **every one of the four MAJORs was manufactured by the
+previous round's repair** — MAJOR A by u-rev 4's MAJOR-2 repair, MAJOR B by u-rev 4's
+MINOR-5 repair, MAJOR C by u-rev 5's answer to MAJOR B, MAJOR D by u-rev 6's answer to
+MAJOR C. The dispatching session's standing rule for a re-review FAIL is **collect,
+architect, no loop**, and a fifth repair-and-review cycle inside one session is the
+loop that rule forbids. **The two findings are repaired because they are FALSEHOODS in
+the tree and leaving them is not an option; the review they owe is the architect's to
+schedule.**
 
 **THE ROWS BELOW SAY WHERE EACH FINDING IS ANSWERED AND DO NOT RESTATE WHAT IT
 SAID (D-331).** The report is in the tree; a reader who wants a finding's content
@@ -108,9 +119,12 @@ reads it there, where it has its home. The dispositions of the u-rev 3 round are
 not repeated here either — `U3-A` carries the one-line record of every round, and
 this block is about the round that is being answered.
 
-| Finding, `wp15b_U3_REVIEW_urev5.md` | Where it is answered at u-rev 6 |
+| Finding, `wp15b_U3_REVIEW_urev6.md` | Where it is answered at u-rev 7 |
 |---|---|
-| **MAJOR C** — the head's *"every cross-unit citation in this unit now reads `(u-rev N, landed <sha>)`"* was false at nine sites, the third completeness claim in this document falsified in the commit that wrote it | **ANSWERED BY THE REVIEWER'S OWN RECOMMENDED FIX (a), PLUS THE ONE THING (a) DOES NOT DO.** All nine sites are converted, so the debt three rounds had scoped out is gone rather than re-disclosed. **AND THE UNIVERSAL IS REPLACED BY A RULE AND A DERIVED COMMAND** — see the paragraph beside D-311's label discipline above. Converting the nine makes today's universal true; deriving it is what stops the next append making it false again, which is what (a) alone would not have done |
+| **MAJOR D** — a tenth live citation at §10 was unbolded and un-u-rev'd, and the derived command registered at u-rev 6 was structurally blind to it, so *"the rule and the tree now agree"* was false in the commit that wrote it | §10's citation, converted. **AND THE INSTRUMENT IS REPLACED RATHER THAN WIDENED INTO A NEW UNIVERSAL** — see the paragraph beside D-311's label discipline. The command is now wider than the form, returns noise a reader triages, and is labelled a FINDING AID; **this head asserts no universal about its own citations at all**, because both previous attempts to state one — direct, then laundered through a grep — were false |
+| **MAJOR E** — the OPEN bullet claimed D-331 *"does not reach"* and *"is silent about"* MAJOR A, B and C; D-331 names A and B by citation as grounding instances, and B is a textbook restatement under its own diagnosis | The OPEN bullet, rewritten. It now splits the three: **B is a D-331 restatement**; **A and C are the neighbouring class**; and D-331 is **not silent** about any of them — what it lacks is a RULE, not a mention |
+
+*(The u-rev 6 round answered `wp15b_U3_REVIEW_urev5.md`'s MAJOR C by converting nine sites and registering a derived command. That repair is what MAJOR D then broke.)*
 
 **WHY THE UNIVERSAL WAS THE DEFECT AND NOT ONLY THE NINE SITES.** The reviewer
 offered two fixes: convert the nine, or re-scope the claim honestly as u-rev 4's
@@ -165,12 +179,14 @@ the disagreement is an ADR line.
 | REVIEW-design, this unit | u-rev 2, `1b645ac` | **FAIL** — 2 BLOCKING, 5 MAJOR, 4 MINOR (`docs/experiments/wp15b_U3_REVIEW.md`). Both BLOCKINGs are D-305's class inside the carve that exists to stop it: B5 recurring at a site the carve itself wrote, and an instrument-clause discharge naming a test D-312 deleted. **Every finding was dispositioned finding-by-finding at u-rev 3, in the head's REVIEW STATUS block at the time (since superseded there by the u-rev 3 review below); u-rev 3 is the answer to it, and the u-rev 3 review confirmed nine of eleven repairs holding.** M1 itself is again NOT reopened on its merits — see the owed-list below |
 | REVIEW-design, this unit | u-rev 3, `7d5d39c` | **FAIL** — 0 BLOCKING, 2 MAJOR, 3 MINOR (`docs/experiments/wp15b_U3_REVIEW_urev3.md`). u-rev 4 was the answer to it. M1 itself is again NOT reopened on its merits — see the owed-list below |
 | REVIEW-design, this unit | u-rev 4, `6f2dfe6` | **FAIL** — 0 BLOCKING, 2 MAJOR, 0 MINOR (`docs/experiments/wp15b_U3_REVIEW_urev4.md`). **Both MAJORs were created by the u-rev 4 repair itself.** u-rev 5 was the answer to it. M1 itself is again NOT reopened on its merits — see the owed-list below |
+| REVIEW-design, this unit | u-rev 6, `f0ae14c` | **FAIL** — 0 BLOCKING, 2 MAJOR, 0 MINOR (`docs/experiments/wp15b_U3_REVIEW_urev6.md`). **THE FOURTH CONSECUTIVE ROUND WHOSE MAJOR WAS MANUFACTURED BY THE PREVIOUS ROUND'S REPAIR.** MAJOR D: the derived command registered to replace MAJOR C's false universal was itself blind to an unbolded citation — the instrument-narrowed-until-blind failure this project recorded once before. MAJOR E: the OPEN bullet misstated what D-331 says about the class. u-rev 7 is the answer, and **the round stopped there rather than dispatching a fifth review** |
 | REVIEW-design, this unit | u-rev 5, `7473a6f` | **FAIL** — 0 BLOCKING, 1 MAJOR, 0 MINOR (`docs/experiments/wp15b_U3_REVIEW_urev5.md`). **THE THIRD CONSECUTIVE ROUND WHOSE MAJOR WAS MANUFACTURED BY THE PREVIOUS ROUND'S REPAIR**, and all three are one class: a completeness claim about this document's own state, false in the commit that wrote it. The B7 site table's completeness claim (MAJOR A), the cross-unit u-rev correction (MAJOR B), and the citation-form universal that answered MAJOR B (MAJOR C). u-rev 6 is the answer, and it is the first of the three to replace an asserted universal with a DERIVED one. The reviewer confirmed the B7 sweep clean at u-rev 5, breaking that half of the pattern |
 
 **What this unit owes that no round has given it:**
 
-- a REVIEW-design of THIS text at THIS u-rev — u-rev 5's ran, FAILED, and does
-  not transfer to u-rev 6;
+- a REVIEW-design of THIS text at THIS u-rev — u-rev 6's ran, FAILED, and does
+  not transfer to u-rev 7; the round that produced u-rev 7 deliberately did not
+  dispatch it (REVIEW STATUS block);
 - **a fresh DECISION-RED-TEAM against MATRIX M1 AS AMENDED (MAJOR 6).** The
   attack in row 1 ran against revision 1 at `ec8f7fb`. §6.1 has since flipped the
   ADOPTED reading from exact to threshold — changing what the config commits and
