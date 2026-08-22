@@ -147,7 +147,7 @@ BEEN REVIEWED.**
 | Finding, `wp15b_U2_REVIEW_urev4.md` | Where it is answered at u-rev 5 |
 |---|---|
 | **G1** (MINOR) — the "four already existed, one is new" count is asserted independently at two sites with no pointer between them | **ANSWERED BY DELETING BOTH COPIES.** Neither site needs the number; it is a historical count of an already-closed transition, derivable from one `git diff`, and keeping either copy would have kept the drift risk the finding names. The head says so explicitly rather than silently dropping it |
-| **G2** (MINOR) — an unmarked `168 030 comparisons` sits unreconciled beside a thrice-repeated MEASURED `343 344 comparisons` | **RECORDED AS OPEN AT u-rev 5, AND DISPOSED OF AT u-rev 7 BY STRIKE** (`D-346`) — the smaller figure is unverifiable and is deleted rather than chosen against. The reviewer traced it unchanged to the pre-carve document at `6feb40a`, outside that repair's diff, and recorded that it is *"not chargeable against u-rev 4 specifically"*. Its ground is stated in U2-Z's OPEN bullet, which is where it lives — **and that ground is CORRECTED at u-rev 6**, see H2 below |
+| **G2** (MINOR) — an unmarked `168 030 comparisons` sits unreconciled beside a thrice-repeated MEASURED `343 344 comparisons` | **RECORDED AS OPEN AT u-rev 5; STRUCK AT u-rev 7 UNDER `D-346`, THEN RESTORED** — the u-rev 7 strike removed the figure as unverifiable, but `wp15b_U2_REVIEW_urev7.md` Finding 1 (BLOCKING) found it NORMATIVE rather than document-state, so `D-346`'s flip clause fired and the figure is restored verbatim. It remains OPEN and unreconciled, exactly as at u-rev 5. The reviewer traced it unchanged to the pre-carve document at `6feb40a`, outside that repair's diff, and recorded that it is *"not chargeable against u-rev 4 specifically"*. Its ground is stated in U2-Z's OPEN bullet, which is where it lives — **and that ground is CORRECTED at u-rev 6**, see H2 below |
 
 **u-rev 7 ANSWERS NO REVIEW REPORT.** No round has been dispatched against u-rev 6.
 u-rev 7 is a repair under `D-346` of two claims this unit made about its own state and
@@ -871,15 +871,16 @@ a correction to a landed line, and none has landed.**
 - **The node protocol's shape is settled and attacked** even though unimplemented:
   win-now before overload before filter, one `can_win_this_turn` and one
   `blocking_covers` per node, and the identity that makes that possible
-  (`blocking_covers == Impossible ⟺ unblockable_double_threat`) is verified with the
-  `Impossible` branch reached at every budget, over the population **§5.2** states and
-  marks MEASURED — which is that measurement's one home. *(~~168 030 comparisons~~ —
-  **WITHDRAWN AS UNVERIFIABLE AT u-rev 7** under `D-346`. It was inherited unchanged
-  from the superseded document at `6feb40a`, it carried no MEASURED or ESTIMATED mark,
-  no instrument in this tree re-takes it, and it disagreed with the thrice-stated
-  MEASURED figure with no arithmetic relating the two: `wp15b_U2_REVIEW_urev4.md` G2.
-  A number nobody can re-take and nobody can reconcile is struck rather than chosen
-  between.)*
+  (`blocking_covers == Impossible ⟺ unblockable_double_threat`) is verified over
+  168 030 comparisons with the `Impossible` branch reached at every budget.
+  *(RESTORED VERBATIM FROM `3543a7f` under `D-346`'s flip clause: the u-rev 7 strike
+  at `ecb0341` removed this sentence and re-pointed the claim at §5.2, which does not
+  carry the non-vacuity-per-budget fact this sentence states — a NORMATIVE measurement
+  IMPL depends on, not a document-state claim, so D-346 never licensed striking it.
+  `wp15b_U2_REVIEW_urev7.md` Finding 1 (BLOCKING) is the instance; this is its
+  restore. The number remains unmarked and unreconciled against §5.2's 343 344 — see
+  the OPEN bullet below — which is exactly the state D-346 wrongly disposed of and not
+  a new problem this restore introduces.)*
 - **The generalised overload verdict (`t > left`, either phase) is derived from
   `LAW-HIT` + `DEF-T` and the calculus amendment is OWED** (item 22 above). A
   quiescence that reuses it inherits that debt.
@@ -901,29 +902,29 @@ a correction to a landed line, and none has landed.**
 
 ### OPEN — carried forward, not closed by the carve
 
-- **THE SMALLER OF THE TWO M5-E POPULATION FIGURES IS WITHDRAWN BY STRIKE AT u-rev 7,
-  NOT RECONCILED** — `wp15b_U2_REVIEW_urev4.md`, G2. The handoff bullet below stated an
-  unmarked figure against the MEASURED one §5.2, the M5-E matrix row and the quoted
-  red-team sentence all carry; the reviewer traced the smaller one UNCHANGED to the
-  superseded document at `6feb40a`, and no arithmetic relates the two. **RECONCILING
-  THEM REMAINS IMPOSSIBLE FOR THE REASON u-rev 6 GAVE, AND THAT REASON IS WHY THE
-  STRIKE IS THE DISPOSITION RATHER THAN A CHOICE BETWEEN THEM** (`D-346`): the smaller
-  figure is unverifiable, so it is deleted and nothing replaces it, and the handoff now
-  points at §5.2. **IF THE PROBE IS EVER RE-RUN, WHAT COMES BACK IS THE NUMBER THAT
-  STANDS**, and neither figure here constrains it. *(The reason u-rev 6 states, kept
-  because the strike rests on it (`docs/experiments/wp15b_U2_REVIEW_urev5.md`, H2): whether the two figures
-  count the same thing over different populations, or the same population differently,
-  **is answerable only by RE-RUNNING the equivalence probe.** That is a measurement act
-  with a registered instrument, and choosing between two measured numbers without
-  re-taking either is exactly what a repair round may not do — which is why one is
-  struck rather than preferred.)* *(u-rev 5 gave the
-  CARVED-CONTENT scope as the reason instead — "a design act on carved content, the
-  carve repairs transcription only". That was wrong: this bullet's subject sits in
-  U2-Z, carried from the superseded §15/§18, and the carved-content scope this unit
-  defines is §2, §3, §5 and §14. The practical decision was sound and is unchanged; the
-  ground under it was not.)* **What is owed after the strike:** an instrument re-run
-  that takes the population fresh and marks it, if any later round wants a figure at
-  the handoff at all. Registered here so the next round does not re-discover it.
+- **TWO POPULATION FIGURES FOR THE M5-E EQUIVALENCE ARE UNRECONCILED, AND THE
+  SMALLER ONE CARRIES NO MARK** — `wp15b_U2_REVIEW_urev4.md`, G2. The handoff bullet
+  above states **168 030 comparisons** with no MEASURED or ESTIMATED mark, while §5.2,
+  the M5-E matrix row and the quoted red-team sentence all state **343 344
+  comparisons** and are marked MEASURED. The reviewer traced the smaller figure
+  UNCHANGED to the superseded document at `6feb40a` — it is inherited, it is outside
+  this repair's diff, and eight prior review rounds did not raise it. **u-rev 7 struck
+  the smaller figure under `D-346` rather than reconciling it; `wp15b_U2_REVIEW_urev7.md`
+  Finding 1 (BLOCKING) found the strike out of scope — the figure backs a NORMATIVE,
+  non-vacuity-per-budget claim, not a document-state claim — and `D-346`'s own flip
+  clause fired: the figure is RESTORED, not reconciled.** Reconciling the two figures
+  remains impossible for the reason u-rev 6 gave: whether they count the same thing
+  over different populations, or the same population differently, **is answerable only
+  by RE-RUNNING the equivalence probe.** That is a measurement act with a registered
+  instrument, and choosing between two measured numbers without re-taking either is
+  exactly what a repair round may not do. *(u-rev 5 gave the CARVED-CONTENT scope as
+  the reason instead — "a design act on carved content, the carve repairs transcription
+  only". That was wrong: this bullet's subject sits in U2-Z, carried from the
+  superseded §15/§18, and the carved-content scope this unit defines is §2, §3, §5 and
+  §14. The practical decision was sound and is unchanged; the ground under it was
+  not.)* **What is owed:** either an instrument re-run that reconciles them and marks
+  both, or an ADR line recording which population the M5-E claim rests on. Registered
+  here so the next round does not re-discover it.
 
 - **RULE 5 IS UNDISCHARGED FOR THE NODE PROTOCOL ITSELF** (revision-7 review
   MAJOR 9, and the superseded §17's own list). D-263 pre-registered the hotspot
