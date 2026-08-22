@@ -12,11 +12,17 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 1.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
+**u-rev 2.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
 `6feb40a` (revision 7, never reviewed, CLOSED by D-309) under the restructure
 selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
 in the tree: it is retrievable at `6feb40a` and nowhere else.
+
+**u-rev 2 is a REPAIR, not a new carve.** It answers
+`docs/experiments/wp15b_U2_REVIEW.md`'s FAIL against u-rev 1 (pinned `38f21b9`):
+F2 (MAJOR, §5.3's unreachable fixture) and F1 (MINOR, §5.4's undisclosed
+citation correction), plus a one-sentence architect ruling (R5, Tier Q).
+Nothing else in this text changed.
 
 **THE TEXT IS A VERBATIM CARVE.** Every change made to it is a CROSS-REFERENCE
 RETARGET — a `§n` that pointed inside the superseded document now names the unit
@@ -25,12 +31,17 @@ plus one B5 repair in §2.2 (below). No sentence of §3, §5 or §14 was rewritt
 extended or re-derived, and no number moved. Every **MEASURED** and **ESTIMATED**
 mark is the mark the superseded text carried.
 
-**Two exceptions, both stated where they occur rather than only here:** §2.2's
+**Three exceptions, all stated where they occur rather than only here:** §2.2's
 config-count sentence became a citation of U3 §10 (B5 — the count was stated
-three different ways and is now stated once, there), and §12 item 2's rate list
+three different ways and is now stated once, there); §12 item 2's rate list
 hands the widening rate and the declined-TT-entry count to `WPQ_seed.md` with
 stage Q, keeping the counter SEAM here because the seam is what a later WP reads
-them through.
+them through; and §5.3's `Run::salvage`-cost sentence silently repointed a
+dangling citation — the superseded text read "§12 item 6", which never existed
+(§12 had five items at `6feb40a`) — to its actual referent, "U2-Z item 20" (i.e.
+superseded §15 item 20), a content correction rather than a retarget, found by
+the u-rev 1 review (`docs/experiments/wp15b_U2_REVIEW.md`, F1) and disclosed at
+the point of occurrence in this u-rev.
 
 **WHY THIS UNIT'S REVIEW IS A CONFIRMATION PASS.** Five fresh-context
 REVIEW-designs and two DECISION-RED-TEAMs have run over this text and **none
@@ -50,8 +61,13 @@ document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
 
-**THIS UNIT HAS NOT BEEN REVIEWED** at this u-rev. A WP is not landable while its
-reviews are outstanding.
+**THIS UNIT HAS BEEN REVIEWED, AND THAT REVIEW FAILED.** u-rev 1 (pinned
+`38f21b9`) was reviewed by `docs/experiments/wp15b_U2_REVIEW.md`, a CONFIRMATION
+PASS: **VERDICT FAIL**, 1 MAJOR (F2, §5.3's unreachable fixture) and 1 MINOR (F1,
+§5.4's undisclosed citation correction). This u-rev (2) is the repair answering
+those two findings, plus one architect ruling (R5). It is unreviewed at ITS OWN
+revision — a repair reopens the review exactly as any other amendment does — and
+a WP is not landable while a review is outstanding.
 
 **BUILD ORDER.** This unit's IMPL is the commit that gives `pistol-search` a
 normal dependency on `pistol-solver` — MEASURED at `08cf4f7`, `pistol-solver` is
@@ -352,7 +368,11 @@ that the table's move can therefore be promoted to index 0 unconditionally,
 F being EMPTY is exactly what puts Tier T first, not the table move. The failing
 case — Tier F empty, Tier T non-empty, table move in Tier Q — is **MEASURED at
 70.8 % of corpus roots**, the common case rather than a corner. §5.4 states the
-one rule, and U2-Z item 20 records what it costs `Run::salvage`.
+one rule, and U2-Z item 20 records what it costs `Run::salvage`. **(Citation
+disclosure, u-rev 2 / F1:** the superseded text cited "§12 item 6" here, which
+never existed — §12 had five items at `6feb40a` — and the carve silently
+repointed it to its actual referent, "U2-Z item 20" (superseded §15 item 20);
+disclosed as this unit's third stated exception in the head.)
 
 **Soundness of the WIN-NOW row.** At a node `k` turns from the root the best score
 any move can reach is `mate_in(k+1)`, because a mate at that distance means
@@ -368,9 +388,23 @@ ALL opponent plans. Both conjuncts hold on this row by construction — the seco
 one established by the `None` arm rather than assumed, which is the repair
 revision 3 made and revision 4 keeps.
 
-**The two-ply realisation — VERIFIED on the shipped solver.** `Cover::Minimal`
-carries SETS because the union is provably insufficient (D-257). Two disjoint
-sealed five-stone P1 rows, P2 to move with two stones:
+**The two-ply realisation — ILLUSTRATION ONLY; "VERIFIED on the shipped solver"
+is WITHDRAWN (u-rev 2 / F2).** `Cover::Minimal` carries SETS because the union
+is provably insufficient. The load-bearing ground for that claim is D-257's own
+abstract, position-free example, which needs no reachability claim at all:
+
+> three hot windows with empties {a,b}, {b,d}, {d,e} have no one-cell cover…
+> {a,e} covers nothing in the middle
+
+The board below is kept only as a concrete illustration of the same shape. It is
+**not a position a legal game reaches**: "two disjoint sealed five-stone P1
+rows" puts P1 at 10 stones, and CLAUDE.md rule 3 makes that impossible at any
+turn boundary — `crates/pistol-core/src/rules.rs` fixes `FIRST_TURN_STONES = 1`
+and `TURN_STONES = 2`, so P1's cumulative count after its *k*-th turn is
+`1 + 2(k − 1) = 2k − 1`, always odd, never 10. The phase0/phase1 output below is
+real solver arithmetic over that unreachable board, not a verification of
+anything a legal game produces, and the claim it was offered to support does not
+need it:
 
 ```
 phase0 cover = Minimal([Two { first: (4,4), second: (5,0) }])
@@ -378,10 +412,12 @@ phase0 union = [(4,4), (5,0)]
 phase1 cover after (4,4) = Minimal([One((5,0))])
 ```
 
-D-243 (4)'s pairing obligation is discharged by the phase-1 regeneration. The same
-two rows UNSEALED give 8 hot windows and `Cover::Impossible` — correct, and why
-the fixture seals both ends: a fixture that forgot them would test the overload
-path while claiming to test the pairing path.
+D-243 (4)'s pairing obligation does not rest on this fixture; it is discharged by
+D-257's position-free ground quoted above. The same two rows UNSEALED illustrate
+`Cover::Impossible`'s 8-hot-window contrast — equally unreachable, for the same
+reason — which is why the illustration seals both ends: an illustration that
+forgot them would show the overload path while claiming to show the pairing
+path.
 
 **One licensed value change.** Under the filter the search no longer prefers the
 longest resistance among losing moves. `LAW-FORCE` licenses it — those moves lose
@@ -439,6 +475,11 @@ function and the search's actual candidate set diverge. Named in U2-Z item 21.
 2. **Tier T** — `LAW-SUPPORT`-qualified per **U3** §6. Delta-ranked, stable sort.
 3. **Tier Q** — the remaining cells of the `quiet_radius` ball, delta-ranked,
    batched per the widening schedule — **stage Q, DEFERRED; see `WPQ_seed.md`**.
+
+**Architect ruling R5 (settled).** Tier Q stays in this unit's node protocol,
+SPECIFIED BUT UNARMED: the D-scope WP-1.5b ships is stages F and T only, this
+unit's protocol scope for Tier Q is unchanged by that scope, and the
+pre-registration registers F+T only.
 
 **The forced prefix and `ordering::order` — specified, because they conflict as
 shipped.** `order` stable-sorts the WHOLE candidate vector by `Eval::delta` and
@@ -724,8 +765,11 @@ a correction to a landed line, and none has landed.**
   `LAW-HIT` + `DEF-T` and the calculus amendment is OWED** (item 22 above). A
   quiescence that reuses it inherits that debt.
 - **Quiescence stands pat and extends in TURNS, never plies** — D-111, unchanged.
-- **What WP-1.6 must not inherit:** this text is UNREVIEWED at this u-rev. Five
-  rounds failed before the restructure and no round has attacked the carve.
+- **What WP-1.6 must not inherit:** this text is UNREVIEWED at this u-rev (u-rev
+  2, this repair). Five rounds failed before the restructure, and the carve
+  itself has now been attacked once — a CONFIRMATION PASS at u-rev 1
+  (`docs/experiments/wp15b_U2_REVIEW.md`, pinned `38f21b9`) returned **FAIL**, 1
+  MAJOR + 1 MINOR, both repaired here. u-rev 2 has not yet been reviewed.
 
 ### The conservative branch this unit records
 
@@ -751,4 +795,5 @@ a correction to a landed line, and none has landed.**
 
 ---
 
-*U2, u-rev 1. A carve, not a revision. IMPL has not started.*
+*U2, u-rev 2. A repair, answering `docs/experiments/wp15b_U2_REVIEW.md`'s FAIL
+against u-rev 1. IMPL has not started.*

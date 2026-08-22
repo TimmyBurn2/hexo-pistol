@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 1. THIS IS NOT A DESIGN AND IS NOT REVIEWABLE.** It is the text D-310
+**u-rev 2. THIS IS NOT A DESIGN AND IS NOT REVIEWABLE.** It is the text D-310
 excised from WP-1.5b when option D cut the work package to stages F and T, kept
 verbatim so the follow-up work package starts from what was written rather than
 from memory. **Nothing here is selected, and nothing here may be cited as
@@ -20,6 +20,11 @@ adopted.** A reviewer asked to review this file should decline and say why: the
 follow-up WP owes its own design, its own option matrix, its own
 DECISION-RED-TEAM and its own SPRT (D-310), and this seed is an input to that
 design, not a draft of it.
+
+**Architect ruling R5 (settled).** This is where stage Q is picked up, not where
+it is armed: **U2**'s node protocol carries Tier Q SPECIFIED BUT UNARMED,
+WP-1.5b's shipped D-scope is stages F and T only, and the pre-registration
+registers F+T only. (u-rev 2, one sentence, per D-311.)
 
 **LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this seed bumps
 its u-rev, however small the diff. The rule binds a seed as it binds a unit,
@@ -219,4 +224,4 @@ is an open selection**; they are recorded here as debt.
 
 ---
 
-*WP-Q seed, u-rev 1. Not a design. Not reviewable. Nothing here is selected.*
+*WP-Q seed, u-rev 2. Not a design. Not reviewable. Nothing here is selected.*
