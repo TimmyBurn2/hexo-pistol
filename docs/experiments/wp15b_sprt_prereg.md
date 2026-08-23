@@ -1,6 +1,32 @@
 # WP-1.5b — SPRT pre-registration: staged threat-first generation vs the committed radius policy
 
-**Revision 5. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
+**Revision 6. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
+
+**Revision 5 (`cd70944`) PASSED its first-ever fresh-context review**
+(`wp15b_sprt_prereg_REVIEW_rev5.md`, `c9ff0c2`) — no BLOCKING or MAJOR finding
+across the nine verify items. It was then run: the governed report's raw
+`verdict h1` at 58 pairs (below §2's 100-pair floor) additionally FAILED
+§7A.1's Criterion 1 outright — 10 of 116 games link 1a could not attribute —
+so per §5's own row for that case the run was not a measurement and its
+verdict was never read (**docs/decisions.md D-381**). A read-only diagnostic
+(`wp15b_vacuity_diagnostics.md`) found no evidence of an actual labelling
+defect: the vacuity is a per-OPENING structural property (5 of 58 openings,
+8.62%, EXACT not sampled), 1b and 1c held on all 116 games, and 8 games were
+independently re-verified via pistol-core. A proposed fix — widening the
+replay window — FAILED its own fresh-context REVIEW-design
+(`wp15b_attribution_window_design_REVIEW.md`, 2 BLOCKING, **D-383**): a fresh,
+cold-subprocess replay of any turn past each engine's first free search races
+a LIVE engine's warm transposition table, reproduced live disagreeing with
+itself. **Revision 6 amends §7A.1 to Criterion 1'** — TOLERATE-WITH-ROBUSTNESS,
+architect ruling **D-384** — replacing "any vacuous game is a FAILURE" with a
+confirmed-inversion requirement (1b/1c, unchanged, universal) plus an
+adversarial-robustness requirement over vacuous PAIRS specifically, recomputed
+off the report's own pentanomial/LLR machinery
+(`tools/wp15b_attribution_check.py`, amended with it). This is an amendment,
+not a fresh draft: it reopens revision 5's PASSED review exactly as CLAUDE.md's
+rule requires ("an amendment reopens the review, however small the diff") —
+§7A.1 is the only section this revision touches; §5's confirmatory-run row is
+untouched.
 
 **Revision 2 (`9c068a0`) FAILED its review — 7 BLOCKING, 8 MAJOR, 2 MINOR, 9 REJECTED
 with reproducers.** Revision 3 applies all twelve numbered fixes and repairs the
@@ -339,8 +365,11 @@ scoring. That is the stage the reviewer's Mutation B lives in, and it is the sta
 an SPRT number cannot see past on its own.
 
 **THE INSTRUMENT: `tools/wp15b_attribution_check.py`, at the revision this document
-lands at**, run over the GOVERNED report and not only over the dry run. It is §8's
-Criterion 1 and it is described in full there.
+lands at**, run over the GOVERNED report and not only over the dry run. §8.3
+describes the dry run's own Criterion 1 as it stood at revision 3, over the
+dry run's fixed matchup — a historical record, left as this revision found it
+per the scope this amendment states below; Criterion 1' as it now governs is
+quoted in full here, not there.
 
 **HOW IT DOES NOT SHARE THE STAGE**, link by link: 1a's referent is the ENGINE
 PROCESS, replayed outside the arena; 1b's is GAME RULE 3 read against the recorded
@@ -348,25 +377,59 @@ move list; 1c's is the `game`-line path, which `conclusion.rs::games` writes fro
 `a_is_p1` directly and which is disjoint from `GameRecord::score_a`. None of the
 three is computed by the code it checks.
 
-**THE AGREEMENT CRITERION, registered before either instrument runs:** the
-instrument exits 0 over the governed report, having attributed **EVERY GAME** on
-link 1a and adjudicated a non-zero count on link 1b. The instrument refuses on both
-counts itself; the criterion names them so a reader does not have to take the exit
-code's word for the check having had anything to bite on.
+**CRITERION 1', REGISTERED BEFORE ANY RUN IT GOVERNS (D-384, quoted verbatim):**
+"A report is a measurement iff (a) zero confirmed inversions under links 1b/1c
+applied to all games, and (b) the verdict is invariant under adversarial
+reassignment of every link-1a-vacuous pair, recomputed from the report's own
+pentanomial and LLR machinery." Link 1a's own direct per-turn mismatch check
+(a DISCRIMINATING turn whose recorded move disagrees with what the credited
+engine, replayed, actually answers) is a confirmed inversion under clause (a)
+exactly as it always was — this is unchanged. What changed is what happens
+when neither of a game's two replayed turns discriminates: that game (always
+pair-simultaneous — both colour-reversed games of one opening query the
+identical book state) is no longer itself a failure. It is enumerated, and
+clause (b) recomputes the verdict as though every such vacuous pair had been
+the opposite of what the report says, using the same pentanomial -> LLR ->
+crossing arithmetic `sprt.rs`/`score.rs` use. If the verdict survives that
+recomputation unchanged, the vacuity cannot have hidden anything the verdict
+cared about.
 
-**Per GAME and not per run, and that distinction is D-308's** — an aggregate
-discriminating count lets a pair the replay can distinguish carry one it cannot,
-and a seat swap confined to the second is invisible to the whole chain, 1b being
-label-blind and 1c deriving from the line the swap corrupts. MEASURED on the dry
-run: 8 of 16 replayed turns do not discriminate, while every one of the 8 games has
-one that does. The criterion binds the games, not the turns.
+**WHY THIS REPLACED "REFUSE ANY VACUOUS GAME."** That rule was measured
+(`wp15b_vacuity_diagnostics.md`) to hit 5 of 58 openings (8.62%, EXACT) on the
+governed run with no evidence of an actual labelling defect — a real cost with
+no offsetting finding. The natural repair, widening the replay window, FAILED
+its own REVIEW-design (D-383): a fresh, cold-subprocess replay of any turn
+past each engine's FIRST free search races a LIVE engine's WARM transposition
+table (`set_position` never clears it; `new_game` does — `pistol-engine`), and
+this was reproduced live disagreeing with a live engine's own answer, on one
+of the very openings the widening was meant to clear. WARM-REPLAY (a
+persistent subprocess replaying an engine's own full turn sequence, to match
+its live TT state) is LICENSED by D-384 but not built — it is what a
+robustness FAILURE, or a confirmed inversion landing on a vacuous pair, needs.
+
+**Per GAME and not per run for clause (a), and that distinction is D-308's** —
+an aggregate discriminating count lets a pair the replay can distinguish carry
+one it cannot, and a seat swap confined to the second is invisible to 1b/1c,
+1b being label-blind and 1c deriving from the line the swap corrupts. MEASURED
+on the dry run: 8 of 16 replayed turns do not discriminate, while every one of
+the 8 games has one that does. **The D-308 attack is now caught by clause (b)
+where it still can be caught**, not by a blanket per-game refusal — a
+confined, internally-consistent swap on a vacuous pair is invisible to (a) by
+construction (that is what "vacuous" means), so whether it is caught depends
+on whether reassigning that pair back would have moved the verdict.
 
 **THE REGISTERED CONSEQUENCE:** a non-zero exit means **THE RUN IS NOT A
 MEASUREMENT** — not an `h0`, not an `h1`, and not a re-run. The verdict is not
-read. The failing link and its games are reported, the committed config does not
-move, and the next step is finding the defect the link names. Exit 2 is the
-instrument saying it could not take the answer, which is a VOID and not a finding
-(tools/SHELL_CHECKLIST.md item 12).
+read. The failing clause, and for (b) the named pairs and both verdict tokens,
+are reported; the committed config does not move; the next step is finding
+the defect (a) names, or — per D-384's flip clause — building warm-replay
+before any verdict from that run is read, on a robustness failure or on any
+confirmed inversion coinciding with a vacuous opening. Exit 2 is the
+instrument saying it could not take the answer, which is a VOID and not a
+finding (tools/SHELL_CHECKLIST.md item 12) — including when the instrument's
+own ported arithmetic fails to reproduce the report's stated verdict on the
+UNMODIFIED pentanomial, which is this tool disagreeing with the machinery it
+claims to recompute and not a finding about the run.
 
 ### 7A.2 DOUBT 2 — whether the staged generator changes what the search completes
 
@@ -773,12 +836,15 @@ the §7A.2 criterion cannot be taken under.
 
 ## 11. REVIEW STATE
 
-**This document has never passed a review, and it does not claim to.** Two full
-cycles have run and both FAILED; a third covered only the `tools/` instrument and
-failed that too. Revision 3 applied every finding from the second review, revision 4
-every finding from the third, and the document is **queued for a fresh-context
-review at THIS revision**, which the architect dispatches; CLAUDE.md's rule is that the revision governing a run must pass its own
-review, and reviews of superseded revisions do not transfer.
+**Revision 5 PASSED — the first time this document has, at any revision.**
+Revision 6 is an amendment to that passed revision (§7A.1 only, per D-384),
+which CLAUDE.md's rule reopens exactly as a fresh draft would: "an amendment
+reopens the review, however small the diff." It is **queued for a
+fresh-context review at THIS revision**, scoped to the amendment (the GO
+dispatch names this scope: the amended §7A.1 against the D-384 selection ADR,
+the checker diff against Criterion 1', its driving tests and the D-308 suite
+run live, confirming revision 5's run is not re-read anywhere, and confirming
+the criterion is registered before the run it governs).
 
 | Cycle | Revision | Verdict |
 |---|---|---|
@@ -786,7 +852,8 @@ review, and reviews of superseded revisions do not transfer.
 | 2 | rev 2, `9c068a0` | **FAILS** — 7 BLOCKING, 8 MAJOR, 2 MINOR, 9 REJECTED with reproducers |
 | 3 | rev 3, `e9a5145` | **PARTIAL** — a fresh-context REVIEW-impl covered the `tools/` half only (the instrument and its test), and FAILED it: 1 BLOCKING, 4 MAJOR, 4 MINOR (D-308). The DOCUMENT was explicitly out of that reviewer's scope and has never been reviewed at any revision |
 | 4 | rev 4, `ca0d331` | **NEVER REVIEWED** — superseded by revision 5's draft edit before any round targeted it |
-| 5 | rev 5, this revision | **OUTSTANDING** — the launch-condition defects are fixed; the document is not self-reviewed and not run; queued for the fresh-context review this document has never had |
+| 5 | rev 5, `cd70944` | **PASSES** — `wp15b_sprt_prereg_REVIEW_rev5.md`, `c9ff0c2`. No BLOCKING or MAJOR across nine verify items; two MINOR, neither blocking. This document's first passed review, at any revision |
+| 6 | rev 6, this revision | **OUTSTANDING** — amends §7A.1 to Criterion 1' (D-384); queued for the scoped fresh-context review the GO dispatch names |
 
 **Nothing here has been run as a governed sample and this document governs
 nothing.** The dry run of §8 is not a governed sample by CLAUDE.md's own text.
