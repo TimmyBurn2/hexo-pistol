@@ -1,517 +1,474 @@
 # WP-1.6 — Threat-only zone-bounded quiescence: design
 
-**Revision 2.** Revision 1 (`9fa27c8`) was reviewed by REVIEW-design and
-FAILED (`docs/experiments/wp16_design_REVIEW.md`): four CONFIRMED blocking
-findings (C1–C4) plus two non-blocking (C5, C6). This revision fixes all six
-in place; §§3.2, 3.3, 3.4, 3.5, 7, 8 changed, §§1, 2, 4, 6, 9 did not (that
-review's V1–V7 verified those unchanged). Per CLAUDE.md, an amendment reopens
-the review however small the diff — this is the scoped re-review revision,
-not a second independent design.
-
-Governing dispatch: `[GROUNDWORK] WP-1.6 threat-only quiescence: full cycle,
-overnight`. Binding core: the dispatch's nine-point ARCHITECT DESIGN CORE. This
-document expands it; it contradicts none of it, and where the dispatch's prose
-cites a calculus ID loosely, §3.4 below states the precise correction and why
-it changes nothing about the ruling's intent. Unblocked by D-386 / ROADMAP.md
-"WP-1.6 is UNBLOCKED."
+**Revision 3.** Authored from two architect rulings resolving `D-389`'s two
+open questions (extension width; TT store rule), supplied verbatim with the
+resume dispatch `[GROUNDWORK] WP-1.6 resume: design revision 3 from
+architect rulings`. Revisions 1 (`9fa27c8`) and 2 (`b1ba746`) each failed
+fresh-context REVIEW-design (`docs/experiments/wp16_design_REVIEW.md`,
+`wp16_design_REVIEW_rev2.md`); `D-389` records the second FAIL and what
+would unstick it. This is not a patch on revision 2 — the rulings replace
+revision 2's core mechanism (reusing `staged_candidates` at a rebound depth)
+with a dedicated generator and a dedicated TT rule, so this document is
+written fresh from them rather than diffed. Where a section carries forward
+unchanged in substance (§1, §2, most of §5, §6, most of §8), it says so and
+does not restate settled argument at length.
 
 Every claim below cites a calculus ID (`docs/research/threat_calculus_v1.md`),
-an ADR (`docs/decisions.md`), or a `file:line`. Reader: this is the expansion,
-not a tutorial — read the calculus and `staged.rs`/`pvs.rs` first.
+an ADR (`docs/decisions.md`), or a `file:line`. Reader: this is the
+expansion, not a tutorial — read the calculus and `staged.rs`/`pvs.rs`/
+`tt/{mod,entry}.rs` first.
 
-## 1. Problem (core §1)
+## 1. Problem (core §1, unchanged)
 
 `Eval::value` sums window-pattern features (`pistol-eval`); it cannot see a
 forced win or a forced loss that starts one turn past the horizon. The prior
 "experiment-2" failure broadened the CANDIDATE SET at the horizon (report
-§B, "your naive one-primitive threat-extension probe failed because it
-broadened the candidate set globally"). The registered cure is threat-only,
-zone-bounded extension (report §B; calculus `PROTO-NODE` step 5: "Threat-only,
-zone-bounded (Tier F + Tier T with t ≥ 2), never full-width").
+§B: "your naive one-primitive threat-extension probe failed because it
+broadened the candidate set globally"). **Both revision 1 and revision 2
+reproduced this anti-pattern in a different dress** — revision 1's trigger
+(c) fired on plan-free positions at a measured 61.5–92.5% of nodes
+(`wp16_design_REVIEW.md` C1), and revision 2's fix, while it narrowed the
+GATE condition, left `§4`'s generation still calling full `staged_candidates`
+— a self-contradiction the scoped re-review caught (`wp16_design_REVIEW_rev2.md`
+NEW-1/NEW-2). **Ruling 1 (§3 below) is the architect's response: the
+extension's candidate cells are the TRIGGER's own query output, full stop,
+and `staged_candidates` is never called from inside quiescence.** This is
+stated exactly once, in §3, and nowhere else in this document restates or
+contradicts it.
 
-## 2. TURNS invariant (core §2, D-111)
+## 2. TURNS invariant (core §2, D-111, unchanged)
 
 A quiescence node is a turn boundary; stand-pat is a static read at
-`Phase::First` only, never mid-turn. This binds every design choice below: an
-extension is granted or refused only when `depth_plies` would hit 0 at
-`Phase::First`, and once granted it always completes as a whole turn (both
-plies) before the next stand-pat/extend decision is made.
+`Phase::First` only, never mid-turn. An extension is granted or refused only
+at a `depth_plies == 0`, `Phase::First` gate, and once granted it completes
+as a whole turn (both plies) before the next gate decision.
 
-### 2.1 The gap this closes — VERIFIED, not assumed
+### 2.1 The gap this closes — VERIFIED at `9fa27c8`, unchanged by revisions 2/3
 
-Core §3a asks: "verify stage F already returns this [win-now]; if so, qsearch
-never sees the case — state which holds." Verified by reading `pvs.rs:199–217`
-(the `if depth_plies == 0` branch): it runs a `debug_assert!` on phase and then
-`return self.position.value()` — no threat query, no candidate generation, no
-call to `staged_candidates`. Stage F's win-now check
-(`staged_candidates`'s step 1, `staged.rs:186–189`) executes only inside the
-`depth_plies > 0` branch (`pvs.rs:260–291`), reached from a PARENT that still
-had ply budget. **Stage F does NOT already cover the horizon**: a mover who
-can complete six THIS TURN at a `depth_plies == 0` node is, today, scored by
-the static evaluator instead of `mate_in(...)`. This is the gap trigger (a)
-(§3.1 below) closes, not a redundant re-check — the first concrete finding of
-this design and the reason `Eval::value`'s window sums cannot be trusted at
-any leaf without at least this one free query first.
+`pvs.rs:199–217` (the `if depth_plies == 0` branch): a `debug_assert!` on
+phase, then `return self.position.value()` — no threat query, no candidate
+generation. Stage F's win-now check (`staged_candidates`'s step 1,
+`staged.rs:186–189`) runs only inside `depth_plies > 0` (`pvs.rs:260–291`).
+A mover who can complete six THIS TURN at a `depth_plies == 0` node is,
+today, scored by the static evaluator instead of `mate_in(...)`. This is the
+gap trigger (a) closes.
 
-## 3. Triggers, in ThreatState's actual vocabulary
+## 3. RULING 1 — the extension's move set, stated once
 
-Every trigger below is realized by calling the EXISTING `staged_candidates`
-protocol (`crates/pistol-search/src/staged.rs:168–207`) at the horizon —
-no new `pistol-solver` query is added. Where core §3 cites `LAW-LEDGER` and
-`LAW-RIPOSTE`, D-267 records that neither has "any counterpart anywhere in the
-shipped surface" and that both are "WP-1.6's" — this WP's job is to express
-their CONTENT in `ThreatState`'s existing calls, not to add new ones. §3.4
-below is where that expansion happens precisely.
+**The rule, quoted from the resume dispatch, in the architect's own words:**
+extension searches trigger-derived cell sets only — defensive ply-1 = union
+of hitting sets over opponent plans t ≤ 1 (completeness argument: non-hitting
+moves lose to plan execution by definition); defensive ply-2 = hitting cells
+of remaining live opponent plans t ≤ 2, union mover plan-making cells t ≤ 2;
+offensive pairs from the t ≤ 2 plan's own making cells; empty hitting set =
+losing band, no search. **Full `staged_candidates` width is EXCLUDED from
+qsearch** — the reason is §1's anti-pattern, cited here and nowhere else: a
+generator built to be complete over a `depth_plies > 0` subtree (Tier T's own
+completeness licence is `LAW-SUPPORT`'s k-TURNS-OUT argument, §3.3 below) is
+not narrow enough for a horizon extension that has no turns of remaining
+depth to spend the completeness on.
 
-### 3.1 Trigger (a) — mover can win this turn
+**Consequence for the recursion shape.** Because qsearch no longer calls
+`staged_candidates` and no longer needs `pvs::visit`'s `depth_plies`-driven
+candidate dispatch at all, it is realized as a DEDICATED function —
+`Run::quiescence(&mut self, alpha, beta, ply, q_budget) -> i32`, in a new
+module `crates/pistol-search/src/quiescence.rs` (parallel to `staged.rs`) —
+invoked exactly once, from `pvs::visit`'s existing `depth_plies == 0` branch,
+replacing today's unconditional `return self.position.value()` with a call
+to this function (which itself falls back to that same static read when no
+trigger fires or the budget is spent). This is a DIFFERENT shape from
+revisions 1–2, which tried to reuse `visit`'s own `depth_plies > 0` machinery
+by rebinding locals in place — that reuse was only motivated by wanting
+`staged_candidates`'s width, which Ruling 1 now forbids, so the reuse
+argument is gone and a small dedicated function is the RULE9-JUSTIFICATION-
+consistent shape (`pvs.rs`'s own doc: "the honest reductions are elsewhere
+and are scheduled... Stage 1 moves candidate generation out entirely",
+`pvs.rs:32–34`).
+
+### 3.1 Gate step 1 — mover can win this turn (trigger a, unchanged in substance)
 
 `threats.can_win_this_turn(us, left)` where `left = StonesLeft::from_state(state)`
-(`query.rs:51–58`, C5-fixed: not the literal `StonesLeft::Two` revision 1
-used — `from_state`'s own doc records `Phase::First` does NOT imply `Two`,
-"or it is turn 1"; core reads the phase, this design never re-derives it,
-rule 2) (`query.rs:231`, `PROTO-NODE` step 1). `Some(witness)` → terminal:
-`mate_in(turns_from_root + 1)`, zero extra nodes, no recursion — identical
-cost shape to `staged_candidates`'s `WinNow` row (`staged.rs:186–189`) and to
-`pvs::visit`'s own `PlyOutcome::Win` handling (`pvs.rs:311–321`). Always
-evaluated at every horizon **under `CandidatePolicy::Staged` only** (C6-fixed:
-a `Radius` seat's `Position` carries no `ThreatState` at all —
-`position.rs:48,67,187–194` — so trigger (a) is gated on the same
-`self.policy` match `pvs::visit`'s `depth_plies > 0` branch already runs,
-never a bare "always"), regardless of `q_budget` — it is not an extension, it
-is the missing check §2.1 identified.
+(`query.rs:51–58,231`, `PROTO-NODE` step 1). `Some(witness)` → terminal:
+`mate_in(turns_from_root + 1)`, zero extra nodes, no call into
+`quiescence()` at all. Scoped to `CandidatePolicy::Staged` only — under
+`Radius` there is no `ThreatState` (`position.rs:48,67,187–194`) and `visit`
+never calls `quiescence()` there; `pvs::visit`'s existing `self.policy` match
+is the gate.
 
-**Consequence for arena comparisons, named because it changes an existing
-experiment's shape:** after this WP, a `staged` seat differs from a `radius`
-seat in TWO ways (threat-first generation, per WP-1.5b, AND the horizon
-win-now check), not one. Any future staged-vs-radius pairing is no longer the
-single-variable comparison WP-1.3(a)/D-386's SPRT was.
+### 3.2 Gate step 2 — opponent holds a plan with t ≤ 1 (trigger b, RE-SCOPED per Ruling 2)
 
-### 3.2 Trigger (b) — opponent holds any plan (`LAW-FORCE`), t ∈ {1, 2}
+**Ruling 2, quoted:** "(b) fires iff ThreatState reports ≥ 1 live opponent
+plan with t ≤ 1." This is narrower than revision 2's `Cover::Minimal(_)` (t
+∈ {1,2}) — it returns to t ≤ 1 only, the reading revision 1 originally had
+before the first review's C4 broadened it. **This is an architect ruling
+supplied with this dispatch, not re-derived here**; the design's job is to
+express it precisely and cite it, not re-litigate C4's t=2 argument. (Ruling
+1's ply-2 rule, §3.5 below, is where a t=2 case a gate at t≤1 did not fully
+resolve gets picked up — see the walkthrough there.)
 
-**Revision 2, C4-fixed.** Revision 1 fired only on t = 1 and excluded t = 2 on
-two grounds; REVIEW-design showed both wrong: (a) "already reachable by the
-parent's FILTERED row" is false — the node under discussion sits at
-`depth_plies == 0`, and it is precisely this node's own forced continuation
-nobody has searched, the exact shape of gap §2.1 names for win-now, applied
-here to the FILTERED row instead; (b) the `LAW-LEDGER` reading was inverted —
-"the defender's turn is worth 2 − t free stones" means t = 1 is the class
-that PAYS the mover a free stone and usually fizzles, while t = 2 pays
-nothing and is where `LAW-RIPOSTE`'s flip-initiative danger actually lives
-(a forced double-block is the one outcome a riposte check exists to catch).
-Excluding t = 2 therefore extended on the weak class and stood pat on the
-strong one, and it is also the cheap class: MEASURED
-(`docs/experiments/U3_tier_t.md` §6.2 census, "cover union when FILTERED"
-row) 2.17–2.27 cells per node across all four regimes — a t ∈ {1,2} extension
-branches ~2 wide, nowhere near the width that made trigger (c) blow its own
-bracket (§3.3).
+Query: `Cover = threats.blocking_covers(us, HitBudget::from(left))`
+(`cover.rs:201`). Classification:
 
-Query `threats.blocking_covers(us, HitBudget::from(left))` where
-`left = StonesLeft::from_state(state)` (C5-fixed, matching §3.1 and §4's
-existing contract; `cover.rs:201`, `LAW-FORCE`'s survival set per D-267).
-Classification, over `Cover` — now the WHOLE of `Cover::Minimal`, no case
-split needed for the gate decision itself:
+- `NothingToBlock` (t = 0): not this trigger; check §3.3.
+- `Minimal(covers)` where `covers.iter().any(|c| matches!(c,
+  MinimalCover::One(_)))` (t = 1, `MinimalCover::One`'s own doc,
+  `cover.rs:60–61`; the exact test REVIEW-design's V2 confirmed by
+  counterexample against `.all(..)` under-firing, `wp16_design_REVIEW.md`
+  V2): **trigger fires.**
+- `Minimal(covers)` with no `MinimalCover::One` (t = 2): **not this trigger**,
+  per Ruling 2's literal scoping. Check §3.3 (offense may still fire).
+- `Impossible` (t ≥ 3): `LAW-OVERLOAD`; handled by §3.4, not this trigger.
 
-- `NothingToBlock` → t = 0, no opponent plan, no defensive obligation. Not
-  this trigger.
-- `Minimal(_)` → t ∈ {1, 2}, **trigger fires**, unconditionally on the
-  covers' shape. `LAW-FORCE` (`threat_calculus_v1.md:49–53`): "every
-  non-losing mover move hits all opponent plans" — this is the law's own
-  condition, with no further reading required.
-- `Impossible` → t ≥ 3, `LAW-OVERLOAD`. Not trigger (b); handled by §3.5.
+**Completeness argument for restricting ply-1 to hitting cells, quoted from
+Ruling 1 and grounded:** "non-hitting moves lose to plan execution by
+definition." `LAW-FORCE` (`threat_calculus_v1.md:49–53`): "if the opponent
+has ≥1 plan and the mover cannot win this turn, every non-losing mover move
+hits all opponent plans." A candidate that does not appear in some minimal
+cover fails this by construction, so excluding it from the ply-1 set loses
+nothing a sound line could use.
 
-Candidate cells on trigger: `Cover::cells()` (the union over ALL inclusion-
-minimal covers, `cover.rs:108–116`) — identical in shape to the FILTERED
-row's own `filtered()` (`staged.rs:251–257`). `LAW-FORCE` is the correct
-citation for "every non-losing mover move hits all opponent plans," not
-`LAW-RIPOSTE` — see §3.4.
+**Ply-1 candidate cells: `Cover::cells()`** (`cover.rs:108–116`) — the union
+over every inclusion-minimal cover the `blocking_covers` call above already
+computed. This can include cells from a `MinimalCover::Two` alongside the
+`MinimalCover::One` that satisfied the t≤1 test (V2's counterexample:
+families `{a,b}`/`{a,c}` admit `One(a)` and `Two{b,c}` simultaneously) —
+those are still legitimate single-stone contributions to SOME minimal cover,
+so they are not excluded; §3.5 (ply-2) is what makes offering `b` or `c` at
+ply-1 sound even though neither alone fully hits.
 
-**`MinimalCover::One` vs `Two` is kept, but only for §8's counters, not for
-this gate.** `covers.iter().any(|c| matches!(c, MinimalCover::One(_)))` is
-the exact t ≤ 1 test (REVIEW-design's V2, confirmed by counterexample: two
-hot windows with empty families `{a,b}`/`{a,c}` make `blocking_covers` emit
-`One(a)` AND `Two{b,c}` simultaneously — `.all(One)` would under-fire, and
-the fix is correctly `.any(One)` — but the gate no longer needs the
-distinction at all, since both t=1 and t=2 now fire the same way). Retained
-in §8 to split `q_extend_defense` by t for the WP's own analysis, per core
-§8, and because the finding that produced it is real and worth keeping
-visible even though it stopped being load-bearing for correctness.
+### 3.3 Gate step 3 — mover can activate a new plan this turn (trigger c, unchanged from revision 2's C1 fix)
 
-### 3.3 Trigger (c) — mover can activate a new plan this turn
+**Ruling 2, quoted:** "(c) iff a mover plan with t ≤ 2 is creatable this
+turn." Query: `threats.cells_raising_to_hot(us, NearHot::Three, &mut cells)`
+(`query.rs:187–192`, equivalently `live_cells_at_count(us, LiveCount::Three,
+...)`, `query.rs:206–208` — D-267's map entry, the two name the same
+windows). Non-empty → trigger fires; candidate cells = the query's own
+output.
 
-**Revision 2, C1-fixed — the trigger set's central defect.** Revision 1 used
-`tier_t_union(threats, us, params)` non-empty, which unions
-`live_cells_at_count(Two)`, `live_cells_at_count(Three)` and `threat_cells`
-for BOTH sides (`staged.rs:294–334`). REVIEW-design showed this fires on
-plan-FREE positions: a `LiveCount::Two` window holds two own stones, `DEF-PLAN`
-(`threat_calculus_v1.md:29`) requires ≥4 for a plan to exist at all, and
-`PAT-O3` (`:108`) records an open three (three own stones — a fortiori two)
-has t = 0, "no plan." MEASURED (`U3_tier_t.md` §6.2 census): trigger (c) as
-revision 1 specified it is only reachable on a `Cover::NothingToBlock` row
-(§3.2 now disposes of everything else), which occurs at 61.5–92.5 % of
-nodes, and on those nodes Tier T averages 23–49 cells — the trigger fired on
-the large majority of horizons, at main-search width, on exactly the
-plan-free positions `PROTO-NODE` step 5's own qualifier (quoted in §1: "Tier
-F + Tier T with **t ≥ 2**") excludes. This is the anti-pattern §1 names,
-reproduced with a threat-shaped gate instead of a radius one — §9's
-registered `<= 2.0x` bracket was already known, before any bench, to miss by
-orders of magnitude (ESTIMATED: ~540–2400 child nodes per fired horizon at
-23–49 candidates/ply × 2 plies, against a bracket built for a ~2-wide
-extension).
+**Why this, and not `tier_t_union`'s `LiveCount::Two` term — the registered
+counter-example Ruling 2 names.** Revision 1 used `tier_t_union`, which
+includes `LiveCount::Two` (two own stones). `DEF-PLAN`
+(`threat_calculus_v1.md:29`) requires ≥4 own stones for a plan to exist;
+`PAT-O3` (`:108`) records an open three (a fortiori two) has t = 0, "no
+plan." MEASURED, `U3_tier_t.md` §6.2 census (verified directly against the
+file at this revision, not through a review's paraphrase): trigger (c) as
+revision 1 specified it is reachable only on a `Cover::NothingToBlock` row
+(§3.2 disposes of the rest), which is the `BATCHED nodes` row — `70.8% /
+61.5% / 65.5% / 92.5%` (corpus roots / r2 draw / r8 draw / playouts,
+`U3_tier_t.md:172`) — and on those nodes Tier T (`option C — Tier T
+(threshold, ADOPTED)`, `:181`) averages `23.29 / 31.50 / 30.26 / 48.73`
+cells. **This is the counter-example this ruling's scoping must kill**, per
+the resume dispatch's own instruction: `cells_raising_to_hot(us,
+NearHot::Three)` is a strict subset of one term of `tier_t_union`'s six-way
+union (`live_cells_at_count(Two) ∪ live_cells_at_count(Three) ∪
+threat_cells`, both sides, `staged.rs:294–334`) — the `LiveCount::Two` term,
+whose windows cannot hold a plan by `DEF-PLAN`, is entirely absent, and so is
+the opponent's side (this trigger is about the MOVER creating a plan;
+trigger (b) already owns the opponent's). `NearHot` is closed at `Three` in
+the shipped surface for exactly this reason (`query.rs:101–107`: "no single
+cell raises a count-2 window to hot") — the type itself refuses the
+`LiveCount::Two` reading.
 
-**The fix:** condition trigger (c) on ACTIVATION, not on `LAW-SUPPORT`'s
-2-turns-out completeness bound. `LAW-SUPPORT`'s k=2 case (`:68–72`,
-"attacker candidates restricted to windows with ≥2 own stones — the
-completeness license for the Tier-T staged generator") licenses `LiveCount::
-Two` for the MAIN search's own multi-turn lookahead, where the search itself
-supplies the remaining turns of depth to turn a count-2 window into a plan.
-A horizon extension has no such remaining depth to spend — it grants at most
-`q_depth_turns` MORE turns, and a count-2 window is arithmetically two turns
-from hot regardless. It is the wrong basis for "can the mover create a plan
-THIS turn."
+`t ≤ 2` in Ruling 2's phrasing: with `HitBudget` closed at two
+(`query.rs:70–77`), any plan family a single activation creates is
+automatically within the representable range the defender's next turn can be
+asked about — a lone newly-created plan has t = 1 (one cell hits it) unless
+the SAME activating stone simultaneously completes two independent live-3
+windows into hot (a genuine fork, `BOUND-CONVERT`'s subject,
+`threat_calculus_v1.md:93`: "one new stone converts ≤3 pre-threats into
+threats on hex"), in which case t = 2 for the resulting family. The query
+does not need to compute this t itself at generation time — it is what the
+CHILD gate's own `blocking_covers` call (§3.2, re-run at the new position by
+the recursion, §3.7) establishes, exactly the way the main search already
+composes one-ply decisions into a turn.
 
-Query: `threats.cells_raising_to_hot(us, NearHot::Three, &mut cells)`
-(`query.rs:187–192`) — equivalently `live_cells_at_count(us, LiveCount::
-Three, ...)` (`query.rs:206–208`; `NearHot::Three` and `LiveCount::Three`
-name the same windows, D-267's map entry). `NearHot` is closed at `Three`
-in the shipped surface for exactly this reason (`query.rs:101–107`, "no
-single cell raises a count-2 window to hot") — the type itself already
-refuses the count-2 reading revision 1 used. Non-empty → trigger fires;
-candidate cells = the query's own output, `us` only (this trigger is about
-the MOVER creating a plan, not the opponent's — trigger (b) already owns the
-opponent's side). This is `BOUND-CONVERT`'s subject (`:93`, "one new stone
-converts ≤3 pre-threats into threats on hex") and D-267's map entry for
-`cells_raising_to_hot`: "the one-stone activation set."
+Tier F for `us` is PROVABLY EMPTY here (trigger (a) answered `None`, which at
+`left` forbids both a win-in-one-ply cell and a hot four-stone window —
+`batched()`'s own argument, `staged.rs:262–266`).
 
-Tier F for `us` is PROVABLY EMPTY here by the same argument `batched()`'s
-own doc already gives (`staged.rs:262–266`): trigger (a) having answered
-`None` forbids both a win-in-one-ply cell and a hot four-stone window at
-`left`, which is exactly what `tier_f` would have contributed. No separate
-Tier-F step to run.
+### 3.4 Gate step 4 — empty hitting set: losing band, no search (Ruling 1, simplified from revision 2's `is_pv` handling)
 
-**Open empirical question, deliberately left to Phase 2's own registered
-bench (D-388), not pre-answered here:** whether a live-3-only, own-side-only
-trigger keeps node inflation inside `<= 2.0x`. This document does not have
-the census's live-3-only cell count broken out (only the live-2 row is shown
-in `U3_tier_t.md` §6.2's table as reproduced in the review); Phase 2 measures
-it against the ALREADY-registered bracket and ABORT threshold — exactly what
-rule 5 is for. If it still exceeds the bracket, the fix is the same D-315/WP-
-1.5c deferral pattern §3.2 no longer needs, not a silent threshold move.
+`Cover::Impossible` (t ≥ 3, `LAW-OVERLOAD`, `threat_calculus_v1.md:55–59`):
+**"empty hitting set = losing band, no search"** — return
+`-mate_in(turns_from_root + 2)` directly, unconditionally, with no candidate
+generation and no dependence on `is_pv`. This REPLACES revision 2's §3.5
+(`is_pv`-conditioned generation of a real BatchedLost line, ruled on by the
+first re-review and then found to conflict with §4/§5 by the second, NEW-7):
+Ruling 1's "no search" is unambiguous and removes the need for that
+distinction entirely inside quiescence. `LAW-OVERLOAD` needs only "attacker
+t ≥ 3" (established) and "defender cannot win this turn" (§3.1's `None`);
+`is_pv` was never one of its conditions, and a line ending at a turn
+boundary is turn-whole regardless (`pv.rs:76–79`, `turns_from_plies` panics
+only on an illegal ply or a turn half played — neither applies at a gate).
+**PV integrity note carried forward from the prior review's independent
+re-derivation** (`wp16_design_REVIEW_rev2.md`, answer to question 4): this
+holds without needing `is_pv` at all, which is why Ruling 1 can drop the
+distinction Ruling-1-free revision 2 needed.
 
-### 3.4 Correcting the dispatch's `LAW-RIPOSTE` citation — REVISION 2, C3-fixed
+### 3.5 Ply-2 generation — one rule, applies uniformly after either a defensive or offensive ply-1
 
-Core §4 cites `LAW-RIPOSTE` for "a defense must hit every unanswerable plan."
-That sentence is `LAW-FORCE`'s content (§3.2 above), not `LAW-RIPOSTE`'s —
-this substitution stood up under REVIEW-design's attack (its V5) and is kept.
-`LAW-RIPOSTE`'s actual content (`threat_calculus_v1.md:74–77`): "a forced
-defensive stone can itself create a plan and flip initiative... any
-forcing-line PROVER must check every forced reply for new plans; skipping the
-check is unsound."
+**Ruling 1, quoted:** "defensive ply-2 = hitting cells of remaining live
+opponent plans t ≤ 2, union mover plan-making cells t ≤ 2." Realized as: at
+the `Phase::Second` node reached after ply-1 (one stone left,
+`left' = StonesLeft::One`), recompute BOTH queries fresh against the new
+position (the incrementally-updated `ThreatState` already reflects the
+ply-1 stone, `position.rs:75,143`):
 
-**Revision 1 misattributed D-267 here and REVIEW-design (C3) caught it: D-267
-assigns `LAW-RIPOSTE` and `LAW-LEDGER` to THIS WP by name** ("`LAW-RIPOSTE`
-and `LAW-LEDGER` are WP-1.6's", `docs/decisions.md:575`) — `ZONE-R` and
-`LAW-DECOMP` alone are Stage 3's. §3 above already quotes this correctly;
-revision 1's §3.4 contradicted its own §3. The correction is not clerical:
-D-267 says WP-1.6 OWES `LAW-RIPOSTE` an expression, not that it is exempt
-from it as a non-prover.
+- `Cover2 = threats.blocking_covers(us, HitBudget::from(left'))` —
+  `HitBudget::One`, since one stone remains. `NothingToBlock` → nothing left
+  to hit. `Minimal(covers)` → **candidate cells include `Cover2::cells()`**
+  (the "remaining live opponent plans" — plans the ply-1 stone did not fully
+  resolve: reachable when ply-1 played a `MinimalCover::Two` member rather
+  than the size-1 hit, or when a wholly different plan already existed
+  alongside the t≤1 family the gate tested). `Impossible` → **"empty hitting
+  set = losing band, no search"** applies again, symmetrically: return
+  `-mate_in(turns_from_root + 2)`, no further generation for this branch —
+  this is a per-BRANCH pruning decision inside the search tree (the branch
+  that chose this particular ply-1 stone is scored and abandoned), not a
+  claim that the real game ever plays fewer than two stones this turn
+  (rule 3; other ply-1 branches, including the one that played the actual
+  size-1 hit `MinimalCover::One` names, are unaffected and reach
+  `NothingToBlock`/`Minimal` normally).
+- `threats.cells_raising_to_hot(us, NearHot::Three, &mut cells)`, recomputed
+  at the ply-2 position — "mover plan-making cells" — union'd in
+  unconditionally (available whether or not `Cover2` found anything left to
+  hit; `LAW-LEDGER`'s free stone, §3.7, is what this cell set spends).
 
-**What discharges the obligation, after the C4/C1 fixes above:** `LAW-
-RIPOSTE`'s danger is a forced defensive stone flipping initiative — REVIEW-
-design's C4 leg (c) showed revision 1's trigger set caught this only when the
-flip reached t ≥ 3 (overload) or t = 1, and silently missed t = 2, "the
-double threat, the strongest flip a riposte can produce short of a proven
-overload." §3.2's fix (fire on any `Cover::Minimal`, t ∈ {1,2}) closes
-exactly that hole: after a hitting cell is played, the child node re-runs the
-SAME trigger protocol (§3 in full) on the resulting position, and a forced
-reply that created a new t ∈ {1,2} plan — LAW-RIPOSTE's own case — now fires
-trigger (b) at the child. `q_depth_turns` caps how far this can run; running
-out of budget means "stand pat" (an admission of ignorance, sound for
-alpha-beta search) rather than "unsound proof" (a df-pn-style prover's
-failure mode, which is what `LAW-RIPOSTE`'s "skipping the check is unsound"
-is actually warning against — a claim of proof this WP never makes). This is
-the sense in which WP-1.6 expresses `LAW-RIPOSTE`'s content in `ThreatState`'s
-existing vocabulary, per D-267's own assignment, rather than being exempt
-from it.
+Ply-2 candidates = `Cover2::cells() ∪ cells_raising_to_hot(us, NearHot::Three)`
+at the ply-2 position (deduplicated), unless `Cover2::Impossible` fired the
+early return above. **No quiet stage, no `within_radius`, no
+`staged_candidates` call anywhere in this path** — every cell in both plies
+traces to one of the three queries named in §3.1–§3.3/§3.5, per Ruling 1.
 
-### 3.5 The `Impossible` / losing-band case (core §4's D-105 pointer) — REVISION 2, ruled per REVIEW-design
+**Offensive pairs (Ruling 1's third clause).** When the gate fired trigger
+(c) rather than (b) (§3.3, `Cover::NothingToBlock` at the gate), ply-1's
+cells are `cells_raising_to_hot(us, NearHot::Three)` and ply-2 uses the SAME
+uniform rule above — recomputing `Cover2` (in case the ply-1 offensive
+stone incidentally landed inside an opponent window and changed something,
+or a plan appeared from an unrelated cause) union'd with the offense query
+recomputed. One ply-2 rule, not two.
 
-`blocking_covers(us, HitBudget::from(left)) == Cover::Impossible` (C5-fixed:
-`left = StonesLeft::from_state(state)`, not the literal `Two`) is
-`LAW-OVERLOAD` (t ≥ 3): the mover cannot survive this turn. `staged_candidates`
-already distinguishes this by PV-ness (`staged.rs:196–206`):
+### 3.6 What Ruling 1 does NOT need this document to re-derive
 
-- `!is_pv` → `StagedRow::OverloadReturn`, zero-cost: return
-  `-mate_in(turns_from_root + 2)` (`pvs.rs:277–279`) with no recursion. Free
-  exactly like trigger (a) — runs regardless of `q_budget`.
-- `is_pv` → `StagedRow::BatchedLost`: the PV must carry a provable line, so
-  generation proceeds instead of returning early — **when budget remains**
-  (`q_budget` is `None`, about to be granted, or `Some(k)` with `k > 0`):
-  fall through to the SAME generation `batched()` already computes for this
-  row (real Tier T, safety net included if Tier T is itself empty — the
-  `Phase::Second` exception's reasoning applies here for the same reason,
-  §4: an `is_pv` line that must be provable is not optional the way an
-  offensive gate decision is), consuming one turn of `q_budget` exactly as
-  triggers (b)/(c) do.
+Ply-1's cells cannot include a cell `Position::place` would refuse: every
+cell named above is the empty cell of a window some side already has ≥2
+stones in (`DEF-WINDOW`, live windows occupy real board positions within
+radius-8 of existing stones by construction) — the same cells the shipped
+Tier T generator already hands to `place` today without `CANDIDATE_ILLEGAL`
+firing (`wp16_design_REVIEW_rev2.md`, answer to question 1, re-derived
+independently there and not re-derived again here).
 
-**RULED (§10 item 5 of revision 1, resolved by REVIEW-design with one
-amendment which this revision adopts):** at a gate node whose budget is
-EXHAUSTED (`q_budget == Some(0)`, or `q_budget == None` with
-`params.q_depth_turns == 0`) and `blocking_covers` answers `Impossible`,
-return `-mate_in(turns_from_root + 2)` **regardless of `is_pv`** — drop the
-PV gate at exactly this combination, nowhere else. The stated default
-(generation half: stand pat, no override) is otherwise adopted as ruled — a
-second, PV-conditioned extension mechanism beyond §3.2/§3.3's uniformly-
-capped path is exactly what §1's discipline excludes, and §9's bracket is
-registered against a single capped path. But the reason `is_pv` gates
-generation in the first place — "the PV must carry a provable line, so
-generation proceeds" (`staged.rs:86–89`) — is ABSENT at an exhausted gate: no
-line can be generated on either branch there (the alternative is
-`self.position.value()` with an empty PV slot, `pvs.rs:194`), so nothing is
-gained by declining the free, more-accurate mate-band answer. Soundness is
-unaffected: `LAW-OVERLOAD` (`threat_calculus_v1.md:55–59`) needs only
-"opponent t ≥ 3" (established) plus "defender cannot win this turn" (trigger
-(a) already established `None`), and `is_pv` is not one of its conditions.
-PV integrity is unaffected: the gate sits at a turn boundary, so a line
-ending there is turn-whole and `turns_from_plies` accepts it.
+### 3.7 LAW-RIPOSTE / LAW-LEDGER — what this design expresses, in D-267's assignment
 
-`D-105` is cited by the dispatch only as the PRECEDENT for "a lost position's
-score is a live, still-open question" (D-105's `DECIDED_WINDOW_VALUE`
-flooring is an UNSTARTED Stage-1 arena experiment, not something this WP
-implements) — nothing here depends on that experiment's outcome; this design
-never floors an eval, it only chooses between a mate-band shortcut and a
-capped stand-pat.
+D-267 (`docs/decisions.md:575`) assigns `LAW-RIPOSTE` and `LAW-LEDGER` to
+THIS WP by name ("are WP-1.6's"), not to Stage 3 — this citation is verified
+against the CURRENT `decisions.md` at this revision (Ruling 5, §7 below is
+this fix's own section for the TT citation; this paragraph is the general
+one). `LAW-LEDGER` (`threat_calculus_v1.md:79–83`): "the defender's turn is
+worth 2 − t free stones." At the gate's t=1 case, the mover banks exactly
+one free stone — §3.5's ply-2 rule is that free stone's spend: hit whatever
+of the opponent's family ply-1 left live, OR develop, whichever the position
+calls for, decided by the search itself rather than by this document.
+`LAW-RIPOSTE` (`:74–77`): "a forced defensive stone can itself create a plan
+and flip initiative... any forcing-line PROVER must check every forced
+reply for new plans." Quiescence is not a prover — it never claims a proof —
+but the SAME check happens for free by recursion: a forced ply-1 stone that
+creates a new plan is exactly what §3.5's `cells_raising_to_hot` re-query
+(and, one turn later, a fresh gate at §3.1–§3.4) would surface, bounded by
+`q_budget` (§6); running out of budget means "stand pat" (an admission of
+ignorance, sound for alpha-beta), never "unsound proof" (the failure mode
+`LAW-RIPOSTE` warns provers against, and one this design never claims to
+avoid by proof).
 
-## 4. Move set inside qsearch
+## 4. Zones — window-support bound, never radius
 
-**No new generator.** Every qsearch node — the gate node and both plies of
-every granted turn — calls the existing `staged_candidates` with
-`left = StonesLeft::from_state(state)` exactly as `pvs::visit`'s
-`depth_plies > 0` branch already does (`pvs.rs:260–264`). The one deviation:
+Every cell any qsearch node can generate (§3.2, §3.3, §3.5) is the empty
+cell of a window some side already holds ≥2 (opponent, via `blocking_covers`
+→ `hot_windows`, ≥4 in fact) or ≥3 (mover, via `cells_raising_to_hot`) own
+stones in — never a `within_radius` ball
+(`crate::candidates::within_radius`, `candidates.rs`). Verified exhaustively
+(`wp16_design_REVIEW.md` V4, re-checked and still true at this revision):
+`within_radius` is `pub(crate)` with exactly two call sites, `candidates.rs`
+under the `Radius` policy arm and `staged.rs:283`'s quiet-ball safety net —
+neither is `quiescence.rs`, which this design never has call into either.
+This holds STRUCTURALLY now, more strongly than in revisions 1–2: those
+designs suppressed `staged_candidates`'s safety net at gate decisions but
+still literally CALLED `staged_candidates`, leaving the suppression a
+runtime condition to get right; this design's generator never imports
+`staged.rs` or `candidates.rs` at all, so there is no radius-based function
+in the call graph to suppress.
 
-**Quiet-safety-net suppression, at `Phase::First` gate decisions only.** If
-`staged_candidates` returns `StagedRow::Batched`/`BatchedLost` with
-`StagedSet::used_quiet_safety_net == true` (`staged.rs:118–122`, meaning Tier
-T was empty and the generator fell back to `within_radius`,
-`staged.rs:276–285`) AT A GATE NODE (`Phase::First`, deciding whether to
-extend), this is treated as "no offensive trigger" — stand pat, never the
-radius ball. This is what "no quiet stage" (core §4) means operationally and
-is exactly the anti-pattern §1 excludes: standing pat here costs nothing,
-since D-111 already permits a static read at any turn boundary.
+Not `ZONE-R` (`threat_calculus_v1.md:137–141`, RZOP's finite-proof relevance
+zones, Stage 3 / WP-1.8's per D-267) — a cheaper, weaker relative sharing
+`ZONE-R`'s motivating principle without its proof-engine machinery.
 
-**Suppression does NOT apply at `Phase::Second` inside an already-granted
-turn.** A turn, once granted, must complete — `Position::place`'s legality and
-the `NO_CANDIDATES_MID_TURN` invariant (`pvs.rs:53–55`, D-104) mean the second
-stone is not optional. If the second ply's `staged_candidates` call comes back
-`Batched` with the safety net used, qsearch uses those cells (radius ball
-included) exactly as the main search would — completing the committed turn
-honestly, never inventing a static answer mid-turn. **This is a correction to
-core §4's literal "no quiet stage," stated because the alternative (suppress
-unconditionally) hits `NO_CANDIDATES_MID_TURN`'s panic path
-(`pvs.rs:479–486`) on the first position where Tier T empties out between a
-turn's two stones — RED-TEAM (Phase 3): construct this fixture explicitly**
-(a granted turn whose first stone is a `MinimalCover` hit and whose second
-stone finds Tier T empty).
-
-## 5. Zones — window-support bound, never radius
-
-By construction, every cell qsearch's gate-trigger candidate sets can contain
-comes from `Cover::cells()` (empties of the opponent's HOT windows, §3.2) or
-`cells_raising_to_hot(us, NearHot::Three, ...)` (empties of the mover's
-LiveCount::Three windows, §3.3, revision 2) — never from `within_radius` (`crate::candidates::within_radius`,
-`candidates.rs`), which is the ONLY radius-based cell source in
-`pistol-search`. §4's suppression rule guarantees `within_radius` cells never
-reach a qsearch GATE decision. This is the "union of live windows' support"
-bound core §5 asks for, satisfied structurally rather than by a separate
-runtime check — REVIEW-design should confirm no path threads
-`within_radius`/`candidate_cells` into a gate node.
-
-This is NOT `ZONE-R` (`threat_calculus_v1.md:137–141`, RZOP's combinatorial
-relevance zones for FINITE PROOFS, order ≤ 3) — `ZONE-R` is Stage 3 / WP-1.8's
-(D-267). Quiescence's window-support bound is a cheaper, weaker relative that
-shares `ZONE-R`'s motivating principle (bound the search combinatorially, not
-by an arbitrary radius) without `ZONE-R`'s proof-engine machinery. Do not cite
-`ZONE-R` as implemented by this WP.
-
-## 6. Cap: `q_depth_turns`
+## 5. Cap: `q_depth_turns` (unchanged from revision 2)
 
 New field on the `staged` variant of `[search.candidate_policy]`
-(`crates/pistol-engine/src/config.rs:161–182`, alongside `quiet_radius`,
-`quiet_top_k`, `widen_schedule`, `tier_t_own_count`, `tier_t_opponent_count`)
-and on `pistol_search::params::StagedParams` (`params.rs:58–70`) —
-schema-home per hard rule 1, no code-side default. `u32`, validated range
-`0..=8` in `pistol-engine`'s `validate.rs` (mirroring `MAX_CANDIDATE_RADIUS`'s
-existing validated-range precedent for `quiet_radius`/`radius`).
-**`q_depth_turns == 0` IS the disable flag** — the gate check at §3 still
-runs (trigger (a)/OverloadReturn are always free, §3.1/§3.5), but no
-extension is ever granted, which is exactly the "quiescence disabled" state
-Phase 2's differential-oracle comparison needs (core, Phase 2: "the oracle
-comparison runs with quiescence disabled-flag identical"). No separate
-boolean field — a second flag alongside a numeric cap would be two ways to say
-the same thing (rule 3's closed-enum discipline, and rule 9's
-no-redundant-state spirit). The SHIPPED value is a closed enum of tried
-values, decided by SPRT only (core §6) — this document fixes no number.
+(`crates/pistol-engine/src/config.rs:161–182`) and on
+`pistol_search::params::StagedParams` (`params.rs:58–70`) — schema-home per
+hard rule 1, no code-side default. `u32`, validated range `0..=8`. **`0` is
+the disable flag**: `quiescence()`'s gate still runs §3.1/§3.4's free checks
+(they cost nothing and are not extensions), but §3.2/§3.3 never grant a turn.
+This is the "quiescence disabled" state the Phase-2 differential oracle needs.
 
-**Configs that must gain the field in the same IMPL commit (N3, non-blocking
-finding from REVIEW-design, fixed here as a checklist item):** every committed
-config using `kind = "staged"` fails to deserialize the instant this field is
-schema-required (`#[serde(deny_unknown_fields)]`, hard rule 1's "missing key =
-error") — `configs/play_staged_v0.toml`, `configs/tactical_staged_v0.toml`,
+**Configs that must gain the field in the landing commit** (unchanged list
+from revision 2, re-verified against the tree at this revision):
+`configs/play_staged_v0.toml`, `configs/tactical_staged_v0.toml`,
 `configs/gate_staged_v0.toml`, `configs/instrument_v0.toml`,
-`configs/instrument_staged_v0.toml`, and the WP-1.5b arena seats
-(`configs/arena_wp15b_staged_vs_r2.toml`,
+`configs/instrument_staged_v0.toml`,
+`configs/arena_wp15b_staged_vs_r2.toml`,
 `configs/arena_wp15b_staged_vs_r2_confirm.toml`,
-`configs/arena_wp15b_dryrun.toml`). IMPL updates all of them in the landing
-commit; `tools/config_check.sh` is the gate that would otherwise catch this
-late.
+`configs/arena_wp15b_dryrun.toml`.
 
-## 7. Correctness
+## 6. RULING 4 — the TT rule, stated once, corrected against a hard constraint neither prior review found
 
-**Win detection.** Rule 2: unchanged, pistol-core's alone. Trigger (a) reads
-`ThreatState`, which is itself derived from and kept in step with
-`GameState`/`Board` (`position.rs` doc, `D-41` as amended by WP-1.5b) — it
-never substitutes for `PlyOutcome::Win`, which is still what actually ends a
-line (`pvs.rs:311–321`, unchanged by this design).
+**The rule, quoted from the resume dispatch:** "qnodes store at depth 0 with
+a distinct quiescence bound-type flag, excluded from main-depth node
+accounting. No alternative reading appears anywhere."
 
-**Scores in turns.** `mate_in`/`to_table`/`from_table` (`score.rs`) are used
-unchanged; a qsearch extension's mate distances are computed exactly as the
-main tree's (`turns_from_root`, `pvs.rs:429–431`), since qsearch never leaves
-the `visit`/`child` recursion (§7.1).
+**A load-bearing finding this revision makes that revisions 1 and 2, and
+both of their reviews, did not: the literal words "store at depth 0" cannot
+be implemented against the current packed TT entry, and this is not a
+judgment call.** `tt/entry.rs`'s module doc, verbatim: "**Zero depth means
+empty.** No stored record has it: a leaf is not worth an entry, so the depth
+field doubles as the occupancy flag" (`entry.rs:9–11`). Its `depth_fits`
+function enforces this as a hard invariant: `assert!(depth >= 1, ...\"a leaf
+is not worth an entry\")` (`entry.rs:174–178`), and `Entry::is_empty`
+(`:138–140`) is LITERALLY `self.depth_plies == 0`. A `Record { depth_plies:
+0, .. }` passed to `Table::store` (`tt/mod.rs:158–171`, which packs via
+`Entry::packed`, `entry.rs:113–123`) panics with `TT_FIELD_OUT_OF_RANGE`
+before it ever reaches a bucket. Neither revision 1's nor revision 2's
+review caught this, because both focused on the CONSEQUENCES of a depth-0
+store (whether a full-width prober would wrongly trust it) and neither
+checked whether the packed format can hold a stored zero at all. It cannot.
 
-**Recursion shape — one function, one new parameter, and the gate node does
-NOT recurse into itself. Revision 2, C2-fixed.** No parallel `quiescence()`
-function. `Run::visit` and `Run::child` each gain one parameter, `q_budget:
-Option<u32>`. Revision 1 said the gate node (`q_budget == None`) "recurses
-with `depth_plies = 2, q_budget = Some(k-1)`" and separately said the TT
-store keys on `q_budget.is_some()` — REVIEW-design (C2) showed these two
-sentences describe a node that does not exist: the gate node's OWN
-`q_budget` is `None` by the first sentence, so the store rule's predicate,
-read literally, never covers the gate node's own `Record` write, and each of
-the two ways to read past that ambiguity breaks something: (reading A) the
-gate node falls through to its own candidate loop with a locally rebound
-`depth_plies = 2` and stores that node's `Record` BEFORE any inner
-`q_budget.is_some()` node exists to claim depth 0 — a `depth_plies: 2` record
-built from a quiescence-narrowed move set, which a later full-width probe at
-the same key and `depth_plies == 2` then trusts as a real cutoff
-(`record.depth_plies >= depth_plies`, `pvs.rs:229`), reachable across
-iterative-deepening iterations at the same table key, not only via
-transposition; (reading B) the gate node instead calls
-`self.visit(2, alpha, beta, ply, Some(k-1))` as a genuine recursive call and
-returns its result — the unsound record disappears, but `visit`'s prologue
-(`self.nodes += 1`, `pvs.rs:193`) now runs twice for what is one node's work,
-double-counting against `self.stop.is_spent(self.nodes)` — the exact quantity
-WP-1.5b's own SPRT was node-matched on (`go nodes 50000`, D-386).
+**Resolution adopted by this revision — the ruling's DEPTH-0 is realized as
+a semantic width-class, not a literal `depth_plies` value:**
 
-**The fix: the gate node enters the quiescence regime ITSELF, in place, not
-through a recursive call.** The moment a gate node (`depth_plies == 0`,
-`Phase::First`, `q_budget == None`) grants an extension (trigger (a) already
-handled and returned; trigger (b) or (c) fires with budget available), it
-REBINDS its own locals — `depth_plies := 2`, `q_budget := Some(k - 1)` (or,
-for the §3.5 `is_pv`+budget-available case, the same rebinding) — and falls
-through into the REST of this SAME `visit` invocation: the same TT probe/
-store code path the `depth_plies > 0` branch already runs
-(`pvs.rs:220–237`, `:359–377`), now executing with the rebound locals. There
-is no second call frame, so `self.nodes` increments exactly once for this
-node (matching `qnodes`'s definition, §8), and the node's own `Record.
-depth_plies` is written from the SAME local that decides its candidate
-generation — which is where the TT rule below now attaches.
+1. **Store `depth_plies: 1`** for every quiescence-regime `Record` — the
+   smallest value the occupancy-flag convention (`entry.rs:9–11,138–140`)
+   allows a real, present entry to carry. `1` is otherwise a legitimate
+   full-width depth (a node one ply from its own horizon reaches it
+   constantly), so depth alone cannot distinguish a quiescence record from a
+   genuine depth-1 full-width one — which is exactly why the ruling asks for
+   a flag.
+2. **Add one bit, `from_quiescence: bool`, to `Entry`**, WITHOUT reducing
+   `GENERATIONS` (64 → fewer would shrink the generation-wraparound horizon
+   inside a single long game, a real cost this design does not want to pay)
+   and WITHOUT touching `bound_age`'s existing `(generation << 2) |
+   bound.index()` packing (`entry.rs:121`), which already uses all 8 of its
+   bits. `Entry`'s declared fields sum to 18 bytes (`verification: u64` = 8,
+   four `i16` fields = 8, `depth_plies: u8` + `bound_age: u8` = 2) against
+   the asserted `ENTRY_BYTES = 24` (`entry.rs:16,100–103`) — six bytes the
+   current layout spends on alignment padding and nothing else. **IMPL adds
+   a `flags: u8` field** (one of those padding bytes, made an explicit field
+   instead of implicit padding) carrying `from_quiescence` in its low bit;
+   the existing `size_of::<Entry>() == ENTRY_BYTES` const assertion
+   (`entry.rs:100–103`) is the gate that catches it if this layout
+   assumption is wrong on some target — a compile-time check this codebase
+   already had, not a new one this design adds. **REVIEW-design (Phase 1'):
+   verify this byte-budget arithmetic independently before trusting it as
+   the resolution** — it is asserted here, not yet compiled.
+3. **Store rule (protects existing data, closes the eviction gap the second
+   revision's review found — `wp16_design_REVIEW_rev2.md` NEW-5 — before it
+   could land):** `Table::store`'s victim selection (`tt/mod.rs:179–191`)
+   gains one condition: if the record being stored has `from_quiescence:
+   true` and the chosen slot already holds a non-empty, NON-quiescence
+   entry, the store is DECLINED (no-op) rather than overwriting. A
+   quiescence store may freely fill an empty slot or replace an existing
+   quiescence entry (the table's ordinary `rank()` comparison,
+   `tt/mod.rs:193–200`, decides which, unchanged). A full-width store is
+   never declined by this rule — it always may evict, exactly as today.
+4. **Probe rule — deliberately the simplest available, per "no alternative
+   reading":** a probe returning a record with `from_quiescence: true` is
+   treated by a FULL-WIDTH caller (`q_budget == None` context) exactly as if
+   `probe` had returned `None` — no cutoff, no move-ordering hint, full stop.
+   `quiescence()` itself never probes the table at all — it only ever
+   WRITES, once per node it visits, so there is no quiescence-to-quiescence
+   reuse question to answer (the second revision's review, NEW-2/N2, raised
+   exactly this as unaddressed; this revision addresses it by removing the
+   read path entirely rather than reasoning about what it would be sound
+   for). This is the one place this document deliberately gives up a
+   possible optimization (a granted turn could in principle reuse a sibling
+   quiescence bound) in exchange for a rule simple enough that "no
+   alternative reading appears anywhere" is actually true of it.
 
-- `None` everywhere in the main tree today — behavior byte-for-byte
-  unchanged from the current code whenever `q_budget` stays `None`, which is
-  every call site until the first horizon gate grants an extension.
-- Once a gate node rebinds to `q_budget = Some(k)` (in place, as above):
-  every node from there on — both plies of the granted turn, and every
-  subsequent horizon this turn's completion reaches — carries `Some(_)`
-  forward through NORMAL recursive `visit`/`child` calls (not rebinding;
-  rebinding happens only at a fresh gate) UNTIL the next `depth_plies == 0`,
-  `Phase::First` gate, where the SAME in-place-rebind decision re-runs with
-  `k` in place of `params.q_depth_turns` (extend again, in place, only if
-  `k > 0`; otherwise the ordinary stand-pat, unchanged).
-- `child()` (`pvs.rs:387–425`) threads `q_budget` through its two recursive
-  calls (`full`/the null-window scan) unchanged in value — it is orthogonal
-  to the same-side/opponent window logic `child` already owns.
+**"Excluded from main-depth node accounting":** `StageCounters`'s existing
+fields (`win_now`/`filtered`/`batched`/`batched_lost`/`cover_impossible`/
+`overload_return`, `info.rs:39–65`) are fed exclusively by
+`StagedRow`/`staged_candidates` (`staged.rs`/`info.rs:69–83`). Since Ruling 1
+removes every call from quiescence into `staged_candidates`, this exclusion
+is now STRUCTURAL — `quiescence()` cannot increment those fields because it
+never reaches the code that does. Quiescence's own activity is recorded
+exclusively under §7's new counters. **`self.nodes` is NOT excluded** — the
+raw node-budget counter (`Run::nodes`, `pvs.rs:79–80`) still increments once
+per node `quiescence()` visits, because `self.stop.is_spent(self.nodes)`
+(`pvs.rs:450–456`) is what a `Stop::Nodes` budget spends against, and rule 6
+requires per-side compute to be reported truthfully — a search that did
+quiescence work for free, invisible to its own budget, would misreport the
+compute WP-1.5b's SPRT was matched on (`go nodes 50000`, D-386). The ruling's
+"excluded from main-depth node accounting" is read as excluding qsearch
+activity from the MAIN-SEARCH-SHAPED counters (`StageCounters`'s existing
+fields), not from the node-budget itself — the two are different
+accounting systems and only the first is what `staged_candidates`'s counters
+were ever about.
 
-**TT sharing at depth 0 (core §7), predicate corrected.** A node's `Record`
-stores `depth_plies: 0` iff THAT NODE's OWN `q_budget` (after any in-place
-rebind it just performed, per the fix above) is `Some(_)` — equivalently:
-every node reached by continuing past a granted gate, WHETHER OR NOT it is
-itself the rebinding gate. This now includes the rebinding gate node itself,
-closing the predicate gap C2 found. REGARDLESS of the local extended-turn ply
-countdown (2 or 1) that node is using for its OWN recursion control —
-`depth_plies` (recursion control) and the TT-stored depth (a claim about
-search width already done) are DELIBERATELY DIFFERENT quantities from the
-moment of rebinding onward: a full-width prober's cutoff test
-(`record.depth_plies >= depth_plies`, `pvs.rs:229`) must never accept a
-quiescence-narrowed bound as satisfying a real `depth_plies >= 1` requirement
-— storing `0` guarantees this by construction. Probing (reading) is
-unrestricted: a quiescence node probing the table is content with ANY stored
-record regardless of its depth (its own requirement is `>= 0`, trivially
-satisfied — true at every quiescence-regime node including the just-rebound
-gate, since its probe also runs after the rebind), so a full-width `Exact`/
-appropriate-bound entry already present is freely reused as a cutoff inside
-qsearch — this is the actual content of "TT shared... with the existing key,"
-and it needs no key change (phase bit + side to move are already in
-`GameState::key()`, unchanged by this design).
+## 7. Correctness — the rest, carried forward or restated briefly
 
-**N1/N2, named for IMPL rather than fixed here (concerns, not blocking):**
-`depth_plies` genuinely carries three roles across this function by the time
-of a rebind (the pre-rebind horizon test at `pvs.rs:199`, the post-rebind
-recursion-control countdown, and the always-0 TT-store value once
-`q_budget.is_some()`) — the fix above keeps them apart by construction but
-IMPL should not collapse them into one variable. Separately, two
-quiescence-regime gate nodes at the same table key with different remaining
-`q_budget` share one `Record` (the key carries side-to-move and the
-intra-turn phase bit only, never `q_budget` itself, §7's determinism
-argument below) — this is ordinary, accepted engine behavior (a shallower
-quiescence bound is simply not trusted at a deeper requirement, per the
-depth-0 rule above) and does not breach the determinism law, but it is
-QUIESCENCE-TO-QUIESCENCE reuse, a different direction from the full-width-to-
-quiescence reuse the paragraph above argues for.
+**Win detection.** Rule 2: unchanged, pistol-core's alone. `ThreatState` is
+derived from and kept in step with `GameState`/`Board`
+(`position.rs`'s doc, D-41 as amended by WP-1.5b); trigger (a) reads it but
+never substitutes for `PlyOutcome::Win`, which still ends every line
+(`pvs.rs:311–321`).
 
-**Determinism law.** No new nondeterminism source: `staged_candidates`,
-`blocking_covers`, `cells_raising_to_hot` are all already total/deterministic/
-sorted (`query.rs`'s module doc: "Every one is total, deterministic... None
-consults a clock, a hasher's iteration order"). `q_budget` is plain recursion state,
-not a wall-clock or thread-order read. The existing `should_stop`/
-`order_deadline` machinery (`pvs.rs:441–467`) is untouched; a qsearch node
-checks the stop condition on entry exactly as any other `visit` call does
-(the `self.nodes += 1; ... if self.should_stop()` prologue, `pvs.rs:193–198`,
-is shared code, not duplicated).
+**Scores in turns.** `mate_in`/`to_table`/`from_table` (`score.rs`) used
+unchanged; `quiescence()` computes `turns_from_root` the same way `visit`
+does and never introduces a ply-counted distance.
+
+**Determinism law.** `can_win_this_turn`, `blocking_covers`,
+`cells_raising_to_hot` are all total/deterministic/sorted (`query.rs`'s
+module doc). `q_budget` is plain recursion state. `quiescence()` calls
+`self.should_stop()` at its own entry — the SAME method `visit` calls
+(`pvs.rs:441–457`), not a duplicate — so a reproducible stop's exactness is
+unaffected by the extra call site.
+
+**PV tracking.** `quiescence()` calls `self.pv.clear(ply)` / `self.pv.promote(ply,
+at)` at the same points `visit`'s own candidate loop does (`pvs.rs:194,341`),
+so a granted turn's line is recorded exactly as a full-width one's would be —
+required for `Run::salvage`'s pairing invariant (`pvs.rs:169–182`) to keep
+holding when an abort lands mid-extension.
+
+**Alpha-beta discipline inside `quiescence()`.** Both plies use the same
+full-window-first / null-window-scan-then-conditional-re-search shape
+`Run::child` already implements (`pvs.rs:387–425`) — IMPL may factor a
+shared helper if it finds one natural; this document does not mandate code
+sharing, only the alpha-beta discipline itself, which is what soundness
+depends on.
 
 ## 8. Counters
 
-Extend `StageCounters` (`info.rs:39–65`) with fields written only from
-`q_budget.is_some()` paths, following the file's own "whole-search totals,
-written from the same point `nodes` is" convention (`info.rs:29–33`):
+`StageCounters` (`info.rs:39–65`) gains fields written only by
+`quiescence()`, per §6's structural exclusion from the existing fields:
 
-- `qnodes: u64` — nodes visited with `q_budget.is_some()` (every `visit` call
-  in that regime, both plies).
-- `q_win_now: u64` — trigger (a) fired at a gate node.
-- `q_overload_return: u64` — §3.5's zero-cost shortcut fired at a gate node.
-- `q_extend_defense: u64` — trigger (b) granted an extension (any
-  `Cover::Minimal`, t ∈ {1, 2}, revision 2/§3.2).
-- `q_extend_defense_t1: u64` / `q_extend_defense_t2: u64` — `q_extend_defense`
-  split by `covers.iter().any(MinimalCover::One)` (t=1) vs not (t=2) — the
-  distinction §3.2 keeps for exactly this purpose after C4 removed it from
-  the gate decision. `q_extend_defense_t1 + q_extend_defense_t2 ==
-  q_extend_defense`.
-- `q_extend_offense: u64` — trigger (c) granted an extension (mutually
-  exclusive with defense: §3.2/§3.3 checked in that order, defense first,
-  per `LAW-FORCE`'s "every non-losing move" precedence over pure offense).
-- `q_stand_pat_no_trigger: u64` — gate reached, no trigger fired.
-- `q_stand_pat_cap: u64` — a trigger fired but `q_budget` was already
-  exhausted (§3.5's `is_pv`+`Impossible` case at an exhausted gate is counted
-  under `q_overload_return`, not here — it returns the mate score, not a
-  stand-pat, per §3.5's revision-2 ruling).
+- `qnodes: u64` — every node `quiescence()` visits (both plies, every
+  granted turn, every chain link).
+- `q_win_now: u64` — §3.1 fired.
+- `q_overload_return: u64` — §3.4 fired, at the gate or at ply-2 (§3.5's
+  symmetric case) combined; the WP's own analysis can split gate-vs-ply-2 by
+  reading `qnodes` alongside it if needed, not required as a separate field
+  here.
+- `q_extend_defense: u64` — §3.2 fired at the gate.
+- `q_extend_offense: u64` — §3.3 fired at the gate (mutually exclusive with
+  defense: `NothingToBlock` vs `Minimal` are disjoint `Cover` arms).
+- `q_stand_pat_no_trigger: u64` — gate reached, neither §3.2 nor §3.3 fired
+  (includes the t=2-at-the-gate case Ruling 2 deliberately excludes, §3.2).
+- `q_stand_pat_cap: u64` — a trigger fired but `q_budget` was already spent.
 
-`StagedRow`/`record()` (`staged.rs`/`info.rs:69–83`) are unchanged — a
-qsearch node's OWN `staged_candidates` calls still feed the existing
-`win_now`/`filtered`/`batched`/... counters exactly as a main-tree node's
-would (§4: same function, same rows), so `StageCounters` after this WP
-answers both "how did the whole search's candidate rows split" (existing
-fields, now additionally covering qsearch-regime nodes) and "how much of that
-was quiescence, and why" (the seven new fields above).
+## 9. Rule-5 registration and RULING 3 — the cost derivation
 
-## 9. Rule-5 registration — verbatim, landed into the ADR before any bench
+**D-388's registered text (`docs/decisions.md`), unedited by this
+revision — numbers do not move, per rule 5 and per Ruling 3's own text:**
 
 > HOTSPOT = trigger evaluation at horizon nodes (can_win_this_turn + plan-t
 > queries per horizon node). INSTRUMENT: existing bench chain, staged+q vs
@@ -519,86 +476,119 @@ was quiescence, and why" (the seven new fields above).
 > nodes-to-same-depth inflation <= 2.0x; ABORT if > 3.0x. ttd may worsen;
 > strength is SPRT's alone. Numbers do not move.
 
-Recorded as `D-388` (this document's landing commit) before Phase 2 IMPL
-starts any bench, per the dispatch's own instruction ("architect's, verbatim
-into the ADR before any bench"). D-388 stands unedited by this revision — the
-registered numbers do not move (rule 5); revision 2 only changes what the
-design being measured against them IS.
+**Ruling 3, quoted:** "derive expected node inflation from `U3_tier_t.md`
+census at the narrow width, whole granted turn, both plies, chain length
+capped by `q_depth_turns`; register the derivation ESTIMATED; D-388's
+bracket and abort stand UNMOVED (one line stating why: the bracket was
+impossible at wide width, which evidenced Ruling 1, not a wider bracket)."
 
-**N4, named per REVIEW-design, not yet resolved — Phase 2 must state it
-before launching the bench:** "staged+q vs staged" does not by itself say
-whether the right-hand `staged` seat is `q_depth_turns = 0` or the pre-WP-1.6
-build. §6 is explicit that `q_depth_turns == 0` still runs the free trigger
-(a)/`OverloadReturn` checks (§3.1/§3.5) — a `q=0` seat therefore already
-returns mate scores at horizons the pre-WP-1.6 engine scores statically, and
-is a different player from that pre-WP-1.6 build. The two right-hand seats
-measure different things (the extension mechanism alone, vs. the extension
-plus the free horizon checks). Phase 2 names which one D-388's registered
-comparison uses, in the bench's own commit, before running it.
+**Why the bracket does not move — the one line Ruling 3 asks for:** the
+wide-width design (revisions 1–2) blew the registered bracket by two to
+three orders of magnitude BEFORE any bench ran (`wp16_design_REVIEW.md` C1);
+that finding is evidence the WIDE design was wrong, which Ruling 1 corrects,
+not evidence the BRACKET was set wrong — a design defect and a
+mis-calibrated instrument are different failure modes, and only the design
+was shown defective. `D-388`'s numbers stand as the standard the NARROW
+design (this revision) is held to.
 
-## 10. Revision 1 → revision 2 changelog, and what the scoped re-review must attack
+**The derivation, ESTIMATED throughout, MEASURED census inputs cited
+directly against `U3_tier_t.md` at this revision (not through a prior
+review's quotation):**
 
-Revision 1 (`9fa27c8`) FAILED REVIEW-design
-(`docs/experiments/wp16_design_REVIEW.md`) on four CONFIRMED blocking findings
-plus two non-blocking. Disposition, each tied to its fix above:
+Per-ply widths (MEASURED where the census carries the quantity, ESTIMATED
+where it is derived from a related quantity the census does carry):
 
-1. **C1 (blocking) — trigger (c) fired on plan-free positions at 61.5–92.5 %
-   of nodes, dropping `PROTO-NODE` step 5's `t ≥ 2` qualifier.** Fixed: §3.3
-   now uses `cells_raising_to_hot(us, NearHot::Three)` (own side, live-3
-   activation only), not `tier_t_union`. Node-inflation consequence left as
-   an explicit open empirical question for Phase 2's registered bench, not
-   pre-answered.
-2. **C2 (blocking) — the TT-store predicate did not cover the gate node; the
-   two readings of the recursion were unsound / node-double-counting
-   respectively.** Fixed: §7 now specifies the gate node rebinds its own
-   `depth_plies`/`q_budget` in place and continues within the SAME `visit`
-   call — no second call frame, `self.nodes` increments once, the store
-   predicate (`q_budget.is_some()` AFTER any rebind) covers the node that
-   writes it.
-3. **C3 (blocking) — §3.4 misattributed D-267 (said `LAW-RIPOSTE` was "Stage
-   3's"; D-267 says it is "WP-1.6's"), contradicting the document's own §3.**
-   Fixed: §3.4 now states D-267's assignment correctly and grounds "the
-   obligation is discharged" in the C4 fix (below) rather than in a claimed
-   exemption.
-4. **C4 (blocking) — the t=2 exclusion in §3.2 rested on two refuted
-   arguments and left LAW-RIPOSTE's flip-initiative case (the double-threat
-   forced reply) uncaught.** Fixed: §3.2 now fires trigger (b) on any
-   `Cover::Minimal` (t ∈ {1,2}); MEASURED cost is cheap (2.17–2.27 cells/node).
-5. **C5 (non-blocking) — §3.1/§3.2 used literal `StonesLeft::Two`/
-   `HitBudget::Two` where §4 already used `StonesLeft::from_state`.** Fixed
-   throughout §3.1, §3.2, §3.5.
-6. **C6 (non-blocking) — §3.1's "always evaluated... regardless of q_budget"
-   did not state the `CandidatePolicy::Staged`-only scoping, and panics under
-   `Radius` (no `ThreatState`).** Fixed: §3.1 states the scoping and names the
-   staged-vs-radius arena-comparison consequence.
+| quantity | corpus roots | r2 draw | r8 draw | playouts | source |
+|---|---|---|---|---|---|
+| `q_extend_defense` upper-bound rate (FILTERED row, t∈{1,2} — an upper bound on Ruling 2's t≤1-only rate, since the census does not split FILTERED by t) | 25.0% | 18.4% | 13.7% | 3.1% | MEASURED, `U3_tier_t.md:170` |
+| ply-1 width when defense fires (`cover union when FILTERED`) | 2.17 | 2.17 | 2.19 | 2.27 | MEASURED, `:168` |
+| `live-3 own`, mean WINDOWS (not cells) | 0.75 | 1.78 | 1.61 | 1.71 | MEASURED, `:165` |
+| `q_extend_offense` rate, ESTIMATED via a Poisson(mean) `P(≥1)` heuristic on the row above — a rough proxy, not a measured zero-fraction | ≈53% | ≈83% | ≈80% | ≈82% | ESTIMATED |
+| ply-1 width when offense fires (empties of live-3 windows, ~3 cells/window before dedup) | ≈3–6 | ≈3–6 | ≈3–6 | ≈3–6 | ESTIMATED |
+| ply-2 width (both branches, `Cover2::cells() ∪` offense cells, summed without modelling overlap) | ≈5–8 | ≈5–8 | ≈5–8 | ≈5–8 | ESTIMATED |
 
-Concerns N1–N3 addressed inline (§7's note, §6's config list); N4 left as an
-explicit unresolved item for Phase 2 (§9); N5 was the §10-item-5 ruling,
-applied in §3.5.
+**What the census does NOT carry, named rather than silently assumed:** the
+FILTERED row's t=1-vs-t=2 split (so the defense rate above is an upper bound,
+conservative in the safe direction for a bracket check), and the zero-count
+fraction for `live-3 own` (so the offense rate is a Poisson heuristic on the
+mean, not a measured probability) — `crates/pistol-solver/tests/wp15b_census.rs`
+is the committed, rerunnable harness (D-287) that could extract both exactly
+in one pass; Phase 2's bench is where that exact number belongs, not a
+further estimate stacked on this one.
 
-**§10 item 5 of revision 1 (the `is_pv`+`BatchedLost`+cap open question) is
-RULED, not open**: REVIEW-design's amendment is adopted in §3.5 — the mate
-return is not `is_pv`-gated at an EXHAUSTED gate specifically, and remains
-`is_pv`-gated (generation proceeds when budget allows) everywhere else.
+**Combining, worst case (no intra-turn alpha-beta pruning — a real
+mitigating factor §7 notes but does not quantify further here), one granted
+turn's extra node cost ≈ `ply1_width × (1 + ply2_width)`:**
 
-**What the scoped re-review (same dispatch pattern, per CLAUDE.md's "an
-amendment reopens the review however small the diff") should attack, beyond
-re-confirming V1–V7 still hold against this revision's line numbers:**
+- defense-triggered: `2.2 × (1 + 7) ≈ 18` extra nodes (ESTIMATED)
+- offense-triggered: `4.5 × (1 + 7) ≈ 36` extra nodes (ESTIMATED)
 
-1. §3.2/§3.3's fixed triggers — do they actually close C1 and C4 as claimed,
-   with no new over/under-firing introduced by the fix itself (in particular:
-   does `cells_raising_to_hot(us, NearHot::Three)` ever return cells that
-   `Position::place` would refuse, or that duplicate what trigger (b) already
-   covers in a way that double-extends)?
-2. §3.4/C3's corrected D-267 reading and the "obligation discharged via
-   C4's fix" argument — does closing the t=2 gap in §3.2 actually suffice
-   for what D-267 assigns WP-1.6, or is something else still owed?
-3. §7's in-place-rebind fix (C2) — is "the same `visit` call frame,
-   rebinding locals, no recursion" actually implementable as stated inside
-   `pvs.rs`'s existing control flow (the `if depth_plies == 0 { ... }`
-   early-return structure), or does it require a restructuring this document
-   has not fully specified? Flag anything IMPL would have to invent.
-4. §3.5's ruling — re-derive the soundness argument independently rather
-   than accepting REVIEW-design's own conclusion on trust.
-5. N4 (§9) — confirm it is adequately flagged as a Phase-2 obligation rather
-   than something this design owed to resolve itself.
+**Expected extra nodes per fired horizon** (`rate_b × 18 + rate_c × 36`,
+using the upper-bound/heuristic rates above): **≈24 at corpus roots, ≈33 at
+the r2 draw, ≈31 at the r8 draw, ≈30 at playouts** (ESTIMATED). Against
+today's ~1 node per horizon, this is a **~24×–34× per-leaf inflation,
+worst-case, before any chain (`q_depth_turns > 1` compounds this further per
+granted extension, capped by the config value; before any intra-turn
+alpha-beta pruning, which real search behavior is expected to reduce this
+by an unquantified factor).**
+
+**Read honestly, not spun toward the answer the ruling might hope for:**
+this worst-case per-leaf figure is well above D-388's `2.0x`/`3.0x` bracket
+if it held uniformly across a whole search tree, and it is a substantial
+improvement over the wide-width design's ~540–2400 estimate (roughly
+15×–70× narrower) without being demonstrably inside the registered bracket.
+**This document does not resolve which side of `2.0x`/`3.0x` the real,
+pruned, chain-capped figure lands on — that is what Phase 2's registered
+bench measures, per Ruling 3's own instruction, and the ABORT clause stands
+ready to fire exactly as registered if the bench confirms the worst case.**
+Reporting an uncomfortable ESTIMATE rather than rounding it toward comfort
+is what rule 5's registration discipline is for.
+
+**N4 from the prior review, still open, still Phase 2's to name (unchanged
+finding, carried forward):** `q_depth_turns == 0` already changes behavior
+(§3.1/§3.4's free checks return mate scores at horizons a pre-WP-1.6 build
+scores statically) — Phase 2's bench states which right-hand seat "staged+q
+vs staged" uses before launching.
+
+## 10. Revision 3's provenance, and what Phase 1' (fresh reviewer) must attack
+
+**Two consecutive FAILs preceded this revision** (`D-389`). This revision is
+authored from architect rulings supplied with the resume dispatch, not
+self-generated fixes — its job is faithful, precisely-cited EXPANSION of
+those rulings, which is a narrower task than revision 2's open design work
+was, but the citations, the TT resolution (§6), and the cost derivation (§9)
+are this session's own work product and are exactly what a fresh reviewer
+should attack hardest, having NOT reviewed revisions 1 or 2 (per the resume
+dispatch: "NOT the phase-1 reviewer slot — two fails earn new eyes"):
+
+1. **§3's move-set specification** — is it now stated exactly once, with §3
+   through §5 mutually consistent (the defect class that sank revision 2)?
+   Confirm no remaining path calls `staged_candidates` from inside
+   quiescence, and that §3.5's ply-2 rule is unambiguous enough for IMPL to
+   build without inventing a reading.
+2. **§6's TT resolution** — this document found `entry.rs`'s `depth_fits`
+   assert makes a literal `depth_plies: 0` store panic, a fact neither prior
+   review caught. Verify this independently against `entry.rs` at HEAD, and
+   verify the proposed fix (a `flags: u8` field inside the existing 24-byte
+   budget, `GENERATIONS` untouched, store-side eviction protection, no-probe
+   for `quiescence()` itself) is a faithful realization of Ruling 4's intent
+   and not an unlicensed departure from it.
+3. **§9's cost derivation** — check the arithmetic, check every census
+   citation against `U3_tier_t.md` directly, and assess whether presenting
+   an ESTIMATE that may exceed the registered bracket (rather than a figure
+   safely inside it) is the right disposition under Ruling 3, or whether
+   the derivation itself has an error that changes the conclusion.
+4. **§3.2/§3.7** — confirm Ruling 2's t≤1-only gate condition, combined with
+   §3.5's ply-2 handling of "remaining" t=2 remnants, actually discharges
+   what D-267 assigns this WP for `LAW-RIPOSTE`/`LAW-LEDGER`, the way the
+   second review's independent re-derivation found revision 2's broader gate
+   did — or whether narrowing back to t≤1 reopens a gap that broader gate
+   had closed.
+5. **§4/§7** — re-verify the zone claim and the win-detection/determinism/PV
+   claims structurally against HEAD, not only against this document's
+   description of them.
+
+PASS → proceed directly into the original dispatch's Phase 2 (IMPL) and run
+it to closure or STOP as written there — no re-entry to Phase 0 needed. FAIL
+→ STOP immediately, land the report, collect for the architect; per the
+resume dispatch, there is no revision 4 inside this session.
