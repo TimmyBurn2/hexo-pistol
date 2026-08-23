@@ -1,0 +1,103 @@
+# pistol — WP-1.5b's GOVERNED EXPERIMENT: staged threat-first candidate
+# generation against the committed radius-2 policy.
+#
+# THIS IS THE DOCUMENT `docs/experiments/wp15b_sprt_prereg.md` §3 NAMES: "The
+# document that IS the experiment is configs/arena_wp15b_staged_vs_r2.toml, and
+# the report's experiment_sha256 is what a replication compares — not this
+# file's path (D-147, D-161)." Authoring this file EXECUTES prereg rev 5 line
+# 160; it is not an amendment to the prereg and it reopens no review — the
+# prereg's own review (wp15b_sprt_prereg_REVIEW_rev5.md, PASS) covers this
+# file's existence as a precondition, not its content as a new claim.
+#
+# THREE FIELDS BELOW ARE NOT YET FINAL. docs/decisions.md D-372 discharged
+# BLOCKING 1 (the rule-5 registration for the node-protocol perf change) and
+# D-374 records the architect's ruling that closed it; neither touches this
+# document's own OPERATOR-CONFIRM slots (prereg §9), which are separate and
+# still open: `[sprt] elo1` (§9.1), `binary_sha256` on both seats (§9.2), and
+# `[run] openings_take` (§9.3). Each is marked OPERATOR-CONFIRM below, holds a
+# placeholder value recommended by the fill-in sheet (this session's report),
+# and none may be read as the registered number until the operator overwrites
+# it immediately before the run — REBUILD MEANS RE-RECORD for binary_sha256
+# specifically, since HEAD moves under this file.
+#
+# Every OTHER value below is transcribed verbatim from the prereg's own §2/§3,
+# which register it as fixed rather than open.
+#
+# Validate this file with tools/config_check.sh.
+
+# The ARENA's schema version, unrelated to the engine configs' (D-15..D-17).
+schema_version = 2
+
+[run]
+# The PRIMARY SPRT book (D-175), 2000 openings, sha-pinned — prereg §3, NOT
+# openings_v1.txt (the dry run's realism cross-check corpus, already spent at
+# c9ff0c2's review and at this WP's own dry run).
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+
+# OPERATOR-CONFIRM (prereg §9.3). BOUND: >= 100 — prereg §2's pair floor is
+# unreachable below it. Placeholder is the floor itself; the fill-in sheet
+# shows the n=100 / n=500 / n=1000 wall-clock arithmetic so the operator picks
+# against a real budget rather than against this placeholder.
+openings_take = 100
+
+# Openings skipped before taking: this run starts at the top of the book
+# (prereg §3; D-202 names the knob for a later disjoint-window run).
+openings_skip = 0
+
+# An evaluation horizon, never a game rule (game rule 6). D-190's runs used 40;
+# prereg §3 fixes it identically so the number is comparable with the record.
+turn_cap = 40
+
+# Cleared by WP-1.3's own red-team round at 1, 2, 4 and 8 workers over a full
+# book through a real early stop — prereg §3.
+n_workers = 4
+
+# Liveness only, never an adjudication (D-159) — prereg §3. Its margin is
+# justified against the STAGED seat's worst single search; prereg §9.5 requires
+# the probe that measures it, taken separately from this file (this session's
+# step 3).
+hang_timeout_ms = 120000
+
+[budget]
+# The registered snapshot budget, D-190's — prereg §3, so the number is
+# comparable with the runs already on the record.
+kind = "nodes"
+value = 50000
+
+[sprt]
+# H0: the staged seat is no stronger — prereg §2.
+elo0 = 0.0
+
+# OPERATOR-CONFIRM (prereg §9.1). Placeholder 25.0, the D-190 precedent the
+# prereg cites as its prior; prereg §9.1 leaves this OPEN and itself
+# contemplates a smaller value bought at the cost of pairs — this is a
+# recommendation, not a value the prereg fixes.
+elo1 = 25.0
+
+# The values every prior run in this project used — prereg §2.
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# THE STAGED SEAT, in slot A because the arena's statistic is slot A's score
+# and prereg §2's H1 is "the staged seat is stronger" — putting it in slot B
+# and reading the sign backwards afterwards is the one mistake a
+# pre-registration exists to prevent (same discipline as D-186's WP-1.3 doc).
+label = "staged"
+binary = "target/release/pistol"
+# OPERATOR-CONFIRM (prereg §9.2). Placeholder recorded from
+#   cargo build --release --locked --bin pistol && sha256sum target/release/pistol
+# at docs/decisions.md D-374's HEAD (94a6d22) — NOT the run's revision, which
+# has not been chosen. REBUILD MEANS RE-RECORD; the arena refuses a stale
+# digest by name (EngineBinaryDigestMismatch) rather than silently using it.
+binary_sha256 = "9acd23544de232012da5f88affd8c0d1e4baeeb3a5f6fee1691b0eef7f2548e8"
+config = "configs/instrument_staged_v0.toml"
+
+[engine_b]
+# THE COMMITTED RADIUS-2 POLICY, unchanged — prereg §3's engine B, same digest
+# as engine A since both seats run the one built binary and differ only by
+# `config` (D-198, D-199, D-283 as qualified by D-294).
+label = "r2"
+binary = "target/release/pistol"
+binary_sha256 = "9acd23544de232012da5f88affd8c0d1e4baeeb3a5f6fee1691b0eef7f2548e8"
+config = "configs/instrument_v0.toml"
