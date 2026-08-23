@@ -29,6 +29,22 @@
 //! union and covers nothing in the middle. A defender handed the flat list has
 //! to guess which cells go together, which is why [`Cover::Minimal`] carries
 //! SETS and why [`Cover::cells`] warns in its own doc.
+//!
+//! # RULE9-JUSTIFICATION: one arithmetic, its early-out, and the inline unit
+//! tests that pin the early-out alone (CLAUDE.md rule 9).
+//!
+//! `three_pairwise_disjoint_families` (docs/decisions.md D-263, D-363) is a
+//! necessary-condition check for the exact same `Impossible`/`exceeds` answer
+//! [`ThreatState::blocking_covers`] and [`ThreatState::min_hitting_set_exceeds`]
+//! already compute the slow way — splitting it into its own file would put a
+//! guard clause and the arithmetic it guards on opposite sides of a module
+//! boundary for no reader's benefit. The five `#[cfg(test)]` cases pin that one
+//! private helper directly, which the crate's public surface cannot: this
+//! module's own doc names family size and budget as bounded types the public
+//! functions already close over, so a private pure-function unit test is the
+//! only place a "three disjoint families" shape is stated as itself rather than
+//! folded into a golden fixture's game position. Splits when a second
+//! early-out earns its own guard.
 
 use pistol_core::window::Window;
 use pistol_core::{Coord, Player};
@@ -109,6 +125,7 @@ impl ThreatState {
     /// ```text
     /// windows is empty     -> false   // the empty set covers it; nothing exceeds 0
     /// some window has no empty -> true    // a completed window cannot be hit at all
+    /// three families pairwise disjoint -> true // no budget here exceeds two (D-263)
     /// Zero                 -> true    // some window stands unhit
     /// One                  -> no cell lies in every window's empties
     /// Two                  -> no pair of cells hits every window
@@ -150,6 +167,13 @@ impl ThreatState {
         if families.iter().any(|empties| empties.is_empty()) {
             return true;
         }
+        // D-263's registered remedy 1: three families with pairwise-disjoint
+        // empties need three cells to hit, which exceeds every `HitBudget` this
+        // type has (closed at two) — skip the O(|universe|^2) enumeration below
+        // for a case it can only ever answer `true` for.
+        if three_pairwise_disjoint_families(&families) {
+            return true;
+        }
         match budget {
             HitBudget::Zero => true,
             HitBudget::One => !universe(&families)
@@ -183,6 +207,12 @@ impl ThreatState {
             return Cover::Impossible;
         }
         let families = self.empty_families(windows);
+        // Same early-out as `min_hitting_set_exceeds`, and for the same reason:
+        // three pairwise-disjoint families need three cells, which is more than
+        // `budget` ever holds here.
+        if three_pairwise_disjoint_families(&families) {
+            return Cover::Impossible;
+        }
         let universe = universe(&families);
         let mut minimal = Vec::new();
         // Any one-cell cover is automatically inclusion-minimal: the empty set
@@ -280,4 +310,96 @@ fn covers(families: &[Vec<Coord>], first: Coord, second: Option<Coord>) -> bool 
     families.iter().all(|empties| {
         empties.contains(&first) || second.is_some_and(|second| empties.contains(&second))
     })
+}
+
+/// Whether two families share no cell.
+fn disjoint(a: &[Coord], b: &[Coord]) -> bool {
+    !a.iter().any(|cell| b.contains(cell))
+}
+
+/// Whether some three of `families` are pairwise disjoint (D-263 remedy 1).
+///
+/// A stone lies in at most one of three pairwise-disjoint families, so no pair
+/// of stones — this crate's whole budget, [`crate::query::HitBudget`] closed
+/// at two — hits all three: this is a NECESSARY condition for `Impossible`
+/// that is cheap to check up front, before the O(|universe|^2) enumeration
+/// [`covers`]'s callers run to establish the same answer the slow way.
+/// `O(m^3)` in the family count `m`, each comparison `O(1)`-ish since a family
+/// holds at most two cells (this module's own doc) — cheaper than the
+/// enumeration it guards whenever `m` is not tiny, and a no-op cost when it
+/// is.
+fn three_pairwise_disjoint_families(families: &[Vec<Coord>]) -> bool {
+    for i in 0..families.len() {
+        for j in (i + 1)..families.len() {
+            if !disjoint(&families[i], &families[j]) {
+                continue;
+            }
+            for family_k in &families[(j + 1)..] {
+                if disjoint(&families[i], family_k) && disjoint(&families[j], family_k) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::three_pairwise_disjoint_families;
+    use pistol_core::Coord;
+
+    fn cell(q: i16, r: i16) -> Coord {
+        Coord::new(q, r)
+    }
+
+    #[test]
+    fn three_families_with_no_shared_cell_are_detected() {
+        let families = vec![
+            vec![cell(0, 0), cell(1, 0)],
+            vec![cell(10, 0), cell(11, 0)],
+            vec![cell(20, 0), cell(21, 0)],
+        ];
+        assert!(three_pairwise_disjoint_families(&families));
+    }
+
+    #[test]
+    fn two_disjoint_families_alone_are_not_three() {
+        let families = vec![vec![cell(0, 0)], vec![cell(10, 0)]];
+        assert!(!three_pairwise_disjoint_families(&families));
+    }
+
+    #[test]
+    fn a_third_family_sharing_a_cell_with_one_of_two_disjoint_families_is_not_three_pairwise_disjoint()
+     {
+        // {0,0} and {10,0} are disjoint from each other, but the third family
+        // shares 10,0 with the second — not every PAIR among the three is
+        // disjoint, so this is not the case the early-out may answer for.
+        let families = vec![
+            vec![cell(0, 0)],
+            vec![cell(10, 0)],
+            vec![cell(10, 0), cell(11, 0)],
+        ];
+        assert!(!three_pairwise_disjoint_families(&families));
+    }
+
+    #[test]
+    fn an_empty_or_singleton_family_list_has_no_three_pairwise_disjoint_families() {
+        assert!(!three_pairwise_disjoint_families(&[]));
+        assert!(!three_pairwise_disjoint_families(&[vec![cell(0, 0)]]));
+    }
+
+    #[test]
+    fn four_families_where_only_three_are_pairwise_disjoint_are_still_detected() {
+        // The fourth family overlaps the first, so not all four are pairwise
+        // disjoint — but the early-out only needs SOME three, and the
+        // second/third/fourth triple qualifies.
+        let families = vec![
+            vec![cell(0, 0)],
+            vec![cell(10, 0)],
+            vec![cell(20, 0)],
+            vec![cell(0, 0), cell(30, 0)],
+        ];
+        assert!(three_pairwise_disjoint_families(&families));
+    }
 }
