@@ -120,10 +120,17 @@ re-litigate any of them:
 
 **What D-323 explicitly does not decide, and IMPL may not read as decided:**
 the **SEAM** by which a test observes the emitted set (D-115's constraint on
-widening `pistol_search::staged` to `pub`) is a **separate, still-OPEN named
-decision** — carried as debt in §6 below, not resolved here. S-E's second half
-(the always-on `assert!` in `visit` for a post-generation drop) is likewise
-**neither selected nor rejected** (`U4_soundness_instrument.md` §U4-T).
+widening `pistol_search::staged` to `pub`) was a separate named decision this
+selection did not make — **CLOSED at IMPL time by `docs/decisions.md` D-353/
+D-358**: `pistol_search::staged` is public (built for exactly this consumer,
+per `U2_node_protocol.md` §5.35's own entry-point design), so the widening
+D-115's constraint bore on has already happened, with its own ADR line, and
+S-M's differential gate is landed and mutation-checked
+(`crates/pistol-search/tests/staged_differential_gate_tests.rs`). S-E's second
+half (the always-on `assert!` in `visit` for a post-generation drop) remains
+**neither selected nor rejected** (`U4_soundness_instrument.md` §U4-T) — the
+SEAM closure is about the CRITERION's observability, not about S-E's separate,
+still-open cheap half.
 
 ### 3.3 The four soundness-gate names (`docs/decisions.md` D-316)
 
@@ -140,11 +147,13 @@ one place (§8.3 and §8.2; wired at §8.7).
 All four become **one script, `tools/staged_soundness_check.sh`**, added to
 `tools/ci.sh`. The retired letters `(a)`–`(d)` still resolve through §8.3's
 lookup table for any pre-existing citation; nothing new is addressed by letter.
-**The differential gate's own script fragment cannot be written until §3.2's
-SEAM decision lands** — the other three parts are unaffected and are not
-blocked on it. Because §8's finish policy requires all four gates wired and
-green with no excusing clause, **IMPL's finish is itself blocked on the SEAM
-decision landing** — this is not a defect in either §3.3 or §8, it is the
+**The differential gate's own script fragment was blocked on §3.2's SEAM
+decision landing — CLOSED, D-353/D-358** — the differential gate's Rust
+instrument (`staged_differential_gate_tests.rs`) is landed, so all four parts
+wire into the one script with none stubbed. Because §8's finish policy
+requires all four gates wired and green with no excusing clause, and the SEAM
+that would have blocked one of them is closed, this is no longer a live
+blocker on IMPL's finish — this is not a defect in either §3.3 or §8, it is the
 binding consequence of requiring the fourth gate unconditionally.
 
 ### 3.4 C at the threshold reading — Tier-T qualification (`U3_tier_t.md` §6.5)
@@ -289,7 +298,10 @@ The argument for each item below is at its own unit's citation, not here.
   DECISION-RED-TEAM against M1 as amended that §3.4's ADR line is gated on;
   the D-scope of `quiet_top_k`/`widen_schedule` (§5 above).
 - **U4** (`U4_soundness_instrument.md` §U4-Z): the differential gate's SEAM
-  (§3.2/§3.3 above); a fresh-context attack on N-E in its own right (D-333
+  (§3.2/§3.3 above) — **CLOSED, D-353/D-358**, kept here as a pointer to
+  where the closure is recorded rather than removed, since this list is
+  U4's own OPEN inventory and the closure postdates U4 itself; a
+  fresh-context attack on N-E in its own right (D-333
   rules this does not reopen the selection, but the attack itself remains
   undone); a POSITION for §8.4's M3 witness and a PARENT position for M6's
   second construction; the snapshot's second instrument (replication is
@@ -338,12 +350,13 @@ S-N (§3.2 condition 4, explicitly not this IMPL's to write); or the operator's
 SPRT moving the committed config (§1 — a decision made after the run, by the
 operator, never a deliverable of IMPL).
 
-**Finish DOES require §3.2/§3.3's differential-gate SEAM decision to land, with
-no excusing clause:** item 2 requires all four §3.3 gates wired and green, and
-§3.3 states plainly that the differential gate's own script fragment cannot be
-written until the SEAM decision lands. If the SEAM is still open, IMPL is not
-finished — full stop. The SEAM decision is the architect's to make, and it sits
-on IMPL's critical path exactly because item 2 admits no exception for it.
+**§3.2/§3.3's differential-gate SEAM decision — CLOSED, D-353/D-358.** Item 2
+requires all four §3.3 gates wired and green, with no excusing clause for any
+of them; the SEAM that would have blocked the differential gate's own script
+fragment is closed (`pistol_search::staged` was already public, built for
+exactly this consumer, and its differential instrument
+(`staged_differential_gate_tests.rs`) is landed and mutation-checked), so item
+2 is satisfiable with all four parts wired, none stubbed.
 
 A landing that skips any of 1–5 is not finished; it is OPEN debt, named as such
 in §6, never silently dropped.
