@@ -1017,6 +1017,48 @@ fn the_witness_window_is_the_least_among_those_sharing_the_winning_cell() {
     }
 }
 
+#[test]
+fn live_cells_at_count_two_is_the_union_of_that_counts_windows_empties() {
+    // `single_hot_window` carries exactly one P1 live-two window (`ConstR@2,0`),
+    // so the query's answer is checked against an independent walk of that one
+    // window's own empties rather than against another query.
+    let (_, threats) = play(&threat_case("single_hot_window").plies);
+    let mut cells = Vec::new();
+    threats.live_cells_at_count(Player::P1, LiveCount::Two, &mut cells);
+    let windows = threats.live_windows_at_count(Player::P1, LiveCount::Two);
+    assert_eq!(
+        windows.len(),
+        1,
+        "single_hot_window carries exactly one P1 live-two window"
+    );
+    let masks = threats.masks(windows[0]);
+    let expected: Vec<Coord> = (0..6u8)
+        .filter(|index| masks.empties() & (1 << index) != 0)
+        .map(|index| windows[0].cell(index))
+        .collect();
+    assert_eq!(cells, expected);
+    assert_eq!(cells.len(), 4, "a live count-two window has four empties");
+}
+
+#[test]
+fn live_cells_at_count_three_agrees_with_cells_raising_to_hot_at_that_count() {
+    // The recorded coincidence (docs/decisions.md D-267, D-352): both are the
+    // deduplicated union of the live count-three windows' empties, under
+    // different names for different questions — `live_cells_at_count` as Tier
+    // T's own qualification, `cells_raising_to_hot` as what a single stone would
+    // activate. There is no such coincidence at `LiveCount::Two`, which `NearHot`
+    // cannot even express.
+    let (_, threats) = play(&threat_case("count_three_live_both_sides").plies);
+    for side in [Player::P1, Player::P2] {
+        let mut by_count = Vec::new();
+        threats.live_cells_at_count(side, LiveCount::Three, &mut by_count);
+        let mut by_raise = Vec::new();
+        threats.cells_raising_to_hot(side, NearHot::Three, &mut by_raise);
+        assert_eq!(by_count, by_raise, "{side}: same union, two names");
+        assert!(!by_count.is_empty(), "{side}: the fixture carries live-three windows");
+    }
+}
+
 /// D-243 consequence (3)'s COMPOSITION, written here because it is the caller's
 /// and not the primitive's.
 ///

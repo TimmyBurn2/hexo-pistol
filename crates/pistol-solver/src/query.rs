@@ -191,6 +191,22 @@ impl ThreatState {
         self.fill_empties(windows, out);
     }
 
+    /// The empty cells of `side`'s live windows at exactly `count` own stones:
+    /// the deduplicated union, not any one window's own empties.
+    ///
+    /// `LAW-SUPPORT`'s k=2 qualification (`docs/decisions.md` D-267, D-352):
+    /// WP-1.5b's Tier T reads these windows' own empties directly, which is a
+    /// different question from [`ThreatState::cells_raising_to_hot`] — that
+    /// query answers which cell would MAKE a window hot, this one answers which
+    /// cells a window ALREADY LICENSES under `LAW-SUPPORT`. The two happen to
+    /// coincide at [`LiveCount::Three`], because [`NearHot::Three`] and
+    /// [`LiveCount::Three`] name the same windows; there is no such coincidence
+    /// at [`LiveCount::Two`], which [`NearHot`] cannot even express (it is closed
+    /// at `Three`, D-243's one-stone-short reading).
+    pub fn live_cells_at_count(&self, side: Player, count: LiveCount, out: &mut Vec<Coord>) {
+        self.fill_empties(self.live_windows_at_count(side, count), out);
+    }
+
     /// True, with a witness, iff `side` moving now with `left` stones can
     /// complete six THIS TURN. D-243's phase conditioning is in the signature.
     ///

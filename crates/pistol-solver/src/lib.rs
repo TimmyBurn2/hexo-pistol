@@ -31,8 +31,8 @@
 //!
 //! # The surface is the queries, and nothing under them
 //!
-//! What this crate exports is [`ThreatState`], the ELEVEN QUERIES on it —
-//! `query`'s eight and `cover`'s three — the closed conditioning types they
+//! What this crate exports is [`ThreatState`], the TWELVE QUERIES on it —
+//! `query`'s nine and `cover`'s three — the closed conditioning types they
 //! take, the answers they return, and [`WindowMasks`].
 //!
 //! NONE OF THE ELEVEN HANDS OUT A [`WindowMasks`]. The two methods that do,
