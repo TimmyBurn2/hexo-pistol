@@ -99,6 +99,10 @@ fn honest_report(dir: &Path, answers: &[Answers; 2]) -> String {
     out.push_str(&format!("opening_turns {OPENING_TURNS}\n"));
     out.push_str("budget nodes 50000\n");
     out.push_str("turn_cap 40\n");
+    // Criterion 1' clause (b) recomputes off these exact bounds — production's
+    // own values (D-190's elo1, D-375's architect ruling), so a fixture's
+    // arithmetic means the same thing a governed run's does.
+    out.push_str("sprt elo0 0.000000000 elo1 25.000000000 alpha 0.050000000 beta 0.050000000\n");
     for (slot, label) in [("a", "ra"), ("b", "rb")] {
         out.push_str(&format!(
             "engine {slot} label {label} binary shim binary_sha256 {0} config {1} config_sha256 \
@@ -142,8 +146,14 @@ fn honest_report(dir: &Path, answers: &[Answers; 2]) -> String {
     out.push_str("counts n 4 distinct_n 4 wins_a 0 capped 0 losses_a 4 forfeits 0 decided 4\n");
     out.push_str("pentanomial p0 2 p1 0 p2 0 p3 0 p4 0\n");
     out.push_str("capped_fraction 0.000000000\n");
-    out.push_str("llr_pair last -1.000000000\n");
-    out.push_str("verdict inconclusive_at_game_cap\n");
+    // n=2, both pairs bucket p0: mu=0, var=0 — DEGENERATE, per sprt.rs, so
+    // `llr_pair` is genuinely undefined and `verdict` is genuinely
+    // `inconclusive_degenerate` (MEASURED against the ported arithmetic in
+    // tools/wp15b_attribution_check.py, not asserted) — necessary now that
+    // Criterion 1' clause (b) self-checks this fixture's own numbers before
+    // trusting them on any flipped pentanomial.
+    out.push_str("llr_pair last none\n");
+    out.push_str("verdict inconclusive_degenerate\n");
     out.push_str("# timing — machine- and schedule-dependent; excluded from every comparison\n");
     out.push_str("timing_engine a time_ms 1 searches 1\n");
     out
@@ -196,6 +206,199 @@ printf 'bestmove %s\n' "$ANSWER"
     mode.set_mode(0o755);
     fs::set_permissions(&path, mode).expect("the shim is executable");
     path
+}
+
+/// A report of `n_pairs` pairs: pair 0 is a p2 split (so the sample is not
+/// wholly degenerate), every other pair is a p4 sweep for seat `ra`, and
+/// `vacuous_pair` (which must not be 0) is ALSO a p4 sweep but with `ra` and
+/// `rb` answering identically at both checked turns, so link 1a cannot
+/// discriminate it. Self-contained from `honest_report`/`shim` above (which
+/// are fixed at exactly 2 openings): duplicating the shim script here is
+/// deliberate rather than a shared helper neither caller needs the full
+/// generality of.
+fn many_pairs_report_and_shim(
+    dir: &Path,
+    n_pairs: usize,
+    vacuous_pair: usize,
+) -> (String, PathBuf) {
+    assert!(
+        vacuous_pair != 0,
+        "pair 0 is the split pair, never the vacuous one"
+    );
+    assert!(vacuous_pair < n_pairs);
+
+    let book = |i: usize| format!("{i},0/0,{i}");
+    let ra_t3 = |i: usize| format!("1,{i}/2,{i}");
+    let ra_t4 = |i: usize| format!("5,{i}/6,{i}");
+    let rb_t3 = |i: usize| format!("3,{i}/4,{i}");
+    let rb_t4 = |i: usize| format!("7,{i}/8,{i}");
+    const FILLER: &str = "9,9/9,8";
+
+    let mut ra_table = String::new();
+    let mut rb_table = String::new();
+    for i in 0..n_pairs {
+        let vacuous = i == vacuous_pair;
+        ra_table.push_str(&format!(
+            "2_{} {}\n3_{} {}\n",
+            book(i),
+            ra_t3(i),
+            book(i),
+            ra_t4(i)
+        ));
+        rb_table.push_str(&format!(
+            "2_{} {}\n3_{} {}\n",
+            book(i),
+            if vacuous { ra_t3(i) } else { rb_t3(i) },
+            book(i),
+            if vacuous { ra_t4(i) } else { rb_t4(i) },
+        ));
+    }
+    fs::write(dir.join("cfg-ra.toml.answers"), ra_table).expect("ra's table is written");
+    fs::write(dir.join("cfg-rb.toml.answers"), rb_table).expect("rb's table is written");
+
+    let engine = dir.join("shim-engine");
+    fs::write(
+        &engine,
+        r#"#!/usr/bin/env bash
+set -euo pipefail
+CONFIG=""
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+	--config)
+		CONFIG="$2"
+		shift 2
+		;;
+	*) shift ;;
+	esac
+done
+LINE="$(grep '^position start moves ' || true)"
+[ -n "$LINE" ] || { echo "shim: no position line" >&2; exit 1; }
+set -- $LINE
+TURNS=$(( $# - 3 ))
+OPENING="$5"
+ANSWER="$(awk -v k="${TURNS}_${OPENING}" '$1 == k { print $2 }' "$CONFIG.answers")"
+[ -n "$ANSWER" ] || { echo "shim: no answer for ${TURNS}_${OPENING} in $CONFIG.answers" >&2; exit 1; }
+printf 'bestmove %s\n' "$ANSWER"
+"#,
+    )
+    .expect("the shim is written");
+    let mut mode = fs::metadata(&engine)
+        .expect("the shim exists")
+        .permissions();
+    mode.set_mode(0o755);
+    fs::set_permissions(&engine, mode).expect("the shim is executable");
+
+    let mut out = String::from("arena_report 4\narena_version 0.0.1\n");
+    out.push_str(
+        "experiment_sha256 0000000000000000000000000000000000000000000000000000000000000000\n",
+    );
+    out.push_str(&format!("opening_turns {OPENING_TURNS}\n"));
+    out.push_str("budget nodes 50000\n");
+    out.push_str("turn_cap 40\n");
+    out.push_str("sprt elo0 0.000000000 elo1 25.000000000 alpha 0.050000000 beta 0.050000000\n");
+    for (slot, label) in [("a", "ra"), ("b", "rb")] {
+        out.push_str(&format!(
+            "engine {slot} label {label} binary shim binary_sha256 {0} config {1} config_sha256 \
+             {0} weights_sha256 {0}\n",
+            "0".repeat(64),
+            dir.join(format!("cfg-{label}.toml")).display()
+        ));
+    }
+
+    let mut wins_a = 0u64;
+    for i in 0..n_pairs {
+        let book_i = book(i);
+        if i == 0 {
+            // The split pair: ra wins as p1 in the even game, rb wins as p1
+            // in the odd game — one win, one loss for seat A.
+            out.push_str(
+                "game 0 opening 0 p1 ra p2 rb result p1_win end normal forfeit_by none reason \
+                 none turns 5 dup_of none nodes_a 1 nodes_b 1 depth_a 2 depth_b 3 llr_game none \
+                 llr_pair none\n",
+            );
+            out.push_str(&format!(
+                "moves 0 0,0 {book_i} {} {} {FILLER}\n",
+                ra_t3(0),
+                rb_t4(0)
+            ));
+            out.push_str(
+                "game 1 opening 0 p1 rb p2 ra result p1_win end normal forfeit_by none reason \
+                 none turns 5 dup_of none nodes_a 1 nodes_b 1 depth_a 2 depth_b 3 llr_game none \
+                 llr_pair none\n",
+            );
+            out.push_str(&format!(
+                "moves 1 0,0 {book_i} {} {} {FILLER}\n",
+                rb_t3(0),
+                ra_t4(0)
+            ));
+            wins_a += 1;
+        } else {
+            let vacuous = i == vacuous_pair;
+            let (t3a, t4b) = if vacuous {
+                (ra_t3(i), ra_t4(i))
+            } else {
+                (ra_t3(i), rb_t4(i))
+            };
+            out.push_str(&format!(
+                "game {0} opening {i} p1 ra p2 rb result p1_win end normal forfeit_by none \
+                 reason none turns 5 dup_of none nodes_a 1 nodes_b 1 depth_a 2 depth_b 3 \
+                 llr_game none llr_pair none\n",
+                2 * i
+            ));
+            out.push_str(&format!(
+                "moves {0} 0,0 {book_i} {t3a} {t4b} {FILLER}\n",
+                2 * i
+            ));
+            let (t3b, t4a) = if vacuous {
+                (ra_t3(i), ra_t4(i))
+            } else {
+                (rb_t3(i), ra_t4(i))
+            };
+            out.push_str(&format!(
+                "game {0} opening {i} p1 rb p2 ra result p2_win end normal forfeit_by none \
+                 reason none turns 4 dup_of none nodes_a 1 nodes_b 1 depth_a 2 depth_b 3 \
+                 llr_game none llr_pair none\n",
+                2 * i + 1
+            ));
+            out.push_str(&format!("moves {0} 0,0 {book_i} {t3b} {t4a}\n", 2 * i + 1));
+            wins_a += 2;
+        }
+    }
+    let n_games = 2 * n_pairs;
+    let losses_a = n_games as u64 - wins_a;
+
+    out.push_str("pair 0 opening 0 bucket p2 score_a 0.500000000\n");
+    for i in 1..n_pairs {
+        out.push_str(&format!(
+            "pair {i} opening {i} bucket p4 score_a 1.000000000\n"
+        ));
+    }
+    out.push_str(&format!(
+        "counts n {n_games} distinct_n {n_games} wins_a {wins_a} capped 0 losses_a {losses_a} \
+         forfeits 0 decided {n_games}\n"
+    ));
+    out.push_str(&format!(
+        "pentanomial p0 0 p1 0 p2 1 p3 0 p4 {}\n",
+        n_pairs - 1
+    ));
+    out.push_str("capped_fraction 0.000000000\n");
+    out.push_str(&format!(
+        "first_player_wins {} of {n_games} decided_non_forfeit forfeits 0\n",
+        n_pairs + 1
+    ));
+    // MEASURED (not asserted) against tools/wp15b_attribution_check.py's own
+    // ported arithmetic at n_pairs=20 (`[0,0,1,0,19]`): llr_pair 8.7678,
+    // bounds ±2.9444 — h1. Recomputing with the vacuous pair's bucket
+    // adversarially reassigned (`[1,0,1,0,18]`) still gives llr_pair 3.5234 —
+    // still h1, the case this fixture exists to build.
+    out.push_str("llr_pair last 8.767752171\n");
+    out.push_str("verdict h1\n");
+    out.push_str("verdict_unit pair\n");
+    out.push_str("verdict_if_clean none pairs_dropped 0\n");
+    out.push_str("# timing — machine- and schedule-dependent; excluded from every comparison\n");
+    out.push_str("timing_engine a time_ms 1 searches 1\n");
+
+    (out, engine)
 }
 
 fn check(report: &Path, engine: &Path) -> Output {
@@ -260,7 +463,9 @@ fn an_honest_report_passes_all_three_links() {
     assert_code(&ran, 0, "nothing is wrong with this report");
     assert!(out.contains("PASS — 0 failure(s)"), "{out}");
     assert!(
-        out.contains("1a: 8 turns replayed, 8 of them discriminating, 4 of 4 games attributed"),
+        out.contains(
+            "1a: 8 turns replayed, 8 of them discriminating, 4 of 4 games directly attributed by replay"
+        ),
         "and it says how much of link 1a was live:\n{out}"
     );
     assert!(
@@ -346,25 +551,33 @@ fn a_seat_label_attached_to_the_wrong_engine_is_rejected() {
     );
 }
 
-/// **THE REVIEW FINDING, KEPT AS AN ATTACK** (docs/decisions.md D-308).
+/// **THE REVIEW FINDING, KEPT AS AN ATTACK, CAUGHT A DIFFERENT WAY**
+/// (docs/decisions.md D-308, D-384).
 ///
-/// A seat swap confined to the games link 1a cannot attribute is invisible to
-/// the other two links by construction: 1b does not read labels at all, and 1c
-/// DERIVES seat A's score from the very `game` line the swap corrupts, so it
-/// agrees with totals mirrored to match. The first shipped guard counted
-/// discriminating turns over the whole RUN, so the discriminating pair carried
-/// the undiscriminating one and this passed with exit 0 — a verdict inverted on
-/// one of two pairs, blessed.
-///
-/// The guard is now per game, and this is what proves it.
+/// A seat swap confined to the pair link 1a cannot attribute is invisible to
+/// 1b and 1c by construction: 1b does not read labels at all, and 1c DERIVES
+/// seat A's score from the very `game` line the swap corrupts, so it agrees
+/// with totals mirrored to match — the report stays internally consistent,
+/// `verdict` included (a real corrupted run's verdict line is computed off
+/// the same corrupted pentanomial, so this fixture updates it too, not left
+/// stale). Under the prior rule any vacuous game was itself a FAILURE, which
+/// caught this by construction; under Criterion 1' (D-384) vacuity alone is
+/// not a failure, so this attack is now caught (or not) by clause (b) alone —
+/// and here it IS caught, because reassigning pair 1 back to its honest
+/// bucket p0 changes an n=2 sample from non-degenerate (`inconclusive_at_
+/// game_cap`) to fully degenerate (`inconclusive_degenerate`), a genuine
+/// verdict-token change. MEASURED against the ported arithmetic, not
+/// asserted: honest `[2,0,0,0,0]` recomputes `inconclusive_degenerate`;
+/// corrupted `[1,0,0,0,1]` recomputes `inconclusive_at_game_cap`.
 #[test]
-fn a_seat_swap_confined_to_games_link_1a_cannot_attribute_is_rejected() {
+fn a_seat_swap_confined_to_a_vacuous_pair_fails_robustness() {
     let (ran, out) = case(
         "attribution-confined-swap",
         the_second_opening_does_not(),
         |text| {
-            // Only the second opening's pair is corrupted, and its totals are
-            // mirrored so the document stays internally consistent.
+            // Only the second opening's pair is corrupted, and its totals —
+            // including the verdict a real corrupted run would recompute —
+            // are mirrored so the document stays internally consistent.
             text.replace(
                 "game 2 opening 1 p1 ra p2 rb",
                 "game 2 opening 1 p1 rb p2 ra",
@@ -385,35 +598,66 @@ fn a_seat_swap_confined_to_games_link_1a_cannot_attribute_is_rejected() {
                 "pentanomial p0 2 p1 0 p2 0 p3 0 p4 0",
                 "pentanomial p0 1 p1 0 p2 0 p3 0 p4 1",
             )
+            .replace(
+                "verdict inconclusive_degenerate",
+                "verdict inconclusive_at_game_cap",
+            )
         },
     );
-    assert_code(&ran, 1, "a swap the chain cannot see is not a pass");
-    assert!(
-        out.contains("1a cannot attribute 2 game(s) — 2, 3"),
-        "the refusal names WHICH games it could not attribute:\n{out}"
+    assert_code(
+        &ran,
+        1,
+        "a swap that moves the verdict under reassignment is not a pass",
     );
     assert!(
-        out.contains("1a: 8 turns replayed, 4 of them discriminating, 2 of 4 games attributed"),
-        "and the aggregate count that hid this is still printed beside the per-game one:\n{out}"
+        out.contains("1a robustness FAILS"),
+        "the refusal names it as a clause-(b) robustness failure, not a clause-(a) inversion:\n{out}"
+    );
+    assert!(
+        out.contains("1 (opening 1)"),
+        "and it names WHICH pair:\n{out}"
+    );
+    assert!(
+        out.contains("from `inconclusive_at_game_cap` to `inconclusive_degenerate`"),
+        "and both verdict tokens, before and after reassignment:\n{out}"
     );
 }
 
-/// AND IT REFUSES AN HONEST REPORT IT CANNOT CHECK, which is the same guard
-/// seen from the other side: the instrument does not certify what it did not
-/// verify. Without this case the guard above could be satisfied by an
-/// instrument that fires only when the labels also happen to look wrong.
+/// AND A VACUOUS PAIR THAT DOES NOT MOVE THE VERDICT IS CERTIFIED, not
+/// refused — the point of D-384's TOLERATE-WITH-ROBUSTNESS: an unattributable
+/// pair is only a problem if the verdict depends on which way it went.
+/// Without this case, the attack test above could be satisfied by an
+/// instrument that still fires on any vacuity at all — which is exactly the
+/// rule Criterion 1' replaced — because at only 2 pairs (as `the_second_
+/// opening_does_not` builds), reassigning ANY pair always flips a
+/// degenerate n=2 sample to non-degenerate or back, so no 2-pair fixture can
+/// demonstrate genuine robustness. Sized at 20 pairs instead — the smallest
+/// size MEASURED (not asserted; see `many_pairs_report_and_shim`) to survive
+/// one pair's adversarial reassignment without moving the verdict off `h1`,
+/// mirroring the shape `wp15b_vacuity_diagnostics.md` found in the actual
+/// governed run (D-381): mostly decisive pairs for one seat, one split pair,
+/// and one pair link 1a cannot discriminate.
 #[test]
-fn an_honest_report_it_cannot_attribute_is_refused_rather_than_certified() {
-    let (ran, out) = case(
-        "attribution-honest-but-blind",
-        the_second_opening_does_not(),
-        |t| t,
+fn a_vacuous_pair_that_does_not_move_the_verdict_is_certified() {
+    let dir = scratch("attribution-robust-vacuity");
+    const N_PAIRS: usize = 20;
+    const VACUOUS_PAIR: usize = 5;
+    let (report, engine) = many_pairs_report_and_shim(&dir, N_PAIRS, VACUOUS_PAIR);
+    let path = dir.join("report.txt");
+    fs::write(&path, &report).expect("the report is written");
+    let ran = check(&path, &engine);
+    let out = said(&ran);
+    assert_code(
+        &ran,
+        0,
+        "one vacuous pair that does not move the verdict is not a failure",
     );
-    assert_code(&ran, 1, "an unverifiable game is not a verified one");
+    assert!(out.contains("PASS — 0 failure(s)"), "{out}");
     assert!(
-        out.contains("1a cannot attribute 2 game(s) — 2, 3"),
-        "{out}"
+        out.contains("1a robustness: 1 vacuous pair(s)"),
+        "the pass is not silent about the vacuity it tolerated:\n{out}"
     );
+    assert!(out.contains("verdict `h1` unchanged"), "{out}");
 }
 
 /// A REPORT OR AN ENGINE IT CANNOT USE IS A THIRD THING
