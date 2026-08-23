@@ -15,3 +15,8 @@ pistol-core = { workspace = true }
 # The `Eval` trait. The search holds a backend chosen elsewhere and never names
 # a concrete one (docs/decisions.md D-61).
 pistol-eval = { workspace = true }
+# The threat state: WP-1.5b's staged generator queries it per node
+# (docs/decisions.md D-310, U2_node_protocol.md §2.1 — this is the structural
+# act U1's gates were pre-registered against, docs/experiments/U1_gate_supersession.md
+# §U1-B).
+pistol-solver = { workspace = true }

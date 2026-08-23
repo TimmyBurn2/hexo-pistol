@@ -14,6 +14,7 @@ publish = false
 [workspace.dependencies]
 pistol-core = { path = "crates/pistol-core" }
 pistol-eval = { path = "crates/pistol-eval" }
+pistol-solver = { path = "crates/pistol-solver" }
 pistol-search = { path = "crates/pistol-search" }
 pistol-engine = { path = "crates/pistol-engine" }
 pistol-cli = { path = "crates/pistol-cli" }

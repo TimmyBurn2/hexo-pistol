@@ -1055,7 +1055,10 @@ fn live_cells_at_count_three_agrees_with_cells_raising_to_hot_at_that_count() {
         let mut by_raise = Vec::new();
         threats.cells_raising_to_hot(side, NearHot::Three, &mut by_raise);
         assert_eq!(by_count, by_raise, "{side}: same union, two names");
-        assert!(!by_count.is_empty(), "{side}: the fixture carries live-three windows");
+        assert!(
+            !by_count.is_empty(),
+            "{side}: the fixture carries live-three windows"
+        );
     }
 }
 

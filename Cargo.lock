@@ -89,6 +89,7 @@ version = "0.0.1"
 dependencies = [
  "pistol-core",
  "pistol-eval",
+ "pistol-solver",
 ]
 
 [[package]]
