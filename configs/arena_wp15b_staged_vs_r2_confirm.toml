@@ -1,0 +1,105 @@
+# pistol — WP-1.5b's CONFIRMATORY RUN: staged threat-first candidate
+# generation against the committed radius-2 policy, on a DISJOINT sample.
+#
+# THE PRIMARY RUN (docs/decisions.md D-381) crossed `verdict h1` at 58 pairs
+# — below prereg §2's 100-pair floor — so per §5's own registered row for
+# that case, "the action was WITHHELD. A confirmatory run on a DISJOINT
+# sample decides it: the same document with `openings_file` changed to
+# `openings_v1.txt` and `openings_take` re-stated, which is D-190's own
+# instrument." That instrument's own precedent (D-190) confirms by a
+# SEPARATE config file — "Run 1's document with the book and its size
+# changed and nothing else" — `configs/arena_wp13_r2_vs_r3_confirm.toml` —
+# and this file follows the identical pattern and naming.
+#
+# `openings_v1.txt` (1591 openings) is the SAME file the dry run and this
+# WP's replay/robustness fixtures already use — chosen because both seats
+# are deterministic in instrument mode, so it is a genuinely disjoint sample
+# from the primary book (`random_openings_v1.txt`, 2000 openings) rather
+# than a re-run of it.
+#
+# Every value below except [run].openings_file/openings_take/openings_skip's
+# comment is transcribed verbatim from the primary config
+# (configs/arena_wp15b_staged_vs_r2.toml) — same budget, same turn_cap, same
+# sprt bounds, same engines. `binary_sha256` on both seats is CONFIRMED
+# fresh at THIS run's own revision (prereg §9.2/§9.6), immediately before
+# launch, per the same discipline the primary run used.
+#
+# Validate this file with tools/config_check.sh.
+
+# The ARENA's schema version, unrelated to the engine configs' (D-15..D-17).
+schema_version = 2
+
+[run]
+# THE DISJOINT SAMPLE, per §5's own text and D-190's precedent — NOT
+# random_openings_v1.txt (the primary book, already spent at D-381).
+openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
+
+# RE-STATED (prereg §5's own requirement) for the confirmatory book's size.
+# 500 carries forward the architect's own §9.3 ruling for the primary run
+# (D-375) unchanged: nothing about the primary run's result (a huge, fast
+# crossing at 58 of a possible 500 pairs) suggests a different sensitivity
+# is needed here, and 500 of 1591 leaves comfortable book room. BOUND:
+# >= 100 — prereg §2's pair floor is unreachable below it.
+openings_take = 500
+
+# Openings skipped before taking: this run starts at the top of the
+# disjoint book (prereg §3's convention; D-202 names the knob for a later
+# disjoint-window run, not needed here since the book itself is already
+# disjoint from the primary run's).
+openings_skip = 0
+
+# An evaluation horizon, never a game rule (game rule 6). Unchanged from the
+# primary run and D-190's runs, so the two samples are comparable.
+turn_cap = 40
+
+# Cleared by WP-1.3's own red-team round at 1, 2, 4 and 8 workers over a
+# full book through a real early stop — prereg §3. Unchanged.
+n_workers = 4
+
+# Liveness only, never an adjudication (D-159) — prereg §3. Unchanged from
+# the primary run: the calibration probe's result (D-376/D-377, 688 ms
+# worst single search, ~174x margin) is a property of the STAGED seat's
+# engine binary and configs/instrument_staged_v0.toml, neither of which has
+# changed since it was measured — re-running an unchanged measurement was
+# judged not worth the wall time, and this line records that judgement
+# rather than silently reusing the number.
+hang_timeout_ms = 120000
+
+[budget]
+# The registered snapshot budget, D-190's — prereg §3, unchanged so the
+# confirmatory sample is comparable with the primary run and the record.
+kind = "nodes"
+value = 50000
+
+[sprt]
+# H0: the staged seat is no stronger — prereg §2. Unchanged.
+elo0 = 0.0
+
+# CONFIRMED (prereg §9.1), architect ruling: 25.0 — unchanged; the
+# confirmatory run tests the SAME hypothesis as the primary run, not a
+# re-tuned one (prereg §5's "the same document").
+elo1 = 25.0
+
+# The values every prior run in this project used — prereg §2. Unchanged.
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# THE STAGED SEAT, in slot A — unchanged reasoning from the primary config.
+label = "staged"
+binary = "target/release/pistol"
+# OPEN (prereg §9.2) until re-confirmed at THIS run's own revision,
+# immediately before launch. REBUILD MEANS RE-RECORD; the arena refuses a
+# stale digest by name (EngineBinaryDigestMismatch) rather than silently
+# using it.
+binary_sha256 = "9acd23544de232012da5f88affd8c0d1e4baeeb3a5f6fee1691b0eef7f2548e8"
+config = "configs/instrument_staged_v0.toml"
+
+[engine_b]
+# THE COMMITTED RADIUS-2 POLICY, unchanged — prereg §3's engine B, same
+# digest as engine A since both seats run the one built binary and differ
+# only by `config` (D-198, D-199, D-283 as qualified by D-294).
+label = "r2"
+binary = "target/release/pistol"
+binary_sha256 = "9acd23544de232012da5f88affd8c0d1e4baeeb3a5f6fee1691b0eef7f2548e8"
+config = "configs/instrument_v0.toml"
