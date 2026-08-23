@@ -1,4 +1,4 @@
-//! `tools/label_consistency_check.sh` — CI gate 15 of 15, the WP-1.5b carve
+//! `tools/label_consistency_check.sh` — CI gate 16 of 16, the WP-1.5b carve
 //! documents' self-state (docs/decisions.md D-338 row R4;
 //! tools/SHELL_CHECKLIST.md item 10).
 //!

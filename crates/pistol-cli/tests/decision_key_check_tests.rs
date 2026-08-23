@@ -1,4 +1,4 @@
-//! `tools/decision_key_check.sh` — CI gate 14 of 14, the decision log's own
+//! `tools/decision_key_check.sh` — CI gate 15 of 16, the decision log's own
 //! integrity (docs/decisions.md D-279, D-284; tools/SHELL_CHECKLIST.md item 10).
 //!
 //! # What is being guarded, and why a gate rather than care

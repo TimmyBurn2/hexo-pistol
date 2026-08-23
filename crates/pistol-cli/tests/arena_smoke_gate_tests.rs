@@ -1,4 +1,4 @@
-//! `tools/arena_smoke.sh` — CI gate 12 of 14 (`tools/ci.sh:131`), the SPRT
+//! `tools/arena_smoke.sh` — CI gate 13 of 16 (`tools/ci.sh:141`), the SPRT
 //! instrument itself run end to end as a self-match.
 //!
 //! # The defect these tests pin

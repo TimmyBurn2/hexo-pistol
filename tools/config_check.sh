@@ -79,7 +79,7 @@ if [ "$explicit" -eq 0 ]; then
 	fi
 	if [ "${#arenas[@]}" -eq 0 ]; then
 		echo "config_check: FAIL: no arena config under configs/" >&2
-		echo "config_check: tools/arena_smoke.sh runs a committed one (CI gate 12 of 14)" >&2
+		echo "config_check: tools/arena_smoke.sh runs a committed one (CI gate 13 of 16)" >&2
 		exit 1
 	fi
 	if [ "${#books[@]}" -eq 0 ]; then

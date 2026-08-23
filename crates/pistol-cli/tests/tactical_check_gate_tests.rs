@@ -1,4 +1,4 @@
-//! `tools/tactical_check.sh` — CI gate 8 of 14 (`tools/ci.sh:102`), the sha-pinned
+//! `tools/tactical_check.sh` — CI gate 8 of 16 (`tools/ci.sh:101`), the sha-pinned
 //! tactical fixture at its pre-registered threshold.
 //!
 //! # Why this file exists at all
