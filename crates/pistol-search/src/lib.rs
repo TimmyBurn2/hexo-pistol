@@ -46,7 +46,7 @@ pub(crate) mod pvs;
 pub use candidates::candidate_cells;
 pub use error::SearchError;
 pub use fallback::{FallbackAnswer, fallback_turn};
-pub use info::{Provenance, SearchInfo, SearchOutcome};
+pub use info::{Provenance, SearchInfo, SearchOutcome, StageCounters};
 pub use params::{CandidatePolicy, SearchParams, StagedParams};
 pub use score::{MATE, ScoreKind};
 pub use search::{MAX_DEPTH_TURNS, Searcher};

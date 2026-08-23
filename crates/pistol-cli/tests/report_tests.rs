@@ -9,7 +9,7 @@ use pistol_cli::report::{
     TOTALS_MARKER, bestmove_line, error_line, id_line, info_line, score_token, totals_line,
 };
 use pistol_core::{Coord, Turn};
-use pistol_engine::{EngineError, MATE, SearchInfo};
+use pistol_engine::{EngineError, MATE, SearchInfo, StageCounters};
 
 /// A report with every field set to something recognisable.
 fn info() -> SearchInfo {
@@ -25,6 +25,7 @@ fn info() -> SearchInfo {
         ],
         score: 42,
         hashfull_permille: 12,
+        stages: StageCounters::default(),
     }
 }
 

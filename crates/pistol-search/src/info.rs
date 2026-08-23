@@ -15,6 +15,83 @@
 
 use pistol_core::Turn;
 
+use crate::staged::StagedRow;
+
+/// The node protocol's stage-share counters (docs/decisions.md U2-M item 2).
+///
+/// All zero under `CandidatePolicy::Radius`, where the staged dispatch never
+/// runs. **The line protocol does not carry these** — `report.rs` renders an
+/// explicit field list, so no protocol output changes; the rates are read
+/// through a committed harness in the `pistol-search` test tree that calls
+/// `Searcher::search` directly, the same shape `wp15b_census.rs` reads
+/// (`crates/pistol-solver/tests/`) rather than through a printed line.
+///
+/// Every field is a WHOLE-SEARCH total, like [`SearchInfo::nodes`]: written
+/// from the same point, on every [`SearchInfo`] construction path including
+/// both salvage ones, so a counter never silently reads zero on a path that
+/// visited real nodes.
+///
+/// Stage Q's own quantities — the widening rate per node class and the TT
+/// entries the truncation rule declines to store — DEFER with stage Q
+/// (`WPQ_seed.md` §7.2) and are not here; this D-scope's nearest counted
+/// proxy is [`StageCounters::batched_quiet_safety_net`], which is not a
+/// widening-rate quantity and is documented as such at its own field.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct StageCounters {
+    /// Nodes that took the WIN-NOW row: Tier F fired (`crate::staged`'s F
+    /// firing rate).
+    pub win_now: u64,
+    /// Nodes that took the FILTERED row.
+    pub filtered: u64,
+    /// Nodes that took the BATCHED row (`Cover::NothingToBlock`): Tier T
+    /// fired, or the quiet-ball safety net did in its place.
+    pub batched: u64,
+    /// Of [`StageCounters::batched`] and [`StageCounters::batched_lost`]
+    /// combined, how many had Tier T itself empty and used the quiet-ball
+    /// safety net (`crate::staged`'s module doc) instead — NOT stage Q's own
+    /// widening-rate quantity, which this D-scope does not implement; the
+    /// nearest counted proxy for "how often the T-only D-scope had nothing
+    /// to offer beyond the raw ball."
+    pub batched_quiet_safety_net: u64,
+    /// Nodes that took the BATCHED-lost row (`Cover::Impossible` at a PV
+    /// node or the root): the position is lost, but the line must still be
+    /// searched to prove the score.
+    pub batched_lost: u64,
+    /// Nodes where `blocking_covers` answered `Impossible` — the union of
+    /// [`StageCounters::overload_return`] and [`StageCounters::batched_lost`].
+    pub cover_impossible: u64,
+    /// Nodes that took `LAW-OVERLOAD`'s early return: no child expanded.
+    pub overload_return: u64,
+}
+
+impl StageCounters {
+    /// Record one node's [`StagedRow`] verdict.
+    pub(crate) fn record(&mut self, row: StagedRow) {
+        match row {
+            StagedRow::WinNow => self.win_now += 1,
+            StagedRow::Filtered => self.filtered += 1,
+            StagedRow::Batched => self.batched += 1,
+            StagedRow::BatchedLost => {
+                self.batched_lost += 1;
+                self.cover_impossible += 1;
+            }
+            StagedRow::OverloadReturn => {
+                self.overload_return += 1;
+                self.cover_impossible += 1;
+            }
+        }
+    }
+
+    /// Record that a BATCHED or BATCHED-lost row just recorded used the
+    /// quiet-ball safety net (`StagedSet::used_quiet_safety_net`) rather than
+    /// a non-empty Tier T. Called separately from [`StageCounters::record`]
+    /// because the safety net is this D-scope's own IMPL choice and not a
+    /// `StagedRow` of the node protocol itself (`crate::staged`'s doc).
+    pub(crate) fn record_quiet_safety_net(&mut self) {
+        self.batched_quiet_safety_net += 1;
+    }
+}
+
 /// One report from the search.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SearchInfo {
@@ -43,6 +120,10 @@ pub struct SearchInfo {
     pub score: i32,
     /// How full the transposition table is, in parts per thousand.
     pub hashfull_permille: u32,
+    /// The node protocol's stage-share counters (docs/decisions.md U2-M item
+    /// 2), whole-search totals like [`SearchInfo::nodes`]. All zero under
+    /// `CandidatePolicy::Radius`.
+    pub stages: StageCounters,
 }
 
 /// What a search returns: the move, and the report that goes with it.

@@ -231,6 +231,7 @@ impl Searcher {
                 pv,
                 score,
                 hashfull_permille: run.hashfull_permille(),
+                stages: run.stages,
             };
             report(&info);
             outcome = Some(SearchOutcome {
@@ -276,6 +277,7 @@ impl Searcher {
                     pv,
                     score,
                     hashfull_permille: 0,
+                    stages: crate::info::StageCounters::default(),
                 },
                 provenance: Provenance::PartialRoot,
             }
@@ -307,6 +309,7 @@ impl Searcher {
                     pv: vec![answer.turn()],
                     score,
                     hashfull_permille: 0,
+                    stages: crate::info::StageCounters::default(),
                 },
                 provenance: Provenance::Fallback,
             }
@@ -314,13 +317,17 @@ impl Searcher {
         // What the last completed depth found, and what the whole search cost —
         // an interrupted iteration is discarded as an answer but not as work,
         // and per-side compute accounting is a reporting requirement
-        // (CLAUDE.md rule 6).
+        // (CLAUDE.md rule 6). `stages` is a whole-search total exactly like
+        // `nodes`, written on every path for the same reason (docs/decisions.md
+        // U2-M item 2: "a counter that silently reads zero on a wall-clock path
+        // would make the play-mode stage shares unreadable").
         let elapsed = started.elapsed();
         outcome.info.nodes = run.nodes;
         outcome.info.nps = per_second(run.nodes, elapsed);
         outcome.info.time_ms = elapsed.as_millis() as u64;
         outcome.info.seldepth_turns = run.seldepth_turns;
         outcome.info.hashfull_permille = run.hashfull_permille();
+        outcome.info.stages = run.stages;
         Ok(outcome)
     }
 

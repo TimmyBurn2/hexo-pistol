@@ -30,7 +30,7 @@ use std::process::ExitCode;
 use pistol_core::{Coord, GameState, NEIGHBOUR_DIRECTIONS, PlyOutcome, Turn, legal_placements};
 use pistol_engine::config::EngineMode;
 use pistol_engine::{
-    Budget, Engine, EngineError, PositionSpec, Provenance, SearchInfo, SearchOutcome,
+    Budget, Engine, EngineError, PositionSpec, Provenance, SearchInfo, SearchOutcome, StageCounters,
 };
 
 /// What this instrument does wrong.
@@ -136,6 +136,7 @@ impl Engine for FirstLegal {
             pv: vec![best],
             score: 0,
             hashfull_permille: 0,
+            stages: StageCounters::default(),
         };
         report(&info);
         Ok(SearchOutcome {

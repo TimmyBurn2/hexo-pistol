@@ -80,6 +80,14 @@ pub struct Run<'a> {
     pub nodes: u64,
     /// The deepest turn count any line reached.
     pub seldepth_turns: u32,
+    /// The node protocol's stage-share counters — all zero under
+    /// `CandidatePolicy::Radius` (docs/decisions.md U2-M item 2). Written from
+    /// the same point `nodes` is, on every node the staged dispatch reaches, so
+    /// a caller that only ever reads it through [`SearchInfo::stages`] sees
+    /// whole-search totals identically to `nodes` (`crate::search::Searcher::search`
+    /// copies it there on every construction path, including both salvage
+    /// ones).
+    pub stages: crate::info::StageCounters,
     /// Set once the stop condition has fired; every node above unwinds without
     /// using its result.
     pub aborted: bool,
@@ -116,6 +124,7 @@ impl<'a> Run<'a> {
             root_turn,
             nodes: 0,
             seldepth_turns: 0,
+            stages: crate::info::StageCounters::default(),
             aborted: false,
             abortable: false,
             root_score: None,
@@ -251,7 +260,12 @@ impl<'a> Run<'a> {
             CandidatePolicy::Staged(params) => {
                 let (state, threats, eval) = self.position.staged_context();
                 let mut set = StagedSet::default();
-                match staged_candidates(state, threats, eval, is_pv, params, &mut set) {
+                let row = staged_candidates(state, threats, eval, is_pv, params, &mut set);
+                self.stages.record(row);
+                if set.used_quiet_safety_net {
+                    self.stages.record_quiet_safety_net();
+                }
+                match row {
                     // `PROTO-NODE` step 2's early return (`U2_node_protocol.md`
                     // §5.2): the guard is step 1's `None` arm above, already
                     // taken; the distance is `k + 2` (our turn completes at
@@ -263,7 +277,10 @@ impl<'a> Run<'a> {
                     StagedRow::OverloadReturn => {
                         return -mate_in(self.turns_from_root() + 2);
                     }
-                    StagedRow::WinNow | StagedRow::Filtered | StagedRow::Batched => {}
+                    StagedRow::WinNow
+                    | StagedRow::Filtered
+                    | StagedRow::Batched
+                    | StagedRow::BatchedLost => {}
                 }
                 if set.cells.is_empty() {
                     self.no_candidates_at_a_turn_boundary();

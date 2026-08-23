@@ -64,15 +64,20 @@ pub enum StagedRow {
     /// `None`, and `blocking_covers` answers `Minimal`: the emitted set is the
     /// cover union and nothing below it (the FILTERED row).
     Filtered,
-    /// `None`, and `blocking_covers` answers `NothingToBlock`, or answers
-    /// `Impossible` at a PV node or the root: Tier F (provably empty on this
-    /// row) ∪ Tier T, or the quiet-ball safety net when Tier T is itself empty
-    /// (see this module's doc). Both the BATCHED and BATCHED-lost rows of
-    /// `U2_node_protocol.md` §5.3 share this variant; a caller distinguishes
-    /// them, if it needs to, by whether `blocking_covers` answered
-    /// `Impossible` — this type does not carry that, because nothing downstream
-    /// of generation reads the distinction.
+    /// `None`, and `blocking_covers` answers `NothingToBlock`: Tier F
+    /// (provably empty on this row) ∪ Tier T, or the quiet-ball safety net
+    /// when Tier T is itself empty (see this module's doc).
     Batched,
+    /// `None`, `blocking_covers` answers `Impossible`, and the node IS a PV
+    /// node or the root: the same cells [`StagedRow::Batched`] would emit —
+    /// the position IS lost, but a PV node must return the line that proves
+    /// its score, so generation proceeds rather than returning early
+    /// (`U2_node_protocol.md` §5.3's BATCHED-lost row). A distinct variant
+    /// from [`StagedRow::Batched`], even though cell generation is identical,
+    /// because the stage-share counters WP-1.6 reads need the
+    /// `Cover::Impossible` rate kept apart from the `NothingToBlock` one
+    /// (`U2_node_protocol.md` §U2-M item 2).
+    BatchedLost,
     /// `None`, `blocking_covers` answers `Impossible`, and the node is NOT a
     /// PV node: `LAW-OVERLOAD`'s early return. `out` is left empty — the
     /// caller returns `-mate_in(turns_from_root + 2)` without expanding a
@@ -96,12 +101,18 @@ pub struct StagedSet {
     /// only within `cells[forced..]`, never across this boundary
     /// ([`StagedSet::promote_table_move`]).
     pub forced: usize,
+    /// Whether a BATCHED or BATCHED-lost row just filled found Tier T empty
+    /// and used the quiet-ball safety net instead (this module's doc). `false`
+    /// on the WIN-NOW and FILTERED rows, where it is never consulted. Read by
+    /// `crate::info::StageCounters::record_quiet_safety_net`'s one caller.
+    pub used_quiet_safety_net: bool,
 }
 
 impl StagedSet {
     fn clear(&mut self) {
         self.cells.clear();
         self.forced = 0;
+        self.used_quiet_safety_net = false;
     }
 
     /// Promote `table_move` to the front of the UNFORCED range
@@ -176,7 +187,7 @@ pub fn staged_candidates(
         Cover::Impossible if !is_pv => StagedRow::OverloadReturn,
         Cover::Impossible => {
             batched(state.board(), threats, eval, us, params, out);
-            StagedRow::Batched
+            StagedRow::BatchedLost
         }
     }
 }
@@ -256,6 +267,7 @@ fn batched(
         // arm answers with, uncapped — `quiet_top_k` is stage Q's own knob and
         // this D-scope does not arm stage Q.
         tier_t = within_radius(board, params.quiet_radius);
+        out.used_quiet_safety_net = true;
     }
     delta_rank(&mut tier_t, eval, us);
     out.cells = tier_t;
@@ -333,6 +345,7 @@ mod tests {
         let mut set = StagedSet {
             cells: vec![Coord::new(0, 0), Coord::new(1, 0), Coord::new(2, 0)],
             forced: 1,
+            used_quiet_safety_net: false,
         };
         let before = set.cells.clone();
 
@@ -367,6 +380,7 @@ mod tests {
         let mut set = StagedSet {
             cells: vec![Coord::new(0, 0)],
             forced: 1,
+            used_quiet_safety_net: false,
         };
         set.promote_table_move(Some(Coord::new(0, 0)));
         assert_eq!(set.cells, vec![Coord::new(0, 0)]);

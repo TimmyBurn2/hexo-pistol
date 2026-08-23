@@ -147,7 +147,7 @@ fn overload_at_entry_scores_loss_without_expansion() {
 }
 
 #[test]
-fn a_pv_node_at_the_same_impossible_verdict_generates_a_batched_row_instead() {
+fn a_pv_node_at_the_same_impossible_verdict_generates_a_batched_lost_row_instead() {
     // The one branch `is_pv` decides (`U2_node_protocol.md` §5.3's
     // BATCHED-lost row): the SAME position, with `is_pv = true`, must not take
     // the early return — it is lost, but a PV node must return the line that
@@ -164,12 +164,12 @@ fn a_pv_node_at_the_same_impossible_verdict_generates_a_batched_row_instead() {
         params(2, 2, 3),
         &mut out,
     );
-    assert_eq!(row, StagedRow::Batched);
+    assert_eq!(row, StagedRow::BatchedLost);
     assert!(
         !out.cells.is_empty(),
         "a PV node generates a candidate set even on a lost verdict"
     );
-    assert_eq!(out.forced, 0, "Tier F is empty on every BATCHED row");
+    assert_eq!(out.forced, 0, "Tier F is empty on every BATCHED-lost row");
 }
 
 #[test]
@@ -320,5 +320,61 @@ fn a_radius_policy_search_is_unaffected_by_stagedparams_existing() {
         outcome.info.score,
         pistol_search::score::mate_in(1),
         "the mate this position holds is found identically"
+    );
+}
+
+/// `stage_counters_reported_in_search_info` (`U2_node_protocol.md` §U2-T):
+/// each counter non-zero on a position built to fire it, zero on a
+/// `CandidatePolicy::Radius` search that never dispatches through the staged
+/// node protocol at all.
+#[test]
+fn stage_counters_are_reported_in_search_info_and_zero_under_radius() {
+    let mut win_now_search = staged_searcher(2, 2, 3);
+    let outcome = win_now_search
+        .search(
+            &win_in_one_ply_position(),
+            pistol_search::Stop::DepthTurns(1),
+            &mut |_| {},
+        )
+        .expect("a staged search over a mate-in-1 root must not be refused");
+    assert!(
+        outcome.info.stages.win_now >= 1,
+        "the root itself takes the WIN-NOW row: {:?}",
+        outcome.info.stages
+    );
+
+    let mut opening_search = staged_searcher(2, 2, 3);
+    let outcome = opening_search
+        .search(
+            &GameState::new_game(),
+            pistol_search::Stop::DepthTurns(3),
+            &mut |_| {},
+        )
+        .expect("a staged search from the opening must not be refused");
+    assert!(
+        outcome.info.stages.batched >= 1,
+        "a multi-ply search from the opening must visit at least one BATCHED node — the \
+         census puts BATCHED at the large majority of nodes: {:?}",
+        outcome.info.stages
+    );
+    assert!(
+        outcome.info.stages.batched_quiet_safety_net >= 1,
+        "the opening's own earliest plies have no live window anywhere, so the safety net \
+         must have fired at least once: {:?}",
+        outcome.info.stages
+    );
+
+    let mut radius = common::searcher(2);
+    let outcome = radius
+        .search(
+            &win_in_one_ply_position(),
+            pistol_search::Stop::DepthTurns(1),
+            &mut |_| {},
+        )
+        .expect("a radius search must still succeed");
+    assert_eq!(
+        outcome.info.stages,
+        pistol_search::StageCounters::default(),
+        "a Radius search never dispatches through staged_candidates, so every counter stays zero"
     );
 }
