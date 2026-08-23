@@ -27,37 +27,47 @@ tt_bytes = 268435456
 # rules' radius-8 legal region lives in pistol-core and is a different number
 # that this one is never compared against.
 #
-# radius = 2, MEASURED. This line used to argue the opposite — that a length-6
-# window reaches up to five cells from a stone, so correct extensions and blocks
-# sit at distance 3 to 5, and that radius 2 therefore "risks tactical
-# blindness". WP-1.3 Run 1 refuted that at a fixed-node instrument and the old
-# argument is withdrawn rather than left standing beside a number that beat it
-# (docs/decisions.md D-190, D-194).
+# STAGED, MEASURED. This block used to commit `kind = "radius", radius = 2`,
+# argued by WP-1.3 Run 1 (D-190, D-194). WP-1.5b's SPRT refutes THAT number in
+# turn and the argument for it is withdrawn rather than left standing beside a
+# policy that beat it (docs/decisions.md D-381, D-385, D-386) — the same
+# discipline D-194 itself used against radius 3.
 #
-# The evidence: radius 2 in slot A against radius 3, fixed nodes 50 000, paired
-# openings, verdict `h1` at 37 pairs with `nelo_pair +210.87`, confirmed on the
-# disjoint corpus book at 50 pairs with `+155.38` — 126 wins of 174 games across
-# two books. The mechanism was measured before those games were played: at this
-# budget radius 2 completes a second turn-iteration in 17 of 24 bench positions
-# where radius 3 manages 6, and a depth-1 iteration searches the mover's own turn
-# without ever seeing a reply. The narrower set buys depth, and depth wins.
+# THE EVIDENCE, two disjoint books, both node-matched at 50 000, both
+# attributable and robust under Criterion 1' (docs/decisions.md D-384):
+# primary book, `verdict h1` at 58 pairs, `nelo_pair +1854.80`; confirmatory
+# book (`openings_v1.txt`), `verdict h1` at 51 pairs, `nelo_pair +1737.18` —
+# 202 wins of 218 decided games across both books, staged never worse than a
+# 101-1 split in either sample. Both crossings are below the pre-registered
+# 100-pair floor individually; §5 of the prereg names the confirmatory-run
+# procedure for exactly this case, D-190's own instrument, and both intervals
+# are read as optimistic per that same procedure — recorded here rather than
+# overstated.
 #
-# WHAT THIS NUMBER DOES NOT SAY, because the distinction decides what may be
-# quoted from it: the win is NODE-matched, not time-matched. Radius 2 spent 1.90x
-# the wall-clock for 6.1% FEWER nodes, so at an equal-TIME budget it would get
-# about half the nodes it had here and nothing measured says its depth advantage
-# survives that. configs/play_v0.toml therefore stays at radius 3 and the two
-# configs deliberately disagree for the first time; WP-1.4 owns the movetime path
-# and the time-matched SPRT that would reunite them.
+# WHAT THIS NUMBER DOES NOT SAY, the same distinction D-194 drew and this
+# config inherits unchanged: the win is NODE-matched, not time-matched.
+# `configs/play_v0.toml` THEREFORE STAYS AT radius 3 (D-194's own value,
+# untouched) — WP-1.5b's SPRT says nothing about a movetime-matched budget,
+# and moving play_v0.toml on the strength of a node-matched run would be
+# exactly the extrapolation D-194 already declined to make for radius 2.
+# `configs/play_staged_v0.toml` already exists as the seat a future
+# movetime-matched SPRT would validate; this run does not license moving to
+# it.
 #
 # Still a search knob and never the rules' radius-8 legal region, which is a
 # pinned constant in pistol-core and is never compared with this number
-# (CLAUDE.md rule 2, docs/decisions.md D-20). The radius policy itself remains a
-# Stage-0 placeholder that Stage 1's threat-first staged candidate generator
-# supersedes (docs/ROADMAP.md WP-1.5).
+# (CLAUDE.md rule 2, docs/decisions.md D-20). `configs/instrument_r2_v0.toml`
+# is kept, unchanged, as D-194's own historical pin of the radius-2 committed
+# value — completed run reports (D-190's own) name it by path and pin it by
+# digest, so it is not deleted merely because a newer policy has superseded
+# it (the same reasoning D-194 gave for keeping it in the first place).
 [search.candidate_policy]
-kind = "radius"
-radius = 2
+kind = "staged"
+quiet_radius = 2
+quiet_top_k = 16
+widen_schedule = [32]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
 
 [eval]
 # Handcrafted three-axis line-window pattern tables.

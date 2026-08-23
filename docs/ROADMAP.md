@@ -109,6 +109,18 @@ Both are ADR changes to this file, not editorial notes.
   bound the committed engine is still the radius one. D-204's flip clause fires
   there, not here.
 
+**WP-1.5b IS CLOSED, SPRT-POSITIVE — docs/decisions.md D-386.** The operator's
+SPRT (two disjoint-book runs, both node-matched, both crossing `verdict h1`
+below the pre-registered 100-pair floor individually, confirmed together per
+prereg §5's own D-190-precedented procedure) fired the supersession this
+section names above: `configs/instrument_v0.toml`'s committed candidate
+policy moved from radius 2 to staged in the same commit. D-204's flip has
+fired; its tactical-threshold re-derivation remains its own unscheduled
+work, per D-204's own text — not inherited as settled by this closure.
+**WP-1.6 is UNBLOCKED**: the stage-share counter seam it reads already
+exists (`crates/pistol-search/src/info.rs`, `pvs.rs`, `staged.rs`), landed
+with WP-1.5b's own IMPL and untouched by this closure.
+
 **WP-1.5c — the quiet stage, its widening schedule, and dominance pruning**
 (docs/decisions.md D-315; the designation is the one §15 item 8 already cites for
 the Tier-Q ball scan). D-310 cut WP-1.5b to stages F and T; the QUIET stage
