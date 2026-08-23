@@ -13,52 +13,10 @@ its owner, and that is what it is for.
 
 
 **u-rev 8.** Carved from `docs/experiments/wp15b_design.md` §2, §3, §5 and §14 at
-`6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it, and is that review's home) under the restructure
+`6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it) under the restructure
 selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
 in the tree: it is retrievable at `6feb40a` and nowhere else.
-
-**EVERY u-rev AFTER THE FIRST IS A REPAIR, NOT A NEW CARVE, AND THE TABLE BELOW
-POINTS AT THE REPORT THAT CAUSED EACH RATHER THAN RESTATING WHAT IT SAID (D-331).**
-Each report is in the tree; a reader who wants a finding's content reads it there,
-where it has its home, and this unit does not carry a second copy that can drift
-from it.
-
-| u-rev | pinned revision reviewed | report | verdict |
-|---|---|---|---|
-| 1 | `38f21b9` | `docs/experiments/wp15b_U2_REVIEW.md` | FAIL |
-| 2 | `56b0bec` (byte-identical at HEAD `e3f0bc3` when that review ran) | `docs/experiments/wp15b_U2_REVIEW_urev2.md` | FAIL |
-| 3 | `d85b049` | `docs/experiments/wp15b_U2_REVIEW_urev3.md` | FAIL |
-| 4 | `7473a6f` | `docs/experiments/wp15b_U2_REVIEW_urev4.md` | FAIL |
-| 5 | `f0ae14c` | `docs/experiments/wp15b_U2_REVIEW_urev5.md` | FAIL |
-| 6 | `3543a7f` | — | **NOT REVIEWED — no round was dispatched against it** |
-| 7 | `1964026` | `docs/experiments/wp15b_U2_REVIEW_urev7.md` | FAIL |
-| **8** | *this text* | **NOT YET REVIEWED** | — |
-
-**THE CARVE-PROVENANCE CLAUSE ABOVE WAS FALSE FROM THE CARVE UNTIL u-rev 6.** It read
-*"revision 7, **never reviewed**, CLOSED by D-309"*. `6feb40a` WAS reviewed, by a
-fresh-context REVIEW-design, and it FAILED — which is the ground D-309 gives for
-closing revision 7 and restructuring rather than revising in place, and which this
-unit's own **U2-A** table has reported all along, a few lines below the false sentence.
-The clause was written once at the carve and propagated VERBATIM into all four units
-and the owner table; **no review of any of the five raised it**
-(`docs/experiments/wp15b_U2_REVIEW_urev5.md`, H1). It is corrected in all five in one
-commit. *~~And the counts now live only in D-309, which is their home (D-331).~~
-**WITHDRAWN AS FALSE AT u-rev 7** — **U2-A**'s revision-7 row restates them, and has
-since the carve. D-309 is still where a reader is sent; what is struck is this
-sentence's claim that nothing else states them.*
-
-**u-rev 4 answered `wp15b_U2_REVIEW_urev3.md`, u-rev 5 answered that round's own
-re-review, and u-rev 6 answers the round after that; none changes anything else.** u-rev 4 rewrote the head's
-exceptions paragraph and put `CARVE-EXCEPTION` markers at the sites the exceptions
-occur at. **The markers sit inside §2.2, §5.3, §5.4 and §12, but they are DISCLOSURE
-APPARATUS and not design content**: no sentence of the carried prose is rewritten by
-them, no number moves, and each says only what already happened at the site it sits
-at. **Which markers pre-dated u-rev 4 and which was new is not stated here or
-anywhere else in this unit** — it is one `git diff d85b049 7dfd047` away, it serves
-no live purpose, and a hand-maintained historical count is the thing this unit spent
-three rounds removing (`wp15b_U2_REVIEW_urev4.md`, G1). Where each finding is
-answered is in the REVIEW STATUS block below.
 
 **THE TEXT IS A VERBATIM CARVE.** Every change made to it is a CROSS-REFERENCE
 RETARGET — a `§n` that pointed inside the superseded document now names the unit
@@ -106,60 +64,12 @@ NOT carved content**; they are new text the carve itself writes and are expected
 to change every u-rev (LABEL DISCIPLINE, below), so an edit to them is not an
 exception and carries no marker.
 
-**WHY THIS UNIT'S REVIEW IS A CONFIRMATION PASS.** Five fresh-context
-REVIEW-designs and two DECISION-RED-TEAMs have run over this text and **none
-broke it on the merits**. The revision-7 review's own Rejected list, with its
-attempted reproducers, covers §2.1's six destructure sites (reproduced accurate
-at `6feb40a`), §3's twenty-three calculus IDs (all exist), the solver query
-surface §5 consumes (all public bar the one §5.35 correctly names as owed),
-§5.2's cited source lines, §14's scope, and the hotspot registration. M5 FELL at
-`7ad466b` and M5-E — supplied by the red team that killed M5-A — has survived
-every round since. The confirmation pass is over THAT: that the carve moved this
-text without changing it, and that its retargets resolve.
-
 **LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this unit bumps
 its u-rev, however small the diff. A review is dispatched against a named
 revision and reviews of superseded revisions do not transfer; the superseded
 document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
-
-**REVIEW STATUS — u-rev 3 WAS REVIEWED AND FAILED; u-rev 4 IS THE REPAIR.**
-`docs/experiments/wp15b_U2_REVIEW_urev3.md`, REVIEW-design, fresh context,
-against **`d85b049`** — **VERDICT FAIL, 1 MAJOR (F5), 1 MINOR (F6)**. **THIS
-u-rev — u-rev 4 — HAS NOT BEEN REVIEWED**, and u-rev 3's review does not transfer
-to it: an amendment reopens the review, however small the diff (D-311). A WP is
-not landable while a review is outstanding. **The rows below say WHERE each
-finding is answered and do not restate what it said** (D-331); the report is in
-the tree.
-
-| Finding, `wp15b_U2_REVIEW_urev3.md` | Where it is answered at u-rev 4 |
-|---|---|
-| **F5** (MAJOR) | **ANSWERED BY REMOVING THE ENUMERATION, NOT BY EXTENDING IT.** The head paragraph that carried the list now states a RULE and a derived command and asserts no set; the missing disclosure is added at its own site, `§5.4`'s architect-ruling paragraph, as a `CARVE-EXCEPTION` marker. Every disclosure in the unit carries the same token, so one command enumerates them |
-| **F6** (MINOR) | **ANSWERED BY DELETION.** The unmarked numeric claim was inside the enumeration F5 removed, and it went with it. No line count of the diff is stated anywhere in this unit |
-
-**REVIEW STATUS — u-rev 4 WAS REVIEWED AND FAILED ON TWO MINORS; u-rev 5 IS THE
-REPAIR.** `docs/experiments/wp15b_U2_REVIEW_urev4.md`, REVIEW-design (re-review),
-fresh context, against **`7473a6f`** — **VERDICT FAIL, 0 BLOCKING, 0 MAJOR, 2 MINOR**.
-It confirmed F5's substitution structural on the merits, having diffed every
-intermediate revision, and F6 cleanly discharged.
-
-| Finding, `wp15b_U2_REVIEW_urev4.md` | Where it is answered at u-rev 5 |
-|---|---|
-| **G1** (MINOR) — the "four already existed, one is new" count is asserted independently at two sites with no pointer between them | **ANSWERED BY DELETING BOTH COPIES.** Neither site needs the number; it is a historical count of an already-closed transition, derivable from one `git diff`, and keeping either copy would have kept the drift risk the finding names. The head says so explicitly rather than silently dropping it |
-| **G2** (MINOR) — an unmarked `168 030 comparisons` sits unreconciled beside a thrice-repeated MEASURED `343 344 comparisons` | **RECORDED AS OPEN AT u-rev 5; STRUCK AT u-rev 7 UNDER `D-346`, THEN RESTORED** — the u-rev 7 strike removed the figure as unverifiable, but `wp15b_U2_REVIEW_urev7.md` Finding 1 (BLOCKING) found it NORMATIVE rather than document-state, so `D-346`'s flip clause fired and the figure is restored verbatim. It remains OPEN and unreconciled, exactly as at u-rev 5. The reviewer traced it unchanged to the pre-carve document at `6feb40a`, outside that repair's diff, and recorded that it is *"not chargeable against u-rev 4 specifically"*. Its ground is stated in U2-Z's OPEN bullet, which is where it lives — **and that ground is CORRECTED at u-rev 6**, see H2 below |
-
-**u-rev 7 ANSWERS NO REVIEW REPORT.** No round has been dispatched against u-rev 6.
-u-rev 7 is a repair under `D-346` of two claims this unit made about its own state and
-that were false or unverifiable at u-rev 6: the *"counts now live only in D-309"*
-sentence, which **U2-A** falsifies, and the unmarked M5-E population figure
-`wp15b_U2_REVIEW_urev4.md` G2 raised and u-rev 5 registered OPEN. Both are STRUCK; the
-`D-309` pointer and the §5.2 pointer are what replace them. Nothing else moved.
-
-| Finding, `wp15b_U2_REVIEW_urev5.md` | Where it is answered at u-rev 6 |
-|---|---|
-| **H1** (MAJOR) — the carve-provenance clause says revision 7 was never reviewed; it was reviewed and it failed, and the clause is verbatim in five documents | The head's provenance sentence, corrected here and in **U1**, **U3**, **U4** and `section_owner_table.md` in one commit. The counts are not restated anywhere; D-309 is their home |
-| **H2** (MINOR) — G2's stated reason misapplies this unit's own CARVED-CONTENT scope | U2-Z's OPEN bullet, whose ground is restated as a MEASUREMENT one: the two figures are measurements and reconciling them means re-running the probe. The practical decision — register OPEN rather than reconcile — is unchanged, and the reviewer agreed it was sound |
 
 **WHY F5's REPAIR IS NOT ANOTHER ITEM ON THE LIST.** The reviewer's own fix scope
 offered *"add a fifth exception … and/or an inline disclosure marker"*. The first
@@ -191,8 +101,8 @@ the disagreement is an ADR line.
 | REVIEW-design | revisions 3–6 | all FAIL; **no STOP after revision 2 and no reopening of M5**. §5's residual findings were transmission, not merits |
 | REVIEW-design | revision 7, `6feb40a` | **FAIL** — 7 BLOCKING, 7 MAJOR, 9 MINOR. **None of the seven BLOCKING is §2's, §3's, §5's or §14's**, except B5's §2.2 site, repaired here |
 
-**What this unit owes that no round has given it:** a REVIEW-design of THIS text
-at THIS u-rev, and rule 5's bracket for the node protocol itself (U2-Z, OPEN).
+**What this unit owes that no round has given it:** rule 5's bracket for the
+node protocol itself (U2-Z, OPEN).
 
 ---
 
@@ -885,14 +795,6 @@ a correction to a landed line, and none has landed.**
   `LAW-HIT` + `DEF-T` and the calculus amendment is OWED** (item 22 above). A
   quiescence that reuses it inherits that debt.
 - **Quiescence stands pat and extends in TURNS, never plies** — D-111, unchanged.
-- **What WP-1.6 must not inherit:** this text is UNREVIEWED at this u-rev. Five
-  rounds failed before the restructure, and the carve itself has been attacked
-  three times post-carve, every one returning FAIL. **The u-rev table in this
-  unit's head is the one place that states which review ran against which
-  revision (D-331); this bullet points at it and states no second copy**, because
-  a chronology restated at the foot of a document is a chronology that goes stale
-  at the next bump — which is what happened to this bullet's own predecessor.
-
 ### The conservative branch this unit records
 
 - **WP-1.5b does not complete `docs/ROADMAP.md` WP-1.5's supersession**, and the
@@ -937,7 +839,6 @@ a correction to a landed line, and none has landed.**
   IQR-gated bench reporting nps AND time-to-depth. **The carve does not close
   this and does not narrow it.** It is a rule-5 registration the architect must
   place before U2's IMPL, not a repair a carve may write.
-- **No REVIEW-design has run against this text at this u-rev** (U2-A).
 
 ---
 
