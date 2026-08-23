@@ -1,0 +1,266 @@
+# pistol tactical fixture, staged v0 — the same twenty positions as
+# tactical_v0.txt, THE TACTICAL SUITE UNDER STAGED (docs/decisions.md D-316;
+# U4_soundness_instrument.md §8.3), run under CandidatePolicy::Staged.
+#
+# Pinned by SHA-256 in crates/pistol-cli/tests/tactical_staged_v0_tests.rs
+# (TACTICAL_STAGED_V0_SHA256). Editing this file without updating that
+# constant is a red test, which is the point.
+#
+# PASS THRESHOLD, PRE-REGISTERED BEFORE THE FIRST RUN OF THE SUITE:
+#
+#   require 20   — all twenty cases, at the config and budget each one states.
+#
+# WHY THE SAME 100% THRESHOLD HOLDS UNDER A DIFFERENT GENERATOR. A case here
+# states only what the game decides (tactical_v0.txt's own rule), and with
+# the quiet cut DISABLED — configs/tactical_staged_v0.toml and
+# configs/gate_staged_v0.toml both set quiet_top_k above the whole candidate
+# pool a position this size can reach — Staged and Radius can differ at a
+# node in exactly three ways, each a [PROVEN] law and not a heuristic
+# (U4_soundness_instrument.md §8.3):
+#
+#   0. the !is_pv OVERLOAD RETURN — generates nothing, returns a mate score
+#      that is exact when its premises hold, so it can only SHORTEN a mate
+#      distance on a position already lost, never invent one;
+#   1. the WIN-NOW row — the emitted set is the argmax set, identical value;
+#   2. the BATCHED row — the emitted set is a SUPERSET of the radius policy's
+#      (Tier T ∪ the quiet ball with the cut disabled), so the value can only
+#      differ by the search seeing MORE;
+#   3. the FILTERED row — the emitted set is the cover union, which LAW-HIT
+#      proves is the only defensive mechanism, so a value difference here can
+#      only be Staged declining a move that LAW-FORCE already proves loses.
+#
+# None of the three directions can turn a game fact this fixture pins into a
+# different one. A failure here is therefore evidence one of the three laws
+# is being composed wrongly in the shipped generator — which is what makes it
+# worth gating, not a tuning question.
+#
+# WHAT THIS DELIBERATELY GIVES UP. With the cut disabled the suite is silent
+# about the quiet prune itself — that is the right division, since the prune
+# is a strength knob and rule 6 makes SPRT its judge, not this fixture. The
+# cut is judged by the movetime measurement, the SPRT, and the differential
+# gate (crates/pistol-search/tests/staged_differential_gate_tests.rs)
+# instead.
+#
+# Every case states the config it is a claim about, because a threshold means
+# nothing without the search that has to meet it (CLAUDE.md rule 6):
+#
+#   configs/tactical_staged_v0.toml   staged, quiet_radius 2, cut DISABLED.
+#                                     The fifteen cases tactical_v0.txt runs
+#                                     at configs/instrument_v0.toml.
+#   configs/gate_staged_v0.toml       staged, quiet_radius 1, cut DISABLED.
+#                                     The five depth-3 cases tactical_v0.txt
+#                                     runs at configs/gate_v0.toml, for the
+#                                     same reason that file exists: a
+#                                     completed depth 3 at a wider quiet ball
+#                                     is minutes to hours of CI time.
+#
+# Mate distances count EVERY turn from the root, both sides' (docs/decisions.md
+# D-3, D-72), so a win for the side to move is always an ODD distance:
+#
+#   mate 1   the mover completes six THIS turn, with its first stone or its
+#            second — rule 4 makes those the same turn.
+#   mate 3   the mover completes six on its SECOND turn from here. This is what
+#            "mate in two turns" means in prose; a case that pinned `mate 2` would
+#            be pinning a LOSS.
+#
+# Format. One block per case; every directive is required exactly once except
+# `expect`, which repeats:
+#
+#   require <n>            once, at the top: the pre-registered pass threshold
+#   case <name>            starts a case
+#   config <path>          the engine config this case is a claim about
+#   position <tail>        the position, spelled exactly as the `position` verb
+#                          spells it, so a case can be pasted into a session
+#   budget depth_turns <n> | budget nodes <n>
+#   expect move <turn>     the engine plays exactly this turn
+#   expect cell <q,r>      the turn it plays puts a stone on this cell
+#   expect mate <n>        the score is a win in n turns
+#   expect not-mated       the score is not a loss
+#
+# `#` starts a comment line. Anything else is a loader error naming the line: a
+# fixture that is quietly half-read reports a pass for cases nobody ran.
+#
+# The `set` form lists each side's stones IN PLAY ORDER, so every position here is
+# one a legal game reaches, replayed through the rules on the way in
+# (docs/decisions.md D-6, D-42). P1's first listed stone is the origin (rule 3)
+# and P1 holds an odd number of stones with P2 one more, which is what
+# "P1 to move at a turn boundary" means.
+#
+# WHAT AN EXPECTATION MAY PIN. A case states only what the game decides, never
+# what this engine's move ordering happens to prefer — see tactical_v0.txt's
+# own header for the full argument; it applies unchanged here, since these
+# are the same twenty positions.
+require 20
+
+# --- mate in one turn, one stone completes it -----------------------------
+# Five in a row with one end blocked: exactly one cell completes six, so every
+# winning turn contains it, and rule 4 ends the turn on the stone that takes it.
+# Once per axis, because there are three of them (rule 1) and an implementation
+# that had two right and one wrong would still look correct.
+
+case mate_in_1_five_in_a_row_blocked_at_one_end
+config configs/tactical_staged_v0.toml
+position set p1:0,0 1,0 2,0 3,0 4,0 p2:-1,0 1,3 2,3 3,3 1,5 2,5 tomove:p1 phase:0
+budget depth_turns 1
+expect cell 5,0
+expect mate 1
+
+case mate_in_1_five_in_a_column_blocked_at_one_end
+config configs/tactical_staged_v0.toml
+position set p1:0,0 0,1 0,2 0,3 0,4 p2:0,-1 2,0 3,0 4,0 2,2 3,2 tomove:p1 phase:0
+budget depth_turns 1
+expect cell 0,5
+expect mate 1
+
+case mate_in_1_five_in_a_diagonal_blocked_at_one_end
+config configs/tactical_staged_v0.toml
+position set p1:0,0 1,-1 2,-2 3,-3 4,-4 p2:-1,1 -3,4 -2,4 -1,4 -3,6 -2,6 tomove:p1 phase:0
+budget depth_turns 1
+expect cell 5,-5
+expect mate 1
+
+# The origin sits in the MIDDLE of the line here, not at its end: rule 3 fixes
+# where the first stone goes, and nothing else about the geometry follows from it.
+case mate_in_1_line_through_the_origin
+config configs/tactical_staged_v0.toml
+position set p1:0,0 -2,0 -1,0 1,0 2,0 p2:-3,0 -2,3 -1,3 0,3 -2,5 -1,5 tomove:p1 phase:0
+budget depth_turns 1
+expect cell 3,0
+expect mate 1
+
+# A hole in the middle, not an open end: the same win, reached by filling a gap.
+case mate_in_1_gap_fill_completes_six
+config configs/tactical_staged_v0.toml
+position set p1:0,0 1,0 2,0 4,0 5,0 p2:0,3 1,3 2,3 0,5 1,5 2,5 tomove:p1 phase:0
+budget depth_turns 1
+expect cell 3,0
+expect mate 1
+
+# Seven in a row, not six. Overlines win (rule 2): no ban, no exact-six variant.
+case mate_in_1_gap_fill_completes_an_overline_of_seven
+config configs/tactical_staged_v0.toml
+position set p1:0,0 1,0 2,0 4,0 5,0 6,0 0,3 p2:2,3 3,3 4,3 2,5 3,5 4,5 2,7 3,7 tomove:p1 phase:0
+budget depth_turns 1
+expect cell 3,0
+expect mate 1
+
+case mate_in_1_gap_fill_completes_an_overline_in_a_column
+config configs/tactical_staged_v0.toml
+position set p1:0,0 0,1 0,2 0,4 0,5 0,6 3,0 p2:5,0 6,0 7,0 5,2 6,2 7,2 5,4 6,4 tomove:p1 phase:0
+budget depth_turns 1
+expect cell 0,3
+expect mate 1
+
+# Both ends open, so TWO cells win and no single move is the right answer. The
+# case pins the score alone.
+case mate_in_1_five_open_at_both_ends
+config configs/tactical_staged_v0.toml
+position set p1:0,0 1,0 2,0 3,0 4,0 p2:0,3 1,3 2,3 0,5 1,5 2,5 tomove:p1 phase:0
+budget depth_turns 1
+expect mate 1
+
+# P1 also has to see that its own win beats answering P2's threat: P2
+# has five with one completion of its own, and it never gets to play it.
+case mate_in_1_own_win_beats_blocking_the_opponent
+config configs/tactical_staged_v0.toml
+position set p1:0,0 1,0 2,0 3,0 4,0 -1,3 2,6 p2:-1,0 0,3 1,3 2,3 3,3 4,3 0,6 1,6 tomove:p1 phase:0
+budget depth_turns 1
+expect cell 5,0
+expect mate 1
+
+# --- mate in one turn, both stones ----------------------------------------
+# Four in a row with one end blocked: no single stone wins, and exactly one PAIR
+# does. The win completes on the turn's second stone, which rule 4 leaves an
+# ordinary pair rather than a truncated turn — the same turn count either way.
+
+case mate_in_1_two_stones_complete_a_row
+config configs/tactical_staged_v0.toml
+position set p1:0,0 1,0 2,0 3,0 0,3 p2:-1,0 -1,5 0,5 1,5 -1,7 0,7 tomove:p1 phase:0
+budget depth_turns 1
+expect move 4,0/5,0
+expect mate 1
+
+case mate_in_1_two_stones_complete_a_column
+config configs/tactical_staged_v0.toml
+position set p1:0,0 0,1 0,2 0,3 3,0 p2:0,-1 5,0 6,0 7,0 5,2 6,2 tomove:p1 phase:0
+budget depth_turns 1
+expect move 0,4/0,5
+expect mate 1
+
+# --- must block -----------------------------------------------------------
+# P2 has five with exactly one completion. P1's turn is two stones, so only
+# one of them is forced: the case pins the CELL, not the turn, and pins that the
+# position is not lost. A depth of two turns is what it takes to see the loss
+# coming — P1's turn, then P2's.
+
+case must_block_p2_five_in_a_row
+config configs/tactical_staged_v0.toml
+position set p1:0,0 -1,1 0,4 1,4 2,4 p2:0,1 1,1 2,1 3,1 4,1 -2,2 tomove:p1 phase:0
+budget depth_turns 2
+expect cell 5,1
+expect not-mated
+
+case must_block_p2_five_in_a_column
+config configs/tactical_staged_v0.toml
+position set p1:0,0 1,-1 4,0 5,0 6,0 p2:1,0 1,1 1,2 1,3 1,4 2,-2 tomove:p1 phase:0
+budget depth_turns 2
+expect cell 1,5
+expect not-mated
+
+case must_block_p2_five_on_a_diagonal
+config configs/tactical_staged_v0.toml
+position set p1:0,0 0,1 -4,4 -3,4 -2,4 p2:1,0 2,-1 3,-2 4,-3 5,-4 0,2 tomove:p1 phase:0
+budget depth_turns 2
+expect cell 6,-5
+expect not-mated
+
+# The completion is a hole in the middle of P2's line, not its end.
+case must_block_p2_gap_fill
+config configs/tactical_staged_v0.toml
+position set p1:0,0 -1,1 0,4 1,4 2,4 p2:0,1 1,1 2,1 4,1 5,1 -2,2 tomove:p1 phase:0
+budget depth_turns 2
+expect cell 3,1
+expect not-mated
+
+# --- mate in two of P1's turns, which scores mate 3 --------------------
+# Two threes sharing a stone. One turn extends both to a live four, and P2's
+# two stones cannot answer two live fours — killing one costs both of them. The
+# second and third cases are the first one's images under a reflection and a
+# rotation of the lattice, so they hold the same value by symmetry and would catch
+# an axis-specific mistake that the first one alone would not.
+
+case mate_in_3_double_three_becomes_double_four
+config configs/gate_staged_v0.toml
+position set p1:0,0 1,0 2,0 0,1 0,2 p2:-1,1 -2,2 -1,3 -3,3 -2,4 -3,5 tomove:p1 phase:0
+budget depth_turns 3
+expect mate 3
+
+case mate_in_3_double_three_becomes_double_four_reflected
+config configs/gate_staged_v0.toml
+position set p1:0,0 1,0 2,0 1,-1 2,-2 p2:0,-1 0,-2 2,-3 0,-3 2,-4 2,-5 tomove:p1 phase:0
+budget depth_turns 3
+expect mate 3
+
+case mate_in_3_double_three_becomes_double_four_rotated
+config configs/gate_staged_v0.toml
+position set p1:0,0 0,1 0,2 -1,1 -2,2 p2:-1,0 -2,0 -3,2 -3,0 -4,2 -5,2 tomove:p1 phase:0
+budget depth_turns 3
+expect mate 3
+
+# --- quiet ---------------------------------------------------------------
+# Neither side can complete six in one turn from either of these. They are here
+# because a search that hallucinates a mate is as wrong as one that misses one,
+# and because the cross-process determinism gate needs positions whose answer
+# comes from a full search rather than from a mate found at depth one.
+
+case quiet_no_tactic_for_either_side
+config configs/gate_staged_v0.toml
+position set p1:0,0 2,0 0,2 2,2 1,4 p2:1,0 0,1 1,1 2,1 0,3 1,3 tomove:p1 phase:0
+budget depth_turns 3
+expect not-mated
+
+case quiet_two_short_clusters
+config configs/gate_staged_v0.toml
+position set p1:0,0 1,0 0,2 2,2 3,0 p2:2,0 0,1 1,1 2,1 1,2 3,1 tomove:p1 phase:0
+budget depth_turns 3
+expect not-mated

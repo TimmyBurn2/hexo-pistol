@@ -1,5 +1,15 @@
 //! Rules `serde` cannot express: value ranges, and agreements between fields
 //! in different sections.
+//!
+//! # RULE9-JUSTIFICATION: one cross-field rule set, over one shared fixture
+//! (CLAUDE.md rule 9).
+//!
+//! Every test here is a difference from `common::VALID` or `common::VALID_STAGED`,
+//! stated as `replacing`/`replacing_staged` edits to one complete document each —
+//! `Config::validate`'s whole surface, `Radius` and `Staged` alike. Splitting by
+//! section would duplicate the two base fixtures or hoist them behind a shared
+//! module neither half of the split owns; it grows again only if the schema
+//! gains a third candidate policy.
 
 mod common;
 

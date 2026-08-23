@@ -9,6 +9,18 @@
 //! Every path here fails loudly and says which document or which flag it
 //! refused (CLAUDE.md rule 3). There is no default config path, no built-in
 //! configuration, and no command that runs with less than it needs.
+//!
+//! # RULE9-JUSTIFICATION: one binary, one engine-construction path, over three
+//! commands that all reach it (CLAUDE.md rule 9).
+//!
+//! `protocol_command`, `perft_command` and `selftest_command` share the
+//! config-loading and identity-line machinery this file also owns, and that
+//! sharing is the whole reason a determinism claim about the shipped binary
+//! means anything: splitting the commands into separate files would either
+//! duplicate `identity_lines`/`weights_digest` per command or hoist them
+//! behind a boundary that makes "the same engine-construction path" a claim
+//! nothing here checks. It grows a fourth file only if a fourth command
+//! needs its own construction path, which none does.
 
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};

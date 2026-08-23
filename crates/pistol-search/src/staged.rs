@@ -36,6 +36,20 @@
 //! architect debt**, not asserted as settled design: it is IMPL choosing the
 //! one branch that keeps the search from crashing, not a matrix-selected
 //! option.
+//!
+//! # RULE9-JUSTIFICATION: one node protocol, over the one dispatch that
+//! realises it (CLAUDE.md rule 9).
+//!
+//! `staged_candidates` and its four helpers (`tier_f`, `filtered`, `batched`,
+//! `tier_t_union`/`tier_t_side`) are the SAME argument `U2_node_protocol.md`
+//! §5.1-§5.4 states as one sequence of steps: which row a node takes decides
+//! which helper runs, and the row decision itself (steps 1-3) is one match
+//! with one query each. Splitting the tiers into separate files would pass
+//! `params`/`threats`/`us`/`left` back and forth between them and put the
+//! soundness argument for each row's boundary (Tier F empty on every BATCHED
+//! row, the FILTERED union and nothing below it) in a different file from the
+//! code it constrains. It grows again only if a fifth row or a fourth tier
+//! arrives.
 
 use pistol_core::{Coord, GameState, Player};
 use pistol_eval::Eval;
