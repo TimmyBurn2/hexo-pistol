@@ -110,9 +110,13 @@
 # claim in one file and the things that can falsify it in another, and every
 # defect this script has had was a line that quietly stopped being invariant.
 #
-# Usage: tools/baseline_snapshot.sh [--out PATH] [--nodes N] [--corpus PATH]
-#                                   [--ladder-depth D] [--ladder-cap-s S]
-#                                   [--binary PATH]
+# Usage: tools/baseline_snapshot.sh --config PATH [--out PATH] [--nodes N]
+#                                   [--corpus PATH] [--ladder-depth D]
+#                                   [--ladder-cap-s S] [--binary PATH]
+#   --config        REQUIRED, no default (N-E, docs/decisions.md D-329): the
+#                   document this snapshot measures. The whole path is
+#                   written into the record's `config` line and is refused if
+#                   it is not printable ASCII with no space.
 #   --out           where to write the record (default: stdout)
 #   --nodes         override the registered budget. A record made this way says
 #                   OVERRIDE on its budget line, so it cannot be quoted as a
@@ -179,7 +183,13 @@ KIND_COMPLETE="baseline_snapshot"
 KIND_INCOMPLETE="baseline_snapshot_incomplete"
 TIMING_MARKER="# timing"
 
-CONFIG="configs/instrument_v0.toml"
+# NO DEFAULT (N-E, docs/decisions.md D-329): hard rule 1's fourth clause in
+# its literal form, not only "no code-side default for a tunable" — rung (a)
+# of D-329's own matrix found every row on the field already refuses an
+# absent `--config` by name, so the clause does not distinguish this row from
+# its rivals; N-E's actual ground is rung (b) (D-329). Required below, once
+# argument parsing has run.
+CONFIG=""
 CORPUS="crates/pistol-cli/tests/fixtures/bench_positions_v1.txt"
 OPENINGS="crates/pistol-cli/tests/fixtures/openings_v1.txt"
 BINARY="target/release/pistol"
@@ -208,38 +218,49 @@ fail() { printf 'baseline_snapshot: FAIL: %s\n' "$*" >&2; exit 1; }
 # statement to read and the script had no single place where the rule lived.
 usage() {
 	cat <<'USAGE'
-usage: tools/baseline_snapshot.sh [--out PATH] [--corpus PATH] [--binary PATH|NAME]
-                                  [--nodes N] [--ladder-depth N] [--ladder-cap-s N]
-                                  [--help]
+usage: tools/baseline_snapshot.sh --config PATH [--out PATH] [--corpus PATH]
+                                  [--binary PATH|NAME] [--nodes N]
+                                  [--ladder-depth N] [--ladder-cap-s N] [--help]
 
 Takes the registered baseline snapshot (docs/decisions.md D-230) and writes the
 record to --out, or to stdout when --out is not given.
 
+--config is REQUIRED and has NO DEFAULT (docs/decisions.md D-329, N-E):
+CLAUDE.md rule 1's fourth clause in its literal form. This script does not
+guess which document a snapshot measures; every caller states it. The whole
+path you give is written into the record's invariant `config` line, so it is
+resolved by THE SAME ONE-BASE RULE as --corpus and --binary below, and its
+whole value -- not only its basename -- is refused if it is not printable
+ASCII with no space.
+
 HOW A RELATIVE PATH IS RESOLVED. THERE IS ONE BASE AND IT IS YOURS.
 
-  Every path YOU pass on the command line -- --out, --corpus, --binary -- is
-  resolved against THE DIRECTORY YOU RAN THIS SCRIPT FROM. Not against the
-  repository root. This script cd's to the repository root before it does
-  anything, and a cd may not redefine what your own words meant.
+  Every path YOU pass on the command line -- --config, --out, --corpus,
+  --binary -- is resolved against THE DIRECTORY YOU RAN THIS SCRIPT FROM. Not
+  against the repository root. This script cd's to the repository root before
+  it does anything, and a cd may not redefine what your own words meant.
 
   This script's OWN defaults are repository paths and are resolved against the
   repository root, because they are the script's words and not yours. They are
-  configs/instrument_v0.toml, the fixture corpus, the opening corpus and
-  target/release/pistol.
+  the fixture corpus, the opening corpus and target/release/pistol --
+  --config has no default to name here (see above).
 
   A --binary with no `/` in it is a bare NAME, not a path: it is resolved by
   PATH at exec time, and PATH is already yours.
 
   WHERE THE TWO READINGS WOULD DISAGREE, THIS SCRIPT REFUSES AND DOES NOT
-  CHOOSE. If a relative --corpus or --binary names an existing file under the
-  repository root and a DIFFERENT existing file under your directory, or names
-  one only under the repository root, you get a named refusal telling you both
-  paths. Pass an absolute path to settle it. Silently preferring either reading
-  is how a record comes to attest a file the caller never named.
+  CHOOSE. If a relative --config, --corpus or --binary names an existing file
+  under the repository root and a DIFFERENT existing file under your
+  directory, or names one only under the repository root, you get a named
+  refusal telling you both paths. Pass an absolute path to settle it. Silently
+  preferring either reading is how a record comes to attest a file the caller
+  never named.
 
 EXIT STATUS. This script declares no VOID class (tools/SHELL_CHECKLIST.md item
 12): 0 is a record written, and every refusal is a FAIL at exit 1, named on
-stderr. Nothing here distinguishes "the answer is no" from "I could not take the
+stderr -- a missing or malformed --config is refused exactly the same way as
+every other precondition this script checks, never a second class of answer.
+Nothing here distinguishes "the answer is no" from "I could not take the
 answer", because this instrument has no answer to give -- it either wrote a
 record or it refused to.
 USAGE
@@ -334,6 +355,7 @@ while [ "$#" -gt 0 ]; do
 	--nodes)
 		argument --nodes "$#" "${2:-}"; NODES="$ARG"; BUDGET_PROVENANCE="OVERRIDE"; shift 2 ;;
 	--corpus) argument --corpus "$#" "${2:-}"; caller_path --corpus "$ARG" read; CORPUS="$ARG"; shift 2 ;;
+	--config) argument --config "$#" "${2:-}"; caller_path --config "$ARG" read; CONFIG="$ARG"; shift 2 ;;
 	--ladder-depth) argument --ladder-depth "$#" "${2:-}"; LADDER_DEPTH="$ARG"; shift 2 ;;
 	--ladder-cap-s) argument --ladder-cap-s "$#" "${2:-}"; LADDER_CAP_S="$ARG"; shift 2 ;;
 	--binary) argument --binary "$#" "${2:-}"; caller_path --binary "$ARG" exec; BINARY="$ARG"; shift 2 ;;
@@ -358,6 +380,24 @@ count() { # flag value -> a named refusal for anything but a bare positive count
 count --nodes "$NODES"
 count --ladder-depth "$LADDER_DEPTH"
 count --ladder-cap-s "$LADDER_CAP_S"
+# N-E (docs/decisions.md D-329): required, no default, no code-side fallback
+# (CLAUDE.md rule 1's fourth clause, literal form). A caller who forgets
+# `--config` is told so BY NAME, before the generic "no config at" refusal
+# below reads as a typo in a path nobody supplied.
+[ -n "$CONFIG" ] || fail "--config is required (no default): pass the document this snapshot measures, e.g. --config configs/instrument_v0.toml"
+# THE WHOLE-PATH GUARD (D-329 condition 2): NOT a reuse of the basename loop
+# below, which only ever sees `\${x##*/}` — MEASURED twice (the round's
+# measurer and its red team) that spelling leaves
+# `configs/spaced dir/instrument_v0.toml` reaching the record at exit 0,
+# because the `config` line writes the WHOLE PATH the caller gave, not a
+# basename. Checked on the value AS GIVEN, before `caller_path` resolution
+# changes what string this variable holds, so the guard's own reason for
+# existing (what reaches the record) is checked against what actually
+# reaches it.
+case "$CONFIG" in
+*[![:print:]]*) fail "the config path \`$CONFIG\` has a character outside printable ASCII, and the whole path is written into the record's invariant \`config\` line" ;;
+*' '*) fail "the config path \`$CONFIG\` has a SPACE, and the whole path is written into a whitespace-delimited field of the record's invariant block, where it would shift every field after it" ;;
+esac
 [ -f "$CONFIG" ] || fail "no config at $CONFIG"
 [ -f "$CORPUS" ] || fail "no corpus at $CORPUS"
 [ -f "$OPENINGS" ] || fail "no opening corpus at $OPENINGS"
@@ -555,10 +595,11 @@ if [ -n "$(git status --porcelain 2>/dev/null || true)" ]; then TREE=dirty; else
 	echo "schema $SCHEMA"
 	echo "revision $REVISION"
 	echo "binary_sha256 $BINARY_SHA256"
-	# `$CONFIG` is a constant of this script and no flag sets it, so it is not
-	# caller-named and the guard above does not cover it. If a `--config` flag is
-	# ever added, this line joins that guard in the same commit: it has the same
-	# shape as the two below and would shift its digest the same way.
+	# `$CONFIG` is now caller-named (N-E, docs/decisions.md D-329) and the
+	# WHOLE PATH reaches this line, not a basename — the whole-path guard
+	# above covers it. `config <path> <sha>` is THREE fields: the digest is
+	# `$3`, not `$4` — that reasoning belongs to the differently shaped
+	# `corpus` line below, which writes a basename plus a `positions` count.
 	echo "config $CONFIG $CONFIG_SHA256"
 	sed 's/^id /engine_id /' "$WORK/id"
 	# `${x##*/}` and NOT `$(basename "$x")`, so the string written here is the

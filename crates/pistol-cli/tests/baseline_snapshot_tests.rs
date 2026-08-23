@@ -101,6 +101,11 @@ fn band_entries() -> (String, String) {
 /// runs in.
 struct Run {
     root: PathBuf,
+    /// `--config`, required with no default (N-E, docs/decisions.md D-329).
+    /// Every `Run` states one, so a test that wants the missing-flag refusal
+    /// uses [`Run::no_config`] rather than an absent field doing it by
+    /// omission.
+    config: Option<PathBuf>,
     corpus: PathBuf,
     binary: PathBuf,
     out: Option<PathBuf>,
@@ -118,6 +123,10 @@ impl Run {
         let dir = scratch(name);
         Self {
             root: repo_root(),
+            // Relative, resolved against whatever `self.root` ends up being
+            // at `go()` time — the real repository root by default, or a
+            // `ScratchRepo`, which copies this exact file in.
+            config: Some(PathBuf::from("configs/instrument_v0.toml")),
             corpus: two_band_corpus(&dir),
             binary: binary.to_path_buf(),
             out: Some(dir.join("record.txt")),
@@ -127,6 +136,17 @@ impl Run {
             mode: None,
             path_prefix: None,
         }
+    }
+
+    fn config(mut self, config: PathBuf) -> Self {
+        self.config = Some(config);
+        self
+    }
+    /// The missing-`--config` refusal class (N-E condition 3, D-329): a
+    /// `Run` that omits the flag entirely rather than naming a bad value.
+    fn no_config(mut self) -> Self {
+        self.config = None;
+        self
     }
 
     fn corpus(mut self, corpus: PathBuf) -> Self {
@@ -176,6 +196,9 @@ impl Run {
             .args(["--ladder-depth", &self.ladder_depth])
             .args(["--binary", self.binary.to_str().expect("utf-8 path")])
             .current_dir(&self.root);
+        if let Some(config) = &self.config {
+            command.args(["--config", config.to_str().expect("utf-8 path")]);
+        }
         if let Some(out) = &self.out {
             command.args(["--out", out.to_str().expect("utf-8 path")]);
         }
@@ -1033,8 +1056,10 @@ fn an_empty_flag_value_is_refused_rather_than_silently_defaulted() {
     let stub = stub_engine("snapshot-empty-flag");
     let dir = scratch("snapshot-empty-flag-run");
     let corpus = two_band_corpus(&dir);
+    let config = repo("configs/instrument_v0.toml");
     let ran = Command::new("bash")
         .arg(repo("tools/baseline_snapshot.sh"))
+        .args(["--config", config.to_str().expect("utf-8 path")])
         .args(["--corpus", corpus.to_str().expect("utf-8 path")])
         .args(["--ladder-depth", "1"])
         .args(["--binary", stub.to_str().expect("utf-8 path")])
@@ -1202,8 +1227,10 @@ fn a_relative_out_lands_in_the_callers_directory_and_not_the_repository_root() {
     let caller = dir.join("caller");
     std::fs::create_dir_all(&caller).expect("the caller's directory is created");
 
+    let config = repo("configs/instrument_v0.toml");
     let ran = Command::new("bash")
         .arg(repo("tools/baseline_snapshot.sh"))
+        .args(["--config", config.to_str().expect("utf-8 path")])
         .args(["--corpus", corpus.to_str().expect("utf-8 path")])
         .args(["--ladder-depth", "1"])
         .args(["--binary", env!("CARGO_BIN_EXE_pistol")])
@@ -1346,9 +1373,12 @@ fn a_relative_out_and_a_relative_corpus_resolve_from_the_same_base() {
     let dir = scratch("snapshot-one-base");
     let stub = stub_engine_in(&dir, "stub-engine");
     two_band_corpus(&dir);
+    let config = repo("configs/instrument_v0.toml");
     let ran = from_directory(
         &dir,
         &[
+            "--config",
+            config.to_str().expect("utf-8 path"),
             "--corpus",
             "./corpus.txt",
             "--binary",
@@ -1484,5 +1514,82 @@ fn the_usage_text_states_the_resolution_base_and_the_exit_status_classes() {
     assert!(
         stdout.contains("no VOID class") && stdout.contains("exit 1"),
         "and answers SHELL_CHECKLIST item 12 by name: {stdout}"
+    );
+    assert!(
+        stdout.contains("--config is REQUIRED and has NO DEFAULT"),
+        "N-E's item-12 sentence names the config refusal by name too: {stdout}"
+    );
+}
+
+/// N-E's FIRST refusal class (docs/decisions.md D-329): `--config` is
+/// required, no default, no code-side fallback.
+#[test]
+fn a_missing_config_flag_is_refused_as_required() {
+    let stub = stub_engine("snapshot-no-config");
+    let stderr = Run::new("snapshot-no-config-run", &stub)
+        .no_config()
+        .refusal();
+    assert!(
+        stderr.contains("--config is required"),
+        "the refusal names the missing flag: {stderr}"
+    );
+    assert!(
+        stderr.contains("no default"),
+        "and says why an inherited value is not an option: {stderr}"
+    );
+}
+
+/// N-E's SECOND refusal class: the WHOLE config path is guarded, not only its
+/// basename — `configs/spaced dir/instrument_v0.toml` is D-329's own named
+/// example of what the basename-loop spelling would miss, since the space
+/// sits in a DIRECTORY component the basename never sees.
+#[test]
+fn a_config_path_with_a_space_in_a_directory_component_is_refused() {
+    let dir = scratch("snapshot-config-space");
+    let spaced = dir.join("spaced dir");
+    std::fs::create_dir_all(&spaced).expect("the spaced directory is created");
+    let config = spaced.join("instrument_v0.toml");
+    std::fs::copy(repo("configs/instrument_v0.toml"), &config)
+        .expect("the committed config copies");
+
+    let stub = stub_engine("snapshot-config-space");
+    let stderr = Run::new("snapshot-config-space-run", &stub)
+        .config(config)
+        .refusal();
+    assert!(
+        stderr.contains("has a SPACE"),
+        "the refusal names what it found: {stderr}"
+    );
+    assert!(
+        stderr.contains("config path"),
+        "and names which flag's value it was: {stderr}"
+    );
+}
+
+/// The control, paired with the test above: the IDENTICAL setup — a fresh
+/// scratch directory, a copied config, a `Run` built the same way — with the
+/// one difference the claim is about (no space in the directory component)
+/// removed. It succeeds, so the refusal above is provably about the space and
+/// not about "a config outside the default location" in general
+/// (tools/SHELL_CHECKLIST.md item 10's coverage rule: a pass must not come
+/// from a guard that refuses everything).
+#[test]
+fn the_same_config_path_shape_without_a_space_is_accepted() {
+    let dir = scratch("snapshot-config-space-control");
+    let unspaced = dir.join("unspaced_dir");
+    std::fs::create_dir_all(&unspaced).expect("the directory is created");
+    let config = unspaced.join("instrument_v0.toml");
+    std::fs::copy(repo("configs/instrument_v0.toml"), &config)
+        .expect("the committed config copies");
+
+    let stub = stub_engine("snapshot-config-space-control");
+    let record = Run::new("snapshot-config-space-control-run", &stub)
+        .config(config)
+        .mode("follow")
+        .record();
+    assert!(
+        invariant(&record).contains("config "),
+        "the same shape of path, without the space, is accepted:\n{}",
+        invariant(&record)
     );
 }
