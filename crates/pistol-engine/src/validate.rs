@@ -79,16 +79,84 @@ impl SearchSection {
             ));
         }
 
-        let CandidatePolicy::Radius { radius } = self.candidate_policy;
-        if radius == 0 || radius > MAX_CANDIDATE_RADIUS {
-            return Err(EngineError::config(
-                "search.candidate_policy.radius",
-                format!("must be in 1..={MAX_CANDIDATE_RADIUS}, got {radius}"),
-            ));
+        match &self.candidate_policy {
+            CandidatePolicy::Radius { radius } => {
+                check_radius("search.candidate_policy.radius", *radius)?;
+            }
+            CandidatePolicy::Staged {
+                quiet_radius,
+                quiet_top_k,
+                widen_schedule,
+                tier_t_own_count,
+                tier_t_opponent_count,
+            } => {
+                check_radius("search.candidate_policy.quiet_radius", *quiet_radius)?;
+                if *quiet_top_k == 0 {
+                    return Err(EngineError::config(
+                        "search.candidate_policy.quiet_top_k",
+                        format!("must be at least 1, got {quiet_top_k}"),
+                    ));
+                }
+                // Stage Q's own schema (`U3_tier_t.md` §10), validated for
+                // completeness even though this D-scope's search does not
+                // read the schedule (docs/decisions.md D-353): non-empty,
+                // strictly increasing, and every entry strictly greater than
+                // `quiet_top_k` — the cross-field rule revision 3's validator
+                // lacked, which let `quiet_top_k = 64` with `[32]` pass as a
+                // widening that NARROWS.
+                if widen_schedule.is_empty() {
+                    return Err(EngineError::config(
+                        "search.candidate_policy.widen_schedule",
+                        "must be non-empty",
+                    ));
+                }
+                let mut previous = *quiet_top_k;
+                for &boundary in widen_schedule {
+                    if boundary <= previous {
+                        return Err(EngineError::config(
+                            "search.candidate_policy.widen_schedule",
+                            format!(
+                                "must be strictly increasing and every entry strictly greater \
+                                 than quiet_top_k ({quiet_top_k}), got {boundary} after {previous}"
+                            ),
+                        ));
+                    }
+                    previous = boundary;
+                }
+                for (key, count) in [
+                    ("search.candidate_policy.tier_t_own_count", tier_t_own_count),
+                    (
+                        "search.candidate_policy.tier_t_opponent_count",
+                        tier_t_opponent_count,
+                    ),
+                ] {
+                    if !(2..=3).contains(count) {
+                        return Err(EngineError::config(
+                            key,
+                            format!(
+                                "must be 2 or 3 — LAW-SUPPORT's threshold reading admits no \
+                                 other count (U3_tier_t.md §6.1), got {count}"
+                            ),
+                        ));
+                    }
+                }
+            }
         }
 
         Ok(())
     }
+}
+
+/// The bound every candidate-policy radius shares, named once so the two
+/// callers (`Radius`'s own, `Staged`'s `quiet_radius`) cannot drift apart.
+fn check_radius(key: &'static str, radius: u32) -> Result<(), EngineError> {
+    if radius == 0 || radius > MAX_CANDIDATE_RADIUS {
+        return Err(EngineError::config(
+            key,
+            format!("must be in 1..={MAX_CANDIDATE_RADIUS}, got {radius}"),
+        ));
+    }
+    Ok(())
 }
 
 impl EvalSection {

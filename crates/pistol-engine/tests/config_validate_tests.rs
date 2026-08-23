@@ -179,3 +179,124 @@ fn replacing_in(document: &str, from: &str, to: &str) -> String {
     );
     document.replace(from, to)
 }
+
+// ---- CandidatePolicy::Staged (`U3_tier_t.md` §10) --------------------------
+
+#[test]
+fn a_staged_document_with_every_key_in_range_is_accepted() {
+    let config = accepted(common::VALID_STAGED);
+    let pistol_engine::config::CandidatePolicy::Staged {
+        quiet_radius,
+        quiet_top_k,
+        widen_schedule,
+        tier_t_own_count,
+        tier_t_opponent_count,
+    } = config.search.candidate_policy
+    else {
+        panic!("the committed staged fixture must parse as Staged");
+    };
+    assert_eq!(quiet_radius, 2);
+    assert_eq!(quiet_top_k, 16);
+    assert_eq!(widen_schedule, vec![32]);
+    assert_eq!(tier_t_own_count, 2);
+    assert_eq!(tier_t_opponent_count, 3);
+}
+
+#[test]
+fn a_staged_quiet_radius_out_of_range_is_refused() {
+    for quiet_radius in [0, MAX_CANDIDATE_RADIUS + 1] {
+        let (key, why) = rejection(&common::replacing_staged(
+            "quiet_radius = 2",
+            &format!("quiet_radius = {quiet_radius}"),
+        ));
+        assert_eq!(key, "search.candidate_policy.quiet_radius");
+        assert!(
+            why.contains("1..="),
+            "quiet_radius {quiet_radius} gave: {why}"
+        );
+    }
+}
+
+#[test]
+fn a_staged_quiet_top_k_of_zero_is_refused() {
+    let (key, why) = rejection(&common::replacing_staged(
+        "quiet_top_k = 16",
+        "quiet_top_k = 0",
+    ));
+    assert_eq!(key, "search.candidate_policy.quiet_top_k");
+    assert!(why.contains("at least 1"), "unexpected reason: {why}");
+}
+
+#[test]
+fn an_empty_widen_schedule_is_refused() {
+    let (key, why) = rejection(&common::replacing_staged(
+        "widen_schedule = [32]",
+        "widen_schedule = []",
+    ));
+    assert_eq!(key, "search.candidate_policy.widen_schedule");
+    assert!(why.contains("non-empty"), "unexpected reason: {why}");
+}
+
+/// `quiet_top_k = 64` with `widen_schedule = [32]` passes a naive
+/// "non-empty and strictly increasing" check while describing a widening
+/// that NARROWS — the cross-field rule revision 3's validator lacked
+/// (`U3_tier_t.md` §10).
+#[test]
+fn a_widen_schedule_entry_that_does_not_exceed_quiet_top_k_is_refused() {
+    let document = common::replacing_staged("quiet_top_k = 16", "quiet_top_k = 64");
+    let (key, why) = rejection(&document);
+    assert_eq!(key, "search.candidate_policy.widen_schedule");
+    assert!(
+        why.contains("greater than quiet_top_k"),
+        "unexpected reason: {why}"
+    );
+}
+
+#[test]
+fn a_widen_schedule_that_does_not_strictly_increase_is_refused() {
+    let document = common::replacing_staged("widen_schedule = [32]", "widen_schedule = [40, 40]");
+    let (key, why) = rejection(&document);
+    assert_eq!(key, "search.candidate_policy.widen_schedule");
+    assert!(
+        why.contains("strictly increasing"),
+        "unexpected reason: {why}"
+    );
+}
+
+#[test]
+fn staged_tier_t_counts_outside_two_or_three_are_refused() {
+    for (needle, key) in [
+        (
+            "tier_t_own_count = 2",
+            "search.candidate_policy.tier_t_own_count",
+        ),
+        (
+            "tier_t_opponent_count = 3",
+            "search.candidate_policy.tier_t_opponent_count",
+        ),
+    ] {
+        for bad in [0, 1, 4] {
+            let replacement = format!("{} = {bad}", needle.split(" = ").next().unwrap());
+            let (got_key, why) = rejection(&common::replacing_staged(needle, &replacement));
+            assert_eq!(got_key, key, "{needle} -> {replacement}");
+            assert!(why.contains("2 or 3"), "unexpected reason: {why}");
+        }
+    }
+}
+
+#[test]
+fn staged_tier_t_counts_of_two_or_three_are_accepted() {
+    for own in [2, 3] {
+        for opponent in [2, 3] {
+            let document = replacing_in(
+                &common::replacing_staged(
+                    "tier_t_own_count = 2",
+                    &format!("tier_t_own_count = {own}"),
+                ),
+                "tier_t_opponent_count = 3",
+                &format!("tier_t_opponent_count = {opponent}"),
+            );
+            accepted(&document);
+        }
+    }
+}

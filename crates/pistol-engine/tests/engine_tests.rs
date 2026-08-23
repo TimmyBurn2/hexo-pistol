@@ -6,7 +6,7 @@
 
 mod common;
 
-use common::{VALID, buildable, replacing};
+use common::{VALID, VALID_STAGED, buildable, replacing};
 use pistol_core::{Coord, Phase, Player, Turn};
 use pistol_engine::{Budget, Engine, EngineError, EngineMode, Pistol, PositionSpec, ScoreKind};
 
@@ -27,6 +27,13 @@ fn instrument() -> Pistol {
 /// The same, in play mode.
 fn play() -> Pistol {
     engine(&replacing("radius = 3", "radius = 1").replace("\"instrument\"", "\"play\""))
+}
+
+/// An instrument-mode engine under `CandidatePolicy::Staged`
+/// (`U3_tier_t.md` §10), for the one test that checks the config layer's
+/// mapping reaches a working search.
+fn staged() -> Pistol {
+    engine(VALID_STAGED)
 }
 
 /// A position with a mate in one for the side to move: five in a row, one end
@@ -69,6 +76,37 @@ fn go_answers_with_the_move_and_the_evidence() {
     assert_eq!(outcome.info.pv.first(), Some(&outcome.best));
     assert_eq!(outcome.info.depth_turns, 1);
     assert!(outcome.info.nodes >= 1, "a search visits nodes");
+}
+
+/// `instance.rs::search_policy`'s `Staged` arm reaches a working search: the
+/// config layer's mapping from `pistol_engine::config::CandidatePolicy::Staged`
+/// to `pistol_search::CandidatePolicy::Staged(StagedParams)` is exercised
+/// end-to-end, not only unit-checked (docs/decisions.md D-353).
+#[test]
+fn a_staged_engine_finds_the_same_mate_a_radius_engine_does() {
+    let mut engine = staged();
+    engine
+        .set_position(&mate_in_one())
+        .expect("a legal position");
+    let outcome = engine
+        .go(Budget::DepthTurns(1))
+        .expect("an ongoing position");
+
+    assert_eq!(
+        outcome.best,
+        Turn::Single(Coord::new(5, 0)),
+        "the one cell that completes six ends the turn (rule 4), under Staged exactly as \
+         under Radius"
+    );
+    assert_eq!(
+        pistol_engine::classify(outcome.info.score),
+        ScoreKind::MateIn(1)
+    );
+    assert!(
+        outcome.info.stages.win_now >= 1,
+        "the staged node protocol's own counters must have fired: {:?}",
+        outcome.info.stages
+    );
 }
 
 #[test]

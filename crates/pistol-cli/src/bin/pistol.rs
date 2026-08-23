@@ -152,12 +152,30 @@ fn echoable_config(stated: &str) -> Result<PathBuf, String> {
 /// NOT: it refuses movetime by name, and its handshake is pinned byte-for-byte
 /// against the pre-WP-1.4 revision.
 fn identity_lines(path: &Path, config: &Config) -> Vec<String> {
-    let pistol_engine::config::CandidatePolicy::Radius { radius } = config.search.candidate_policy;
+    // `id candidate_policy radius <n>` under Radius, unchanged. Under Staged,
+    // `id candidate_policy staged quiet_radius <n> quiet_top_k <k>` — one
+    // line, whitespace-delimited, multi-token value, the same shape
+    // `id budgets depth_turns nodes` already establishes (docs/decisions.md
+    // D-230; `U2_node_protocol.md` §U2-M item 2). `tier_t_own_count`,
+    // `tier_t_opponent_count` and `widen_schedule` do not ride on this line —
+    // U2-M item 2 names only `quiet_radius` and `quiet_top_k`.
+    let candidate_policy_line = match &config.search.candidate_policy {
+        pistol_engine::config::CandidatePolicy::Radius { radius } => {
+            format!("candidate_policy radius {radius}")
+        }
+        pistol_engine::config::CandidatePolicy::Staged {
+            quiet_radius,
+            quiet_top_k,
+            ..
+        } => {
+            format!("candidate_policy staged quiet_radius {quiet_radius} quiet_top_k {quiet_top_k}")
+        }
+    };
     let mut lines = vec![
         format!("config {}", path.display()),
         format!("eval {}", config.eval.backend.token()),
         format!("tt_bytes {}", config.search.tt_bytes),
-        format!("candidate_policy radius {radius}"),
+        candidate_policy_line,
     ];
     if config.engine.mode == pistol_engine::EngineMode::Play {
         lines.push(format!(

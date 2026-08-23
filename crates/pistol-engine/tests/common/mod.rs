@@ -38,6 +38,46 @@ pub fn replacing(from: &str, to: &str) -> String {
     VALID.replace(from, to)
 }
 
+/// A complete, in-range, instrument-mode document under
+/// `CandidatePolicy::Staged` (`U3_tier_t.md` §10's schema).
+pub const VALID_STAGED: &str = r#"
+schema_version = 2
+
+[engine]
+mode = "instrument"
+
+[search]
+tt_bytes = 1048576
+
+[search.candidate_policy]
+kind = "staged"
+quiet_radius = 2
+quiet_top_k = 16
+widen_schedule = [32]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+movetime_epsilon_ms = 50
+"#;
+
+/// [`VALID_STAGED`] with one substring rewritten.
+pub fn replacing_staged(from: &str, to: &str) -> String {
+    assert!(
+        VALID_STAGED.contains(from),
+        "staged fixture has no `{from}` to replace"
+    );
+    VALID_STAGED.replace(from, to)
+}
+
 /// [`VALID`] with every line whose trimmed form starts with `prefix` removed.
 pub fn without_key(prefix: &str) -> String {
     let kept: Vec<&str> = VALID

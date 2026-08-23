@@ -155,6 +155,31 @@ pub enum CandidatePolicy {
         /// Hex distance from the nearest stone, in `1..=`[`MAX_CANDIDATE_RADIUS`].
         radius: u32,
     },
+    /// Threat-first staged pair generation (docs/decisions.md D-310;
+    /// `docs/experiments/U3_tier_t.md` §10 is this document's schema, the one
+    /// place the count of staged documents and their shape is stated).
+    #[serde(rename = "staged")]
+    Staged {
+        /// Hex distance the fallback's quiet ball reaches, in
+        /// `1..=`[`MAX_CANDIDATE_RADIUS`].
+        quiet_radius: u32,
+        /// Stage Q's own knob: the first batch's quiet-cell count. Validated
+        /// for schema completeness against `U3_tier_t.md` §10; this D-scope's
+        /// search does not read it (docs/decisions.md D-353 — stage Q's
+        /// widening schedule is not armed).
+        quiet_top_k: u64,
+        /// Stage Q's own knob: cumulative quiet-cell batch boundaries after
+        /// the first, strictly increasing, each greater than `quiet_top_k`.
+        /// Validated for schema completeness; not read by this D-scope's
+        /// search (docs/decisions.md D-353).
+        widen_schedule: Vec<u64>,
+        /// `LAW-SUPPORT`'s threshold for the side to move's own qualifying
+        /// windows: 2 or 3 (`U3_tier_t.md` §6.1, the THRESHOLD reading).
+        tier_t_own_count: u8,
+        /// `LAW-SUPPORT`'s threshold for the opponent's qualifying windows:
+        /// 2 or 3.
+        tier_t_opponent_count: u8,
+    },
 }
 
 /// `[eval]`.

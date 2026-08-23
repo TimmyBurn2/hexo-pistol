@@ -161,13 +161,28 @@ fn build_eval(config: &Config) -> Result<Box<dyn Eval>, EngineError> {
 
 /// The search's candidate policy, from the config's.
 ///
-/// Two enums with one variant each, and they are deliberately different types:
-/// one is a document's vocabulary and the other is a search's. The radii are
-/// never compared with the rules' radius-8 legal region (CLAUDE.md rule 2,
-/// docs/decisions.md D-20).
+/// Two enums, and they are deliberately different types: one is a document's
+/// vocabulary and the other is a search's. The radii are never compared with
+/// the rules' radius-8 legal region (CLAUDE.md rule 2, docs/decisions.md
+/// D-20). Under `Staged`, `quiet_top_k` and `widen_schedule` are validated at
+/// the config layer (`validate.rs`) for schema completeness against
+/// `U3_tier_t.md` §10 and go no further — `pistol_search::StagedParams`
+/// deliberately does not carry them, because this D-scope's search does not
+/// arm stage Q's widening schedule (docs/decisions.md D-353).
 fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
-    match *policy {
-        CandidatePolicy::Radius { radius } => SearchCandidatePolicy::Radius { radius },
+    match policy {
+        CandidatePolicy::Radius { radius } => SearchCandidatePolicy::Radius { radius: *radius },
+        CandidatePolicy::Staged {
+            quiet_radius,
+            tier_t_own_count,
+            tier_t_opponent_count,
+            quiet_top_k: _,
+            widen_schedule: _,
+        } => SearchCandidatePolicy::Staged(pistol_search::StagedParams {
+            quiet_radius: *quiet_radius,
+            tier_t_own_count: *tier_t_own_count,
+            tier_t_opponent_count: *tier_t_opponent_count,
+        }),
     }
 }
 
@@ -195,8 +210,11 @@ fn stop_for(budget: Budget) -> Result<Stop, EngineError> {
 /// Each one lands on the variant an operator can act on: a parameter names the
 /// config key that set it (docs/decisions.md D-10, D-24), a depth past the
 /// horizon names the budget key that asked for it, a candidate policy that
-/// offers nothing names its own radius, and a root half way through a turn is a
-/// position with nothing to search rather than an illegal one.
+/// offers nothing names `search.candidate_policy` itself — policy-agnostic,
+/// since `SearchError::NoCandidates` carries the whole policy and not a bare
+/// radius (docs/decisions.md D-353, U2-Z item 8) — and a root half way
+/// through a turn is a position with nothing to search rather than an
+/// illegal one.
 ///
 /// A decided root is the one case that cannot be reached: `set_position` refuses
 /// a won position and a new game is not one, so the search seeing a decided root
@@ -215,7 +233,7 @@ fn from_search(error: SearchError) -> EngineError {
             EngineError::config("budget.depth_turns", other.to_string())
         }
         other @ SearchError::NoCandidates { .. } => {
-            EngineError::config("search.candidate_policy.radius", other.to_string())
+            EngineError::config("search.candidate_policy", other.to_string())
         }
     }
 }
