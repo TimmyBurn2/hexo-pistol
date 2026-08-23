@@ -94,10 +94,15 @@ impl Searcher {
     /// anyone, and a search that quietly repaired one would be the silent
     /// fallback CLAUDE.md rule 3 forbids.
     pub fn new(params: SearchParams, eval: Box<dyn Eval>) -> Result<Searcher, SearchError> {
-        let CandidatePolicy::Radius { radius } = params.candidate_policy;
+        let (key, radius) = match params.candidate_policy {
+            CandidatePolicy::Radius { radius } => ("search.candidate_policy.radius", radius),
+            CandidatePolicy::Staged(staged) => {
+                ("search.candidate_policy.quiet_radius", staged.quiet_radius)
+            }
+        };
         if radius == 0 {
             return Err(SearchError::params(
-                "search.candidate_policy.radius",
+                key,
                 "must be at least 1: a radius of 0 reaches only occupied cells",
             ));
         }
@@ -111,7 +116,7 @@ impl Searcher {
         // legal region (docs/decisions.md D-20, D-77).
         if i16::try_from(radius).is_err() {
             return Err(SearchError::params(
-                "search.candidate_policy.radius",
+                key,
                 format!(
                     "must be at most {}: a ball wider than a coordinate can step is not a ball, \
                      got {radius}",
@@ -119,10 +124,33 @@ impl Searcher {
                 ),
             ));
         }
+        if let CandidatePolicy::Staged(staged) = params.candidate_policy {
+            for (key, count) in [
+                (
+                    "search.candidate_policy.tier_t_own_count",
+                    staged.tier_t_own_count,
+                ),
+                (
+                    "search.candidate_policy.tier_t_opponent_count",
+                    staged.tier_t_opponent_count,
+                ),
+            ] {
+                if !(2..=3).contains(&count) {
+                    return Err(SearchError::params(
+                        key,
+                        format!(
+                            "must be 2 or 3 — LAW-SUPPORT's threshold reading admits no other \
+                             count (U3_tier_t.md §6.1), got {count}"
+                        ),
+                    ));
+                }
+            }
+        }
+        let tracks_threats = matches!(params.candidate_policy, CandidatePolicy::Staged(_));
         Ok(Searcher {
             params,
             table: Table::new(params.tt_bytes)?,
-            position: Position::new(eval),
+            position: Position::new(eval, tracks_threats),
         })
     }
 
@@ -308,11 +336,10 @@ impl Searcher {
         if state.phase() != Phase::First {
             return Err(SearchError::TurnInProgress { turn: state.turn() });
         }
-        let CandidatePolicy::Radius { radius } = self.params.candidate_policy;
         if candidate_cells(state.board(), self.params.candidate_policy).is_empty() {
             return Err(SearchError::NoCandidates {
                 turn: state.turn(),
-                radius,
+                policy: self.params.candidate_policy,
             });
         }
         match stop {

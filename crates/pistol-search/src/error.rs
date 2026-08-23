@@ -14,6 +14,8 @@ use std::fmt;
 
 use pistol_core::Player;
 
+use crate::params::CandidatePolicy;
+
 /// Every way the search refuses to proceed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SearchError {
@@ -57,11 +59,19 @@ pub enum SearchError {
     /// stone, and is therefore in every policy's reach. It is stated anyway
     /// because "cannot happen" is a claim about today's policies, and the next
     /// one to arrive would otherwise fail by returning no move.
+    ///
+    /// **Policy-agnostic by construction** (U2-Z item 8, `U3_tier_t.md` §U3-T's
+    /// `no_candidates_under_staged_is_refused_by_a_policy_agnostic_error`): a
+    /// `CandidatePolicy::Staged` has three radius-shaped numbers of its own
+    /// (`quiet_radius` and the two `tier_t_*_count` thresholds), and a variant
+    /// carrying a bare `radius: u32` field would either lie about which of
+    /// them came up empty or force an invented one. The whole policy is
+    /// carried instead, and [`fmt::Display`] reads it.
     NoCandidates {
         /// The turn the mover owes a stone on.
         turn: u32,
-        /// The policy radius that came up empty.
-        radius: u32,
+        /// The candidate policy that came up empty.
+        policy: CandidatePolicy,
     },
 }
 
@@ -97,9 +107,9 @@ impl fmt::Display for SearchError {
                     "depth {turns} turns is past this build's horizon of {max}"
                 )
             }
-            SearchError::NoCandidates { turn, radius } => write!(
+            SearchError::NoCandidates { turn, policy } => write!(
                 f,
-                "the radius-{radius} candidate policy offers no cell on turn {turn}, \
+                "the {policy:?} candidate policy offers no cell on turn {turn}, \
                  though the rules admit a move"
             ),
         }

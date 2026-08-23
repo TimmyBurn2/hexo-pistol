@@ -28,6 +28,10 @@ pub mod info;
 pub mod params;
 pub mod score;
 pub mod search;
+// Public per docs/decisions.md D-353 (`U2_node_protocol.md` §5.35, U2-Z item
+// 17): the one entry point the differential gate's expensive half drives from
+// an integration test. A permanent surface commitment.
+pub mod staged;
 pub mod stop;
 pub mod tt;
 
@@ -43,7 +47,7 @@ pub use candidates::candidate_cells;
 pub use error::SearchError;
 pub use fallback::{FallbackAnswer, fallback_turn};
 pub use info::{Provenance, SearchInfo, SearchOutcome};
-pub use params::{CandidatePolicy, SearchParams};
+pub use params::{CandidatePolicy, SearchParams, StagedParams};
 pub use score::{MATE, ScoreKind};
 pub use search::{MAX_DEPTH_TURNS, Searcher};
 pub use stop::{NODE_CHECK_INTERVAL, Stop};

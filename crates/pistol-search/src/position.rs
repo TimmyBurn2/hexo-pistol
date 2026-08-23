@@ -1,10 +1,23 @@
-//! The position the search walks: a game and an evaluation, kept in step.
+//! The position the search walks: a game, an evaluation and a threat state,
+//! kept in step.
 //!
 //! `GameState` moves the stone and `Eval` accounts for it, and the two are only
 //! correct together — an eval updated for a stone the state refused, or a stone
 //! placed without telling the eval, is the drift docs/decisions.md D-41 names
-//! the seam for. So they are moved from one place, here, and the search never
-//! holds either of them alone.
+//! the seam for. WP-1.5b adds a third member on the same terms (U2-Z item 6, an
+//! amendment to D-41): under [`crate::params::CandidatePolicy::Staged`], a
+//! [`ThreatState`] is carried and kept in step the same way, because the node
+//! protocol reads it at every node the search visits. So all three are moved
+//! from one place, here, and the search never holds any of them alone.
+//!
+//! # `Option`, not a bare field
+//!
+//! Under `CandidatePolicy::Radius` nothing consults the threat state, and a
+//! radius search paying to maintain one it never reads would make the SPRT's
+//! incumbent slower for no reason — a measurement hazard in the direction that
+//! flatters the change under test (`U2_node_protocol.md` §2.1). Whether this
+//! position tracks one is fixed at construction from the policy the searcher
+//! was built with, never per-call.
 //!
 //! # Failure
 //!
@@ -12,19 +25,27 @@
 //! about cells it believes are legal and would rather hear that it was wrong.
 //! [`Position::undo`] cannot fail from a search: the search takes back what it
 //! just placed, so a refusal there is a broken invariant and panics with
-//! [`POSITION_DESYNC`].
+//! [`POSITION_DESYNC`]. The threat state's own desync (`THREAT_DESYNC`) fires
+//! from inside `pistol_solver` on the same class of caller bug, through the
+//! same `apply`/`undo` calls this module makes.
 
 use pistol_core::{Board, Coord, CoreError, GameState, Player, PlyOutcome};
 use pistol_eval::Eval;
+use pistol_solver::ThreatState;
 
 /// Named invariant: the game and the evaluation disagree about what is on the
 /// board.
 pub const POSITION_DESYNC: &str = "POSITION_DESYNC";
 
-/// A game in progress and the evaluation of it.
+/// A game in progress, the evaluation of it, and — under `Staged` — the threat
+/// state.
 pub struct Position {
     state: GameState,
     eval: Box<dyn Eval>,
+    /// `Some` exactly when this position was built to track it
+    /// (`CandidatePolicy::Staged`); `None` under `Radius`, where nothing reads
+    /// it.
+    threats: Option<ThreatState>,
     /// The stones this search put down, newest last.
     ///
     /// Not a second copy of the game: it is what the *evaluation* has to be told
@@ -36,30 +57,46 @@ pub struct Position {
 }
 
 impl Position {
-    /// A new game and an empty evaluation of it.
-    pub fn new(eval: Box<dyn Eval>) -> Position {
+    /// A new game, an empty evaluation of it, and — if `tracks_threats` — an
+    /// empty threat state.
+    ///
+    /// `tracks_threats` is the caller's `CandidatePolicy::Staged` test, made
+    /// once at construction rather than read from a policy this type does not
+    /// hold: [`crate::search::Searcher::new`] is the one caller and it already
+    /// knows its own policy.
+    pub fn new(eval: Box<dyn Eval>, tracks_threats: bool) -> Position {
         Position {
             state: GameState::new_game(),
             eval,
+            threats: tracks_threats.then(ThreatState::new),
             placed: Vec::new(),
         }
     }
 
-    /// Take up a position: unwind the evaluation to empty, then rebuild it over
-    /// the new stones.
+    /// Take up a position: unwind the evaluation (and the threat state, if
+    /// tracked) to empty, then rebuild both over the new stones.
     ///
     /// Unwinding rather than rebuilding from nothing is what the trait promises
     /// — an unwound eval is indistinguishable from a fresh one, whatever order
     /// the stones came off in (docs/decisions.md D-61, D-62) — and it keeps this
     /// from needing a way to construct a backend it only knows as `dyn Eval`.
+    /// The threat state is simply replaced: `ThreatState::new` is O(1) and its
+    /// own `apply` is what rebuilds it, in the same loop as the eval — O(stones
+    /// × 18) once per search, per `U2_node_protocol.md` §2.1.
     pub fn reset_to(&mut self, state: &GameState) {
         let stones: Vec<(Coord, Player)> = self.state.board().stones().collect();
         for (at, player) in stones {
             self.eval.undo(at, player);
         }
+        if self.threats.is_some() {
+            self.threats = Some(ThreatState::new());
+        }
         self.state = state.clone();
         for (at, player) in self.state.board().stones() {
             self.eval.apply(at, player);
+            if let Some(threats) = &mut self.threats {
+                threats.apply(at, player);
+            }
         }
         self.placed.clear();
     }
@@ -103,6 +140,9 @@ impl Position {
         let mover = self.state.to_move();
         let outcome = self.state.place(at)?;
         self.eval.apply(at, mover);
+        if let Some(threats) = &mut self.threats {
+            threats.apply(at, mover);
+        }
         self.placed.push((at, mover));
         Ok(outcome)
     }
@@ -129,5 +169,28 @@ impl Position {
              game took back {taken}"
         );
         self.eval.undo(at, player);
+        if let Some(threats) = &mut self.threats {
+            threats.undo(at, player);
+        }
+    }
+
+    /// The three things [`crate::staged::staged_candidates`] needs, handed out
+    /// together (`U2_node_protocol.md` §5.35: "one accessor, so the three
+    /// cannot be taken apart at a call site and drift").
+    ///
+    /// # Panics
+    ///
+    /// If this position was not built to track threats (`tracks_threats` was
+    /// `false` at [`Position::new`]) — a caller reaching for the staged
+    /// generator under `CandidatePolicy::Radius` is a policy-dispatch bug, not
+    /// operator input.
+    pub(crate) fn staged_context(&mut self) -> (&GameState, &ThreatState, &mut dyn Eval) {
+        let threats = self.threats.as_ref().unwrap_or_else(|| {
+            panic!(
+                "pistol-search invariant {POSITION_DESYNC}: staged_context called on a position \
+                 that was not built to track threats"
+            )
+        });
+        (&self.state, threats, self.eval.as_mut())
     }
 }

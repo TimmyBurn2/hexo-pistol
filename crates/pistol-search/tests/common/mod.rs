@@ -24,7 +24,8 @@ use std::path::PathBuf;
 
 use pistol_core::{Axis, Coord, GameState, Player};
 use pistol_eval::{HandcraftedV0, Weights};
-use pistol_search::{CandidatePolicy, SearchParams, Searcher};
+use pistol_search::{CandidatePolicy, SearchParams, Searcher, StagedParams};
+use pistol_solver::ThreatState;
 
 /// The committed weight table, loaded. A failure here is a broken contract
 /// file, not a broken test.
@@ -58,6 +59,53 @@ pub fn searcher(radius: u32) -> Searcher {
         Box::new(HandcraftedV0::new(committed_weights())),
     )
     .expect("test search parameters must be accepted")
+}
+
+/// `CandidatePolicy::Staged` search parameters, everything stated (CLAUDE.md
+/// rule 1): no test inherits a value from anywhere but its own body.
+pub fn staged_params(
+    quiet_radius: u32,
+    tier_t_own_count: u8,
+    tier_t_opponent_count: u8,
+    tt_bytes: u64,
+) -> SearchParams {
+    SearchParams {
+        tt_bytes,
+        candidate_policy: CandidatePolicy::Staged(StagedParams {
+            quiet_radius,
+            tier_t_own_count,
+            tier_t_opponent_count,
+        }),
+    }
+}
+
+/// A searcher under `CandidatePolicy::Staged`, over the committed weights.
+pub fn staged_searcher(
+    quiet_radius: u32,
+    tier_t_own_count: u8,
+    tier_t_opponent_count: u8,
+) -> Searcher {
+    Searcher::new(
+        staged_params(
+            quiet_radius,
+            tier_t_own_count,
+            tier_t_opponent_count,
+            SMALL_TT,
+        ),
+        Box::new(HandcraftedV0::new(committed_weights())),
+    )
+    .expect("test staged parameters must be accepted")
+}
+
+/// A [`ThreatState`] matching `state`, built by replaying the same stones —
+/// the same D-41-shaped construction `Position::reset_to` does internally,
+/// available here for a test that wants the threat state alone.
+pub fn threats_for(state: &GameState) -> ThreatState {
+    let mut threats = ThreatState::new();
+    for (at, player) in state.board().stones() {
+        threats.apply(at, player);
+    }
+    threats
 }
 
 /// A position, stated as the stones each side holds.

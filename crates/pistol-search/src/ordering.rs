@@ -161,7 +161,7 @@ mod tests {
     /// an unconditional `cells.insert(0, best)` makes this test red.
     #[test]
     fn a_table_move_that_is_not_a_candidate_is_dropped_rather_than_played() {
-        let mut position = Position::new(ByQ::boxed());
+        let mut position = Position::new(ByQ::boxed(), false);
         let candidates = [Coord::new(0, 0), Coord::new(1, 0), Coord::new(2, 0)];
         // By `ByQ`, q ascending is score ascending, so the sorted order is the
         // reverse of the ascending input `order` requires.

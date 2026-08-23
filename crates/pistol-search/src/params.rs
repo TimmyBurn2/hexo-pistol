@@ -20,7 +20,7 @@
 
 /// How the search chooses which cells to consider.
 ///
-/// One kind today. It is an enum rather than a bare number so that Stage 1's
+/// Two kinds. It is an enum rather than a bare number so that Stage 1's
 /// threat-first generator is an added variant rather than a changed signature
 /// (docs/ROADMAP.md).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,6 +33,40 @@ pub enum CandidatePolicy {
         /// the first node.
         radius: u32,
     },
+    /// Threat-first staged pair generation (docs/decisions.md D-310;
+    /// docs/ROADMAP.md WP-1.5b): the node protocol in [`crate::staged`],
+    /// selecting Tier F (forced) and Tier T (`LAW-SUPPORT`-qualified) at every
+    /// node in place of the radius ball. Stage Q, the quiet tier beyond Tier T,
+    /// is deferred (`docs/experiments/WPQ_seed.md`, D-315) — this D-scope ships
+    /// stages F and T only.
+    Staged(StagedParams),
+}
+
+/// The parameters `CandidatePolicy::Staged` carries.
+///
+/// Deliberately narrower than the config document's `[search.candidate_policy]`
+/// table (`U3_tier_t.md` §10), which also states `quiet_top_k` and
+/// `widen_schedule` — those two govern stage Q's widening schedule, which this
+/// D-scope does not implement (§1 above; `WPQ_seed.md`). Carrying them here
+/// unused would be dead weight on the search's own hot-path type for a
+/// mechanism that does not run; they are validated at the config layer
+/// (`pistol-engine`) for schema completeness and go no further. **This is an
+/// IMPL-time reading of an OPEN question the design left the architect's**
+/// (`U3_tier_t.md` §U3-Z: "whether the D-scope shipped surface keeps those two
+/// keys at all is OPEN") — WP-1.5c is where stage Q, and therefore where these
+/// two keys' consumption, is arms.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct StagedParams {
+    /// Hex distance the fallback's quiet ball reaches (docs/decisions.md
+    /// U2-Z item 8: "the fallback under Staged reuses the `quiet_radius`
+    /// ball"). At least 1, same bound as [`CandidatePolicy::Radius`]'s radius.
+    pub quiet_radius: u32,
+    /// `LAW-SUPPORT`'s threshold for the side to move's own qualifying
+    /// windows: 2 or 3 (`U3_tier_t.md` §6.1, the THRESHOLD reading — own
+    /// windows qualify at count `>= tier_t_own_count`).
+    pub tier_t_own_count: u8,
+    /// `LAW-SUPPORT`'s threshold for the opponent's qualifying windows: 2 or 3.
+    pub tier_t_opponent_count: u8,
 }
 
 /// Everything the search needs that is not the position.

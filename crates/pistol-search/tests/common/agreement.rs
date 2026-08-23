@@ -128,7 +128,12 @@ impl Agreement {
             name: self.name.clone(),
             state: self.root.clone(),
         };
-        let CandidatePolicy::Radius { radius } = self.policy;
+        // This oracle module is CandidatePolicy::Radius-only (D-106; see
+        // `reference.rs::check_root`'s comment) — `Agreement` is built only by
+        // `agreement()` above, which always constructs a `Radius` policy.
+        let CandidatePolicy::Radius { radius } = self.policy else {
+            panic!("Agreement::policy is always Radius; agreement() never builds a Staged one")
+        };
         let outcome = search_only(&fixture, self.depth_turns, radius, tt_bytes, weights);
         let value = self.reference.values.get(&outcome.best).unwrap_or_else(|| {
             panic!(

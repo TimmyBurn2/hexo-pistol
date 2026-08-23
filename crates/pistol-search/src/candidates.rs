@@ -30,15 +30,33 @@ use crate::params::CandidatePolicy;
 /// A radius of zero reaches only the stones themselves, which are occupied, so
 /// it yields nothing. [`crate::Searcher::new`] refuses that radius by name; this
 /// function answers the question it was asked.
+///
+/// # `CandidatePolicy::Staged`
+///
+/// Answers about the **quiet ball alone** — `within_radius(board,
+/// quiet_radius)` — and not about the node protocol's actual per-node
+/// candidate set, which [`crate::staged::staged_candidates`] computes and this
+/// function cannot express (it takes no threat state). This is deliberate and
+/// named (`U2_node_protocol.md` §5.35, U2-Z item 21): the two callers that
+/// reach this function under `Staged` — [`crate::fallback::fallback_turn`]
+/// (U2-Z item 8) and [`crate::search::Searcher::check_root`]'s no-candidates
+/// check — both need only a bounded, threat-state-free reachability answer,
+/// never the search's real per-node set.
 pub fn candidate_cells(board: &Board, policy: CandidatePolicy) -> Vec<Coord> {
     match policy {
         CandidatePolicy::Radius { radius } => within_radius(board, radius),
+        CandidatePolicy::Staged(params) => within_radius(board, params.quiet_radius),
     }
 }
 
 /// The union of the radius-`radius` balls around the stones, intersected with
 /// the cells rule 5 admits.
-fn within_radius(board: &Board, radius: u32) -> Vec<Coord> {
+///
+/// `pub(crate)`, not private: [`crate::staged`] reuses it twice — for the
+/// fallback ball `CandidatePolicy::Staged`'s own arm above delegates to, and
+/// for the quiet-ball safety net a BATCHED node falls back to when Tier F ∪
+/// Tier T is empty (see that module's doc for why the D-scope needs one).
+pub(crate) fn within_radius(board: &Board, radius: u32) -> Vec<Coord> {
     if board.is_empty() {
         return legal_placements(board);
     }

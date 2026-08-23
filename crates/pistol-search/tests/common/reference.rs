@@ -239,7 +239,18 @@ fn check_root(
     // The policy is refused before the position is looked at, as
     // `Searcher::new` does: a radius of zero is a parameter this build will not
     // honour, not a fact about this root.
-    let CandidatePolicy::Radius { radius } = policy;
+    //
+    // This reference is CandidatePolicy::Radius-only (D-106): WP-1.5b's staged
+    // policy is checked against the COMMITTED RADIUS engine, not this negamax
+    // reference (`a_radius_policy_search_is_byte_identical_to_the_committed_engine`),
+    // so no caller of this oracle passes `Staged` and none is expected to.
+    let radius = match policy {
+        CandidatePolicy::Radius { radius } => radius,
+        CandidatePolicy::Staged(_) => panic!(
+            "the differential search oracle is CandidatePolicy::Radius-only (D-106); a caller \
+             passed Staged, which this from-scratch reference does not implement"
+        ),
+    };
     if radius == 0 {
         return Err(ReferenceError::PolicyRadiusZero);
     }

@@ -43,6 +43,7 @@ use crate::params::CandidatePolicy;
 use crate::position::Position;
 use crate::pv::PvTable;
 use crate::score::{INFINITY, mate_in};
+use crate::staged::{StagedRow, StagedSet, staged_candidates};
 use crate::stop::{NODE_CHECK_INTERVAL, Stop};
 use crate::tt::{Bound, Record, Table};
 
@@ -226,41 +227,52 @@ impl<'a> Run<'a> {
             return record.score;
         }
 
-        let mut cells = candidate_cells(self.position.board(), self.policy);
-        if cells.is_empty() {
-            // Unreachable for any radius of at least one, by the argument
-            // `pistol_core::turn` gives for there being no stalemate — and kept
-            // because that is a claim about today's policies rather than about
-            // every policy (docs/decisions.md D-104).
-            //
-            // At a turn boundary a static value is the honest answer: the rules
-            // still admit a move, the policy is what excluded it, and the line
-            // reported so far ends on a whole turn. Half way through a turn it
-            // is not an answer at all — the parent would promote a line ending
-            // on a lone stone, and `turns_from_plies` refuses that by name at
-            // the root, far from the node that caused it. A policy that runs dry
-            // mid-turn has to say what the mover's second stone is; there is no
-            // value this node can return that makes that question go away.
-            assert!(
-                self.position.state().phase() == Phase::First,
-                "pistol-search invariant {NO_CANDIDATES_MID_TURN}: the candidate policy offered \
-                 nothing at phase 1, where the mover still owes a stone — a policy that can run \
-                 dry must answer inside a turn, not only at its boundary"
-            );
-            return self.position.value();
-        }
         // A deadline can land inside the scoring loop — its length is the
         // candidate count, which the opponent partly grows (D-95) — so under a
         // wall-clock stop the ordering itself checks the clock and the node
         // aborts like any other; the partially scored order is discarded with
         // it. Reproducible stops pass `None` and read no clock (rule 4).
         let table_move = known.map(|record| record.best);
-        if order(self.position, &mut cells, table_move, self.order_deadline())
-            == OrderOutcome::DeadlinePassed
-        {
-            self.aborted = true;
-            return 0;
-        }
+        let cells = match self.policy {
+            CandidatePolicy::Radius { .. } => {
+                let mut cells = candidate_cells(self.position.board(), self.policy);
+                if cells.is_empty() {
+                    self.no_candidates_at_a_turn_boundary();
+                    return self.position.value();
+                }
+                if order(self.position, &mut cells, table_move, self.order_deadline())
+                    == OrderOutcome::DeadlinePassed
+                {
+                    self.aborted = true;
+                    return 0;
+                }
+                cells
+            }
+            CandidatePolicy::Staged(params) => {
+                let (state, threats, eval) = self.position.staged_context();
+                let mut set = StagedSet::default();
+                match staged_candidates(state, threats, eval, is_pv, params, &mut set) {
+                    // `PROTO-NODE` step 2's early return (`U2_node_protocol.md`
+                    // §5.2): the guard is step 1's `None` arm above, already
+                    // taken; the distance is `k + 2` (our turn completes at
+                    // `k+1`, the opponent's overload win at `k+2`); the
+                    // `!is_pv` gate is `staged_candidates`'s own `is_pv`
+                    // argument, so `visit` never re-asks it. No child is
+                    // expanded — `self.nodes` was already incremented at entry,
+                    // and that is the whole node cost this row pays.
+                    StagedRow::OverloadReturn => {
+                        return -mate_in(self.turns_from_root() + 2);
+                    }
+                    StagedRow::WinNow | StagedRow::Filtered | StagedRow::Batched => {}
+                }
+                if set.cells.is_empty() {
+                    self.no_candidates_at_a_turn_boundary();
+                    return self.position.value();
+                }
+                set.promote_table_move(table_move);
+                set.cells
+            }
+        };
 
         let original_alpha = alpha;
         let mut best_score = -INFINITY;
@@ -436,6 +448,25 @@ impl<'a> Run<'a> {
             _ => None,
         }
     }
+
+    /// The shared refusal both candidate policies raise when they offer
+    /// nothing: correctness-invariant at `Phase::Second` (a policy running dry
+    /// mid-turn has no honest static answer, docs/decisions.md D-104), and a
+    /// no-op check at `Phase::First`, where the caller returns the static
+    /// value as an honest leaf. Under `Staged` this is unreachable in practice
+    /// — [`crate::staged::staged_candidates`]'s quiet-ball safety net (that
+    /// module's doc) empties only when the rules themselves admit no move at
+    /// all, which [`Position::place`] would already have refused — but the
+    /// check stays, at the same strength `Radius` carries it at, rather than
+    /// asserting the safety net can never come up short.
+    fn no_candidates_at_a_turn_boundary(&self) {
+        assert!(
+            self.position.state().phase() == Phase::First,
+            "pistol-search invariant {NO_CANDIDATES_MID_TURN}: the candidate policy offered \
+             nothing at phase 1, where the mover still owes a stone — a policy that can run dry \
+             must answer inside a turn, not only at its boundary"
+        );
+    }
 }
 
 #[cfg(test)]
@@ -482,7 +513,7 @@ mod tests {
     #[test]
     fn an_abort_before_any_root_promotion_salvages_nothing() {
         let state = root();
-        let mut position = Position::new(Box::new(Flat));
+        let mut position = Position::new(Box::new(Flat), false);
         position.reset_to(&state);
         let mut table = Table::new(1 << 20).expect("the smallest table");
         let policy = CandidatePolicy::Radius { radius: 1 };
@@ -523,7 +554,7 @@ mod tests {
     #[test]
     fn a_salvaged_root_line_is_turn_whole_and_keeps_its_promotion_score() {
         let state = root();
-        let mut position = Position::new(Box::new(Flat));
+        let mut position = Position::new(Box::new(Flat), false);
         position.reset_to(&state);
         let mut table = Table::new(1 << 20).expect("the smallest table");
         let policy = CandidatePolicy::Radius { radius: 1 };
