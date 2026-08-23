@@ -726,17 +726,74 @@ fn a_root_with_no_manifest_is_refused_by_the_manifest_and_not_by_cargo() {
     );
 }
 
-/// THE STANDING INVARIANT, over the real workspace, on every commit: no source
-/// of the threat generator is an input to any of the five binaries this
-/// workspace ships. This is what WP-1.5a's H1 claimed, checked continuously
-/// rather than once in a governed run (D-276).
+/// `docs/experiments/U1_gate_supersession.md` §4.4, OPTION (f)'s LINK HALF: A
+/// DERIVED HIT-SET INVARIANT, not a live "reaches nothing" assertion.
+///
+/// WP-1.5b (docs/decisions.md D-310) makes `pistol-solver` a normal input to
+/// every shipped binary — U1_gate_supersession.md §4.1 measured the resulting
+/// transcript before the edge landed ("30 hits over 5 binaries") so this is
+/// not a surprise. What survives as a standing invariant is narrower and
+/// stronger than "reaches nothing": the set of `pistol-solver` files this gate
+/// finds reaching a shipped binary is EXACTLY the crate's own `src/` file set —
+/// an EXTERNALLY DERIVED referent (the filesystem, not the gate's own prior
+/// output), which is what CLAUDE.md's process section asks a reviewer to look
+/// for first. A stray file reaching a binary through something other than the
+/// crate's own compiled sources (`U1_gate_supersession.md` §4.3's
+/// `include_str!` construction, the residual class this gate exists to
+/// catch) would show up as a hit line naming a path OUTSIDE this set; a
+/// source file no longer compiled into any binary would be missing from the
+/// hit set while still present on disk. Either is a red run.
 #[test]
-fn no_solver_source_reaches_any_shipped_binary_of_this_workspace() {
+fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary() {
     let ran = link_check(&repo_root(), "crates/pistol-solver");
     assert_code(
         &ran,
-        0,
-        "no pistol-solver source may be an input to a shipped binary",
+        1,
+        "pistol-search's dependency on pistol-solver (docs/decisions.md D-310) makes this \
+         crate's sources reach every shipped binary; a 0 here would mean the edge went missing",
+    );
+    let stdout = out(&ran);
+    assert!(
+        stdout.contains("solver_link_check: 5 shipped binaries,"),
+        "this workspace ships five binaries, machine-invariant across a run: {stdout}"
+    );
+
+    // The externally derived referent: the crate's own `src/` directory,
+    // enumerated by this test and not read from the gate's output.
+    let src_dir = repo("crates/pistol-solver/src");
+    let mut on_disk: Vec<String> = std::fs::read_dir(&src_dir)
+        .unwrap_or_else(|error| panic!("{} must read: {error}", src_dir.display()))
+        .map(|entry| entry.expect("a directory entry reads").file_name())
+        .map(|name| name.to_str().expect("utf-8 file name").to_owned())
+        .filter(|name| name.ends_with(".rs"))
+        .map(|name| format!("crates/pistol-solver/src/{name}"))
+        .collect();
+    on_disk.sort();
+    on_disk.dedup();
+    assert!(
+        !on_disk.is_empty(),
+        "the referent itself must be non-empty, or this test proves nothing"
+    );
+
+    // The hit set the gate reports, canonicalised down to the repo-relative
+    // subject path and deduplicated across the five binaries — a hit line
+    // repeats per binary by design, which is not a second file.
+    let mut hit: Vec<String> = stdout
+        .lines()
+        .filter_map(|line| line.strip_prefix("solver_link_check:   "))
+        .filter_map(|line| line.split_once(" <- "))
+        .map(|(path, _binary)| path)
+        .filter_map(|path| path.split_once("crates/pistol-solver/"))
+        .map(|(_prefix, rest)| format!("crates/pistol-solver/{rest}"))
+        .collect();
+    hit.sort();
+    hit.dedup();
+
+    assert_eq!(
+        hit, on_disk,
+        "the set of pistol-solver files reaching a shipped binary must be exactly its own \
+         src/ files — nothing more (a stray non-source input) and nothing less (a source file \
+         no binary actually compiles)"
     );
 }
 

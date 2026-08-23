@@ -280,19 +280,58 @@ fn a_crate_name_that_would_be_read_as_an_option_is_refused() {
     );
 }
 
-/// `p = 0` AS A STANDING CI INVARIANT. WP-1.5a's whole hypothesis is that
-/// nothing in this workspace links the solver; until now that was checked by one
-/// pre-registration, once. Here it fails on the commit that breaks it.
+/// `docs/experiments/U1_gate_supersession.md` §4.4, OPTION (f)'s EDGE HALF: a
+/// GOLDEN TRANSCRIPT, not a live "no edge" assertion.
+///
+/// WP-1.5b (docs/decisions.md D-310) gives `pistol-search` a normal dependency
+/// on `pistol-solver` — exactly the edge WP-1.5a's `p = 0` hypothesis asserted
+/// did not exist, and §4.1 measured the resulting exit-1 transcript BEFORE the
+/// edge landed so the expiry would not read as a surprise: "6 tree lines."
+/// Asserting `p = 0` here would now be asserting the WP this crate exists to
+/// ship never happened. What the edge test can still stand for — and what a
+/// declared list of allowed dependents could not, per §4.4's surviving attack
+/// — is that the SHAPE of `pistol-solver`'s reverse-dependency cone is
+/// unchanged from what U1_gate_supersession.md §4.1 measured: not a wider
+/// cone, not a different member's edge, not a version bump masquerading as a
+/// graph change.
 #[test]
-fn the_shipped_workspace_has_no_normal_edge_on_the_solver() {
+fn the_solver_edge_matches_the_transcript_u1_gate_supersession_pinned() {
+    const SOLVER_EDGE_V1_SHA256: &str =
+        "6e4b2c135ce725513d1ff707b38e9ed6ffdcef5f5fe2af76c5c28c0001ffc4c4";
+    let fixture_path = repo("crates/pistol-cli/tests/fixtures/solver_edge_v1.txt");
+    let fixture_bytes = std::fs::read(&fixture_path).expect("the golden transcript reads");
+    assert_eq!(
+        pistol_cli::sha256::sha256_hex(&fixture_bytes),
+        SOLVER_EDGE_V1_SHA256,
+        "the fixture itself must match this line, in the same commit as any edit to it \
+         (docs/decisions.md D-209's regeneration discipline)"
+    );
+    let fixture_text = String::from_utf8(fixture_bytes).expect("the fixture is UTF-8");
+    let golden: String = fixture_text
+        .lines()
+        .filter(|line| !line.starts_with('#'))
+        .map(|line| format!("{line}\n"))
+        .collect();
+
     let ran = edge_check(&repo_root(), "pistol-solver");
     assert_eq!(
         ran.status.code(),
-        Some(0),
-        "p = 0: nothing in this workspace may take a normal dependency on pistol-solver\n\
+        Some(1),
+        "pistol-search's dependency on pistol-solver is the edge this build ships \
+         (docs/decisions.md D-310); a 0 here would mean the edge went missing\n\
          stdout: {}\nstderr: {}",
         stdout(&ran),
         stderr(&ran)
+    );
+    assert_eq!(
+        stdout(&ran),
+        golden,
+        "the reverse-dependency cone must match U1_gate_supersession.md §4.1's own \
+         measurement byte for byte — a red run here names EITHER a legitimate change this \
+         fixture must be regenerated for (with an ADR line) OR an accidental edge \
+         (U1_gate_supersession.md §4.4's surviving attack: 'a legitimate crate added inside \
+         the cone, an accidental pistol-cli edge, and a workspace version bump' all arrive \
+         as the same-looking diff, and a maintainer reading this failure decides which)"
     );
 }
 

@@ -1,0 +1,38 @@
+# solver_edge_v1.txt — the pinned `tools/solver_edge_check.sh . pistol-solver`
+# transcript, U1_gate_supersession.md §4.4's option (f): "pin the gate's
+# stdout, with colour neutralised, pwd -P, the cargo version recorded, and a
+# D-209-shaped regeneration discipline."
+#
+# WHAT THIS REPLACES. Until WP-1.5b's IMPL, this crate's own standing CI
+# assertion was "p = 0: nothing in this workspace may take a normal dependency
+# on pistol-solver" — WP-1.5a's H1, checked as a live invariant on every commit.
+# WP-1.5b's whole point is to add exactly that edge (docs/decisions.md D-310;
+# crates/pistol-search/Cargo.toml). U1_gate_supersession.md §4.1 measured the
+# expiry before it fired: "tools/solver_edge_check.sh . pistol-solver -> exit
+# 1, 6 tree lines." This fixture is what a golden transcript relocates that
+# memory into (§4.4's strongest surviving attack, recorded verbatim in D-353's
+# sibling ADR line for this commit).
+#
+# GENERATED against this repository's own HEAD (revision d6a24fd, the commit
+# that gave pistol-search its normal dependency on pistol-solver), by running
+# `tools/solver_edge_check.sh . pistol-solver` from the repository root and
+# capturing stdout verbatim. Cargo version at generation: `cargo 1.97.1
+# (c980f4866 2026-06-30)`.
+#
+# REGENERATION DISCIPLINE (D-209's, quoted in U1_gate_supersession.md §4.4):
+# "Regenerating this fixture compares post to post and certifies nothing, so a
+# regeneration is legitimate only for a deliberate, ADR-recorded
+# instrument-behavior change naming the new revision." A workspace member
+# added inside pistol-solver's reverse-dependency cone, an accidental new edge,
+# or a workspace version bump are each a red run here — and each is the class
+# U1_gate_supersession.md §4.4's surviving attack names as this transcript's
+# residual: the same-looking diff with the same one-command repair, deferred
+# to whoever is looking at a red suite. That residual is recorded, not solved,
+# by this fixture (U1-Z's OPEN bullet).
+solver_edge_check: inverted normal-edge tree for pistol-solver (6 lines)
+solver_edge_check:   pistol-solver v0.0.1 (<workspace>/crates/pistol-solver)
+solver_edge_check:   └── pistol-search v0.0.1 (<workspace>/crates/pistol-search)
+solver_edge_check:       └── pistol-engine v0.0.1 (<workspace>/crates/pistol-engine)
+solver_edge_check:           ├── pistol-arena v0.0.1 (<workspace>/crates/pistol-arena)
+solver_edge_check:           └── pistol-cli v0.0.1 (<workspace>/crates/pistol-cli)
+solver_edge_check:               └── pistol-arena v0.0.1 (<workspace>/crates/pistol-arena)
