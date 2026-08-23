@@ -31,21 +31,13 @@ cost column is computed with the deferred stage inside it. U3-Z lists what the
 decision moves; the RANKING that selects C is what survives it.
 
 **THE TEXT IS A VERBATIM CARVE** apart from cross-reference retargets and the
-named repairs, each stated where it occurs. At u-rev 1: **B5** (§10's lead-in —
-the config count, which the superseded document stated three different ways
-across four sites, is stated once here and cited everywhere else) and **B7**
-(§6.2's no-restatement claim, which was absolute and false, is stated at the
-strength the pin actually has). At **u-rev 3**: the repairs answering
-`docs/experiments/wp15b_U3_REVIEW.md`, finding by finding (see U3-A for the
-one-line record now that u-rev 4 has superseded that fold-in table). At
-**u-rev 4**: the repairs answering `docs/experiments/wp15b_U3_REVIEW_urev3.md`.
-At **u-rev 5**: the repairs answering `docs/experiments/wp15b_U3_REVIEW_urev4.md`,
-and the removal of two restating surfaces those findings came out of. At **u-rev 6**:
-the repairs answering `docs/experiments/wp15b_U3_REVIEW_urev5.md`. **Which
-round is which is stated once, in `U3-A`; the REVIEW STATUS block below covers the
-round being answered and no other (D-331).** Every **MEASURED** and **ESTIMATED** mark is the mark the superseded
-text carried; no number carried from the superseded text moved, and none gained
-or lost a mark.
+named repairs, each stated where it occurs: **B5** (§10's lead-in — the config
+count, which the superseded document stated three different ways across four
+sites, is stated once here and cited everywhere else) and **B7** (§6.2's
+no-restatement claim, which was absolute and false, is stated at the strength
+the pin actually has). Every **MEASURED** and **ESTIMATED** mark is the mark the
+superseded text carried; no number carried from the superseded text moved, and
+none gained or lost a mark.
 
 **LABEL DISCIPLINE — RETIRED BY `D-311`'s APPENDED AMENDMENT.** Revision identity for this unit is its commit SHA; travelling item T5 is resolved by that retirement, as at every sibling document.
 
