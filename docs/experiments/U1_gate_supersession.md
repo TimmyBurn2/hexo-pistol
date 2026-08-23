@@ -13,7 +13,7 @@ its owner, and that is what it is for.
 
 
 **u-rev 5.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
-(revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it, and is that review's home) under the restructure selected as
+(revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it) under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`; no line of the superseded
 document is owned twice and none is unowned. The superseded document is not in
@@ -25,22 +25,6 @@ revision and reviews of superseded revisions do not transfer; the superseded
 document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
 differ by 69 lines, and that ambiguity is what this rule removes. A citation of
 another unit names the unit AND the u-rev cited.
-
-**THIS UNIT'S REVIEW HISTORY IS NOT RESTATED HERE.** Each round's pinned revision,
-verdict and findings live in that round's report, `docs/experiments/wp15b_U1_REVIEW*.md`,
-which is their home under D-331. **NO REVIEW-design HAS RUN AGAINST THIS u-rev**, and a
-review of a superseded revision does not transfer — an amendment reopens the review,
-however small the diff. §4's own matrix M0 was attacked at `ec8f7fb` and FELL to
-option (f) — see U1-A.
-
-*(~~This unit has been reviewed, at u-rev 1, and failed … the repaired text is itself
-unreviewed until a fresh REVIEW-design runs against u-rev 2.~~ **STRUCK AT u-rev 4**
-under `D-346`. It was written at u-rev 2 and never re-read: u-rev 2 **was** reviewed
-and it **PASSED** (`docs/experiments/wp15b_U1_REVIEW_urev2.md`), so a head describing
-this unit as awaiting that review was false from `f81706a` onward and named
-U1's own PASS nowhere at all. `docs/decisions.md` D-342 records it as the
-open half of `matrix_META1_REDTEAM.md` M3; this is that half, answered by deletion
-rather than by a fourth hand-kept copy of a history the reports already hold.)*
 
 Theory citations are calculus IDs from `docs/research/threat_calculus_v1.md`
 (D-266). This unit restates no theory; where it appears to, the calculus wins and
@@ -55,7 +39,6 @@ the disagreement is an ADR line.
 | DECISION-RED-TEAM, matrix M0 | revision 1, `ec8f7fb` | **M0 FELL** → option (f), supplied by the red team that killed (e) |
 | REVIEW-design ×5 | revisions 2–6, `182f389` `7ad466b` `f762c9a` `64af80c` `2d07ff6` | all FAIL, none on M0's merits; no round reopened M0 |
 | REVIEW-design | revision 7, `6feb40a` | **FAIL** — 7 BLOCKING, 7 MAJOR, 9 MINOR. **B6 is M0's** and is discharged below; no other finding is §4's |
-| REVIEW-design, **this unit** | every u-rev that has been reviewed | **THIS TABLE DOES NOT RESTATE THIS UNIT'S OWN REVIEW HISTORY.** Each round's pinned revision, verdict and findings are in that round's report, `docs/experiments/wp15b_U1_REVIEW*.md`, which is their home. It carried no row for them at all until u-rev 4, which is how U1's own PASS went uncited by the unit that earned it (`docs/decisions.md` D-342) |
 | DECISION-RED-TEAM, restructure | matrix at `eea480b` | F10: option B's cost cell called M0 clean against the matrix's own Facts block. **M0 was not clean — B6 was live.** It is now not live |
 
 **"Revision 6" above is `2d07ff6` — an unresolved dispute, disclosed, not
@@ -68,9 +51,6 @@ that reviewer explicitly declined to pick a side. The row above uses `2d07ff6`
 tree and is not this unit's to resolve — U1-A states which SHA this row uses
 and that the dispute stands, and takes no position on which of `2d07ff6` /
 `9c068a0` is the correct referent for "revision 6."
-
-**What §4 owes that no round has given it:** a REVIEW-design of THIS text at
-THIS u-rev. That review is outstanding and this unit is not landable while it is.
 
 ---
 
@@ -325,7 +305,6 @@ This unit has no governed run.
   least wants to be delayed. The regeneration discipline is the only thing
   between them and a maintainer pasting a diff. Not a carve item: it is (f)'s
   recorded residual and belongs in item 1's ADR line.
-- **No REVIEW-design has run against this text at this u-rev** (U1-A).
 
 ---
 
