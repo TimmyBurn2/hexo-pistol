@@ -1,0 +1,47 @@
+# pistol — play-mode configuration, threat-first staged pair generation.
+#
+# The movetime measurement's seat (U3_tier_t.md §10; docs/ROADMAP.md WP-1.4).
+# The staged counterpart of configs/play_v0.toml: same schema, same tt_bytes,
+# same eval, and — unlike the instrument pair, which moved from radius 2 to
+# staged on this WP's own SPRT — the incumbent this document's own movetime
+# comparison is taken against is `configs/play_v0.toml` at radius 3.
+#
+# THE CUT BINDS HERE, for the same reason `configs/instrument_staged_v0.toml`
+# binds it: a seat with the quiet cut disabled would make the movetime
+# measurement say nothing about the prune it exists to characterise (CLAUDE.md
+# rule 6, U2_node_protocol.md §7.2).
+#
+# Every strength claim in this project still comes from instrument mode; a
+# result obtained here carries no number anyone may quote (CLAUDE.md rule 6).
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[engine]
+mode = "play"
+
+[search]
+tt_bytes = 268435456
+
+[search.candidate_policy]
+kind = "staged"
+# Matches configs/play_v0.toml's radius 3, so the fallback ball and the
+# safety net (docs/decisions.md D-353) reach the same cells the deployment
+# radius policy does in the one place they still agree by construction.
+quiet_radius = 3
+quiet_top_k = 16
+widen_schedule = [32]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+movetime_epsilon_ms = 50

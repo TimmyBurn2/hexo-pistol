@@ -1,0 +1,50 @@
+# pistol — instrument-mode configuration, staged, quiet cut DISABLED.
+#
+# THE TACTICAL SUITE UNDER STAGED gate's config (U3_tier_t.md §10;
+# U4_soundness_instrument.md §8.3, docs/decisions.md D-316): what runs the
+# fifteen `instrument_v0` tactical cases of `tactical_staged_v0.txt` under
+# `CandidatePolicy::Staged`. NEW relative to the radius-only fixture family —
+# this document did not exist before WP-1.5b, and its whole reason for
+# existing is that `configs/instrument_staged_v0.toml` cannot be both the
+# tactical config (cut disabled, so a `require 20` derivation holds) and the
+# SPRT seat (cut enabled, or the match measures nothing about the prune).
+#
+# THE CUT IS DISABLED: `quiet_top_k` is set above the whole candidate pool a
+# fifteen-stone position's radius-2 ball can ever hold (MEASURED, the radius-2
+# ball's largest regime mean over the pinned census is under 400 —
+# `crates/pistol-solver/tests/wp15b_census.rs`), so no legitimate cell is ever
+# cut and the tactical suite's `require 20` derivation
+# (U4_soundness_instrument.md §8.3) is not silently weakened by the prune it
+# is not testing.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[engine]
+mode = "instrument"
+
+[search]
+tt_bytes = 268435456
+
+[search.candidate_policy]
+kind = "staged"
+quiet_radius = 2
+# Disabled: see the header. 1024 is not a guess — the radius-2 ball's
+# measured largest regime mean is under 400 (wp15b_census.rs), and a bounded
+# ball at 17 stones cannot exceed 18 * 17 = 306 at radius 2.
+quiet_top_k = 1024
+widen_schedule = [2048]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+movetime_epsilon_ms = 50

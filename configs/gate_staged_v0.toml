@@ -1,0 +1,45 @@
+# pistol — the staged configuration THE COLONY FAMILY and TACTICAL SUITE
+# UNDER STAGED gates run their gate_v0-class cases at.
+#
+# The staged counterpart of configs/gate_v0.toml: candidate radius 1's own
+# quiet ball, quiet cut DISABLED (U3_tier_t.md §10, U4_soundness_instrument.md
+# §8.3): the five `depth_turns 3` cases of `tactical_staged_v0.txt`, at radius
+# 1 for the same reason configs/gate_v0.toml is — a completed depth 3 at
+# radius 2 or 3 is minutes to hours of CI time, and this is what fits inside a
+# CI run.
+#
+# THE CUT IS DISABLED: MEASURED balls 22/22/22/18/15 at eleven stones
+# (configs/gate_v0.toml's own header), bounded by 6 * 17 = 102 three turns
+# deeper — `quiet_top_k = 128` never cuts a legitimate cell from any of the
+# five gate cases.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[engine]
+mode = "instrument"
+
+[search]
+tt_bytes = 16777216
+
+[search.candidate_policy]
+kind = "staged"
+quiet_radius = 1
+# Disabled: see the header. 128 exceeds the measured bound of
+# 6 * 17 = 102 three turns deeper than the deepest measured ball.
+quiet_top_k = 128
+widen_schedule = [256]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+movetime_epsilon_ms = 50

@@ -1,0 +1,57 @@
+# pistol — instrument-mode configuration, threat-first staged pair generation.
+#
+# The SPRT seat and the standing snapshot's AFTER measurement (U3_tier_t.md
+# §10; docs/decisions.md D-310, D-353). The staged counterpart of
+# configs/instrument_v0.toml: same schema, same tt_bytes, same eval — the one
+# thing that differs is [search.candidate_policy], which is what the SPRT this
+# document seats judges.
+#
+# THE CUT BINDS HERE (U2_node_protocol.md §7.2, carried from WPQ_seed.md): a
+# seat with the quiet cut disabled would make the SPRT measure nothing about
+# the prune (CLAUDE.md rule 6). `quiet_top_k`/`widen_schedule` are stage Q's
+# own knobs, validated here for schema completeness and not yet read by the
+# search this D-scope ships (docs/decisions.md D-353, D-356) — carrying them
+# is what a `deny_unknown_fields` document requires; whether stage Q's own
+# widening schedule reads them is WP-1.5c's (`WPQ_seed.md`).
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[engine]
+mode = "instrument"
+
+[search]
+# Matches configs/instrument_v0.toml: the two SPRT seats agree on everything
+# but candidate_policy, which is the one axis this WP judges.
+tt_bytes = 268435456
+
+[search.candidate_policy]
+kind = "staged"
+# The fallback's bounded ball (U2-Z item 8) and the D-scope's own safety net
+# when Tier F ∪ Tier T is empty (docs/decisions.md D-353) — matches
+# configs/instrument_v0.toml's radius, so the two seats reach the same cells
+# in the one place they still agree by construction.
+quiet_radius = 2
+# Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
+quiet_top_k = 16
+# Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
+widen_schedule = [32]
+# LAW-SUPPORT's threshold reading (U3_tier_t.md §6.1): own windows qualify at
+# count >= 2.
+tier_t_own_count = 2
+# LAW-SUPPORT's threshold reading: opponent windows qualify at count >= 3.
+tier_t_opponent_count = 3
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+# Stated even though the mode is "instrument": a config is complete, and every
+# key is present because no key has a code-side default (CLAUDE.md rule 1).
+movetime_epsilon_ms = 50
