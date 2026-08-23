@@ -68,7 +68,11 @@ fail() { printf 'staged_cover_bench: FAIL: %s\n' "$*" >&2; exit 1; }
 void() { printf 'staged_cover_bench: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
 REPS="${1:-5}"
-[ "$REPS" -ge 5 ] 2>/dev/null || fail "REPS must be an integer >= 5 (pre-registered), got: $REPS"
+case "$REPS" in
+*[!0-9]* | "") fail "REPS must be an integer >= 5 (pre-registered), got: \`$REPS\`" ;;
+0* | +*) fail "REPS must be spelled as a plain decimal integer with no leading zero or sign, got: \`$REPS\`" ;;
+esac
+[ "$REPS" -ge 5 ] || fail "REPS must be an integer >= 5 (pre-registered), got: $REPS"
 [ -f "$CONFIG" ] || fail "no config at $CONFIG"
 [ -f "$FIXTURE" ] || fail "no fixture at $FIXTURE"
 
@@ -104,8 +108,10 @@ esac
 ENGINE="${BUILT[0]}"
 [ -x "$ENGINE" ] || fail "cargo named \`$ENGINE\` for --bin pistol and it is not executable"
 
-printf 'pistol\nquit\n' | timeout 60 "$ENGINE" --config "$CONFIG" 2>/dev/null |
-	grep '^id ' | sed 's/^/staged_cover_bench: identity /'
+IDENTITY="$(printf 'pistol\nquit\n' | timeout 60 "$ENGINE" --config "$CONFIG" 2>/dev/null |
+	grep '^id ' || true)"
+[ -n "$IDENTITY" ] || fail "the engine answered no \`id \` lines to the \`pistol\` handshake"
+printf '%s\n' "$IDENTITY" | sed 's/^/staged_cover_bench: identity /'
 
 echo "staged_cover_bench: config $CONFIG, nodes $NODES, depth_turns $DEPTH, reps $REPS"
 
@@ -120,7 +126,9 @@ while IFS= read -r entry; do
 	esac
 	if [ "$stones" -le "$EARLY_MAX" ]; then echo early; else echo late; fi >>"$WORK/bands"
 done <"$WORK/entries"
-echo "staged_cover_bench: $COUNT positions ($(grep -c early "$WORK/bands") early, $(grep -c late "$WORK/bands") late)"
+EARLY_COUNT="$(grep -c early "$WORK/bands" || true)"
+LATE_COUNT="$(grep -c late "$WORK/bands" || true)"
+echo "staged_cover_bench: $COUNT positions ($EARLY_COUNT early, $LATE_COUNT late)"
 
 for budget in "nodes $NODES" "depth_turns $DEPTH"; do
 	name="${budget%% *}"
