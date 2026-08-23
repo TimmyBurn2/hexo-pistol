@@ -137,6 +137,16 @@ fn the_filtered_row_matches_r1_at_every_filtered_node_of_the_corpus() {
         // Impossible branch reads it), so `false` exercises the same code
         // path a non-PV search node would.
         let row = staged_candidates(&state, &threats, &mut *eval, false, params, &mut out);
+        // SCOPE, NAMED RATHER THAN LEFT IMPLICIT (docs/decisions.md D-370;
+        // WP-1.5b Phase 4 MINOR 8): this gate is blind, by construction, to a
+        // shipped row that DECLINES to be FILTERED where R1 says it should be
+        // (a false `Impossible`/`NothingToBlock` — exactly what an over-eager
+        // `three_pairwise_disjoint_families` early-out would produce). That
+        // direction is covered elsewhere:
+        // `pistol-solver`'s `threat_oracle_tests::threat_incremental_matches_reference_on_random_playouts`
+        // asserts full `Cover` equality against R1 at every ply of the same
+        // corpus shape, and is what caught the review's mutation of the
+        // early-out (docs/decisions.md D-363).
         if row != StagedRow::Filtered {
             continue;
         }

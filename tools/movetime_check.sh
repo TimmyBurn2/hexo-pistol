@@ -29,20 +29,23 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-CONFIG="configs/play_v0.toml"
+# TWO PLAY SEATS, RADIUS AND STAGED (docs/decisions.md D-370; WP-1.5b Phase 4
+# MINOR 6): under `Staged`, `ordering::order` never runs, and with it the
+# ordering loop's own wall-clock deadline check never runs either — one fewer
+# clock check per node on exactly the class D-95 names, on a seat this gate did
+# not cover before it existed.
+SEATS=("radius configs/play_v0.toml" "staged configs/play_staged_v0.toml")
 FIXTURE="crates/pistol-cli/tests/fixtures/spread_v1.txt"
 BUDGETS_MS=(500 50 1)
 
 fail() { printf 'movetime: FAIL: %s\n' "$*" >&2; exit 1; }
 
 command -v cargo >/dev/null || fail "cargo is not on PATH"
-[ -f "$CONFIG" ] || fail "no config at $CONFIG"
+for seat in "${SEATS[@]}"; do
+	read -r _ seat_config <<<"$seat"
+	[ -f "$seat_config" ] || fail "no config at $seat_config"
+done
 [ -f "$FIXTURE" ] || fail "no fixture at $FIXTURE"
-
-# The promise under test comes from the config, never from this script.
-EPSILON="$(sed -n 's/^movetime_epsilon_ms = \([0-9]\+\)$/\1/p' "$CONFIG")"
-[ -n "$EPSILON" ] || fail "$CONFIG states no movetime_epsilon_ms"
-echo "movetime: epsilon ${EPSILON} ms from $CONFIG"
 
 echo "movetime: release test layer (movetime_tests, fallback_tests, instrument golden)"
 cargo test --release --locked -p pistol-cli --test movetime_tests ||
@@ -102,27 +105,43 @@ mapfile -t STONES < <(sed -n 's/^stones //p' "$FIXTURE")
 [ "${#POSITIONS[@]}" -eq "${#STONES[@]}" ] ||
 	fail "${#POSITIONS[@]} positions beside ${#STONES[@]} stone counts"
 
-echo "movetime: overshoot table (engine-reported time, bound = N + ${EPSILON} ms)"
-printf '%8s %12s %12s %10s\n' "stones" "movetime_ms" "elapsed_ms" "verdict"
-WORST=0
-for i in "${!POSITIONS[@]}"; do
-	for budget in "${BUDGETS_MS[@]}"; do
-		out="$(printf 'position %s\ngo movetime %s\nquit\n' "${POSITIONS[$i]}" "$budget" |
-			"$ENGINE" --config "$CONFIG")" || fail "the engine exited nonzero"
-		grep -q '^error ' <<<"$out" && fail "the engine refused a fixture search:
+run_seat() {
+	local name="$1" config="$2"
+	# The promise under test comes from the config, never from this script.
+	local epsilon
+	epsilon="$(sed -n 's/^movetime_epsilon_ms = \([0-9]\+\)$/\1/p' "$config")"
+	[ -n "$epsilon" ] || fail "$name: $config states no movetime_epsilon_ms"
+	echo "movetime: seat $name: epsilon ${epsilon} ms from $config"
+
+	echo "movetime: seat $name: overshoot table (engine-reported time, bound = N + ${epsilon} ms)"
+	printf '%8s %12s %12s %10s\n' "stones" "movetime_ms" "elapsed_ms" "verdict"
+	local worst=0 i budget out elapsed bound verdict over
+	for i in "${!POSITIONS[@]}"; do
+		for budget in "${BUDGETS_MS[@]}"; do
+			out="$(printf 'position %s\ngo movetime %s\nquit\n' "${POSITIONS[$i]}" "$budget" |
+				"$ENGINE" --config "$config")" || fail "$name: the engine exited nonzero"
+			grep -q '^error ' <<<"$out" && fail "$name: the engine refused a fixture search:
 $(grep -m 3 '^error ' <<<"$out")"
-		elapsed="$(sed -n 's/^info totals .* time \([0-9]\+\) .*/\1/p' <<<"$out")"
-		[ -n "$elapsed" ] || fail "no totals time in the answer for ${STONES[$i]} stones"
-		bound=$((budget + EPSILON))
-		verdict="ok"
-		if [ "$elapsed" -gt "$bound" ]; then verdict="OVER"; fi
-		printf '%8s %12s %12s %10s\n' "${STONES[$i]}" "$budget" "$elapsed" "$verdict"
-		over=$((elapsed - budget))
-		[ "$over" -gt "$WORST" ] && WORST=$over
-		[ "$verdict" = "ok" ] ||
-			fail "movetime $budget on ${STONES[$i]} stones took $elapsed ms (bound $bound ms)"
+			elapsed="$(sed -n 's/^info totals .* time \([0-9]\+\) .*/\1/p' <<<"$out")"
+			[ -n "$elapsed" ] || fail "$name: no totals time in the answer for ${STONES[$i]} stones"
+			bound=$((budget + epsilon))
+			verdict="ok"
+			if [ "$elapsed" -gt "$bound" ]; then verdict="OVER"; fi
+			printf '%8s %12s %12s %10s\n' "${STONES[$i]}" "$budget" "$elapsed" "$verdict"
+			over=$((elapsed - budget))
+			[ "$over" -gt "$worst" ] && worst=$over
+			[ "$verdict" = "ok" ] ||
+				fail "$name: movetime $budget on ${STONES[$i]} stones took $elapsed ms (bound $bound ms)"
+		done
 	done
+
+	printf 'movetime: seat %s: ok — %d searches, worst overshoot %d ms against epsilon %d ms\n' \
+		"$name" $((${#POSITIONS[@]} * ${#BUDGETS_MS[@]})) "$worst" "$epsilon"
+}
+
+for seat in "${SEATS[@]}"; do
+	read -r seat_name seat_config <<<"$seat"
+	run_seat "$seat_name" "$seat_config"
 done
 
-printf 'movetime: ok — %d searches, worst overshoot %d ms against epsilon %d ms\n' \
-	$((${#POSITIONS[@]} * ${#BUDGETS_MS[@]})) "$WORST" "$EPSILON"
+printf 'movetime: ok — %d seat(s), all within their own epsilon\n' "${#SEATS[@]}"
