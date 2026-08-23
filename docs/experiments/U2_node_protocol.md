@@ -64,12 +64,7 @@ NOT carved content**; they are new text the carve itself writes and are expected
 to change every u-rev (LABEL DISCIPLINE, below), so an edit to them is not an
 exception and carries no marker.
 
-**LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this unit bumps
-its u-rev, however small the diff. A review is dispatched against a named
-revision and reviews of superseded revisions do not transfer; the superseded
-document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
-differ by 69 lines, and that ambiguity is what this rule removes. A citation of
-another unit names the unit AND the u-rev cited.
+**LABEL DISCIPLINE — RETIRED BY `D-311`'s APPENDED AMENDMENT.** Revision identity for this unit is its commit SHA; travelling item T5 is resolved by that retirement, as at every sibling document.
 
 **WHY F5's REPAIR IS NOT ANOTHER ITEM ON THE LIST.** The reviewer's own fix scope
 offered *"add a fifth exception … and/or an inline disclosure marker"*. The first
@@ -842,6 +837,4 @@ a correction to a landed line, and none has landed.**
 
 ---
 
-*U2, u-rev 8. Which round produced each u-rev, and which of them were reviewed, is
-the head block's table — this line restates neither and carries the u-rev label alone,
-so it cannot go one behind the head independently of it. IMPL has not started.*
+*U2. IMPL has not started.*

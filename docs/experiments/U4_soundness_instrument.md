@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 10.** Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
+Carved from `docs/experiments/wp15b_design.md` §8, §9, §11.6 and §12
 item 1 at `6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it) under the
 restructure selected as option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`. The superseded document is not
@@ -66,12 +66,7 @@ Every **MEASURED** and **ESTIMATED** mark carried from the superseded text is th
 that text carried; a mark added later names the command that took it and pastes its
 complete output.
 
-**LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this unit bumps
-its u-rev, however small the diff. A review is dispatched against a named
-revision and reviews of superseded revisions do not transfer; the superseded
-document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
-differ by 69 lines, and that ambiguity is what this rule removes. A citation of
-another unit names the unit AND the u-rev cited.
+**LABEL DISCIPLINE — RETIRED BY `D-311`'s APPENDED AMENDMENT.** Revision identity for this unit is its commit SHA; travelling item T5 is resolved by that retirement, as at every sibling document.
 
 **AND AT u-rev 8 IT NAMES THE REVISION AT WHICH THAT u-rev WAS CURRENT** — the form
 `(u-rev N, landed <sha>)`, adopted here from **U3** (u-rev 6, landed `13621d3`), whose own
@@ -1978,4 +1973,4 @@ re-derived in full.)*
 
 ---
 
-*U4, u-rev 10. What each u-rev of this unit did, and what each matrix selected, is the head block's and U4-Z's — this line restates neither and carries the u-rev label alone, so it cannot go one behind the head independently of them. IMPL has not started.*
+*U4. IMPL has not started.*

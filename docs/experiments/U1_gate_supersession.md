@@ -12,19 +12,14 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 5.** Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
+Carved from `docs/experiments/wp15b_design.md` §4 at `6feb40a`
 (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it) under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
 `docs/experiments/section_owner_table.md`; no line of the superseded
 document is owned twice and none is unowned. The superseded document is not in
 the tree: it is retrievable at `6feb40a` and nowhere else.
 
-**LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this unit bumps
-its u-rev, however small the diff. A review is dispatched against a named
-revision and reviews of superseded revisions do not transfer; the superseded
-document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
-differ by 69 lines, and that ambiguity is what this rule removes. A citation of
-another unit names the unit AND the u-rev cited.
+**LABEL DISCIPLINE — RETIRED BY `D-311`'s APPENDED AMENDMENT.** Revision identity for this unit is its commit SHA; travelling item T5 is resolved by that retirement, as at every sibling document.
 
 Theory citations are calculus IDs from `docs/research/threat_calculus_v1.md`
 (D-266). This unit restates no theory; where it appears to, the calculus wins and
@@ -308,7 +303,4 @@ This unit has no governed run.
 
 ---
 
-*U1, u-rev 5. What each u-rev of this unit did is the head block's and U1-A's,
-and this line restates neither — it carries the u-rev label and nothing else, so
-that it cannot go stale against the head independently of them. IMPL has not
-started.*
+*U1. IMPL has not started.*

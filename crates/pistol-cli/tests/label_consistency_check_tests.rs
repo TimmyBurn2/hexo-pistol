@@ -4,25 +4,27 @@
 //!
 //! # What is being guarded, and why a gate rather than care
 //!
-//! `docs/experiments/matrix_META1_REDTEAM.md` M3 found two live head/foot
-//! disagreements in the six frozen carve documents with a one-line shell loop,
-//! in under a second, in a defect class the matrix under attack asserted only a
-//! fresh reviewer's hand-built claim inventory could reach. One of the two was
-//! manufactured in the commit AFTER the identical defect was reported as
-//! BLOCKING in a sibling document. A document that misdescribes its own state is
+//! `docs/experiments/matrix_META1_REDTEAM.md` M2: both landed claim inventories
+//! ship a headline count of their own table that their own table falsifies —
+//! fifty-four rows under a stated thirty-four, eleven failing rows under a
+//! stated six — uncaught by every round including the reviewer who read the
+//! earlier one closely. Inside this gate's subject the same form appears twice
+//! over: a summand line's arithmetic against its own stated total and against
+//! the section heading above it, and a group-count line against the names it
+//! introduces. A document that misdescribes its own count is
 //! docs/decisions.md D-335's generator (2).
 //!
-//! # The loop that found two missed a third, and that is what this suite pins
+//! # The head/foot u-rev label check this gate once ran is retired
 //!
-//! That loop read a `tail -3`. Three of the six documents wrap their closing
-//! italic paragraph over several lines, and `U4_soundness_instrument.md` closes
-//! with a single very long line behind a `---` rule — on U4 the loop printed a
-//! truncated `foot=u-rev` with no number, read as noise rather than as a
-//! refusal, while U4 was head `u-rev 8` against foot `u-rev 7` the whole time.
-//! So `a_closing_block_wrapped_over_several_lines_still_resolves` and
-//! `a_single_long_closing_line_behind_a_rule_still_resolves` are not incidental
-//! coverage: they are the two shapes the instrument this gate replaces was blind
-//! to, and a fixed-depth tail cannot pass both.
+//! `docs/decisions.md` D-311's appended amendment: revision identity for these
+//! six documents is the commit SHA, not an in-document label — `e42ca88`
+//! appended 14 lines to `U4_soundness_instrument.md` without bumping its head
+//! label, so `u-rev 9` came to name two different texts, the exact ambiguity a
+//! label exists to prevent, produced by the commit that amended D-311 to
+//! reaffirm the rule the label had just broken. This suite no longer builds
+//! label-bearing fixtures or exercises the retired check; what a document says
+//! about its own revision history is struck under D-346 rather than checked
+//! here.
 //!
 //! # RULE9-JUSTIFICATION: one gate, one scratch repository, one fixture builder.
 //! Every test drives the same shipped script over the same scratch git
@@ -50,9 +52,9 @@ const DOCS: [&str; 6] = [
 ];
 
 /// The gate's non-vacuity floors, also restated: it refuses a run that finds
-/// fewer than two summand lines or fewer than four group counts, because a
-/// smaller number is its extraction drifting off its subject rather than the
-/// documents going clean.
+/// fewer than two summand lines, five summand rows, or four group counts,
+/// because a smaller number is its extraction drifting off its subject rather
+/// than the documents going clean.
 const SUMMAND_FLOOR: usize = 2;
 const ROW_FLOOR: usize = 5;
 const GROUP_FLOOR: usize = 4;
@@ -111,9 +113,9 @@ fn assert_code(ran: &Output, want: i32, what: &str) {
     let meaning = match got {
         Some(0) => "0 — every document agrees with itself",
         Some(1) => {
-            "1 — a document disagrees with itself, or an extraction found nothing; an ANSWER, and it is no"
+            "1 — a document's stated count disagrees with what it counts, or an extraction found nothing; an ANSWER, and it is no"
         }
-        Some(2) => "2 — RUN VOID: no answer was taken, which is NOT a stale label",
+        Some(2) => "2 — RUN VOID: no answer was taken, which is NOT a bad count",
         _ => "a code this gate does not define, or a signal",
     };
     panic!(
@@ -122,12 +124,10 @@ fn assert_code(ran: &Output, want: i32, what: &str) {
     );
 }
 
-/// One carve document: a head label, a body, and a closing italic block.
-///
-/// `foot` is the WHOLE closing block, so a test can wrap it, run it long, or
-/// make it name two u-revs — the three shapes the extraction has to survive.
-fn document(head: u32, body: &str, foot: &str) -> String {
-    format!("# T\n\n**u-rev {head}.** A carve.\n\n{body}\n\n---\n\n*T, {foot}*\n")
+/// One carve document: a title and a body. The gate no longer reads any
+/// revision label, so the fixture carries none.
+fn document(body: &str) -> String {
+    format!("# T\n\n{body}\n")
 }
 
 /// The two counted forms, carrying the gate's floors exactly: two summand lines
@@ -171,10 +171,7 @@ fn shipped_shape() -> Vec<(String, String)> {
             } else {
                 String::from("Normative content.")
             };
-            (
-                (*name).to_string(),
-                document(4, &body, "u-rev 4. The label alone."),
-            )
+            ((*name).to_string(), document(&body))
         })
         .collect()
 }
@@ -217,125 +214,9 @@ fn six_documents_that_agree_with_themselves_are_accepted() {
         )),
         "and reports the counted forms it actually checked, at the floors it refuses below:\n{out}"
     );
-    // The subject is PRINTED, so it cannot sit unread in the source.
-    for name in DOCS {
-        assert!(out.contains(name), "the run names {name}:\n{out}");
-    }
-}
-
-/// THE PLANTED MISMATCH — the defect M3 recorded, reproduced, and the refusal
-/// must NAME THE FILE rather than printing a count.
-#[test]
-fn a_foot_one_behind_the_head_is_refused_and_the_file_is_named() {
-    let root = scratch_repo("label-stale");
-    let mut docs = shipped_shape();
-    with_doc(
-        &mut docs,
-        "U3_tier_t",
-        document(4, "Normative content.", "u-rev 3. The label alone."),
-    );
-    write_docs(&root, &docs);
-
-    let ran = gate(&root);
-    let out = said(&ran);
-    assert_code(&ran, 1, "a stale foot is a refusal");
     assert!(
-        out.contains("docs/experiments/U3_tier_t.md: head u-rev 4"),
-        "the refusal NAMES the file:\n{out}"
-    );
-    assert!(
-        out.contains("foot u-rev 3"),
-        "and states both labels:\n{out}"
-    );
-    assert!(
-        !out.contains("U2_node_protocol.md: head"),
-        "and does not blame the documents that agree:\n{out}"
-    );
-}
-
-/// A foot that recounts what each u-rev did names several, and there is then no
-/// fact of the matter about which is the document's own. That is a refusal, not
-/// a tolerance, and the fold law is the repair it points at.
-#[test]
-fn a_foot_naming_two_u_revs_is_refused_as_unresolvable() {
-    let root = scratch_repo("label-ambiguous");
-    let mut docs = shipped_shape();
-    with_doc(
-        &mut docs,
-        "U1_gate_supersession",
-        document(
-            4,
-            "Normative content.",
-            "u-rev 4. u-rev 3 was a carve, not a revision.",
-        ),
-    );
-    write_docs(&root, &docs);
-
-    let ran = gate(&root);
-    let out = said(&ran);
-    assert_code(&ran, 1, "an unresolvable foot is a refusal");
-    assert!(
-        out.contains("docs/experiments/U1_gate_supersession.md: the closing region")
-            && out.contains("names 2 u-rev labels"),
-        "named for what it is:\n{out}"
-    );
-    assert!(
-        out.contains("D-331"),
-        "and points at the fold law as the repair:\n{out}"
-    );
-}
-
-/// THE FIRST SHAPE THE REPLACED LOOP WAS BLIND TO. A `tail -3` reading this
-/// document sees a middle line; a `tail -1` sees `restates none of it.*`.
-#[test]
-fn a_closing_block_wrapped_over_several_lines_still_resolves() {
-    let root = scratch_repo("label-wrapped");
-    let mut docs = shipped_shape();
-    with_doc(
-        &mut docs,
-        "U2_node_protocol",
-        document(
-            4,
-            "Normative content.",
-            "u-rev 4. What each revision did is the head\nblock's, and this line\nrestates none of it.",
-        ),
-    );
-    write_docs(&root, &docs);
-
-    let ran = gate(&root);
-    let out = said(&ran);
-    assert_code(&ran, 0, "a wrapped closing block resolves");
-    assert!(
-        out.contains("U2_node_protocol.md") && out.contains("foot=u-rev 4"),
-        "to the label on its FIRST line:\n{out}"
-    );
-}
-
-/// THE SECOND SHAPE, and the one that hid U4: a single very long closing line,
-/// mentioning `u-rev` again without a number. A greedy `sub(/^.*u-rev /, ...)`
-/// yields an EMPTY label here — measured, during this gate's own build.
-#[test]
-fn a_single_long_closing_line_behind_a_rule_still_resolves() {
-    let root = scratch_repo("label-longline");
-    let mut docs = shipped_shape();
-    let long = format!(
-        "u-rev 4. What each u-rev of this unit did is the head block's and U4-Z's, \
-         and this line restates neither. {} IMPL has not started.",
-        "Further clauses of the same closing sentence. ".repeat(20)
-    );
-    with_doc(
-        &mut docs,
-        "U4_soundness_instrument",
-        document(4, "Normative content.", &long),
-    );
-    write_docs(&root, &docs);
-
-    let ran = gate(&root);
-    let out = said(&ran);
-    assert_code(&ran, 0, "a long single-line closing block resolves");
-    assert!(
-        out.contains("U4_soundness_instrument.md") && out.contains("foot=u-rev 4"),
-        "to its FIRST u-rev and not to an empty label:\n{out}"
+        out.contains("6 document(s) read"),
+        "the run counts the subject it read:\n{out}"
     );
 }
 
@@ -346,11 +227,7 @@ fn a_group_that_states_more_names_than_it_enumerates_is_refused() {
     let root = scratch_repo("label-group");
     let mut docs = shipped_shape();
     let body = counted_body().replace("**U2 (2):**", "**U2 (34):**");
-    with_doc(
-        &mut docs,
-        "section_owner_table",
-        document(4, &body, "u-rev 4. The label alone."),
-    );
+    with_doc(&mut docs, "section_owner_table", document(&body));
     write_docs(&root, &docs);
 
     let ran = gate(&root);
@@ -372,11 +249,7 @@ fn a_summand_line_that_does_not_total_its_stated_number_is_refused() {
     let root = scratch_repo("label-summand");
     let mut docs = shipped_shape();
     let body = counted_body().replace("3 + 4 + 3 + 3 + 2 = **15**", "3 + 5 + 3 + 3 + 2 = **15**");
-    with_doc(
-        &mut docs,
-        "section_owner_table",
-        document(4, &body, "u-rev 4. The label alone."),
-    );
+    with_doc(&mut docs, "section_owner_table", document(&body));
     write_docs(&root, &docs);
 
     let ran = gate(&root);
@@ -397,11 +270,7 @@ fn a_heading_count_the_total_below_it_contradicts_is_refused() {
         "## 5. §15 — the 15 ADR items",
         "## 5. §15 — the 19 ADR items",
     );
-    with_doc(
-        &mut docs,
-        "section_owner_table",
-        document(4, &body, "u-rev 4. The label alone."),
-    );
+    with_doc(&mut docs, "section_owner_table", document(&body));
     write_docs(&root, &docs);
 
     let ran = gate(&root);
@@ -423,11 +292,7 @@ fn a_subject_set_that_lost_its_counted_forms_is_refused_not_passed() {
     with_doc(
         &mut docs,
         "section_owner_table",
-        document(
-            4,
-            "Normative content, and no counted form at all.",
-            "u-rev 4. The label alone.",
-        ),
+        document("Normative content, and no counted form at all."),
     );
     write_docs(&root, &docs);
 
@@ -473,16 +338,13 @@ fn a_subject_document_missing_from_the_index_is_refused_not_skipped() {
 fn the_staged_bytes_are_read_and_not_the_worktree_copy() {
     let root = scratch_repo("label-index");
     let mut docs = shipped_shape();
-    with_doc(
-        &mut docs,
-        "U3_tier_t",
-        document(4, "Normative content.", "u-rev 3. The label alone."),
-    );
+    let bad_body = counted_body().replace("**U2 (2):**", "**U2 (34):**");
+    with_doc(&mut docs, "section_owner_table", document(&bad_body));
     write_docs(&root, &docs);
-    // The worktree now says something clean; the index still holds the stale foot.
+    // The worktree now says something clean; the index still holds the bad count.
     std::fs::write(
-        root.join("docs/experiments/U3_tier_t.md"),
-        document(4, "Normative content.", "u-rev 4. The label alone."),
+        root.join("docs/experiments/section_owner_table.md"),
+        document(&counted_body()),
     )
     .expect("the worktree copy is overwritten");
 
@@ -491,10 +353,10 @@ fn the_staged_bytes_are_read_and_not_the_worktree_copy() {
     assert_code(
         &ran,
         1,
-        "the STAGED stale foot is what the gate answers about",
+        "the STAGED bad count is what the gate answers about",
     );
     assert!(
-        out.contains("docs/experiments/U3_tier_t.md: head u-rev 4") && out.contains("foot u-rev 3"),
+        out.contains("group U2 states 34 and enumerates 2"),
         "reading the index and not the worktree:\n{out}"
     );
 }
@@ -518,62 +380,6 @@ fn an_argument_is_refused_rather_than_run_as_the_default() {
     );
 }
 
-/// THE MASKING ASIDE — REVIEW-impl BLOCKING-1 against `908a2f7`, reproduced and
-/// pinned. The previous spelling located the foot at the LAST line starting with
-/// an asterisk and an uppercase letter, and accumulated from there; a stale foot
-/// followed by a trailing italic note naming the HEAD's u-rev therefore read as
-/// `foot=u-rev 4 OK` AT EXIT 0, in the one code path whose whole job is to
-/// prevent an exit-0-wrong-answer. The closing REGION sees both labels.
-#[test]
-fn a_stale_foot_masked_by_a_trailing_aside_is_refused_not_passed() {
-    let root = scratch_repo("label-masking-aside");
-    let mut docs = shipped_shape();
-    with_doc(
-        &mut docs,
-        "U3_tier_t",
-        format!(
-            "{}\n*Folded into u-rev 4 of the seed document, see its own foot.*\n",
-            document(4, "Normative content.", "u-rev 3. The label alone.")
-        ),
-    );
-    write_docs(&root, &docs);
-
-    let ran = gate(&root);
-    let out = said(&ran);
-    assert_code(&ran, 1, "an aside masking a stale foot is a refusal");
-    assert!(
-        out.contains("docs/experiments/U3_tier_t.md: the closing region")
-            && out.contains("names 2 u-rev labels"),
-        "the whole region below the rule is read, not the last asterisk line:\n{out}"
-    );
-    assert!(
-        !out.contains("U3_tier_t.md       head=u-rev 4   foot=u-rev 4   OK"),
-        "and it is NOT reported clean:\n{out}"
-    );
-}
-
-/// A document with no closing rule has no closing region, and that is a refusal
-/// rather than a label read from wherever a `u-rev` happens to appear.
-#[test]
-fn a_document_with_no_closing_rule_is_refused() {
-    let root = scratch_repo("label-norule");
-    let mut docs = shipped_shape();
-    with_doc(
-        &mut docs,
-        "WPQ_seed",
-        String::from("# T\n\n**u-rev 4.** A carve.\n\n*T, u-rev 4. The label alone.*\n"),
-    );
-    write_docs(&root, &docs);
-
-    let ran = gate(&root);
-    let out = said(&ran);
-    assert_code(&ran, 1, "no closing rule is a refusal");
-    assert!(
-        out.contains("docs/experiments/WPQ_seed.md: no closing `---` rule"),
-        "named for what it is:\n{out}"
-    );
-}
-
 /// THE MULTI-WORD LABEL — REVIEW-impl MAJOR-3, reproduced and pinned. The
 /// extraction's own character class admits a space in a group label, and a
 /// positionally-read record then absorbed half of it: a CORRECT two-word group
@@ -584,11 +390,7 @@ fn a_correct_group_with_a_two_word_label_is_accepted_and_not_garbled() {
     let root = scratch_repo("label-two-word");
     let mut docs = shipped_shape();
     let body = counted_body().replace("**U3 (1):**", "**New Plan (1):**");
-    with_doc(
-        &mut docs,
-        "section_owner_table",
-        document(4, &body, "u-rev 4. The label alone."),
-    );
+    with_doc(&mut docs, "section_owner_table", document(&body));
     write_docs(&root, &docs);
 
     let ran = gate(&root);
@@ -606,11 +408,7 @@ fn a_two_word_label_that_miscounts_is_named_in_full() {
     let root = scratch_repo("label-two-word-bad");
     let mut docs = shipped_shape();
     let body = counted_body().replace("**U3 (1):**", "**New Plan (7):**");
-    with_doc(
-        &mut docs,
-        "section_owner_table",
-        document(4, &body, "u-rev 4. The label alone."),
-    );
+    with_doc(&mut docs, "section_owner_table", document(&body));
     write_docs(&root, &docs);
 
     let ran = gate(&root);
@@ -623,7 +421,7 @@ fn a_two_word_label_that_miscounts_is_named_in_full() {
 }
 
 /// THE SUMMANDS AGAINST THE TABLE — REVIEW-impl MAJOR-2, reproduced and pinned.
-/// A table row that loses an item leaves the arithmetic AND the heading
+/// A table row that lost an item leaves the arithmetic AND the heading
 /// untouched, so checking those two against each other is a property the named
 /// defect PRESERVES — which CLAUDE.md says is not a criterion at all. This is the
 /// only check that reaches `section_owner_table.md` §7, whose owners' items live
@@ -633,11 +431,7 @@ fn a_table_row_that_lost_an_item_is_refused_though_the_arithmetic_still_holds() 
     let root = scratch_repo("label-summand-row");
     let mut docs = shipped_shape();
     let body = counted_body().replace("| **U2** | 4, 5, 6, 7 |", "| **U2** | 4, 5, 6 |");
-    with_doc(
-        &mut docs,
-        "section_owner_table",
-        document(4, &body, "u-rev 4. The label alone."),
-    );
+    with_doc(&mut docs, "section_owner_table", document(&body));
     write_docs(&root, &docs);
 
     let ran = gate(&root);

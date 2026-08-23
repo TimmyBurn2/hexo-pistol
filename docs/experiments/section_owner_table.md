@@ -2,7 +2,7 @@
 
 <!-- WP-1.5b CARVE MEMBER — read by crates/pistol-solver/tests/wp15b_census.rs -->
 
-**u-rev 6.** The map from `docs/experiments/wp15b_design.md` at `6feb40a`
+The map from `docs/experiments/wp15b_design.md` at `6feb40a`
 (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it; the counts are D-309's and are not restated here) to the units the restructure
 selected as option D by D-310 produced. **This table is the carve's own gate: an
 unowned line or a double-owned line is a FAILED carve, not a finding.**
@@ -16,8 +16,9 @@ census `BEGIN…END` block in the tree, which the pin
 the exact corruption a reviewer used against the old pin and which it now fails
 the build on.
 
-**LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this table bumps
-its u-rev. **THIS TABLE IS AT u-rev 6**: the `now` column is DELETED and replaced by
+**LABEL DISCIPLINE — RETIRED BY `D-311`'s APPENDED AMENDMENT.** Revision identity for this table is its commit SHA; travelling item T5 is resolved by that retirement, as at every sibling document. The append history below is kept as the record of this table's own measurements, not as a label.
+
+**THIS TABLE IS AT u-rev 6**: the `now` column is DELETED and replaced by
 the command that derives it, discharging by deletion the standing duty that had gone
 stale three times; §11's question is re-posed on the measured u-rev-6 numbers; and the
 carve-provenance sentence above is corrected (it said revision 7 was *never reviewed*;
@@ -437,6 +438,4 @@ is the architect's.
 
 ---
 
-*Carve table, u-rev 6. What each u-rev of this table did is the LABEL DISCIPLINE
-block's, and this line restates none of it — it carries the u-rev label alone, so it
-cannot go one behind the head independently of that block.*
+*Carve table.*

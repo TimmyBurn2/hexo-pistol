@@ -12,7 +12,7 @@ elsewhere; `docs/experiments/section_owner_table.md` maps every one of them to
 its owner, and that is what it is for.
 
 
-**u-rev 9.** Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
+Carved from `docs/experiments/wp15b_design.md` §6, §10 and §12 items
 4 and 5 at `6feb40a` (revision 7, CLOSED by D-309 — which records the fresh-context REVIEW-design that FAILED it), plus the two
 bullets of §7.2 that are not widening text, under the restructure selected as
 option D by D-310. The carve's section-to-owner map is
@@ -47,12 +47,7 @@ round being answered and no other (D-331).** Every **MEASURED** and **ESTIMATED*
 text carried; no number carried from the superseded text moved, and none gained
 or lost a mark.
 
-**LABEL DISCIPLINE — D-311, travelling item T5.** Any append to this unit bumps
-its u-rev, however small the diff. A review is dispatched against a named
-revision and reviews of superseded revisions do not transfer; the superseded
-document carried the label "Revision 7" at both `d94dc0a` and `6feb40a`, which
-differ by 69 lines, and that ambiguity is what this rule removes. A citation of
-another unit names the unit AND the u-rev cited.
+**LABEL DISCIPLINE — RETIRED BY `D-311`'s APPENDED AMENDMENT.** Revision identity for this unit is its commit SHA; travelling item T5 is resolved by that retirement, as at every sibling document.
 
 **AND AT u-rev 5 IT NAMES THE REVISION AT WHICH THAT u-rev WAS CURRENT.** D-311's
 rule as written manufactures the staleness it exists to prevent: a bare
@@ -907,7 +902,4 @@ only one of them** (MAJOR 13).
 
 ---
 
-*U3, u-rev 9. What each u-rev of this unit did, and which rounds attacked it, are the
-REVIEW STATUS block's and U3-A's — this line restates neither and carries the u-rev
-label alone, so it cannot go one behind the head independently of them. IMPL has not
-started.*
+*U3. IMPL has not started.*
