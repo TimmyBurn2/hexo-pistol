@@ -3,11 +3,9 @@
 Authored fresh at WP-1.5b's design closure (`docs/decisions.md` D-351), from
 `docs/experiments/U1_gate_supersession.md`, `U2_node_protocol.md`, `U3_tier_t.md`
 and `U4_soundness_instrument.md` — REFERENCE material under D-351, cited here and
-not restated. Every claim below cites its primary source; a reader who wants a
-finding's content or a design's argument reads it there, per D-331's fold law.
+not restated.
 `docs/experiments/section_owner_table.md` is the index of which unit owns which
-part of the superseded pre-carve design; this document does not repeat that
-mapping.
+part of the superseded pre-carve design.
 
 ---
 
@@ -45,20 +43,32 @@ first makes CI red on an unchanged workspace; landing U2 without U1 leaves CI
 red on a changed one. Neither ordering is a defect in either unit, but this one
 is binding.
 
+A second binding clause, promoted here from pointer status
+(`U2_node_protocol.md` §U2-Z): **rule 5 is undischarged for the node protocol
+itself** — the change that puts `can_win_this_turn` and `blocking_covers` on
+every node has no expected-gain bracket, no abort threshold and no IQR-gated
+bench of its own, distinct from §4's cover-arithmetic hotspot. This is a rule-5
+registration **the architect must place before U2's IMPL starts**, not a repair
+IMPL or a carve may write. IMPL does not begin U2's shape until this
+registration lands.
+
 ## 3. The selected shapes IMPL builds against
 
-Each of the following is a **landed selection**, not a proposal; IMPL builds
-the shape as selected, including the debt riding with it. None is restated
-beyond what IMPL needs to build it — the argument for each lives at its ADR
-line and its unit's own §8/§9.
+Each of the following is a **landed selection**, not a proposal — IMPL builds
+the shape as selected, including the debt riding with it. Three carry a landed
+ADR line (§3.1 D-329, §3.2 D-323, §3.3 D-316) with their argument at U4's own
+§8/§9; §3.4's is **GATED** (`U3_tier_t.md` §U3-Z item 2, not yet written) and
+its argument lives at `U3_tier_t.md` §6.1/§6.5.
 
 ### 3.1 N-E — the snapshot's `--config` seam (`docs/decisions.md` D-329)
 
 A **required `--config PATH`, no default**, with a new whole-path guard on
-`tools/baseline_snapshot.sh`. This is hard rule 1's fourth clause in its literal
-form — *"NO code-side default for any tunable"* — not merely its spirit: the
-three-row field's rung (a) was silent on defaults across every row, and N-E
-still refuses an absent flag by name at exit 1.
+`tools/baseline_snapshot.sh`. This is hard rule 1's fourth clause — *"NO
+code-side default for any tunable"* — rung (a) was silent across the
+three-row field because all three rows already satisfy it (MEASURED: none of
+the three has a default, all refusing an absent `--config` by name at exit 1),
+so rung (a) does not distinguish N-E; N-E's actual ground is rung (b), at
+D-329.
 
 **Four registered conditions ride with the selection and IMPL pays all four**
 (D-329):
@@ -96,8 +106,9 @@ re-litigate any of them:
 1. R1 is reused, not rewritten; a second, freshly-written referent for this
    criterion is **forbidden** without a registered agreement criterion and a
    registered consequence for disagreement.
-2. The `0 of 3406` legality-agreement figure **may not be cited as evidence
-   about the convention** — R1 and `cover.rs` are blind to it together.
+2. The `0 of 3406` **cover-enumeration agreement** figure **may not be cited
+   as evidence about the convention** — R1 and `cover.rs` are blind to it
+   together.
 3. The gate ships marked `DEPENDS-OPEN-THEORY`, at the gate's own text.
 4. **S-N is OWED and is a FLIP TRIGGER, not a footnote** — the rules-derived
    survival row the red team found missing. **S-N is NOT implemented by this
@@ -110,14 +121,14 @@ re-litigate any of them:
 **What D-323 explicitly does not decide, and IMPL may not read as decided:**
 the **SEAM** by which a test observes the emitted set (D-115's constraint on
 widening `pistol_search::staged` to `pub`) is a **separate, still-OPEN named
-decision** — carried as debt in §5 below, not resolved here. S-E's second half
+decision** — carried as debt in §6 below, not resolved here. S-E's second half
 (the always-on `assert!` in `visit` for a post-generation drop) is likewise
 **neither selected nor rejected** (`U4_soundness_instrument.md` §U4-T).
 
 ### 3.3 The four soundness-gate names (`docs/decisions.md` D-316)
 
 The gate has four parts, named rather than lettered, each specified in exactly
-one place (`U4_soundness_instrument.md` §8.3, §8.7):
+one place (§8.3 and §8.2; wired at §8.7).
 
 | Gate | Specified at |
 |---|---|
@@ -131,53 +142,90 @@ All four become **one script, `tools/staged_soundness_check.sh`**, added to
 lookup table for any pre-existing citation; nothing new is addressed by letter.
 **The differential gate's own script fragment cannot be written until §3.2's
 SEAM decision lands** — the other three parts are unaffected and are not
-blocked on it.
+blocked on it. Because §8's finish policy requires all four gates wired and
+green with no excusing clause, **IMPL's finish is itself blocked on the SEAM
+decision landing** — this is not a defect in either §3.3 or §8, it is the
+binding consequence of requiring the fourth gate unconditionally.
 
 ### 3.4 C at the threshold reading — Tier-T qualification (`U3_tier_t.md` §6.5)
 
-`tier_t_own_count >= 2`, `tier_t_opponent_count >= 3` (the **threshold**
-reading, not exact — `U3_tier_t.md` §6.1). **Pre-registered consequence, fixed
-before any gate runs:** if the soundness instrument (§3.2) shows C dropping a
-cell a proven tactic needs, C is replaced by B — strictly wider under the
-threshold reading — as an amendment with its own review, never a silent
-threshold move. Item 2 of `U3_tier_t.md` §U3-Z (the ADR line recording C's
-strongest surviving attack) is **gated**: it may not be written until a fresh
-DECISION-RED-TEAM has attacked matrix M1 **as amended** (the threshold flip and
-C's selection under it post-date the only attack M1 has ever had) — carried as
-debt in §5 below.
+Config keys `tier_t_own_count = 2`, `tier_t_opponent_count = 3` (the
+**threshold** reading — own windows qualify at count ≥ 2, opponent windows at
+≥ 3; not the exact reading — `U3_tier_t.md` §6.1). **Pre-registered
+consequence, fixed before any gate runs, two branches:**
 
-## 4. The pre-registered hotspot — bracket and abort threshold (`docs/decisions.md` D-263, corrected by `U3_tier_t.md` §U3-M item 4)
+1. If the soundness instrument (§3.3 above, U4 §8 in full) shows C dropping a
+   cell a proven tactic needs, C is replaced by B — strictly wider under the
+   threshold reading — as an amendment with its own review, never a silent
+   threshold move.
+2. If the instrument is GREEN while mutation M7 (`U4_soundness_instrument.md`
+   §8.4; Tier T at ≥3 for the mover — option A) also SURVIVES, the instrument
+   has demonstrated it cannot tell A from C, C's entire ground is unmeasured,
+   and that is recorded as such in the results rather than read as a
+   confirmation of C.
+
+Item 2 of `U3_tier_t.md` §U3-Z (the ADR line recording C's strongest surviving
+attack) is **gated**: it may not be written until a fresh DECISION-RED-TEAM has
+attacked matrix M1 **as amended** (the threshold flip and C's selection under
+it post-date the only attack M1 has ever had) — carried as debt in §6 below.
+
+## 4. The pre-registered hotspot — bracket and abort threshold (`docs/decisions.md` D-263)
 
 D-263 pre-registers the **cover arithmetic** (`blocking_covers`,
 `min_hitting_set_exceeds`) as WP-1.5b's hotspot, named before the per-node
 caller exists, and states plainly that it carries no bracket, no abort
-threshold and no bench — *"NONE of those is in this line."* Two things then
-happened, both already landed and neither IMPL's to redo:
+threshold and no bench — *"NONE of those is in this line."* This registration
+is unamended and, checked at this revision, unchanged in the tree: no ADR line
+records a substitution, `docs/ROADMAP.md`:89–92 still names the cover
+arithmetic, `pistol-solver` is not a dependency of `pistol-search`
+(`grep -c pistol-solver crates/pistol-search/Cargo.toml` → `0`), and no
+`staged.rs` exists in `crates/pistol-search/src/`. **IMPL's registered hotspot
+is therefore the cover arithmetic, per D-263, as landed.**
 
-- `U2_node_protocol.md` §5.2 (M5-E) deleted the redundant query pair the cover
-  arithmetic was paying twice, cutting D-263's own ceiling from **10.51 % to
-  7.45 %** of a fast node by deleting work rather than accelerating it.
-- `U3_tier_t.md` §U3-M item 4 **re-measured and found D-263 named the wrong
-  hotspot**: MEASURED, Tier-T cell extraction costs about **6×** both threat
-  queries combined (533 ns reused-buffer / 662 ns fresh, against 86 ns for the
-  pair).
+One thing has already landed and IMPL writes its code from: `U2_node_protocol.md`
+§5.2 (M5-E), an adopted design decision that deletes the redundant query pair
+the cover arithmetic was paying twice, cutting D-263's own ceiling from
+**10.51 % to 7.45 %** of a fast node by deleting work rather than accelerating
+it — IMPL writes this deletion as part of building the cover arithmetic's
+per-node call site; it is not a separate hotspot.
 
-**IMPL's registered hotspot is Tier-T cell extraction, per `U3_tier_t.md`
-§U3-M item 4, not the cover arithmetic D-263 originally named:**
+**What D-263 owes and IMPL pays:** measure `blocking_covers` and
+`min_hitting_set_exceeds` at the candidate counts its own generator produces,
+not at counts chosen to make a curve; try the cheap remedies in D-263's stated
+order before the algorithm — the three-pairwise-disjoint-families early-out,
+then lifting `empty_families`'s per-call allocation off the hot path, and only
+then a different enumeration.
 
-- **HOTSPOT:** Tier-T cell extraction on the per-node path.
-- **EXPECTED GAIN BRACKET:** none may be derived before IMPL measures it — the
-  registration is **BASELINE = the in-search mask walk with a reused buffer,
-  MEASURED first, in its own commit**; the accessor is a second commit whose
-  bracket is set from that baseline before it is written.
-- **ABORT THRESHOLD:** below **1.05×**, or any regression in whole-search nps.
+- **HOTSPOT:** the cover arithmetic (`blocking_covers`,
+  `min_hitting_set_exceeds`) on the per-node path, per D-263.
+- **EXPECTED GAIN BRACKET:** none may be derived before IMPL measures it —
+  D-263 registers no bracket. BASELINE = the cover arithmetic as it lands on
+  the per-node path, MEASURED first in its own commit; each remedy in the
+  stated order is a further commit whose bracket is set from the prior
+  measurement before it is written.
+- **ABORT THRESHOLD:** D-263 registers none either; IMPL sets one from the
+  BASELINE commit's own measurement before writing the first remedy, per rule
+  5 — a remedy that misses its own derived bracket, or regresses whole-search
+  nps, aborts. A structural floor found this way is a finding, not a failure
+  (CLAUDE.md rule 5).
 - **INSTRUMENT:** one IQR-gated bench reporting **nps AND time-to-depth**
-  (never the snapshot, which reports `depth_turns`/`nodes` only), taken on
-  **BATCHED nodes only** — the 533/662 ns figures are a blended mean across
-  BATCHED and the **29.2 %** of nodes that take a forced row and never extract
-  Tier T at all, and IMPL re-takes the number on the right population before
-  banking a bracket against it.
+  (never the snapshot, which reports `depth_turns`/`nodes` only), taken at
+  **both stone counts** the arena plays from.
 - **ONE CHANGE = ONE COMMIT** (CLAUDE.md rule 5).
+
+**ADR debt, owed and not IMPL's to close silently:** `U3_tier_t.md` §U3-Z item
+7 (U3:702–708) is a re-measurement, **MEASURED, OWED, and NOT LANDED** —
+*"D-263 named the wrong hotspot: Tier-T cell extraction is MEASURED at about
+6× both threat queries combined (533 ns reused-buffer / 662 ns fresh, against
+86 ns for the pair), on BATCHED nodes only (the 29.2 % that take a forced row
+never extract Tier T at all)."* This document does not decide whether that
+re-measurement replaces D-263's hotspot — that is an ADR line the architect
+writes, amending D-263 and `docs/ROADMAP.md`:89–92 together (CLAUDE.md rule
+10: silent architecture drift is a breach). Until that ADR lands, IMPL benches
+the cover arithmetic per D-263 as registered above; if the ADR lands before
+IMPL reaches §4's commits, IMPL benches Tier-T cell extraction instead, using
+`U3_tier_t.md` §U3-M item 4's own bracket/threshold/instrument text, and this
+document is amended to match rather than silently superseded.
 
 ## 5. Fixtures and configs IMPL produces
 
@@ -203,38 +251,37 @@ absent by `ls`, this commit).
   landed (CLAUDE.md rule 7, D-209's discipline): twenty cases, fifteen at
   `tactical_staged_v0.toml` and five at `gate_staged_v0.toml`
   (`U4_soundness_instrument.md` §8.3).
-- **These same four documents are what `docs/experiments/wp15b_sprt_prereg.md`
-  §9's OPERATOR-CONFIRM slots need** before that document's governed run can be
-  taken — in particular §9.7, the revision at which `tools/baseline_snapshot.sh`
-  accepts `--config` (§3.1 above), and §9.4, the soundness gate (§3.3 above)
-  green at the run's revision. `wp15b_sprt_prereg.md` is its own governed
-  document with its own outstanding review; this prompt does not supersede or
-  restate it.
+- **These four documents are what `docs/experiments/wp15b_sprt_prereg.md`
+  §9.4's soundness-gate slot and the snapshot's AFTER measurement need** before
+  that document's governed run can be taken (§3.3 above). §9.7 is a separate
+  slot — the revision at which `tools/baseline_snapshot.sh` accepts `--config`
+  (§3.1 above) — a REVISION, not a config-document need. `wp15b_sprt_prereg.md`
+  is its own governed document with its own outstanding review; this prompt
+  does not supersede or restate it.
 - **`SearchInfo.stages: StageCounters`** — the stage-share counter seam
   (`U2_node_protocol.md` §U2-M item 2): F/T/Q firing rates, the filtered-node
   rate, the `Cover::Impossible` rate, the overload-return rate. Written from the
   same points `nodes`/`nps`/`time_ms` are, on **every** construction path
   including both salvage ones — a counter that silently reads zero on a
-  wall-clock path makes the play-mode stage shares unreadable. **WP-1.6
-  (quiescence) blocks on this seam existing**, even though it consumes none of
-  stage Q's widening-rate counters (those defer with `WPQ_seed.md` §7.2). The
-  line protocol's output does not change; the seam is read by a committed
+  wall-clock path makes the play-mode stage shares unreadable. Stage Q's own
+  widening-rate counters DEFER with stage Q (`WPQ_seed.md` §7.2); a later WP
+  (WP-1.5c, which owns the deferred quantities) reads them through this same
+  seam, so the seam itself is not deferred with them — this seam carries no
+  WP-1.6 dependency (`U2_node_protocol.md` §U2-M item 2; no source names one).
+  The line protocol's output does not change; the seam is read by a committed
   harness in the `pistol-search` test tree, not printed.
 
 ## 6. What is OPEN and this document does not resolve
 
-Pointer-only, per unit's own OPEN list — the argument for each is at that
-citation, not here.
+The argument for each item below is at its own unit's citation, not here.
 
 - **U1** (`U1_gate_supersession.md` §U1-Z): the two clauses of §4.4's surviving
   attack that option (f) does not answer (a legitimate crate added inside the
   cone; a workspace version bump that is not a graph change).
 - **U2** (`U2_node_protocol.md` §U2-Z): the two unreconciled M5-E-equivalence
   population figures (168 030 vs. 343 344 comparisons — D-346 restored the
-  claim, it did not reconcile the figures); rule 5 for the node protocol
-  itself (`can_win_this_turn` + `blocking_covers` on every node has no
-  expected-gain bracket, abort threshold or bench of its own — distinct from
-  §4's Tier-T hotspot).
+  claim, it did not reconcile the figures). The node-protocol rule-5
+  registration is promoted to §2's binding order, not carried here.
 - **U3** (`U3_tier_t.md` §U3-Z): the self-completeness-claim architect gap
   (whether D-331 owes a binding clause for a document's universal about its
   own state); MAJOR 12, the unmarked `23.2` in §6.3's failure-mode cell
@@ -249,6 +296,10 @@ citation, not here.
   registered, an independent instrument is not); SHELL_CHECKLIST reviews for
   both `tools/staged_soundness_check.sh` (new) and the reopened
   `tools/baseline_snapshot.sh` (N-E).
+- **The hotspot substitution ADR** (§4 above): whether Tier-T cell extraction
+  (`U3_tier_t.md` §U3-Z item 7) replaces D-263's cover arithmetic as WP-1.5b's
+  registered hotspot is OWED as an ADR line and is not this document's to
+  decide.
 
 ## 7. NOT IN SCOPE
 
@@ -269,10 +320,12 @@ IMPL for stages F and T is finished when:
    answered by name, and is green — the differential gate's own part marked
    `DEPENDS-OPEN-THEORY` rather than silently green on an unresolved
    convention.
-3. §4's Tier-T-extraction hotspot has run its two-commit registration (baseline
-   measured, accessor bracketed from it) with one IQR-gated bench reporting
-   nps and time-to-depth, and the commit stands or is reverted by that verdict
-   alone.
+3. §4's cover-arithmetic hotspot (or, if the §4 ADR debt has landed by then,
+   the substituted Tier-T-extraction hotspot) has run its registration —
+   BASELINE measured first in its own commit, each remedy/accessor commit
+   bracketed from the prior measurement, in the governing hotspot's own stated
+   order — with one IQR-gated bench reporting nps and time-to-depth, and each
+   commit stands or is reverted by that verdict alone.
 4. `docs/experiments/wp15b_sprt_prereg.md` passes its own outstanding
    fresh-context review at the revision governing its run, and the operator's
    governed SPRT run completes and reports a verdict under that document's own
@@ -281,11 +334,16 @@ IMPL for stages F and T is finished when:
    IMPL, never before.
 
 **Finish does not require:** stage Q or the widening schedule (§1, WP-1.5c);
-§3.2/§3.3's differential-gate SEAM decision, if still open when IMPL starts
-(carried forward as §6 debt, not blocking); S-N (§3.2 condition 4, explicitly
-not this IMPL's to write); or the operator's SPRT moving the committed config
-(§1 — a decision made after the run, by the operator, never a deliverable of
-IMPL).
+S-N (§3.2 condition 4, explicitly not this IMPL's to write); or the operator's
+SPRT moving the committed config (§1 — a decision made after the run, by the
+operator, never a deliverable of IMPL).
+
+**Finish DOES require §3.2/§3.3's differential-gate SEAM decision to land, with
+no excusing clause:** item 2 requires all four §3.3 gates wired and green, and
+§3.3 states plainly that the differential gate's own script fragment cannot be
+written until the SEAM decision lands. If the SEAM is still open, IMPL is not
+finished — full stop. The SEAM decision is the architect's to make, and it sits
+on IMPL's critical path exactly because item 2 admits no exception for it.
 
 A landing that skips any of 1–5 is not finished; it is OPEN debt, named as such
 in §6, never silently dropped.
