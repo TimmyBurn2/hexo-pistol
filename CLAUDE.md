@@ -188,6 +188,37 @@ coverage rule is the binding one: any tools/ script that produces a recorded
 number carries at least one test driving the shipped script. The checklist is
 judged, not mechanized.
 
+THE OPERATOR OVERRULE, a first-class move and not an escape hatch. Where the
+CODE is done — tested, green, its mutations dying — and what blocks it is a
+claim in a governing DOCUMENT or a rule of this file, the session states the
+problem in a SHORT paragraph and asks the operator to OVERRULE. The paragraph
+names three things and no more: the finding, why the blocked claim does no work,
+and what would be deleted. The operator's answer is an ADR line, and the
+deletion is the fix. THE TEST IS WHETHER THE DISPUTED CLAIM CHANGES WHAT ANYONE
+MAY CONCLUDE — where both sides of a distinction license the same conclusion it
+is not a distinction, and it is DELETED rather than refined. IT IS NOT A LICENCE
+OVER CORRECTNESS: a finding that names a way the code can produce a wrong answer
+is never overruled, only fixed, and the overrule reaches only prose that
+constrains nothing. Measured, the alternative costs a full review round per
+revision and buys nothing — WP-1.6's exit taxonomy produced one MAJOR in each of
+three consecutive revisions, every one inside the paragraph written to fix the
+last, while both sides of the distinction it drew meant the same thing: the run
+is not a measurement (D-424).
+
+A pre-registration registers only what constrains the CONCLUSION. Operational
+guidance — what to do after a refusal, which file to look at next, whether to
+re-run — is NOT registered, is not reviewed, and lives in the instrument's own
+printed message. Pre-registration exists to stop a reading being chosen after
+the numbers are seen; a rule that cannot change any reading is protecting
+nothing and is prose a reviewer must still attack.
+
+A CLAIM THE DOCUMENT MAKES TWICE IS A DEFECT WAITING. State it once, in the
+section that owns it, and have every other section POINT at that section rather
+than restate it — because a fix then lands once instead of needing to land
+twice, and the second site is what gets missed. Measured: revision 7 of WP-1.6's
+pre-registration corrected the exit taxonomy in §5 and left §7A.1's copy
+byte-identical, and the document shipped self-contradicting (D-423).
+
 ## Roadmap pointer
 
 Stages per the research report: 0 foundations (correct + reproducible) → 1 tactical
