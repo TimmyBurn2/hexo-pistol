@@ -948,7 +948,10 @@ fn an_answer_that_cannot_be_delivered_is_no_answer_and_not_a_finding() {
     assert_eq!(
         control.status.code(),
         Some(0),
-        "the control is refused, so nothing below is about delivery: {}",
+        "the control must exit 0. Exit 1 would mean the fixture itself has an \
+         attribution failure and the cases below would be measuring that instead; \
+         exit 2 that it is unreadable; exit 3 a determinism violation. Any of the \
+         three makes everything after this line vacuous: {}",
         said(&control)
     );
 
@@ -980,6 +983,46 @@ fn an_answer_that_cannot_be_delivered_is_no_answer_and_not_a_finding() {
         assert!(
             !String::from_utf8_lossy(&out.stderr).contains("Traceback"),
             "no traceback may reach the reader (PYTHONUNBUFFERED={unbuffered}): {}",
+            said(&out)
+        );
+    }
+
+    // STDOUT CLOSED, which is not the same as stdout unwritable. `>&-` makes
+    // CPython set `sys.stdout` to None, and `print` on None SILENTLY RETURNS —
+    // so the refusal was recorded as delivered, and the flush at the exit then
+    // raised AttributeError, which the OSError guard did not catch. Exit 1 with
+    // a traceback (D-425 MAJOR 1). The second case is the one that matters
+    // most: a NONEXISTENT report is a pure void, and it exited 1 too.
+    for (what, report_arg) in [
+        ("an honest report", report_path.display().to_string()),
+        (
+            "a nonexistent report, i.e. a pure VOID",
+            String::from("/nonexistent"),
+        ),
+    ] {
+        let out = Command::new("sh")
+            .arg("-c")
+            .arg(format!(
+                "exec python3 {} {} {} {} >&-",
+                repo("tools/wp16_warm_attribution_check.py").display(),
+                report_arg,
+                replay_path.display(),
+                engine.display()
+            ))
+            .output()
+            .expect("sh runs the checker with stdout closed");
+        assert_eq!(
+            out.status.code(),
+            Some(2),
+            "with stdout CLOSED on {what} the answer was never delivered, so it is NO ANSWER \
+             — exit 2. Exit 1 is a void wearing the exit code this document registers as an \
+             attribution finding, which is the defect the whole delivery funnel exists to \
+             prevent: {}",
+            said(&out)
+        );
+        assert!(
+            !String::from_utf8_lossy(&out.stderr).contains("Traceback"),
+            "no traceback may reach the reader ({what}): {}",
             said(&out)
         );
     }

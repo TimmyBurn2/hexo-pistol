@@ -194,18 +194,37 @@ def say(line):
     """
     global DELIVERED
     try:
-        print(line)
-    except OSError:
+        # `sys.stdout.write` AND NOT `print`. With stdout CLOSED (`>&-`) CPython
+        # sets `sys.stdout` to None and `print` SILENTLY RETURNS, so the refusal
+        # was recorded as delivered when nothing had been written; `leave()`'s
+        # flush then raised AttributeError, which is not OSError, escaped the
+        # OSError guard that used to stand here, and exited 1 with a traceback.
+        # A NONEXISTENT REPORT FILE -- a pure void -- exited 1 that way
+        # (docs/decisions.md D-425 MAJOR 1). `.write` raises on None instead.
+        stream = sys.stdout
+        if stream is None:
+            raise OSError("stdout is not open")
+        stream.write(line + "\n")
+        stream.flush()
+    except BaseException:  # noqa: BLE001 - deliberate; see below
+        # A CATCH-ALL, for the third time in this file and for the same reason.
+        # This guard named OSError and missed AttributeError; the handler at the
+        # foot of this file named three classes and missed StopIteration and
+        # ZeroDivisionError. ANY failure to write means the line was not
+        # delivered, and enumerating the ways it can fail is what keeps being
+        # wrong.
         DELIVERED = False
         _mute()
 
 
 def _mute():
-    """Point stdout at the null device, so no later flush can re-raise."""
+    """Make stdout something no later flush can raise on."""
     try:
         sys.stdout = open(os.devnull, "w")
-    except OSError:
-        pass
+    except BaseException:  # noqa: BLE001
+        # None is what CPython itself uses for a closed stdout, and its shutdown
+        # flush tolerates it. Better than leaving a stream that raises.
+        sys.stdout = None
 
 
 def leave(code):
@@ -221,8 +240,11 @@ def leave(code):
     """
     global DELIVERED
     try:
-        sys.stdout.flush()
-    except OSError:
+        stream = sys.stdout
+        if stream is None:
+            raise OSError("stdout is not open")
+        stream.flush()
+    except BaseException:  # noqa: BLE001 - deliberate; see `say`
         DELIVERED = False
         _mute()
     raise SystemExit(code if DELIVERED else NO_ANSWER)

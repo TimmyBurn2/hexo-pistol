@@ -1,9 +1,21 @@
 # WP-1.6 — SPRT pre-registration: threat-only quiescence (`defensive_only`) vs the committed staged policy
 
-**Revision 8. UNREVIEWED. It amends THE HEADER (this block), §5, §7A.1, §10 and
+**Revision 9. UNREVIEWED. It amends THE HEADER (this block), §5, §7A.1, §10 and
 §11 — and nothing else. It MOVES THE INSTRUMENT: `385631f` re-pins §7A.1's
 statistics layer, so this review reopens WHOLE. This document does NOT govern a
 run until a fresh review passes it.**
+
+**WHY THERE IS A REVISION 9.** Revision 8 (`3696dea`) FAILED its governing
+review — 0 BLOCKING, 3 MAJOR, 4 MINOR (**D-425**). Two of the three MAJORs were
+that revision 8 did not finish its own job: the exit-2 partition D-424 deleted
+was still present in a SECOND table in §7A.1, with per-kind instructions
+opposite to §5's, and §11 still told the next reviewer the review was scoped
+under a cap D-423 had declared exhausted. The third was a CORRECTNESS defect in
+the instrument, which the overrule does not reach and which is fixed in code:
+with stdout CLOSED, `print` on a None stream silently succeeded, so a refusal
+counted as delivered and the exit flush then raised `AttributeError` past an
+`OSError`-only guard — a NONEXISTENT REPORT FILE, a pure void, exited **1**.
+Revision 9 closes all seven findings.
 
 **WHAT REVISION 8 IS, IN ONE SENTENCE: IT DELETES THE PARAGRAPH THAT HAS FAILED
 THREE REVIEWS RATHER THAN WRITING A FOURTH VERSION OF IT.**
@@ -409,7 +421,7 @@ shape WP-1.5b registered and D-386 executed exactly as written.
 | **Criterion 1'' fails on the GOVERNED report — exit 1** (§7A, Doubt 1) | **The run is not a measurement, and it is not an `h0` either.** The verdict is not read and the committed instrument config does not move in either direction. See §7A.1 |
 | **Exit 2 — NO ANSWER WAS TAKEN.** One consequence, no kinds. The instrument refused to read the two documents, and the reason is printed under `warm_attribution_check: CANNOT READ:` | **The run is not a measurement. The verdict is not read. Nothing about either engine is in evidence, in either direction.** In particular exit 2 is never an `h0`, never an attribution failure, and never evidence about the extension. What to do next — re-run, or go and find out how a report the arena could not have written came to exist — is read off the instrument's own message, which names the path, the record and the field. That is operational and this document does not register it. **Revisions 5, 6 and 7 each tried to partition this row into a VOID and a REFUSED REPORT and each partition failed its review** (D-419 MAJOR A, D-421 MINOR 2, D-423 MAJOR 1); the two sides always had the SAME consequence above, so the distinction licensed no different reading and was deleted rather than refined a fourth time (**D-424**) |
 | **A DETERMINISM VIOLATION — exit 3** | **A hard stop bigger than this WP**, with TWO possible causes the instrument itself declines to choose between: the ENGINE's instrument-mode guarantee failing (CLAUDE.md rule 4), or the REPLAY not reproducing the sequence the run played. Revisions 3 and 4 named only the first; D-413's reviewer MEASURED an instrument mutant landing here with the engine healthy. Reported as such, never folded into an attribution count, nothing downstream of it is read, and WP-1.6 does not proceed until it is understood |
-| **A TERMINATION THAT IS NONE OF 0, 1, 2 OR 3** | **A VOID ABOUT THE INVOCATION ENVIRONMENT, never about the engines and never about the report.** No verdict was delivered, so none is read; the invocation is re-issued and nothing is concluded from the terminated attempt. **Revision 8 narrows what can still land here.** Revision 7 had to register exit **120** (CPython's shutdown flush, with stdout on a full device) and a `KeyboardInterrupt`'s signal death; `385631f` closes both — every line goes through `say()`, every exit through `leave()`, an undelivered answer is downgraded to exit 2, and the handler catches `BaseException`. What remains is what no process can catch: `SIGKILL`, the OOM killer, a machine that stops. Those are facts about the box and this row is where they are read |
+| **A TERMINATION THAT IS NONE OF 0, 1, 2 OR 3** | **A VOID ABOUT THE INVOCATION ENVIRONMENT, never about the engines and never about the report.** No verdict was delivered, so none is read; the invocation is re-issued and nothing is concluded from the terminated attempt. **Revision 8 narrows what can still land here.** Revision 7 had to register exit **120** (CPython's shutdown flush, with stdout on a full device) and a `KeyboardInterrupt`'s signal death; `385631f` closes both — every line goes through `say()`, every exit through `leave()`, an undelivered answer is downgraded to exit 2, and the handler catches `BaseException`. What remains is any death this process did not choose — `SIGKILL` and the OOM killer, which cannot be caught, and also `SIGTERM` and its siblings, which CAN be caught and are not, so they land here at the shell's `128+n` (MEASURED: `SIGTERM` gives 143). This row deliberately does NOT enumerate them: the status was chosen by the kernel or the shell rather than by the instrument, and that is the whole content of the row (D-425 MINOR 3) |
 | **The two instruments DISAGREE** (§7A.1's registered agreement criterion) | The run is not a measurement, the verdict is not read, and the disagreement is investigated as an INSTRUMENT defect before anything is concluded about either engine |
 | **A robustness FAILURE under the old Criterion 1' clause (b)** | Superseded, and kept so the supersession is visible rather than silent. Criterion 1' is no longer this document's instrument, and warm-replay — the thing D-384's flip clause said had to be built before any verdict was read — is built (D-407 through D-412) and IS Criterion 1'' |
 
@@ -789,7 +801,7 @@ the instrument's own constants: `ATTRIBUTABLE = 0`, `NOT_A_MEASUREMENT = 1`,
 |---|---|---|
 | 0 | `main()` returns with an empty `failures` list, and every note was delivered | §5 |
 | 1 | **the NAMED attribution findings, and nothing else** — a confirmed inversion; an unattributable pair; an inert pair whose bucket contradicts the theorem; a cross-check that moves the verdict; a broken link 1b or 1c. Every one is printed under `FAIL ` before the exit | §5 |
-| 2 | every refusal, from `die()`. There are ~50 of them and this document does not enumerate or partition them — see §5's single exit-2 row and **D-424** | §5 |
+| 2 | every refusal, from `die()`. This document does not count, enumerate or partition them — a count goes stale on every instrument edit and did so twice (D-421 MINOR 3, D-425 MINOR 1) — see §5's single exit-2 row and **D-424** | §5 |
 | 3 | a divergence neither engine's answer explains; a clean game whose replay spent different nodes; a forfeiting seat that spent more replaying than the whole game cost it live | §5 |
 
 **THE INVARIANT, and it is now TRUE AS WRITTEN rather than narrowed to fit:**
@@ -843,18 +855,6 @@ was being asserted by an ENUMERATION** — the same shape as the exit-2 partitio
 §5 has now deleted, and as the "closed list of four" before it. Three instances,
 one class, and D-424 is the rule that ends it.
 
-| Exit | What reaches it | Consequence, registered here |
-|---|---|---|
-| 0 | Criterion 1'' holds | §5's table is read, and only then |
-| 1 | **the NAMED attribution findings, and nothing else** — a confirmed inversion; an unattributable pair; an inert pair whose bucket contradicts the theorem; a cross-check that moves the verdict; a broken link 1b or 1c. Every one is printed under `FAIL ` before the exit | **THE RUN IS NOT A MEASUREMENT.** The verdict is not read, it is not an `h0` either, and the committed instrument config does not move in either direction |
-| 2 | **two kinds, partitioned by RULE rather than by list.** **(i) a VOID — the CLOSED list**: a missing or unrunnable engine, an unreadable or non-UTF-8 document, an incomplete or abandoned replay pass, a budget this cannot replay. Not a finding, not evidence about any engine; the void is fixed and the answer re-taken. **(ii) a REFUSED REPORT — the REGISTERED CATCH-ALL**: every other exit 2, named or not, including the four premise refusals, the `status`/halt refusals, the cross-check's self-check, every report-internal contradiction, and any refusal nobody has enumerated — such as the handler's own `an unanticipated {Class} escaped this instrument`. **Nothing here is "fixed" and nothing is "re-taken"** — the report is not one the arena could have written, the run is not a measurement, and what is investigated is the report's provenance, never the engines | as stated per kind. **The reader does not need to match a message against a list**: kind (i) is closed above, so an exit 2 that is not one of those four IS kind (ii) by rule. That is the whole point of the change — revision 5 asked the reader to distinguish the kinds by text and did not give them enough text to do it |
-| 3 | a divergence neither engine's answer explains; a clean game whose replay spent different nodes; a forfeiting seat that spent more replaying than the whole game cost it live | **A HARD STOP BIGGER THAN THIS WP.** Reported as such, never folded into an attribution count, and nothing downstream of it is read. WP-1.6 does not proceed until it is understood |
-
-**A NOTE ON DIRECTION, so the exit-2 catch-all is not over-read as laxity.**
-Every refusal it absorbs leaves the instrument STRICTER than this document
-promises, never looser. No exit 0 is reachable through any of it, so no false
-PASS is available — the catch-all can only turn a crash into a refusal, and a
-refusal is already a non-measurement.
 
 **EXIT 3 NAMES BOTH CAUSES, corrected in revision 5.** Revisions 3 and 4
 registered it as "the engine's own instrument-mode guarantee is failing". The
@@ -1328,8 +1328,8 @@ all and it did not:
 | Instrument | Pinned at | Where |
 |---|---|---|
 | `crates/pistol-arena/src/seats.rs`, `transcript.rs`, `replay.rs`, `replay_report.rs`, `bin/arena.rs`'s `--replay` mode | `bfdf933` | §7A.1 |
-| `tools/wp16_warm_attribution_check.py` | **`385631f`** — `bfdf933` through revision 5, `43e8a86` in revisions 6-7, `385631f` now | §7A.1 |
-| `target/release/arena` and `target/release/pistol`, BY CONTENT | the two `sha256` digests, unchanged by revision 6 | §7A.1 (a rebuild is a re-record, and a re-record is an amendment) |
+| `tools/wp16_warm_attribution_check.py` | **the D-425 fix round** — `bfdf933` through revision 5, `43e8a86` in revisions 6-7, `385631f` now | §7A.1 |
+| `target/release/arena` and `target/release/pistol`, BY CONTENT | the two `sha256` digests, unchanged by revisions 6, 7 and 8 | §7A.1 (a rebuild is a re-record, and a re-record is an amendment) |
 | `tools/wp15b_attribution_check.py` — the SECOND INSTRUMENT, not this criterion's | `bfdf933`, unchanged by this WP. **§8.2 pins the same file a second time**, as "the commit this document lands at"; the two pins denote IDENTICAL CONTENT — the file was last modified at `a80a864`, long before this WP, and `git diff --stat bfdf933..HEAD -- tools/wp15b_attribution_check.py` prints nothing — so neither is false, and revision 6 records both rather than leaving §10 claiming to be the only place (D-419 MINOR F) | §7A.1's second-instrument paragraph **and** §8.2 |
 | `tools/baseline_snapshot.sh` | `9282dd0`, as §7A.2 states it | **§7A.2**, not §7A.1 |
 
@@ -1346,7 +1346,7 @@ staying demoted, and that re-registration itself reopens this review.
 
 ## 11. REVIEW STATE
 
-**REVISION 8 (this text) IS UNREVIEWED AND GOVERNS NOTHING YET.**
+**REVISION 9 (this text) IS UNREVIEWED AND GOVERNS NOTHING YET.**
 
 | Revision | State |
 |---|---|
@@ -1357,7 +1357,8 @@ staying demoted, and that re-registration itself reopens this review.
 | 5 (`de53f5d`) | **FAILED its governing review — 0 BLOCKING, 2 MAJOR, 7 MINOR (D-419)**, report at `docs/experiments/wp16_prereg_rev5_REVIEW.md`. Document-only, and its receipts rule verified overwhelmingly clean — all twelve quoted instrument strings character-exact, all ten named tests present and driving. **Both MAJORs were that rule's own dividend**: MAJOR A, an exit-2 enumeration presented as complete that was not; MAJOR B, a registered receipt found FALSE by being tested. MAJOR B was an INSTRUMENT defect, so the session stopped rather than editing around it. No run was taken |
 | 6 (`3a198de`) | **FAILED its governing review — 0 BLOCKING, 1 MAJOR, 2 MINOR (D-421)**, report at `docs/experiments/wp16_prereg_rev6_REVIEW.md`. The first revision of this document that was NOT document-only. Its reviewer re-ran all five mutations (all killed), reproduced both binary digests byte-exactly, verified all nine quoted instrument strings character-exact and all seven of D-419's MINORs closed. **The MAJOR was the invariant revision 6 itself introduced**, found false by being TESTED with the instrument's stdout on `/dev/full`. The cap's FAIL-ON-THE-DIFF branch fired: one fix round, a scoped re-review, then STOP regardless |
 | 7 (`1618467`) | The ONE licensed fix round under revision 6's cap. Closed the MAJOR by NARROWING the invariant and adding a fifth registered check. **FAILED its scoped re-review — 0 BLOCKING, 2 MAJOR, 2 MINOR (D-423)**, report at `docs/experiments/wp16_prereg_rev7_REVIEW.md`. The scoping HELD (proved by a per-section sha256 over all 28 sections) and MINOR 3 closed fully, but the exit-2 fix landed in §5 and not in §7A.1's copy, so the document shipped self-contradicting; and the fifth check was green at the revision where the defect was live, so it was no more a falsifier than the four it joined. The cap was exhausted and the session STOPPED |
-| 8 (this text) | **The operator's OVERRULE (D-424), not a fourth narrowing.** DELETES the exit-2 partition that failed three reviews, on the ground that both its sides had the same registered consequence and so licensed no different reading. States the taxonomy ONCE, in §5, with §7A.1 pointing at it. Replaces the five greps with a driving test the defect falsifies, which required moving the instrument — `385631f`, which also closes D-422. **NOT document-only**; this review reopens WHOLE |
+| 8 (`3696dea`) | **The operator's OVERRULE (D-424), not a fourth narrowing.** DELETES the exit-2 partition that failed three reviews, on the ground that both its sides had the same registered consequence and so licensed no different reading. States the taxonomy ONCE, in §5, with §7A.1 pointing at it. Replaces the five greps with a driving test the defect falsifies, which required moving the instrument — `385631f`, which also closes D-422. **NOT document-only**; this review reopens WHOLE |
+| 9 (this text) | Closes D-425's seven findings. **The two document MAJORs were revision 8 failing to finish its own deletion** — a second copy of the partition in §7A.1 and a stale scoping instruction in §11, both the same one-of-two-sites mechanism CLAUDE.md's new rule names. The instrument MAJOR is fixed in code: `say()` now writes through `sys.stdout.write` and both it and `leave()` guard with `BaseException`, because the delivery funnel was itself an enumeration and missed `AttributeError`. The `die()` count is DELETED rather than corrected a third time |
 
 **THE INSTRUMENT THIS DOCUMENT REGISTERS HAS ITS OWN REVIEW RECORD, and it is
 in §7A.1 rather than only in the ADR log**: the implementation FAILED its
@@ -1374,10 +1375,11 @@ verified by a five-mutation table run in a separate worktree — every mutation
 killed, including one whose only job is to prove the tests' own controls are
 load-bearing.
 
-A fresh review — SCOPED to revision 7's three fixes, because revision 6's whole
-review has already been taken and its cap licenses exactly one fix round and
-one scoped re-review — must pass before the governed run this document
-describes may be launched. Any diff outside this document voids that scoping.
+A fresh review — REOPENED WHOLE, because `385631f` moves the instrument and a
+review of a superseded revision does not transfer — must pass before the
+governed run this document describes may be launched. The cap that governed
+revision 6's review licensed one fix round and one scoped re-review, and
+D-423 records BOTH as spent; no scoping survives it.
 §9.2/§9.6/§9.7's remaining slots are filled at that run's own launch, after
 this review is green.
 
