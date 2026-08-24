@@ -1,6 +1,29 @@
 # WP-1.6 — SPRT pre-registration: threat-only quiescence (`defensive_only`) vs the committed staged policy
 
-**Revision 1. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
+**Revision 2. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
+
+**Revision 1 (`43b5d78`) FAILED its first fresh-context review** — one
+BLOCKING defect and one MAJOR finding, both independently verified by the
+reviewer against the live tree (config hashes, the `identity_lines` handshake
+claim, a fresh from-scratch re-execution of the entire dry run byte-for-byte,
+and the arena's own `Verdict` enum against §5's table — all of it held).
+**BLOCKING**: §7A.2's agreement criterion let an `h1` verdict satisfy its
+AGREEMENT clause unconditionally ("regardless of the bucket count") while its
+own DISAGREEMENT clause was separately defined to fire on the identical
+case — a contradiction with no stated precedence, exactly the
+after-the-numbers ambiguity CLAUDE.md's registered-consequence rule forbids.
+Fixed: the criterion is now a clean partition on the bucket count ALONE,
+independent of the verdict; the "tactical correctness needn't mean shallower"
+reasoning moved to how a DISAGREEMENT is investigated, not to whether the
+criterion fires. **MAJOR**: §2's pair-floor paragraph asserted the 100-pair
+floor stays conservative at `elo1 = 15` directionally, without computing
+anything — fixed with an actual few-seconds derivation off `sprt.rs`'s own
+LLR formula, solving for the `t_hat` D-190's own empirical elo1=25 crossings
+imply and re-solving at `elo1 = 15` under the same decisiveness (~16.6 pairs
+uncapped, ~10.0 capped — both ESTIMATES, both an order of magnitude under the
+floor). This is an amendment, not a fresh draft: it reopens revision 1's
+FAILED review exactly as CLAUDE.md's rule requires. §7A.1, §8, and every ADR
+citation the reviewer independently re-verified are untouched.
 
 **Provenance, stated so a reviewer does not have to reconstruct it from the ADR
 log.** `docs/wp16_quiescence_design.md` revision 5 (`96c856c`) passed its fifth
@@ -99,13 +122,27 @@ read more into an `h1` than the matchup supports.**
 
 **The pair floor: 100 pairs**, the same standing convention D-190 established
 and every SPRT document in this project since has used (D-386's own
-confirmatory run cleared it at 51 pairs). **This is carried as PRECEDENT, not
-re-derived for `elo1 = 15`**: D-190's ten-pair/six-pair theoretical minimums
-are specific to `elo1 = 25` and this project's own "numbers do not transfer
-across an axis without independent re-derivation" discipline (`D-396`'s own
-rationale, quoting `threat_calculus_v1.md`'s Scope rule) applies here too — a
-smaller `elo1` needs MORE pairs to distinguish at the same `alpha`/`beta`, not
-fewer, so 100 remains a conservative floor and is not reduced.
+confirmatory run cleared it at 51 pairs). **Not re-derived from scratch for
+`elo1 = 15`, but the directional claim IS computed rather than asserted** —
+found in seconds from `crates/pistol-arena/src/sprt.rs`'s own LLR formula
+rather than left as a hand-wave (CLAUDE.md's own "an estimate that could have
+been measured in seconds is a finding" instruction), since a first draft of
+this document did leave it as a directional assertion and that is a real gap
+a reviewer named. D-190's "ten pairs" (uncapped) and "six pairs" (capped) at
+`elo1 = 25` are EMPIRICAL crossings, not closed-form minimums — the LLR's
+denominator `t1 * t_hat - t1^2 / 2` is unbounded as the sample variance
+shrinks, so no first-principles minimum exists independent of an assumed
+pentanomial shape. **What is computable**: solving `n * (t1(25) * t_hat -
+t1(25)^2/2) = h1` for the `t_hat` D-190's own two empirical crossings imply
+(`h1 = ln(0.95/0.05) = 2.944…`, this run's own bound too — alpha/beta
+unchanged), then re-solving for `n` at `t1(15)` under the SAME implied
+`t_hat` (the same DECISIVENESS of sample, not the same effect size): the
+uncapped shape crosses at **~16.6 pairs** and the capped shape at **~10.0
+pairs**. Both ESTIMATES, not measured — they assume this run's own sample
+would be exactly as decisive as D-190's, which nothing here confirms — but
+both are a full order of magnitude under the 100-pair floor, so the floor's
+own protection (§5's confirmatory-run row fires below it regardless of where
+the true minimum sits) holds with room, not merely by directional assertion.
 
 ---
 
@@ -322,30 +359,43 @@ own budget), count the `defensive_only` seat's completed `depth_turns` against
 the plain staged seat's in three buckets: strictly greater, equal, strictly
 less.**
 
-- **AGREEMENT** is a non-`h1` verdict with the `defensive_only` seat
-  STRICTLY LESS OR EQUAL on at least 18 of the 24 positions (D-398's own
-  measured 2.48x node-ratio at fixed depth predicts the inverse relationship
-  holds at fixed nodes on most positions — this number is JUDGED, not
-  measured, and stated so a reviewer can attack it: a 2.48x per-depth-3 cost
-  does not mechanically fix a fixed-nodes bucket count, and 18/24 = 75% is
-  chosen to be comfortably below the ~92% (22/24) comparable fraction D-398
-  itself measured, leaving margin for positions where the extra ply-1/ply-2
-  search still completes within budget), **or** an `h1` verdict regardless of
-  the bucket count — a real strength gain from a mechanism that also reaches
-  the SAME depth more often than not on this sample is not a contradiction,
-  since quiescence's whole claim is tactical correctness at whatever depth is
-  reached, not depth itself.
-- **DISAGREEMENT** is `h1` with the `defensive_only` seat STRICTLY GREATER on
-  more than 6 of the 24 positions — a claimed strength gain riding on a
-  mechanism that, contrary to its own design, is making the search see
-  DEEPER rather than more accurately, which is not the claim this document
-  registers and would need its own investigation before being read as
-  confirming quiescence's value.
+**THE PARTITION IS ON THE BUCKET COUNT ALONE, independent of the SPRT
+verdict** — CLAUDE.md's own registered-consequence rule forbids a criterion
+that leaves an after-the-numbers choice standing, and a verdict-conditioned
+branch here would do exactly that (a first draft of this section made this
+mistake and a fresh-context review caught it — recorded rather than silently
+fixed, since an amendment reopens the review it corrects):
 
-**THE REGISTERED CONSEQUENCE**: on disagreement, the work package does not
-land on the SPRT alone. The committed config does not move, the disagreement
-is reported with both numbers and all three buckets, and the next step is
-investigation — not a re-run and not a re-reading of either threshold.
+- **AGREEMENT** is the `defensive_only` seat STRICTLY GREATER on AT MOST 6 of
+  the 24 positions — mostly same-or-shallower, consistent with the
+  registered prediction that the extension spends nodes at the horizon rather
+  than narrowing the tree above it.
+- **DISAGREEMENT** is the `defensive_only` seat STRICTLY GREATER on MORE THAN
+  6 of the 24 positions — the search is seeing DEEPER rather than more
+  accurately, contrary to the mechanism the design claims.
+
+6/24 = 25% is chosen as the complement of the ~75% "strictly-less-or-equal"
+threshold a first draft of this criterion used and is JUDGED, not measured,
+stated so a reviewer can attack it: D-398's own measured 2.48x node-ratio at
+fixed depth predicts the inverse relationship holds at fixed nodes on MOST
+positions, and 24 × 0.25 = 6 leaves margin below the ~92% (22/24) comparable
+fraction D-398 itself measured for positions where the extra ply-1/ply-2
+search still completes within budget.
+
+**THE REGISTERED CONSEQUENCE**: on DISAGREEMENT, the work package does not
+land on the SPRT alone, REGARDLESS OF THE VERDICT — the committed config does
+not move even on an `h1` verdict, the disagreement is reported with both
+numbers and all three buckets, and the next step is investigation, not a
+re-run and not a re-reading of either threshold. **An `h1` verdict that also
+falls in the DISAGREEMENT bucket is not read as confirming quiescence's
+tactical-accuracy claim** — a real strength gain riding on a mechanism that is
+making the search see deeper rather than more accurately is not the claim
+§1 registers, and needs the same investigation a disagreeing `h0` would. This
+is where the "tactical correctness at whatever depth is reached, not depth
+itself" reasoning belongs — in how a DISAGREEMENT is investigated, not in
+whether the criterion fires — so the criterion itself stays a clean partition
+on one observable and a reader cannot pick a reading after seeing the
+numbers.
 
 **WHAT THIS INSTRUMENT STILL CANNOT SEE**: it is blind to the arena's score
 path, as the SPRT is — precisely why Doubt 1 has its own instrument, and
@@ -597,5 +647,8 @@ staying demoted, and that re-registration itself reopens this review.
 
 ## 11. REVIEW STATE
 
-**UNREVIEWED.** This is revision 1's first fresh-context dispatch. Per
-CLAUDE.md, this document governs no run until it passes.
+**UNREVIEWED AT THIS REVISION.** Revision 1 (`43b5d78`) FAILED its first
+fresh-context review (one BLOCKING, one MAJOR — see the provenance paragraph
+at the top). Revision 2 fixes both and reopens the review per CLAUDE.md's
+amendment rule. Per CLAUDE.md, this document governs no run until the
+revision that governs it passes its own fresh-context review.
