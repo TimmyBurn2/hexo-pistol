@@ -148,9 +148,7 @@ impl SearchSection {
                 if *q_depth_turns > MAX_Q_DEPTH_TURNS {
                     return Err(EngineError::config(
                         "search.candidate_policy.q_depth_turns",
-                        format!(
-                            "must be at most {MAX_Q_DEPTH_TURNS}, got {q_depth_turns}"
-                        ),
+                        format!("must be at most {MAX_Q_DEPTH_TURNS}, got {q_depth_turns}"),
                     ));
                 }
             }

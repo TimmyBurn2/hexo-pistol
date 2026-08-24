@@ -217,8 +217,13 @@ fn tt_store_declines_a_quiescence_record_that_would_evict_a_full_width_entry() {
     let mut table = Table::new(SMALL_TT).expect("a one mebibyte table");
     table.store(key(1), 0, record(100, 9));
     table.store(key(1), 0, quiescence_record(999));
-    let hit = table.probe(key(1), 0).expect("the full-width entry must survive");
-    assert_eq!(hit.score, 100, "the quiescence store must have been declined");
+    let hit = table
+        .probe(key(1), 0)
+        .expect("the full-width entry must survive");
+    assert_eq!(
+        hit.score, 100,
+        "the quiescence store must have been declined"
+    );
     assert_eq!(hit.depth_plies, 9);
 
     // Same story across a bucket collision: five full-width entries at

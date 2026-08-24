@@ -23,7 +23,7 @@
 //! position through call boundaries the design's own §3 already keeps inside
 //! one `staged_context()` borrow.
 
-use pistol_core::{Coord, PlyOutcome, NEIGHBOUR_DIRECTIONS};
+use pistol_core::{Coord, NEIGHBOUR_DIRECTIONS, PlyOutcome};
 use pistol_solver::{Cover, HitBudget, LiveCount, MinimalCover, NearHot, StonesLeft};
 
 use crate::pvs::{CANDIDATE_ILLEGAL, Run};
@@ -538,7 +538,11 @@ mod tests {
     /// exactly the horizon `pvs::visit` would hand `Run::quiescence`, which
     /// is what lets these tests call it directly rather than driving a whole
     /// multi-turn `Searcher::search` to land on one by chance.
-    fn run_over<'a>(position: &'a mut Position, table: &'a mut Table, q_depth_turns: u32) -> Run<'a> {
+    fn run_over<'a>(
+        position: &'a mut Position,
+        table: &'a mut Table,
+        q_depth_turns: u32,
+    ) -> Run<'a> {
         Run::new(
             position,
             table,
