@@ -1,0 +1,86 @@
+# pistol — WP-1.6's GOVERNED EXPERIMENT: threat-only quiescence
+# (defensive_only, one turn) against the committed plain staged policy.
+#
+# THIS IS THE DOCUMENT `docs/experiments/wp16_sprt_prereg.md` §3 NAMES: "The
+# document that IS the experiment is
+# configs/arena_wp16_defensive_only_vs_staged.toml ... — not authored here,
+# since it needs the launch-time binary digest §9.2 records." Authoring this
+# file EXECUTES the prereg's own §9.7 slot at revision 2 (`731150a`), passed
+# at its fresh-context re-review (D-400); it is not an amendment to the
+# prereg and reopens no review — the prereg's own review covers this file's
+# existence as a precondition, not its content as a new claim.
+#
+# `binary_sha256` on both seats (prereg §9.2) is CONFIRMED below: rebuilt
+# `--release --locked` and re-digested at this file's own revision,
+# immediately before launch. REBUILD MEANS RE-RECORD.
+#
+# `[sprt] elo0`/`elo1`/`alpha`/`beta` and `[run] openings_take` are FIXED by
+# D-396's own dispatch (prereg §9.1/§9.3) — not operator-confirm slots here,
+# unlike WP-1.5b's document.
+#
+# Every other value below is transcribed verbatim from the prereg's own §2/§3.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[run]
+# The PRIMARY SPRT book (prereg §3), 2000 openings, sha-pinned.
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+
+# FIXED (prereg §9.3, D-396's dispatch): 500. Comfortably clears the 100-pair
+# floor (prereg §2).
+openings_take = 500
+
+# From the top of the book (prereg §3).
+openings_skip = 0
+
+# An evaluation horizon, never a game rule (game rule 6). Every prior SPRT
+# run in this project used 40; prereg §3 fixes it identically.
+turn_cap = 40
+
+# WP-1.3's own red-team clearance, unchanged.
+n_workers = 4
+
+# Liveness only, never an adjudication (D-159). Freshly calibrated for the
+# defensive_only seat (prereg §9.5, D-398's own session): worst single search
+# 291 ms over two independent 24-position sweeps at this exact budget,
+# leaving a ~412x margin. NO-CHANGE from every prior SPRT run's value.
+hang_timeout_ms = 120000
+
+[budget]
+# The registered snapshot budget every SPRT document in this project uses
+# (prereg §3).
+kind = "nodes"
+value = 50000
+
+[sprt]
+# H0: the defensive_only extension is no stronger (prereg §2).
+elo0 = 0.0
+
+# FIXED (prereg §9.1, D-396's dispatch): 15.0.
+elo1 = 15.0
+
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# THE QUIESCENCE-EXTENDED SEAT, in slot A because the arena's statistic is
+# slot A's score and prereg §2's H1 is "the defensive_only extension is
+# stronger" — putting it in slot B and reading the sign backwards afterwards
+# is the one mistake a pre-registration exists to prevent.
+label = "staged_q"
+binary = "target/release/pistol"
+# CONFIRMED (prereg §9.2): sha256sum of a fresh `cargo build --release
+# --locked --bin pistol` at this file's own launch revision.
+binary_sha256 = "b8d0dc963a2453e1eff69823629c37b23bafe419b9225f8af2401df519bc2673"
+config = "configs/instrument_staged_q_defensive_only_v0.toml"
+
+[engine_b]
+# THE COMMITTED PLAIN STAGED POLICY, unchanged — prereg §3's engine B, same
+# digest as engine A since both seats run the one built binary and differ
+# only by `config`.
+label = "staged"
+binary = "target/release/pistol"
+binary_sha256 = "b8d0dc963a2453e1eff69823629c37b23bafe419b9225f8af2401df519bc2673"
+config = "configs/instrument_staged_v0.toml"
