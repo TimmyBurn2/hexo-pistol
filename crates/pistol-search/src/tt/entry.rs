@@ -1,14 +1,24 @@
 //! What one position takes up in the table, packed.
 //!
 //! [`ENTRY_BYTES`] per entry: a 64-bit verification word, the ply that scored
-//! best, two scores, a depth, and a bound with the generation that wrote it.
-//! The score fields are `i16` because the whole score band fits in one — the
-//! mate band tops out at 30000 (docs/decisions.md D-3) — and the depth is a `u8`
-//! because the search's horizon is far inside it.
+//! best, two scores, a depth, a bound with the generation that wrote it, and a
+//! flags byte. The score fields are `i16` because the whole score band fits in
+//! one — the mate band tops out at 30000 (docs/decisions.md D-3) — and the
+//! depth is a `u8` because the search's horizon is far inside it.
 //!
 //! **Zero depth means empty.** No stored record has it: a leaf is not worth an
 //! entry, so the depth field doubles as the occupancy flag and no separate one
-//! is needed. Nothing else in the layout has a spare bit pattern to spend.
+//! is needed.
+//!
+//! **The `flags` byte is spent alignment padding, not new size.** The
+//! declared fields before it sum to 18 bytes (`verification: u64` = 8, four
+//! `i16` fields = 8, `depth_plies: u8` + `bound_age: u8` = 2), and
+//! `align_of::<u64>() == 8` already forces [`Entry`] to 24 bytes — six bytes
+//! of padding the layout was paying for and not using. One of those six
+//! becomes `flags`, carrying [`FLAG_FROM_QUIESCENCE`] in its low bit
+//! (docs/wp16_quiescence_design.md §6, WP-1.6 D-390/D-392/D-393); the
+//! `size_of::<Entry>() == ENTRY_BYTES` assertion below is what would catch a
+//! wrong layout assumption on some target, not a new gate this field adds.
 
 use pistol_core::Coord;
 
@@ -21,6 +31,14 @@ pub const GENERATIONS: u8 = 64;
 /// Named invariant: a value handed to the table does not fit the slot it packs
 /// into.
 pub const TT_FIELD_OUT_OF_RANGE: &str = "TT_FIELD_OUT_OF_RANGE";
+
+/// Whether a record was written by a quiescence-regime node
+/// (`crate::quiescence`) rather than the main search — a claim about SEARCH
+/// WIDTH, orthogonal to `depth_plies` (docs/wp16_quiescence_design.md §6).
+/// Stored at `depth_plies: 1` (the smallest non-empty value, D-393): depth
+/// alone cannot distinguish a quiescence record from a genuine depth-1
+/// full-width one, which is exactly why this flag exists.
+pub const FLAG_FROM_QUIESCENCE: u8 = 0b0000_0001;
 
 /// What a stored score says about the true value of the position.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,6 +90,9 @@ pub struct Record {
     pub bound: Bound,
     /// The ply that scored best there — the first move the ordering tries.
     pub best: Coord,
+    /// Whether a quiescence-regime node wrote this record. `false` for every
+    /// full-width store, unchanged from before this field existed.
+    pub from_quiescence: bool,
 }
 
 /// One packed entry.
@@ -84,6 +105,7 @@ pub struct Entry {
     static_eval: i16,
     depth_plies: u8,
     bound_age: u8,
+    flags: u8,
 }
 
 /// A slot nothing has been written to.
@@ -95,6 +117,7 @@ pub const EMPTY: Entry = Entry {
     static_eval: 0,
     depth_plies: 0,
     bound_age: 0,
+    flags: 0,
 };
 
 const _: () = assert!(
@@ -119,6 +142,11 @@ impl Entry {
             static_eval: fits(record.static_eval, "static_eval"),
             depth_plies: depth_fits(record.depth_plies),
             bound_age: (generation << 2) | record.bound.index(),
+            flags: if record.from_quiescence {
+                FLAG_FROM_QUIESCENCE
+            } else {
+                0
+            },
         }
     }
 
@@ -131,6 +159,7 @@ impl Entry {
             static_eval: i32::from(self.static_eval),
             bound: Bound::from_index(self.bound_age & 0b11),
             best: Coord::new(self.best_q, self.best_r),
+            from_quiescence: self.from_quiescence(),
         }
     }
 
@@ -147,6 +176,11 @@ impl Entry {
     /// The generation that wrote it.
     pub fn age(self) -> u8 {
         self.bound_age >> 2
+    }
+
+    /// Whether a quiescence-regime node wrote this entry.
+    pub fn from_quiescence(self) -> bool {
+        self.flags & FLAG_FROM_QUIESCENCE != 0
     }
 
     /// How deep the search that wrote it looked, in plies. Zero means empty.

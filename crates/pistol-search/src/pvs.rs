@@ -372,6 +372,7 @@ impl<'a> Run<'a> {
                         Bound::Exact
                     },
                     best: best_cell,
+                    from_quiescence: false,
                 },
             );
         }

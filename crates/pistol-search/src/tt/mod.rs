@@ -146,25 +146,47 @@ impl Table {
 
     /// What the table knows about this position, with any mate distance
     /// re-based onto the root.
+    ///
+    /// A quiescence-regime entry (`Entry::from_quiescence`) is never
+    /// returned: a full-width caller (the only caller `Table::probe` has —
+    /// `crate::quiescence`'s own nodes never probe, docs/wp16_quiescence_design.md
+    /// §6 item 5) treats a hit on one exactly as if this method had answered
+    /// `None` — no cutoff, no move-ordering hint. Centralised here rather than
+    /// at each call site so there is exactly one place this rule is stated.
     pub fn probe(&self, key: Key128, turns_from_root: u32) -> Option<Record> {
         let bucket = &self.buckets[self.index(key)];
-        let entry = bucket.iter().find(|entry| entry.matches(key.high()))?;
+        let entry = bucket
+            .iter()
+            .find(|entry| entry.matches(key.high()) && !entry.from_quiescence())?;
         let mut record = entry.record();
         record.score = score::from_table(record.score, turns_from_root);
         Some(record)
     }
 
     /// Write what this search learned about a position.
+    ///
+    /// A quiescence-regime record (`record.from_quiescence`) never evicts an
+    /// existing full-width entry — it may fill an empty slot or replace an
+    /// existing quiescence entry, using the ordinary victim rule below, but a
+    /// store that would otherwise land on a non-empty, non-quiescence slot is
+    /// silently declined instead (docs/wp16_quiescence_design.md §6 item 3,
+    /// WP-1.6 D-390/D-392/D-393). A full-width store is never declined by
+    /// this rule — it may evict anything, exactly as before this field
+    /// existed.
     pub fn store(&mut self, key: Key128, turns_from_root: u32, record: Record) {
+        let index = self.index(key);
+        let slot = self.victim(index, key.high());
+        let existing = self.buckets[index][slot];
+        if record.from_quiescence && !existing.is_empty() && !existing.from_quiescence() {
+            return;
+        }
         let packed = Entry::packed(
             key.high(),
             record,
             score::to_table(record.score, turns_from_root),
             self.generation,
         );
-        let index = self.index(key);
-        let slot = self.victim(index, key.high());
-        if self.buckets[index][slot].is_empty() {
+        if existing.is_empty() {
             self.used += 1;
         }
         self.buckets[index][slot] = packed;

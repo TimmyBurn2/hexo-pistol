@@ -32,6 +32,14 @@ fn record(score: i32, depth_plies: u32) -> Record {
         static_eval: 42,
         bound: Bound::Exact,
         best: Coord::new(1, -2),
+        from_quiescence: false,
+    }
+}
+
+fn quiescence_record(score: i32) -> Record {
+    Record {
+        from_quiescence: true,
+        ..record(score, 1)
     }
 }
 
@@ -168,6 +176,93 @@ fn tt_replacement_prefers_depth_and_is_the_same_every_run() {
             "two identical store sequences must leave identical tables"
         );
     }
+}
+
+#[test]
+fn tt_probe_never_returns_a_quiescence_record() {
+    // docs/wp16_quiescence_design.md §6 item 5: a full-width caller treats a
+    // quiescence hit exactly as a miss.
+    let mut table = Table::new(SMALL_TT).expect("a one mebibyte table");
+    table.store(key(1), 0, quiescence_record(100));
+    assert!(
+        table.probe(key(1), 0).is_none(),
+        "a quiescence-flagged entry is never returned by probe"
+    );
+}
+
+#[test]
+fn tt_store_fills_an_empty_slot_with_a_quiescence_record() {
+    // Even though probe never returns it, the store itself is real: the slot
+    // is occupied, not silently dropped. One entry in a table of tens of
+    // thousands is honestly zero permille (`tt_clear_forgets_everything`'s
+    // own reasoning), so enough distinct keys are stored to register.
+    let mut table = Table::new(SMALL_TT).expect("a one mebibyte table");
+    assert_eq!(table.hashfull_permille(), 0);
+    let entries = table.buckets() as u64 * 4;
+    for n in 0..entries / 100 {
+        table.store(key(n), 0, quiescence_record(100));
+    }
+    assert!(
+        table.hashfull_permille() > 0,
+        "quiescence stores into empty slots occupy them"
+    );
+}
+
+#[test]
+fn tt_store_declines_a_quiescence_record_that_would_evict_a_full_width_entry() {
+    // docs/wp16_quiescence_design.md §6 item 3: a quiescence store never
+    // clobbers existing full-width data, even at the SAME key (where
+    // `victim` would otherwise pick that exact slot) and even when a
+    // different key's shallower arrival would ordinarily be evicted.
+    let mut table = Table::new(SMALL_TT).expect("a one mebibyte table");
+    table.store(key(1), 0, record(100, 9));
+    table.store(key(1), 0, quiescence_record(999));
+    let hit = table.probe(key(1), 0).expect("the full-width entry must survive");
+    assert_eq!(hit.score, 100, "the quiescence store must have been declined");
+    assert_eq!(hit.depth_plies, 9);
+
+    // Same story across a bucket collision: five full-width entries at
+    // increasing depth fill a bucket, then a quiescence store at a colliding
+    // key must not evict any of them (the ordinary `rank` comparison would
+    // otherwise pick the shallowest full-width entry as the victim).
+    let bucket_stride = table.buckets() as u64;
+    let mut table = Table::new(SMALL_TT).expect("a one mebibyte table");
+    for n in 0..4u64 {
+        let colliding = Key128::from_parts(bucket_stride * n, 0xBEEF_0000 + n);
+        table.store(colliding, 0, record(100 + n as i32, 1 + n as u32));
+    }
+    let shallowest = Key128::from_parts(0, 0xBEEF_0000);
+    let new_key = Key128::from_parts(bucket_stride * 4, 0xBEEF_0004);
+    table.store(new_key, 0, quiescence_record(999));
+    assert!(
+        table.probe(shallowest, 0).is_some(),
+        "the shallowest full-width entry survives a quiescence store, unlike an ordinary one"
+    );
+}
+
+#[test]
+fn tt_store_lets_a_quiescence_record_replace_another_quiescence_record() {
+    // A quiescence store is only ever declined against full-width data
+    // (the test above); against another quiescence entry the ordinary
+    // victim rule applies, so storing twice at the same key occupies
+    // exactly one slot, not two — checked in bulk so the difference
+    // registers in parts per thousand rather than rounding to zero.
+    let mut twice = Table::new(SMALL_TT).expect("a one mebibyte table");
+    let entries = twice.buckets() as u64 * 4;
+    for n in 0..entries / 100 {
+        twice.store(key(n), 0, quiescence_record(100));
+        twice.store(key(n), 0, quiescence_record(200));
+    }
+    let mut once = Table::new(SMALL_TT).expect("a one mebibyte table");
+    for n in 0..entries / 100 {
+        once.store(key(n), 0, quiescence_record(200));
+    }
+    assert_eq!(
+        twice.hashfull_permille(),
+        once.hashfull_permille(),
+        "a second quiescence store at an already-occupied quiescence key must replace it, not add a slot"
+    );
+    assert!(once.hashfull_permille() > 0, "the stores must have landed");
 }
 
 #[test]
