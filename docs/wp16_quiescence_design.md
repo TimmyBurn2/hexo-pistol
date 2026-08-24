@@ -1,17 +1,20 @@
 # WP-1.6 — Threat-only zone-bounded quiescence: design
 
-**Revision 3.** Authored from two architect rulings resolving `D-389`'s two
-open questions (extension width; TT store rule), supplied verbatim with the
-resume dispatch `[GROUNDWORK] WP-1.6 resume: design revision 3 from
-architect rulings`. Revisions 1 (`9fa27c8`) and 2 (`b1ba746`) each failed
-fresh-context REVIEW-design (`docs/experiments/wp16_design_REVIEW.md`,
-`wp16_design_REVIEW_rev2.md`); `D-389` records the second FAIL and what
-would unstick it. This is not a patch on revision 2 — the rulings replace
-revision 2's core mechanism (reusing `staged_candidates` at a rebound depth)
-with a dedicated generator and a dedicated TT rule, so this document is
-written fresh from them rather than diffed. Where a section carries forward
-unchanged in substance (§1, §2, most of §5, §6, most of §8), it says so and
-does not restate settled argument at length.
+**Revision 4 — a DELTA on revision 3, not a rewrite.** Revision 3
+(`a3b9e37`) was authored from two architect rulings resolving `D-389`'s open
+questions (extension width; TT store rule); a fresh, fourth-slot reviewer
+(`wp16_design_REVIEW_rev3.md`) FAILED it on four blocking defects (`D-391`).
+Revision 4 is authored from a third architect ruling (THE COMPLETION STONE,
+supplied verbatim with the resume-2 dispatch `[GROUNDWORK] WP-1.6 resume 2:
+completion stone, revision 4, then the pipeline`) that resolves the
+load-bearing defects (B1, and via a small correction B2 as well), plus
+plain, one-reading fixes to the two remaining ones (B3, B4). §10 (bottom)
+carries the full revision history and scopes exactly what changed. Revisions
+1 (`9fa27c8`) and 2 (`b1ba746`) each failed fresh-context REVIEW-design
+(`docs/experiments/wp16_design_REVIEW.md`, `wp16_design_REVIEW_rev2.md`);
+`D-389` and `D-391` record those and what would unstick them. Sections not
+named in §10's revision-4 changelog are UNCHANGED from revision 3 and
+already passed that revision's review.
 
 Every claim below cites a calculus ID (`docs/research/threat_calculus_v1.md`),
 an ADR (`docs/decisions.md`), or a `file:line`. Reader: this is the
@@ -94,6 +97,11 @@ and are scheduled... Stage 1 moves candidate generation out entirely",
 `Radius` there is no `ThreatState` (`position.rs:48,67,187–194`) and `visit`
 never calls `quiescence()` there; `pvs::visit`'s existing `self.policy` match
 is the gate.
+
+(M10 from the rev-3 review — this trigger's PV/`seldepth_turns` bookkeeping —
+is out of this delta's named scope, per "touch nothing the rev-3 review
+verified clean" read together with "DELTA ONLY"; left for whoever next
+touches §3.1, not silently dropped.)
 
 ### 3.2 Gate step 2 — opponent holds a plan with t ≤ 1 (trigger b, RE-SCOPED per Ruling 2)
 
@@ -210,9 +218,20 @@ distinction Ruling-1-free revision 2 needed.
 **Ruling 1, quoted:** "defensive ply-2 = hitting cells of remaining live
 opponent plans t ≤ 2, union mover plan-making cells t ≤ 2." Realized as: at
 the `Phase::Second` node reached after ply-1 (one stone left,
-`left' = StonesLeft::One`), recompute BOTH queries fresh against the new
-position (the incrementally-updated `ThreatState` already reflects the
-ply-1 stone, `position.rs:75,143`):
+`left' = StonesLeft::One`), first re-run trigger (a)'s own check —
+`threats.can_win_this_turn(us, left')` — before anything else. **This is a
+small addition this revision makes to close a hole neither the win-set nor
+either prior review named**, discovered while completing this subsection
+rather than requested by name in Ruling 1: `Some(witness)` → terminal,
+zero-cost, exactly §3.1's shortcut, and it is NOT redundant with what
+follows — a win-in-one-ply window (`WinInOnePly`, own count = 5) is a
+different classification from anything `cells_raising_to_hot`
+(`NearHot::Three`) or `Cover2` reads, so a position could have zero live-3
+windows and zero remaining opponent plans while still holding a stone that
+wins outright, and the rest of this section would otherwise never look for
+it. `None` → recompute BOTH remaining queries fresh against the new position
+(the incrementally-updated `ThreatState` already reflects the ply-1 stone,
+`position.rs:75,143`):
 
 - `Cover2 = threats.blocking_covers(us, HitBudget::from(left'))` —
   `HitBudget::One`, since one stone remains. `NothingToBlock` → nothing left
@@ -221,24 +240,46 @@ ply-1 stone, `position.rs:75,143`):
   resolve: reachable when ply-1 played a `MinimalCover::Two` member rather
   than the size-1 hit, or when a wholly different plan already existed
   alongside the t≤1 family the gate tested). `Impossible` → **"empty hitting
-  set = losing band, no search"** applies again, symmetrically: return
-  `-mate_in(turns_from_root + 2)`, no further generation for this branch —
-  this is a per-BRANCH pruning decision inside the search tree (the branch
-  that chose this particular ply-1 stone is scored and abandoned), not a
-  claim that the real game ever plays fewer than two stones this turn
-  (rule 3; other ply-1 branches, including the one that played the actual
-  size-1 hit `MinimalCover::One` names, are unaffected and reach
-  `NothingToBlock`/`Minimal` normally).
+  set = losing band, no search"** applies again — but "no search" means no
+  RECURSION past this stone, not no stone. **Revision-4 correction, closing
+  the second defect the fresh reviewer found (B2, `wp16_design_REVIEW_rev3.md`):**
+  revision 3 returned `-mate_in(turns_from_root + 2)` here with NOTHING
+  placed and the ply-2 PV slot left cleared — the parent then promoted a
+  ONE-PLY line into a two-stone turn, which `turns_from_plies` refuses with
+  `PV_NOT_PLAYABLE` (`pv.rs:101–105`) the moment that branch is the node's
+  best, exactly the failure `D-104` describes: "the mover's second stone,"
+  not a missing value. §3.4's own "no dependence on `is_pv`... a line ending
+  at a turn boundary is turn-whole" argument is correct only at the GATE
+  (`Phase::First`); the reviewer's finding is precise that it does not
+  transfer to this `Phase::Second` node, and this document does not restate
+  it here as if it did. **The fix: place §3.5a's completion stone (tier 1,
+  falling back to tier 2) exactly as if the candidate union had come up
+  empty by the ordinary route — because for the purposes of "this branch
+  needs a legal second stone and nothing else," `Cover2::Impossible` and an
+  empty non-`Impossible` union are the SAME situation — then score the
+  resulting, now turn-complete position with `-mate_in(turns_from_root + 2)`
+  directly, still with no further recursion.** This keeps "no search"
+  meaning exactly what it always meant (no exploration of alternatives, no
+  deepening) while making the branch's OWN PV turn-whole, the same way every
+  other branch's is. Per-BRANCH: the branch that chose this particular ply-1
+  stone is scored and abandoned at ply-2, not the whole turn (other ply-1
+  branches, including the one that played the actual size-1 hit
+  `MinimalCover::One` names, are unaffected and reach `NothingToBlock`/
+  `Minimal` normally, per rule 3 and per the real game's own two-stones-per-turn
+  rule, which this correction now honours rather than merely asserts).
 - `threats.cells_raising_to_hot(us, NearHot::Three, &mut cells)`, recomputed
   at the ply-2 position — "mover plan-making cells" — union'd in
   unconditionally (available whether or not `Cover2` found anything left to
   hit; `LAW-LEDGER`'s free stone, §3.7, is what this cell set spends).
 
 Ply-2 candidates = `Cover2::cells() ∪ cells_raising_to_hot(us, NearHot::Three)`
-at the ply-2 position (deduplicated), unless `Cover2::Impossible` fired the
-early return above. **No quiet stage, no `within_radius`, no
-`staged_candidates` call anywhere in this path** — every cell in both plies
-traces to one of the three queries named in §3.1–§3.3/§3.5, per Ruling 1.
+at the ply-2 position (deduplicated) — **except in the two cases §3.5a
+handles: the union comes up empty, or `Cover2::Impossible` fired** (the
+bullet above's revision-4 correction routes that case through §3.5a too,
+rather than returning with nothing placed). No quiet stage, no
+`within_radius`, no `staged_candidates` call anywhere in this path,
+including §3.5a — every cell in every ply traces to one of the four queries
+named in §3.1–§3.3/§3.5/§3.5a, per Ruling 1.
 
 **Offensive pairs (Ruling 1's third clause).** When the gate fired trigger
 (c) rather than (b) (§3.3, `Cover::NothingToBlock` at the gate), ply-1's
@@ -247,6 +288,152 @@ uniform rule above — recomputing `Cover2` (in case the ply-1 offensive
 stone incidentally landed inside an opponent window and changed something,
 or a plan appeared from an unrelated cause) union'd with the offense query
 recomputed. One ply-2 rule, not two.
+
+### 3.5a THE COMPLETION STONE — Ruling 3 (resume-2), resolving `D-391`'s open question (B1/B2)
+
+**The defect this section fixes, restated precisely.** The fresh reviewer of
+revision 3 (`wp16_design_REVIEW_rev3.md`, B1) found `Cover2::cells() ∪
+cells_raising_to_hot(us, NearHot::Three)` can be EMPTY at `Phase::Second` on
+the design's own MODAL defensive line — gate fires at t=1, ply-1 plays the
+single hitting cell, `LAW-HIT` kills the opponent's hot windows outright
+(`Cover2` becomes `NothingToBlock`, contributing nothing), and the mover
+owns no live-3 window (MEASURED ~47% of positions at corpus roots per §9's
+own Poisson estimate off `U3_tier_t.md`'s `live-3 own` row). Ruling 1
+excludes `staged_candidates`'s quiet-ball safety net and `within_radius` by
+name (§3, §4) — the only two fallbacks the codebase already has for an
+empty candidate set — so this state needed a THIRD, dedicated answer.
+**D-104's `NO_CANDIDATES_MID_TURN` invariant is what an unaddressed empty
+set at `Phase::Second` hits** (`pvs.rs:479–486`, a release-active `assert!`)
+— that ADR's own flip clause anticipates exactly this WP: it "flips when a
+candidate policy that can run dry mid-turn arrives, which must answer
+inside a turn." This section is that answer.
+
+**Ruling 3 (resume-2), quoted:** "Empty trigger-derived set at `Phase::Second`
+→ exactly one deterministic completion stone, branching 1: argmax
+`Eval::delta` over the union of live windows' support; if that support is
+empty, argmax delta over the 6-neighbors of the mover's ply-1 stone; fixed
+coordinate-order tie-break. Completion is not search; `staged_candidates`
+and `within_radius` remain excluded; D-104's `NO_CANDIDATES_MID_TURN`
+invariant is satisfied by construction."
+
+**Trigger — two routes, one mechanism.** (1) `§3.5`'s union
+(`Cover2::cells() ∪ cells_raising_to_hot(us, NearHot::Three)`, both
+recomputed at the ply-2 position, AFTER the win-check this revision added
+above has already answered `None`) is empty; or (2) `Cover2::Impossible`
+fired at ply-2 (§3.5's revision-4 correction, just above — B2's fix), where
+the completion stone is placed before the mate-band score is assigned
+rather than in place of a score. A non-empty §3.5 union, with `Cover2` not
+`Impossible`, is searched exactly as §3.5 already specifies and never
+reaches this section.
+
+**PV and TT participation — plain, one reading.** The completion stone is
+not a special non-move: `self.position.place(at)` places it exactly as any
+other candidate in this design's alpha-beta loop (§7's "same
+full-window-first / null-window-scan shape `Run::child` already
+implements"), so it clears and promotes the PV at its own ply
+(`pvs.rs:194,341`) the same way, and if it is the best-scoring candidate at
+its node — which, at branching 1, it always is, being the only candidate —
+it becomes that node's `Record.best` under §6's store rule, unchanged by
+being a completion pick rather than a threat-derived one. Route (2)'s
+placed-then-shortcut-scored stone participates the same way: the PV records
+the real stone played, and the score attached to it is `-mate_in(...)`
+rather than a recursively-computed value — a real move paired with a
+zero-recursion score, the same shape §3.5's `!is_pv` `OverloadReturn` case
+already has at a non-`Phase::Second` node (`staged.rs:196–201`), just paid
+for here with one placed stone instead of zero.
+
+**Tier 1 — the union of live windows' support.** "Live windows' support," in
+`ThreatState`'s own vocabulary and using only queries already in play
+elsewhere in this design (no new solver primitive, matching §3's discipline
+throughout): the deduplicated union of
+
+- `threats.threat_cells(side, ...)` (hot windows' empties, `query.rs:178–180`)
+- `threats.win_in_one_ply_cells(side, ...)` (`query.rs:165–167`) — for `us`
+  this is PROVABLY EMPTY by the win-check just above (same argument §3.3
+  gives for Tier F); included here only for symmetry with the opponent's
+  side, where it is not provably empty
+- `threats.live_cells_at_count(side, LiveCount::Two, ...)` (`query.rs:206–208`)
+- `threats.live_cells_at_count(side, LiveCount::Three, ...)` (same)
+
+for BOTH `side = us` and `side = us.opponent()` — eight calls, unioned and
+deduplicated. **Deliberately NOT** `ThreatState::table_snapshot`
+(`state.rs:148–150`), whose own doc reads "**Never on a choice path**: see
+`WindowTable::snapshot`, whose doc says why the table underneath may be
+hashed at all" — a completion pick is exactly a choice path, so this design
+uses the same four per-side queries the rest of §3 already relies on rather
+than the raw table. `LiveCount::Two` is INCLUDED here even though §3.3
+(C1's own fix) deliberately excludes it from a TRIGGER — the two are
+different questions: §3.3 asks "is this cell worth EXTENDING search for"
+(where `LiveCount::Two` cannot license a plan, `DEF-PLAN`), this asks "is
+this cell a PLAUSIBLE, non-arbitrary place to put a stone the position
+already has no better answer for" (no plan claim, no extension, branching
+exactly 1) — a materially weaker bar, and Ruling 3 sets it explicitly.
+
+Among this union's cells (if non-empty), pick `argmax` over
+`self.position.static_score_after(at)` (`position.rs:130–133`, the existing
+`Eval::delta` roundtrip already used for move ordering elsewhere in this
+codebase — no new eval entry point). **Fixed coordinate-order tie-break,
+matching D-5/D-7's established convention**: iterate the cell set in its
+already-sorted `(q, r)` order (`fill_empties` sorts and dedups,
+`query.rs:268–276`) and keep the running best only on STRICT improvement,
+never on a tie — the first-encountered maximum survives ties, exactly the
+"stable sort... leaves equal-scoring cells in the ascending coordinate order
+they arrived in" rule `staged.rs`'s own `delta_rank` already states
+(`staged.rs:336–339`).
+
+**Tier 2 — the mover's ply-1 stone's own six neighbors, if Tier 1 is
+empty.** `pistol_core::axis::NEIGHBOUR_DIRECTIONS` (`axis.rs:64–77`) — the
+fixed-order six unit steps, already pinned by a test "for exactly the reason
+this design needs it: neighbour iteration feeds candidate generation... and
+an order that drifts is an order that can change a move choice." Candidates
+= `{ply1_stone.offset(d) : d ∈ NEIGHBOUR_DIRECTIONS}` (`Coord::offset`,
+`coord.rs:72`) filtered to cells NOT `self.position.board().is_occupied(at)`
+(`board.rs:90`). Same argmax-by-`static_score_after`, same tie-break rule,
+over whichever of the (at most six) neighbors remain after the occupancy
+filter.
+
+**Totality — what Phase 1'' is asked to verify, argued here rather than
+merely asserted.** Every Tier-1 cell is, by `fill_empties`'s own contract,
+already both empty and legal (§3.6's argument, unchanged). Every Tier-2
+candidate is legal by construction — a neighbor of an already-placed stone
+is trivially within hex-distance 1, hence within radius-8, of that stone
+(rule 5's own legal-region definition) — and is filtered to unoccupied
+before the argmax runs, so nothing illegal can be selected at either tier.
+**Where this chain is NOT proven total, named rather than silently assumed
+complete:** if Tier 1 is empty (no live window anywhere carries either
+side's stones at count ≥2 through the mover's or opponent's classified
+windows) AND all six of the ply-1 stone's neighbors are already occupied,
+this section names no third tier. This is an EXTREME board-density
+configuration — it requires the cell the search just legally placed a stone
+on to already have six stones immediately surrounding it while nothing
+anywhere on the board qualifies for any live classification — and this
+document does not claim it is impossible, only implausible at any reachable
+mid-search position. Per rule 3's fail-loud discipline (the same discipline
+`StonesLeft::from_state` and `min_hitting_set_exceeds` already apply to
+their own "should not happen through normal play" cases), IMPL names this
+`NO_COMPLETION_STONE` and panics rather than silently falling through to a
+forbidden generator or a mid-turn static read. **RED-TEAM (Phase 3 of the
+overnight dispatch, when reached): construct a fixture for this exact
+boundary** (a dense cluster around the ply-1 stone, zero live windows
+elsewhere) to confirm the panic fires rather than something silent.
+
+**Soundness — Ruling 3's own paragraph, expanded with its citation.**
+`LEM-MONO` (`threat_calculus_v1.md:40`): "stones are never removed; an own
+extra stone never hurts (zugzwang-free)." A defensive extension needs a
+LOWER BOUND on the mover's survival, not the best possible continuation —
+`LAW-FORCE` already established (§3.2) that SOME response exists (the
+extension was granted because `Cover`/`Cover2` was not `Impossible`); the
+completion stone is not claimed to be that response, only A legal one, and
+zugzwang-freedom is exactly what makes ANY legal stone a sound (if not
+tight) lower bound rather than a potential loss of tempo the way it would
+be in a game where passing could be forced or beneficial. On the offensive
+branch (§3.3 fired, not §3.2), the same stone is at worst an
+under-claim — the search may fail to find the best continuation and report
+a value lower than the position's true worth, which is the error direction
+alpha-beta pruning already tolerates everywhere (a null-window scan that
+under-explores also only ever under-claims, never over-claims, `pvs.rs:406–423`)
+and never the direction that would corrupt a proof or a bound the rest of
+the tree relies on.
 
 ### 3.6 What Ruling 1 does NOT need this document to re-derive
 
@@ -308,18 +495,53 @@ New field on the `staged` variant of `[search.candidate_policy]`
 (`crates/pistol-engine/src/config.rs:161–182`) and on
 `pistol_search::params::StagedParams` (`params.rs:58–70`) — schema-home per
 hard rule 1, no code-side default. `u32`, validated range `0..=8`. **`0` is
-the disable flag**: `quiescence()`'s gate still runs §3.1/§3.4's free checks
-(they cost nothing and are not extensions), but §3.2/§3.3 never grant a turn.
-This is the "quiescence disabled" state the Phase-2 differential oracle needs.
+the disable flag**: `quiescence()`'s gate still runs §3.1/§3.4's free
+checks (they are not extensions — no turn is granted — but they are NOT
+free of cost: `blocking_covers` is `D-388`'s own registered HOTSPOT, "trigger
+evaluation at horizon nodes," `O(|universe|²)` over the hot-window family,
+`cover.rs:216–239` — revision-4 correction of a sentence the rev-3 review's
+M6 found contradicting §9's own quoted registration in the same document),
+but §3.2/§3.3 never grant a turn. This is the "quiescence disabled" state
+the Phase-2 differential oracle needs.
 
-**Configs that must gain the field in the landing commit** (unchanged list
-from revision 2, re-verified against the tree at this revision):
-`configs/play_staged_v0.toml`, `configs/tactical_staged_v0.toml`,
-`configs/gate_staged_v0.toml`, `configs/instrument_v0.toml`,
-`configs/instrument_staged_v0.toml`,
-`configs/arena_wp15b_staged_vs_r2.toml`,
-`configs/arena_wp15b_staged_vs_r2_confirm.toml`,
-`configs/arena_wp15b_dryrun.toml`.
+**Configs that must gain the field in the landing commit — revision-4
+correction of the list, closing B4 (`wp16_design_REVIEW_rev3.md`: "wrong in
+both directions"; the reviewer's own corrected enumeration, re-verified
+against the tree at this revision, is what follows):**
+
+- **Five `configs/*.toml` files carry `[search.candidate_policy]` with
+  `kind = "staged"` and must gain the field**: `gate_staged_v0.toml`,
+  `instrument_staged_v0.toml`, `instrument_v0.toml`, `play_staged_v0.toml`,
+  `tactical_staged_v0.toml`. `instrument_v0.toml` really is the staged
+  policy now (D-386, `9282dd0`).
+- **`configs/arena_wp15b_staged_vs_r2.toml`,
+  `configs/arena_wp15b_staged_vs_r2_confirm.toml` and
+  `configs/arena_wp15b_dryrun.toml` do NOT carry the field and must NOT be
+  edited** — revision 2 and 3 both listed them in error. They have no
+  `[search.candidate_policy]` section of their own (they are dispatched to
+  the ARENA schema by basename, `tools/config_check.sh:56–63`, and
+  reference the engine configs above by path); adding an unknown key to
+  them would be rejected by their own `deny_unknown_fields`, not by
+  omission. They inherit the field automatically through whichever engine
+  config they name.
+- **`crates/pistol-engine/tests/common/mod.rs:43–70`'s `pub const
+  VALID_STAGED: &str`** — a complete `kind = "staged"` instrument-mode
+  document, the fixture `crates/pistol-engine/tests/config_validate_tests.rs`
+  mutates for its twelve staged-validation cases — needs the field or every
+  one of those twelve fails on a missing-field error.
+- **`StagedParams`'s own construction sites** need the field added to their
+  struct literals: `crates/pistol-engine/src/instance.rs:181` and six
+  `pistol-search` test files —
+  `crates/pistol-search/tests/common/mod.rs:74`,
+  `staged_tests.rs:88`, `staged_colony_family_tests.rs:122,151`,
+  `staged_differential_gate_tests.rs:126`,
+  `staged_pattern_fixture_tests.rs:51`,
+  `staged_tier_t_threshold_tests.rs:96`.
+
+`config.rs:159–160` nominates `U3_tier_t.md` §10 as the schema document
+naming staged documents' shape; that document's own count should move from
+five keys to six alongside this landing commit, so the citation stays true
+rather than merely the field.
 
 ## 6. RULING 4 — the TT rule, stated once, corrected against a hard constraint neither prior review found
 
@@ -353,7 +575,13 @@ a semantic width-class, not a literal `depth_plies` value:**
    constantly), so depth alone cannot distinguish a quiescence record from a
    genuine depth-1 full-width one — which is exactly why the ruling asks for
    a flag.
-2. **Add one bit, `from_quiescence: bool`, to `Entry`**, WITHOUT reducing
+2. **Add one bit, `from_quiescence: bool`, to `Entry` AND to the public
+   `Record` type it packs from/unpacks to** (`entry.rs:63–75`,
+   `Entry::packed`/`Entry::record`, `entry.rs:113–135` — closing the rev-3
+   review's M2: "the flag has to live on `Record`, not only on `Entry`...
+   §6's stated resolution does not typecheck as written"; item 4 below's
+   `Record { ..., from_quiescence: true, ... }` construction is this fix
+   already applied), WITHOUT reducing
    `GENERATIONS` (64 → fewer would shrink the generation-wraparound horizon
    inside a single long game, a real cost this design does not want to pay)
    and WITHOUT touching `bound_age`'s existing `(generation << 2) |
@@ -367,9 +595,13 @@ a semantic width-class, not a literal `depth_plies` value:**
    the existing `size_of::<Entry>() == ENTRY_BYTES` const assertion
    (`entry.rs:100–103`) is the gate that catches it if this layout
    assumption is wrong on some target — a compile-time check this codebase
-   already had, not a new one this design adds. **REVIEW-design (Phase 1'):
-   verify this byte-budget arithmetic independently before trusting it as
-   the resolution** — it is asserted here, not yet compiled.
+   already had, not a new one this design adds. **VERIFIED, not merely
+   asserted**: the fresh reviewer of revision 3 compiled the current
+   `Entry` struct plus a `+ flags: u8` variant under `rustc -O --edition
+   2024` (`#[repr(Rust)]`, field reordering in play) and confirmed both are
+   24 bytes with `BUCKET_BYTES` unchanged at 96, headroom for six such
+   bytes total (`wp16_design_REVIEW_rev3.md`, §6 assessment). Out of scope
+   for Phase 1'' by name (§10) — this item is not re-opened.
 3. **Store rule (protects existing data, closes the eviction gap the second
    revision's review found — `wp16_design_REVIEW_rev2.md` NEW-5 — before it
    could land):** `Table::store`'s victim selection (`tt/mod.rs:179–191`)
@@ -380,19 +612,49 @@ a semantic width-class, not a literal `depth_plies` value:**
    quiescence entry (the table's ordinary `rank()` comparison,
    `tt/mod.rs:193–200`, decides which, unchanged). A full-width store is
    never declined by this rule — it always may evict, exactly as today.
-4. **Probe rule — deliberately the simplest available, per "no alternative
-   reading":** a probe returning a record with `from_quiescence: true` is
-   treated by a FULL-WIDTH caller (`q_budget == None` context) exactly as if
-   `probe` had returned `None` — no cutoff, no move-ordering hint, full stop.
+4. **What a quiescence `Record` contains — revision-4 fix, one reading only,
+   closing the fresh reviewer's B3 (`wp16_design_REVIEW_rev3.md`: "§6 never
+   states what a quiescence `Record` is... IMPL cannot write this store
+   without inventing the record").** Exactly the fields `visit`'s own
+   end-of-node store already computes (`pvs.rs:359–377`), with two
+   substituted: `Record { depth_plies: 1, from_quiescence: true, score:
+   best_score, static_eval: self.position.value(), bound: <Exact if
+   best_score is strictly between the node's alpha/beta, Lower if it met or
+   beat beta, Upper if it never beat the original alpha — the same three-way
+   rule `pvs.rs:367–373` already applies, unchanged>, best: best_cell }`,
+   where `best_score`/`best_cell` are whatever `quiescence()`'s own
+   alpha-beta loop (§7's "same shape `Run::child` already implements")
+   already tracks by the time the node returns — including a completion
+   stone (§3.5a) when it was the node's only candidate, and including
+   route (2)'s placed-then-shortcut-scored stone (§3.5, B2's fix) with
+   `score` set to the mate-band value that shortcut assigns. One
+   construction, no second reading of what the fields mean.
+5. **Probe rule, and its honest cost — read plainly, not softened.** A probe
+   returning a record with `from_quiescence: true` is treated by a
+   FULL-WIDTH caller (`q_budget == None` context) exactly as if `probe` had
+   returned `None` — no cutoff, no move-ordering hint, full stop.
    `quiescence()` itself never probes the table at all — it only ever
-   WRITES, once per node it visits, so there is no quiescence-to-quiescence
-   reuse question to answer (the second revision's review, NEW-2/N2, raised
-   exactly this as unaddressed; this revision addresses it by removing the
-   read path entirely rather than reasoning about what it would be sound
-   for). This is the one place this document deliberately gives up a
-   possible optimization (a granted turn could in principle reuse a sibling
-   quiescence bound) in exchange for a rule simple enough that "no
-   alternative reading appears anywhere" is actually true of it.
+   WRITES, once per node it visits (item 4, above), so there is no
+   quiescence-to-quiescence reuse question to answer (the second revision's
+   review, NEW-2/N2, raised exactly this as unaddressed; this revision
+   removes the read path entirely rather than reasoning about what it would
+   be sound for). **Consequence, named rather than left for B3 to name
+   again:** combined with item 4, this means EVERY quiescence write is a
+   pure cost with no reader anywhere in the system — one `Table::store` call
+   (key, pack, four-slot victim scan) and one bucket slot held, reclaimable
+   only by a full-width store or another quiescence store (item 3), for a
+   record nothing ever reads back. This is not "an optimization foregone";
+   it is a deliberate, stated choice to accept that cost — landing on `ttd`,
+   D-388's PRIMARY metric — in exchange for a store/probe rule simple enough
+   that "no alternative reading appears anywhere" is actually true of it. If
+   Phase 2's bench shows this cost matters, the one-sentence fix is "item 4
+   and item 5 do not run — quiescence does not store" — which deletes the
+   `Entry` field, the `victim()` condition, and this item, and is exactly as
+   sound (§4/§7's soundness arguments do not depend on the store existing at
+   all). This document does not pre-empt that measurement by choosing
+   between "store, unread" and "do not store" now; it states both readings
+   are available, which one is shipped, and how cheap the other is to
+   switch to.
 
 **"Excluded from main-depth node accounting":** `StageCounters`'s existing
 fields (`win_now`/`filtered`/`batched`/`batched_lost`/`cover_impossible`/
@@ -550,45 +812,81 @@ finding, carried forward):** `q_depth_turns == 0` already changes behavior
 scores statically) — Phase 2's bench states which right-hand seat "staged+q
 vs staged" uses before launching.
 
-## 10. Revision 3's provenance, and what Phase 1' (fresh reviewer) must attack
+## 10. Revision history, and what Phase 1'' (scoped, fourth reviewer) attacks
 
-**Two consecutive FAILs preceded this revision** (`D-389`). This revision is
-authored from architect rulings supplied with the resume dispatch, not
-self-generated fixes — its job is faithful, precisely-cited EXPANSION of
-those rulings, which is a narrower task than revision 2's open design work
-was, but the citations, the TT resolution (§6), and the cost derivation (§9)
-are this session's own work product and are exactly what a fresh reviewer
-should attack hardest, having NOT reviewed revisions 1 or 2 (per the resume
-dispatch: "NOT the phase-1 reviewer slot — two fails earn new eyes"):
+**Three consecutive FAILs preceded this revision** (`D-389`, `D-391`).
+Revision 3 was reviewed in full by a fresh ("new eyes") reviewer
+(`wp16_design_REVIEW_rev3.md`) and FAILED on four blocking defects, two of
+them (B1, B2) load-bearing: §3.5's ply-2 rule could produce an empty
+candidate set at `Phase::Second` (the design's own modal defensive line) and
+a `Phase::Second` early return that dropped `is_pv` and produced a
+half-turn PV. **Revision 4 is a DELTA on revision 3**, not a rewrite: it
+adds §3.5a (THE COMPLETION STONE, Ruling 3 of the resume-2 dispatch, closing
+B1 and — via a small correction to §3.5's `Impossible` case — B2 as well),
+plainly states what a quiescence `TT` record contains and accepts its cost
+by name (closing B3, §6 item 4/5), and corrects the config checklist to the
+reviewer's own verified list (closing B4, §5). Two adjacent one-sentence
+findings (M2, M6) were folded in because the sections they touch were
+already open for this delta; the others the rev-3 review named
+(M1 `MAX_PLY`/`seldepth_turns`, M3 `PROTO-NODE` step 5's unnamed
+divergence, M9 `Cover::Impossible`'s budget-dependent meaning at ply-2) are
+**deliberately NOT touched here** — "DELTA ONLY" per the resume-2 dispatch,
+and none of the three is a normative contradiction (the rev-3 review's own
+characterization: M1 an implementation bound, M3 a citation-naming gap, M9 a
+precision note) — left as recorded, known debt for whoever next opens §3.1,
+§3.2 or §7.
 
-1. **§3's move-set specification** — is it now stated exactly once, with §3
-   through §5 mutually consistent (the defect class that sank revision 2)?
-   Confirm no remaining path calls `staged_candidates` from inside
-   quiescence, and that §3.5's ply-2 rule is unambiguous enough for IMPL to
-   build without inventing a reading.
-2. **§6's TT resolution** — this document found `entry.rs`'s `depth_fits`
-   assert makes a literal `depth_plies: 0` store panic, a fact neither prior
-   review caught. Verify this independently against `entry.rs` at HEAD, and
-   verify the proposed fix (a `flags: u8` field inside the existing 24-byte
-   budget, `GENERATIONS` untouched, store-side eviction protection, no-probe
-   for `quiescence()` itself) is a faithful realization of Ruling 4's intent
-   and not an unlicensed departure from it.
-3. **§9's cost derivation** — check the arithmetic, check every census
-   citation against `U3_tier_t.md` directly, and assess whether presenting
-   an ESTIMATE that may exceed the registered bracket (rather than a figure
-   safely inside it) is the right disposition under Ruling 3, or whether
-   the derivation itself has an error that changes the conclusion.
-4. **§3.2/§3.7** — confirm Ruling 2's t≤1-only gate condition, combined with
-   §3.5's ply-2 handling of "remaining" t=2 remnants, actually discharges
-   what D-267 assigns this WP for `LAW-RIPOSTE`/`LAW-LEDGER`, the way the
-   second review's independent re-derivation found revision 2's broader gate
-   did — or whether narrowing back to t≤1 reopens a gap that broader gate
-   had closed.
-5. **§4/§7** — re-verify the zone claim and the win-detection/determinism/PV
-   claims structurally against HEAD, not only against this document's
-   description of them.
+**Everything the revision-3 review explicitly verified clean is UNCHANGED
+by this delta and is OUT OF SCOPE for Phase 1'' by name, per the resume-2
+dispatch**: the move-set structure (§3.1–§3.4, §3.6, §3.7, §4 zones), the
+TT byte-layout finding and its `flags: u8` resolution (§6 items 1–3, the
+part revision 4 did not touch), the cost derivation (§9), the `LAW-RIPOSTE`/
+`LAW-LEDGER` discharge argument, and every citation the rev-3 reviewer
+spot-checked. Phase 1'' should not re-litigate these; the rev-3 review
+report is the list of what already passed.
 
-PASS → proceed directly into the original dispatch's Phase 2 (IMPL) and run
-it to closure or STOP as written there — no re-entry to Phase 0 needed. FAIL
-→ STOP immediately, land the report, collect for the architect; per the
-resume dispatch, there is no revision 4 inside this session.
+**Phase 1'' — scoped fresh review, a NEW (fourth) reviewer, attacks ONLY:**
+
+1. **§3.5a, THE COMPLETION STONE — existence.** Is the two-tier selection
+   chain (live windows' support, then the ply-1 stone's six neighbors)
+   total in every state this document claims it is? Is the named residual
+   case (`NO_COMPLETION_STONE`, both tiers empty) correctly argued as
+   extreme-but-unproven-impossible rather than silently assumed away? Does
+   `cells_raising_to_hot`/`live_cells_at_count`/`threat_cells`/
+   `win_in_one_ply_cells` really compose into "live windows' support" the
+   way §3.5a states, and does the explicit refusal to use
+   `ThreatState::table_snapshot` (cited as "never on a choice path") hold up
+   against `state.rs`?
+2. **§3.5a — determinism.** Fixed coordinate-order tie-break, fixed
+   `NEIGHBOUR_DIRECTIONS` order, `Eval::delta`/`static_score_after` as the
+   only score input — no clock, no hash-iteration order, no thread. Verify
+   against `axis.rs`, `coord.rs`, `position.rs`.
+3. **§3.5a — the soundness paragraph.** `LEM-MONO`'s zugzwang-free premise,
+   the lower-bound argument for the defensive branch, the under-claim-only
+   argument for the offensive branch. Does either branch's argument actually
+   hold, independently re-derived rather than trusted from this document's
+   own prose?
+4. **§3.5's revision-4 correction (B2's fix)** — placing a completion stone
+   before the `Cover2::Impossible` shortcut score, rather than dropping
+   `is_pv` unconditionally. Does this actually produce a turn-whole PV in
+   every case, and does the shortcut score remain sound when a real stone
+   now sits under it?
+5. **§6 items 4–5 (the plainly-stated `Record` contents and the accepted
+   store-with-no-reader cost)** and **§5 (the corrected config checklist)** —
+   verify both against the current tree, not against this document's or the
+   rev-3 review's citation of it.
+
+**Rev-3-verified sections are out of scope by name** (the resume-2
+dispatch's own words) — a FAIL confined to one of them is recorded as an
+out-of-scope observation and does not block, per the dispatch, unless it is
+a normative contradiction, in which case the overnight dispatch's STOP 3
+applies.
+
+PASS → proceed directly into the original overnight dispatch's Phase 2
+(IMPL) and run it to closure or its STOP states as written there — no
+re-entry to Phase 0 needed. FAIL on the completion-stone mechanism itself →
+STOP, land the report, collect for the architect, who brings the operator a
+joint call (prototype-behind-the-oracle-and-SPRT vs. a fifth paper round)
+per the resume-2 dispatch's own text. FAIL confined outside the named scope
+→ record and proceed per the PASS path, unless it is a normative
+contradiction (STOP 3).
