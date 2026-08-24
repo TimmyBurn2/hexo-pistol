@@ -1,0 +1,53 @@
+# pistol — instrument-mode configuration, threat-first staged pair generation
+# WITH threat-only quiescence, defensive trigger only.
+#
+# WP-1.6's SPRT seat (docs/wp16_quiescence_design.md; docs/decisions.md D-396,
+# D-398; docs/experiments/wp16_sprt_prereg.md §3). Identical to
+# configs/instrument_staged_v0.toml in every field but the two this WP adds:
+# `q_depth_turns = 1` (the extension is live for one further turn past the
+# horizon) and `q_triggers = "defensive_only"` (trigger (c), the offensive
+# activation, stays gated off — D-396's "cheapest coherent hypothesis first").
+#
+# THE CUT BINDS HERE exactly as it does in the sibling document — see that
+# file's own header for the quiet-cut rationale, unchanged by this WP.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[engine]
+mode = "instrument"
+
+[search]
+# Matches configs/instrument_staged_v0.toml and configs/instrument_v0.toml:
+# every SPRT seat in this project agrees on tt_bytes.
+tt_bytes = 268435456
+
+[search.candidate_policy]
+kind = "staged"
+quiet_radius = 2
+quiet_top_k = 16
+widen_schedule = [32]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+# WP-1.6's own knob (docs/wp16_quiescence_design.md §5): one further TURN past
+# the horizon, per D-398's measured accounting (node-ratio 2.48x, ttd-ratio
+# 2.80x over the 24-position bench at this value).
+q_depth_turns = 1
+# D-396: trigger (c) gated off. The wider, costlier arm
+# (`defensive_and_offensive`) is licensed-not-scheduled future work, not this
+# run's claim.
+q_triggers = "defensive_only"
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+# Stated even though the mode is "instrument": a config is complete, and every
+# key is present because no key has a code-side default (CLAUDE.md rule 1).
+movetime_epsilon_ms = 50

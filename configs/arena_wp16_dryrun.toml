@@ -1,0 +1,74 @@
+# pistol — WP-1.6's DRY RUN. Not an experiment, and it decides nothing.
+#
+# This document exists to satisfy CLAUDE.md's dry-run rule for
+# docs/experiments/wp16_sprt_prereg.md: "A pre-registration's literal commands
+# are exercised before its review passes, on an input of the SAME KIND as the
+# registered workload — the same sort of artefact, differing only in identity —
+# and never on the registered workload itself. A synthetic stand-in exercises
+# syntax; only a real instance of the kind exercises ATTRIBUTION."
+#
+# IT IS A REAL INSTANCE OF THE KIND: a quiescence-extended staged seat against
+# the plain staged seat, played through the real arena over a real sha-pinned
+# book. It is not the registered workload — it differs in identity on the one
+# axis the registered run's own claim turns on:
+#
+#   - ENGINES: staged+q(defensive_and_offensive) against plain staged. The
+#     governed run seats staged+q(defensive_only) — this is D-396's OTHER,
+#     wider arm, never the registered candidate.
+#   - BOOK: openings_v1.txt, the realism cross-check corpus (also WP-1.5b's
+#     own disjoint confirmatory book), and NOT the primary SPRT book
+#     random_openings_v1.txt the governed run draws from.
+#   - SIZE: four openings, eight games.
+#
+# WHAT IS DELIBERATELY THE SAME, because a dry run that changes everything
+# exercises nothing: the budget, the turn cap, the worker count and the hang
+# timeout are the governed run's, so the commands are exercised against the
+# shapes they will meet.
+#
+# THE VERDICT THIS PRODUCES IS NOT A RESULT. Four openings cannot cross an SPRT
+# boundary at these bounds and are not meant to; what the dry run reads is the
+# pre-registration's §8.3 criteria (reused verbatim from WP-1.5b's Criterion 1',
+# tools/wp15b_attribution_check.py — the arena's own label/move/score
+# attribution chain, which is engine-agnostic and unchanged by this WP), which
+# are about ATTRIBUTION and not about strength. Nothing in this file may be
+# quoted as a measurement of either engine.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
+openings_take = 4
+openings_skip = 0
+turn_cap = 40
+n_workers = 4
+hang_timeout_ms = 120000
+
+[budget]
+kind = "nodes"
+value = 50000
+
+[sprt]
+# The governed run's bounds (docs/decisions.md D-396's dispatch). Nothing is
+# concluded from the LLR either way; the block is present so the report's
+# instrument lines are the real ones.
+elo0 = 0.0
+elo1 = 15.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+label = "staged_q_both"
+binary = "target/release/pistol"
+# Recorded from cargo build --release --locked --bin pistol &&
+# sha256sum target/release/pistol at this file's own revision. REBUILD MEANS
+# RE-RECORD.
+binary_sha256 = "b8d0dc963a2453e1eff69823629c37b23bafe419b9225f8af2401df519bc2673"
+config = "configs/instrument_staged_q_defensive_and_offensive_v0.toml"
+
+[engine_b]
+label = "staged"
+binary = "target/release/pistol"
+binary_sha256 = "b8d0dc963a2453e1eff69823629c37b23bafe419b9225f8af2401df519bc2673"
+config = "configs/instrument_staged_v0.toml"

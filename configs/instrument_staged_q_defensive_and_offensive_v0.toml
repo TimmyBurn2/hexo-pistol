@@ -1,0 +1,47 @@
+# pistol — instrument-mode configuration, threat-first staged pair generation
+# WITH threat-only quiescence, BOTH triggers (defensive and offensive).
+#
+# NOT a governed-run seat. This document exists for two reasons only:
+#
+# 1. It is `docs/experiments/wp16_sprt_prereg.md`'s dry-run engine A — an
+#    input of the SAME KIND as the registered workload (a quiescence-extended
+#    staged seat against the plain staged seat), differing in identity on the
+#    one axis that matters (`q_triggers`), never the registered matchup
+#    itself (CLAUDE.md's dry-run rule).
+# 2. It is D-396's own "licensed-not-scheduled future work" — the wider,
+#    costlier arm a later WP-1.6 experiment would seat if `defensive_only`
+#    closes the WP — committed now so that experiment does not first have to
+#    author the config revision 1 of it already needed here.
+#
+# Identical to configs/instrument_staged_q_defensive_only_v0.toml but for
+# `q_triggers`. Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[engine]
+mode = "instrument"
+
+[search]
+tt_bytes = 268435456
+
+[search.candidate_policy]
+kind = "staged"
+quiet_radius = 2
+quiet_top_k = 16
+widen_schedule = [32]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+q_depth_turns = 1
+# The wider, costlier arm (D-395's own cost accounting) — trigger (c) live.
+q_triggers = "defensive_and_offensive"
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+movetime_epsilon_ms = 50
