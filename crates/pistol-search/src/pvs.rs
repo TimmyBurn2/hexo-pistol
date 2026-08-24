@@ -71,8 +71,12 @@ pub const STATIC_EVAL_MID_TURN: &str = "STATIC_EVAL_MID_TURN";
 /// at the end, so no state can bleed from one search into the next
 /// (docs/decisions.md D-7).
 pub struct Run<'a> {
-    position: &'a mut Position,
-    table: &'a mut Table,
+    /// `pub(crate)`: `crate::quiescence`'s own methods on `Run` need it too
+    /// (docs/wp16_quiescence_design.md §3 — a dedicated module, not a
+    /// duplicated one).
+    pub(crate) position: &'a mut Position,
+    /// `pub(crate)`, same reason as `position`.
+    pub(crate) table: &'a mut Table,
     policy: CandidatePolicy,
     stop: Stop,
     root_turn: u32,
@@ -102,7 +106,8 @@ pub struct Run<'a> {
     /// kind — the write is behavior-neutral — and read only by
     /// [`Run::salvage`], which only a wall-clock caller consults.
     root_score: Option<i32>,
-    pv: PvTable,
+    /// `pub(crate)`, same reason as `position`.
+    pub(crate) pv: PvTable,
 }
 
 impl<'a> Run<'a> {
@@ -214,7 +219,17 @@ impl<'a> Run<'a> {
                  where the mover still owes a stone — a horizon must extend one ply to complete \
                  the turn rather than evaluate half of it"
             );
-            return self.position.value();
+            // WP-1.6 (docs/wp16_quiescence_design.md §3): threat-only
+            // quiescence extends the horizon under `Staged` only — `Radius`
+            // tracks no `ThreatState` (`position.rs`'s own doc) and this
+            // match is the SAME one the `depth_plies > 0` branch below
+            // already runs to dispatch on `self.policy`.
+            return match self.policy {
+                CandidatePolicy::Radius { .. } => self.position.value(),
+                CandidatePolicy::Staged(params) => {
+                    self.quiescence(alpha, beta, ply, params.q_depth_turns)
+                }
+            };
         }
 
         let key = self.position.state().key();
@@ -427,7 +442,10 @@ impl<'a> Run<'a> {
 
     /// How many turns this position is from the root. Both plies of a turn
     /// share it, because they share a turn number.
-    fn turns_from_root(&self) -> u32 {
+    ///
+    /// `pub(crate)`: `crate::quiescence`'s own nodes compute mate distances
+    /// the same way `visit`'s do (docs/wp16_quiescence_design.md §7).
+    pub(crate) fn turns_from_root(&self) -> u32 {
         self.position.state().turn() - self.root_turn
     }
 
@@ -439,7 +457,10 @@ impl<'a> Run<'a> {
     /// up to [`NODE_CHECK_INTERVAL`] nodes — each with a whole ordering pass —
     /// run past the clock, which is D-95's magnitude class, and a deadline stop
     /// is not reproducible anyway, so granularity buys it nothing.
-    fn should_stop(&mut self) -> bool {
+    ///
+    /// `pub(crate)`: `crate::quiescence` calls this SAME method at its own
+    /// entry rather than duplicating it (docs/wp16_quiescence_design.md §7).
+    pub(crate) fn should_stop(&mut self) -> bool {
         if self.aborted {
             return true;
         }

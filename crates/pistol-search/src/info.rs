@@ -62,6 +62,29 @@ pub struct StageCounters {
     pub cover_impossible: u64,
     /// Nodes that took `LAW-OVERLOAD`'s early return: no child expanded.
     pub overload_return: u64,
+    /// `crate::quiescence`'s own totals (WP-1.6,
+    /// docs/wp16_quiescence_design.md §8) — written only by `Run::quiescence`
+    /// and its own helpers, never by `staged_candidates`' dispatch, so these
+    /// are structurally disjoint from every field above.
+    ///
+    /// Every node `Run::quiescence` (or its ply-2 continuation) visits, both
+    /// plies of every granted turn, every chain link.
+    pub qnodes: u64,
+    /// The gate's trigger (a) fired (win-now).
+    pub q_win_now: u64,
+    /// The gate's or ply-2's `LAW-OVERLOAD` shortcut fired
+    /// (`Cover::Impossible`), combined — the WP's own analysis can split
+    /// gate-vs-ply-2 by reading [`StageCounters::qnodes`] alongside it if
+    /// needed.
+    pub q_overload_return: u64,
+    /// The gate's trigger (b) fired and an extension was granted.
+    pub q_extend_defense: u64,
+    /// The gate's trigger (c) fired and an extension was granted.
+    pub q_extend_offense: u64,
+    /// The gate was reached and neither trigger fired.
+    pub q_stand_pat_no_trigger: u64,
+    /// A trigger fired but the quiescence budget was already spent.
+    pub q_stand_pat_cap: u64,
 }
 
 impl StageCounters {

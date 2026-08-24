@@ -42,6 +42,10 @@ pub(crate) mod ordering;
 pub(crate) mod position;
 pub(crate) mod pv;
 pub(crate) mod pvs;
+// Threat-only quiescence at the horizon (WP-1.6). Internal for the same
+// reason `pvs` is: it is how `Run::visit`'s horizon works, not a surface a
+// caller reaches directly.
+pub(crate) mod quiescence;
 
 pub use candidates::candidate_cells;
 pub use error::SearchError;
