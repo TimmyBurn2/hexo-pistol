@@ -419,6 +419,18 @@ fn clean(games: Vec<Game>) -> Fixture {
     Fixture { games, divergences }
 }
 
+/// Rebuild a document with whole lines replaced, for corruptions `replacen` cannot
+/// express because the text they must hit is not unique in the document.
+fn rewrite(document: &str, mut edit: impl FnMut(&str) -> Option<String>) -> String {
+    let mut out = String::new();
+    for line in document.split('\n') {
+        out.push_str(&edit(line).unwrap_or_else(|| line.to_string()));
+        out.push('\n');
+    }
+    out.pop();
+    out
+}
+
 /// THE CONTROL: an honest report whose replay found nothing is a measurement.
 #[test]
 fn a_clean_replay_of_an_honest_report_is_attributable() {
@@ -895,6 +907,190 @@ fn a_forfeiting_seat_that_spent_more_replaying_than_it_did_live_is_a_determinism
     assert!(
         String::from_utf8_lossy(&out.stdout).contains("more than the whole game cost it"),
         "{}",
+        said(&out)
+    );
+}
+
+/// A pair whose two book prefixes differ only in LENGTH is refused, not crashed
+/// out of.
+///
+/// `clause_b`'s book arm named the first turn at which the two prefixes differ.
+/// Two Python slices can be unequal because one is SHORTER, in which case no
+/// index differs at all: the generator is empty and `next()` raised
+/// `StopIteration`, which the top-level handler's named tuple did not cover. It
+/// escaped as a traceback — no `CANNOT READ:` line and exit 1, which this
+/// instrument registers as THE RUN IS NOT A MEASUREMENT, a finding about the
+/// engines. A refusal wearing the exit code of a finding, inside the very
+/// try/except whose comment says it exists to stop that
+/// (docs/decisions.md D-419, MAJOR B).
+#[test]
+fn a_pair_mate_shorter_than_the_book_is_a_refusal_and_not_a_crash() {
+    let dir = scratch("wp16warm-shortmate");
+    let engine = shim(&dir, &[]);
+    let fixture = clean(distinct_pair(0));
+    // Game 0 keeps its first turn and nothing else — a move list SHORTER than the
+    // 2-turn book. Every coverage check above `clause_b` is kept TRUE (`turns`,
+    // `recorded_turns`, `replayed_turns`, and a clean `compared_turns` of
+    // `max(0, 1 - 2)`), so nothing refuses earlier and the run reaches the book
+    // arm with `["0,0"]` against a two-move prefix: unequal slices, no differing
+    // index. `rewrite` and not `replacen` because `turns 5` is game 1's count too.
+    let text = rewrite(&report(&dir, &fixture), |line| {
+        if line.starts_with("game 0 ") {
+            Some(line.replace(" turns 5 ", " turns 1 "))
+        } else if line.starts_with("moves 0 ") {
+            Some(String::from("moves 0 0,0"))
+        } else {
+            None
+        }
+    });
+    let document = rewrite(&replay(&fixture, &sha256_hex(text.as_bytes())), |line| {
+        line.starts_with("replay 0 ").then(|| {
+            String::from(
+                "replay 0 recorded_turns 1 replayed_turns 1 compared_turns 0 nodes_a 10 \
+                 nodes_b 20 status clean",
+            )
+        })
+    });
+    let out = check(&dir, &text, &document, &engine);
+    assert_eq!(
+        out.status.code(),
+        Some(2),
+        "a pair-mate shorter than the book is a REFUSAL of the pair's premise. Exit 1 would \
+         read as a finding about the engines, which is exactly what the uncaught StopIteration \
+         produced: {}",
+        said(&out)
+    );
+    let printed = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        printed.contains("warm_attribution_check: CANNOT READ:"),
+        "the refusal must print under the CANNOT READ prefix, and the crash printed no such \
+         line at all: {}",
+        said(&out)
+    );
+    assert!(
+        printed.contains("fewer than the 2-turn book"),
+        "the refusal must name the short game rather than a turn index that does not exist: {}",
+        said(&out)
+    );
+    assert!(
+        !String::from_utf8_lossy(&out.stderr).contains("StopIteration"),
+        "no traceback may reach the reader: {}",
+        said(&out)
+    );
+}
+
+/// An exception class NOBODY ENUMERATED is a refusal too.
+///
+/// The handler used to name `(KeyError, ValueError, IndexError)`, and a named
+/// tuple is an enumeration — only as good as its author's imagination. This seeds
+/// a field the parser cannot anticipate: `alpha 1.0` is a syntactically perfect
+/// float that no read guards, and it makes the PORTED sprt.rs arithmetic divide
+/// by zero at `math.log(beta / (1.0 - alpha))`. `ZeroDivisionError` is in no
+/// tuple anyone would have written, and the invariant is that it still cannot
+/// become exit 1.
+#[test]
+fn an_unanticipated_exception_is_a_refusal_and_not_a_finding() {
+    let dir = scratch("wp16warm-catchall");
+    let engine = shim(&dir, &[]);
+    // An inert pair (bucket p2) beside a pair seat A wins from both seats
+    // (bucket p4). Two different buckets is what gives the sample a non-zero
+    // VARIANCE, without which `recompute_verdict` returns `inconclusive_degenerate`
+    // before it ever reaches the division. `cross_check` is only entered at all
+    // when `inert` is non-empty and no game forfeited, which the first pair and
+    // this fixture's lack of forfeits supply.
+    let mut games = inert_pair(0);
+    games.extend(vec![
+        Game {
+            opening: 1,
+            book: 1,
+            a_is_p1: true,
+            result: "p1_win",
+            end: "normal",
+            forfeit_by: None,
+            free: vec![
+                String::from("3,3/3,4"),
+                String::from("4,4/4,5"),
+                String::from("5,5/5,6"),
+            ],
+            nodes: [30, 40],
+        },
+        Game {
+            opening: 1,
+            book: 1,
+            a_is_p1: false,
+            // Seat A holds p2 here and p1 there, and wins both — an even turn
+            // count, so link 1b's rule-3 adjudication agrees with `p2_win`.
+            result: "p2_win",
+            end: "normal",
+            forfeit_by: None,
+            free: vec![
+                String::from("6,6/6,7"),
+                String::from("7,7/7,8"),
+                String::from("8,8/8,9"),
+                String::from("9,9/9,10"),
+            ],
+            nodes: [40, 30],
+        },
+    ]);
+    let fixture = clean(games);
+    // Two buckets means the sample is NOT degenerate, so the honest recomputation
+    // is `inconclusive_at_game_cap` and the builder's blanket
+    // `verdict inconclusive_degenerate` — right for every single-bucket fixture in
+    // this file — would be refused by the cross-check's own self-check before the
+    // division is ever reached. Corrected here so that the ONLY difference between
+    // the two documents below is the `alpha` field.
+    let honest = report(&dir, &fixture).replacen(
+        "verdict inconclusive_degenerate",
+        "verdict inconclusive_at_game_cap",
+        1,
+    );
+    let text = honest.replacen("alpha 0.050000000", "alpha 1.000000000", 1);
+    assert_ne!(text, honest, "the edit landed");
+    let out = check(
+        &dir,
+        &text,
+        &replay(&fixture, &sha256_hex(text.as_bytes())),
+        &engine,
+    );
+    assert_eq!(
+        out.status.code(),
+        Some(2),
+        "an exception this file never anticipated is a VOID: nothing was computed, so there is \
+         nothing to report about the engines. Exit 1 would be that void read as an attribution \
+         failure: {}",
+        said(&out)
+    );
+    let printed = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        printed.contains("warm_attribution_check: CANNOT READ:"),
+        "the refusal must print under the CANNOT READ prefix: {}",
+        said(&out)
+    );
+    assert!(
+        printed.contains("ZeroDivisionError"),
+        "the refusal must NAME the exception, or the reader is told only that something went \
+         wrong somewhere: {}",
+        said(&out)
+    );
+    assert!(
+        !String::from_utf8_lossy(&out.stderr).contains("Traceback"),
+        "no traceback may reach the reader: {}",
+        said(&out)
+    );
+    // THE CONTROL: the same fixture, differing only in that `alpha` is left alone,
+    // is a measurement. Without it the case above could be passing because the
+    // fixture is unreadable for some reason that has nothing to do with the
+    // catch-all (tools/SHELL_CHECKLIST.md item 10).
+    let out = check(
+        &dir,
+        &honest,
+        &replay(&fixture, &sha256_hex(honest.as_bytes())),
+        &engine,
+    );
+    assert_eq!(
+        out.status.code(),
+        Some(0),
+        "the control is refused, so the case above proves nothing about the catch-all: {}",
         said(&out)
     );
 }

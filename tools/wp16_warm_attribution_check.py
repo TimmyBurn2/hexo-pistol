@@ -611,7 +611,34 @@ def clause_b(report, replay, buckets, notes, failures):
                 "labels is the only difference between them"
             )
         if one[:book] != two[:book]:
-            spot = next(at for at in range(min(len(one), len(two), book)) if one[at] != two[at])
+            spot = next(
+                (at for at in range(min(len(one), len(two), book)) if one[at] != two[at]),
+                None,
+            )
+            if spot is None:
+                # THE PREFIXES DIFFER IN LENGTH AND NOT IN CONTENT, which is the
+                # only other way two slices can be unequal. It happens exactly when
+                # a game's WHOLE move list stops inside the book: the shorter list
+                # then agrees with the longer one at every index it has, so no turn
+                # differs and there is no turn to name. Same refusal — the pair does
+                # not satisfy the premise — and it earns its own words rather than
+                # an index that does not exist. Before this arm the generator was
+                # empty and `next` raised StopIteration, which the handler at the
+                # foot of this file did not cover: no `CANNOT READ:` line, and exit
+                # 1, which this instrument registers as a finding about the ENGINES
+                # (docs/decisions.md D-419, MAJOR B).
+                shorter, longer = sorted((len(one), len(two)))
+                short = first if len(one) < len(two) else second
+                other = second if len(one) < len(two) else first
+                die(
+                    f"pair {pair} (games {first['game']}/{second['game']}): game "
+                    f"{short['game']} records {shorter} turn(s), fewer than the {book}-turn "
+                    f"book, and game {other['game']} records {longer} — their book prefixes "
+                    "differ in LENGTH and not in content, so there is no turn at which they "
+                    "disagree and no book they share. Both arms of clause (b) begin \"the two "
+                    "games agree up to t\"; on this pair there is no such t, because the "
+                    "shorter game stops inside the book"
+                )
             die(
                 f"pair {pair} (games {first['game']}/{second['game']}): its two games differ at "
                 f"turn {spot + 1}, which is inside the {book}-turn book, so they do not share the "
@@ -812,12 +839,42 @@ def main():
 
 
 if __name__ == "__main__":
-    # A FIELD THAT IS NOT THERE, OR IS NOT A NUMBER, IS A VOID AND NOT A FINDING (item
-    # 12). Every read above names its record, so the refusal names the key; what this
-    # catches is the reads too numerous to guard one at a time, and it catches them into
-    # exit 2 rather than letting a traceback exit 1 and read as "the run's seats are
-    # mis-attributed".
+    # THE ENFORCED INVARIANT, and the whole reason this handler catches everything:
+    #
+    #   EXIT 1 ARISES ONLY FROM THE NAMED ATTRIBUTION FINDINGS. The single site that
+    #   reaches it is `main()`'s `return ATTRIBUTABLE if not failures else
+    #   NOT_A_MEASUREMENT`, so exit 1 means the `failures` list is non-empty and
+    #   every entry in it was printed by name. EVERY OTHER TERMINATION OF THIS FILE
+    #   IS EXIT 0 (a measurement), EXIT 2 (no answer could be taken) OR EXIT 3
+    #   (a determinism violation, on `violation()`'s own code).
+    #
+    # A FIELD THAT IS NOT THERE, OR IS NOT A NUMBER, IS A VOID AND NOT A FINDING
+    # (tools/SHELL_CHECKLIST.md item 12). Every read above names its record, so those
+    # refusals name the key; what this catches is the reads too numerous to guard one
+    # at a time, and it catches them into exit 2 rather than letting a traceback exit
+    # 1 and read as "the run's seats are mis-attributed".
+    #
+    # IT IS A CATCH-ALL AND NOT A NAMED TUPLE. `(KeyError, ValueError, IndexError)`
+    # was such a tuple, and a tuple is an enumeration — only as good as the
+    # imagination of whoever wrote it. Two classes escaped it, both MEASURED against
+    # this file: `StopIteration`, out of `clause_b`'s book-prefix arm above (D-419,
+    # MAJOR B), and `ZeroDivisionError`, out of the ported sprt.rs arithmetic in
+    # `recompute_verdict` on a report declaring `alpha 1.0`. Each exited 1 with a
+    # traceback. The defect was not that the tuple was one class short; it was that
+    # the invariant above was being asserted by an enumeration at all.
+    #
+    # `Exception` AND NOT `BaseException` is the exact boundary the invariant needs.
+    # `SystemExit` is what `die()`, `violation()` and `main()`'s own return travel
+    # on, and it must pass through untouched or every exit code above is lost;
+    # CPython's exit status for an uncaught `Exception` is 1, which is precisely the
+    # hole being closed. A `KeyboardInterrupt` is not an answer this file computed
+    # and dies by its signal rather than by exit 1, so it does not breach the
+    # invariant either.
     try:
         raise SystemExit(main())
-    except (KeyError, ValueError, IndexError) as why:
-        die(f"a record in one of the documents is malformed: {why!r}")
+    except Exception as why:  # noqa: BLE001 — deliberate; see the invariant above
+        die(
+            f"an unanticipated {type(why).__name__} escaped this instrument: {why!r}. Something "
+            "in one of these documents is malformed in a way no read above expected, and an "
+            "unexpected malformation is a VOID rather than a finding about the engines"
+        )
