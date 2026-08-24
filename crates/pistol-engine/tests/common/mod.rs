@@ -57,6 +57,7 @@ widen_schedule = [32]
 tier_t_own_count = 2
 tier_t_opponent_count = 3
 q_depth_turns = 0
+q_triggers = "defensive_only"
 
 [eval]
 backend = "handcrafted_v0"

@@ -17,8 +17,8 @@
 mod common;
 
 use pistol_core::{Coord, GameState};
-use pistol_search::StagedParams;
 use pistol_search::staged::{StagedRow, StagedSet, staged_candidates};
+use pistol_search::{QTriggers, StagedParams};
 
 use common::{committed_weights, threats_for};
 use pistol_eval::HandcraftedV0;
@@ -53,6 +53,7 @@ fn pat_gaps_singleton_cell_is_forced_by_the_staged_generator() {
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
         q_depth_turns: 0,
+        q_triggers: QTriggers::DefensiveAndOffensive,
     };
     let mut out = StagedSet::default();
     let row = staged_candidates(&state, &threats, &mut *eval, false, params, &mut out);

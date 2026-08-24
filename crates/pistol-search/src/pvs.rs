@@ -77,7 +77,9 @@ pub struct Run<'a> {
     pub(crate) position: &'a mut Position,
     /// `pub(crate)`, same reason as `position`.
     pub(crate) table: &'a mut Table,
-    policy: CandidatePolicy,
+    /// `pub(crate)`, same reason as `position`: `crate::quiescence`'s gate
+    /// reads `StagedParams::q_triggers` off it (D-396).
+    pub(crate) policy: CandidatePolicy,
     stop: Stop,
     root_turn: u32,
     /// Nodes visited, leaves included. Incremented once per [`Run::visit`].

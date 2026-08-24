@@ -90,6 +90,7 @@ impl SearchSection {
                 tier_t_own_count,
                 tier_t_opponent_count,
                 q_depth_turns,
+                q_triggers: _,
             } => {
                 check_radius("search.candidate_policy.quiet_radius", *quiet_radius)?;
                 if *quiet_top_k == 0 {

@@ -197,7 +197,31 @@ pub enum CandidatePolicy {
         /// `LAW-OVERLOAD` checks still run (WP-1.6,
         /// docs/wp16_quiescence_design.md §6), but no turn is ever granted.
         q_depth_turns: u32,
+        /// Which of `docs/wp16_quiescence_design.md` §3's two gate triggers
+        /// may grant an extension (D-396: gated so the first SPRT experiment
+        /// tests the cheapest coherent hypothesis, not the compound one
+        /// D-395 measured). Trigger (a) (win-now) and `LAW-OVERLOAD`'s
+        /// zero-cost shortcut are unconditional either way — this field
+        /// gates only trigger (b) (`DefensiveOnly`) versus triggers (b) and
+        /// (c) together (`DefensiveAndOffensive`).
+        q_triggers: QTriggers,
     },
+}
+
+/// Which quiescence gate triggers may grant an extension
+/// (`[search.candidate_policy.q_triggers]`, D-396).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum QTriggers {
+    /// Trigger (b) only (`docs/wp16_quiescence_design.md` §3.2, `LAW-FORCE`'s
+    /// forced-reply case) — the cheaper of the two, per D-395's own cost
+    /// accounting, and the first SPRT experiment's own seat (D-396).
+    DefensiveOnly,
+    /// Trigger (b) and trigger (c) (`docs/wp16_quiescence_design.md` §3.3,
+    /// the offensive activation case) — the compound configuration D-395
+    /// measured. Licensed as a future experiment, not scheduled by this
+    /// dispatch (D-396).
+    DefensiveAndOffensive,
 }
 
 /// `[eval]`.

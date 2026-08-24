@@ -72,6 +72,24 @@ pub struct StagedParams {
     /// docs/wp16_quiescence_design.md §6). `0` disables the extension; the
     /// horizon's free checks (win-now, `LAW-OVERLOAD`) run regardless.
     pub q_depth_turns: u32,
+    /// Which of `crate::quiescence`'s two gate triggers may grant an
+    /// extension (docs/decisions.md D-396).
+    pub q_triggers: QTriggers,
+}
+
+/// Which quiescence gate triggers may grant an extension
+/// (`crate::quiescence`, D-396). Mirrors
+/// `pistol_engine::config::QTriggers` — this crate does not depend on
+/// `pistol-engine` (the crate map's composition direction is the other
+/// way), so the two are separate types with the same two variants, the
+/// same pattern `CandidatePolicy` itself already follows.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum QTriggers {
+    /// Trigger (b) only (`docs/wp16_quiescence_design.md` §3.2).
+    DefensiveOnly,
+    /// Trigger (b) and trigger (c) (`docs/wp16_quiescence_design.md` §3.2,
+    /// §3.3) — the compound configuration D-395 measured.
+    DefensiveAndOffensive,
 }
 
 /// Everything the search needs that is not the position.

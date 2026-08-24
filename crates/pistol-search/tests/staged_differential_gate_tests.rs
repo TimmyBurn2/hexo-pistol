@@ -61,8 +61,8 @@ mod reference;
 mod common;
 
 use pistol_core::GameState;
-use pistol_search::StagedParams;
 use pistol_search::staged::{StagedRow, StagedSet, staged_candidates};
+use pistol_search::{QTriggers, StagedParams};
 use pistol_solver::HitBudget;
 
 use common::playouts::playout;
@@ -128,6 +128,7 @@ fn the_filtered_row_matches_r1_at_every_filtered_node_of_the_corpus() {
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
         q_depth_turns: 0,
+        q_triggers: QTriggers::DefensiveAndOffensive,
     };
     let mut filtered_nodes = 0usize;
     for state in corpus() {

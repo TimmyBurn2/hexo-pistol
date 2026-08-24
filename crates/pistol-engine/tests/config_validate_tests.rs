@@ -203,6 +203,7 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
         tier_t_own_count,
         tier_t_opponent_count,
         q_depth_turns,
+        q_triggers,
     } = config.search.candidate_policy
     else {
         panic!("the committed staged fixture must parse as Staged");
@@ -213,6 +214,7 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
     assert_eq!(tier_t_own_count, 2);
     assert_eq!(tier_t_opponent_count, 3);
     assert_eq!(q_depth_turns, 0);
+    assert_eq!(q_triggers, pistol_engine::config::QTriggers::DefensiveOnly);
 }
 
 #[test]

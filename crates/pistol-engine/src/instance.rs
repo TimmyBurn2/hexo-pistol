@@ -21,12 +21,12 @@ use std::time::{Duration, Instant};
 use pistol_core::GameState;
 use pistol_eval::{Eval, HandcraftedV0, Weights};
 use pistol_search::{
-    CandidatePolicy as SearchCandidatePolicy, SearchError, SearchInfo, SearchOutcome, SearchParams,
-    Searcher, Stop,
+    CandidatePolicy as SearchCandidatePolicy, QTriggers as SearchQTriggers, SearchError,
+    SearchInfo, SearchOutcome, SearchParams, Searcher, Stop,
 };
 
 use crate::budget::Budget;
-use crate::config::{CandidatePolicy, Config, EngineMode, EvalBackend, TieBreak};
+use crate::config::{CandidatePolicy, Config, EngineMode, EvalBackend, QTriggers, TieBreak};
 use crate::engine::Engine;
 use crate::error::EngineError;
 use crate::position::PositionSpec;
@@ -177,6 +177,7 @@ fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
             tier_t_own_count,
             tier_t_opponent_count,
             q_depth_turns,
+            q_triggers,
             quiet_top_k: _,
             widen_schedule: _,
         } => SearchCandidatePolicy::Staged(pistol_search::StagedParams {
@@ -184,7 +185,19 @@ fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
             tier_t_own_count: *tier_t_own_count,
             tier_t_opponent_count: *tier_t_opponent_count,
             q_depth_turns: *q_depth_turns,
+            q_triggers: search_q_triggers(*q_triggers),
         }),
+    }
+}
+
+/// `pistol_engine::config::QTriggers` to `pistol_search::QTriggers` — two
+/// separate types with the same two variants, the same
+/// document's-vocabulary-vs-search's-vocabulary reason `search_policy`'s own
+/// doc gives for `CandidatePolicy` (docs/decisions.md D-396).
+fn search_q_triggers(q_triggers: QTriggers) -> SearchQTriggers {
+    match q_triggers {
+        QTriggers::DefensiveOnly => SearchQTriggers::DefensiveOnly,
+        QTriggers::DefensiveAndOffensive => SearchQTriggers::DefensiveAndOffensive,
     }
 }
 

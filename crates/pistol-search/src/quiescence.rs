@@ -26,6 +26,7 @@
 use pistol_core::{Coord, NEIGHBOUR_DIRECTIONS, PlyOutcome};
 use pistol_solver::{Cover, HitBudget, LiveCount, MinimalCover, NearHot, StonesLeft};
 
+use crate::params::{CandidatePolicy, QTriggers};
 use crate::pvs::{CANDIDATE_ILLEGAL, Run};
 use crate::score::{self, INFINITY};
 use crate::tt::{Bound, Record};
@@ -194,10 +195,25 @@ impl<'a> Run<'a> {
             return GateRow::ExtendDefense(cover.cells());
         }
 
-        let mut offense = Vec::new();
-        threats.cells_raising_to_hot(us, NearHot::Three, &mut offense);
-        if !offense.is_empty() {
-            return GateRow::ExtendOffense(offense);
+        // D-396: trigger (c) is evaluated only under
+        // `QTriggers::DefensiveAndOffensive` — under `DefensiveOnly` the
+        // gate falls straight to `StandPat` when trigger (b) does not fire,
+        // exactly as if trigger (c) did not exist. `self.policy` is
+        // `CandidatePolicy::Staged` here by construction: `gate_row` is
+        // reachable only from `Run::quiescence`, itself reachable only from
+        // `Run::visit`'s own `Staged` arm (`pvs.rs`).
+        let CandidatePolicy::Staged(params) = self.policy else {
+            unreachable!(
+                "pistol-search invariant: the quiescence gate is reachable only under \
+                 CandidatePolicy::Staged"
+            );
+        };
+        if params.q_triggers == QTriggers::DefensiveAndOffensive {
+            let mut offense = Vec::new();
+            threats.cells_raising_to_hot(us, NearHot::Three, &mut offense);
+            if !offense.is_empty() {
+                return GateRow::ExtendOffense(offense);
+            }
         }
 
         GateRow::StandPat
@@ -462,7 +478,7 @@ mod tests {
     use pistol_eval::Eval;
 
     use super::*;
-    use crate::params::{CandidatePolicy, StagedParams};
+    use crate::params::{CandidatePolicy, QTriggers, StagedParams};
     use crate::position::Position;
     use crate::score::mate_in;
     use crate::stop::Stop;
@@ -525,12 +541,34 @@ mod tests {
         .expect("opponent_t_le_1_position is a legal game")
     }
 
-    fn staged_params(q_depth_turns: u32) -> StagedParams {
+    /// P1 to move, phase First: P1 holds a live-3 window (own count 3, both
+    /// ends open at `(-1,0)`/`(3,0)`) — `DEF-PLAN` requires own count >= 4,
+    /// so this is not a plan and trigger (a)/(b) do not fire from it, but
+    /// `cells_raising_to_hot(P1, NearHot::Three)` is non-empty (trigger c's
+    /// own query). P2 holds four stones split 2-and-2 across two axes, no
+    /// four in a row on any of them, so P2 has no hot window at all —
+    /// `blocking_covers(P1, ..)` is `Cover::NothingToBlock`, isolating
+    /// trigger (c) from trigger (b).
+    fn mover_can_activate_position() -> GameState {
+        GameState::from_plies(&[
+            Coord::new(0, 0),
+            Coord::new(3, 3),
+            Coord::new(4, 3),
+            Coord::new(1, 0),
+            Coord::new(2, 0),
+            Coord::new(3, 5),
+            Coord::new(4, 6),
+        ])
+        .expect("mover_can_activate_position is a legal game")
+    }
+
+    fn staged_params(q_depth_turns: u32, q_triggers: QTriggers) -> StagedParams {
         StagedParams {
             quiet_radius: 2,
             tier_t_own_count: 2,
             tier_t_opponent_count: 3,
             q_depth_turns,
+            q_triggers,
         }
     }
 
@@ -542,11 +580,12 @@ mod tests {
         position: &'a mut Position,
         table: &'a mut Table,
         q_depth_turns: u32,
+        q_triggers: QTriggers,
     ) -> Run<'a> {
         Run::new(
             position,
             table,
-            CandidatePolicy::Staged(staged_params(q_depth_turns)),
+            CandidatePolicy::Staged(staged_params(q_depth_turns, q_triggers)),
             Stop::Nodes(u64::MAX),
             64,
         )
@@ -560,7 +599,12 @@ mod tests {
         let mut position = Position::new(Box::new(Flat), true);
         position.reset_to(&win_in_one_ply_position());
         let mut table = Table::new(1 << 20).expect("the smallest table");
-        let mut run = run_over(&mut position, &mut table, 0);
+        let mut run = run_over(
+            &mut position,
+            &mut table,
+            0,
+            QTriggers::DefensiveAndOffensive,
+        );
 
         let score = run.quiescence(-INFINITY, INFINITY, 0, 0);
         assert_eq!(
@@ -581,7 +625,12 @@ mod tests {
         let mut position = Position::new(Box::new(Flat), true);
         position.reset_to(&opponent_t_le_1_position());
         let mut table = Table::new(1 << 20).expect("the smallest table");
-        let mut run = run_over(&mut position, &mut table, 0);
+        let mut run = run_over(
+            &mut position,
+            &mut table,
+            0,
+            QTriggers::DefensiveAndOffensive,
+        );
 
         let score = run.quiescence(-INFINITY, INFINITY, 0, 0);
         assert_eq!(
@@ -601,7 +650,12 @@ mod tests {
         let mut position = Position::new(Box::new(Flat), true);
         position.reset_to(&opponent_t_le_1_position());
         let mut table = Table::new(1 << 20).expect("the smallest table");
-        let mut run = run_over(&mut position, &mut table, 1);
+        let mut run = run_over(
+            &mut position,
+            &mut table,
+            1,
+            QTriggers::DefensiveAndOffensive,
+        );
 
         run.quiescence(-INFINITY, INFINITY, 0, 1);
         assert_eq!(
@@ -616,6 +670,68 @@ mod tests {
     }
 
     #[test]
+    fn a_defensive_trigger_grants_an_extension_under_defensive_only_too() {
+        // D-396: q_triggers gates trigger (c) only — trigger (b) is
+        // unaffected by either arm.
+        let mut position = Position::new(Box::new(Flat), true);
+        position.reset_to(&opponent_t_le_1_position());
+        let mut table = Table::new(1 << 20).expect("the smallest table");
+        let mut run = run_over(&mut position, &mut table, 1, QTriggers::DefensiveOnly);
+
+        run.quiescence(-INFINITY, INFINITY, 0, 1);
+        assert_eq!(
+            run.stages.q_extend_defense, 1,
+            "trigger (b) must fire under DefensiveOnly exactly as it does under \
+             DefensiveAndOffensive"
+        );
+    }
+
+    #[test]
+    fn an_offensive_trigger_grants_an_extension_under_defensive_and_offensive() {
+        let mut position = Position::new(Box::new(Flat), true);
+        position.reset_to(&mover_can_activate_position());
+        let mut table = Table::new(1 << 20).expect("the smallest table");
+        let mut run = run_over(
+            &mut position,
+            &mut table,
+            1,
+            QTriggers::DefensiveAndOffensive,
+        );
+
+        run.quiescence(-INFINITY, INFINITY, 0, 1);
+        assert_eq!(
+            run.stages.q_extend_offense, 1,
+            "trigger (c) must fire under DefensiveAndOffensive when the mover can activate a \
+             new plan"
+        );
+        assert_eq!(run.stages.q_extend_defense, 0);
+    }
+
+    #[test]
+    fn an_offensive_trigger_cannot_fire_under_defensive_only() {
+        // The dispatch's own required proof (D-396, Step 2): the SAME
+        // position that grants an offensive extension under
+        // DefensiveAndOffensive must stand pat under DefensiveOnly, exactly
+        // as if trigger (c) did not exist.
+        let mut position = Position::new(Box::new(Flat), true);
+        position.reset_to(&mover_can_activate_position());
+        let mut table = Table::new(1 << 20).expect("the smallest table");
+        let mut run = run_over(&mut position, &mut table, 1, QTriggers::DefensiveOnly);
+
+        let score = run.quiescence(-INFINITY, INFINITY, 0, 1);
+        assert_eq!(
+            run.stages.q_extend_offense, 0,
+            "trigger (c) must never fire under DefensiveOnly"
+        );
+        assert_eq!(
+            run.stages.q_stand_pat_no_trigger, 1,
+            "with trigger (c) gated off and trigger (b) not applicable (P2 has no hot window), \
+             the gate must stand pat"
+        );
+        assert_eq!(score, 0, "Flat's static value, unconditionally");
+    }
+
+    #[test]
     fn quiescence_is_deterministic_across_repeated_calls() {
         // CLAUDE.md rule 4: the same position and budget must produce the
         // same score and the same node count every time, single-threaded.
@@ -623,7 +739,12 @@ mod tests {
             let mut position = Position::new(Box::new(Flat), true);
             position.reset_to(&opponent_t_le_1_position());
             let mut table = Table::new(1 << 20).expect("the smallest table");
-            let mut run = run_over(&mut position, &mut table, 3);
+            let mut run = run_over(
+                &mut position,
+                &mut table,
+                3,
+                QTriggers::DefensiveAndOffensive,
+            );
             let score = run.quiescence(-INFINITY, INFINITY, 0, 3);
             (score, run.nodes, run.stages)
         };

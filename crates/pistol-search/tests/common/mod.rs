@@ -24,7 +24,7 @@ use std::path::PathBuf;
 
 use pistol_core::{Axis, Coord, GameState, Player};
 use pistol_eval::{HandcraftedV0, Weights};
-use pistol_search::{CandidatePolicy, SearchParams, Searcher, StagedParams};
+use pistol_search::{CandidatePolicy, QTriggers, SearchParams, Searcher, StagedParams};
 use pistol_solver::ThreatState;
 
 /// The committed weight table, loaded. A failure here is a broken contract
@@ -68,6 +68,7 @@ pub fn staged_params(
     tier_t_own_count: u8,
     tier_t_opponent_count: u8,
     q_depth_turns: u32,
+    q_triggers: QTriggers,
     tt_bytes: u64,
 ) -> SearchParams {
     SearchParams {
@@ -77,6 +78,7 @@ pub fn staged_params(
             tier_t_own_count,
             tier_t_opponent_count,
             q_depth_turns,
+            q_triggers,
         }),
     }
 }
@@ -87,6 +89,7 @@ pub fn staged_searcher(
     tier_t_own_count: u8,
     tier_t_opponent_count: u8,
     q_depth_turns: u32,
+    q_triggers: QTriggers,
 ) -> Searcher {
     Searcher::new(
         staged_params(
@@ -94,6 +97,7 @@ pub fn staged_searcher(
             tier_t_own_count,
             tier_t_opponent_count,
             q_depth_turns,
+            q_triggers,
             SMALL_TT,
         ),
         Box::new(HandcraftedV0::new(committed_weights())),
