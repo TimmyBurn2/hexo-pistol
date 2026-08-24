@@ -26,6 +26,15 @@
 //! transposition table — it has none — so the design's test (i) is ALSO run
 //! against the real engine as an operator procedure, recorded at
 //! docs/decisions.md D-412.
+//!
+//! # RULE9-JUSTIFICATION: the cases here are one run, seen four ways. They share
+//! a single harness — one arena run, one replay of it, one reader over the
+//! document that came back — and each case varies exactly one thing about that
+//! run: nothing (the clean pass), the worker count, the seat labels, or the
+//! engine's own demand to be told `newgame`. Splitting them would duplicate the
+//! harness into every piece, and a harness copied four ways is four things that
+//! can drift apart, which is the defect this whole work package exists to
+//! remove.
 
 mod common;
 
@@ -261,4 +270,86 @@ fn a_swapped_seat_label_diverges_at_the_first_differing_turn() {
             "the first turn either engine searched is where it shows: {line}"
         );
     }
+
+    // THE HALT RULE, D-409's, asserted rather than only written down. Feeding an
+    // engine past a divergence feeds it a move it did not choose and
+    // desynchronises its table from what the live game had, so every later
+    // comparison in that game would be against a state the run never reached. A
+    // replay that kept walking would report `replayed_turns` equal to
+    // `recorded_turns`; a fresh-context review measured that nothing caught it
+    // (docs/decisions.md D-413, MAJOR 5).
+    for line in pass.records("replay") {
+        let of = |key: &str| -> usize {
+            let words: Vec<&str> = line.split_whitespace().collect();
+            let at = words
+                .iter()
+                .position(|word| *word == key)
+                .unwrap_or_else(|| panic!("no `{key}` on `{line}`"));
+            words[at + 1].parse().expect("a count")
+        };
+        assert_eq!(
+            of("replayed_turns"),
+            OPENING_TURNS,
+            "the replay halted at the divergence, so it fed exactly the turns before it: {line}"
+        );
+        assert!(
+            of("replayed_turns") < of("recorded_turns"),
+            "and stopped short of the game: {line}"
+        );
+        assert_eq!(
+            of("compared_turns"),
+            1,
+            "having compared just the one: {line}"
+        );
+    }
+}
+
+/// The replay path spawns its seats through the SAME setup the generation path
+/// runs, so it sends `newgame` on every fresh spawn too.
+///
+/// `demands_newgame` refuses any position it is given before it has been told
+/// the verb, which is the only way an engine can witness a send that is
+/// otherwise a functional no-op on a fresh process (docs/decisions.md D-413,
+/// MAJOR 6). If the replay reached engines by any path but
+/// `seats::with_seats`, every game here would forfeit at its first ask.
+#[test]
+fn the_replay_path_sends_newgame_on_every_fresh_spawn_too() {
+    let scratch = Scratch::new("replay-newgame");
+    let openings = scratch.write("ng-openings.txt", &openings_prefix(OPENINGS));
+    let config_a = scratch.stub_config("ng-a.toml", "demands_newgame");
+    let config_b = scratch.stub_config("ng-b.toml", "demands_newgame");
+    let spec = ConfigSpec {
+        openings: &openings,
+        take: OPENINGS,
+        skip: 0,
+        turn_cap: TURN_CAP,
+        workers: 1,
+        hang_ms: 30_000,
+        elo1: 4.0,
+        budget_kind: "nodes",
+        budget_value: 5_000,
+        binary_a: STUB,
+        config_a: &config_a,
+        binary_b: STUB,
+        config_b: &config_b,
+    };
+    let ran = run(&scratch, &spec, "newgame");
+    assert_eq!(ran.code(), 0, "the run itself is clean:\n{}", ran.report());
+    let report = report_of(&scratch, &ran, "newgame");
+
+    let pass = replay(&scratch, &report, "newgame", "1");
+    assert_eq!(
+        pass.code(),
+        0,
+        "a seat that demands `newgame` forfeited during REPLAY, so the replay reached it by \
+         some path other than the shared setup:\n{}\n{}",
+        pass.document(),
+        pass.stderr()
+    );
+    assert_eq!(
+        pass.records("divergences"),
+        vec![String::from("divergences 0")],
+        "{}",
+        pass.document()
+    );
 }

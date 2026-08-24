@@ -64,6 +64,17 @@ enum Behave {
     /// document edited under a live run, which the arena must catch at the
     /// next spawn's identity re-verification (docs/decisions.md D-199).
     EditOwnConfig,
+    /// Plays honestly, but REFUSES any `position` it is given before it has
+    /// been sent `newgame`.
+    ///
+    /// `seats::with_seats` sends `newgame` on every fresh spawn, and on a fresh
+    /// process that send is a functional no-op — so no honest engine can tell
+    /// whether it happened, and no test built from one could pin it. A REVIEW
+    /// of the extraction measured exactly that: deleting the send left the
+    /// whole workspace green (docs/decisions.md D-413). This behaviour is the
+    /// witness that closes it, and it is a deliberate deviation from a real
+    /// engine rather than a claim about one.
+    DemandsNewGame,
 }
 
 impl Behave {
@@ -79,13 +90,14 @@ impl Behave {
             "bad_protocol" => Behave::BadProtocol,
             "play_mode" => Behave::PlayMode,
             "edit_own_config" => Behave::EditOwnConfig,
+            "demands_newgame" => Behave::DemandsNewGame,
             _ => return None,
         })
     }
 
     /// Every spelling, for a refusal that has to list them.
     const ALL: &'static str = "honest, honest_last, illegal, garbage, bad_bestmove, hang, \
-                               exit, bad_protocol, play_mode, edit_own_config";
+                               exit, bad_protocol, play_mode, edit_own_config, demands_newgame";
 }
 
 /// The exit code the `exit` behaviour uses. Distinct from this program's own
@@ -273,8 +285,29 @@ fn serve(
     );
     let mut session = pistol_cli::Session::new(engine).identify(vec![weights_line]);
     let mut config_edited = false;
+    let mut told_new_game = false;
     for line in stdin.lock().lines() {
         let line = line.map_err(|io| format!("stdin: {io}"))?;
+        if behave == Behave::DemandsNewGame {
+            let asked = line.trim_start();
+            if asked.starts_with(pistol_cli::protocol::NEW_GAME) {
+                told_new_game = true;
+            } else if asked.starts_with(pistol_cli::protocol::POSITION) && !told_new_game {
+                // An `error` line is what the arena forfeits on, so a spawn that
+                // was never sent `newgame` shows up as a forfeit with a named
+                // reason rather than as a silently different game.
+                writeln!(
+                    out,
+                    "{} NoNewGame: this instrument was given a position before it was told \
+                     `{}`",
+                    pistol_cli::report::ERROR_PREFIX,
+                    pistol_cli::protocol::NEW_GAME
+                )
+                .map_err(io_error)?;
+                out.flush().map_err(io_error)?;
+                continue;
+            }
+        }
         let asking_to_move = line.trim_start().starts_with(pistol_cli::protocol::GO);
         if asking_to_move && behave == Behave::EditOwnConfig && !config_edited {
             // The edit keeps the document valid — a comment — so an arena that

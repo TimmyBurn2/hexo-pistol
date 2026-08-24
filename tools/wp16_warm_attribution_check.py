@@ -1,5 +1,13 @@
 """WP-1.6 §7A.1 Criterion 1'' — warm-replay attribution, checked end to end.
 
+RULE9-JUSTIFICATION: one instrument, one file. Every link of this criterion, every
+refusal that guards it, and the proof clause (b) rests on are one argument, and a
+reader deciding whether a governed run is a measurement must be able to read the
+whole of it in one place. Splitting it would put half of a refusal in another file.
+(`tools/file_justification_check.sh` enumerates `.rs` and `.sh` only, so this marker
+is not mechanized here — see docs/decisions.md D-414 for that gap, recorded rather
+than silently relied on.)
+
   usage: tools/wp16_warm_attribution_check.py <report> <replay> <engine-binary>
 
 THIS IS AN INSTRUMENT. It produces the verdict `docs/experiments/wp16_sprt_prereg.md`
@@ -164,9 +172,12 @@ def die(why):
 def violation(why):
     print(f"warm_attribution_check: DETERMINISM VIOLATION: {why}")
     print(
-        "warm_attribution_check: this is the engine's own instrument-mode guarantee failing "
-        "(CLAUDE.md rule 4), not an attribution question. It is bigger than this work package "
-        "and it is NOT counted as an attribution failure."
+        "warm_attribution_check: this has TWO possible causes and this instrument cannot tell "
+        "them apart: the ENGINE's own instrument-mode guarantee failing (CLAUDE.md rule 4), or "
+        "the REPLAY not reproducing the sequence the run actually played. Naming only the first "
+        "would send a reader hunting a defect in the subject when the instrument is what broke "
+        "(tools/SHELL_CHECKLIST.md item 12). Either way it is bigger than this work package, it "
+        "is NOT counted as an attribution failure, and nothing downstream of it is read."
     )
     raise SystemExit(DETERMINISM_VIOLATION)
 
@@ -344,7 +355,7 @@ def read_replay(path):
             zip(("label", "binary_sha256", "config_sha256", "weights_sha256"), found.groups())
         )
 
-    replays, divergences = {}, []
+    replays, divergences, by_index = {}, [], {}
     for line in text.split("\n"):
         if line.startswith("replay "):
             record = fields(line)
@@ -353,7 +364,12 @@ def read_replay(path):
                 die(f"the replay document records game {index} twice")
             replays[index] = record
         elif line.startswith("divergence "):
-            divergences.append(fields(line))
+            record = fields(line)
+            index = record["divergence"]
+            if index in by_index:
+                die(f"the replay document records two divergences for game {index}")
+            by_index[index] = record
+            divergences.append(record)
     if not replays:
         die("the replay document records no replayed games")
 
@@ -371,6 +387,7 @@ def read_replay(path):
         "engines": engines,
         "replays": replays,
         "divergences": divergences,
+        "divergence_by_index": by_index,
     }
 
 
@@ -410,7 +427,7 @@ def bind(report, replay):
         )
 
 
-def check_coverage(report, replay, notes):
+def check_coverage(report, replay, notes):  # noqa: C901 — one record, one gate
     """Every game replayed, every move list the same length, every clean game's nodes
     equal. The node equality is the referent this file does not compute about itself."""
     for game in report["games"]:
@@ -428,8 +445,48 @@ def check_coverage(report, replay, notes):
                 f"game {index}: the replay saw {record['recorded_turns']} recorded turn(s) and the "
                 f"report holds {len(played)}"
             )
-        if record["status"] != "clean":
+        # THE `status` WORD IS NOT TAKEN ON TRUST. Everything that makes coverage
+        # non-vacuous — the turn count and the node equality — lives below this
+        # point, so a record that simply CLAIMS to have diverged would skip all of
+        # it and still be summarised as "replayed in full". `status` is therefore
+        # cross-checked against the divergence records the document actually
+        # carries, and a divergent record's own halt invariant is checked here
+        # rather than assumed.
+        status = record["status"]
+        if status not in ("clean", "divergence"):
+            die(f"game {index}: `status {status}` is neither `clean` nor `divergence`")
+        found = replay["divergence_by_index"].get(index)
+        if (status == "divergence") != (found is not None):
+            die(
+                f"game {index}: the replay record says `status {status}` and the document "
+                f"carries {0 if found is None else 1} `divergence` record for it"
+            )
+        if found is not None:
+            at_turn = int(found["at_turn"])
+            # THE HALT RULE, read off the document: the first disagreement ends
+            # that game's replay, so exactly `at_turn - 1` turns were fed and the
+            # compared count runs from the end of the book to the divergence.
+            if int(record["replayed_turns"]) != at_turn - 1:
+                die(
+                    f"game {index}: it diverged at turn {at_turn}, so {at_turn - 1} turn(s) were "
+                    f"fed, and the record says `replayed_turns {record['replayed_turns']}` — the "
+                    "replay did not halt where it says it halted"
+                )
+            if int(record["compared_turns"]) != at_turn - report["opening_turns"]:
+                die(
+                    f"game {index}: it diverged at turn {at_turn} with `opening_turns "
+                    f"{report['opening_turns']}`, so {at_turn - report['opening_turns']} turn(s) "
+                    f"were compared, and the record says `compared_turns "
+                    f"{record['compared_turns']}`"
+                )
             continue
+        if int(record["compared_turns"]) != max(0, len(played) - report["opening_turns"]):
+            die(
+                f"game {index}: a clean replay of {len(played)} turn(s) past a "
+                f"{report['opening_turns']}-turn book compares "
+                f"{max(0, len(played) - report['opening_turns'])} of them, and the record says "
+                f"`compared_turns {record['compared_turns']}`"
+            )
         if int(record["replayed_turns"]) != len(played):
             die(
                 f"game {index}: the replay reports no divergence yet fed only "
@@ -458,9 +515,15 @@ def check_coverage(report, replay, notes):
                     f"game {index}: seat {slot} spent {ran} node(s) in the run and {again} "
                     "replaying the identical sequence of positions at the identical budget"
                 )
+    halted = sum(
+        1 for record in replay["replays"].values() if record["status"] == "divergence"
+    )
     notes.append(
-        f"W coverage: {len(report['games'])} game(s) replayed in full, every clean game's node "
-        "counts equal to the run's"
+        f"W coverage: {len(report['games'])} game(s) accounted for — "
+        f"{len(report['games']) - halted} replayed in full with every node count equal to the "
+        f"run's, {halted} halted at a divergence. A game that halted was NOT replayed in full "
+        "and its node counts are not comparable; saying otherwise would be this note claiming "
+        "coverage the pass does not have"
     )
 
 
@@ -516,12 +579,46 @@ def classify(report, replay, engine, notes):
 
 
 def clause_b(report, replay, buckets, notes, failures):
-    """Every pair either excluded by the inert theorem or directly attributed."""
+    """Every pair either excluded by the inert theorem or directly attributed.
+
+    THE PREMISE IS CHECKED BEFORE THE PROOF IS USED. Both arms below rest on one
+    sentence — "its two games share a book prefix and swap which label sits in
+    which seat" — which the arena guarantees by construction (`one_game` takes
+    `openings.taken[index / 2]`, and the seating alternates on the game index) but
+    which THIS instrument must not assume, because the reports it exists to judge
+    are exactly the ones that might not be what they say they are. A pair that
+    fails the premise is a VOID and not a finding: nothing here can attribute it,
+    and passing it as attributed would be the proof applied to a case it does not
+    cover.
+    """
     games, moves = report["games"], report["moves"]
+    book = report["opening_turns"]
     inert, attributed, unattributable = [], [], []
     for pair in range(len(games) // 2):
         first, second = games[2 * pair], games[2 * pair + 1]
         one, two = moves[first["game"]], moves[second["game"]]
+        if first["opening"] != second["opening"]:
+            die(
+                f"pair {pair} (games {first['game']}/{second['game']}): its two games declare "
+                f"openings {first['opening']} and {second['opening']}, so they are not one "
+                "opening played from both seats and no pair-level argument applies to them"
+            )
+        if first["p1"] != second["p2"] or first["p2"] != second["p1"]:
+            die(
+                f"pair {pair} (games {first['game']}/{second['game']}): its two games seat "
+                f"`{first['p1']}`/`{first['p2']}` and `{second['p1']}`/`{second['p2']}`, which is "
+                "not one seating and its reverse — the pair's whole argument is that swapping the "
+                "labels is the only difference between them"
+            )
+        if one[:book] != two[:book]:
+            spot = next(at for at in range(min(len(one), len(two), book)) if one[at] != two[at])
+            die(
+                f"pair {pair} (games {first['game']}/{second['game']}): its two games differ at "
+                f"turn {spot + 1}, which is inside the {book}-turn book, so they do not share the "
+                "opening prefix every argument below assumes. Both arms of clause (b) begin "
+                "\"the two games agree up to t\"; on this pair that is false before any engine "
+                "was ever asked anything"
+            )
         forfeited = "forfeit" in (first["end"], second["end"])
         if one == two and not forfeited:
             inert.append(pair)
@@ -532,20 +629,25 @@ def clause_b(report, replay, buckets, notes, failures):
                     f"1-1 split — and the report records bucket p{buckets[pair]}"
                 )
             continue
+        # THE FIRST difference, full stop — not the first difference that happens
+        # to sit past the book. The proof's own first step is "both games agree up
+        # to t", so a t chosen past an EARLIER disagreement would be a t at which
+        # the two boards are not the same and the argument does not hold. The book
+        # check above is what makes this the same thing as "the first difference at
+        # or past the book"; without it the two are different searches, and the
+        # difference is a pair attributed by an argument that does not cover it.
         witness = next(
-            (
-                at
-                for at in range(min(len(one), len(two)))
-                if one[at] != two[at] and at >= report["opening_turns"]
-            ),
+            (at for at in range(min(len(one), len(two))) if one[at] != two[at]),
             None,
         )
+        if witness is not None and witness < book:
+            die(f"pair {pair}: unreachable — the book check above already refused this")
         if witness is None:
             unattributable.append(
                 f"(b) pair {pair} (opening {first['opening']}) is not inert "
                 f"({'a forfeit ended one of its games' if forfeited else 'its move lists differ'}) "
-                "and its two games never differ at a turn either engine searched, so no replayed "
-                "turn tells the two seats apart in it"
+                "and its two games never differ at a turn either engine searched — one move list "
+                "is a prefix of the other — so no replayed turn tells the two seats apart in it"
             )
         else:
             attributed.append(pair)

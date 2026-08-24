@@ -188,6 +188,32 @@ fn a_report_this_mode_cannot_answer_about_is_refused_by_name() {
             "against",
         ),
         (
+            "whitespace_in_a_path",
+            Box::new(|text: &str| {
+                // The format is whitespace-delimited and does not quote, so a
+                // path with a space in it was written unrecoverably. The wrong
+                // half of a path is a different binary, so it is refused rather
+                // than misparsed.
+                // TWO extra words, so the record still parses as key-value pairs
+                // and the twelve-word shape check is what has to catch it.
+                on_line(text, "engine a ", |line| {
+                    line.replacen(" config ", " config a b c/", 1)
+                })
+            }),
+            "cannot be read back",
+        ),
+        (
+            "an_odd_field_count",
+            Box::new(|text: &str| {
+                // ONE extra word: the record is no longer key-value pairs at all,
+                // which is a different refusal from the one above and says so.
+                on_line(text, "engine a ", |line| {
+                    line.replacen(" config ", " config a b/", 1)
+                })
+            }),
+            "is not a sequence of key-value pairs",
+        ),
+        (
             "same_label",
             Box::new(|text: &str| {
                 on_line(text, "engine b label b ", |line| {

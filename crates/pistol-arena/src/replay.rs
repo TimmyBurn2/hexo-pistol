@@ -15,11 +15,19 @@
 //!
 //! This module has no such ceiling because it does not skip: it spawns both
 //! seats exactly as a game does, feeds the RECORDED move list turn by turn, and
-//! asks the seat whose turn it is at every one of its turns. Every engine
-//! therefore sees precisely the sequence of `position`/`go` exchanges it saw
-//! when the report was written, so its table is in precisely the state it was
-//! in — and its answer is comparable to the record for the whole game rather
-//! than for two turns of it.
+//! asks the seat whose turn it is at every one of its turns THAT HAS A RECORDED
+//! MOVE. Every engine therefore sees precisely the sequence of `position`/`go`
+//! exchanges it saw when the report was written, so its table is in precisely
+//! the state it was in — and its answer is comparable to the record for the
+//! whole game rather than for two turns of it.
+//!
+//! **The qualification is not decoration.** A game that ended in a FORFEIT ended
+//! on an ask whose answer was refused, so the report holds no move for it: that
+//! ask is not replayed, and it is exactly the ply that decided the game. This is
+//! why `wp16_warm_attribution_check.py` compares only the non-forfeiting seat's
+//! node count on such a game, and why the inert-pair theorem excludes forfeit
+//! pairs outright rather than treating "zero divergence over every recorded
+//! move" as proof about a game whose result no recorded move explains.
 //!
 //! # The setup is not described here, it is CALLED
 //!
@@ -41,12 +49,11 @@
 //! # What this module does NOT decide
 //!
 //! Whether a divergence is a mis-attributed seat or a broken determinism
-//! guarantee is not knowable from the credited engine alone, and settling it
-//! takes a COLD probe of the other engine — which is deliberately not part of
-//! the warm chain. That classification belongs to one component and it is
-//! `tools/wp16_warm_attribution_check.py`, which consumes what this writes
-//! (docs/decisions.md D-411). This module reports facts: at which turn, which
-//! seat, what was recorded, what was answered.
+//! guarantee takes a COLD probe of the OTHER engine, which is deliberately not
+//! part of the warm chain. That classification has exactly one owner and it is
+//! `tools/wp16_warm_attribution_check.py` (docs/decisions.md D-411). This
+//! module reports facts: which turn, which seat, what was recorded, what was
+//! answered.
 
 use std::sync::Mutex;
 
@@ -55,7 +62,7 @@ use pistol_core::{GameState, Outcome, Turn};
 use crate::channel::Channel;
 use crate::error::ArenaError;
 use crate::exchange::{Answer, ask};
-use crate::game::Rules;
+use crate::game::{Rules, seat_of};
 use crate::record::Compute;
 use crate::replay_report::{Answered, Divergence, GameReplay, Replayed};
 use crate::seats::{self, Seat};
@@ -186,10 +193,8 @@ fn walk(
 
     for (at, recorded) in game.moves.iter().enumerate() {
         if at >= opening_turns as usize {
-            // Seat 0 is the first player, and engine A holds it when `a_is_p1`
-            // — the same arithmetic `game::play` does, over the same state.
             let mover_is_p1 = state.to_move() == pistol_core::Player::P1;
-            let engine = usize::from(mover_is_p1 != game.a_is_p1);
+            let engine = seat_of(mover_is_p1, game.a_is_p1);
             let answer = ask(
                 &mut channels[engine],
                 &fed,

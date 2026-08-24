@@ -60,9 +60,18 @@ const OPENINGS: [&str; 2] = ["1,1/1,2", "2,2/2,3"];
 /// The two labels, seat A first.
 const LABELS: [&str; 2] = ["ra", "rb"];
 
+/// One way a pair can fail clause (b)'s premise: what it is called, how it
+/// corrupts an honest pair, and the words the refusal it earns must carry.
+type Premise = (&'static str, fn(&mut Vec<Game>), &'static str);
+
 /// One game as a fixture states it.
 struct Game {
+    /// What the report DECLARES this game's opening to be.
     opening: usize,
+    /// Which book the move list actually starts from. Equal to `opening` in
+    /// every honest fixture — separable so a case can seed a pair whose two
+    /// games claim one opening and played two.
+    book: usize,
     /// Whether seat A holds the first seat.
     a_is_p1: bool,
     result: &'static str,
@@ -76,7 +85,7 @@ struct Game {
 
 impl Game {
     fn moves(&self) -> Vec<String> {
-        let mut all = vec![String::from("0,0"), OPENINGS[self.opening].to_string()];
+        let mut all = vec![String::from("0,0"), OPENINGS[self.book].to_string()];
         all.extend(self.free.iter().cloned());
         all
     }
@@ -224,15 +233,24 @@ fn replay(fixture: &Fixture, source_sha256: &str) -> String {
     for (index, game) in fixture.games.iter().enumerate() {
         let moves = game.moves();
         let diverged = fixture.divergences.get(index).and_then(Option::as_ref);
-        let (replayed, status) = match diverged {
-            Some((at, _)) => (at - 1, "divergence"),
-            None => (moves.len(), "clean"),
+        // The halt rule, spelled the way `replay.rs` spells it: a divergence at
+        // turn `at` means `at - 1` turns were fed, and the compared count runs
+        // from the end of the book to the divergence inclusive. Getting this
+        // wrong in the FIXTURE would have hidden the checker's own cross-check
+        // of it, which is why the checker now derives both rather than trusting
+        // the record's word.
+        let (replayed, compared, status) = match diverged {
+            Some((at, _)) => (at - 1, at - OPENING_TURNS, "divergence"),
+            None => (
+                moves.len(),
+                moves.len().saturating_sub(OPENING_TURNS),
+                "clean",
+            ),
         };
         records.push_str(&format!(
-            "replay {index} recorded_turns {} replayed_turns {replayed} compared_turns {} nodes_a \
-             {} nodes_b {} status {status}\n",
+            "replay {index} recorded_turns {} replayed_turns {replayed} compared_turns {compared} \
+             nodes_a {} nodes_b {} status {status}\n",
             moves.len(),
-            replayed.saturating_sub(OPENING_TURNS),
             game.nodes[0],
             game.nodes[1],
         ));
@@ -335,6 +353,7 @@ fn distinct_pair(opening: usize) -> Vec<Game> {
     vec![
         Game {
             opening,
+            book: opening,
             a_is_p1: true,
             result: "p1_win",
             end: "normal",
@@ -348,6 +367,7 @@ fn distinct_pair(opening: usize) -> Vec<Game> {
         },
         Game {
             opening,
+            book: opening,
             a_is_p1: false,
             result: "p1_win",
             end: "normal",
@@ -372,6 +392,7 @@ fn inert_pair(opening: usize) -> Vec<Game> {
     vec![
         Game {
             opening,
+            book: opening,
             a_is_p1: true,
             result: "p1_win",
             end: "normal",
@@ -381,6 +402,7 @@ fn inert_pair(opening: usize) -> Vec<Game> {
         },
         Game {
             opening,
+            book: opening,
             a_is_p1: false,
             result: "p1_win",
             end: "normal",
@@ -455,13 +477,16 @@ fn a_forfeit_sibling_of_an_inert_pair_is_not_excluded() {
     let dir = scratch("wp16warm-forfeit-sibling");
     let engine = shim(&dir, &[]);
     let mut games = inert_pair(0);
-    // The forfeiting engine's refused answer has no recorded move, so its game is
-    // one turn shorter — which is exactly why "zero divergence over every recorded
-    // move" is vacuously true at the ply that decided the result.
-    games[1].free.pop();
+    // THE MOVE LISTS STAY IDENTICAL, and that is the whole point of this case.
+    // The forfeiting engine's refused answer has no recorded move, so "zero
+    // divergence over every recorded move" is vacuously true at exactly the ply
+    // that decided the result — and the ONLY thing standing between this pair
+    // and the inert exclusion is the forfeit conjunct. A fixture whose two lists
+    // also differed in LENGTH would be excluded by `one == two` before that
+    // conjunct was ever consulted, which is how this case came to be vacuous for
+    // the very thing it is named after (docs/decisions.md D-413, MAJOR 3).
     games[1].end = "forfeit";
-    games[1].result = "p2_win";
-    games[1].forfeit_by = Some(1);
+    games[1].forfeit_by = Some(0);
     games.extend(distinct_pair(1));
     let fixture = clean(games);
     let text = report(&dir, &fixture);
@@ -577,7 +602,14 @@ fn a_clean_game_that_spent_different_nodes_replaying_is_a_determinism_violation(
     let tampered = honest.replacen("nodes_a 10", "nodes_a 11", 1);
     assert_ne!(honest, tampered, "the edit landed");
     let out = check(&dir, &text, &tampered, &engine);
-    assert_eq!(out.status.code(), Some(3), "{}", said(&out));
+    assert_eq!(
+        out.status.code(),
+        Some(3),
+        "equal moves at unequal cost takes the DETERMINISM-VIOLATION exit and no other. Exit 1 \
+         would have counted an instrument failure as an attribution failure — the exact \
+         misreading item 12 exists to stop — and exit 0 would have passed it: {}",
+        said(&out)
+    );
     assert!(
         String::from_utf8_lossy(&out.stdout).contains("replaying the identical sequence"),
         "{}",
@@ -592,9 +624,18 @@ fn an_inert_pair_the_report_did_not_score_one_all_is_a_finding() {
     let dir = scratch("wp16warm-inert-bucket");
     let engine = shim(&dir, &[]);
     let mut games = inert_pair(0);
-    // Two identical games that BOTH credit seat A: impossible under the theorem,
-    // which is the whole reason the bucket is asserted rather than assumed.
-    games[1].a_is_p1 = true;
+    // Two IDENTICAL move lists, seats properly swapped, no forfeit — so the pair
+    // IS inert and the theorem forces a 1-1 split — recorded as a win for one
+    // game and a cap for the other. Impossible under the theorem, since a result
+    // is a pure function of the move sequence, and that is exactly why the bucket
+    // is asserted rather than assumed. One pair only, so the sample stays
+    // degenerate and the pentanomial self-check has nothing to disagree about:
+    // this case is about the theorem, not about the arithmetic.
+    //
+    // NOT a seat that fails to swap. That is a different defect — the pair
+    // PREMISE rather than the theorem's conclusion — and it now takes exit 2 in
+    // its own case below.
+    games[1].result = "capped";
     let fixture = clean(games);
     let text = report(&dir, &fixture);
     let out = check(
@@ -603,7 +644,14 @@ fn an_inert_pair_the_report_did_not_score_one_all_is_a_finding() {
         &replay(&fixture, &sha256_hex(text.as_bytes())),
         &engine,
     );
-    assert_eq!(out.status.code(), Some(1), "{}", said(&out));
+    assert_eq!(
+        out.status.code(),
+        Some(1),
+        "a pair that contradicts the theorem excluding it is a FINDING. Exit 0 would mean the \
+         bucket was assumed rather than checked, and exit 2 that a premise check fired first — \
+         which would be a different defect: {}",
+        said(&out)
+    );
     assert!(
         String::from_utf8_lossy(&out.stdout).contains("the inert-pair theorem forces a 1-1 split"),
         "{}",
@@ -679,6 +727,174 @@ fn documents_that_are_not_about_each_other_are_a_void_and_not_a_finding() {
         out.status.code(),
         Some(0),
         "the control is refused: {}",
+        said(&out)
+    );
+}
+
+/// The PREMISE of clause (b)'s proof is checked, not assumed.
+///
+/// Both arms of the proof begin "its two games share a book prefix and swap
+/// which label sits in which seat". The arena guarantees that by construction,
+/// and this instrument exists to judge reports that might not be what they say
+/// they are — so it must not take the guarantee on trust. A fresh-context review
+/// found the witness search skipping a BOOK-level difference and attributing the
+/// pair at a later turn, where the proof's own first step ("both games agree up
+/// to t") is false (docs/decisions.md D-413, BLOCKING 1).
+#[test]
+fn a_pair_that_does_not_satisfy_the_proofs_premise_is_a_void_and_not_an_attribution() {
+    let cases: [Premise; 3] = [
+        (
+            "book",
+            |games| {
+                // Both games still DECLARE opening 0; only the moves disagree,
+                // and they disagree inside the book. This is the case that used
+                // to be reported `directly attributed`.
+                games[1].book = 1;
+            },
+            "inside the 2-turn book",
+        ),
+        (
+            "opening",
+            |games| games[1].opening = 1,
+            "not one opening played from both seats",
+        ),
+        (
+            "seating",
+            |games| games[1].a_is_p1 = true,
+            "not one seating and its reverse",
+        ),
+    ];
+    for (name, corrupt, must_say) in cases {
+        let dir = scratch(&format!("wp16warm-premise-{name}"));
+        let engine = shim(&dir, &[]);
+        let mut games = distinct_pair(0);
+        corrupt(&mut games);
+        let fixture = clean(games);
+        let text = report(&dir, &fixture);
+        let out = check(
+            &dir,
+            &text,
+            &replay(&fixture, &sha256_hex(text.as_bytes())),
+            &engine,
+        );
+        assert_eq!(
+            out.status.code(),
+            Some(2),
+            "`{name}` must be a VOID: nothing here can attribute such a pair, and exit 0 would \
+             be the proof applied to a case it does not cover — which is what a review \
+             measured. Exit 1 would be a finding about engines, which this is not: {}",
+            said(&out)
+        );
+        assert!(
+            String::from_utf8_lossy(&out.stdout).contains(must_say),
+            "`{name}` must refuse by name, saying `{must_say}`: {}",
+            said(&out)
+        );
+    }
+}
+
+/// The replay document's own `status` word is not taken on trust.
+///
+/// Everything that makes coverage non-vacuous — the turn counts and the node
+/// equality that is the externally derived referent — sat behind a `continue`
+/// keyed on that word, so a record that merely CLAIMED to have diverged skipped
+/// all of it and was still summarised as "replayed in full" (D-413, MAJOR 2).
+#[test]
+fn a_replay_record_cannot_skip_its_own_coverage_checks_by_claiming_a_divergence() {
+    let dir = scratch("wp16warm-status");
+    let engine = shim(&dir, &[]);
+    let mut fixture = clean(distinct_pair(0));
+    let text = report(&dir, &fixture);
+    let honest = replay(&fixture, &sha256_hex(text.as_bytes()));
+
+    let cases: Vec<(&str, String, &str)> = vec![
+        (
+            "a status word that is neither",
+            honest.replacen("status clean", "status wobbly", 1),
+            "is neither `clean` nor `divergence`",
+        ),
+        (
+            "a claimed divergence with no divergence record",
+            honest
+                .replacen("status clean", "status divergence", 1)
+                .replacen("nodes_a 10", "nodes_a 999999", 1),
+            "carries 0 `divergence` record",
+        ),
+        (
+            "a clean record that compared the wrong number of turns",
+            honest.replacen("compared_turns 3", "compared_turns 1", 1),
+            "compares 3 of them",
+        ),
+    ];
+    for (name, document, must_say) in cases {
+        assert_ne!(document, honest, "`{name}`'s edit landed");
+        let out = check(&dir, &text, &document, &engine);
+        assert_eq!(
+            out.status.code(),
+            Some(2),
+            "`{name}` must be a void; exit 0 would be the instrument printing `replayed in \
+             full` about a game it never checked: {}",
+            said(&out)
+        );
+        assert!(
+            String::from_utf8_lossy(&out.stdout).contains(must_say),
+            "`{name}` must refuse by name, saying `{must_say}`: {}",
+            said(&out)
+        );
+    }
+
+    // A DIVERGENT record whose own halt invariant does not hold. The halt rule
+    // is D-409's, and until this case nothing read it back off the document.
+    fixture.divergences[0] = Some((3, String::from("0,9/0,8")));
+    let text = report(&dir, &fixture);
+    let diverged = replay(&fixture, &sha256_hex(text.as_bytes()));
+    let unhalted = diverged.replacen("replayed_turns 2", "replayed_turns 5", 1);
+    assert_ne!(unhalted, diverged, "the edit landed");
+    let out = check(&dir, &text, &unhalted, &engine);
+    assert_eq!(
+        out.status.code(),
+        Some(2),
+        "a replay that fed every turn of a game it says diverged at turn 3 did not halt where \
+         it says it halted, and that is a void rather than a finding: {}",
+        said(&out)
+    );
+    assert!(
+        String::from_utf8_lossy(&out.stdout).contains("did not halt where it says it halted"),
+        "{}",
+        said(&out)
+    );
+}
+
+/// A forfeiting seat may spend LESS replaying than it did in the run — its last,
+/// refused ask has no recorded move — but never more.
+#[test]
+fn a_forfeiting_seat_that_spent_more_replaying_than_it_did_live_is_a_determinism_violation() {
+    let dir = scratch("wp16warm-overspend");
+    let engine = shim(&dir, &[]);
+    let mut games = inert_pair(0);
+    games[1].end = "forfeit";
+    games[1].forfeit_by = Some(0);
+    games.extend(distinct_pair(1));
+    let fixture = clean(games);
+    let text = report(&dir, &fixture);
+    let honest = replay(&fixture, &sha256_hex(text.as_bytes()));
+    // Game 1's seat A forfeited having spent 20 nodes; the replay claims 21.
+    let tampered = honest.replace(
+        "replay 1 recorded_turns 5 replayed_turns 5 compared_turns 3 nodes_a 20",
+        "replay 1 recorded_turns 5 replayed_turns 5 compared_turns 3 nodes_a 21",
+    );
+    assert_ne!(tampered, honest, "the edit landed");
+    let out = check(&dir, &text, &tampered, &engine);
+    assert_eq!(
+        out.status.code(),
+        Some(3),
+        "spending more on the turns it DID complete than the whole game cost it live is the \
+         instrument-or-engine determinism exit, not an attribution failure: {}",
+        said(&out)
+    );
+    assert!(
+        String::from_utf8_lossy(&out.stdout).contains("more than the whole game cost it"),
+        "{}",
         said(&out)
     );
 }

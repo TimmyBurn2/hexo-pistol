@@ -206,12 +206,58 @@ fn game_records_are_byte_identical_across_the_seat_setup_extraction() {
 #[test]
 fn the_scenarios_do_not_all_share_one_digest() {
     let mut seen: Vec<&str> = SCENARIOS.iter().map(|s| s.records_sha256).collect();
+    assert!(
+        seen.iter().all(|digest| digest.len() == 64),
+        "every PINNED scenario carries a real digest"
+    );
     seen.sort_unstable();
     seen.dedup();
     assert!(
         seen.len() >= 4,
         "the pinned digests collapse to {} distinct values, so most of them certify nothing",
         seen.len()
+    );
+}
+
+/// EVERY FRESH SPAWN IS SENT `newgame`, and this is the witness for it.
+///
+/// The send is a functional no-op on a fresh process, so no honest engine can
+/// tell whether it happened and no scenario built from one can pin it —
+/// MEASURED by a fresh-context review, which deleted the send from
+/// `seats::with_seats` and watched the entire workspace stay green
+/// (docs/decisions.md D-413). `demands_newgame` is the deliberate deviation
+/// that closes the branch: it refuses any `position` it is given before it has
+/// been told `newgame`, so a spawn that skipped the verb forfeits by name.
+#[test]
+fn every_fresh_spawn_is_sent_newgame_before_it_is_given_a_position() {
+    let scratch = Scratch::new("seatid-newgame");
+    let demanding = Scenario {
+        name: "demands_newgame",
+        behave: ["demands_newgame", "demands_newgame"],
+        workers: 1,
+        // Not pinned: this scenario is about the verb, not about the records,
+        // and it did not exist at the revision the digests were recorded at.
+        records_sha256: "",
+    };
+    let (ran, _) = play(&scratch, &demanding);
+    assert_eq!(
+        ran.code(),
+        0,
+        "a seat that demands `newgame` before any position forfeited, so some spawn was not \
+         sent it. Exit 1 here means the extracted setup skipped the verb; exit 2 would have \
+         meant the run was refused before any game and is a different failure entirely:\n{}",
+        ran.report()
+    );
+    assert!(
+        ran.field("counts").contains("forfeits 0"),
+        "nothing forfeited: {}",
+        ran.field("counts")
+    );
+    assert_eq!(
+        ran.games().len(),
+        OPENINGS * 2,
+        "and every game was played, so every spawn was asked: {}",
+        ran.report()
     );
 }
 

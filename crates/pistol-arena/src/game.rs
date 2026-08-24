@@ -78,9 +78,8 @@ pub fn play(
                 compute,
             ));
         }
-        // Seat 0 is the first player. Engine A holds it when `a_is_p1`.
         let mover_is_p1 = state.to_move() == pistol_core::Player::P1;
-        let engine = usize::from(mover_is_p1 != a_is_p1);
+        let engine = seat_of(mover_is_p1, a_is_p1);
         let loser = GameResult::loser_of(mover_is_p1);
 
         let answer = ask(
@@ -128,6 +127,17 @@ pub fn play(
             return Ok(finish(result, End::Normal, None, None, moves, compute));
         }
     }
+}
+
+/// Which ENGINE holds the seat that moves now: `0` is A, which is how compute
+/// and forfeits are attributed.
+///
+/// Seat 0 is the first player, and engine A holds it when `a_is_p1`. One
+/// function rather than two lines spelled twice: the replay path asks the same
+/// question of the same state, and a copy that agrees today is not an
+/// inheritance (docs/decisions.md D-406's own finding, D-408's answer to it).
+pub const fn seat_of(mover_is_p1: bool, a_is_p1: bool) -> usize {
+    if mover_is_p1 == a_is_p1 { 0 } else { 1 }
 }
 
 impl GameResult {
