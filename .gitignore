@@ -19,3 +19,7 @@
 /artifacts/
 /logs/
 /bench-out/
+
+# Session summaries for the operator: working notes, never part of the record
+# that CI or a reviewer reads. Same rule as /artifacts/ (CLAUDE.md rule 8).
+/sessions/
