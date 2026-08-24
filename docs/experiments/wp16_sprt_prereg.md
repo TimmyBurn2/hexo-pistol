@@ -1,9 +1,22 @@
 # WP-1.6 — SPRT pre-registration: threat-only quiescence (`defensive_only`) vs the committed staged policy
 
-**Revision 3. UNREVIEWED at the moment of writing. It amends §5, §7, §7A.1,
-§8 (new §8.6), §10 and §11, and an amendment reopens this document's review
-however small the diff — so revision 2's PASS (D-400) does NOT transfer, and
-this document does NOT govern a run until a fresh scoped review passes it.**
+**Revision 4. UNREVIEWED. It amends §5, §7, §7A.1, §8 (new §8.6), §10 and §11
+— all of that is revision 3's — and, NEW IN REVISION 4, one line of §3. An
+amendment reopens this document's review however small the diff, so revision
+2's PASS (D-400) does NOT transfer and this document does NOT govern a run
+until a fresh review passes it.**
+
+**WHY THERE IS A REVISION 4, recorded rather than folded into revision 3.**
+Revision 3 was committed (`8820e91`) and its review was dispatched. Before that
+review returned, this session found that §3 pinned `openings_skip = 0` — the
+EXACT slice D-401's retired run drew — while the dispatch commissioning this
+work calls for a FRESH opening slice at Step 7. The review was withdrawn rather
+than allowed to finish, because a PASS on revision 3 would not have transferred
+to the amended document and the amendment would have reopened it anyway
+(CLAUDE.md: "an amendment reopens the review, however small the diff"). One
+review at the governing revision is both cheaper and the rule. Revision 3 is
+recorded here as committed-and-superseded, not as never-written: it governed
+nothing and no run was taken under it.
 
 **WHAT REVISION 3 CHANGES, AND WHY, IN ONE PARAGRAPH.** Revision 2 governed
 the run D-401 took. That run FAILED its own Criterion 1' on clause (b) — 44 of
@@ -20,8 +33,10 @@ Criterion 1' in §7A.1**, its new instruments are named with their governing
 revision, its consequences are registered per exit code, a SECOND INSTRUMENT
 and its agreement criterion are registered before either runs, and §8.6
 records the new instruments' own dry run — two arms, one honest and one
-seeded, each with the defect class it excludes. §1, §2, §3, §4, §6, §7A.2,
-§8.1 through §8.5 and §9 are UNTOUCHED.
+seeded, each with the defect class it excludes. **Revision 4 adds exactly one
+substantive line on top of that**: §3's `openings_skip`, from `0` to `500`. §1,
+§2, §4, §6, §7A.2 and §8.1 through §8.5 are UNTOUCHED; §3 is touched in that one
+row and nowhere else; §9 gains a slot for the skip and changes nothing else.
 
 **Revision 2 (`731150a`) PASSED its own review (D-400) and governed the D-401
 run.** Everything below that revision 3 does not name is revision 2's text,
@@ -180,8 +195,8 @@ the true minimum sits) holds with room, not merely by directional assertion.
 | engine B | `configs/instrument_staged_v0.toml` — the committed plain staged policy, unchanged, label `staged` |
 | binaries | both seats run `target/release/pistol`, bound by `binary_sha256` (D-283 as qualified by D-294); recorded at Step 6's launch (§9.2) |
 | book | `crates/pistol-cli/tests/fixtures/random_openings_v1.txt` — the PRIMARY SPRT book, 2000 openings, sha-pinned |
-| `openings_take` | **500 — FIXED by D-396's dispatch**, not an OPERATOR-CONFIRM slot. Bound at `>= 100` by §2's floor; comfortably clears it |
-| `openings_skip` | 0 |
+| `openings_take` | **500 — FIXED by D-396's dispatch**, not an OPERATOR-CONFIRM slot. Bound at `>= 100` by §2's floor; comfortably clears it. UNCHANGED by revision 4, so §2's floor derivation is untouched: it turns on the pair COUNT, which is `take`, and not on which window they come from |
+| `openings_skip` | **500 — a FRESH SLICE, and revision 4's only substantive change.** D-401's retired run drew `skip 0, take 500`; this draws the next 500, disjoint from it by construction (docs/decisions.md D-202's own knob, and D-143: the book is emitted in content-hash order, so any window is as much a sample as a prefix is). The skip is inside `experiment_sha256` (D-202), so the two are formally different experiments and no reader can mistake this run for a re-read of one that is retired under any criterion, ever (D-402) |
 | budget | `kind = "nodes"`, `value = 50000` — the registered snapshot budget every SPRT document in this project uses, so this run's numbers are comparable with the record. **NOT the same convention D-398 measured under**: D-398's own cost accounting used a FIXED-DEPTH methodology (`go depth_turns 3`, reading nodes/time to reach it), the inverse of the arena's FIXED-NODES-per-move convention this run uses. §7A.2's own agreement criterion is the instrument that reconnects the two conventions for THIS run's own matchup, at THIS budget |
 | `turn_cap` | 40, as every prior run in this project |
 | `n_workers` | 4 — WP-1.3's red-team clearance, unchanged |
@@ -835,6 +850,12 @@ they can only be known then.
 after `cargo build --release --locked --bin pistol` at Step 6's own launch
 revision, for BOTH seats. Rebuild means re-record.
 
+**9.2a `openings_skip`.** FIXED at `500` (§3) by revision 4, not an
+OPERATOR-CONFIRM slot and not a launch-time one: it is decided HERE, before the
+run, because which games are played is part of the experiment and choosing a
+window after seeing anything would be the after-the-numbers move this document
+exists to forbid.
+
 **9.3 `openings_take`.** FIXED at `500` (§3), by D-396's dispatch. Clears the
 100-pair floor (§2) with wide margin, matching WP-1.5b's own governed run
 shape so the two are comparable in scale.
@@ -887,7 +908,9 @@ staying demoted, and that re-registration itself reopens this review.
 
 ## 11. REVIEW STATE
 
-**REVISION 3 (this text) IS UNREVIEWED AND GOVERNS NOTHING YET.** Revision 1
+**REVISION 4 (this text) IS UNREVIEWED AND GOVERNS NOTHING YET.** Revision 3
+(`8820e91`) was committed and its review dispatched, then WITHDRAWN before it
+returned — see the header for why. No run was taken under it. Revision 1
 (`43b5d78`) FAILED its first fresh-context review (one BLOCKING, one MAJOR).
 Revision 2 (`731150a`) fixed both, reopened the review, and PASSED a second
 scoped fresh-context review with zero findings against the fix —
@@ -895,10 +918,11 @@ scoped fresh-context review with zero findings against the fix —
 its own Criterion 1' and is retired as evidence for anything this WP
 concludes, under any criterion, ever (D-402).
 
-Revision 3 amends §5, §7, §7A.1, §8 (adding §8.6), §10 and this section. An
-amendment reopens the review however small the diff, and this one is not
-small: it replaces the criterion, its instrument and its consequences.
-**Revision 2's PASS therefore does NOT transfer.** A fresh fresh-context
+Revisions 3 and 4 together amend §3, §5, §7, §7A.1, §8 (adding §8.6), §9, §10
+and this section. An amendment reopens the review however small the diff, and
+this one is not small: it replaces the criterion, its instrument and its
+consequences, and it moves the window the run draws from. **Revision 2's PASS
+therefore does NOT transfer.** A fresh fresh-context
 review — scoped to what revision 3 changed, rather than re-litigating the
 sections it left alone — must pass before the governed run this document
 describes may be launched. §9.2/§9.6/§9.7's remaining slots are filled at that
