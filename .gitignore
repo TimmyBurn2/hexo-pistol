@@ -23,3 +23,9 @@
 # Session summaries for the operator: working notes, never part of the record
 # that CI or a reviewer reads. Same rule as /artifacts/ (CLAUDE.md rule 8).
 /sessions/
+
+# Agent harness directories. Scratch belonging to whatever tool is driving
+# the session, never to the project; `git add -A` swept 143 of these into a
+# commit once (docs/decisions.md D-426 MAJOR 4).
+/.agents/
+/.claude/
