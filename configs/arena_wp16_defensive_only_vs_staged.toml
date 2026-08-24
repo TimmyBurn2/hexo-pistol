@@ -32,8 +32,13 @@ openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
 # floor (prereg §2).
 openings_take = 500
 
-# From the top of the book (prereg §3).
-openings_skip = 0
+# A FRESH SLICE (prereg §3 and §9.2a, revision 4's only substantive change).
+# D-401's RETIRED run drew `skip 0, take 500`; this draws the NEXT 500, disjoint
+# from it by construction. This file was authored at prereg revision 2, before
+# that slice existed, and still said `0` on the morning of the launch -- which
+# would have re-played the exact sample D-402 retired as evidence for anything
+# this WP concludes (docs/decisions.md D-427).
+openings_skip = 500
 
 # An evaluation horizon, never a game rule (game rule 6). Every prior SPRT
 # run in this project used 40; prereg §3 fixes it identically.
