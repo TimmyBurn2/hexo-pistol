@@ -1,6 +1,7 @@
 # WP-1.6 — SPRT pre-registration: threat-only quiescence (`defensive_only`) vs the committed staged policy
 
-**Revision 2. DRAFT. THIS DOCUMENT GOVERNS NOTHING YET.**
+**Revision 2. PASSED review (D-400). GOVERNS Step 6's run as of `731150a`,
+provided no further amendment lands before launch.**
 
 **Revision 1 (`43b5d78`) FAILED its first fresh-context review** — one
 BLOCKING defect and one MAJOR finding, both independently verified by the
@@ -647,8 +648,11 @@ staying demoted, and that re-registration itself reopens this review.
 
 ## 11. REVIEW STATE
 
-**UNREVIEWED AT THIS REVISION.** Revision 1 (`43b5d78`) FAILED its first
+**REVISION 2 (`731150a`) PASSES.** Revision 1 (`43b5d78`) FAILED its first
 fresh-context review (one BLOCKING, one MAJOR — see the provenance paragraph
-at the top). Revision 2 fixes both and reopens the review per CLAUDE.md's
-amendment rule. Per CLAUDE.md, this document governs no run until the
-revision that governs it passes its own fresh-context review.
+at the top). Revision 2 fixed both and reopened the review; a second
+fresh-context reviewer, scoped to the fix, found zero findings against it —
+PASS, recorded verbatim at `docs/decisions.md` **D-400**. **This document now
+GOVERNS Step 6's run**, at revision `731150a`, provided no further amendment
+lands before launch (an amendment reopens this review exactly as revision 1's
+did). §9.2/§9.6/§9.7's remaining slots are filled at Step 6's own launch.
