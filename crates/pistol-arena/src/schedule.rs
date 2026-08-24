@@ -33,15 +33,14 @@
 
 use std::sync::Mutex;
 
-use crate::channel::Channel;
 use crate::config::ArenaConfig;
 use crate::error::ArenaError;
 use crate::game::{self, Rules};
-use crate::handshake;
-use crate::identity::{self, EngineIdentity};
+use crate::identity::EngineIdentity;
 use crate::openings::Openings;
 use crate::record::GameRecord;
 use crate::score;
+use crate::seats::{self, Seat};
 
 /// What a run produced.
 pub struct Played {
@@ -153,8 +152,8 @@ fn contiguous(slots: &[Option<GameRecord>]) -> Vec<GameRecord> {
         .collect()
 }
 
-/// One game: two fresh engines, a handshake each — re-verified against the
-/// run-start identity capture — and the referee.
+/// One game: two fresh engines set up by [`seats::with_seats`] — the same
+/// sequence the replay mode runs — and the referee between them.
 fn one_game(
     config: &ArenaConfig,
     openings: &Openings,
@@ -167,30 +166,17 @@ fn one_game(
     // report's order is opening index, then side assignment, by construction.
     let a_is_p1 = index.is_multiple_of(2);
 
-    let sides = [&config.engine_a, &config.engine_b];
-    let mut channels = [
-        Channel::start(&sides[0].label, &sides[0].binary, &sides[0].config)?,
-        Channel::start(&sides[1].label, &sides[1].binary, &sides[1].config)?,
+    let seats = [
+        Seat {
+            section: &config.engine_a,
+            identity: &identities[0],
+        },
+        Seat {
+            section: &config.engine_b,
+            identity: &identities[1],
+        },
     ];
-    for (side, channel) in channels.iter_mut().enumerate() {
-        let spoken = handshake::shake(channel, config.run.hang_timeout_ms)?;
-        // Digests were captured once before the first game, and engines are
-        // respawned from disk per game: without this, a config or weights file
-        // edited mid-run silently changes the experiment while the report
-        // attests the old one (docs/decisions.md D-188's operating rule,
-        // D-199). Drift aborts the RUN by name; it is never a game result.
-        identity::verify_respawn(sides[side], &identities[side], &spoken)?;
-        if channel.send(pistol_cli::protocol::NEW_GAME).is_err() {
-            return Err(ArenaError::Handshake {
-                engine: channel.label().to_string(),
-                why: String::from("it closed its input before the game started"),
-            });
-        }
-    }
-
-    let record = game::play(opening, a_is_p1, index, &mut channels, rules)?;
-    for channel in &mut channels {
-        channel.shutdown();
-    }
-    Ok(record)
+    seats::with_seats(&seats, config.run.hang_timeout_ms, |channels| {
+        game::play(opening, a_is_p1, index, channels, rules)
+    })
 }

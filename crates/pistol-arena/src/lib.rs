@@ -13,6 +13,9 @@
 //!   strength claim may come from it, and the two ways it can stop talking.
 //! - [`identity`] — who each engine is by content, captured before the first
 //!   game and re-verified at every spawn.
+//! - [`seats`] — spawning the engines one game is played between, setting them
+//!   up and taking them down: ONE sequence, called by the generation path and by
+//!   the replay mode alike, so the two cannot drift (docs/decisions.md D-408).
 //! - [`game`] / [`exchange`] — the referee, and one question-and-answer with one
 //!   engine. Every turn is validated through pistol-core, which is the only
 //!   judge of legality in this workspace (rule 2).
@@ -53,6 +56,7 @@ pub mod record;
 pub mod report;
 pub mod schedule;
 pub mod score;
+pub mod seats;
 pub mod sprt;
 pub mod summary;
 mod validate;
