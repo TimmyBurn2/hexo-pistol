@@ -63,8 +63,22 @@ use crate::tt::Table;
 /// name rather than clamped.
 pub const MAX_DEPTH_TURNS: u32 = 64;
 
-/// Plies the recursion can reach: two per turn, and room for the root.
-pub(crate) const MAX_PLY: usize = 2 * MAX_DEPTH_TURNS as usize + 2;
+/// The most whole turns one quiescence chain can add past the horizon
+/// (`crate::quiescence`, WP-1.6): `2 * q_depth_turns` plies at the deepest
+/// point of the deepest iteration. Kept generously above
+/// `pistol_engine::config::MAX_Q_DEPTH_TURNS`'s own ceiling (8 turns) rather
+/// than linked to it — `pistol-search` does not depend on `pistol-engine`
+/// (the crate map's composition direction is the other way), so this is an
+/// independent, deliberately loose bound `[MAX_PLY]` sizes against; a config
+/// ceiling raised past what this covers is a `pistol-search` change too, not
+/// a config-only one.
+const MAX_Q_EXTENSION_PLIES: usize = 32;
+
+/// Plies the recursion — main search plus the deepest possible quiescence
+/// chain past its horizon — can reach: two per turn, room for the root, and
+/// room for one quiescence chain at the deepest iteration
+/// ([`MAX_Q_EXTENSION_PLIES`]).
+pub(crate) const MAX_PLY: usize = 2 * MAX_DEPTH_TURNS as usize + 2 + MAX_Q_EXTENSION_PLIES;
 
 const _: () = assert!(
     2 * MAX_DEPTH_TURNS < MAX_MATE_TURNS,
@@ -144,6 +158,23 @@ impl Searcher {
                         ),
                     ));
                 }
+            }
+            // This crate's own ceiling to refuse, same reason as `radius`
+            // above: `pistol-engine`'s validator binds documents, and a
+            // `SearchParams` built in code never passes through it. A
+            // `q_depth_turns` past what `MAX_PLY` was sized for is not a
+            // deeper quiescence extension, it is a chain `PvTable` cannot
+            // index into (docs/wp16_quiescence_design.md §6).
+            let max_q_depth_turns = MAX_Q_EXTENSION_PLIES as u32 / 2;
+            if staged.q_depth_turns > max_q_depth_turns {
+                return Err(SearchError::params(
+                    "search.candidate_policy.q_depth_turns",
+                    format!(
+                        "must be at most {max_q_depth_turns}: a chain deeper than that runs past \
+                         the principal-variation table's fixed size, got {}",
+                        staged.q_depth_turns
+                    ),
+                ));
             }
         }
         let tracks_threats = matches!(params.candidate_policy, CandidatePolicy::Staged(_));

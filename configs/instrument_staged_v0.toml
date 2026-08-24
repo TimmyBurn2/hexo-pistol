@@ -42,6 +42,7 @@ widen_schedule = [32]
 tier_t_own_count = 2
 # LAW-SUPPORT's threshold reading: opponent windows qualify at count >= 3.
 tier_t_opponent_count = 3
+q_depth_turns = 0
 
 [eval]
 backend = "handcrafted_v0"

@@ -6,8 +6,8 @@
 
 use crate::config::{
     CandidatePolicy, Config, EngineMode, EvalSection, InstrumentSection, MAX_CANDIDATE_RADIUS,
-    MAX_MOVETIME_EPSILON_MS, MAX_TT_BYTES, MIN_TT_BYTES, PlaySection, SCHEMA_VERSION,
-    SearchSection,
+    MAX_MOVETIME_EPSILON_MS, MAX_Q_DEPTH_TURNS, MAX_TT_BYTES, MIN_TT_BYTES, PlaySection,
+    SCHEMA_VERSION, SearchSection,
 };
 use crate::error::EngineError;
 
@@ -89,6 +89,7 @@ impl SearchSection {
                 widen_schedule,
                 tier_t_own_count,
                 tier_t_opponent_count,
+                q_depth_turns,
             } => {
                 check_radius("search.candidate_policy.quiet_radius", *quiet_radius)?;
                 if *quiet_top_k == 0 {
@@ -139,6 +140,18 @@ impl SearchSection {
                             ),
                         ));
                     }
+                }
+                // WP-1.6 (docs/wp16_quiescence_design.md §6): 0 is a real
+                // value, not a missing one — it disables the extension while
+                // the horizon's free checks still run. No lower bound beyond
+                // that.
+                if *q_depth_turns > MAX_Q_DEPTH_TURNS {
+                    return Err(EngineError::config(
+                        "search.candidate_policy.q_depth_turns",
+                        format!(
+                            "must be at most {MAX_Q_DEPTH_TURNS}, got {q_depth_turns}"
+                        ),
+                    ));
                 }
             }
         }

@@ -67,6 +67,7 @@ pub fn staged_params(
     quiet_radius: u32,
     tier_t_own_count: u8,
     tier_t_opponent_count: u8,
+    q_depth_turns: u32,
     tt_bytes: u64,
 ) -> SearchParams {
     SearchParams {
@@ -75,6 +76,7 @@ pub fn staged_params(
             quiet_radius,
             tier_t_own_count,
             tier_t_opponent_count,
+            q_depth_turns,
         }),
     }
 }
@@ -84,12 +86,14 @@ pub fn staged_searcher(
     quiet_radius: u32,
     tier_t_own_count: u8,
     tier_t_opponent_count: u8,
+    q_depth_turns: u32,
 ) -> Searcher {
     Searcher::new(
         staged_params(
             quiet_radius,
             tier_t_own_count,
             tier_t_opponent_count,
+            q_depth_turns,
             SMALL_TT,
         ),
         Box::new(HandcraftedV0::new(committed_weights())),

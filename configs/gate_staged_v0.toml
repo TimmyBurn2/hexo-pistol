@@ -32,6 +32,7 @@ quiet_top_k = 128
 widen_schedule = [256]
 tier_t_own_count = 2
 tier_t_opponent_count = 3
+q_depth_turns = 0
 
 [eval]
 backend = "handcrafted_v0"

@@ -127,6 +127,7 @@ fn the_filtered_row_matches_r1_at_every_filtered_node_of_the_corpus() {
         quiet_radius: 2,
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
+        q_depth_turns: 0,
     };
     let mut filtered_nodes = 0usize;
     for state in corpus() {

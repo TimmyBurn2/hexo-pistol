@@ -67,6 +67,11 @@ pub struct StagedParams {
     pub tier_t_own_count: u8,
     /// `LAW-SUPPORT`'s threshold for the opponent's qualifying windows: 2 or 3.
     pub tier_t_opponent_count: u8,
+    /// How many further whole turns a threat-only quiescence extension may
+    /// grant at a horizon (`crate::quiescence`, WP-1.6,
+    /// docs/wp16_quiescence_design.md §6). `0` disables the extension; the
+    /// horizon's free checks (win-now, `LAW-OVERLOAD`) run regardless.
+    pub q_depth_turns: u32,
 }
 
 /// Everything the search needs that is not the position.

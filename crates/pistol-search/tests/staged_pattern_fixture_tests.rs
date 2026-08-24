@@ -52,6 +52,7 @@ fn pat_gaps_singleton_cell_is_forced_by_the_staged_generator() {
         quiet_radius: 2,
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
+        q_depth_turns: 0,
     };
     let mut out = StagedSet::default();
     let row = staged_candidates(&state, &threats, &mut *eval, false, params, &mut out);

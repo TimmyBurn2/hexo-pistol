@@ -97,6 +97,7 @@ fn run(
         quiet_radius: 2,
         tier_t_own_count,
         tier_t_opponent_count,
+        q_depth_turns: 0,
     };
     let mut out = StagedSet::default();
     let row = staged_candidates(state, &threats, &mut *eval, false, params, &mut out);

@@ -89,6 +89,7 @@ fn params(quiet_radius: u32, own: u8, opponent: u8) -> StagedParams {
         quiet_radius,
         tier_t_own_count: own,
         tier_t_opponent_count: opponent,
+        q_depth_turns: 0,
     }
 }
 
@@ -300,7 +301,7 @@ fn a_full_search_under_staged_completes_from_the_opening_without_crashing() {
     // The integration-level version of the safety-net test above: a real
     // `Searcher::search` call, at a depth that reaches past the plies where
     // Tier T is empty, must return a move rather than panicking.
-    let mut searcher = staged_searcher(2, 2, 3);
+    let mut searcher = staged_searcher(2, 2, 3, 0);
     let outcome = searcher
         .search(
             &GameState::new_game(),
@@ -339,7 +340,7 @@ fn a_radius_policy_search_is_unaffected_by_stagedparams_existing() {
 /// node protocol at all.
 #[test]
 fn stage_counters_are_reported_in_search_info_and_zero_under_radius() {
-    let mut win_now_search = staged_searcher(2, 2, 3);
+    let mut win_now_search = staged_searcher(2, 2, 3, 0);
     let outcome = win_now_search
         .search(
             &win_in_one_ply_position(),
@@ -353,7 +354,7 @@ fn stage_counters_are_reported_in_search_info_and_zero_under_radius() {
         outcome.info.stages
     );
 
-    let mut opening_search = staged_searcher(2, 2, 3);
+    let mut opening_search = staged_searcher(2, 2, 3, 0);
     let outcome = opening_search
         .search(
             &GameState::new_game(),
@@ -386,5 +387,35 @@ fn stage_counters_are_reported_in_search_info_and_zero_under_radius() {
         outcome.info.stages,
         pistol_search::StageCounters::default(),
         "a Radius search never dispatches through staged_candidates, so every counter stays zero"
+    );
+}
+
+/// `Searcher::new`'s own ceiling on `q_depth_turns`, refused by name — the
+/// same "this crate's to refuse, not the engine's" reasoning
+/// `a_radius_this_search_cannot_honour_is_refused_by_name` already gives for
+/// `radius`: a `StagedParams` built in code never passes through
+/// `pistol-engine`'s validator (docs/wp16_quiescence_design.md §6).
+#[test]
+fn a_q_depth_turns_this_search_cannot_honour_is_refused_by_name() {
+    let bad = pistol_search::params::StagedParams {
+        quiet_radius: 2,
+        tier_t_own_count: 2,
+        tier_t_opponent_count: 3,
+        q_depth_turns: u32::MAX,
+    };
+    let refused = pistol_search::Searcher::new(
+        pistol_search::SearchParams {
+            tt_bytes: common::SMALL_TT,
+            candidate_policy: pistol_search::CandidatePolicy::Staged(bad),
+        },
+        eval(),
+    );
+    let Err(error) = refused else {
+        panic!("q_depth_turns = u32::MAX cannot be honoured, so it must be refused");
+    };
+    let said = error.to_string();
+    assert!(
+        said.contains("candidate_policy.q_depth_turns"),
+        "must name the key an operator edits, got: {said}"
     );
 }

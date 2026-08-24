@@ -421,7 +421,15 @@ widen_schedule = [32]
 # the opponent (§6).
 tier_t_own_count = 2
 tier_t_opponent_count = 3
+# WP-1.6 (docs/wp16_quiescence_design.md §6): further whole turns a
+# threat-only quiescence extension may grant at a horizon. 0 disables it;
+# the horizon's free win-now/LAW-OVERLOAD checks run regardless.
+q_depth_turns = 0
 ```
+
+Six keys, not five, since WP-1.6 landed: this document's own count moves with
+the field, per that WP's own config checklist (docs/wp16_quiescence_design.md
+§5).
 
 Validation, in `pistol-engine`'s validator and again in `Searcher::new` (a
 `SearchParams` can be built in code and never passes through a document):
@@ -433,7 +441,11 @@ validator did not check — `quiet_top_k = 64` with `[32]` passed "non-empty and
 strictly increasing" and described a widening that NARROWS. The cross-field rule
 is the last bullet's and carries the same status the lead-in gives it: it
 validates two keys whose D-scope is OPEN, against semantics that are the seed's
-unselected text (MAJOR 7, U3-Z).
+unselected text (MAJOR 7, U3-Z). `q_depth_turns` in
+`0..=MAX_Q_DEPTH_TURNS` (`pistol-engine`'s config-level sanity ceiling, 8) and,
+independently in `Searcher::new`, at most what `pistol-search`'s own
+`PvTable` sizing can index into (16) — the same two-crate pattern `radius`
+already has, not a new one.
 
 **And the threshold is NOT "over `LiveCount`", which cannot express it.**
 `LiveCount` is closed at `{Two, Three}` (D-255, a compile error otherwise), so it

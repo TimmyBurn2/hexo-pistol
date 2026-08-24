@@ -17,7 +17,8 @@ use std::path::Path;
 
 use common::{accepted, rejection, replacing};
 use pistol_engine::config::{
-    EngineMode, MAX_CANDIDATE_RADIUS, MAX_MOVETIME_EPSILON_MS, MAX_TT_BYTES, MIN_TT_BYTES,
+    EngineMode, MAX_CANDIDATE_RADIUS, MAX_MOVETIME_EPSILON_MS, MAX_Q_DEPTH_TURNS, MAX_TT_BYTES,
+    MIN_TT_BYTES,
 };
 use pistol_engine::{Config, SCHEMA_VERSION};
 
@@ -201,6 +202,7 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
         widen_schedule,
         tier_t_own_count,
         tier_t_opponent_count,
+        q_depth_turns,
     } = config.search.candidate_policy
     else {
         panic!("the committed staged fixture must parse as Staged");
@@ -210,6 +212,7 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
     assert_eq!(widen_schedule, vec![32]);
     assert_eq!(tier_t_own_count, 2);
     assert_eq!(tier_t_opponent_count, 3);
+    assert_eq!(q_depth_turns, 0);
 }
 
 #[test]
@@ -308,5 +311,34 @@ fn staged_tier_t_counts_of_two_or_three_are_accepted() {
             );
             accepted(&document);
         }
+    }
+}
+
+/// WP-1.6 (docs/wp16_quiescence_design.md §6): a `q_depth_turns` past the
+/// build's ceiling is refused, by name.
+#[test]
+fn a_staged_q_depth_turns_past_the_ceiling_is_refused() {
+    let bad = MAX_Q_DEPTH_TURNS + 1;
+    let (key, why) = rejection(&common::replacing_staged(
+        "q_depth_turns = 0",
+        &format!("q_depth_turns = {bad}"),
+    ));
+    assert_eq!(key, "search.candidate_policy.q_depth_turns");
+    assert!(
+        why.contains(&format!("at most {MAX_Q_DEPTH_TURNS}")),
+        "unexpected reason: {why}"
+    );
+}
+
+/// Zero (disabled) through the ceiling are all accepted — zero is a real
+/// value, not a missing one (§6).
+#[test]
+fn a_staged_q_depth_turns_in_range_is_accepted() {
+    for q_depth_turns in [0, 1, MAX_Q_DEPTH_TURNS] {
+        let document = common::replacing_staged(
+            "q_depth_turns = 0",
+            &format!("q_depth_turns = {q_depth_turns}"),
+        );
+        accepted(&document);
     }
 }

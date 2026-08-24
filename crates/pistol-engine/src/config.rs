@@ -61,6 +61,18 @@ pub const MAX_MOVETIME_EPSILON_MS: u64 = 1000;
 /// (CLAUDE.md rule 2, docs/decisions.md D-20).
 pub const MAX_CANDIDATE_RADIUS: u32 = 64;
 
+/// Largest `q_depth_turns` this build accepts (WP-1.6,
+/// docs/wp16_quiescence_design.md §6).
+///
+/// A rejection bound like [`MAX_CANDIDATE_RADIUS`], not a value: the shipped
+/// number is a closed enum of tried values decided by SPRT alone, never
+/// picked here. `pistol_search`'s principal-variation table is fixed-size
+/// and sized to cover a quiescence chain up to 16 turns deep
+/// (`pistol_search::search::MAX_Q_EXTENSION_PLIES`, private to that crate) —
+/// this ceiling is chosen well inside that headroom; raising it past 8 is a
+/// `pistol-search` sizing change too, not a config-only one.
+pub const MAX_Q_DEPTH_TURNS: u32 = 8;
+
 /// A complete engine configuration.
 ///
 /// Parsing an incomplete document is an error, never an empty-but-usable
@@ -179,6 +191,12 @@ pub enum CandidatePolicy {
         /// `LAW-SUPPORT`'s threshold for the opponent's qualifying windows:
         /// 2 or 3.
         tier_t_opponent_count: u8,
+        /// How many further whole turns a threat-only quiescence extension
+        /// may grant at a horizon, in `0..=`[`MAX_Q_DEPTH_TURNS`]. `0`
+        /// disables the extension: the horizon's free win-now and
+        /// `LAW-OVERLOAD` checks still run (WP-1.6,
+        /// docs/wp16_quiescence_design.md §6), but no turn is ever granted.
+        q_depth_turns: u32,
     },
 }
 
