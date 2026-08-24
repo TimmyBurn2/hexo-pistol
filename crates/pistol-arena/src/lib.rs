@@ -20,6 +20,10 @@
 //!   engine. Every turn is validated through pistol-core, which is the only
 //!   judge of legality in this workspace (rule 2).
 //! - [`record`] — one finished game as a value.
+//! - [`transcript`] / [`replay`] / [`replay_report`] — a report read back as the
+//!   run it describes, that run re-driven WARM through its own engines, and what
+//!   the pass found. The instrument Criterion 1'' is taken with
+//!   (docs/decisions.md D-409).
 //! - [`schedule`] — the workers, and a stop that fires only at pair boundaries.
 //! - [`dedupe`] — distinct games, keyed on the canonical form of the played
 //!   sequence under the twelve lattice symmetries.
@@ -53,12 +57,15 @@ pub mod openings;
 pub mod outpath;
 pub mod reap;
 pub mod record;
+pub mod replay;
+pub mod replay_report;
 pub mod report;
 pub mod schedule;
 pub mod score;
 pub mod seats;
 pub mod sprt;
 pub mod summary;
+pub mod transcript;
 mod validate;
 
 pub use config::ArenaConfig;

@@ -10,6 +10,23 @@
 //! Exit: 0 the run completed and no game was forfeited, 1 the run was abandoned
 //! or a game was forfeited — in both cases a report was still written — or 2 a
 //! document this build refuses, in which case there is no report at all.
+//!
+//! # The second mode: `--replay`
+//!
+//! The same binary also re-drives a report it already wrote, WARM, through the
+//! engines that report attests, and says where — if anywhere — one of them no
+//! longer answers what the report records it answering. It is a second mode on
+//! this program and not a second program because it spawns and drives engines
+//! through the SAME code the generation path runs
+//! (`pistol_arena::seats::with_seats`), and a separate binary would be the
+//! invitation to grow a second copy of it (docs/decisions.md D-408, D-409).
+//!
+//! # RULE9-JUSTIFICATION: everything this program will not guess belongs in one
+//! place. Its whole discipline is that a reader can see the complete set of
+//! things it refuses — every flag, every spelling, every exit — beside the two
+//! modes that refuse them, and the second mode exists here rather than in a
+//! second binary precisely because a second binary is what would grow a second
+//! copy of the seat-setup sequence this work package extracted to stop copying.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -20,7 +37,10 @@ use std::io::Write as _;
 use pistol_arena::config::ArenaConfig;
 use pistol_arena::error::ArenaError;
 use pistol_arena::report::Written;
-use pistol_arena::{identity, openings, outpath, report, schedule, score, summary};
+use pistol_arena::{
+    identity, openings, outpath, replay, replay_report, report, schedule, score, summary,
+    transcript,
+};
 
 /// What this program does, and what it refuses to guess.
 const USAGE: &str = "\
@@ -28,6 +48,7 @@ arena — the paired-openings SPRT judge for pistol
 
 usage:
   arena --config <path> --out <path>
+  arena --replay <report path> --out <path> --workers <n>
 
   --config  an arena config. Always explicit: there is no default path and no
             built-in configuration (CLAUDE.md rule 1). It states the openings,
@@ -39,6 +60,21 @@ usage:
             claim somebody has already made. A refusal before any game removes
             the empty claim again. Match logs are artifacts and are never
             written inside the repository (CLAUDE.md rule 8).
+
+  --replay  a report THIS program wrote. Its games are re-driven warm through
+            the engines it attests — every seat spawned, every recorded move
+            fed, every turn an engine searched asked again at the run's own
+            budget — and the first turn of each game where an answer disagrees
+            with the record is reported. Only a `nodes` budget replays, by name:
+            the premise is that a re-driven engine answers what it answered, and
+            wall-clock does not promise that (CLAUDE.md rule 4). Refuses a
+            report whose engines are no longer the ones it attests, before any
+            game. The flags are in this order; there is no other spelling.
+  --workers how many games are replayed at once, on the command line because
+            there is no config document here to state it and no code-side
+            default for a tunable (CLAUDE.md rule 1). The pass replays EVERY
+            game of the report with no early stop, so what it finds does not
+            depend on this number.
 
   Only instrument budgets are accepted. A `movetime` budget is refused by name:
   wall-clock is not reproducible, and it is not even a ceiling — the first
@@ -69,20 +105,37 @@ fn main() -> ExitCode {
 }
 
 fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
-    let (config_path, out_path) = match words {
+    enum Mode {
+        Play(PathBuf),
+        Replay(PathBuf, usize),
+    }
+    let (mode, out_path) = match words {
         ["--help" | "-h"] => {
             print!("{USAGE}");
             return Ok(ExitCode::SUCCESS);
         }
         ["--config", config, "--out", out] | ["--out", out, "--config", config] => {
-            (PathBuf::from(config), PathBuf::from(out))
+            (Mode::Play(PathBuf::from(config)), PathBuf::from(out))
         }
-        _ => return Err(format!("--config and --out are both required\n\n{USAGE}")),
+        ["--replay", source, "--out", out, "--workers", workers] => (
+            Mode::Replay(PathBuf::from(source), workers_of(workers)?),
+            PathBuf::from(out),
+        ),
+        _ => {
+            return Err(format!(
+                "--config and --out are both required, or --replay, --out and --workers in that \
+                 order\n\n{USAGE}"
+            ));
+        }
     };
     // The claim IS the existence check: one O_EXCL syscall, no window for a
     // second run to slip through (docs/decisions.md D-200).
     let claimed = outpath::claim(&out_path).map_err(|error| error.to_string())?;
-    match run(&config_path, &out_path, claimed) {
+    let outcome = match &mode {
+        Mode::Play(config) => run(config, &out_path, claimed),
+        Mode::Replay(source, workers) => replay_pass(source, &out_path, claimed, *workers),
+    };
+    match outcome {
         Ok(code) => Ok(code),
         Err(error) => {
             // Exit 2 promises "no report at all". This branch is every
@@ -94,6 +147,95 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
                 eprintln!("arena: {cleanup}");
             }
             Err(error.to_string())
+        }
+    }
+}
+
+/// The worker count, with its SPELLING validated and not merely its value.
+///
+/// `+4`, ` 4` and `04` all parse to four and would land in a document's timing
+/// block unnormalised, describing a run nobody can reproduce by copying the line
+/// back (tools/SHELL_CHECKLIST.md item 8).
+fn workers_of(word: &str) -> Result<usize, String> {
+    let parsed: usize = word
+        .parse()
+        .map_err(|_| format!("`{word}` is not a worker count\n\n{USAGE}"))?;
+    if parsed.to_string() != word {
+        return Err(format!(
+            "`{word}` is a worker count spelled a way this program will not echo back; write it \
+             as `{parsed}`\n\n{USAGE}"
+        ));
+    }
+    if parsed == 0 {
+        return Err(String::from("--workers 0 would replay nothing at all"));
+    }
+    Ok(parsed)
+}
+
+/// Re-drive one report's games through the engines that report attests.
+fn replay_pass(
+    source: &Path,
+    out_path: &Path,
+    mut claimed: std::fs::File,
+    workers: usize,
+) -> Result<ExitCode, ArenaError> {
+    // A REGULAR FILE, CHECKED BEFORE IT IS READ. `fs::read` on a FIFO blocks
+    // until a writer appears, with no channel yet in existence and so no
+    // watchdog to end it — a hang where a refusal belongs (docs/decisions.md
+    // D-252's sibling case in `identity::digest_of`).
+    let meta = std::fs::metadata(source)
+        .map_err(|io| ArenaError::io(format!("reading {}", source.display()), io))?;
+    if !meta.is_file() {
+        return Err(ArenaError::config(
+            "replay report",
+            format!("{} is not a regular file", source.display()),
+        ));
+    }
+    let bytes = std::fs::read(source)
+        .map_err(|io| ArenaError::io(format!("reading {}", source.display()), io))?;
+    let source_sha256 = pistol_cli::sha256::sha256_hex(&bytes);
+    let text = std::str::from_utf8(&bytes).map_err(|why| {
+        ArenaError::config(
+            "replay report",
+            format!("{} is not UTF-8: {why}", source.display()),
+        )
+    })?;
+    let transcript = transcript::read(text, source_sha256)?;
+    replay::verify_engines(&transcript)?;
+
+    let (outcome, played) = replay::run(&transcript, workers);
+    let failure = outcome.err();
+    let rendered = replay_report::render(&transcript, &played, failure.as_ref());
+    claimed
+        .write_all(rendered.as_bytes())
+        .and_then(|()| claimed.flush())
+        .map_err(|io| ArenaError::io(format!("writing {}", out_path.display()), io))?;
+
+    let covered = played.covered();
+    let total = played.games.len();
+    match failure {
+        Some(error) => {
+            eprintln!("arena: {error}");
+            eprintln!(
+                "arena: {covered} of {total} game(s) were replayed; a criterion over some of a \
+                 report's games is not one anybody registered, so {} is a diagnostic",
+                out_path.display()
+            );
+            Ok(ExitCode::from(RUN_FAILED))
+        }
+        None => {
+            let divergences = played.divergences();
+            println!(
+                "arena: replayed {covered} of {total} game(s) from {}, {divergences} \
+                 divergence(s)",
+                source.display()
+            );
+            println!("arena: replay written to {}", out_path.display());
+            Ok(if divergences == 0 && covered == total {
+                ExitCode::SUCCESS
+            } else {
+                ExitCode::from(RUN_FAILED)
+            })
         }
     }
 }
