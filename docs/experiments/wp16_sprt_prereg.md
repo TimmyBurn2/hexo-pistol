@@ -1,13 +1,54 @@
 # WP-1.6 — SPRT pre-registration: threat-only quiescence (`defensive_only`) vs the committed staged policy
 
-**Revision 5. UNREVIEWED. It amends §5, §7, §7A.1, §8 and §8.5, §8.6, §10 and
-§11 — revisions 3 and 4's own amendments — plus two rows of §3 (revision 4's),
-and, NEW IN REVISION 5, a rewritten §7A.1 and corrections in §5, §7, §8.6 and
-§10. An amendment reopens this document's review however small the diff, so
-revision 2's PASS (D-400) does NOT transfer and this document does NOT govern
-a run until a fresh review passes it.**
+**Revision 6. UNREVIEWED. It amends THE HEADER (this block), §5, §7, §7A.1,
+§10 and §11 — and nothing else. An amendment reopens this document's review
+however small the diff, so no earlier revision's review transfers and this
+document does NOT govern a run until a fresh review passes it.**
 
-**WHY THERE IS A REVISION 5.** Revision 4 (`20f9b26`) FAILED its governing
+**REVISION 6 IS NOT DOCUMENT-ONLY, AND THAT IS ITS HEADLINE.** Revisions 3, 4
+and 5 could each say that `git diff --stat bfdf933..HEAD -- crates/ tools/`
+prints nothing, and each did say it. **Revision 6 cannot say it and does not
+pretend to**: commit `43e8a86` changes `tools/wp16_warm_attribution_check.py`,
+which is THIS CRITERION'S OWN INSTRUMENT. Its governing revision therefore
+MOVES from `bfdf933` to `43e8a86`; §7A.1's pin and §10's table are re-recorded
+accordingly; and the sentence "commits after `bfdf933` on this branch are
+DOCUMENT-ONLY" is RETIRED rather than quietly left standing where it has become
+false. **The two BINARY digests are NOT affected and are NOT re-recorded** —
+`43e8a86` touches `tools/` and one test file, nothing a release binary is built
+from — and §7A.1 states that with the command that checks it.
+
+**WHY THERE IS A REVISION 6.** Revision 5 (`de53f5d`) FAILED its governing
+review — 0 BLOCKING, 2 MAJOR, 7 MINOR (**D-419**, report at
+`docs/experiments/wp16_prereg_rev5_REVIEW.md`). The receipts rule revision 5
+introduced WORKED, and both MAJORs are its dividend: the reviewer TESTED
+registered receipts instead of reading them, and one of them was false for a
+reachable input.
+
+- **MAJOR B is closed IN CODE by `43e8a86`**, not by narrowing the document's
+  receipt down to whatever the instrument happened to do. §7A.1 registered
+  "Each prints under `CANNOT READ:` and exits **2**" of the three premise
+  refusals; for a pair-mate whose move list stops inside the book, the
+  instrument instead raised an uncaught `StopIteration`, printed no
+  `CANNOT READ:` line, and exited **1** — the code this document registers as
+  THE RUN IS NOT A MEASUREMENT, a finding about the ENGINES. A refusal wearing
+  a finding's exit code. The architect licensed the instrument fix; the receipt
+  is now TRUE rather than narrowed, and it has a fourth premise row of its own.
+- **MAJOR A is closed by replacing an ENUMERATION with an INVARIANT.** Revision
+  5 claimed "every one of those messages is quoted verbatim above" of its
+  exit-2 partition while the instrument had 49 `die()` sites and §7A.1 quoted
+  7. Revision 6 does not answer that with a longer list — a longer list is the
+  same defect standing further away, and the same defect is what `43e8a86`
+  removed from the instrument's own exception handler. Kind (i) becomes the
+  CLOSED list it genuinely can be, kind (ii) becomes a REGISTERED CATCH-ALL
+  residue, and the reader gets a rule that partitions the whole space instead
+  of an enumeration to audit.
+- **MINORs C through I are closed** in the sections they land in: a stale
+  sample count (§7), a contradictory step number (§7), an estimate that was
+  derivable from this document's own measurements (§7), a double pin (§10), an
+  incomplete header list (this block), an over-claimed justification clause
+  (§7A.1), and three missing receipts (§7A.1).
+
+**WHY THERE WAS A REVISION 5.** Revision 4 (`20f9b26`) FAILED its governing
 review — 1 BLOCKING, 2 MAJOR, 5 MINOR (**D-416**, report at
 `docs/experiments/wp16_prereg_rev4_REVIEW.md`) — and the dispatch's own rule
 for that step is a STOP, which is where the session stopped. The architect
@@ -21,9 +62,12 @@ runs. Revision 5 is the document catching up to the instrument, under a rule
 stated at the head of §7A.1 and applied throughout it: **every criterion
 sentence carries a receipt from the shipped instrument — an exit code, a quoted
 message, or a driving test name — and no paraphrase survives.** **NO
-INSTRUMENT CODE IS TOUCHED**: `git diff --stat bfdf933..HEAD -- crates/ tools/`
-prints nothing, and every finding D-416 raised was a document finding, the
-instrument being stricter than the document said rather than looser.
+INSTRUMENT CODE WAS TOUCHED BY REVISION 5**: `git diff --stat
+bfdf933..de53f5d -- crates/ tools/` prints nothing, and every finding D-416
+raised was a document finding, the instrument being stricter than the document
+said rather than looser. (Written against revision 5's own SHA rather than
+`HEAD`, because at revision 6 the `HEAD` form no longer prints nothing and a
+historical claim must not be phrased so that a later commit falsifies it.)
 
 **WHY THERE WAS A REVISION 4, recorded rather than folded into revision 3.**
 Revision 3 was committed (`8820e91`) and its review was dispatched. Before that
@@ -53,14 +97,20 @@ revision, its consequences are registered per exit code, a SECOND INSTRUMENT
 and its agreement criterion are registered before either runs, and §8.6
 records the new instruments' own dry run — two arms, one honest and one
 seeded, each with the defect class it excludes. **Revision 4 added `openings_skip
-= 500` to §3**, a fresh slice. **Revision 5 rewrites §7A.1 and corrects §5, §7,
-§8.6 and §10.** Stated exactly, because revision 4's own version of this
-sentence was wrong twice and a reviewer had to find it: §3 is touched in TWO
-rows (`openings_skip`, and a sentence added to `openings_take` saying §2's floor
-is unaffected); §8.5 IS touched, by a four-line paragraph saying §8.1-§8.5
-govern revision 2's instruments and §8.6 does not amend them; §9 gains §9.2a for
-the skip. **UNTOUCHED across revisions 3, 4 and 5: §1, §2, §4, §6, §7A.2, and
-§8.1 through §8.4.**
+= 500` to §3**, a fresh slice. **Revision 5 rewrote §7A.1 and corrected §5, §7,
+§8.6, §10 AND §11, and rewrote this header block.** **Revision 6 amends this
+header block, §5, §7, §7A.1, §10 and §11.** Stated exactly — and stated so as
+to include the sections a revision rewrites while describing itself — because
+this sentence has now been wrong twice, in two different ways, and a reviewer
+had to find it both times: revision 4's version was wrong about §3 and §8.5
+(D-416 MINOR 4), and revision 5's omitted §11, which it substantially rewrote
+and whose rewrite WAS D-416's MAJOR 3 fix, and omitted the header block it was
+itself rewriting (D-419 MINOR G). §3 is touched in TWO rows (`openings_skip`,
+and a sentence added to `openings_take` saying §2's floor is unaffected); §8.5
+IS touched, by a four-line paragraph saying §8.1-§8.5 govern revision 2's
+instruments and §8.6 does not amend them; §9 gains §9.2a for the skip.
+**UNTOUCHED across revisions 3, 4, 5 and 6: §1, §2, §4, §6, §7A.2, and §8.1
+through §8.4.**
 
 **Revision 2 (`731150a`) PASSED its own review (D-400) and governed the D-401
 run.** Everything below that revision 3 does not name is revision 2's text,
@@ -309,8 +359,8 @@ shape WP-1.5b registered and D-386 executed exactly as written.
 | A PRE-GAME refusal — digest mismatch, an openings-digest mismatch, a config refusal, or an `--out` path that exists | **exit 2 and NO REPORT AT ALL.** Re-record the digest (§9.2) and re-launch; nothing has been measured |
 | `arena_report_aborted` | No verdict exists. The games are a diagnostic and explicitly not a sample |
 | **Criterion 1'' fails on the GOVERNED report — exit 1** (§7A, Doubt 1) | **The run is not a measurement, and it is not an `h0` either.** The verdict is not read and the committed instrument config does not move in either direction. See §7A.1 |
-| **Exit 2, kind (i): a VOID** — a missing or unrunnable engine, an unreadable document, an incomplete replay pass, a budget this cannot replay | **Not a finding and not evidence about any engine.** The void is fixed and the answer re-taken. If it cannot be taken at all, the run is still not a measurement, but nothing has been learned about the extension |
-| **Exit 2, kind (ii): a REFUSED REPORT** — any of §7A.1's three premise refusals, its `status`/halt refusals, or the cross-check's own self-check failing | **NOTHING IS FIXED AND NOTHING IS RE-TAKEN.** The report is not one the arena could have written. The run is not a measurement, and what is investigated is the REPORT's provenance — never the engines. Revision 4 registered this case under kind (i) and that reading was wrong; §7A.1 quotes each refusal's own message so the two kinds are told apart by text |
+| **Exit 2, kind (i): a VOID — the CLOSED list** — a missing or unrunnable engine, an unreadable or non-UTF-8 document, an incomplete or abandoned replay pass, or a budget this cannot replay. These four categories are enumerable and this is the enumeration | **Not a finding and not evidence about any engine.** The void is fixed and the answer re-taken. If it cannot be taken at all, the run is still not a measurement, but nothing has been learned about the extension |
+| **Exit 2, kind (ii): a REFUSED REPORT — EVERY OTHER exit 2, by rule and not by list** | **NOTHING IS FIXED AND NOTHING IS RE-TAKEN.** The report is not one the arena could have written. The run is not a measurement, and what is investigated is the REPORT's provenance — never the engines. Revision 4 registered these under kind (i) and that reading was wrong. Revision 5 tried to tell the kinds apart by quoting every message and did not quote enough of them (D-419 MAJOR A); revision 6 tells them apart by RULE — kind (i) is closed above, so a refusal that is not one of those four IS kind (ii), including refusals no one has enumerated. See §7A.1 |
 | **A DETERMINISM VIOLATION — exit 3** | **A hard stop bigger than this WP**, with TWO possible causes the instrument itself declines to choose between: the ENGINE's instrument-mode guarantee failing (CLAUDE.md rule 4), or the REPLAY not reproducing the sequence the run played. Revisions 3 and 4 named only the first; D-413's reviewer MEASURED an instrument mutant landing here with the engine healthy. Reported as such, never folded into an attribution count, nothing downstream of it is read, and WP-1.6 does not proceed until it is understood |
 | **The two instruments DISAGREE** (§7A.1's registered agreement criterion) | The run is not a measurement, the verdict is not read, and the disagreement is investigated as an INSTRUMENT defect before anything is concluded about either engine |
 | **A robustness FAILURE under the old Criterion 1' clause (b)** | Superseded, and kept so the supersession is visible rather than silent. Criterion 1' is no longer this document's instrument, and warm-replay — the thing D-384's flip clause said had to be built before any verdict was read — is built (D-407 through D-412) and IS Criterion 1'' |
@@ -366,11 +416,11 @@ measurement exists.
 | One search at the registered budget, `defensive_only` seat | — | D-398: summed over 22 comparable bench positions at `depth_turns = 3`, node-ratio **2.48x**, ttd-ratio **2.80x** against the plain staged seat |
 | The calibration probe (§9.5) | ~2 min | **MEASURED, this session, two independent 24-position sweeps at `go nodes 50000`**: worst single search 291 ms (run 1) / 289 ms (run 2). `hang_timeout_ms = 120000` leaves a **~412x** margin over the larger figure — R-9.5d's own `~24x` convention clears with wide room, discharged NO-CHANGE |
 | The dry run (§8) | ~3 min | **MEASURED: 14.254 s of arena wall time** at 4 workers over 8 games, plus the release build (already current), the two external referent searches and the Criterion 1' replay |
-| Criterion 1'' on the governed report — the warm-replay pass | ESTIMATED **~1x the governed run's own wall time**, since it re-runs every search every seat actually took | **MEASURED, §8.6, three times: `0.997x`, `1.003x` and `0.994x`** — straddling 1.0, so the registered figure is "about one run" and no third digit is load-bearing. At `openings_take = 500` that is a second pass of the same order as the run itself |
+| Criterion 1'' on the governed report — the warm-replay pass | ESTIMATED **~1x the governed run's own wall time**, since it re-runs every search every seat actually took | **MEASURED, §8.6, FOUR times: `0.997x`, `1.003x`, `0.994x` and `1.003x`** — straddling 1.0, so the registered figure is "about one run" and no third digit is load-bearing. At `openings_take = 500` that is a second pass of the same order as the run itself. (Revision 5 added §8.6's fourth sample and left this row saying "three times" — D-419 MINOR C) |
 | Criterion 1'' — the statistics layer | — | **MEASURED, §8.6: `0.029 s` over 8 games**, plus one cold probe per divergence, expected zero on a clean report |
 | The SECOND INSTRUMENT (§7A.1), `tools/wp15b_attribution_check.py` on the same report | — | **MEASURED, §8.6: `6.485 s` over 8 games** — 4 cold searches per pair at the registered budget, minutes at `openings_take = 500` |
 | The governed run | ESTIMATED, scaled from D-398's own node-ratio against D-292's radius-policy anchor (5.44 core-hours / ~82 min wall at 2000 openings) — at `openings_take = 500` and roughly 2.5x the per-search cost of a plain-staged-only matchup, **ESTIMATE ~2-3 core-hours, ~35-50 min wall at 4 workers** | the run itself, Step 6 |
-| §7A.2's own Step-6 sweep (the completed-depth comparison) | ESTIMATED **~2 min**, the same shape and budget as §9.5's calibration probe, which MEASURED 24 positions per sweep at `go nodes 50000`. Priced here because revision 4 left it off this table entirely | the sweep itself, Step 7 |
+| §7A.2's own sweep (the completed-depth comparison) | **DERIVED FROM MEASURED — `≤14 s`, not the `~2 min` revision 5 carried.** §9.5's probe MEASURED 24 positions per sweep at `go nodes 50000` with a worst single search of **291 ms**, so a two-seat comparison is `2 × 24 × ≤0.291 s ≈ ≤14 s` — an upper bound that charges every position the WORST search's time. Revision 5's `~2 min` was anchored to §9.5's DECLARED figure rather than to its measurement: roughly 8x this document's own numbers, and derivable from them in seconds (D-419 MINOR E, and CLAUDE.md's "an estimate that could have been measured in seconds is a finding", D-291) | the sweep itself, **Step 6** — §7A.2's own words are "**TO BE RUN AT STEP 6**, alongside the governed SPRT run". Revision 5's row named Step 6 in its title and Step 7 in this column, contradicting itself and §7A.2 in one row (D-419 MINOR D) |
 | Operator/session attention | one launch, one report read, **and the Criterion 1'' chain: one `arena --replay` pass, one `wp16_warm_attribution_check.py` run, one `wp15b_attribution_check.py` run as the second instrument**; every branch is in §5 | — |
 
 ---
@@ -423,6 +473,30 @@ the state it was in. MEASURED on this WP's own dry-run report (§8.6): the cold
 instrument reached **16** replayed turns, the warm one compared **201**, all
 confirmed.
 
+**THE RECEIPTS FOR THAT SENTENCE, added in revision 6.** It is the most
+load-bearing "what the instrument does" claim in this section — the whole
+criterion and the second instrument's stage-separation rest on it — and
+revision 5 gave it none of the three receipts its own rule demands, while five
+much smaller claims beside it carried full ones (D-419 MINOR I). The receipts
+exist and are named here:
+
+- **the shared spawn path**, `seats::with_seats` — driven by
+  `the_replay_path_sends_newgame_on_every_fresh_spawn_too` and
+  `every_fresh_spawn_is_sent_newgame_before_it_is_given_a_position`, the two
+  tests D-414 records as pinning the spawn sequence;
+- **the shipped chain end to end**, `crates/pistol-arena/tests/replay_chain_tests.rs`;
+- **"every turn THAT HAS A RECORDED MOVE"** — the qualifier that makes a
+  forfeited game's last, refused ask non-replayable, which is why §7A.1's
+  forfeit row and `check_coverage`'s forfeiter branch exist at all.
+
+The same rule applied to the two other unreceipted claims revision 5 left: the
+second-instrument bullet's "the cold checker spawns one fresh process per query
+and never drives a game at all" is `wp15b_attribution_check.py`'s `cold_answer`,
+one `subprocess.run` per query with no game loop anywhere in the file; and the
+exit-1 row's "a broken link 1b or 1c" is `link_1b`/`link_1c` appending to
+`failures`, which reaches exit 1 through the single `NOT_A_MEASUREMENT` site
+named in the invariant above.
+
 **THE INSTRUMENT'S OWN REVIEW HISTORY, stated here rather than left to the ADR
 log, because a document that registers an instrument owes its reader that
 instrument's record.** The warm-replay implementation FAILED its first
@@ -446,9 +520,14 @@ document's review exactly as an amendment would:
 
 1. **The warm-replay pass** — `crates/pistol-arena/src/seats.rs`,
    `transcript.rs`, `replay.rs`, `replay_report.rs` and `bin/arena.rs`'s
-   `--replay` mode, at commit `bfdf933`.
-2. **The statistics layer** — `tools/wp16_warm_attribution_check.py`, at the
-   same commit `bfdf933`.
+   `--replay` mode, at commit `bfdf933`. **Unmoved by revision 6**:
+   `git diff --stat bfdf933..HEAD -- crates/pistol-arena/` prints nothing.
+2. **The statistics layer** — `tools/wp16_warm_attribution_check.py`, **at
+   commit `43e8a86`, RE-RECORDED IN REVISION 6 and no longer `bfdf933`.**
+   `43e8a86` closes D-419's MAJOR B in the instrument (see "MAJOR B, CLOSED IN
+   CODE" below). This re-record IS the amendment that reopens this document's
+   review, and it is the reason revision 6 exists as a revision rather than as
+   an erratum.
 3. **The binaries those two actually run** — `target/release/arena`
    `sha256 3ba8de615d4d708793d72c2f3c2f6c649811996bb331527e64d0f612a13aebc2`
    and `target/release/pistol`
@@ -456,10 +535,24 @@ document's review exactly as an amendment would:
    built `--release --locked` at `bfdf933`. Rebuild means re-record, and
    re-recording is an amendment. **Independently verified**: revision 4's
    reviewer rebuilt in its own tree and got both digests exactly.
+   **UNCHANGED BY REVISION 6, and this is checkable rather than asserted**:
+   `43e8a86` touches `tools/wp16_warm_attribution_check.py` and
+   `crates/pistol-cli/tests/wp16_warm_attribution_check_tests.rs` — a `tools/`
+   script and a `tests/` target, neither of which a release binary is built
+   from — so `git diff --stat bfdf933..HEAD -- crates/*/src/ Cargo.toml Cargo.lock`
+   prints nothing and `sha256sum target/release/pistol target/release/arena`
+   still prints the two digests above.
 
-Commits after `bfdf933` on this branch are DOCUMENT-ONLY and do not move the
-instrument — checkable in one command, `git diff --stat bfdf933..HEAD -- crates/ tools/`,
-which must print nothing. `tools/wp15b_attribution_check.py` is NOT modified by
+**THE SENTENCE THAT USED TO STAND HERE IS RETIRED.** Revisions 3, 4 and 5 each
+said "Commits after `bfdf933` on this branch are DOCUMENT-ONLY … checkable in
+one command, `git diff --stat bfdf933..HEAD -- crates/ tools/`, which must print
+nothing." **That is FALSE at revision 6 and is removed rather than left to be
+discovered**: `43e8a86` is not a document commit. What replaces it is the
+narrower pair of checks in items 1 and 3 above, which are the claims revision 6
+actually needs and can actually make. A reviewer should run them; the broad
+command will now print, and printing is correct.
+
+`tools/wp15b_attribution_check.py` is NOT modified by
 this WP; it appears below as the SECOND INSTRUMENT, not as this criterion's,
 and it carries its own revision there.
 
@@ -490,7 +583,7 @@ instrument, not merely a citation.
 
 #### What the instrument refuses BEFORE it applies the criterion at all
 
-Three premise refusals, each an exit-2 REFUSAL of the report, in
+**FOUR** premise refusals, each an exit-2 REFUSAL of the report, in
 `tools/wp16_warm_attribution_check.py`'s `clause_b`. They exist because both
 arms of clause (b) begin "the two games agree up to t", and the arena
 guarantees that by construction while this instrument must not assume it — the
@@ -501,22 +594,46 @@ they are.
 |---|---|
 | the pair's two games declare the SAME `opening` | `its two games declare openings {X} and {Y}, so they are not one opening played from both seats and no pair-level argument applies to them` |
 | the two games SWAP the seats | ``its two games seat `{p1}`/`{p2}` and `{p1}`/`{p2}`, which is not one seating and its reverse — the pair's whole argument is that swapping the labels is the only difference between them`` |
-| the two games share their first `opening_turns` moves | ``its two games differ at turn {t}, which is inside the {n}-turn book, so they do not share the opening prefix every argument below assumes. Both arms of clause (b) begin "the two games agree up to t"; on this pair that is false before any engine was ever asked anything`` |
+| the two games share their first `opening_turns` moves, DIFFERING AT A TURN | ``its two games differ at turn {t}, which is inside the {n}-turn book, so they do not share the opening prefix every argument below assumes. Both arms of clause (b) begin "the two games agree up to t"; on this pair that is false before any engine was ever asked anything`` |
+| **NEW IN REVISION 6** — the two games share their first `opening_turns` moves, DIFFERING ONLY IN LENGTH because one game's whole move list stops inside the book | ``game {j} records {k} turn(s), fewer than the {n}-turn book, and game {i} records {m} — their book prefixes differ in LENGTH and not in content, so there is no turn at which they disagree and no book they share. Both arms of clause (b) begin "the two games agree up to t"; on this pair there is no such t, because the shorter game stops inside the book`` |
 
 Each prints under `warm_attribution_check: CANNOT READ:` and exits **2**.
-Driving test: `a_pair_that_does_not_satisfy_the_proofs_premise_is_a_void_and_not_an_attribution`
+Driving tests: `a_pair_that_does_not_satisfy_the_proofs_premise_is_a_void_and_not_an_attribution`
 (`crates/pistol-cli/tests/wp16_warm_attribution_check_tests.rs`), which seeds
-all three and requires exit 2 on each.
+the first three and requires exit 2 on each; and, for the fourth,
+`a_pair_mate_shorter_than_the_book_is_a_refusal_and_not_a_crash`, which
+requires exit 2, the `CANNOT READ:` prefix, the words `fewer than the 2-turn
+book`, and NO `StopIteration` on stderr.
 
-**THE REGISTERED READING OF THESE THREE, corrected in revision 5.** Revision 4
+**MAJOR B, CLOSED IN CODE AND NOT BY NARROWING THIS RECEIPT.** Until `43e8a86`
+the sentence "Each prints under `CANNOT READ:` and exits **2**" was FALSE, and
+D-419's reviewer proved it false by TESTING it rather than reading it. The
+third arm asked for the first index at which the two book prefixes differ; two
+lists can be unequal because one is SHORTER, in which case no index differs at
+all, the generator was empty, and `next()` raised `StopIteration`. That class
+was not in the handler's caught tuple, so it escaped as a traceback: **no
+`CANNOT READ:` line at all, and exit 1** — the code this document registers as
+THE RUN IS NOT A MEASUREMENT, a finding about the ENGINES. A refusal wearing a
+finding's exit code, inside the very `try`/`except` whose own comment said it
+existed to prevent that.
+
+The reviewer offered two closes: narrow this receipt to what the instrument
+actually did, or obtain a licence to fix the instrument. **The architect
+licensed the fix**, so the receipt above is now true rather than weakened, and
+the refusal it describes has become the fourth row of the table rather than an
+exception to a three-row one. The instrument's governing revision moves
+accordingly (item 2 above), which is what makes this a revision and not an
+erratum.
+
+**THE REGISTERED READING OF THESE FOUR, corrected in revision 5.** Revision 4
 registered exit 2 as "the void is fixed and the answer re-taken". **That is the
 wrong reading for a premise refusal, and it is now stated correctly**: a pair
 whose two games declare different openings, or do not swap seats, or diverge
-inside the book, is a fact about the REPORT. There is no void to fix and
-nothing to re-take. **The report is REFUSED and it is not a measurement**, and
-the thing to investigate is how a report the arena cannot write came to exist —
-never the engines. A reader who followed revision 4's text would have gone
-looking for a broken checker.
+inside the book, or stop inside it, is a fact about the REPORT. There is no
+void to fix and nothing to re-take. **The report is REFUSED and it is not a
+measurement**, and the thing to investigate is how a report the arena cannot
+write came to exist — never the engines. A reader who followed revision 4's
+text would have gone looking for a broken checker.
 
 ---
 
@@ -555,7 +672,7 @@ none did — and each names the branch that handles it, its exit and its test.
 
 | The pair | What the instrument does | Exit | Driving test |
 |---|---|---|---|
-| move lists IDENTICAL, neither game forfeited | **INERT**, excluded by the theorem: both credited engines warm-replayed every move, so the two seats are indistinguishable at every position either game reached, swapping the labels could not have changed a board at any ply, and the pair is a FORCED 1-1 split. The bucket is ASSERTED, not assumed — a pair recorded at anything but `p2` prints ``(b) pair {i} … has two identical move lists, neither forfeited and both replayed clean — the inert-pair theorem forces a 1-1 split — and the report records bucket p{k}`` | 0 excluded / **1** if the bucket contradicts the theorem | `an_inert_pair_is_excluded_by_the_theorem_and_its_cross_check_is_a_no_op`; `an_inert_pair_the_report_did_not_score_one_all_is_a_finding` |
+| move lists IDENTICAL, neither game forfeited | **INERT**, excluded by the theorem. The theorem's content is that IDENTICAL move lists force a 1-1 split whatever the replay saw: swapping the labels could not have changed a board at any ply, so whichever PLAYER INDEX wins one game wins the other, and the two games swap which LABEL holds that index. The bucket is ASSERTED, not assumed — a pair recorded at anything but `p2` prints ``(b) pair {i} … has two identical move lists, neither forfeited and both replayed clean — the inert-pair theorem forces a 1-1 split — and the report records bucket p{k}`` | 0 excluded / **1** if the bucket contradicts the theorem | `an_inert_pair_is_excluded_by_the_theorem_and_its_cross_check_is_a_no_op`; `an_inert_pair_the_report_did_not_score_one_all_is_a_finding` |
 | move lists IDENTICAL, one game FORFEITED | **NOT inert** — forfeits are always non-inert, because a forfeit's outcome-deciding event has no recorded MOVE to warm-replay against, so "zero divergence across every recorded move" is vacuously true at exactly the ply that decided the result. No witness turn exists either, so the pair is UNATTRIBUTABLE and clause (b) FAILS on it: ``(b) pair {i} (opening {o}) is not inert (a forfeit ended one of its games) and its two games never differ at a turn either engine searched — one move list is a prefix of the other — so no replayed turn tells the two seats apart in it`` | **1** | `a_forfeit_sibling_of_an_inert_pair_is_not_excluded` |
 | move lists DIFFER, and a witness turn `t` exists in both | **DIRECTLY ATTRIBUTED at `t`.** Both games agree up to `t` (the book refusal above is what makes that true), so the board at `t` is identical and the mover is the same PLAYER INDEX in both — and that index's occupant searched exactly the same prefixes in both games, so its warm table is in the same state in both. The replay measured the seat credited in game one answering `m1` there and the seat credited in game two — the OTHER label — answering `m2 != m1` there. Inverted labels would require one engine to answer both to the same position with the same history, which instrument-mode determinism forbids | 0 | `a_clean_replay_of_an_honest_report_is_attributable`; `a_forfeit_containing_pair_that_differs_at_a_searched_turn_is_attributed` |
 | move lists DIFFER, no witness turn — one is a strict PREFIX of the other | **UNATTRIBUTABLE**, same message as the forfeit row with `its move lists differ` in place of the forfeit clause. Neither excluded nor attributed, and named rather than passed over | **1** | covered by the same case as the forfeit row |
@@ -565,6 +682,17 @@ routes against it — differing game lengths, a witness inside the book, an
 asymmetric opening book, capped games, forfeits, and a halted replay — and
 broke none; the last is closed by control flow, since any divergence makes the
 classifier exit 1 or 3 before clause (b) is reached at all.
+
+**ROW 1'S GROUND IS THE THEOREM, NOT THE REPLAY — corrected in revision 6.**
+Revision 5 grounded the exclusion on "both credited engines warm-replayed every
+move, so the two seats are indistinguishable at every position either game
+reached". For a pair whose two games are the book and nothing more,
+`compared_turns` is 0 — the replay compared nothing — yet `clause_b` excludes
+the pair on the strength of `one == two` alone, and D-419's reviewer reproduced
+exactly that (MINOR H). **The conclusion survives untouched**, because the
+theorem never needed the replay: identical move lists force a 1-1 split as a
+matter of the move lists, and row 1 now says only that. The over-claiming
+clause is gone.
 
 ---
 
@@ -602,12 +730,59 @@ unchanged` in the output — so the cross-check is RUN, not merely argued.
 run.** The codes are the instrument's own constants: `ATTRIBUTABLE = 0`,
 `NOT_A_MEASUREMENT = 1`, `NO_ANSWER = 2`, `DETERMINISM_VIOLATION = 3`.
 
+**THE INVARIANT THIS TABLE RESTS ON, NEW IN REVISION 6, ENFORCED IN THE
+INSTRUMENT AND STATED IN A COMMENT AT ITS HANDLER:**
+
+> **EXIT 1 ARISES ONLY FROM THE NAMED ATTRIBUTION FINDINGS. Every other
+> termination of the instrument is exit 0, exit 2, or exit 3.**
+
+This is what revision 6 registers in place of revision 5's promise that "every
+one of those messages is quoted verbatim above" (D-419 MAJOR A). That promise
+was an ENUMERATION — the instrument has 49 `die()` call sites and §7A.1 quoted
+7 — and an enumeration is only as good as the imagination of whoever wrote it.
+The invariant is not a list, so it cannot be short.
+
+**IT IS CHECKABLE, AND THESE ARE THE CHECKS**, so a reviewer confirms it rather
+than believing it:
+
+- `grep -n "raise SystemExit" tools/wp16_warm_attribution_check.py` finds
+  **three** sites: `die()` → 2, `violation()` → 3, and `main()`'s own return.
+- `grep -n "NOT_A_MEASUREMENT" tools/wp16_warm_attribution_check.py` finds the
+  constant's definition and **exactly one** use site — `main()`'s
+  `return ATTRIBUTABLE if not failures else NOT_A_MEASUREMENT` — reached only
+  with a non-empty `failures` list, every entry of which is printed by name
+  under `FAIL `.
+- Every inner `except` clause in the file routes to `die()`, i.e. to exit 2.
+- The handler at the foot of the file catches `Exception` — a CATCH-ALL, not a
+  named tuple. `Exception` and not `BaseException` is the exact boundary the
+  invariant needs: `SystemExit` is what `die()`, `violation()` and `main()`'s
+  return travel on and must pass through untouched, while CPython's exit status
+  for an uncaught `Exception` is **1**, which is precisely the hole being
+  closed.
+
+**WHY A CATCH-ALL AND NOT A LONGER TUPLE.** The handler used to name
+`(KeyError, ValueError, IndexError)`. Two classes escaped it, both MEASURED
+against this file: `StopIteration`, out of `clause_b`'s book-prefix arm
+(D-419 MAJOR B), and `ZeroDivisionError`, out of the ported `sprt.rs`
+arithmetic in `recompute_verdict` on a report declaring `alpha 1.0` — a
+syntactically perfect float that no read guards. Each exited 1 with a
+traceback. Adding a fourth class would have left a fifth. **The defect was not
+that the tuple was one class short; it was that the invariant was being
+asserted by an enumeration at all** — which is the same shape as MAJOR A in
+this document, one level down, and both are closed the same way.
+
 | Exit | What reaches it | Consequence, registered here |
 |---|---|---|
 | 0 | Criterion 1'' holds | §5's table is read, and only then |
-| 1 | a confirmed inversion; an unattributable pair; an inert pair whose bucket contradicts the theorem; a cross-check that moves the verdict; a broken link 1b or 1c | **THE RUN IS NOT A MEASUREMENT.** The verdict is not read, it is not an `h0` either, and the committed instrument config does not move in either direction |
-| 2 | **two different things, and the distinction is registered** — (i) a VOID: a missing or unrunnable engine, an unreadable document, an incomplete replay pass, a budget this cannot replay. Not a finding, not evidence about any engine; the void is fixed and the answer re-taken. (ii) a REFUSED REPORT: any of the three premise refusals, the `status`/halt refusals, or the cross-check's self-check failing. **Nothing here is "fixed" and nothing is "re-taken"** — the report is not one the arena could have written, the run is not a measurement, and what is investigated is the report's provenance, never the engines | as stated per kind. The instrument prints the same `CANNOT READ:` prefix for both, so **the reader distinguishes them by the message text, which is why every one of those messages is quoted verbatim above** |
+| 1 | **the NAMED attribution findings, and nothing else** — a confirmed inversion; an unattributable pair; an inert pair whose bucket contradicts the theorem; a cross-check that moves the verdict; a broken link 1b or 1c. Every one is printed under `FAIL ` before the exit | **THE RUN IS NOT A MEASUREMENT.** The verdict is not read, it is not an `h0` either, and the committed instrument config does not move in either direction |
+| 2 | **two kinds, partitioned by RULE rather than by list.** **(i) a VOID — the CLOSED list**: a missing or unrunnable engine, an unreadable or non-UTF-8 document, an incomplete or abandoned replay pass, a budget this cannot replay. Not a finding, not evidence about any engine; the void is fixed and the answer re-taken. **(ii) a REFUSED REPORT — the REGISTERED CATCH-ALL**: every other exit 2, named or not, including the four premise refusals, the `status`/halt refusals, the cross-check's self-check, every report-internal contradiction, and any refusal nobody has enumerated — such as the handler's own `an unanticipated {Class} escaped this instrument`. **Nothing here is "fixed" and nothing is "re-taken"** — the report is not one the arena could have written, the run is not a measurement, and what is investigated is the report's provenance, never the engines | as stated per kind. **The reader does not need to match a message against a list**: kind (i) is closed above, so an exit 2 that is not one of those four IS kind (ii) by rule. That is the whole point of the change — revision 5 asked the reader to distinguish the kinds by text and did not give them enough text to do it |
 | 3 | a divergence neither engine's answer explains; a clean game whose replay spent different nodes; a forfeiting seat that spent more replaying than the whole game cost it live | **A HARD STOP BIGGER THAN THIS WP.** Reported as such, never folded into an attribution count, and nothing downstream of it is read. WP-1.6 does not proceed until it is understood |
+
+**A NOTE ON DIRECTION, so the exit-2 catch-all is not over-read as laxity.**
+Every refusal it absorbs leaves the instrument STRICTER than this document
+promises, never looser. No exit 0 is reachable through any of it, so no false
+PASS is available — the catch-all can only turn a crash into a refusal, and a
+refusal is already a non-measurement.
 
 **EXIT 3 NAMES BOTH CAUSES, corrected in revision 5.** Revisions 3 and 4
 registered it as "the engine's own instrument-mode guarantee is failing". The
@@ -1081,10 +1256,10 @@ all and it did not:
 | Instrument | Pinned at | Where |
 |---|---|---|
 | `crates/pistol-arena/src/seats.rs`, `transcript.rs`, `replay.rs`, `replay_report.rs`, `bin/arena.rs`'s `--replay` mode | `bfdf933` | §7A.1 |
-| `tools/wp16_warm_attribution_check.py` | `bfdf933` | §7A.1 |
-| `target/release/arena` and `target/release/pistol`, BY CONTENT | the two `sha256` digests | §7A.1 (a rebuild is a re-record, and a re-record is an amendment) |
-| `tools/wp15b_attribution_check.py` — the SECOND INSTRUMENT, not this criterion's | `bfdf933`, unchanged by this WP | §7A.1's second-instrument paragraph |
-| `tools/baseline_snapshot.sh` | its own revision | **§7A.2**, not §7A.1 |
+| `tools/wp16_warm_attribution_check.py` | **`43e8a86`** — moved in revision 6 by the MAJOR B fix, and NOT `bfdf933` | §7A.1 |
+| `target/release/arena` and `target/release/pistol`, BY CONTENT | the two `sha256` digests, unchanged by revision 6 | §7A.1 (a rebuild is a re-record, and a re-record is an amendment) |
+| `tools/wp15b_attribution_check.py` — the SECOND INSTRUMENT, not this criterion's | `bfdf933`, unchanged by this WP. **§8.2 pins the same file a second time**, as "the commit this document lands at"; the two pins denote IDENTICAL CONTENT — the file was last modified at `a80a864`, long before this WP, and `git diff --stat bfdf933..HEAD -- tools/wp15b_attribution_check.py` prints nothing — so neither is false, and revision 6 records both rather than leaving §10 claiming to be the only place (D-419 MINOR F) | §7A.1's second-instrument paragraph **and** §8.2 |
+| `tools/baseline_snapshot.sh` | `9282dd0`, as §7A.2 states it | **§7A.2**, not §7A.1 |
 
 The claim itself flips on the run (§5). The DOCUMENT flips if
 `docs/wp16_quiescence_design.md`'s own gate is not green at the run's revision
@@ -1099,7 +1274,7 @@ staying demoted, and that re-registration itself reopens this review.
 
 ## 11. REVIEW STATE
 
-**REVISION 5 (this text) IS UNREVIEWED AND GOVERNS NOTHING YET.**
+**REVISION 6 (this text) IS UNREVIEWED AND GOVERNS NOTHING YET.**
 
 | Revision | State |
 |---|---|
@@ -1107,7 +1282,8 @@ staying demoted, and that re-registration itself reopens this review.
 | 2 (`731150a`) | Fixed both, reopened the review, and PASSED a scoped fresh-context review with zero findings against the fix (**D-400**). It governed the run D-401 took, which failed its own Criterion 1' and is retired as evidence for anything this WP concludes, under any criterion, ever (**D-402**) |
 | 3 (`8820e91`) | Committed; its review was dispatched and then WITHDRAWN before returning, when the author found §3's `openings_skip` contradicted the commissioning dispatch's own Step 7. No run was taken under it |
 | 4 (`20f9b26`) | **FAILED its governing review — 1 BLOCKING, 2 MAJOR, 5 MINOR (D-416)**, report at `docs/experiments/wp16_prereg_rev4_REVIEW.md`. The BLOCKING was that §7A.1 registered a criterion the shipped instrument no longer implemented. Per the dispatch's own rule for that step the session STOPPED; no run was taken |
-| 5 (this text) | Closes all eight of D-416's findings, under a receipts rule stated at the head of §7A.1. **Document-only**: no instrument code is touched, and `git diff --stat bfdf933..HEAD -- crates/ tools/` printing nothing is the check |
+| 5 (`de53f5d`) | **FAILED its governing review — 0 BLOCKING, 2 MAJOR, 7 MINOR (D-419)**, report at `docs/experiments/wp16_prereg_rev5_REVIEW.md`. Document-only, and its receipts rule verified overwhelmingly clean — all twelve quoted instrument strings character-exact, all ten named tests present and driving. **Both MAJORs were that rule's own dividend**: MAJOR A, an exit-2 enumeration presented as complete that was not; MAJOR B, a registered receipt found FALSE by being tested. MAJOR B was an INSTRUMENT defect, so the session stopped rather than editing around it. No run was taken |
+| 6 (this text) | Closes both MAJORs and all seven MINORs. **NOT document-only** — and it is the first revision that is not. `43e8a86` fixes the instrument, so §7A.1's statistics-layer pin moves to `43e8a86`, the "commits after `bfdf933` are DOCUMENT-ONLY" sentence is RETIRED as false, and the two binary digests are re-checked and unchanged. MAJOR A is closed by replacing an enumeration with the ENFORCED INVARIANT that exit 1 arises only from the named attribution findings |
 
 **THE INSTRUMENT THIS DOCUMENT REGISTERS HAS ITS OWN REVIEW RECORD, and it is
 in §7A.1 rather than only in the ADR log**: the implementation FAILED its
@@ -1117,10 +1293,14 @@ it (**D-414**); the operator ruled that no second implementation review would
 be held and moved two duties onto this document's review instead (**D-415**),
 both of which were discharged — the mutation table re-ran at the governing
 revision with all six mutants dying, and the word-by-word semantics duty is
-what found D-416's BLOCKING.
+what found D-416's BLOCKING. **Revision 6 adds one more entry to that record**:
+`43e8a86`, the MAJOR B fix, which reproduced the defect against the pristine
+instrument first, ships two driving tests against the SHIPPED script, and was
+verified by a five-mutation table run in a separate worktree — every mutation
+killed, including one whose only job is to prove the tests' own controls are
+load-bearing.
 
-A fresh review — scoped to what revision 5 changed, rather than re-litigating
-what revision 4's reviewer already verified clean at this same instrument
-revision — must pass before the governed run this document describes may be
-launched. §9.2/§9.6/§9.7's remaining slots are filled at that run's own launch,
-after this review is green.
+A fresh review — reopened WHOLE, because revision 6 moves code and a review of
+a superseded revision does not transfer — must pass before the governed run
+this document describes may be launched. §9.2/§9.6/§9.7's remaining slots are
+filled at that run's own launch, after this review is green.
