@@ -117,6 +117,7 @@ neither is an instrument failure).
 
 import hashlib
 import math
+import os
 import re
 import subprocess
 import sys
@@ -164,14 +165,77 @@ def recompute_verdict(buckets, elo0, elo1, alpha, beta):
     return "inconclusive_at_game_cap", llr
 
 
+# Whether everything this file tried to print actually reached stdout. Read at
+# the single exit below; see `say`.
+DELIVERED = True
+
+
+def say(line):
+    """EVERY line this instrument prints goes through here.
+
+    A write to stdout can fail — a full disk, a closed pipe, a `>/dev/full`
+    redirect. That failure is a fact about the TRANSPORT, never about the
+    report, and it must not be able to choose an exit code: printing is how
+    this file DELIVERS an answer, not how it computes one.
+
+    Before this funnel it could choose one, MEASURED two ways (D-421 MAJOR 1).
+    Under `PYTHONUNBUFFERED=1` a failed `print` inside `die()` raised OSError
+    out of `die()`, reached the catch-all handler at the foot of this file,
+    which called `die()` again, which failed again and escaped — EXIT 1 WITH A
+    TRACEBACK AND NO `CANNOT READ:` LINE, the exact signature that handler
+    exists to abolish, surviving inside it. Under default buffering the write
+    succeeded into the buffer and CPython's shutdown flush failed instead, for
+    EXIT 120.
+
+    The failure is REMEMBERED, not swallowed: `leave()` re-reads it and the
+    process exits NO_ANSWER, because an answer that was never delivered was
+    never given. Stdout is swapped for the null device so the shutdown flush
+    cannot raise the same error again.
+    """
+    global DELIVERED
+    try:
+        print(line)
+    except OSError:
+        DELIVERED = False
+        _mute()
+
+
+def _mute():
+    """Point stdout at the null device, so no later flush can re-raise."""
+    try:
+        sys.stdout = open(os.devnull, "w")
+    except OSError:
+        pass
+
+
+def leave(code):
+    """THE ONE EXIT OF THIS FILE. Every termination goes through here.
+
+    A buffered write fails at FLUSH rather than at `print`, so the flush is
+    forced here, inside the same guard, before any code is chosen.
+
+    AN UNDELIVERED ANSWER IS NO ANSWER. If anything failed to reach stdout the
+    code becomes NO_ANSWER whatever it would have been — including exit 1,
+    because findings nobody can read are not findings, and especially including
+    exit 0, because a PASS nobody can read is not a pass.
+    """
+    global DELIVERED
+    try:
+        sys.stdout.flush()
+    except OSError:
+        DELIVERED = False
+        _mute()
+    raise SystemExit(code if DELIVERED else NO_ANSWER)
+
+
 def die(why):
-    print(f"warm_attribution_check: CANNOT READ: {why}")
-    raise SystemExit(NO_ANSWER)
+    say(f"warm_attribution_check: CANNOT READ: {why}")
+    leave(NO_ANSWER)
 
 
 def violation(why):
-    print(f"warm_attribution_check: DETERMINISM VIOLATION: {why}")
-    print(
+    say(f"warm_attribution_check: DETERMINISM VIOLATION: {why}")
+    say(
         "warm_attribution_check: this has TWO possible causes and this instrument cannot tell "
         "them apart: the ENGINE's own instrument-mode guarantee failing (CLAUDE.md rule 4), or "
         "the REPLAY not reproducing the sequence the run actually played. Naming only the first "
@@ -179,7 +243,7 @@ def violation(why):
         "(tools/SHELL_CHECKLIST.md item 12). Either way it is bigger than this work package, it "
         "is NOT counted as an attribution failure, and nothing downstream of it is read."
     )
-    raise SystemExit(DETERMINISM_VIOLATION)
+    leave(DETERMINISM_VIOLATION)
 
 
 def fields(line):
@@ -209,6 +273,18 @@ def only(text, pattern, what):
 
 
 def slurp(path, what):
+    # A PATH THIS INSTRUMENT WILL NOT BLOCK ON (docs/decisions.md D-422).
+    # `open()` on a FIFO with no writer NEVER RETURNS, and this file has no
+    # timeout and installs no signal handler, so it hung instead of refusing —
+    # a void that never even prints one. Only a regular file can carry a
+    # report, so anything else is refused by name before it is opened.
+    if not os.path.exists(path):
+        die(f"the {what} `{path}` does not exist")
+    if not os.path.isfile(path):
+        die(
+            f"the {what} `{path}` is not a regular file. A directory, device or FIFO cannot "
+            "carry a report, and a FIFO would hang this instrument rather than let it refuse"
+        )
     try:
         with open(path, "rb") as handle:
             return handle.read()
@@ -829,10 +905,10 @@ def main():
         )
 
     for note in notes:
-        print(f"warm_attribution_check: {note}")
+        say(f"warm_attribution_check: {note}")
     for failure in failures:
-        print(f"warm_attribution_check: FAIL {failure}")
-    print(
+        say(f"warm_attribution_check: FAIL {failure}")
+    say(
         f"warm_attribution_check: {'PASS' if not failures else 'FAIL'} — {len(failures)} failure(s)"
     )
     return ATTRIBUTABLE if not failures else NOT_A_MEASUREMENT
@@ -844,9 +920,19 @@ if __name__ == "__main__":
     #   EXIT 1 ARISES ONLY FROM THE NAMED ATTRIBUTION FINDINGS. The single site that
     #   reaches it is `main()`'s `return ATTRIBUTABLE if not failures else
     #   NOT_A_MEASUREMENT`, so exit 1 means the `failures` list is non-empty and
-    #   every entry in it was printed by name. EVERY OTHER TERMINATION OF THIS FILE
-    #   IS EXIT 0 (a measurement), EXIT 2 (no answer could be taken) OR EXIT 3
-    #   (a determinism violation, on `violation()`'s own code).
+    #   every entry in it was printed by name AND DELIVERED. EVERY OTHER TERMINATION
+    #   OF THIS FILE IS EXIT 0 (a measurement), EXIT 2 (no answer could be taken) OR
+    #   EXIT 3 (a determinism violation, on `violation()`'s own code).
+    #
+    # THE SECOND SENTENCE USED TO BE FALSE and a governing review MEASURED it false
+    # two ways (D-421 MAJOR 1): with stdout unwritable this file exited 120 under
+    # default buffering, and exited 1 WITH A TRACEBACK under `PYTHONUNBUFFERED=1`,
+    # because the failing `print` inside `die()` re-entered this very handler and
+    # failed again on the way out. Both are closed by routing every line through
+    # `say()` and every exit through `leave()`. It is now true as written, and
+    # `an_answer_that_cannot_be_delivered_is_no_answer_and_not_a_finding` is the
+    # test that says so — a check the defect could falsify, which four greps over
+    # this file's text could not.
     #
     # A FIELD THAT IS NOT THERE, OR IS NOT A NUMBER, IS A VOID AND NOT A FINDING
     # (tools/SHELL_CHECKLIST.md item 12). Every read above names its record, so those
@@ -863,18 +949,21 @@ if __name__ == "__main__":
     # traceback. The defect was not that the tuple was one class short; it was that
     # the invariant above was being asserted by an enumeration at all.
     #
-    # `Exception` AND NOT `BaseException` is the exact boundary the invariant needs.
-    # `SystemExit` is what `die()`, `violation()` and `main()`'s own return travel
-    # on, and it must pass through untouched or every exit code above is lost;
-    # CPython's exit status for an uncaught `Exception` is 1, which is precisely the
-    # hole being closed. A `KeyboardInterrupt` is not an answer this file computed
-    # and dies by its signal rather than by exit 1, so it does not breach the
-    # invariant either.
+    # `BaseException` AND NOT `Exception`. The narrower form left `KeyboardInterrupt`
+    # outside the invariant, and the comment that used to stand here argued that away
+    # instead of closing it — an argument is not an invariant. `SystemExit` is
+    # re-raised FIRST and untouched, because `die()`, `violation()` and `leave()` all
+    # travel on it and each has already chosen its code; everything else, signals
+    # included, is NO ANSWER, which is what a half-finished read of two documents is.
     try:
-        raise SystemExit(main())
-    except Exception as why:  # noqa: BLE001 — deliberate; see the invariant above
-        die(
-            f"an unanticipated {type(why).__name__} escaped this instrument: {why!r}. Something "
-            "in one of these documents is malformed in a way no read above expected, and an "
-            "unexpected malformation is a VOID rather than a finding about the engines"
+        leave(main())
+    except SystemExit:
+        raise
+    except BaseException as why:  # noqa: BLE001 — deliberate; see the invariant above
+        say(
+            f"warm_attribution_check: CANNOT READ: an unanticipated {type(why).__name__} "
+            f"escaped this instrument: {why!r}. Something in one of these documents is "
+            "malformed in a way no read above expected, or this process was interrupted, and "
+            "either way it is a VOID rather than a finding about the engines"
         )
+        leave(NO_ANSWER)

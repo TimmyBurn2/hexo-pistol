@@ -911,6 +911,134 @@ fn a_forfeiting_seat_that_spent_more_replaying_than_it_did_live_is_a_determinism
     );
 }
 
+/// An answer that could not be DELIVERED is no answer, and never a finding.
+///
+/// A write to stdout can fail — a full disk, a closed pipe, `>/dev/full`. That
+/// is a fact about the transport and not about the report, so it must not pick
+/// an exit code. A governing review MEASURED it picking one two different ways
+/// (docs/decisions.md D-421, MAJOR 1): under default buffering the failure
+/// surfaced in CPython's shutdown flush as **exit 120**, and under
+/// `PYTHONUNBUFFERED=1` the failing `print` inside `die()` re-entered the
+/// catch-all handler, which called `die()` again, which failed again and
+/// escaped — **exit 1 with a traceback and no `CANNOT READ:` line**, the exact
+/// signature that handler exists to abolish, surviving inside it.
+///
+/// THIS TEST IS THE REGISTERED CHECK FOR THAT INVARIANT, and it exists because
+/// the four greps that preceded it could not falsify the defect: they read this
+/// file's TEXT while the defect was in its RUNTIME behaviour, so they were green
+/// at the revision where it was live.
+#[test]
+fn an_answer_that_cannot_be_delivered_is_no_answer_and_not_a_finding() {
+    if !Path::new("/dev/full").exists() {
+        return;
+    }
+    let dir = scratch("wp16warm-undelivered");
+    let engine = shim(&dir, &[]);
+    let fixture = clean(distinct_pair(0));
+    let text = report(&dir, &fixture);
+    let replay_text = replay(&fixture, &sha256_hex(text.as_bytes()));
+    let report_path = dir.join("report.txt");
+    let replay_path = dir.join("replay.txt");
+    fs::write(&report_path, &text).expect("the report is written");
+    fs::write(&replay_path, &replay_text).expect("the replay is written");
+
+    // The same invocation with a WORKING stdout is exit 0, so the cases below
+    // differ from a PASS in nothing but where the bytes go.
+    let control = check(&dir, &text, &replay_text, &engine);
+    assert_eq!(
+        control.status.code(),
+        Some(0),
+        "the control is refused, so nothing below is about delivery: {}",
+        said(&control)
+    );
+
+    for unbuffered in [false, true] {
+        let full = fs::OpenOptions::new()
+            .write(true)
+            .open("/dev/full")
+            .expect("/dev/full opens");
+        let mut command = Command::new("python3");
+        command
+            .arg(repo("tools/wp16_warm_attribution_check.py"))
+            .arg(&report_path)
+            .arg(&replay_path)
+            .arg(&engine)
+            .stdout(full);
+        if unbuffered {
+            command.env("PYTHONUNBUFFERED", "1");
+        }
+        let out = command.output().expect("python3 runs the checker");
+        assert_eq!(
+            out.status.code(),
+            Some(2),
+            "with stdout unwritable (PYTHONUNBUFFERED={unbuffered}) the answer was never \
+             delivered, so it is NO ANSWER — exit 2. Exit 1 would be an undeliverable void \
+             read as an attribution finding, and exit 120 would be CPython's shutdown flush \
+             choosing the code instead of this instrument: {}",
+            said(&out)
+        );
+        assert!(
+            !String::from_utf8_lossy(&out.stderr).contains("Traceback"),
+            "no traceback may reach the reader (PYTHONUNBUFFERED={unbuffered}): {}",
+            said(&out)
+        );
+    }
+}
+
+/// A path that is not a regular file is REFUSED, not blocked on.
+///
+/// `open()` on a FIFO with no writer never returns, and this instrument has no
+/// timeout and installs no signal handler — so it hung forever instead of
+/// refusing, a void that never even printed one (docs/decisions.md D-422). The
+/// guard is checked with a real FIFO and a hard timeout, because a test for a
+/// hang that could itself hang is not a test.
+#[test]
+fn a_path_that_is_not_a_regular_file_is_refused_rather_than_blocked_on() {
+    let dir = scratch("wp16warm-fifo");
+    let engine = shim(&dir, &[]);
+    let fixture = clean(distinct_pair(0));
+    let text = report(&dir, &fixture);
+    let replay_text = replay(&fixture, &sha256_hex(text.as_bytes()));
+    let replay_path = dir.join("replay.txt");
+    fs::write(&replay_path, &replay_text).expect("the replay is written");
+
+    let fifo = dir.join("report.fifo");
+    let made = Command::new("mkfifo")
+        .arg(&fifo)
+        .status()
+        .expect("mkfifo runs");
+    assert!(made.success(), "mkfifo failed");
+
+    // `timeout` is the second witness: if the guard were gone this would sit
+    // forever, and the harness would report 124 rather than hanging the suite.
+    let out = Command::new("timeout")
+        .arg("10")
+        .arg("python3")
+        .arg(repo("tools/wp16_warm_attribution_check.py"))
+        .arg(&fifo)
+        .arg(&replay_path)
+        .arg(&engine)
+        .output()
+        .expect("python3 runs the checker");
+    assert_ne!(
+        out.status.code(),
+        Some(124),
+        "the instrument BLOCKED on a FIFO instead of refusing it — `timeout` had to kill it: {}",
+        said(&out)
+    );
+    assert_eq!(
+        out.status.code(),
+        Some(2),
+        "a FIFO cannot carry a report, and that is a VOID: {}",
+        said(&out)
+    );
+    assert!(
+        String::from_utf8_lossy(&out.stdout).contains("is not a regular file"),
+        "the refusal must say what is wrong with the path: {}",
+        said(&out)
+    );
+}
+
 /// A pair whose two book prefixes differ only in LENGTH is refused, not crashed
 /// out of.
 ///
