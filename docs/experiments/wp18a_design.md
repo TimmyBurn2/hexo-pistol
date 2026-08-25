@@ -28,7 +28,8 @@ occupied cells; root stones are never zone cells, so the literal class
 included every root stone of every fixture). All nine are closed in this
 revision 4; the σ class now reads `legal_placements(P)`, the σ-invariant is
 restated at the strength its proof carries (at most k−1 of k cells), the σ
-tuple order is pinned, the (c2)/(b) cost figures match the registered caps,
+tuple order is pinned, the (c2)/(b) cost figures carry their own registered
+caps,
 the dry-run criteria are scoped to the pinned revision, and (c2)'s
 independence note now states the fact that carries it (the v0 value path
 never consults zones).
@@ -327,10 +328,11 @@ solved, implemented independently (its own live-window scan, not
   the witness tree; gate (b) also asserts solver-memoised `Z_p` == verifier
   `Z_p`. **Cost, priced (round-3 review MINOR N-8)**: applying every legal
   turn at every AND node is on the order of 10⁵-10⁶ `place`+win-check
-  applications per AND node across the tree — terminating by construction
-  (finite tree × finite turns), but slow rather than hung; gate (b) runs
-  under the same detached discipline and 30-minute wall cap as (c2), with
-  exceedance a named failure (`VERIFIER-OVERRUN`).
+  applications per AND node across the tree, ESTIMATED — terminating by
+  construction (finite tree × finite turns), but slow rather than hung; gate
+  (b) runs detached under its own 30-minute wall cap, with exceedance the
+  named failure `VERIFIER-OVERRUN` (distinct from (c2)'s 60-minute cap —
+  the two legs are separate wall budgets).
 - **(c) RZ property, two legs** (re-review BLOCKING A re-specified; σ class
   narrowed to LEGAL pre-placements — cells of `P`'s own legal region — the
   natural game reading of "place defender stones", and a bounded sample):
