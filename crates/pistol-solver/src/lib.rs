@@ -104,14 +104,31 @@
 //! so it panics with [`THREAT_DESYNC`] rather than returning an error nobody
 //! could handle (CLAUDE.md rule 3).
 
+pub mod config;
 pub mod cover;
+pub mod dfpn;
+pub mod fixture;
+pub mod pn;
+pub mod policy;
 pub mod query;
+pub mod solver;
 pub mod state;
+pub mod tt;
+pub mod zone;
 
 mod sets;
 mod table;
 
+pub use config::{
+    SOLVER_SCHEMA_VERSION, SUPPORTED_FREE_STONE_RADIUS, SUPPORTED_ZONE_ORDERS, SolverConfigError,
+    SolverConfigFile, SolverParams, SolverSection,
+};
 pub use cover::{Cover, MinimalCover};
+pub use dfpn::{ProofDag, ProofKind, ProofNode, SearchStats};
+pub use fixture::{Expectation, FixtureCase, FixtureError};
+pub use pn::{Epsilon, INF, Value, value_of};
 pub use query::{HitBudget, LiveCount, NearHot, StonesLeft, WinWitness};
+pub use solver::{EmittedNode, ProofTree, SolveOutcome, SolveResult, Solver, WRONG_POSITION};
 pub use state::{THREAT_DESYNC, ThreatState};
 pub use table::WindowMasks;
+pub use zone::{ZONE_ORDERS, ZoneP, ep1_contribution, t31_contribution};

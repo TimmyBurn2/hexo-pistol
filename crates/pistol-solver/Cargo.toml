@@ -14,3 +14,4 @@ workspace = true
 # docs/decisions.md D-253). Nothing else, and no dev-dependencies — the test
 # tree carries its own SHA-256 for the same reason pistol-core's does (D-37).
 pistol-core = { workspace = true }
+serde = { workspace = true }

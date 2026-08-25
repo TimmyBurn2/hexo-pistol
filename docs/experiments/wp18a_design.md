@@ -461,28 +461,43 @@ The seesaw number is measured at the gates and NOT read as a licence.
 
 **M5's receipt is above (§6), taken before selection.**
 
-The §7 command blocks cannot be exercised at design time — the targets they
-name do not exist until IMPL, and CLAUDE.md's instrument rule binds artifacts
-by revision. The dry run is therefore registered here as the FIRST impl act
-after the solver computes real values, and BEFORE any gate script or fixture
-is authored: at the first commit where the `solver-selftest` bin and the
-`solver_oracle_tests` target actually solve positions (the df-pn core in,
-gates not yet), the §7 commands are run against a stand-in fixture of the
-same kind as the registered workload — two positions, a trivial win-in-one
-(an attacker open five) and a trivial refutation (no attacker live window at
-all), differing from the registered fixture only in identity. **The
-stand-in fixture's exact content**: position 1 = the plies of an open five
-for the attacker plus defender stones far from it; position 2 = four
-scattered attacker stones with no live window of own ≥ 2, plus two defender
-stones placed so the position stays mid-game (round-3 review MINOR N-6:
-registered-workload positions are two-colour; §1's game-ongoing assertion
-must not be fed a defender-less position). **Criteria the output must show,
-with externally-derived referents** (re-review MAJOR C — values known from
-the definitions, not from the instrument): position 1 prints `Win` with a
-nonzero proof digest; position 2 prints `NoWin`; the selftest exits nonzero
-on a malformed fixture and the test target fails on an empty run. (The
+**THE DRY RUN, TAKEN** at the first commit where the `solver-selftest` bin
+actually solves positions (the df-pn core in, gates not yet), against the
+stand-in fixture registered above — two positions differing from the
+registered workload only in identity. The stand-in fixture's exact bytes are
+preserved at `artifacts/wp18a_dryrun_fixture.txt` (gitignored, sha-anchored
+in the ADR; its content is the two cases below):
+
+```
+case open-five-win
+plies 0,0 7,0 7,2 1,0 2,0 7,4 7,6 3,0 4,0 8,2 8,4
+expect win
+
+case no-live-window
+plies 0,0 0,8 0,-8 8,0 -7,7 1,8 1,-8
+expect nowin
+```
+
+Command and output, verbatim:
+
+```
+$ cargo run --release -p pistol-solver --bin solver-selftest -- \
+    crates/pistol-solver/tests/fixtures/solver_v0.txt   [stand-in path]
+case open-five-win value win nodes 1 seesaw 0 digest 09610c19a17a73c6 zone ok
+case no-live-window value nowin nodes 1 seesaw 0 digest 0000000000000000 zone -
+summary 2 cases 1 wins 0 failures
+EXIT=0
+```
+
+**The criteria, with their externally-derived referents, all shown**: the
+open five prints `win` (a five-own window completes in one stone — rule 2 +
+DEF-PLAN, known from the definitions, not from the instrument), with a
+nonzero digest and one node (the leaf); the scattered position prints
+`nowin` (no live window at own ≥ 2 exists — LAW-SUPPORT k=2 admits no
+candidate — again from the definitions) at one node; the whole run costs
+0.26 s wall (MEASURED). A malformed fixture (`bogus`) refuses by name at
+exit 2 (`CANNOT READ: ... unknown directive "bogus"`), MEASURED. The
 per-gate-assertion PASS/FAIL lines are criteria for the GATE revisions, not
-for this pre-gate dry run — round-3 review MINOR N-5.) This section then
-records the stand-in fixture's bytes, the command output, the σ-sample and
-(c2) costs, and the wall times, at that revision; REVIEW-impl verifies the
-recorded output against these criteria.
+this pre-gate dry run. The σ-sample and (c2) costs are measured by the
+gates' first run on the registered fixture; the dry run's stand-in measures
+the near-best-case σ-solve, and that extrapolation weakness is stated above.

@@ -97,6 +97,7 @@ name = "pistol-solver"
 version = "0.0.1"
 dependencies = [
  "pistol-core",
+ "serde",
 ]
 
 [[package]]

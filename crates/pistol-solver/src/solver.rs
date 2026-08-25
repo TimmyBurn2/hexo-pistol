@@ -1,0 +1,457 @@
+//! The solver entry: precondition checks, the search, and the witness tree
+//! the oracle gates consume (docs/experiments/wp18a_design.md §4).
+//!
+//! # What the solver claims
+//!
+//! The value of the POLICY game (§1): a lower bound on the true game value,
+//! computed over the §2 move policy with every defender-side shortcut
+//! falsifiable by the differential gate. The zone is the derived artifact:
+//! the certificate is the verifier's, and the solver's own copy exists to be
+//! cross-checked against it (gate (b)).
+//!
+//! # The fail-loud zone invariant
+//!
+//! After a `Win`, every cell of the root zone must lie within reach of the
+//! stones on the proof boards — the tripwire half of §3's containment. It
+//! holds by construction (EP-1 scans windows intersecting the legal region;
+//! move cells are legal placements); a violation is a zone-construction
+//! defect and refuses as `NoWinUnderZone` rather than certifying the win.
+
+use pistol_core::{GameState, Key128, Player, Turn};
+
+use crate::dfpn::{ProofDag, ProofKind, Search, SearchStats};
+use crate::pn::{Epsilon, Value};
+use crate::policy::{self, turn_cells};
+use crate::state::ThreatState;
+use crate::tt::SolverTT;
+use crate::zone::ZoneP;
+
+/// The precondition the solver states and refuses by name on violation
+/// (CLAUDE.md rule 3: wrong-kind input raises a named error).
+pub const WRONG_POSITION: &str =
+    "SOLVER_WRONG_POSITION: the solver takes an ongoing position at Phase::First owing two stones";
+
+/// The solver's answer for a position.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SolveOutcome {
+    /// The attacker forces a rule-2 win under the policy; the witness tree
+    /// is attached.
+    Win(Box<ProofTree>),
+    /// The attacker cannot force a win under the policy.
+    NoWin,
+    /// A win was found but its zone violates the containment invariant —
+    /// refused loudly rather than certified. Unreachable at the v0 config by
+    /// construction; the outcome exists so the invariant has a failure mode.
+    NoWinUnderZone,
+}
+
+/// Everything one solve produced.
+#[derive(Debug, Clone)]
+pub struct SolveResult {
+    /// The value.
+    pub outcome: SolveOutcome,
+    /// df-pn node visits.
+    pub nodes: u64,
+    /// Threshold-miss returns after which the parent switched subtrees.
+    pub seesaw: u64,
+}
+
+/// One emitted node of the witness tree. Transpositions collapse: a position
+/// proven once appears once, its children referencing further nodes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EmittedNode {
+    /// The position's key.
+    pub key: Key128,
+    /// What proved it.
+    pub kind: ProofKind,
+    /// The solver's zone for it.
+    pub zone: ZoneP,
+    /// For `OrStep`: the one child (after the witness move). For `AndStep`:
+    /// every blocking pair and its child.
+    pub children: Vec<(Turn, Key128)>,
+}
+
+/// The emitted witness tree: nodes in deterministic walk order, the root
+/// first.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProofTree {
+    /// The root position's key.
+    pub root: Key128,
+    /// Every node, walk order.
+    pub nodes: Vec<EmittedNode>,
+}
+
+impl ProofTree {
+    /// A deterministic digest of the tree: nodes, kinds, witness cells,
+    /// children and zones folded through splitmix64. Equal trees under equal
+    /// configs give equal digests; it is a fingerprint, not a checksum.
+    pub fn digest(&self) -> u64 {
+        let mut z = 0x243F_6A88_85A3_08D3u64;
+        for node in &self.nodes {
+            z = mix(z ^ node.key.low()).wrapping_add(node.key.high());
+            z = mix(z ^ kind_tag(&node.kind));
+            for (turn, child) in &node.children {
+                for at in turn_cells(turn) {
+                    z = mix(z ^ ((at.q as u64) << 16 | (at.r as u64) as u16 as u64));
+                }
+                z = mix(z ^ child.low());
+            }
+            for order in 0..crate::zone::ZONE_ORDERS {
+                z = mix(z ^ (node.zone.order(order).len() as u64));
+                for at in node.zone.order(order) {
+                    z = mix(z ^ ((at.q as u64) << 16 | (at.r as u64) as u16 as u64));
+                }
+            }
+        }
+        mix(z)
+    }
+}
+
+fn kind_tag(kind: &ProofKind) -> u64 {
+    match kind {
+        ProofKind::OrWinLeaf { .. } => 1,
+        ProofKind::AndOverloadLeaf => 2,
+        ProofKind::OrStep { .. } => 3,
+        ProofKind::AndStep => 4,
+    }
+}
+
+fn mix(mut z: u64) -> u64 {
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
+/// A solver: configuration plus nothing. One instance, many solves; each
+/// solve starts from empty tables, so nothing crosses positions and
+/// determinism needs no cleanup story.
+pub struct Solver {
+    epsilon: Epsilon,
+    tt_entries: usize,
+}
+
+impl Solver {
+    /// From validated parameters (the config's `validate`).
+    pub fn new(epsilon: Epsilon, tt_entries: usize) -> Solver {
+        Solver {
+            epsilon,
+            tt_entries,
+        }
+    }
+
+    /// Solve `state` for the policy game.
+    ///
+    /// # Panics
+    ///
+    /// With [`WRONG_POSITION`] when the position is not an ongoing
+    /// `Phase::First` position owing two stones, and with the df-pn module's
+    /// own named invariants otherwise. Panics are this crate's fail-loud
+    /// channel for states its own callers must not reach.
+    pub fn solve(&self, state: &GameState) -> SolveResult {
+        if state.outcome().is_decided()
+            || state.phase() != pistol_core::Phase::First
+            || state.stones_owed() != 2
+        {
+            panic!("{WRONG_POSITION}");
+        }
+        let attacker = state.to_move();
+        let mut work = state.clone();
+        let mut threat = ThreatState::new();
+        for (at, player) in work.board().stones() {
+            threat.apply(at, player);
+        }
+        let mut tt = SolverTT::new(self.tt_entries);
+        let mut dag = ProofDag::default();
+        let mut stats = SearchStats::default();
+        let value = {
+            let mut search = Search::new(attacker, self.epsilon, &mut tt, &mut dag, &mut stats);
+            search.solve_root(&mut work, &mut threat)
+        };
+        match value {
+            Value::Disproven => SolveResult {
+                outcome: SolveOutcome::NoWin,
+                nodes: stats.nodes,
+                seesaw: stats.seesaw,
+            },
+            Value::Unknown => unreachable!("solve_root returns a definitive value or panics"),
+            Value::Proven => {
+                let (tree, zone_ok) = emit(&mut work, &mut threat, attacker, state.key(), &dag);
+                if let Some(tree) = tree {
+                    if zone_ok {
+                        SolveResult {
+                            outcome: SolveOutcome::Win(Box::new(tree)),
+                            nodes: stats.nodes,
+                            seesaw: stats.seesaw,
+                        }
+                    } else {
+                        SolveResult {
+                            outcome: SolveOutcome::NoWinUnderZone,
+                            nodes: stats.nodes,
+                            seesaw: stats.seesaw,
+                        }
+                    }
+                } else {
+                    // The root is proven but the DAG lost it — impossible
+                    // without a defect, and named rather than guessed at.
+                    panic!(
+                        "pistol-solver invariant SOLVER_ROOT_UNPROVEN: the root value is Win but the proof DAG has no root node"
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// Walk the proof DAG from the root, replaying the game to re-derive child
+/// keys, and emit the witness tree in deterministic order. The second return
+/// is the containment tripwire: whether every node's zone cells lie within
+/// reach (13) of that node's own board stones.
+fn emit(
+    state: &mut GameState,
+    threat: &mut ThreatState,
+    attacker: Player,
+    root: Key128,
+    dag: &ProofDag,
+) -> (Option<ProofTree>, bool) {
+    let mut walk = Walk {
+        dag,
+        out: Vec::new(),
+        seen: std::collections::BTreeMap::new(),
+        zone_ok: true,
+    };
+    emit_node(state, threat, attacker, root, &mut walk);
+    if walk.out.is_empty() {
+        return (None, walk.zone_ok);
+    }
+    (
+        Some(ProofTree {
+            root,
+            nodes: walk.out,
+        }),
+        walk.zone_ok,
+    )
+}
+
+/// The walk's mutable state, bundled so the recursion carries one argument
+/// where eight would invite ordering mistakes.
+struct Walk<'a> {
+    dag: &'a ProofDag,
+    out: Vec<EmittedNode>,
+    seen: std::collections::BTreeMap<Key128, usize>,
+    zone_ok: bool,
+}
+
+fn emit_node(
+    state: &mut GameState,
+    threat: &mut ThreatState,
+    attacker: Player,
+    key: Key128,
+    walk: &mut Walk<'_>,
+) {
+    if walk.seen.contains_key(&key) {
+        return;
+    }
+    let Some(record) = walk.dag.get(key) else {
+        panic!(
+            "pistol-solver invariant SOLVER_DAG_GAP: the walk reached a position the search never recorded"
+        );
+    };
+    walk.seen.insert(key, walk.out.len());
+    // The tripwire, checked AT the node, against the node's own board: a
+    // zone cell more than 13 from every stone is a construction defect.
+    for at in record.zone.all_cells() {
+        let near = state
+            .board()
+            .stones()
+            .any(|(stone, _)| hex_distance(at, stone) <= 13);
+        if !near {
+            walk.zone_ok = false;
+        }
+    }
+    let mut children = Vec::new();
+    match &record.kind {
+        ProofKind::OrWinLeaf { .. } | ProofKind::AndOverloadLeaf => {}
+        ProofKind::OrStep { witness } => {
+            crate::dfpn::apply_turn(state, threat, *witness);
+            let child_key = state.key();
+            emit_node(state, threat, attacker, child_key, walk);
+            crate::dfpn::undo_turn(state, threat, *witness);
+            children.push((*witness, child_key));
+        }
+        ProofKind::AndStep => {
+            let mut pairs = Vec::new();
+            policy::blocking_pairs(state, threat, attacker, &mut pairs);
+            for turn in pairs {
+                crate::dfpn::apply_turn(state, threat, turn);
+                let child_key = state.key();
+                emit_node(state, threat, attacker, child_key, walk);
+                crate::dfpn::undo_turn(state, threat, turn);
+                children.push((turn, child_key));
+            }
+        }
+    }
+    walk.out.push(EmittedNode {
+        key,
+        kind: record.kind.clone(),
+        zone: record.zone.clone(),
+        children,
+    });
+}
+
+/// Axial hex distance.
+fn hex_distance(a: pistol_core::Coord, b: pistol_core::Coord) -> u32 {
+    let dq = i32::from(a.q) - i32::from(b.q);
+    let dr = i32::from(a.r) - i32::from(b.r);
+    let ds = dq + dr;
+    (dq.unsigned_abs() + dr.unsigned_abs() + ds.unsigned_abs()) / 2
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use crate::pn::Epsilon;
+    use pistol_core::{Coord, Outcome, Turn};
+
+    fn solver() -> Solver {
+        Solver::new(Epsilon::new(1, 4).unwrap(), 1024)
+    }
+
+    fn game_of_turns(turns: &[Turn]) -> GameState {
+        let mut state = GameState::new_game();
+        let mut iter = turns.iter();
+        let first = iter.next().expect("the first turn is P1's single stone");
+        state.make_turn(*first).expect("turn 1");
+        for turn in iter {
+            state.make_turn(*turn).expect("test turn is legal");
+        }
+        assert_eq!(state.outcome(), Outcome::Ongoing);
+        state
+    }
+
+    fn pair(cells: &[(i16, i16)]) -> Turn {
+        let mut iter = cells.iter();
+        let first = iter.next().unwrap();
+        let second = iter.next().unwrap();
+        Turn::pair(Coord::new(first.0, first.1), Coord::new(second.0, second.1)).unwrap()
+    }
+
+    /// An attacker open four on the mover's turn: the win is immediate
+    /// (§2.1's leaf).
+    #[test]
+    fn an_open_four_for_the_mover_wins_now() {
+        let state = game_of_turns(&[
+            Turn::Single(Coord::new(0, 0)),
+            pair(&[(7, 0), (8, 1)]),
+            pair(&[(1, 0), (2, 0)]),
+            pair(&[(7, 2), (8, 3)]),
+            pair(&[(3, 0), (4, 0)]),
+            pair(&[(7, 4), (8, 5)]),
+        ]);
+        assert_eq!(state.to_move(), pistol_core::Player::P1);
+        let result = solver().solve(&state);
+        assert!(matches!(result.outcome, SolveOutcome::Win(_)));
+        assert_eq!(result.nodes, 1, "a win-now leaf is one visit");
+    }
+
+    /// No live window at own >= 2 anywhere for the attacker — every pair of
+    /// attacker stones sits more than a window apart — so the policy move
+    /// set is empty and the root is a one-visit NoWin leaf.
+    #[test]
+    fn a_scattered_position_is_nowin() {
+        let state = game_of_turns(&[
+            Turn::Single(Coord::new(0, 0)),
+            pair(&[(0, 8), (0, -8)]),
+            pair(&[(8, 0), (-7, 7)]),
+            pair(&[(1, 8), (1, -8)]),
+        ]);
+        assert_eq!(state.to_move(), pistol_core::Player::P1);
+        let result = solver().solve(&state);
+        assert_eq!(result.outcome, SolveOutcome::NoWin);
+        assert_eq!(result.nodes, 1, "an empty policy set is one visit");
+    }
+
+    /// A two-turn win: the attacker's canonical-first threat pair
+    /// {(0,1),(0,2)} creates THREE disjoint plan families — the ConstR
+    /// column cluster through (0,3),(0,4) reaches four own, the ConstQ
+    /// three at r=1 reaches four, the ConstQ three at r=2 reaches four —
+    /// so the defender's node is a LAW-OVERLOAD leaf and the root proves
+    /// in a handful of visits.
+    ///
+    /// The attacker is P2, so the origin stone belongs to the DEFENDER and
+    /// kills every column window below r=1 — that is what keeps {(0,1),
+    /// (0,2)} the two smallest candidate cells. The defender's killer
+    /// stones are spread across three columns and two diagonals so they
+    /// hold no four of their own: a defender with a completable window at
+    /// the AND node would win the race and the proof would not exist.
+    #[test]
+    fn a_pair_creating_three_disjoint_plans_wins() {
+        let plies = [
+            // P1 turn 1: the origin, a defender stone.
+            Coord::new(0, 0),
+            // P2: the ConstQ three at r=1.
+            Coord::new(1, 1),
+            Coord::new(2, 1),
+            // P1: the r=1 and r=2 left killers.
+            Coord::new(-1, 1),
+            Coord::new(-1, 2),
+            // P2: the ConstR column cluster.
+            Coord::new(0, 3),
+            Coord::new(0, 4),
+            // P1: the c=1 and c=2 diagonal killers.
+            Coord::new(-2, 3),
+            Coord::new(-2, 4),
+            // P2: the ConstQ three at r=2.
+            Coord::new(2, 2),
+            Coord::new(3, 2),
+            // P1: the c=3 and c=4 diagonal killers.
+            Coord::new(-2, 5),
+            Coord::new(1, 3),
+            // P2: the rows' right stones.
+            Coord::new(5, 1),
+            Coord::new(5, 2),
+            // P1: the c=3 diagonal killer and a parity filler.
+            Coord::new(-1, 4),
+            Coord::new(-3, 3),
+        ];
+        let state = GameState::from_plies(&plies).expect("legal game");
+        assert_eq!(state.to_move(), pistol_core::Player::P2);
+        let attacker = pistol_core::Player::P2;
+        let mut threat = crate::ThreatState::new();
+        for (at, player) in state.board().stones() {
+            threat.apply(at, player);
+        }
+        // No hot window on either side at the root: the win is neither
+        // immediate nor racy.
+        assert!(threat.hot_windows(attacker).is_empty());
+        assert!(threat.hot_windows(attacker.opponent()).is_empty());
+        let mut candidates = Vec::new();
+        crate::policy::candidate_cells(&threat, attacker, &mut candidates);
+        assert_eq!(
+            &candidates[..2],
+            &[Coord::new(0, 1), Coord::new(0, 2)],
+            "the winning pair is the canonical-first threat pair"
+        );
+        let result = solver().solve(&state);
+        match &result.outcome {
+            SolveOutcome::Win(tree) => {
+                assert!(
+                    result.nodes < 20,
+                    "a two-turn overload proof is a handful of visits, got {}",
+                    result.nodes
+                );
+                assert_ne!(tree.digest(), 0);
+            }
+            other => panic!("three disjoint plans from one pair is a policy win: {other:?}"),
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "SOLVER_WRONG_POSITION")]
+    fn a_mid_turn_position_is_refused() {
+        let mut state = game_of_turns(&[Turn::Single(Coord::new(0, 0)), pair(&[(0, 6), (0, 7)])]);
+        // Force a mid-turn state by placing one stone of P1's turn.
+        state.place(Coord::new(1, 0)).expect("legal ply");
+        let _ = solver().solve(&state);
+    }
+}
