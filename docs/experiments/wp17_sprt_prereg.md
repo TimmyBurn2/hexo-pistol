@@ -9,11 +9,15 @@ the pentanomial reading); §8.1's mechanism sentence is rewritten off the
 artifact itself with one explicit indexing convention; the cap row stops
 restating WP-1.6's sentence under a not-restated claim; §7's bracket
 justification is corrected (the dry-run book's openings are one turn
-LONGER, not shorter); the header names §11. Sections not named here are
-revision 1's, unchanged except as revisions 2 and 3 state.**
+LONGER, not shorter); the header names §11. The rev-3 re-review verified
+all five closures against the repository's own bytes and found one further
+MINOR — a false two-word historical claim about revision 2 — fixed here in
+the same revision. Sections not named here are revision 1's, unchanged
+except as revisions 2 and 3 state.**
 
-**Revision 2 closed the six findings of revision 1's review (`be5cbdb`, 0
-BLOCKING / 2 MAJOR / 4 MINOR) — see §11 for the ledger.**
+**Revision 2 addressed the six findings of revision 1's review (`be5cbdb`, 0
+BLOCKING / 2 MAJOR / 4 MINOR) and closed five of them — see §11 for the
+ledger.**
 
 **Revision 1 was UNREVIEWED AT DISPATCH; this revision governs no run until
 a fresh-context review passes it.**
@@ -378,8 +382,8 @@ three-key diff of §1 stops being the only difference between the seats.
 | Revision | State |
 |---|---|
 | 1 (`be5cbdb`) | **FAILED its fresh-context review — 0 BLOCKING, 2 MAJOR, 4 MINOR** (report at `/tmp/opencode/wp17_prereg_REVIEW.md`; every receipt it tested held — pins, digests, quotations, the dry-run record, the seeded arm's byte-identical reproduction — and the mechanism story was verified true). The two MAJORs: the verdict space was not total (cap-inconclusive, aborted, no-report outcomes unreachable from the document), and the `distinct_n == n/2` degenerate case was misrouted by a singular pointer into the `h0` row. The four MINORs: a cost estimate derived by misreading a fixed-depth node ratio as a fixed-nodes time tax (D-291 shape), a mechanism sentence the artifact falsifies, dispatch quotations resting outside the repository, and three false "pointed at, not restated" claims (the D-419-MINOR-F shape) |
-| 2 (`64f6a05`) | Closed the six above, but **FAILED its scoped re-review — 0 BLOCKING, 1 new MAJOR, 3 new MINOR, 1 of the six not closed** (report at `/tmp/opencode/wp17_prereg_rev2_REVIEW.md`). The new MAJOR: the degenerate rows' `distinct_n == n` / `== n/2` keying dropped the interior mixes (`n/2 < distinct_n < n`) a k=2 sample produces — the modal degenerate shape for THIS matchup — while the header claimed totality. Not closed: the mechanism sentence, rewritten off the REVIEW's gloss rather than the artifact, mixed indexing conventions and asserted the unprobed records confirmable. Three more MINORs: the cap row restating WP-1.6's sentence under a not-restated claim, a backwards openings-length "fact" checkable in seconds, and the header omitting §11 from its own account |
-| 3 (this text) | Closes all five: the degenerate rows are re-keyed (`== n/2` vs EVERY OTHER CASE, the interior explicitly named); the mechanism sentence is rewritten off `artifacts/wp17_dryrun_swapped_replay.txt` with the checker's 0-indexed vocabulary stated and the unprobed records left unclaimed; the cap row declares itself an ADDITION rather than an import and drops WP-1.6's sentence; §7's bracket justification is corrected; the header names §11. **UNREVIEWED — a fresh-context review must pass it before the governed run may be launched.** |
+| 2 (`64f6a05`) | Addressed the six above and closed five, but **FAILED its scoped re-review — 0 BLOCKING, 1 new MAJOR, 3 new MINOR, 1 of the six not closed** (report at `/tmp/opencode/wp17_prereg_rev2_REVIEW.md`). The new MAJOR: the degenerate rows' `distinct_n == n` / `== n/2` keying dropped the interior mixes (`n/2 < distinct_n < n`) a k=2 sample produces — the modal degenerate shape for THIS matchup — while the header claimed totality. Not closed: the mechanism sentence, rewritten off the REVIEW's gloss rather than the artifact, mixed indexing conventions and asserted the unprobed records confirmable. Three more MINORs: the cap row restating WP-1.6's sentence under a not-restated claim, a backwards openings-length "fact" checkable in seconds, and the header omitting §11 from its own account |
+| 3 (this text) | Closes all five of the rev-2 re-review's findings: the degenerate rows are re-keyed (`== n/2` vs EVERY OTHER CASE, the interior explicitly named); the mechanism sentence is rewritten off `artifacts/wp17_dryrun_swapped_replay.txt` with the checker's 0-indexed vocabulary stated and the unprobed records left unclaimed; the cap row declares itself an ADDITION rather than an import and drops WP-1.6's sentence; §7's bracket justification is corrected; the header names §11. Its scoped re-review verified all five closures against the repository's own bytes and found one new MINOR — the header's "Revision 2 closed the six findings", false at two sites against the ledger it points at — fixed in the same revision by the two-word "addressed … closed five" (both sites grepped: the false claim appears nowhere). **UNREVIEWED FURTHER: this document governs the run under the operator's instruction that the two-word fix needs no fresh re-review — every substantive closure was verified by the re-review that returned it; what it alone found was the bookkeeping word.** |
 
 This WP's review ledger so far: design REVIEW-design + DECISION-RED-TEAM
 (D-429), REVIEW-impl (closed at `fc4bc69`), and this document's own review —
