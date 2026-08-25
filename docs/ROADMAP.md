@@ -156,6 +156,21 @@ misreads, so **the Stage-2 re-test STAYS SCHEDULED** below and
 measuring only once the candidate set they order is the threat-first one. Keyed
 on the completing stone and on the pair, per the report's move-ordering stack.
 
+**WP-1.7 — CLOSED, `h0` (D-433).** The three heuristics are implemented,
+gated OFF by default in every committed config, and measured: the governed
+SPRT run (fresh slice `1000..1499`, 341 pairs, `llr_pair -2.9911` against
+the `-2.9444` `h0` boundary, Criterion 1'' exit 0 with 0 unattributable
+pairs, the second instrument's agreement criterion holding on both clauses)
+did not accept them at 50 000 nodes on `random_openings_v1`. A measured
+finding, not a threshold move: the chess-lineage prior did not survive a
+threat-first ordering that already captures most of these heuristics'
+value — which the design and the prereg both registered as the likely
+outcome before game one. The rule-5 bench's ordering-QUALITY signal (nps
+ratio 1.06/1.06, one position gaining a completed depth) stands as recorded
+context (D-431); the licensed-not-scheduled relaxations (top-K promotions,
+depth-scaled bonuses, play-order pair keying) are future pre-registrations,
+not inherited business.
+
 **WP-1.8 — AND-OR solver**, upgraded to relevance-zone Deep df-pn (+1+epsilon,
 GHI).
 
