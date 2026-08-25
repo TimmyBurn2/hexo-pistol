@@ -1,8 +1,8 @@
 # pistol — instrument-mode configuration, staged pair generation WITH all
 # three WP-1.7 ordering heuristics ON.
 #
-# WP-1.7's SPRT arm A seat (docs/experiments/wp17_design.md §6;
-# docs/experiments/wp17_sprt_prereg.md §3). Identical to
+# WP-1.7's SPRT arm A seat (docs/experiments/wp17_design.md §6; the
+# pre-registration that governs the run names this file). Identical to
 # configs/instrument_staged_v0.toml in every field but the three this WP
 # adds — `killers`, `history`, `countermove`, all `true` here and all
 # `false` there — so this run's ENTIRE claim is carried by those three keys

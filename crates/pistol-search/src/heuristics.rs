@@ -396,13 +396,13 @@ mod tests {
     }
 
     #[test]
-    fn a_cutoff_in_the_forced_prefix_updates_nothing() {
-        // The gate is `best_index >= forced` in `pvs::visit`; what this test
-        // pins is the recording side's own discipline — `record_cutoff`
-        // trusts its caller for that test and records only what it is
-        // handed. The full-node behaviour is pinned by the integration
-        // tests: a WIN-NOW node's cutoffs update nothing, because the whole
-        // set is forced there.
+    fn record_cutoff_trusts_its_caller_for_the_unforced_test() {
+        // The unforced-only gate itself lives in `pvs::visit`
+        // (`best_index >= forced`) and is pinned there, at the node level, by
+        // `a_forced_prefix_cutoff_updates_nothing_at_its_own_ply`. What this
+        // test pins is the OTHER half of the contract: `record_cutoff` does
+        // not re-derive the boundary — it records exactly what it is handed,
+        // so the caller's test is the only defence the boundary has.
         let state = quiet();
         let mut tables = HeuristicTables::new();
         tables.record_cutoff(&state, 3, Coord::new(3, 3));

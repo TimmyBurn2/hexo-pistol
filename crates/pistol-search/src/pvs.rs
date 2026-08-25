@@ -677,6 +677,76 @@ mod tests {
         );
     }
 
+    /// WP-1.7's M8 boundary, pinned at the node level: a beta cutoff whose
+    /// cell sits in the FORCED prefix updates nothing AT ITS OWN PLY. The
+    /// fixture is the staged tests' FILTERED-row one — P2 holds one hot
+    /// window whose two empties are each a one-cell cover, so the whole
+    /// candidate set is forced (`forced == cells.len()`) — and the visit
+    /// runs under a null window at the bottom, so the FIRST candidate fails
+    /// high: a genuine beta cutoff at index 0, a forced cell, at ply 0.
+    /// Deeper nodes of the same visit take their own unforced cutoffs at
+    /// deeper plies and legitimately record THERE; what must stay empty is
+    /// the forced cutoff's own ply.
+    ///
+    /// Mutation checked: replacing `best_index >= forced` with `true` in
+    /// `visit`'s post-loop recording gate makes this test red — Tier-F cells
+    /// would enter the killer tables, the exact masquerade M8's row names as
+    /// its failure mode.
+    #[test]
+    fn a_forced_prefix_cutoff_updates_nothing_at_its_own_ply() {
+        // P1: (0,0), (-1,2), (5,3) — nothing aligned. P2: (0,2)..(3,2), one
+        // hot window blocked behind at (-1,2), empties (4,2) and (5,2).
+        let state = GameState::from_plies(&[
+            Coord::ORIGIN,
+            Coord::new(0, 2),
+            Coord::new(1, 2),
+            Coord::new(-1, 2),
+            Coord::new(5, 3),
+            Coord::new(2, 2),
+            Coord::new(3, 2),
+        ])
+        .expect("the FILTERED-row fixture is a legal game");
+        let mut position = Position::new(Box::new(Flat), true);
+        position.reset_to(&state);
+        let mut table = Table::new(1 << 20).expect("the smallest table");
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
+        let mut run = Run::new(
+            &mut position,
+            &mut table,
+            CandidatePolicy::Staged(crate::params::StagedParams {
+                quiet_radius: 2,
+                tier_t_own_count: 2,
+                tier_t_opponent_count: 3,
+                q_depth_turns: 0,
+                q_triggers: crate::params::QTriggers::DefensiveOnly,
+                ordering: crate::params::OrderingHeuristics {
+                    killers: true,
+                    history: true,
+                    countermove: true,
+                },
+            }),
+            Stop::DepthTurns(1),
+            12,
+            &mut heuristics,
+        );
+        // The null window at the bottom: any finite child score fails high
+        // against `beta`, so the first forced candidate cuts the node off.
+        let score = run.visit(2, -INFINITY, -INFINITY + 1, 0);
+        assert!(
+            score >= -INFINITY + 1,
+            "the null window must fail high for the cutoff to have happened at all"
+        );
+        // `killers[0]` is written only by a recording at ply 0 — the root's
+        // own cutoff. Deeper plies write their own slots (and a phase-Second
+        // cutoff at ply 1 legitimately writes `pair_killers[0]`, which is
+        // why the assertion stops at the killer slots).
+        assert!(
+            heuristics.killers[0] == [None, None],
+            "a forced-prefix cutoff is a tactical cell the tiers already front-load; \
+             recording it would let Tier F masquerade as a quiet-refutation hint"
+        );
+    }
+
     /// WP-1.7's liveness pin: a staged search with the gates ON actually
     /// reaches `HeuristicTables::record_cutoff` from `visit` — the one thing
     /// no unit test of the tables themselves can prove. A beta cutoff at an
