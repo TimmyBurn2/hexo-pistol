@@ -11,13 +11,17 @@
 //! on, because this crate takes no dev-dependency either.
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
+pub mod fixture_loader;
 pub mod fixtures;
 pub mod patterns;
 pub mod plans;
 pub mod playouts;
+pub mod r3;
+pub mod r3_zone;
 pub mod reference;
 pub mod region;
 pub mod sha256;
+pub mod verifier;
 
 use std::fs;
 use std::path::PathBuf;

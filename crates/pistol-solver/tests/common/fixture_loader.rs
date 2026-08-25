@@ -1,0 +1,46 @@
+//! The solver fixture loader for the test tree: reads
+//! `tests/fixtures/solver_v0.txt` through the crate's own strict loader and
+//! pins its SHA-256 (CLAUDE.md rule 7).
+//!
+//! The pin is asserted HERE, at load time, so every gate that loads the
+//! fixture is already standing on the pinned bytes: an edited fixture is a
+//! red test before any gate runs.
+
+use std::fs;
+use std::path::PathBuf;
+
+use pistol_solver::fixture::FixtureCase;
+
+use super::sha256::sha256_hex;
+
+/// The registered fixture's SHA-256. Editing the fixture without updating
+/// this constant in the same commit is a red test.
+pub const SOLVER_V0_SHA256: &str =
+    "ed336ed419950d779b29ef667ee044b76be21a85cd218653d8e04194e3b0deb0";
+
+pub fn fixture_path(name: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures")
+        .join(name)
+}
+
+/// Load the registered fixture, pin first.
+pub fn load_solver_fixture(name: &str) -> Vec<FixtureCase> {
+    let path = fixture_path(name);
+    let bytes = fs::read(&path).unwrap_or_else(|error| panic!("fixture {name}: {error}"));
+    if bytes.len() > super::FIXTURE_MAX_BYTES {
+        panic!(
+            "fixture {name} is {} bytes, over the {} ceiling",
+            bytes.len(),
+            super::FIXTURE_MAX_BYTES
+        );
+    }
+    let text = String::from_utf8(bytes)
+        .unwrap_or_else(|error| panic!("fixture {name} is not UTF-8: {error}"));
+    let digest = sha256_hex(text.as_bytes());
+    assert_eq!(
+        digest, SOLVER_V0_SHA256,
+        "fixture {name} does not match its pin {SOLVER_V0_SHA256}"
+    );
+    pistol_solver::fixture::load(&text).unwrap_or_else(|error| panic!("fixture {name}: {error}"))
+}

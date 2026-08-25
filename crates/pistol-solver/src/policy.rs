@@ -141,15 +141,6 @@ mod tests {
 
     use pistol_core::Coord;
 
-    fn game(plies: &[Coord]) -> GameState {
-        let mut state = GameState::new_game();
-        for &at in plies {
-            state.place(at).expect("test game is legal");
-        }
-        assert_eq!(state.outcome(), pistol_core::Outcome::Ongoing);
-        state
-    }
-
     /// Build a game from an explicit PLAY-ORDER turn list: the first entry
     /// is P1's single origin stone, then pairs in the order they were
     /// played. Colour assignment stays written where it is meant instead of

@@ -53,16 +53,18 @@ configs=()
 weights=()
 arenas=()
 books=()
+solvers=()
 for file in "${files[@]}"; do
 	case "$(basename "$file")" in
 	*_weights.toml) weights+=("$file") ;;
 	arena_*.toml) arenas+=("$file") ;;
 	random_openings_*.toml) books+=("$file") ;;
+	solver_*.toml) solvers+=("$file") ;;
 	*) configs+=("$file") ;;
 	esac
 done
 
-echo "config_check: ${#configs[@]} engine config(s), ${#weights[@]} weight table(s), ${#arenas[@]} arena config(s), ${#books[@]} book config(s)"
+echo "config_check: ${#configs[@]} engine config(s), ${#weights[@]} weight table(s), ${#arenas[@]} arena config(s), ${#books[@]} book config(s), ${#solvers[@]} solver config(s)"
 
 # In default mode both kinds are part of the committed contract, so an empty list
 # is a missing file rather than nothing to do. With explicit paths, only what was
@@ -88,6 +90,11 @@ if [ "$explicit" -eq 0 ]; then
 		echo "config_check: random_openings_v1.txt was generated with (D-177)" >&2
 		exit 1
 	fi
+	if [ "${#solvers[@]}" -eq 0 ]; then
+		echo "config_check: FAIL: no solver config under configs/" >&2
+		echo "config_check: the solver's tunables live in exactly one committed place (WP-1.8a)" >&2
+		exit 1
+	fi
 fi
 
 status=0
@@ -105,6 +112,11 @@ fi
 if [ "${#arenas[@]}" -gt 0 ]; then
 	cargo run --quiet --locked --package pistol-arena --example validate_arena_config -- \
 		"${arenas[@]}" || status=1
+fi
+
+if [ "${#solvers[@]}" -gt 0 ]; then
+	cargo run --quiet --locked --package pistol-solver --example validate_solver_config -- \
+		"${solvers[@]}" || status=1
 fi
 
 if [ "${#books[@]}" -gt 0 ]; then

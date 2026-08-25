@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 use std::env;
 use std::process::ExitCode;
 
-use pistol_solver::fixture::{load, Expectation};
+use pistol_solver::fixture::{Expectation, load};
 use pistol_solver::{Epsilon, SolveOutcome, Solver, SolverParams};
 
 const USAGE: &str = "usage: solver-selftest <fixture> [config]";
@@ -88,7 +88,12 @@ fn main() -> ExitCode {
             wins += 1;
         }
     }
-    println!("summary {} cases {} wins {} failures", cases.len(), wins, failures);
+    println!(
+        "summary {} cases {} wins {} failures",
+        cases.len(),
+        wins,
+        failures
+    );
     if failures == 0 {
         ExitCode::SUCCESS
     } else {
@@ -113,7 +118,11 @@ fn read_config(path: &str) -> Result<SolverParams, String> {
         if line.starts_with('[') && line.ends_with(']') {
             let found = line[1..line.len() - 1].trim();
             if found != "solver" {
-                return Err(format!("{}: line {}: unknown section [{found}]", path, index + 1));
+                return Err(format!(
+                    "{}: line {}: unknown section [{found}]",
+                    path,
+                    index + 1
+                ));
             }
             section = found.to_owned();
             continue;
@@ -131,11 +140,16 @@ fn read_config(path: &str) -> Result<SolverParams, String> {
                 return Err(format!("{}: line {}: unknown key {key}", path, index + 1));
             }
             schema_version = Some(
-                u32::try_from(value).map_err(|_| format!("{}: schema_version does not fit", path))?,
+                u32::try_from(value)
+                    .map_err(|_| format!("{}: schema_version does not fit", path))?,
             );
         } else {
             if keys.insert(key.to_owned(), value).is_some() {
-                return Err(format!("{}: line {}: key {key} given twice", path, index + 1));
+                return Err(format!(
+                    "{}: line {}: key {key} given twice",
+                    path,
+                    index + 1
+                ));
             }
         }
     }
@@ -165,5 +179,6 @@ fn read_config(path: &str) -> Result<SolverParams, String> {
                 .map_err(|_| format!("{path}: tt_entries does not fit"))?,
         },
     };
-    file.validate().map_err(|error| format!("{path}: {error:?}"))
+    file.validate()
+        .map_err(|error| format!("{path}: {error:?}"))
 }
