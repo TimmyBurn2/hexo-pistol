@@ -1,8 +1,17 @@
 # WP-1.8a design — relevance zones + df-pn in pistol-solver, correctness only
 
-Revision 1. Governing dispatch: `[GROUNDWORK] WP-1.8a` (operator). D-436 governs
+Revision 2. Governing dispatch: `[GROUNDWORK] WP-1.8a` (operator). D-436 governs
 the GHI retirement; D-434/D-435 landed with this WP's opening commit and bind
 nothing here beyond the teacher question they settle.
+
+Revision 1 (`6f13d0c`) FAILED its REVIEW-design (report landed at
+`docs/experiments/wp18a_design_REVIEW.md`): 1 BLOCKING, 8 MAJOR, 6 MINOR. Every
+finding is closed in this revision; the review's own numbering is cited at each
+fix. The one design decision the review overturned: v0 no longer prunes the
+defender's free stone by a zone (BLOCKING 1 + MAJOR 8 showed the radius-4 zone
+certified false wins and overflowed legitimate wins); the zone is now the
+derived, independently re-verified artifact, and the pruning knob is carried at
+its no-prune value.
 
 ## 0. Premises, corrected against the live tree
 
@@ -22,7 +31,7 @@ silently worked around:
      the dispatch's "Pawlewicz-Lew threshold formulas" name.
    - Wu & Lin, *Relevance-Zone-Oriented Proof Search for Connect6*, IEEE
      TCIAIG 2(3), 2010, pp. 191-207 (operator-provided PDF), the source of
-     AT-1/DT-1/EP-1/T1/T2/T3.
+     AT-1/DT-1/EP-1/T1/T2/T3 and of Definition 3 (the relevance property).
    The formulas below are quoted from the papers, not from a report. If report
    B lands later and disagrees, that is an amendment reopening this design.
 
@@ -37,10 +46,13 @@ ongoing — asserted, not coerced: a wrong-kind position is a named error, rule 
 is solved for the value of the **policy game**: the attacker wins iff it can
 force a rule-2 win playing only the §2 attacker policy, against every defender
 turn. Restricting the attacker makes the value a *lower* bound on the true game
-value (sound, incomplete); the defender is NOT restricted except as §3 states.
-The value is `Win` or `NoWin` — df-pn is run to completion, no node budget; the
-solver is not on the search path and makes no strength claim (dispatch DONE
-list). Turns, not plies, are the depth unit throughout (rule 4).
+value (sound, incomplete); the defender is NOT restricted — v0 enumerates the
+defender's full legal turn set filtered only by the §2 blocking predicate. The
+value is `Win` or `NoWin` — df-pn is run to completion, no node budget; the
+solver is not on the search path and makes no strength claim. Turns, not plies,
+are the depth unit throughout (rule 4). All three implementations below apply
+moves through `GameState::place`, so rules 1-5 (legality, win detection, sudden
+death) are pistol-core's and re-implemented nowhere (rule 2).
 
 ## 2. Move policy
 
@@ -62,61 +74,96 @@ The v0 policy has NO free attacker stone (both stones must be threat-relevant).
 That is the deliberate narrowing M4 records; the one-free-stone widening is
 licensed-not-scheduled.
 
-**Defender (AND node), in order — every step is a law, not a heuristic:**
+**Defender (AND node), solver-side enumeration, in order:**
 1. Defender wins this turn (`can_win_this_turn(defender, Two)`): the node is
    `NoWin` — rule 4's race is decided by the side to move and the defender
    moves now.
 2. Attacker plans = attacker hot windows (DEF-PLAN); exact minimum hitting set
-   size `t` over their empty cells (RULE-EXACT; `Cover`/`min_hitting_set`
-   arithmetic already in the crate). `t ≥ 1` always here: the attacker's last
-   move created a hot window by §2.2 — asserted, fail loud if false.
+   size `t` over their empty cells (RULE-EXACT). `t ≥ 1` always here: the
+   attacker's last move created a hot window by §2.2 — asserted, fail loud if
+   false.
 3. `t ≥ 3` and step 1 false: the node is `Win` without expansion — LAW-OVERLOAD
    (two defender stones cannot hit three).
-4. `t ∈ {1, 2}`: blocking pairs = pairs covering all plan-empty cells = pairs
-   containing some inclusion-minimal cover (`blocking_covers(defender, Two)`).
-   Each is enumerated as: the cover itself (size 2), or cover cell + free stone
-   `f` (size-1 cover). The free stone ranges over the §3 search zone. The
-   defender's free stone is the LAW-RIPOSTE danger, and enumerating it at every
-   zone cell is RZOP's seminull verification in the df-pn setting (T1-1c).
-   Non-blocking pairs are NOT enumerated: a surviving plan completes next turn
-   by DEF-PLAN + rule 3 (≤ 2 empties, 2 stones), so they are already `Win` for
-   the attacker; the oracle reference (§7a) reaches the same classification by
-   its own code.
+4. `t ∈ {1, 2}`: the children are `generate_turns(state)` filtered to pairs
+   covering all plan-empty cells (every such pair contains an
+   inclusion-minimal cover; `blocking_covers(defender, Two)` exists as the fast
+   path and the per-pair predicate as the specification — the filter and the
+   cover arithmetic must agree, and a unit test pins that they do). The
+   defender's second stone is the LAW-RIPOSTE danger; enumerating it over the
+   full legal region is the seminull mechanism of RZOP's T1-1c, adapted: the
+   paper derives the second stone's range from the sub-proof's zones, v0 ranges
+   it over the whole legal turn set (marked deviation; the paper-faithful
+   derived-range version is what the `free_stone_radius` knob licenses later).
+
+**Every defender-side step above is a SOLVER-ONLY shortcut.** The reference
+(§7a) and the verifier (§7b) implement none of them: they enumerate every legal
+defender turn. Steps 1, 3 and the blocking filter are therefore falsifiable by
+gate (a), which is the point of building them that way (review MAJOR 2).
 
 ## 3. Zones
 
-**Search zone `Z_s` (top-down, fixed at the root).** Every empty cell within
-hex-distance `search_zone_radius` (config, registered start 4, ESTIMATED —
-the RZOP paper's radius is square-board and non-transferable) of any stone.
-Defender free stones range over `Z_s`. This is the only pruning the zone does.
-
-**Proof zone `Z_p` (bottom-up over the found proof).** A sequence
-`Z_1 ⊆ Z_2 ⊆ Z_3` (`zone_orders` config, registered start 3, ESTIMATED —
-ZONE-R/ADOPT-RZOP: "order ≤ 3 suffices for two-stone moves", square-board),
-constructed per Wu & Lin §IV, adapted to 3 axes and this formulation:
+**The proof zone `Z_p`** is a sequence `Z_1 ⊆ Z_2 ⊆ Z_3` (`zone_orders` config,
+registered start 3, ESTIMATED — ZONE-R/ADOPT-RZOP: "order ≤ 3 suffices for
+two-stone moves", square-board), constructed per Wu & Lin §IV:
 
 - **AT-1** (OR node, proven by move m): `Z_p(node) = Z_p(child) ∪ cells(m)`,
-  elementwise across the sequence.
-- **DT-1** (AND node, proven): `Z_p(node) = ⋃` over all enumerated defender
-  pairs of `Z_p(child(pair))`, elementwise, plus the T-contributions below.
-- **EP-1** (any proof node): for each defender hot window with exactly `k`
-  empty cells (k ∈ {1, 2}; hot means ≥ 4 own), those empties enter `Z_k..Z_3`.
-  A defender hot window is the only defender formation that can win within the
-  proof's horizon; deeper defender builds are the higher-order tolerance.
+  at EVERY order `Z_i` (the attacker's own move cells enter all orders, so no
+  tolerated defender stone can ever sit on one).
+- **DT-1** (AND node, proven): `Z_p(node) = ⋃` over ALL legal defender pairs of
+  `Z_p(child(pair))`, elementwise, plus the EP-1/T3-1 contributions below. A
+  non-blocking pair's child is the plan completion (§2.4's classification): its
+  contribution is the completion's cells — the least surviving plan by
+  `(axis, start)`, its empty cells, the same deterministic rule in both the
+  solver and the verifier (this is a zone-cell bookkeeping choice, not a move
+  choice; no strength implication).
+- **EP-1** (every proof node): for each **defender active segment** — a 6-window
+  with no attacker stones, ANY defender count including zero (Wu & Lin §III-A:
+  "A segment is called an active segment of one player, if none of the squares
+  are occupied by the opponent's stones") — with exactly `k` unoccupied
+  squares: those squares enter `Z_k..Z_3`, i.e. `k = 1` → `Z_1..Z_3`, `k = 2`
+  → `Z_2..Z_3`, `k ≥ 3` → `Z_3` (the paper's order-3 cap: "we construct zones
+  with size three, and simply use [Z_3] for those higher order zones"). This
+  is the paper-faithful grading revision 1 narrowed to hot windows, which the
+  review's BLOCKING 1 showed certified false wins (a defender live-one's
+  extension cells are order-3 relevant; leaving them in no zone put them in the
+  tolerance class).
 - **T3-1**: the attacker's hot-window empties enter ALL of `Z_1..Z_3`.
-- **T3-2**: EP-1's contributions (the paper's own pairing of the two).
 
-`Z_p` is stored in the solver TT entry when a node is proven (memoising zone
-construction across transpositions) and recomputed bottom-up during proof-tree
-reconstruction.
+**One marked deviation from the paper.** The paper's boards are finite; ours is
+unbounded. The active-segment scan at a proof node is bounded to windows
+intersecting that node's own legal region (the radius-8 union around the
+node's stones — the R2 region-scan pattern). Grounds: cells beyond the legal
+region are unreachable by any legal stone at that node (rule 5), and the scan
+re-runs at every node as the board grows, so a defender build marching outward
+enters the scan one step behind the march, which is exactly when it becomes
+legally reachable. The paper's zone machinery is dynamic (promotion, shifting,
+Lemma 3) in ways this static per-node construction does not reproduce; **no
+inheritance from the paper's Theorem 2 is claimed** — the property our
+construction actually has is whatever gate (c) falsifies or confirms on the
+fixture class, and nothing beyond it (review MAJOR 5(iv)).
 
-**The soundness hinge, stated once.** Pruning free stones to `Z_s` is sound for
-a found proof iff `Z_p ⊆ Z_s`: a free stone outside `Z_s` is then outside
-`Z_p`, and the RZOP relevance property (Wu & Lin Definition 3, the property
-gate (c) replays) says defender stones outside the proof zone do not break the
-proof. The solver CHECKS `Z_p ⊆ Z_s` after every solve and reports a zone
-overflow as a named outcome (`NoWinUnderZone` — fail loud, rule 3) rather than
-claiming the win.
+**Storage and the certificate.** The solver computes `Z_p` incrementally on
+its proof DAG as nodes are proven and stores it in the TT entry (memoising
+zone construction across transpositions; proven entries carry zones). The
+certificate is the verifier's (§7b) from-scratch `Z_p` over the reconstructed
+witness tree, and gate (b) asserts the solver's memoised zones and the
+verifier's agree — two independent constructions of the same specification
+(review MAJOR 9(a): one certificate, the verifier's; the TT copy is a
+cross-check, never the authority). A fail-loud invariant, not a soundness
+claim: every cell of the verifier's `Z_p` must lie within the legal region of
+some proof node grown by 5 (a window's reach past its last stone). By
+construction it cannot fail; if it does, the zone construction has a defect
+and the solve refuses (review BLOCKING 1's blast radius: v0 has no zone-based
+pruning, so this invariant is the only thing the zone can still get wrong
+loudly).
+
+**No zone pruning in v0.** The defender's second stone ranges over the full
+legal turn set. The `free_stone_radius` knob (registered start 8 = the full
+legal region = no prune) exists so a later WP can shrink it; any value below 8
+makes the solver report `NoWinUnderZone` whenever the proof's zone exceeds the
+radius-`r` balls around the root stones — a loud outcome, never a silent
+false win (the review's MAJOR 8(b) showed radius 4 overflows legitimate
+2-turn extension chains; that arithmetic is why v0 does not prune).
 
 ## 4. df-pn
 
@@ -144,27 +191,46 @@ stored pn/dn never see it. ε = 1/4 is the registered starting value (paper
 non-transferable), a config knob as an exact rational (numerator/denominator,
 u32, `ceil` in u128 arithmetic).
 
+**The loop semantics the quotes do not state, pinned (review MAJOR 3):** the
+paper's derivation is for the first child at one visit; a df-pn node LOOPS. At
+each iteration the parent (i) re-derives `p`/`d` from current child numbers,
+(ii) terminates if `p ≥ pt` or `d ≥ dt`, (iii) re-selects the minimum child
+(least by canonical move order on ties — deterministic), (iv) recomputes
+`p2`/`d2` against the CURRENT ordering, and (v) descends with the quoted
+formulas evaluated against current values. The formulas are applied per
+descent, never cached from a previous iteration.
+
 **INF sentinel**: `INF = 1 << 62` (u64). All pn/dn/threshold arithmetic is
 saturating: `INF + x = INF`, `INF + INF = INF`, `min`/`max` saturate at INF,
 no operation can wrap (u64::MAX is unreachable by construction; the ε multiply
 is done in u128 and clamped to INF). No negative values exist (unsigned).
+**Subtraction, the one operation that can underflow (review MAJOR 4):** the
+subtractions `dt − d` and `pt − p` occur only inside the threshold formulas,
+which are evaluated only in step (v) for the selected child, only after step
+(ii) confirmed `p < pt ∧ d < dt` at the parent — so `dt − d ≥ 1` and the
+result is ≥ `d1 ≥ 0`. The order evaluate → terminate-check → select →
+threshold is pinned by a unit test that asserts no underflow path exists
+(debug builds panic on overflow; the release build is checked by the same
+test).
 
 **Solver TT.** Key: pistol-core's full 128-bit key (D-8) — side-to-move and
-intra-turn phase bit included (D-9), so half-move positions key correctly and
-no GHI machinery is needed (D-36: the game is monotone, the state graph is a
-DAG). Entry: `{pn, dn, value ∈ {Proven, Disproven, Unknown}, zone: Option<ZoneP>,
+intra-turn phase bit included (D-9) — so half-move positions key correctly and
+no GHI machinery is needed (D-436: the game is monotone, no repetition, the
+state graph is a DAG; the review's MINOR 1 mis-citation is corrected here —
+D-36 is the win-detection API decision and says nothing about this). Entry:
+`{pn, dn, value ∈ {Proven, Disproven, Unknown}, zone: Option<ZoneP>,
 generation}`. Two-level bucket (Breuker's TwoBig, the scheme the paper itself
-used): slot pair per index — depth/generation-preferred + always-replace;
-PROVEN entries are never replaced by unproven ones (dispatch). Replacement is
-by key hash into a fixed array — deterministic, no hasher iteration on any
-choice path (D-7).
+used): slot pair per index — generation-preferred + always-replace; PROVEN
+entries are never replaced by unproven ones (dispatch). Replacement is by key
+hash into a fixed array — deterministic, no hasher iteration on any choice
+path (D-7).
 
-**Proof-tree reconstruction.** After a root `Win`: walk from the root — OR
-nodes take the least policy move (canonical order, stable tie-break) whose
-child entry is proven; AND nodes take every enumerated defender pair; leaves
-re-verify rule 2 through pistol-core's own win detection. Output: the proof
-tree (moves per node) + `Z_p` + node count + seesaw count. Gate (b) consumes
-this output.
+**Proof-tree reconstruction.** The solver records its witness move per node
+into a proof DAG owned by the solve (separate from the TT; eviction cannot
+lose it — review MAJOR 9(b)). After a root `Win`, the claimed tree is emitted
+by walking the proof DAG: OR nodes emit the recorded witness move; AND nodes
+emit the §2.4 child set (re-derived deterministically). Gate (b)'s verifier
+then re-proves that tree full-width and independently (§7b).
 
 **Seesaw counter.** One counter per solve. A seesaw event: a df-pn recursive
 call returns on a threshold miss, and the parent's next descent selects a
@@ -183,46 +249,75 @@ at closure; the print seam lands with 1.8b's wiring.
 
 ## 6. Option matrix (each row: options, costs, failure modes, recommendation)
 
-| # | decision | options | recommendation + strongest attack |
+| # | decision | options | recommendation + strongest surviving attack |
 |---|---|---|---|
-| M1 | defender free-stone range | (a) full legal region; (b) fixed root `Z_s`; (c) RZOP dynamic seminull sets | **(b)**. (a) forfeits the zone entirely (~10-50× per AND node, and the dispatch requires zone pruning); (c) needs the strategy-first verifier architecture, incompatible with df-pn search. Attack: a root-fixed zone ignores what the proof discovers — answered by the `Z_p ⊆ Z_s` check, which converts a too-small zone into a loud `NoWinUnderZone`, never a false win. |
-| M2 | zone representation | (a) sequence `Z_1⊆Z_2⊆Z_3`; (b) flat set | **(a)**. EP-1's classification is per-order and gate (c)'s tolerance class is order-structured (Wu & Lin Definition 3); a flat set collapses the tolerance claim to the weakest order. Attack: more state in the TT entry — cost is three small sorted vecs, measured at impl. |
+| M1 | defender second-stone range | (a) full legal turn set, no zone prune; (b) fixed root radius `Z_s`; (c) RZOP dynamic seminull sets | **(a)** in v0, knob `free_stone_radius = 8` carrying (b) as licensed-not-scheduled; (c) needs the strategy-first verifier architecture, incompatible with df-pn search. Strongest surviving attack on (b)/(c), recorded after the review broke rev 1's answer: *sub-hot defender builds outside a shrunken range invalidate the found proof, and the `Z_p ⊆ Z_s` check sees them only if EP-1 is paper-faithful — with rev 2's EP-1 it does see them, but then a shrunken range converts legitimate outward-walking wins into `NoWinUnderZone` at radius scales the rev-1 arithmetic already refuted (a live-two's far empty sits at distance 4; two chained extensions reach 8)*. The knob's trade is certification rate for speed, v0 takes the no-prune end, and any shrinking is a future pre-registration. |
+| M2 | zone representation | (a) sequence `Z_1⊆Z_2⊆Z_3`; (b) flat set | **(a)**. EP-1's grading is per-order and gate (c)'s tolerance class is order-structured (Definition 3); a flat set collapses the tolerance claim to the weakest order. Attack: three small sorted vecs per TT entry — an ESTIMATED few-hundred-bytes cost, measured at impl. |
 | M3 | node accounting | (a) inside per-side budget; (b) separate, both printed | **(b)**, §5. Attack: two knobs to configure per seat — real, and cheaper than a silently unmatched SPRT. |
 | M4 | attacker policy width v0 | (a) both stones threat-relevant; (b) one free stone | **(a)**. (b) multiplies OR branching by the legal region and is a width claim needing its own gate story. Attack: (a) proves strictly less — recorded as the licensed-not-scheduled widening, not hidden. |
-| M5 | harness home | (a) bin target inside pistol-solver; (b) bin in pistol-cli; (c) tests only | **(a)**. (b) creates the normal reverse edge that WP-1.5a's `p = 0` claim and `tools/solver_edge_check.sh` adjudicate against; (c) cannot give the determinism gate a two-process seat. Attack: a bin inside the crate is still "a binary in this workspace" on a literal reading — answered at impl by driving the SHIPPED edge-check script against a scratch workspace containing exactly this shape and recording its verdict. |
+| M5 | harness home | (a) bin target inside pistol-solver; (b) bin in pistol-cli; (c) tests only | **(a)**. (b) creates the normal reverse edge WP-1.5a's `p = 0` claim adjudicates against; (c) cannot give the determinism gate a two-process seat. The strongest attack ("a bin inside the crate is still a binary in this workspace on a literal reading") is answered BEFORE selection, by receipt: the shipped `tools/solver_edge_check.sh` was driven against a scratch workspace containing exactly this shape — bin target inside the solver crate, `--locked` graph — and printed `NO normal reverse-dependency on pistol-solver anywhere in the workspace`, exit 0; the control run (a normal `pistol-solver` dependency added to a sibling crate) printed the edge and exited 1. The adjudicator of `p = 0` answers "no edge" to this shape. |
 
 ## 7. Oracles — the gate of this WP
 
 Fixture: `crates/pistol-solver/tests/fixtures/solver_v0.txt`, sha-pinned,
 machine-checkable loader (the `pattern_v0.txt` discipline: unknown line or
-missing expectation = panic). Positions are hand-built small forcing setups and
-near-misses; **bounded means: ≤ 10 stones, proofs ≤ 4 turns deep** (caps are
-design parameters, stated as numbers; wall times MEASURED at §10 and recorded
-here when the oracle first runs). Sample size: ≥ 60 positions, ≥ 20 `Win`,
-≥ 20 `NoWin`. The loader refuses a fixture whose caps it cannot verify.
+missing expectation = panic). **Bounded means, as numbers**: ≤ 10 stones; proof
+depth ≤ 2 turns for the bulk of the differential set, with ≥ 6 positions at
+depth 3-4; the depth cap is a POST-RUN check — a fixture whose proof runs
+deeper than its registered band FAILS the gate, it is not excluded (review
+MINOR 4). Sample size: ≥ 60 positions — ≥ 20 `Win`, of which ≥ 8 walk outward
+(their zone reaches ≥ 2 cells beyond the initial live-window cluster) and ≥ 8
+carry a defender live-three or better near the action (riposte-stressing: the
+positions where a naive free-stone treatment goes wrong); ≥ 20 `NoWin`; ≥ 20
+shallow (≤ 1 turn) wins and refutations pinning rules 2/4 at the leaves
+(review MINOR 3).
 
-**R3' — the brute-force reference** (new, test tree only, alongside R1/R2/R3):
-a memoised AND-OR over the SAME policy semantics, written against `Board` and
-its own hitting-set enumeration, sharing nothing with the solver but
-pistol-core: no df-pn, no thresholds, no TT, no zones, and its defender
-free-stone range is the FULL legal region. Semantics shared, machinery not.
+**R3' — the brute-force reference** (test tree only, alongside R1/R2/R3): a
+memoised AND-OR with short-circuiting (value-preserving: OR stops at the first
+`Win` child, AND at the first `NoWin`), written against `Board` with its own
+window scans — sharing nothing with the solver but pistol-core: no df-pn, no
+thresholds, no TT, no zones, and **no §2 defender-side shortcuts** — every
+legal defender turn from `generate_turns` is applied and the child evaluated;
+step-1/step-3/blocking classifications are never used (review MAJOR 2). The
+attacker side stays policy-restricted: that restriction IS the game being
+solved, implemented independently (its own live-window scan, not
+`ThreatState`).
 
 - **(a) Differential**: for every fixture position, solver value == R3' value.
-  Because R3' enumerates free stones over the full legal region and the solver
-  over `Z_s`, this gate adjudicates BOTH the df-pn machinery AND zone-pruning
-  sufficiency on the fixture class.
-- **(b) Proof-tree re-verification**: every attacker node's claimed move is in
-  the policy set (recomputed independently); every defender node's enumerated
-  pair set is complete per §2 (recomputed independently); every leaf is a
-  rule-2 win via pistol-core. Runs over every `Win` fixture.
+  A `NoWinUnderZone` from the solver is a MISMATCH and fails the gate (it is
+  unreachable in v0 by construction — `free_stone_radius = 8` prunes nothing —
+  so it can only mean a defect; review MINOR 2). Because R3' enumerates every
+  defender turn and the solver prunes to blocking pairs with LAW-OVERLOAD and
+  race shortcuts, this gate adjudicates the df-pn machinery AND every
+  defender-side lemma.
+- **(b) Proof-tree re-verification**: an independent full-width verifier
+  re-proves every `Win` from the emitted claimed tree: every attacker node's
+  move is regenerated by the verifier's own policy code; every defender node
+  is checked against ALL legal turns — a tree edge recurses, a non-edge must
+  concretely resolve as an attacker win (apply the least surviving plan's
+  completion, rule-2 via pistol-core); every leaf is a rule-2 win via
+  pistol-core; every `t ≥ 3` shortcut node is re-derived from the verifier's
+  own hitting-set enumeration plus a concrete defender-no-win check (review
+  MAJOR 9(c)). The verifier computes `Z_p` from scratch over the witness tree;
+  gate (b) also asserts solver-memoised `Z_p` == verifier `Z_p`.
 - **(c) RZ property**: for every `Win` fixture, for every defender
-  pre-placement σ with |σ| ≤ `zone_orders` where σ's i-th stone lies outside
-  `Z_i` (Wu & Lin Definition 3's irrelevance, restricted to the bounded region
-  around the stones — sample = ALL such σ), replay the proof tree's attacker
-  strategy; it must still win. Sample size stated as the count of σ per
-  fixture.
+  pre-placement σ with |σ| ≤ `zone_orders` such that σ's i-th stone lies
+  outside `Z_i` for ALL i (Definition 3's irrelevance, first form; ∀i, pinned —
+  review MAJOR 5(iii)): replay the proof tree's attacker strategy ADVERSARIALLY
+  in `P+σ` — at defender nodes the defender may play ANY legal turn of `P+σ`
+  (σ only occupies cells, so its turn set is a subset of `P`'s; tree edges
+  recurse, non-edges must concretely resolve as attacker wins); at attacker
+  nodes the tree's move is forced and must be legal (AT-1 puts attacker cells
+  in every order, so σ never occupies one); leaves are core-checked. The sample
+  region is the legal region (rule 5) — pinned (review MAJOR 5(i)); sample =
+  ALL σ with |σ| ≤ 2 (≈ 2·10⁴ per fixture, MEASURED at dry run), and for
+  |σ| = 3 the first 20 000 σ in canonical (deterministic) order, the count
+  stated here as the registered sample size.
 - **(d) TT cross-check**: full TT vs a 32-entry TT, identical VALUES on the
-  fixture set (node counts and seesaw may differ; values may not).
+  fixture set (node counts and seesaw may differ; values may not). The 32-entry
+  leg runs under a node cap of 50× the full-TT node count (registered);
+  exceeding it is a named failure `TT-NONTERMINATION`, never a hang (review
+  MAJOR 6). Runs on the differential fixture set only.
 
 Exact commands (release, as the tactical gate precedent dictates):
 
@@ -232,16 +327,18 @@ cargo run --release -p pistol-solver --bin solver-selftest -- \
     crates/pistol-solver/tests/fixtures/solver_v0.txt
 ```
 
-The first is gate (a)+(d) plus the unit tests; the second prints per-position
-value, nodes, seesaw, proof digest and zone overflow status (gates (b)/(c)
-consume its output shape; they are asserted inside the test target too, so the
-script and the test agree by construction). Both are wrapped by
+The first is gates (a)+(d) plus the unit tests; the second prints per-position
+value, nodes, seesaw, proof digest and zone status (gates (b)/(c) consume its
+output shape; they are asserted inside the test target too, so the script and
+the test agree by construction). Both are wrapped by
 `tools/solver_oracle_check.sh` (exit 0/1/2 per the taxonomy; SHELL_CHECKLIST
 reviewed; carries a driving test against the shipped script, per D-289's rule).
 
 **Mutation receipts** (each in its own worktree, each must die):
-- M-A: drop AT-1's attacker-move-cell union → gate (a) or (c) dies.
-- M-B: drop one T2 blocking pair (skip the last minimal cover) → a gate dies.
+- M-A: drop AT-1's attacker-move-cell union at every order → gate (a) or (c)
+  dies.
+- M-B: drop one blocking pair (skip the last minimal cover) at an AND node →
+  a gate dies.
 - M-C: INF as raw `i64::MAX` with plain `+` (overflow/wrap) → a gate dies.
 - M-D: ε applied to stored pn → gate (a) or (d) dies.
 
@@ -262,26 +359,38 @@ schema_version = 1
 epsilon_num = 1
 epsilon_den = 4
 zone_orders = 3
-search_zone_radius = 4
+free_stone_radius = 8
 tt_entries = 1048576
 ```
 
 All four tunables are ESTIMATED imports or engineering starts (ε=1/4 and
-order 3 from square-board papers; radius and TT size unmeasured until §10).
-Validated by `tools/config_check.sh` once its schema table learns the file.
+order 3 from square-board papers; `free_stone_radius = 8` is the no-prune
+value §3 argues for; TT size unmeasured until §10). Validated by
+`tools/config_check.sh` once its schema table learns the file.
 
 ## 9. Out of scope (licensed-not-scheduled unless D-numbered)
 
 Search→solver calls, Deep df-pn, df-pn(r), BTA, twin nodes, TCA, SNDA (all
 retired by D-436), perf tuning, strength claims, attacker free-stone widening,
-12-fold TT canonicalization. The seesaw number is measured and NOT read as a
-licence.
+free-stone range shrinking below the legal region, 12-fold TT canonicalization.
+The seesaw number is measured and NOT read as a licence.
 
-## 10. Dry run (registered commands exercised before review)
+## 10. Dry run and receipts
 
-The §7 command shapes were exercised on a stand-in fixture of the same kind
-(two positions, one trivial win, one trivial refutation, thrown away after the
-dry run — not the registered workload). Output and wall times recorded here at
-impl time; the criterion each command's output must show: the test target
-prints one PASS/FAIL line per gate assertion, the selftest prints one line per
-position with all six fields, and neither exits 0 on an empty run.
+**M5's receipt is above (§6), taken before selection.**
+
+The §7 command blocks cannot be exercised at design time — the targets they
+name do not exist until IMPL, and CLAUDE.md's instrument rule binds artifacts
+by revision. The dry run is therefore registered here as the FIRST impl act,
+before any gate is authored: at the scaffold commit (the commit adding the
+`solver_oracle_tests` target, the `solver-selftest` bin, and
+`tools/solver_oracle_check.sh`, each in stub form), the §7 commands are run
+against a stand-in fixture of the same kind as the registered workload — two
+positions, a trivial win-in-one (an open five) and a trivial refutation (no
+attacker live window at all), differing from the registered fixture only in
+identity — and this section records the stand-in fixture's exact content, the
+command output, and the wall times, at that revision. Criteria each output
+must show: the test target prints one PASS/FAIL line per gate assertion and
+fails on an empty run; the selftest prints one line per position with all six
+fields and exits nonzero on a malformed fixture. REVIEW-impl verifies the
+recorded output against these criteria.
