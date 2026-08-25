@@ -1,17 +1,24 @@
 # WP-1.8a design — relevance zones + df-pn in pistol-solver, correctness only
 
-Revision 2. Governing dispatch: `[GROUNDWORK] WP-1.8a` (operator). D-436 governs
+Revision 3. Governing dispatch: `[GROUNDWORK] WP-1.8a` (operator). D-436 governs
 the GHI retirement; D-434/D-435 landed with this WP's opening commit and bind
 nothing here beyond the teacher question they settle.
 
-Revision 1 (`6f13d0c`) FAILED its REVIEW-design (report landed at
-`docs/experiments/wp18a_design_REVIEW.md`): 1 BLOCKING, 8 MAJOR, 6 MINOR. Every
-finding is closed in this revision; the review's own numbering is cited at each
-fix. The one design decision the review overturned: v0 no longer prunes the
-defender's free stone by a zone (BLOCKING 1 + MAJOR 8 showed the radius-4 zone
-certified false wins and overflowed legitimate wins); the zone is now the
-derived, independently re-verified artifact, and the pruning knob is carried at
-its no-prune value.
+Revision 1 (`6f13d0c`) FAILED its REVIEW-design (report at
+`docs/experiments/wp18a_design_REVIEW.md`): 1 BLOCKING, 8 MAJOR, 6 MINOR —
+closed in revision 2 (`34c6838`), which the review's own words overturn in one
+place: v0 no longer prunes the defender's free stone by a zone, because the
+radius-4 zone certified false wins and overflowed legitimate wins; the zone is
+now the derived, independently re-verified artifact, and the pruning knob is
+carried at its no-prune value.
+
+Revision 2 FAILED its scoped re-review (report at
+`docs/experiments/wp18a_design_REVIEW_rev2.md`): 12 of 15 rev-1 findings
+closed; 1 new BLOCKING (gate (c)'s P+σ replay mis-specified — the "turn set is
+a subset of P's" claim is false under rule 5, σ stones extend the legal
+region), 2 MAJOR (verifier defender-no-win at expanded AND nodes; dry-run
+criteria without externally-derived referents), 4 MINOR. All are closed in
+this revision, cited by the re-review's letters.
 
 ## 0. Premises, corrected against the live tree
 
@@ -85,7 +92,9 @@ licensed-not-scheduled.
 3. `t ≥ 3` and step 1 false: the node is `Win` without expansion — LAW-OVERLOAD
    (two defender stones cannot hit three).
 4. `t ∈ {1, 2}`: the children are `generate_turns(state)` filtered to pairs
-   covering all plan-empty cells (every such pair contains an
+   forming a COVER of the plan family — a hitting set of the plans'
+   empty-cell sets: at least one pair stone in every plan's empty set
+   (re-review MINOR G; every such pair contains an
    inclusion-minimal cover; `blocking_covers(defender, Two)` exists as the fast
    path and the per-pair predicate as the specification — the filter and the
    cover arithmetic must agree, and a unit test pins that they do). The
@@ -234,7 +243,8 @@ then re-proves that tree full-width and independently (§7b).
 
 **Seesaw counter.** One counter per solve. A seesaw event: a df-pn recursive
 call returns on a threshold miss, and the parent's next descent selects a
-different child. Printed per solve. MEASURED on the fixture set, no threshold
+different child. Printed per solve, and aggregated over the fixture set at
+the gates — a to-be-measured number with no registered threshold
 registered — that number is WP-1.8c's licence input.
 
 ## 5. Node accounting (the decision the dispatch asks for)
@@ -251,7 +261,7 @@ at closure; the print seam lands with 1.8b's wiring.
 
 | # | decision | options | recommendation + strongest surviving attack |
 |---|---|---|---|
-| M1 | defender second-stone range | (a) full legal turn set, no zone prune; (b) fixed root radius `Z_s`; (c) RZOP dynamic seminull sets | **(a)** in v0, knob `free_stone_radius = 8` carrying (b) as licensed-not-scheduled; (c) needs the strategy-first verifier architecture, incompatible with df-pn search. Strongest surviving attack on (b)/(c), recorded after the review broke rev 1's answer: *sub-hot defender builds outside a shrunken range invalidate the found proof, and the `Z_p ⊆ Z_s` check sees them only if EP-1 is paper-faithful — with rev 2's EP-1 it does see them, but then a shrunken range converts legitimate outward-walking wins into `NoWinUnderZone` at radius scales the rev-1 arithmetic already refuted (a live-two's far empty sits at distance 4; two chained extensions reach 8)*. The knob's trade is certification rate for speed, v0 takes the no-prune end, and any shrinking is a future pre-registration. |
+| M1 | defender second-stone range | (a) full legal turn set, no zone prune; (b) fixed root radius `Z_s`; (c) RZOP dynamic seminull sets | **(a)** in v0, knob `free_stone_radius = 8` carrying (b) as licensed-not-scheduled; (c) needs the strategy-first verifier architecture, incompatible with df-pn search. Strongest surviving attack on (b)/(c), recorded after the review broke rev 1's answer: *sub-hot defender builds outside a shrunken range invalidate the found proof, and the `Z_p ⊆ Z_s` check sees them only if EP-1 is paper-faithful — with rev 2's EP-1 it does see them, but then a shrunken range converts legitimate outward-walking wins into `NoWinUnderZone` at radius scales the rev-1 arithmetic already refuted (ESTIMATED: a live-two's far empty sits at distance 4, two chained extensions reach 8)*. The knob's trade is certification rate for speed, v0 takes the no-prune end, and any shrinking is a future pre-registration. |
 | M2 | zone representation | (a) sequence `Z_1⊆Z_2⊆Z_3`; (b) flat set | **(a)**. EP-1's grading is per-order and gate (c)'s tolerance class is order-structured (Definition 3); a flat set collapses the tolerance claim to the weakest order. Attack: three small sorted vecs per TT entry — an ESTIMATED few-hundred-bytes cost, measured at impl. |
 | M3 | node accounting | (a) inside per-side budget; (b) separate, both printed | **(b)**, §5. Attack: two knobs to configure per seat — real, and cheaper than a silently unmatched SPRT. |
 | M4 | attacker policy width v0 | (a) both stones threat-relevant; (b) one free stone | **(a)**. (b) multiplies OR branching by the legal region and is a width claim needing its own gate story. Attack: (a) proves strictly less — recorded as the licensed-not-scheduled widening, not hidden. |
@@ -293,26 +303,65 @@ solved, implemented independently (its own live-window scan, not
 - **(b) Proof-tree re-verification**: an independent full-width verifier
   re-proves every `Win` from the emitted claimed tree: every attacker node's
   move is regenerated by the verifier's own policy code; every defender node
-  is checked against ALL legal turns — a tree edge recurses, a non-edge must
-  concretely resolve as an attacker win (apply the least surviving plan's
-  completion, rule-2 via pistol-core); every leaf is a rule-2 win via
-  pistol-core; every `t ≥ 3` shortcut node is re-derived from the verifier's
-  own hitting-set enumeration plus a concrete defender-no-win check (review
-  MAJOR 9(c)). The verifier computes `Z_p` from scratch over the witness tree;
-  gate (b) also asserts solver-memoised `Z_p` == verifier `Z_p`.
-- **(c) RZ property**: for every `Win` fixture, for every defender
-  pre-placement σ with |σ| ≤ `zone_orders` such that σ's i-th stone lies
-  outside `Z_i` for ALL i (Definition 3's irrelevance, first form; ∀i, pinned —
-  review MAJOR 5(iii)): replay the proof tree's attacker strategy ADVERSARIALLY
-  in `P+σ` — at defender nodes the defender may play ANY legal turn of `P+σ`
-  (σ only occupies cells, so its turn set is a subset of `P`'s; tree edges
-  recurse, non-edges must concretely resolve as attacker wins); at attacker
-  nodes the tree's move is forced and must be legal (AT-1 puts attacker cells
-  in every order, so σ never occupies one); leaves are core-checked. The sample
-  region is the legal region (rule 5) — pinned (review MAJOR 5(i)); sample =
-  ALL σ with |σ| ≤ 2 (≈ 2·10⁴ per fixture, MEASURED at dry run), and for
-  |σ| = 3 the first 20 000 σ in canonical (deterministic) order, the count
-  stated here as the registered sample size.
+  applies EVERY legal turn through `GameState::place` and a defender-win
+  `PlyOutcome` is a verification FAILURE at every AND node, not only at
+  `t ≥ 3` shortcut nodes (re-review MAJOR B) — a tree edge recurses, a
+  non-edge must concretely resolve as an attacker win (apply the least
+  surviving plan's completion, rule-2 via pistol-core); every leaf is a rule-2
+  win via pistol-core; every `t ≥ 3` shortcut node is re-derived from the
+  verifier's own hitting-set enumeration plus a concrete defender-no-win
+  check (review MAJOR 9(c)). The verifier computes `Z_p` from scratch over
+  the witness tree; gate (b) also asserts solver-memoised `Z_p` == verifier
+  `Z_p`.
+- **(c) RZ property, two legs** (re-review BLOCKING A re-specified; σ class
+  narrowed to LEGAL pre-placements — cells of `P`'s own legal region — the
+  natural game reading of "place defender stones", and a bounded sample):
+
+  **(c1) Sequence replay.** For every sampled σ: walk the proof tree in
+  `P+σ`. At attacker nodes the tree's move is played and must (i) be legal
+  and (ii) still create its hot window — both checked concretely; AT-1 puts
+  attacker move cells in every zone order, so σ can never occupy one, and
+  every empty cell of every window a proof move activates is in `Z_1` (the
+  move cells by AT-1, the future plan cells by T3-1 at the child), so σ
+  cannot kill the activation either — but the replay CHECKS rather than
+  assumes. At defender nodes the tree's pairs are applied via
+  `GameState::place`: a defender-win outcome is a named failure
+  (`DEFENDER-WIN-UNDER-SIGMA`); a tree pair made illegal by σ (σ on a
+  free-stone cell) is SKIPPED and counted — its line is adjudicated by (c2),
+  not by this walk. Leaves are core-checked rule-2 wins.
+
+  **(c2) Property evaluation.** For every sampled σ: the SOLVER's value on
+  `P+σ` must be `Win` — the paper's Definition 3 property ("the attacker
+  wins in `P+σ` for all irrelevant σ"), with the defender playing
+  adversarially through the solver's own full enumeration on the `P+σ`
+  board, whose legal region σ stones EXTEND (rule 5 unions around every
+  existing stone, σ's included — the re-review's superset correction: the
+  defender's `P+σ` turn set is a SUPERSET of `P`'s, and (c2) is the leg that
+  adjudicates the additions, which (c1) cannot). Independence note: (c2)
+  uses the solver as its win-oracle; the solver's values are vouched for by
+  gates (a)+(b) on this class, and a zone-property failure is falsifiable
+  in the right direction (σ that breaks the win makes (c2) print `NoWin`).
+
+  **The σ class and sample, registered**: σ's i-th stone lies outside `Z_i`
+  (all i), and all σ cells lie in `P`'s legal region. Sample: |σ| = 1 — ALL
+  such cells; |σ| = 2 — all such pairs, capped at the first 5 000 in
+  canonical order; |σ| = 3 — all such triples, capped at the first 2 000
+  canonical. One structural invariant, stated because it is the paper's
+  grading working: σ alone can never complete a defender six — completing a
+  k-empty active segment needs k stones all inside `Z_k..`, and σ_i avoids
+  `Z_i`, so at least one of the k is excluded; the k = 1 and k = 2 cases
+  (hot windows) are excluded outright by `Z_1`/`Z_2`, and the k = 3 case
+  needs three stones of which σ_3 cannot be one.
+
+  **Cost, priced (re-review MINOR F)**: (c1) is a tree walk —
+  O(proof-tree size) per σ, µs-scale; (c2) is one solver call per σ.
+  Registered caps, stated before the run: (c2) runs on ALL `Win` fixtures
+  under a 60-minute wall cap for the whole gate leg (detached execution);
+  if the cap is exceeded the gate FAILS with `SIGMA-SAMPLE-OVERRUN` — the
+  sample does not shrink post-hoc. Expected order of magnitude, ESTIMATED:
+  ≤ ~5 000 solver calls per fixture on ≤ 10-stone clustered positions, each
+  a small solve; the dry run MEASURES the real figure and it is recorded in
+  §10.
 - **(d) TT cross-check**: full TT vs a 32-entry TT, identical VALUES on the
   fixture set (node counts and seesaw may differ; values may not). The 32-entry
   leg runs under a node cap of 50× the full-TT node count (registered);
@@ -381,16 +430,22 @@ The seesaw number is measured and NOT read as a licence.
 
 The §7 command blocks cannot be exercised at design time — the targets they
 name do not exist until IMPL, and CLAUDE.md's instrument rule binds artifacts
-by revision. The dry run is therefore registered here as the FIRST impl act,
-before any gate is authored: at the scaffold commit (the commit adding the
-`solver_oracle_tests` target, the `solver-selftest` bin, and
-`tools/solver_oracle_check.sh`, each in stub form), the §7 commands are run
-against a stand-in fixture of the same kind as the registered workload — two
-positions, a trivial win-in-one (an open five) and a trivial refutation (no
-attacker live window at all), differing from the registered fixture only in
-identity — and this section records the stand-in fixture's exact content, the
-command output, and the wall times, at that revision. Criteria each output
-must show: the test target prints one PASS/FAIL line per gate assertion and
-fails on an empty run; the selftest prints one line per position with all six
-fields and exits nonzero on a malformed fixture. REVIEW-impl verifies the
-recorded output against these criteria.
+by revision. The dry run is therefore registered here as the FIRST impl act
+after the solver computes real values, and BEFORE any gate script or fixture
+is authored: at the first commit where the `solver-selftest` bin and the
+`solver_oracle_tests` target actually solve positions (the df-pn core in,
+gates not yet), the §7 commands are run against a stand-in fixture of the
+same kind as the registered workload — two positions, a trivial win-in-one
+(an attacker open five) and a trivial refutation (no attacker live window at
+all), differing from the registered fixture only in identity. **The
+stand-in fixture's exact content**: position 1 = the plies of an open five
+for the attacker plus defender stones far from it; position 2 = four
+scattered attacker stones with no live window of own ≥ 2. **Criteria the
+output must show, with externally-derived referents** (re-review MAJOR C —
+values known from the definitions, not from the instrument): position 1
+prints `Win` and position 2 prints `NoWin`; both print nonzero proof
+digests; each gate assertion prints its own PASS/FAIL line; the selftest
+exits nonzero on a malformed fixture and the test target fails on an empty
+run. This section then records the stand-in fixture's bytes, the command
+output, the σ-sample and (c2) costs, and the wall times, at that revision;
+REVIEW-impl verifies the recorded output against these criteria.
