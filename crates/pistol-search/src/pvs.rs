@@ -733,7 +733,7 @@ mod tests {
         // against `beta`, so the first forced candidate cuts the node off.
         let score = run.visit(2, -INFINITY, -INFINITY + 1, 0);
         assert!(
-            score >= -INFINITY + 1,
+            score > -INFINITY,
             "the null window must fail high for the cutoff to have happened at all"
         );
         // `killers[0]` is written only by a recording at ply 0 — the root's
