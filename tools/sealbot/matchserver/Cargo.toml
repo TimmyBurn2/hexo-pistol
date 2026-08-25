@@ -1,0 +1,22 @@
+[package]
+name = "pistol-matchserver"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+publish = false
+
+# The local HeXO match server: a referee over pistol-core (the one rules
+# implementation this repository has) driving two engine subprocesses. See
+# tools/sealbot/README.md. Deliberately NOT a workspace member (the empty
+# [workspace] table below detaches it): it is a comparison harness, not
+# shipped engine code, and the fresh-clone gate builds the workspace only.
+[workspace]
+
+[dependencies]
+pistol-core = { path = "../../../crates/pistol-core" }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.145"
+toml = "1.1.4"
+
+[lints.rust]
+unsafe_code = "deny"

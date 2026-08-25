@@ -1,0 +1,122 @@
+# Sealbot anchor match — pre-registration
+
+**What this is**: ONE anchor match, pistol (the WP-1.7-closure engine) vs
+sealbot, on the local HeXO match platform (`tools/sealbot/`). Its purpose is
+to record where pistol stands against the one external engine we have, with a
+transcript that can be replayed. **What this is NOT**: not SPRT, not paired,
+not an Elo claim, not a strength claim of any kind beyond "this is what
+happened in these N games". Sealbot is UNVERIFIED (docs/research/
+sealbot_notes.md, D-197): beating it licenses the claim "beats sealbot" and
+nothing more, and the standing judgment — bot far below strong humans until
+measured against them — is unchanged by anything here.
+
+## 1. The registered numbers (fixed before game one)
+
+| What | Value |
+|---|---|
+| Games | **N = 40** (seats alternate; engine A = pistol is p1 in odd games, p2 in even — 20 per seat) |
+| Opening policy | **The platform's standard setup, every game**: the server (matchserver) auto-plays p1's turn-1 stone at the origin (0,0), exactly as the HeXO server's htttx `setup` packet delivers; engines are first asked at turn 2 |
+| pistol engine | binary built at `e2280ca` in a dedicated worktree, sha256 `665d2815ddba28e7889ebea661a10b15352036ab46bfc6f1758d72813cad4184` (= D-433's pinned digest, reproduced twice in two directories; see tools/sealbot/README.md "The engine pin" for why HEAD's build differs) |
+| pistol config | `configs/instrument_staged_v0.toml` (mode instrument, 1 thread, lexicographic tie-break), run with cwd = the engine worktree |
+| pistol budget | `go nodes 50000` — the same instrument budget WP-1.6/1.7 ran (D-186, D-432) |
+| pistol process | one per game; wall cap 120 s per answer |
+| sealbot engine | `current/` at the recorded local path, through `tools/sealbot/sealbot_shim.py` |
+| sealbot budget | `time_limit = 0.3` s per turn (the value hexo-bridge's own sealbot example runs); wall cap 5 s per answer |
+| Turn cap | **60** (evaluation horizon; a game with no decision is "capped", never a win) |
+
+## 2. What counts as what
+
+- **Decided**: a game ending in six-or-more-in-a-line. These are the ONLY
+  games in the interval's sample.
+- **Capped**: no decision within 60 turns. Reported separately, excluded from
+  the interval.
+- **Forfeit**: illegal move (a stone the rules refuse, or a turn that stops
+  short of the stones owed), engine failure, or timeout. Reported separately,
+  excluded from the interval; a win that arrives by the opponent's forfeit is
+  tallied as `win_by_opponent_forfeit`, never as a decided win.
+- **Interval**: Wilson 95% over pistol's share of DECIDED games. No paired
+  statistic, no Elo conversion, no SPRT — the seats are reported separately
+  precisely because nothing here pairs them.
+- **Compute**: pistol's node total (from the engine's own `totals` lines) and
+  both sides' wall time, per the transcripts.
+
+## 3. The instruments, at their revisions
+
+| Instrument | Revision | Digest/identity |
+|---|---|---|
+| The match platform (`tools/sealbot/`, whole tree) | **INSTRUMENT_SHA** (the commit recorded in the ADR at run time) | the adapter + matchserver + shim + tests + this document's tree |
+| `run_match.sh` | same commit | drives the match; builds with `--locked` |
+| `replay_check` (second instrument) | same commit | replays transcripts against pistol-core |
+| The run config | `local/sealbot_anchor.toml` | sha256 recorded in the ADR at run time |
+| pistol binary | `e2280ca` | `665d2815…` (§1) |
+| sealbot | local tree, unversioned | recorded as the shim's argv in the config; UNVERIFIED by design |
+
+A change to any of these before the run reopens this pre-registration,
+however small the diff.
+
+## 4. The registered commands
+
+Run from the repository root (the branch carrying this document):
+
+```
+tools/sealbot/run_match.sh local/sealbot_anchor.toml
+tools/sealbot/matchserver/target/release/replay_check artifacts/sealbot_anchor_v1
+sha256sum artifacts/sealbot_anchor_v1/report.json \
+         artifacts/sealbot_anchor_v1/report.txt \
+         artifacts/sealbot_anchor_v1/g*.jsonl
+```
+
+## 5. The dry run (taken before this registration; same kind, not the sample)
+
+Input: `local/sealbot_dryrun.toml` — the same two real engines, the same
+seats rule, at reduced budgets (pistol `nodes 5000`, sealbot `0.05 s`,
+cap 40, **2 games**). Output: `artifacts/sealbot_dryrun_v1/`
+(report `fc8449bc63f2277b15e574a5f60bcd366c43708ab6c9a8e559d7c1b1e2350a9f`,
+transcripts `002d10c0…` and `e4bca9cd…`).
+
+**Criteria, with the defect class each exists to exclude:**
+
+- **A. Both games ran without a forfeit** (game 1 capped; game 2 a win at
+  turn 15). *Defect class: a driver-protocol break masquerading as a game
+  outcome — a seat that cannot speak its protocol loses by forfeit and the
+  anchor would silently measure plumbing.* A forfeit here fails this
+  criterion.
+- **B. `replay_check` exits 0 on the dry-run transcripts.** *Defect class:
+  the written record is not the game that was played — stone order, turn
+  boundaries, or win bookkeeping corrupted in the transcript path.* Any
+  disagreement fails this criterion.
+- **C. The report's `nodes_total` equals the sum of the per-turn `nodes` in
+  the transcripts** (verified: 124747 == 124747). *Defect class: compute
+  misattribution — per-side compute is a reporting requirement (CLAUDE.md
+  rule 6) and a driver that bills the wrong seat's nodes misreports it.*
+- **D. The stub suite passes**, including the tampered-record negative
+  control. *Defect class: an instrument that cannot say no.*
+
+## 6. The governed run's agreement criterion, and its consequence
+
+`replay_check` over all 40 transcripts must print
+`40 transcript(s) replayed to their recorded outcomes` and exit 0. The two
+instruments share pistol-core by design (the rules are not the stage under
+doubt); the stage under doubt is the RECORD, which only the re-read
+exercises. **Registered consequence of disagreement**: the run is NOT a
+measurement. The transcripts stand as raw material, the anchor verdict is
+withheld, and the platform is fixed and the match re-run as a NEW
+pre-registration on a fresh output directory. No post-hoc repair of the
+record, no partial reading.
+
+## 7. Cost
+
+MEASURED dry-run scale-up: 2 games at 1/10 budgets took 16 s wall. The
+governed run at full budget: games run longer (deeper answers, more turns);
+ESTIMATE 10–20 min wall on this machine, operator attention ~5 min to launch
+and read. **Abort bound**: if the run exceeds 60 min wall it is stopped and
+recorded as such (a cost anomaly, not a verdict).
+
+## 8. What flips or reopens this
+
+- Any change to an instrument revision (§3) before the run.
+- The operator's overrule of N, the cap, or a budget — each is an amendment
+  and a fresh review of THIS document at its new revision.
+- Nothing about the outcome reopens it: a 40–0 sealbot sweep and a 40–0
+  pistol sweep are equally valid anchors, and both leave the standing
+  judgment (below strong humans) exactly where it is.

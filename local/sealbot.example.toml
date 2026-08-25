@@ -1,0 +1,46 @@
+# local/sealbot.example.toml — the shape of a match config for the local
+# HeXO match platform. Copy to local/<your-run>.toml and edit. Everything
+# machine-specific (sealbot's paths, budgets, the run's label) lives HERE,
+# gitignored; this example is the committed shape.
+#
+# Run: tools/sealbot/run_match.sh local/<your-run>.toml
+#
+# Paths are relative to the repository root (where run_match.sh stands).
+# output_dir is created; a directory that already holds a report is refused.
+
+schema_version = 1
+
+games = 40
+# The evaluation horizon: a game with no decision by this many turns is
+# reported "capped", never a win.
+turn_cap = 60
+# Where transcripts, stderr and the report are written (repo-relative).
+output_dir = "artifacts/sealbot_anchor_v1"
+
+[engine_a]
+kind = "pistol"
+label = "pistol-e2280ca-instrument"
+# The shipped binary, pinned by digest in the pre-registration.
+command = ["target/release/pistol", "--config", "configs/instrument_staged_v0.toml"]
+# pistol resolves its config's internal paths against this directory.
+cwd = "."
+# The instrument budget: `go nodes <n>`. Registered in the pre-registration.
+nodes = 50000
+# Wall cap per pistol answer; the node budget bounds it, this bounds a hang.
+turn_timeout_seconds = 120.0
+
+[engine_b]
+kind = "sealbot"
+label = "sealbot-current"
+# The shim owns everything sealbot-specific.
+command = [
+  "python3",
+  "tools/sealbot/sealbot_shim.py",
+  "/absolute/path/to/sealbot/current",   # bot_dir: where minimax_cpp lives
+  "/absolute/path/to/sealbot",           # root_dir: where game.py lives
+]
+cwd = "."
+# sealbot's own budget: seconds per turn, handed to the shim verbatim.
+time_limit_seconds = 0.3
+# Wall cap per sealbot answer: a hang forfeits, never blocks the match.
+turn_timeout_seconds = 5.0
