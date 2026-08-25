@@ -1,0 +1,89 @@
+# pistol — WP-1.7's GOVERNED EXPERIMENT: the three ordering heuristics
+# (killers, history, countermove, all ON) against the committed plain
+# staged policy.
+#
+# THIS IS THE DOCUMENT `docs/experiments/wp17_sprt_prereg.md` §3 NAMES: "The
+# document that IS the experiment is
+# configs/arena_wp17_heuristics_vs_staged.toml, authored and committed at
+# Step 6's own launch, once §9.2/§9.6 are known."
+#
+# `binary_sha256` on both seats (prereg §9.2) is CONFIRMED below: rebuilt
+# `--release --locked` and re-digested at this file's own revision,
+# immediately before launch. REBUILD MEANS RE-RECORD. The digests are
+# UNCHANGED from prereg §7A.1's pins (the commits between `fc4bc69` and
+# here touch docs, `tools/` scripts, `configs/`, and one `#[cfg(test)]`
+# module — nothing a release binary is built from; the pinned digests
+# re-verified byte-exact after the rebuild).
+#
+# Every value below transcribes prereg §3 verbatim:
+#   openings_file / openings_take 500 / openings_skip 1000 (THE FRESH SLICE,
+#     fixed in the document per §9.2a — D-402 retired 0..499, WP-1.6
+#     consumed 500..999, this draws 1000..1499);
+#   turn_cap 40 / n_workers 4 / hang_timeout_ms 120000;
+#   budget nodes 50000; sprt elo0 0.0 elo1 15.0 alpha 0.05 beta 0.05.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[run]
+# The PRIMARY SPRT book (prereg §3), 2000 openings, sha-pinned.
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+
+# Prereg §3: clears §2's 100-pair floor with wide margin.
+openings_take = 500
+
+# THE FRESH SLICE (prereg §3 and §9.2a): D-402 retired `skip 0, take 500`;
+# WP-1.6's governed run consumed `skip 500, take 500`; this draws the NEXT
+# 500, disjoint from both by construction. Decided in the pre-registration
+# itself — D-427's lesson — never at launch.
+openings_skip = 1000
+
+# An evaluation horizon, never a game rule (game rule 6). Prereg §3: as
+# every prior run.
+turn_cap = 40
+
+# WP-1.3's own red-team clearance, unchanged (prereg §3).
+n_workers = 4
+
+# Liveness only, never an adjudication (D-159). Prereg §3/§9.5: calibrated
+# NO-CHANGE — D-431's bench measured the heuristics seat's worst single
+# search at 430 ms at this exact budget, a ~279x margin.
+hang_timeout_ms = 120000
+
+[budget]
+# The registered snapshot budget every SPRT document in this project uses
+# (prereg §3).
+kind = "nodes"
+value = 50000
+
+[sprt]
+# Prereg §2: H0 — the heuristics-ON seat is no stronger.
+elo0 = 0.0
+
+# Prereg §2, FIXED by this WP's dispatch (D-432 records the quotation).
+elo1 = 15.0
+
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# THE HEURISTICS-ON SEAT, in slot A because the arena's statistic is slot
+# A's score and prereg §1's H1 is "the heuristics seat is stronger" —
+# reading the sign backwards afterwards is the one mistake a
+# pre-registration exists to prevent.
+label = "staged_h"
+binary = "target/release/pistol"
+# CONFIRMED (prereg §9.2): sha256sum of a fresh `cargo build --release
+# --locked --bin pistol` at this file's own launch revision.
+binary_sha256 = "665d2815ddba28e7889ebea661a10b15352036ab46bfc6f1758d72813cad4184"
+config = "configs/instrument_staged_h_v0.toml"
+
+[engine_b]
+# THE COMMITTED PLAIN STAGED POLICY, unchanged — prereg §3's engine B, same
+# digest as engine A since both seats run the one built binary and differ
+# only by `config`.
+label = "staged"
+binary = "target/release/pistol"
+binary_sha256 = "665d2815ddba28e7889ebea661a10b15352036ab46bfc6f1758d72813cad4184"
+config = "configs/instrument_staged_v0.toml"
