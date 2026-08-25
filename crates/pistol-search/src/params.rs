@@ -75,6 +75,36 @@ pub struct StagedParams {
     /// Which of `crate::quiescence`'s two gate triggers may grant an
     /// extension (docs/decisions.md D-396).
     pub q_triggers: QTriggers,
+    /// WP-1.7's three ordering-heuristic gates
+    /// (docs/experiments/wp17_design.md §6): killers, history and
+    /// countermove reorder the staged candidate set's UNFORCED range. Each
+    /// is `false` in every committed config until an SPRT says otherwise;
+    /// there is no `Default` and no code-side default (CLAUDE.md rule 1) —
+    /// a value exists because a config or a test stated it.
+    pub ordering: OrderingHeuristics,
+}
+
+/// Which of WP-1.7's three ordering heuristics run
+/// (`docs/experiments/wp17_design.md`). Three independent gates, each
+/// defaulting OFF in every committed config; `any()` is the one question the
+/// search's hot path asks, so a fully-off policy costs one boolean OR.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OrderingHeuristics {
+    /// Per-ply killer slots: the completing stone (two single-cell slots)
+    /// and the canonical pair (one slot, phase-First plies).
+    pub killers: bool,
+    /// The (mover, cell) cutoff score, aged by halving at each new search.
+    pub history: bool,
+    /// The opponent's last placed stone → the reply that refuted it.
+    pub countermove: bool,
+}
+
+impl OrderingHeuristics {
+    /// Whether any gate is on — the one question `pvs::visit` asks before it
+    /// touches the heuristic tables at all.
+    pub const fn any(self) -> bool {
+        self.killers || self.history || self.countermove
+    }
 }
 
 /// Which quiescence gate triggers may grant an extension

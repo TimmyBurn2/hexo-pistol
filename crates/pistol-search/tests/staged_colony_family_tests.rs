@@ -31,7 +31,7 @@ mod common;
 
 use pistol_core::{Coord, GameState};
 use pistol_search::staged::{StagedRow, StagedSet, staged_candidates};
-use pistol_search::{QTriggers, StagedParams};
+use pistol_search::{OrderingHeuristics, QTriggers, StagedParams};
 
 use common::{committed_weights, threats_for};
 use pistol_eval::HandcraftedV0;
@@ -125,6 +125,11 @@ fn assert_win_now(name: &str, dir: Coord) {
         tier_t_opponent_count: 3,
         q_depth_turns: 0,
         q_triggers: QTriggers::DefensiveAndOffensive,
+        ordering: OrderingHeuristics {
+            killers: false,
+            history: false,
+            countermove: false,
+        },
     };
     let mut out = StagedSet::default();
     let row = staged_candidates(&state, &threats, &mut *eval, false, params, &mut out);
@@ -156,6 +161,11 @@ fn assert_filtered(name: &str, dir: Coord) {
         tier_t_opponent_count: 3,
         q_depth_turns: 0,
         q_triggers: QTriggers::DefensiveAndOffensive,
+        ordering: OrderingHeuristics {
+            killers: false,
+            history: false,
+            countermove: false,
+        },
     };
     let mut out = StagedSet::default();
     let row = staged_candidates(&state, &threats, &mut *eval, false, params, &mut out);

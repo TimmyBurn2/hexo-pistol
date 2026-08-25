@@ -98,6 +98,11 @@ pub struct Searcher {
     params: SearchParams,
     table: Table,
     position: Position,
+    /// WP-1.7's ordering-heuristic tables — they persist across the searches
+    /// of one game like the transposition table does, are begun afresh by
+    /// every [`Searcher::search`], and are cleared by [`Searcher::clear`],
+    /// which is what a new game is (`docs/experiments/wp17_design.md` §3.1).
+    heuristics: crate::heuristics::HeuristicTables,
 }
 
 impl Searcher {
@@ -182,6 +187,7 @@ impl Searcher {
             params,
             table: Table::new(params.tt_bytes)?,
             position: Position::new(eval, tracks_threats),
+            heuristics: crate::heuristics::HeuristicTables::new(),
         })
     }
 
@@ -198,6 +204,7 @@ impl Searcher {
     /// Forget everything learned so far. This is what a new game does.
     pub fn clear(&mut self) {
         self.table.clear();
+        self.heuristics.clear();
     }
 
     /// Search `state` under `stop`, reporting once per completed depth.
@@ -214,6 +221,13 @@ impl Searcher {
 
         self.position.reset_to(state);
         self.table.new_generation();
+        // WP-1.7: the heuristic tables' per-search lifecycle — killers and
+        // pair killers reset (ply indices restart here), history ages by
+        // halving, countermove survives (`docs/experiments/wp17_design.md`
+        // §3.1). Before the first iteration, like the position reset: a
+        // heuristic that had already read the tables would be reading the
+        // previous search's ply numbering.
+        self.heuristics.begin_search();
         // Under a wall-clock stop the answer is secured BEFORE any deepening:
         // the fallback's cost is bounded and paid up front, so every iteration
         // — the first included — may then be interrupted (D-74 as amended by
@@ -233,6 +247,7 @@ impl Searcher {
             self.params.candidate_policy,
             stop,
             MAX_PLY,
+            &mut self.heuristics,
         );
 
         let mut outcome = None;

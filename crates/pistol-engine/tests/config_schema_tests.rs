@@ -3,7 +3,7 @@
 
 mod common;
 
-use common::{rejection, replacing, without_key, without_table};
+use common::{rejection, replacing, without_key, without_staged_key, without_table};
 use pistol_engine::Config;
 
 /// The config sources, scanned by `config_rejects_code_side_default_probe`.
@@ -70,6 +70,26 @@ fn config_rejects_missing_field() {
         );
         assert!(
             why.contains("missing field") || why.contains("unknown variant"),
+            "dropping `{dropped}` gave: {why}"
+        );
+    }
+}
+
+/// WP-1.7's three ordering-heuristic gates are required keys in the staged
+/// variant, exactly like `q_depth_turns` before them: a missing gate is an
+/// error, never an implicit OFF (CLAUDE.md rule 1,
+/// docs/experiments/wp17_design.md §6).
+#[test]
+fn a_staged_document_missing_an_ordering_heuristic_gate_is_refused() {
+    for dropped in ["killers", "history", "countermove"] {
+        let expected_key = format!("search.candidate_policy.{dropped}");
+        let (key, why) = rejection(&without_staged_key(dropped));
+        assert_eq!(
+            key, expected_key,
+            "dropping `{dropped}` named the wrong key"
+        );
+        assert!(
+            why.contains("missing field"),
             "dropping `{dropped}` gave: {why}"
         );
     }

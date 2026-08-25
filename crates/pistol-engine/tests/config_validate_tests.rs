@@ -204,6 +204,9 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
         tier_t_opponent_count,
         q_depth_turns,
         q_triggers,
+        killers,
+        history,
+        countermove,
     } = config.search.candidate_policy
     else {
         panic!("the committed staged fixture must parse as Staged");
@@ -215,6 +218,11 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
     assert_eq!(tier_t_opponent_count, 3);
     assert_eq!(q_depth_turns, 0);
     assert_eq!(q_triggers, pistol_engine::config::QTriggers::DefensiveOnly);
+    // WP-1.7's three gates: required keys, defaulting OFF in every committed
+    // config (docs/experiments/wp17_design.md §6).
+    assert!(!killers);
+    assert!(!history);
+    assert!(!countermove);
 }
 
 #[test]

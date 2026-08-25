@@ -24,7 +24,9 @@ use std::path::PathBuf;
 
 use pistol_core::{Axis, Coord, GameState, Player};
 use pistol_eval::{HandcraftedV0, Weights};
-use pistol_search::{CandidatePolicy, QTriggers, SearchParams, Searcher, StagedParams};
+use pistol_search::{
+    CandidatePolicy, OrderingHeuristics, QTriggers, SearchParams, Searcher, StagedParams,
+};
 use pistol_solver::ThreatState;
 
 /// The committed weight table, loaded. A failure here is a broken contract
@@ -62,13 +64,15 @@ pub fn searcher(radius: u32) -> Searcher {
 }
 
 /// `CandidatePolicy::Staged` search parameters, everything stated (CLAUDE.md
-/// rule 1): no test inherits a value from anywhere but its own body.
+/// rule 1): no test inherits a value from anywhere but its own body — the
+/// ordering-heuristic gates included, so a test that wants them states them.
 pub fn staged_params(
     quiet_radius: u32,
     tier_t_own_count: u8,
     tier_t_opponent_count: u8,
     q_depth_turns: u32,
     q_triggers: QTriggers,
+    ordering: OrderingHeuristics,
     tt_bytes: u64,
 ) -> SearchParams {
     SearchParams {
@@ -79,6 +83,7 @@ pub fn staged_params(
             tier_t_opponent_count,
             q_depth_turns,
             q_triggers,
+            ordering,
         }),
     }
 }
@@ -90,6 +95,7 @@ pub fn staged_searcher(
     tier_t_opponent_count: u8,
     q_depth_turns: u32,
     q_triggers: QTriggers,
+    ordering: OrderingHeuristics,
 ) -> Searcher {
     Searcher::new(
         staged_params(
@@ -98,6 +104,7 @@ pub fn staged_searcher(
             tier_t_opponent_count,
             q_depth_turns,
             q_triggers,
+            ordering,
             SMALL_TT,
         ),
         Box::new(HandcraftedV0::new(committed_weights())),

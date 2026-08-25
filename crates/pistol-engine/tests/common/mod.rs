@@ -58,6 +58,9 @@ tier_t_own_count = 2
 tier_t_opponent_count = 3
 q_depth_turns = 0
 q_triggers = "defensive_only"
+killers = false
+history = false
+countermove = false
 
 [eval]
 backend = "handcrafted_v0"
@@ -89,6 +92,22 @@ pub fn without_key(prefix: &str) -> String {
     assert!(
         kept.len() < VALID.lines().count(),
         "fixture has no line starting with `{prefix}`"
+    );
+    kept.join("\n")
+}
+
+/// [`VALID_STAGED`] with every line whose trimmed form starts with `prefix`
+/// removed — the staged document's own `without_key`, so a schema test can
+/// drop the staged-only keys (WP-1.7's three gates included) and see the
+/// refusal.
+pub fn without_staged_key(prefix: &str) -> String {
+    let kept: Vec<&str> = VALID_STAGED
+        .lines()
+        .filter(|line| !line.trim_start().starts_with(prefix))
+        .collect();
+    assert!(
+        kept.len() < VALID_STAGED.lines().count(),
+        "staged fixture has no line starting with `{prefix}`"
     );
     kept.join("\n")
 }

@@ -91,6 +91,9 @@ impl SearchSection {
                 tier_t_opponent_count,
                 q_depth_turns,
                 q_triggers: _,
+                killers: _,
+                history: _,
+                countermove: _,
             } => {
                 check_radius("search.candidate_policy.quiet_radius", *quiet_radius)?;
                 if *quiet_top_k == 0 {

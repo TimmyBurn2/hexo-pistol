@@ -27,8 +27,7 @@ pub mod fallback;
 pub mod info;
 pub mod params;
 pub mod score;
-pub mod search;
-// Public per docs/decisions.md D-353 (`U2_node_protocol.md` §5.35, U2-Z item
+pub mod search; // Public per docs/decisions.md D-353 (`U2_node_protocol.md` §5.35, U2-Z item
 // 17): the one entry point the differential gate's expensive half drives from
 // an integration test. A permanent surface commitment.
 pub mod staged;
@@ -38,6 +37,7 @@ pub mod tt;
 // The recursion and what it walks. Private because they are how the search
 // works rather than what it offers: a caller holds a `Searcher` and a `Stop`,
 // and everything below is free to change behind them.
+pub(crate) mod heuristics;
 pub(crate) mod ordering;
 pub(crate) mod position;
 pub(crate) mod pv;
@@ -51,7 +51,7 @@ pub use candidates::candidate_cells;
 pub use error::SearchError;
 pub use fallback::{FallbackAnswer, fallback_turn};
 pub use info::{Provenance, SearchInfo, SearchOutcome, StageCounters};
-pub use params::{CandidatePolicy, QTriggers, SearchParams, StagedParams};
+pub use params::{CandidatePolicy, OrderingHeuristics, QTriggers, SearchParams, StagedParams};
 pub use score::{MATE, ScoreKind};
 pub use search::{MAX_DEPTH_TURNS, Searcher};
 pub use stop::{NODE_CHECK_INTERVAL, Stop};

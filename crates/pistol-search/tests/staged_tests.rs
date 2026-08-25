@@ -21,7 +21,7 @@ mod common;
 
 use pistol_core::{Coord, GameState, Phase, Player};
 use pistol_search::staged::{StagedRow, StagedSet, staged_candidates};
-use pistol_search::{QTriggers, StagedParams};
+use pistol_search::{OrderingHeuristics, QTriggers, StagedParams};
 
 use common::{committed_weights, staged_searcher, threats_for};
 use pistol_eval::{Eval, HandcraftedV0};
@@ -91,6 +91,11 @@ fn params(quiet_radius: u32, own: u8, opponent: u8) -> StagedParams {
         tier_t_opponent_count: opponent,
         q_depth_turns: 0,
         q_triggers: QTriggers::DefensiveAndOffensive,
+        ordering: OrderingHeuristics {
+            killers: false,
+            history: false,
+            countermove: false,
+        },
     }
 }
 
@@ -302,7 +307,18 @@ fn a_full_search_under_staged_completes_from_the_opening_without_crashing() {
     // The integration-level version of the safety-net test above: a real
     // `Searcher::search` call, at a depth that reaches past the plies where
     // Tier T is empty, must return a move rather than panicking.
-    let mut searcher = staged_searcher(2, 2, 3, 0, QTriggers::DefensiveAndOffensive);
+    let mut searcher = staged_searcher(
+        2,
+        2,
+        3,
+        0,
+        QTriggers::DefensiveAndOffensive,
+        OrderingHeuristics {
+            killers: false,
+            history: false,
+            countermove: false,
+        },
+    );
     let outcome = searcher
         .search(
             &GameState::new_game(),
@@ -341,7 +357,18 @@ fn a_radius_policy_search_is_unaffected_by_stagedparams_existing() {
 /// node protocol at all.
 #[test]
 fn stage_counters_are_reported_in_search_info_and_zero_under_radius() {
-    let mut win_now_search = staged_searcher(2, 2, 3, 0, QTriggers::DefensiveAndOffensive);
+    let mut win_now_search = staged_searcher(
+        2,
+        2,
+        3,
+        0,
+        QTriggers::DefensiveAndOffensive,
+        OrderingHeuristics {
+            killers: false,
+            history: false,
+            countermove: false,
+        },
+    );
     let outcome = win_now_search
         .search(
             &win_in_one_ply_position(),
@@ -355,7 +382,18 @@ fn stage_counters_are_reported_in_search_info_and_zero_under_radius() {
         outcome.info.stages
     );
 
-    let mut opening_search = staged_searcher(2, 2, 3, 0, QTriggers::DefensiveAndOffensive);
+    let mut opening_search = staged_searcher(
+        2,
+        2,
+        3,
+        0,
+        QTriggers::DefensiveAndOffensive,
+        OrderingHeuristics {
+            killers: false,
+            history: false,
+            countermove: false,
+        },
+    );
     let outcome = opening_search
         .search(
             &GameState::new_game(),
@@ -404,6 +442,11 @@ fn a_q_depth_turns_this_search_cannot_honour_is_refused_by_name() {
         tier_t_opponent_count: 3,
         q_depth_turns: u32::MAX,
         q_triggers: QTriggers::DefensiveAndOffensive,
+        ordering: OrderingHeuristics {
+            killers: false,
+            history: false,
+            countermove: false,
+        },
     };
     let refused = pistol_search::Searcher::new(
         pistol_search::SearchParams {

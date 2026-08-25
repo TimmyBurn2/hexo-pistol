@@ -38,6 +38,7 @@ use std::time::Instant;
 use pistol_core::{Coord, Phase, PlyOutcome};
 
 use crate::candidates::candidate_cells;
+use crate::heuristics::HeuristicTables;
 use crate::ordering::{OrderOutcome, order};
 use crate::params::CandidatePolicy;
 use crate::position::Position;
@@ -80,6 +81,12 @@ pub struct Run<'a> {
     /// `pub(crate)`, same reason as `position`: `crate::quiescence`'s gate
     /// reads `StagedParams::q_triggers` off it (D-396).
     pub(crate) policy: CandidatePolicy,
+    /// WP-1.7's ordering-heuristic tables — borrowed from the
+    /// [`crate::search::Searcher`] so they persist across the searches of
+    /// one game and are cleared by `newgame`
+    /// (`docs/experiments/wp17_design.md` §3.1). `pub(crate)` for the same
+    /// reason as `position`: nothing outside the crate constructs a `Run`.
+    pub(crate) heuristics: &'a mut HeuristicTables,
     stop: Stop,
     root_turn: u32,
     /// Nodes visited, leaves included. Incremented once per [`Run::visit`].
@@ -121,12 +128,14 @@ impl<'a> Run<'a> {
         policy: CandidatePolicy,
         stop: Stop,
         max_ply: usize,
+        heuristics: &'a mut HeuristicTables,
     ) -> Run<'a> {
         let root_turn = position.state().turn();
         Run {
             position,
             table,
             policy,
+            heuristics,
             stop,
             root_turn,
             nodes: 0,
@@ -259,6 +268,10 @@ impl<'a> Run<'a> {
         // aborts like any other; the partially scored order is discarded with
         // it. Reproducible stops pass `None` and read no clock (rule 4).
         let table_move = known.map(|record| record.best);
+        // The unforced range's start under `Staged` (`None` under `Radius`:
+        // the heuristic gates exist only inside `StagedParams`, so nothing
+        // is recorded there and the bound is never read).
+        let mut forced_bound: Option<usize> = None;
         let cells = match self.policy {
             CandidatePolicy::Radius { .. } => {
                 let mut cells = candidate_cells(self.position.board(), self.policy);
@@ -304,6 +317,21 @@ impl<'a> Run<'a> {
                     return self.position.value();
                 }
                 set.promote_table_move(table_move);
+                // WP-1.7: the ordering heuristics reorder the unforced range
+                // AFTER the table's own move, never across the Tier-F
+                // boundary (`docs/experiments/wp17_design.md` §2-§3).
+                if params.ordering.any() {
+                    let (state, threats, _) = self.position.staged_context();
+                    self.heuristics.order_candidates(
+                        params.ordering,
+                        state,
+                        threats,
+                        ply,
+                        table_move,
+                        &mut set,
+                    );
+                }
+                forced_bound = Some(set.forced);
                 set.cells
             }
         };
@@ -311,6 +339,7 @@ impl<'a> Run<'a> {
         let original_alpha = alpha;
         let mut best_score = -INFINITY;
         let mut best_cell = cells[0];
+        let mut best_index = 0;
 
         for (index, &at) in cells.iter().enumerate() {
             let outcome = self.position.place(at).unwrap_or_else(|error| {
@@ -353,6 +382,7 @@ impl<'a> Run<'a> {
             if score > best_score {
                 best_score = score;
                 best_cell = at;
+                best_index = index;
                 if score > alpha {
                     alpha = score;
                     self.pv.promote(ply, at);
@@ -374,6 +404,21 @@ impl<'a> Run<'a> {
         }
 
         if !self.aborted {
+            // WP-1.7: a genuine beta cutoff whose winning candidate was in
+            // the UNFORCED range is the one event that feeds the ordering
+            // heuristics (`docs/experiments/wp17_design.md` §3.2). The index
+            // test is what keeps Tier-F cells — and therefore winning
+            // placements, which on every row with an unforced range can only
+            // come from the forced prefix — out of the quiet-refutation
+            // tables.
+            if let CandidatePolicy::Staged(params) = self.policy
+                && params.ordering.any()
+                && best_score >= beta
+                && forced_bound.is_some_and(|forced| best_index >= forced)
+            {
+                self.heuristics
+                    .record_cutoff(self.position.state(), ply, best_cell);
+            }
             self.table.store(
                 key,
                 from_root,
@@ -558,12 +603,14 @@ mod tests {
         position.reset_to(&state);
         let mut table = Table::new(1 << 20).expect("the smallest table");
         let policy = CandidatePolicy::Radius { radius: 1 };
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
         let mut run = Run::new(
             &mut position,
             &mut table,
             policy,
             Stop::Deadline(expired()),
             12,
+            &mut heuristics,
         );
 
         // Iteration 1 is run non-abortable, so it completes over the expired
@@ -600,7 +647,15 @@ mod tests {
         let mut table = Table::new(1 << 20).expect("the smallest table");
         let policy = CandidatePolicy::Radius { radius: 1 };
         let far = Instant::now() + Duration::from_secs(3600);
-        let mut run = Run::new(&mut position, &mut table, policy, Stop::Deadline(far), 12);
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
+        let mut run = Run::new(
+            &mut position,
+            &mut table,
+            policy,
+            Stop::Deadline(far),
+            12,
+            &mut heuristics,
+        );
 
         let score = run
             .iterate(2, true)
@@ -619,6 +674,75 @@ mod tests {
             turns.len(),
             1,
             "a two-ply line from turn 2 is exactly one whole turn"
+        );
+    }
+
+    /// WP-1.7's liveness pin: a staged search with the gates ON actually
+    /// reaches `HeuristicTables::record_cutoff` from `visit` — the one thing
+    /// no unit test of the tables themselves can prove. A beta cutoff at an
+    /// unforced candidate in a two-turn search must leave a killer, a
+    /// history entry and a countermove behind; a search that never cut off
+    /// would leave all three empty and this test would fail.
+    ///
+    /// Mutation checked: deleting the `record_cutoff` call in `visit`'s
+    /// post-loop block makes this test red.
+    #[test]
+    fn a_staged_search_with_the_gates_on_records_its_cutoffs() {
+        // The search tests' own `quiet()` shape: eleven stones, nothing
+        // decided, a BATCHED row's delta-ranked unforced range at every
+        // node — exactly where cutoffs feed the tables.
+        let state = GameState::from_plies(&[
+            Coord::ORIGIN,
+            Coord::new(1, 0),
+            Coord::new(0, 1),
+            Coord::new(2, 0),
+            Coord::new(1, 1),
+            Coord::new(0, 2),
+            Coord::new(2, 1),
+            Coord::new(1, 3),
+            Coord::new(2, 2),
+            Coord::new(0, 3),
+            Coord::new(1, 4),
+        ])
+        .expect("the quiet fixture is a legal game");
+        let mut position = Position::new(Box::new(Flat), true);
+        position.reset_to(&state);
+        let mut table = Table::new(1 << 20).expect("the smallest table");
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
+        let mut run = Run::new(
+            &mut position,
+            &mut table,
+            CandidatePolicy::Staged(crate::params::StagedParams {
+                quiet_radius: 2,
+                tier_t_own_count: 2,
+                tier_t_opponent_count: 3,
+                q_depth_turns: 0,
+                q_triggers: crate::params::QTriggers::DefensiveOnly,
+                ordering: crate::params::OrderingHeuristics {
+                    killers: true,
+                    history: true,
+                    countermove: true,
+                },
+            }),
+            Stop::DepthTurns(3),
+            12,
+            &mut heuristics,
+        );
+        run.iterate(6, false)
+            .expect("a depth budget over a quiet position completes");
+
+        let any_killer = heuristics
+            .killers
+            .iter()
+            .any(|slots| slots[0].is_some() || slots[1].is_some());
+        assert!(
+            any_killer || !heuristics.history.is_empty(),
+            "a two-turn search over a quiet position cuts off somewhere, and \
+             every unforced cutoff lands in the tables"
+        );
+        assert!(
+            !heuristics.countermove.is_empty(),
+            "every cutoff whose node follows an opponent stone writes a countermove"
         );
     }
 }

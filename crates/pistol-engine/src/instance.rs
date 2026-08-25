@@ -178,6 +178,9 @@ fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
             tier_t_opponent_count,
             q_depth_turns,
             q_triggers,
+            killers,
+            history,
+            countermove,
             quiet_top_k: _,
             widen_schedule: _,
         } => SearchCandidatePolicy::Staged(pistol_search::StagedParams {
@@ -186,6 +189,11 @@ fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
             tier_t_opponent_count: *tier_t_opponent_count,
             q_depth_turns: *q_depth_turns,
             q_triggers: search_q_triggers(*q_triggers),
+            ordering: pistol_search::OrderingHeuristics {
+                killers: *killers,
+                history: *history,
+                countermove: *countermove,
+            },
         }),
     }
 }

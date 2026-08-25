@@ -34,6 +34,11 @@ tier_t_own_count = 2
 tier_t_opponent_count = 3
 q_depth_turns = 0
 q_triggers = "defensive_only"
+# WP-1.7 ordering-heuristic gates (docs/experiments/wp17_design.md §6):
+# default OFF in every committed config until an SPRT says otherwise.
+killers = false
+history = false
+countermove = false
 
 [eval]
 backend = "handcrafted_v0"

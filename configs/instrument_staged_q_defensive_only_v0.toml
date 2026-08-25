@@ -38,6 +38,11 @@ q_depth_turns = 1
 # (`defensive_and_offensive`) is licensed-not-scheduled future work, not this
 # run's claim.
 q_triggers = "defensive_only"
+# WP-1.7 ordering-heuristic gates (docs/experiments/wp17_design.md §6):
+# default OFF in every committed config until an SPRT says otherwise.
+killers = false
+history = false
+countermove = false
 
 [eval]
 backend = "handcrafted_v0"

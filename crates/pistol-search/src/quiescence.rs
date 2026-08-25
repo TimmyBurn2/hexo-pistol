@@ -569,6 +569,11 @@ mod tests {
             tier_t_opponent_count: 3,
             q_depth_turns,
             q_triggers,
+            ordering: crate::params::OrderingHeuristics {
+                killers: false,
+                history: false,
+                countermove: false,
+            },
         }
     }
 
@@ -581,6 +586,7 @@ mod tests {
         table: &'a mut Table,
         q_depth_turns: u32,
         q_triggers: QTriggers,
+        heuristics: &'a mut crate::heuristics::HeuristicTables,
     ) -> Run<'a> {
         Run::new(
             position,
@@ -588,6 +594,7 @@ mod tests {
             CandidatePolicy::Staged(staged_params(q_depth_turns, q_triggers)),
             Stop::Nodes(u64::MAX),
             64,
+            heuristics,
         )
     }
 
@@ -599,11 +606,13 @@ mod tests {
         let mut position = Position::new(Box::new(Flat), true);
         position.reset_to(&win_in_one_ply_position());
         let mut table = Table::new(1 << 20).expect("the smallest table");
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
         let mut run = run_over(
             &mut position,
             &mut table,
             0,
             QTriggers::DefensiveAndOffensive,
+            &mut heuristics,
         );
 
         let score = run.quiescence(-INFINITY, INFINITY, 0, 0);
@@ -625,11 +634,13 @@ mod tests {
         let mut position = Position::new(Box::new(Flat), true);
         position.reset_to(&opponent_t_le_1_position());
         let mut table = Table::new(1 << 20).expect("the smallest table");
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
         let mut run = run_over(
             &mut position,
             &mut table,
             0,
             QTriggers::DefensiveAndOffensive,
+            &mut heuristics,
         );
 
         let score = run.quiescence(-INFINITY, INFINITY, 0, 0);
@@ -650,11 +661,13 @@ mod tests {
         let mut position = Position::new(Box::new(Flat), true);
         position.reset_to(&opponent_t_le_1_position());
         let mut table = Table::new(1 << 20).expect("the smallest table");
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
         let mut run = run_over(
             &mut position,
             &mut table,
             1,
             QTriggers::DefensiveAndOffensive,
+            &mut heuristics,
         );
 
         run.quiescence(-INFINITY, INFINITY, 0, 1);
@@ -676,7 +689,14 @@ mod tests {
         let mut position = Position::new(Box::new(Flat), true);
         position.reset_to(&opponent_t_le_1_position());
         let mut table = Table::new(1 << 20).expect("the smallest table");
-        let mut run = run_over(&mut position, &mut table, 1, QTriggers::DefensiveOnly);
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
+        let mut run = run_over(
+            &mut position,
+            &mut table,
+            1,
+            QTriggers::DefensiveOnly,
+            &mut heuristics,
+        );
 
         run.quiescence(-INFINITY, INFINITY, 0, 1);
         assert_eq!(
@@ -691,11 +711,13 @@ mod tests {
         let mut position = Position::new(Box::new(Flat), true);
         position.reset_to(&mover_can_activate_position());
         let mut table = Table::new(1 << 20).expect("the smallest table");
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
         let mut run = run_over(
             &mut position,
             &mut table,
             1,
             QTriggers::DefensiveAndOffensive,
+            &mut heuristics,
         );
 
         run.quiescence(-INFINITY, INFINITY, 0, 1);
@@ -716,7 +738,14 @@ mod tests {
         let mut position = Position::new(Box::new(Flat), true);
         position.reset_to(&mover_can_activate_position());
         let mut table = Table::new(1 << 20).expect("the smallest table");
-        let mut run = run_over(&mut position, &mut table, 1, QTriggers::DefensiveOnly);
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
+        let mut run = run_over(
+            &mut position,
+            &mut table,
+            1,
+            QTriggers::DefensiveOnly,
+            &mut heuristics,
+        );
 
         let score = run.quiescence(-INFINITY, INFINITY, 0, 1);
         assert_eq!(
@@ -739,11 +768,13 @@ mod tests {
             let mut position = Position::new(Box::new(Flat), true);
             position.reset_to(&opponent_t_le_1_position());
             let mut table = Table::new(1 << 20).expect("the smallest table");
+            let mut heuristics = crate::heuristics::HeuristicTables::new();
             let mut run = run_over(
                 &mut position,
                 &mut table,
                 3,
                 QTriggers::DefensiveAndOffensive,
+                &mut heuristics,
             );
             let score = run.quiescence(-INFINITY, INFINITY, 0, 3);
             (score, run.nodes, run.stages)

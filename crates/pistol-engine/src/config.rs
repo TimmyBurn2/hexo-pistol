@@ -220,6 +220,18 @@ pub enum CandidatePolicy {
         /// gates only trigger (b) (`DefensiveOnly`) versus triggers (b) and
         /// (c) together (`DefensiveAndOffensive`).
         q_triggers: QTriggers,
+        /// WP-1.7's first ordering-heuristic gate
+        /// (`docs/experiments/wp17_design.md` §6): per-ply killer slots —
+        /// the completing stone (two single-cell slots) and the canonical
+        /// pair (one slot, phase-First plies). `false` in every committed
+        /// config until an SPRT says otherwise.
+        killers: bool,
+        /// WP-1.7's second ordering-heuristic gate: the (mover, cell)
+        /// cutoff score, aged by halving at each new search.
+        history: bool,
+        /// WP-1.7's third ordering-heuristic gate: the opponent's last
+        /// placed stone → the reply cell that refuted it.
+        countermove: bool,
     },
 }
 

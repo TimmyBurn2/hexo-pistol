@@ -1,0 +1,50 @@
+# pistol — the staged configuration with WP-1.7's ordering heuristics ON,
+# for the determinism gate's third seat.
+#
+# Identical to configs/gate_staged_v0.toml except the three WP-1.7 gates,
+# all `true` here and all `false` there: CLAUDE.md rule 4's gate
+# (tools/determinism.sh) must exercise the heuristics-ON choice path too —
+# the tables are state that persists across a session's searches, so the
+# C-vs-D layout comparison (one process per position against a session with
+# newgame before each) is what catches a table that newgame fails to clear.
+# This seat is NOT a strength claim: the committed policy stays
+# configs/instrument_staged_v0.toml until an SPRT says otherwise.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[engine]
+mode = "instrument"
+
+[search]
+tt_bytes = 16777216
+
+[search.candidate_policy]
+kind = "staged"
+# Matches configs/gate_staged_v0.toml: same quiet ball, same cut, so the
+# third seat differs from the staged seat on the heuristics alone.
+quiet_radius = 1
+quiet_top_k = 128
+widen_schedule = [256]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+q_depth_turns = 0
+q_triggers = "defensive_only"
+# The one axis this seat differs on (docs/experiments/wp17_design.md §6).
+killers = true
+history = true
+countermove = true
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+# Stated even though the mode is "instrument": a config is complete, and every
+# key is present because no key has a code-side default (CLAUDE.md rule 1).
+movetime_epsilon_ms = 50

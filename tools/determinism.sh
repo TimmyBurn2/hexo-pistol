@@ -16,9 +16,10 @@
 #            neither can see whether `newgame` really clears everything the
 #            previous position left in the table; this pair is that question.
 #
-# TWO SEATS, RADIUS AND STAGED (docs/decisions.md D-370): the same one binary,
-# built once and reused, run against each `CandidatePolicy` in turn — the
-# staged generator is a choice path this gate did not touch before it existed.
+# THREE SEATS, RADIUS, STAGED AND STAGED-WITH-HEURISTICS (docs/decisions.md
+# D-370 for the second; docs/experiments/wp17_design.md §5 for the third): the
+# same one binary, built once and reused, run against each configuration in
+# turn — each is a choice path this gate did not touch before it existed.
 #
 # What is NOT compared: `nps` and `time`. They measure the machine, not the
 # search. Every other field is reproducible and is compared.
@@ -40,9 +41,10 @@ cd "$ROOT"
 # candidate radius 3 a completed depth of 4 turns costs hours per position, which
 # is the measured Stage-0 floor recorded in that file's own comment table
 # (CLAUDE.md rule 5). The determinism law is about whether two runs agree, not
-# about how strong they are. TWO SEATS, RADIUS AND STAGED
-# (docs/decisions.md D-370; WP-1.5b Phase 4 MINOR 5): the staged generator is an
-# entirely new choice path — a `ThreatState` carried and unwound in `Position`,
+# about how strong they are. THREE SEATS, RADIUS, STAGED AND
+# STAGED-WITH-HEURISTICS (docs/decisions.md D-370; WP-1.5b Phase 4 MINOR 5;
+# WP-1.7): the staged generator is an entirely new choice path — a
+# `ThreatState` carried and unwound in `Position`,
 # tier extraction, `three_pairwise_disjoint_families` — that no run of this gate
 # touched before, and CLAUDE.md rule 4 does not admit "verified by hand once" as
 # a substitute for a gate every `tools/ci.sh` run repeats.
@@ -51,9 +53,18 @@ cd "$ROOT"
 # enforced by the test that reads it (docs/decisions.md D-37), so an edited
 # fixture is already a red `cargo test`; this gate compares two runs against
 # each other and cannot be wrong about a position it was given.
+#
+# A THIRD SEAT, STAGED WITH WP-1.7'S ORDERING HEURISTICS ON
+# (docs/experiments/wp17_design.md §5): the heuristics add cross-search state
+# (history, countermove) that persists within a game like the transposition
+# table does, so the C-vs-D layout comparison below — one process per position
+# against a session with `newgame` before each — is exactly the question that
+# state makes live: a table `newgame` fails to clear shows up there as a
+# position answered differently on its own than in the session.
 SEATS=(
 	"radius configs/gate_v0.toml crates/pistol-cli/tests/fixtures/tactical_v0.txt"
 	"staged configs/gate_staged_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"
+	"staged-heuristics configs/gate_staged_heuristics_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"
 )
 
 # The budgets, both reproducible. A wall-clock budget could not be compared at

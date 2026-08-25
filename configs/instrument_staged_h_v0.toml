@@ -1,0 +1,54 @@
+# pistol — instrument-mode configuration, staged pair generation WITH all
+# three WP-1.7 ordering heuristics ON.
+#
+# WP-1.7's SPRT arm A seat (docs/experiments/wp17_design.md §6;
+# docs/experiments/wp17_sprt_prereg.md §3). Identical to
+# configs/instrument_staged_v0.toml in every field but the three this WP
+# adds — `killers`, `history`, `countermove`, all `true` here and all
+# `false` there — so this run's ENTIRE claim is carried by those three keys
+# going from OFF to ON, exactly as WP-1.6's matchup was carried by
+# `q_depth_turns` alone.
+#
+# THE CUT BINDS HERE exactly as it does in the sibling document — see that
+# file's own header for the quiet-cut rationale, unchanged by this WP.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[engine]
+mode = "instrument"
+
+[search]
+# Matches configs/instrument_staged_v0.toml: every SPRT seat in this project
+# agrees on tt_bytes.
+tt_bytes = 268435456
+
+[search.candidate_policy]
+kind = "staged"
+quiet_radius = 2
+quiet_top_k = 16
+widen_schedule = [32]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+# WP-1.6 closed h0 (D-428): the quiescence extension stays gated off in
+# every seat this WP runs.
+q_depth_turns = 0
+q_triggers = "defensive_only"
+# WP-1.7's three gates, all ON — the one axis this seat differs on.
+killers = true
+history = true
+countermove = true
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+# Stated even though the mode is "instrument": a config is complete, and every
+# key is present because no key has a code-side default (CLAUDE.md rule 1).
+movetime_epsilon_ms = 50
