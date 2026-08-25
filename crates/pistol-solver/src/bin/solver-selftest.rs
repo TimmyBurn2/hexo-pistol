@@ -56,7 +56,7 @@ fn main() -> ExitCode {
             return ExitCode::from(2);
         }
     };
-    let solver = Solver::new(params.epsilon, params.tt_entries);
+    let mut solver = Solver::new(params.epsilon, params.tt_entries);
     let mut failures = 0u32;
     let mut wins = 0u32;
     for case in &cases {

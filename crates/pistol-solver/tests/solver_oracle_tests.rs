@@ -32,7 +32,7 @@ fn tiny_solver() -> Solver {
 #[test]
 fn gate_a_differential_matches_the_brute_force_reference() {
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
-    let solver = solver();
+    let mut solver = solver();
     let mut failures = Vec::new();
     for case in &cases {
         let position = case.position().expect("the loader validated every case");
@@ -69,7 +69,7 @@ fn gate_a_differential_matches_the_brute_force_reference() {
 #[test]
 fn gate_b_proof_trees_reverify_full_width() {
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
-    let solver = solver();
+    let mut solver = solver();
     let mut checked = 0;
     let mut failures = Vec::new();
     for case in &cases {
@@ -109,7 +109,7 @@ fn gate_b_proof_trees_reverify_full_width() {
 #[test]
 fn gate_c_relevance_zone_property_holds() {
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
-    let solver = solver();
+    let mut solver = solver();
     let mut checked = 0;
     let mut failures = Vec::new();
     let mut sigma_count = 0u64;
@@ -181,8 +181,10 @@ fn gate_d_tt_size_does_not_change_values() {
     let mut failures = Vec::new();
     for case in &cases {
         let position = case.position().expect("the loader validated every case");
-        let full = solver().solve(&position);
-        let tiny = tiny_solver().solve(&position);
+        let mut full_solver = solver();
+        let full = full_solver.solve(&position);
+        let mut tiny_solver = tiny_solver();
+        let tiny = tiny_solver.solve(&position);
         let full_value = matches!(full.outcome, SolveOutcome::Win(_));
         let tiny_value = matches!(tiny.outcome, SolveOutcome::Win(_));
         if full_value != tiny_value {

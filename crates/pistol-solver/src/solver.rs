@@ -127,7 +127,14 @@ fn mix(mut z: u64) -> u64 {
 /// determinism needs no cleanup story.
 pub struct Solver {
     epsilon: Epsilon,
-    tt_entries: usize,
+    /// ONE table, reused across solves. Entries carry the epoch of the
+    /// solve that wrote them and read as absent for every later solve, so
+    /// nothing crosses positions — the isolation of a fresh table without
+    /// the O(entries) clear that made a per-solve table cost more than the
+    /// search itself on small positions (gate (c)'s sigma sweep needs
+    /// ~145k solves).
+    table: SolverTT,
+    epoch: u32,
 }
 
 impl Solver {
@@ -135,7 +142,8 @@ impl Solver {
     pub fn new(epsilon: Epsilon, tt_entries: usize) -> Solver {
         Solver {
             epsilon,
-            tt_entries,
+            table: SolverTT::new(tt_entries),
+            epoch: 0,
         }
     }
 
@@ -147,7 +155,7 @@ impl Solver {
     /// `Phase::First` position owing two stones, and with the df-pn module's
     /// own named invariants otherwise. Panics are this crate's fail-loud
     /// channel for states its own callers must not reach.
-    pub fn solve(&self, state: &GameState) -> SolveResult {
+    pub fn solve(&mut self, state: &GameState) -> SolveResult {
         if state.outcome().is_decided()
             || state.phase() != pistol_core::Phase::First
             || state.stones_owed() != 2
@@ -160,11 +168,20 @@ impl Solver {
         for (at, player) in work.board().stones() {
             threat.apply(at, player);
         }
-        let mut tt = SolverTT::new(self.tt_entries);
+        // A new epoch per solve: the reused table's earlier entries go
+        // stale the moment this increments, all at once, with no clearing.
+        self.epoch = self.epoch.wrapping_add(1);
         let mut dag = ProofDag::default();
         let mut stats = SearchStats::default();
         let value = {
-            let mut search = Search::new(attacker, self.epsilon, &mut tt, &mut dag, &mut stats);
+            let mut search = Search::new(
+                attacker,
+                self.epsilon,
+                &mut self.table,
+                &mut dag,
+                &mut stats,
+            );
+            search.epoch = self.epoch;
             search.solve_root(&mut work, &mut threat)
         };
         match value {
@@ -349,7 +366,8 @@ mod tests {
             pair(&[(7, 4), (8, 5)]),
         ]);
         assert_eq!(state.to_move(), pistol_core::Player::P1);
-        let result = solver().solve(&state);
+        let mut solver = solver();
+        let result = solver.solve(&state);
         assert!(matches!(result.outcome, SolveOutcome::Win(_)));
         assert_eq!(result.nodes, 1, "a win-now leaf is one visit");
     }
@@ -366,7 +384,8 @@ mod tests {
             pair(&[(1, 8), (1, -8)]),
         ]);
         assert_eq!(state.to_move(), pistol_core::Player::P1);
-        let result = solver().solve(&state);
+        let mut solver = solver();
+        let result = solver.solve(&state);
         assert_eq!(result.outcome, SolveOutcome::NoWin);
         assert_eq!(result.nodes, 1, "an empty policy set is one visit");
     }
@@ -432,7 +451,8 @@ mod tests {
             &[Coord::new(0, 1), Coord::new(0, 2)],
             "the winning pair is the canonical-first threat pair"
         );
-        let result = solver().solve(&state);
+        let mut solver = solver();
+        let result = solver.solve(&state);
         match &result.outcome {
             SolveOutcome::Win(tree) => {
                 assert!(
@@ -452,6 +472,7 @@ mod tests {
         let mut state = game_of_turns(&[Turn::Single(Coord::new(0, 0)), pair(&[(0, 6), (0, 7)])]);
         // Force a mid-turn state by placing one stone of P1's turn.
         state.place(Coord::new(1, 0)).expect("legal ply");
-        let _ = solver().solve(&state);
+        let mut solver = solver();
+        let _ = solver.solve(&state);
     }
 }

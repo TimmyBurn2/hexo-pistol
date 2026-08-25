@@ -31,6 +31,12 @@ use crate::zone::ZoneP;
 pub struct Entry {
     /// The position the numbers belong to.
     pub key: Key128,
+    /// The search epoch this entry belongs to; entries from earlier
+    /// epochs are stale and read as absent. This is what lets one table
+    /// serve many solves without an O(entries) clear between them — the
+    /// clear cost is the entire reason a naive per-solve table made gate
+    /// (c)'s sigma sweep infeasible at 145k solves.
+    pub epoch: u32,
     /// The best-known proof number. `0` means proven.
     pub pn: u64,
     /// The best-known disproof number. `0` means disproven.
@@ -77,20 +83,26 @@ impl SolverTT {
         }
     }
 
-    /// The entry for `key`, if the table still holds one.
+    /// The entry for `key` from epoch `epoch`, if the table still holds a
+    /// live one. Stale entries read as absent, which is the whole
+    /// correctness argument for never clearing.
     ///
     /// Both slots are checked; on the (legal) case where both hold `key`,
     /// the fresher generation wins — a pure function of the contents, so the
     /// same table state always yields the same answer.
-    pub fn lookup(&self, key: Key128) -> Option<&Entry> {
+    pub fn lookup(&self, key: Key128, epoch: u32) -> Option<&Entry> {
         let index = Self::index(key, self.mask);
-        match (&self.preferred[index], &self.replace[index]) {
-            (Some(a), Some(b)) if a.key == key && b.key == key => {
-                Some(if a.generation >= b.generation { a } else { b })
-            }
-            (Some(a), _) if a.key == key => Some(a),
-            (_, Some(b)) if b.key == key => Some(b),
-            _ => None,
+        fn live(entry: &Option<Entry>, key: Key128, epoch: u32) -> Option<&Entry> {
+            entry.as_ref().filter(|e| e.key == key && e.epoch == epoch)
+        }
+        match (
+            live(&self.preferred[index], key, epoch),
+            live(&self.replace[index], key, epoch),
+        ) {
+            (Some(a), Some(b)) => Some(if a.generation >= b.generation { a } else { b }),
+            (Some(a), None) => Some(a),
+            (None, Some(b)) => Some(b),
+            (None, None) => None,
         }
     }
 
@@ -148,6 +160,9 @@ impl SolverTT {
                 if existing.is_proven() && !entry.is_proven() {
                     return false;
                 }
+                if existing.epoch > entry.epoch {
+                    return false;
+                }
                 entry.generation >= existing.generation
             }
         }
@@ -173,6 +188,7 @@ mod tests {
     fn unproven(low: u64, generation: u32) -> Entry {
         Entry {
             key: key(low),
+            epoch: 7,
             pn: 3,
             dn: 5,
             zone: None,
@@ -183,6 +199,7 @@ mod tests {
     fn proven(low: u64, generation: u32) -> Entry {
         Entry {
             key: key(low),
+            epoch: 7,
             pn: 0,
             dn: crate::pn::INF,
             zone: Some(ZoneP::new()),
@@ -195,9 +212,9 @@ mod tests {
         let mut tt = SolverTT::new(4);
         tt.store(unproven(1, 0));
         tt.store(proven(2, 0));
-        assert_eq!(tt.lookup(key(1)).unwrap().pn, 3);
-        assert_eq!(tt.lookup(key(2)).unwrap().pn, 0);
-        assert!(tt.lookup(key(3)).is_none());
+        assert_eq!(tt.lookup(key(1), 7).unwrap().pn, 3);
+        assert_eq!(tt.lookup(key(2), 7).unwrap().pn, 0);
+        assert!(tt.lookup(key(3), 7).is_none());
     }
 
     #[test]
@@ -210,9 +227,9 @@ mod tests {
         assert_eq!(SolverTT::index(a.key, 1), SolverTT::index(b.key, 1));
         tt.store(a);
         tt.store(b);
-        assert_eq!(tt.lookup(key(0)).unwrap().generation, 0);
+        assert_eq!(tt.lookup(key(0), 7).unwrap().generation, 0);
         assert_eq!(
-            tt.lookup(Key128::from_parts(u64::MAX - 1, 0))
+            tt.lookup(Key128::from_parts(u64::MAX - 1, 0), 7)
                 .map(|e| e.generation),
             Some(1)
         );
@@ -226,6 +243,7 @@ mod tests {
         for generation in 2..50u32 {
             tt.store(Entry {
                 key: Key128::from_parts(u64::from(generation) * 2 + 1, 7),
+                epoch: 7,
                 pn: 1,
                 dn: 1,
                 zone: None,
@@ -233,7 +251,7 @@ mod tests {
             });
         }
         assert!(
-            tt.lookup(key(5)).is_some_and(|e| e.pn == 0),
+            tt.lookup(key(5), 7).is_some_and(|e| e.pn == 0),
             "a proven entry is never replaced by an unproven one"
         );
     }
@@ -245,6 +263,7 @@ mod tests {
         tt.store(unproven(9, 0));
         tt.store(Entry {
             key: Key128::from_parts(77, 7),
+            epoch: 7,
             pn: 2,
             dn: 2,
             zone: None,
@@ -253,14 +272,15 @@ mod tests {
         // A refresh of key 9 must not disturb key 77's slot.
         let refreshed = Entry {
             key: key(9),
+            epoch: 7,
             pn: 8,
             dn: 8,
             zone: None,
             generation: 1,
         };
         tt.store(refreshed);
-        assert_eq!(tt.lookup(key(9)).unwrap().pn, 8);
-        assert!(tt.lookup(Key128::from_parts(77, 7)).is_some());
+        assert_eq!(tt.lookup(key(9), 7).unwrap().pn, 8);
+        assert!(tt.lookup(Key128::from_parts(77, 7), 7).is_some());
         let _ = index;
     }
 
@@ -268,5 +288,28 @@ mod tests {
     #[should_panic(expected = "TT_SIZE")]
     fn non_power_of_two_sizes_are_refused() {
         SolverTT::new(3);
+    }
+
+    #[test]
+    fn stale_epochs_read_as_absent() {
+        let mut tt = SolverTT::new(2);
+        tt.store(Entry {
+            key: key(1),
+            epoch: 1,
+            pn: 3,
+            dn: 5,
+            zone: None,
+            generation: 0,
+        });
+        tt.store(Entry {
+            key: key(1),
+            epoch: 2,
+            pn: 9,
+            dn: 9,
+            zone: None,
+            generation: 0,
+        });
+        assert!(tt.lookup(key(1), 1).is_none(), "epoch 1's entry is stale");
+        assert_eq!(tt.lookup(key(1), 2).unwrap().pn, 9);
     }
 }

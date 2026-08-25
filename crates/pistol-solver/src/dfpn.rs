@@ -118,6 +118,9 @@ pub struct Search<'a> {
     attacker: Player,
     epsilon: Epsilon,
     generation: u32,
+    /// The solve's epoch: stamped on every entry this search stores, and
+    /// the only epoch its lookups accept.
+    pub epoch: u32,
     tt: &'a mut SolverTT,
     dag: &'a mut ProofDag,
     stats: &'a mut SearchStats,
@@ -142,6 +145,7 @@ impl<'a> Search<'a> {
             attacker,
             epsilon,
             generation: 0,
+            epoch: 0,
             tt,
             dag,
             stats,
@@ -178,7 +182,7 @@ impl<'a> Search<'a> {
     ) -> (u64, u64) {
         self.stats.nodes += 1;
         let key = state.key();
-        if let Some(entry) = self.tt.lookup(key) {
+        if let Some(entry) = self.tt.lookup(key, self.epoch) {
             if entry.pn == 0 {
                 return (0, INF);
             }
@@ -209,6 +213,7 @@ impl<'a> Search<'a> {
             let zone = self.leaf_zone(state, threat, witness_cells(&witness));
             self.tt.store(Entry {
                 key,
+                epoch: self.epoch,
                 pn: 0,
                 dn: INF,
                 zone: Some(zone.clone()),
@@ -227,6 +232,7 @@ impl<'a> Search<'a> {
         if moves.is_empty() {
             self.tt.store(Entry {
                 key,
+                epoch: self.epoch,
                 pn: INF,
                 dn: 0,
                 zone: None,
@@ -253,14 +259,30 @@ impl<'a> Search<'a> {
                 }
                 d = saturating_sum([d, cdn]);
             }
+            // Step 2: definitive or threshold termination. `selected` is
+            // None exactly when every child is disproven (all pn at INF) —
+            // the node is disproven, and the d == 0 arm below is the one
+            // that answers it, so the empty selection is answered HERE
+            // rather than by an unwrap that cannot reach its error.
+            if selected.is_none() || d == 0 {
+                self.tt.store(Entry {
+                    key,
+                    epoch: self.epoch,
+                    pn: INF,
+                    dn: 0,
+                    zone: None,
+                    generation: self.generation,
+                });
+                return (INF, 0);
+            }
             let Some((turn, child_key, d1)) = selected else {
-                unreachable!("an OR node with children always selects one");
+                unreachable!("the empty selection was answered above")
             };
-            // Step 2: definitive or threshold termination.
             if p == 0 {
                 let zone = self.or_step_zone(state, threat, turn, child_key);
                 self.tt.store(Entry {
                     key,
+                    epoch: self.epoch,
                     pn: 0,
                     dn: INF,
                     zone: Some(zone.clone()),
@@ -276,6 +298,7 @@ impl<'a> Search<'a> {
             if d == 0 {
                 self.tt.store(Entry {
                     key,
+                    epoch: self.epoch,
                     pn: INF,
                     dn: 0,
                     zone: None,
@@ -286,6 +309,7 @@ impl<'a> Search<'a> {
             if p >= pt || d >= dt {
                 self.tt.store(Entry {
                     key,
+                    epoch: self.epoch,
                     pn: p,
                     dn: d,
                     zone: None,
@@ -328,6 +352,7 @@ impl<'a> Search<'a> {
         {
             self.tt.store(Entry {
                 key,
+                epoch: self.epoch,
                 pn: INF,
                 dn: 0,
                 zone: None,
@@ -343,6 +368,7 @@ impl<'a> Search<'a> {
             zone.union_with(&ep1_contribution(state.board(), self.attacker));
             self.tt.store(Entry {
                 key,
+                epoch: self.epoch,
                 pn: 0,
                 dn: INF,
                 zone: Some(zone.clone()),
@@ -381,12 +407,32 @@ impl<'a> Search<'a> {
                 }
                 p = saturating_sum([p, cpn]);
             }
+            // The AND dual: `selected` is None exactly when every child is
+            // proven — the node is proven, answered here before the unwrap.
+            if selected.is_none() || p == 0 {
+                let zone = self.and_step_zone(state, threat, &child_keys);
+                self.tt.store(Entry {
+                    key,
+                    epoch: self.epoch,
+                    pn: 0,
+                    dn: INF,
+                    zone: Some(zone.clone()),
+                    generation: self.generation,
+                });
+                self.dag.record(ProofNode {
+                    key,
+                    kind: ProofKind::AndStep,
+                    zone,
+                });
+                return (0, INF);
+            }
             let Some((turn, child_key, p1)) = selected else {
-                unreachable!("an AND node with children always selects one");
+                unreachable!("the empty selection was answered above")
             };
             if d == 0 {
                 self.tt.store(Entry {
                     key,
+                    epoch: self.epoch,
                     pn: INF,
                     dn: 0,
                     zone: None,
@@ -398,6 +444,7 @@ impl<'a> Search<'a> {
                 let zone = self.and_step_zone(state, threat, &child_keys);
                 self.tt.store(Entry {
                     key,
+                    epoch: self.epoch,
                     pn: 0,
                     dn: INF,
                     zone: Some(zone.clone()),
@@ -413,6 +460,7 @@ impl<'a> Search<'a> {
             if p >= pt || d >= dt {
                 self.tt.store(Entry {
                     key,
+                    epoch: self.epoch,
                     pn: p,
                     dn: d,
                     zone: None,
@@ -460,7 +508,7 @@ impl<'a> Search<'a> {
     /// initialize the node's PN and DN the same way as we do it for a
     /// leaf").
     fn child_numbers(&self, key: Key128) -> (u64, u64) {
-        match self.tt.lookup(key) {
+        match self.tt.lookup(key, self.epoch) {
             Some(entry) => (entry.pn, entry.dn),
             None => (1, 1),
         }
@@ -471,7 +519,7 @@ impl<'a> Search<'a> {
     /// valid lower bounds, which is what makes re-searches safe.
     fn merge_store(&mut self, key: Key128, returned: (u64, u64), zone: Option<ZoneP>) {
         let (rpn, rdn) = returned;
-        let merged = match self.tt.lookup(key) {
+        let merged = match self.tt.lookup(key, self.epoch) {
             Some(existing) => {
                 let (pn, dn) = if rpn == 0 {
                     (0, INF)
@@ -483,6 +531,7 @@ impl<'a> Search<'a> {
                 let zone = existing.zone.clone().or(zone);
                 Entry {
                     key,
+                    epoch: self.epoch,
                     pn,
                     dn,
                     zone,
@@ -491,6 +540,7 @@ impl<'a> Search<'a> {
             }
             None => Entry {
                 key,
+                epoch: self.epoch,
                 pn: rpn,
                 dn: rdn,
                 zone,
