@@ -361,6 +361,38 @@ review passes, on an input of the SAME KIND, never on the registered workload.
   (config 2, position 1). The dry run is not a governed sample and consumes
   nothing.
 
+### 7b. The bench receipt — MEASURED, at the implementation revision `f745d90`
+
+The registered command block, run over all 24 positions × 5 reps × both
+configs (240 searches, ~90 s wall, sequential, single core). The raw
+transcript is an artifact and is never committed: `artifacts/wp17_bench_v1.txt`,
+`sha256 e34a6931443a7da84226b8e192feb7225e0a8bc83ca894a7a9ec373671975d9e`.
+
+| band | config | Σnodes | Σ median ms | band nps | completed `depth_turns` |
+|---|---|---|---|---|---|
+| early (12 pos, ≤ 17 stones) | OFF `instrument_staged_v0` | 602112 | 2495.0 | 241327 | 9× depth 3, 3× depth 2 |
+| early | ON `instrument_staged_h_v0` | 602112 | 2356.0 | 255565 | 7× depth 3, 4× depth 2, **1× depth 4** |
+| late (12 pos, > 17 stones) | OFF `instrument_staged_v0` | 501914 | 2514.0 | 199648 | 1× depth 4, 2× depth 1, 4× depth 2, 5× depth 3 |
+| late | ON `instrument_staged_h_v0` | 501914 | 2362.0 | 212495 | 2× depth 1, 4× depth 2, 6× depth 3 |
+
+- **nps ratio ON/OFF: early 1.0590, late 1.0644.** BOTH bands are INSIDE the
+  bracket (≥ 0.85) — and above 1.0, which the bracket did not predict and
+  which is read honestly rather than celebrated: the per-node heuristic cost
+  is real but is more than offset by the ordering changing the NODE MIX —
+  earlier cutoffs mean fewer candidate scorings per node — so the same node
+  count spends less wall time. This is an ordering-QUALITY effect wearing an
+  nps costume, and the depth column is the honest signal: the ON seat
+  completed a **depth 4** on one early-band position where OFF stopped at 3
+  (and lost the depth-4 completion on one late-band position — mixed, as a
+  per-position effect at this sample size should be expected to be).
+- **IQR gate: ZERO violations** — no position's 5-rep IQR exceeded 10% of its
+  median, so no verdict was withheld and nothing was re-measured.
+- **Node identity:** per-position node counts are identical across reps
+  (deterministic fixed-node budget, asserted in aggregation); every
+  early-band search consumed the full budget (`50176`), so the early-band
+  totals are `12 × 50176 = 602112` on both sides.
+- **VERDICT: WITHIN THE BRACKET. The WP proceeds to SPRT.**
+
 ## 8. Tests and mutation receipts
 
 Unit/integration tests (names are the behavior):
