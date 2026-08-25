@@ -4,7 +4,7 @@
 
 **Verdict: FAIL** — 1 BLOCKING, 8 MAJOR, 6 MINOR. The §2 move policy and the §4 Pawlewicz-Lew quotations survived adversarial checking (details at the end); the §3 zone construction did not: it is not the Wu & Lin construction its soundness hinge depends on, and the design's own justification for the difference is false.
 
-Landed retroactively with revision 2's fix round (the review was returned as a message before the report file existed; its content is unchanged). The findings below are quoted in summary form; revision 2 of the design cites them by number.
+Landed retroactively with revision 3's fix round, two fix rounds after the review itself (the review was returned as a message before the report file existed; its content is unchanged). The findings below are quoted in summary form; revision 2 of the design cites them by number.
 
 ## BLOCKING 1 — §3's EP-1/T3-2 are narrowed to hot windows; the constructed `Z_p` is not a relevance-zone sequence, and the hinge "sound iff `Z_p ⊆ Z_s`" is unsupported (a false `Win` is reachable)
 
