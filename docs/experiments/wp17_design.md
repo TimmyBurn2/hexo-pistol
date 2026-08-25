@@ -1,5 +1,17 @@
 # WP-1.7 — design: killers, history, countermove on pair moves
 
+**Revision 3.** It closes the DECISION-RED-TEAM's wounds on the §4 matrix
+(attacked at `232a175` after REVIEW-design's findings were closed in revision
+2): M1's site list is re-categorised (one production site, nine test sites)
+and its citation corrected; M2 gains the omitted top-K option, the
+late-in-stack cap honesty and a by-construction mark; M3/M4 gain the
+play-order / first-stone-credit options the dispatch's own keying and credit
+contract rule out, recorded as the strongest surviving attacks; M5 and M7 now
+state the thin-residue composite honestly; M8 (update/promotion boundary) and
+M9 (countermove-before-history order) are added as the rows the red team
+found missing; §3.1's countermove exemption carries its true reason. All
+seven standing calls from revision 2 are unchanged.
+
 **Revision 2.** It closes all eight findings of the design review
 (`038e458`, 1 BLOCKING / 2 MAJOR / 5 MINOR): §7's command block was rewritten
 (the registered extraction matched ZERO fixture lines — the wrong-answer class
@@ -104,8 +116,12 @@ Lifecycle:
 - **`begin_search()`** — called at the top of `Searcher::search`: killer and
   pair-killer arrays are reset (ply indices restart at every search); history
   scores are HALVED, floor division, entry per entry (the aging scheme, §4
-  M5); countermove is left alone — its key means the same thing throughout a
-  game.
+  M5); countermove is left alone — not because its key is stabler than
+  history's (both keys mean the same thing throughout a game), but because
+  countermove is a single-slot LAST-WRITE-WINS table that overwrites its own
+  stale entries, while history is an accumulator that cannot; the residual
+  cost — an opening countermove read at full authority in the endgame — is
+  the lineage-standard price of that shape, accepted here.
 - **`clear()`** — called by `Searcher::clear` (newgame): everything to empty.
 
 ### 3.2 Update — when a beta cutoff lands
@@ -182,24 +198,35 @@ section that owns cost.
 
 ## 4. Option matrix
 
-Every numeric claim is marked **MEASURED** or **ESTIMATED**. The
-fresh-context attack this matrix's recommendations got is REVIEW-design
-(`038e458`, whose findings this revision closes); a compact fresh-context
-DECISION-RED-TEAM is dispatched against THIS amended matrix before IMPL, so
-the matrix is attacked before selection is treated as final under CLAUDE.md's
-rule — recorded here because the commissioning dispatch's subagent policy
-names REVIEW-design and REVIEW-impl as the dispatched reviews and does not
-name the matrix attack.
+Every numeric claim is marked **MEASURED** or **ESTIMATED** (claims that are
+true by construction of the mechanism are marked as such). The matrix has
+been attacked twice by fresh contexts: REVIEW-design (`038e458`, whose
+findings revision 2 closed) and a DECISION-RED-TEAM against the amended
+matrix (`232a175`) — **no recommendation died; every row survived with
+wounds, and the strongest surviving attack on each standing call is recorded
+in §9's ADR note** per CLAUDE.md's own rule.
 
 | # | Decision | Options | Costs / failure modes | Call |
 |---|---|---|---|---|
-| M1 | Where the config gates live | (a) three keys inside `[search.candidate_policy]` `staged` variant; (b) a top-level `[search.ordering]` section | (b) makes every Radius config state three keys the Radius path never reads — dead keys outside the variant, against the variant-scoped precedent `q_depth_turns`/`q_triggers` set (D-396); (a) costs churn in every `StagedParams` construction site — **MEASURED by grep, 10 sites**: `instance.rs:183`, `quiescence.rs:566`, and eight in the test tree (`staged_differential_gate_tests.rs:126`, `staged_pattern_fixture_tests.rs:51`, `staged_tier_t_threshold_tests.rs:96`, `staged_colony_family_tests.rs:122` and `:153`, `staged_tests.rs:88` and `:401`, `common/mod.rs:76`) — all mechanical, rule 1 forbids a code-side default at each | **(a)** |
-| M2 | How history orders | (a) promote the single best-history unforced candidate; (b) stable re-sort of the unforced range by history score; (c) history as a tie-break in the delta sort | (b) needs no delta scores (a stable sort by history alone preserves the delta order among equal-history cells) but lets history DOMINATE delta, inverting the tactical signal the tiers exist to front-load; (c) needs the delta scores, which live inside `staged_candidates` (`staged.rs:340-348`) — touching that ranking is touching generation, out of scope. (a) is one map lookup per unforced candidate plus one rotation, and caps history's influence at one cell | **(a)** |
-| M3 | Do pair killers earn a slot | (a) one pair slot per phase-First ply; (b) no pair killers at all | (b) loses the pair's FIRST stone (the completing stone is already covered by the single-cell killer keyed at the phase-Second ply); (a) costs one extra table and the rule-4/canonical validation seam. The report's line 83 says "adapt killers … by keying on the completing stone AND on the pair" | **(a)** — the report names both keyings; the first stone is exactly what (b) drops |
-| M4 | Pair promotion shape | (a) promote each present cell of the pair, canonical order; (b) promote only when BOTH cells are candidates | (b) wastes the hint when one cell is occupied/off-set; (a) can promote a pair's second cell as a turn's first stone — a weaker hint, never a wrong move (it reorders legal candidates only) | **(a)** |
-| M5 | History aging | (a) halve at `begin_search`; (b) clear at `begin_search`; (c) no aging | (b) discards cross-search signal within a game, which is where history is supposed to help; (c) unbounded growth, and stale-opening scores would dominate late-game argmax. Halving is the standard chess lineage scheme | **(a)** |
+| M1 | Where the config gates live | (a) three keys inside `[search.candidate_policy]` `staged` variant; (b) a top-level `[search.ordering]` section | (b) makes every Radius config state three keys the Radius path never reads — dead keys outside the variant, against the variant-scoping precedent the committed schema itself sets (`config.rs:189-223`'s `q_depth_turns`/`q_triggers`); (a) costs churn in every `StagedParams` construction site — **MEASURED by grep, 10 sites: one production site (`instance.rs:183`) and nine test sites** (`quiescence.rs:566` is inside its `#[cfg(test)]` module, plus the eight integration-test sites) — all mechanical, rule 1 forbids a code-side default at each | **(a)** |
+| M2 | How history orders | (a) promote the single best-history unforced candidate; (b) stable re-sort of the unforced range by history score; (c) history as a tie-break in the delta sort; (d) top-K history promotions, K = 2-3 | (b) needs no delta scores (a stable sort by history alone preserves the delta order among equal-history cells) but lets history DOMINATE delta, inverting the tactical signal the tiers exist to front-load; (c) needs the delta scores, which live inside `staged_candidates` (`staged.rs:340-348`) and are discarded before `pvs::visit` holds the set — touching that ranking is touching generation, out of scope; (d) is the natural first relaxation and costs K-1 extra rotations, but every K beyond one is a tuning axis with no hex evidence. (a) is one map lookup per unforced candidate (by construction) plus one rotation, and caps history's influence at one cell — a cap that lands LATE in the promotion stack (§3.3: behind TT, killers, pair, countermove), which is stated here rather than left for a reader to derive | **(a)**; (d) is licensed-not-scheduled if the SPRT reads null |
+| M3 | What earns the pair's first stone a slot | (a) one canonical-pair killer slot per phase-First ply; (b) no pair killers; (c) credit the turn's FIRST stone in history at a phase-Second cutoff | (b) loses the pair's first stone entirely; (c) would recover it through the history table with no new seam, BUT it credits a stone that did NOT produce the cutoff — against the dispatch's own contract ("score per (mover, cell) for the stone that produced a beta cutoff, bonus on cutoff") — and the dispatch names the pair keying itself ("full canonical pair, D-5, D-51"). The report's line 83 says "adapt killers … by keying on the completing stone AND on the pair" | **(a)** — the dispatch's keying; (c) is the strongest surviving attack on it and is recorded, not adopted |
+| M4 | Pair promotion shape | (a) promote each present cell of the canonical pair, in canonical order; (b) promote only when BOTH cells are candidates; (c) store and promote in PLAY order | (b) wastes the hint when one cell is occupied/off-set; (c) composes with the phase-Second single-cell killer to reconstruct the whole refuting pair and is free at write time — but the dispatch names the keying "full canonical pair" (D-5, D-51's `make_turn` semantics), so (c) is out of bounds for this WP; canonical order can promote the pair's second cell as a turn's first stone, and inverts play order even when both cells are present — a weaker hint, never a wrong move (it reorders legal candidates only, and the rule-4 check excludes the first-stone-wins class) | **(a)**, with (c) recorded as the strongest surviving attack |
+| M5 | History aging | (a) halve at `begin_search`; (b) clear at `begin_search`; (c) no aging | (b) discards cross-search signal; (c) unbounded growth, and stale-opening scores would dominate late-game argmax. **The honest composite, stated rather than oversold**: with floor halving and a flat `+1` (M7), a single-cutoff cell halves to 0 at the next search — history's cross-search memory is a THIN RESIDUE available only to repeatedly-cutting cells, so (a) sits close to (b) in effect, and the choice between them is not load-bearing. Halving is kept as the lineage-standard middle point | **(a)**, with the thin-residue reading on its face |
 | M6 | Killer slots per ply | (a) two; (b) one | Chess lineage: two slots capture the two most recent refutations at negligible cost (two rotations) — **ESTIMATED** benefit, zero measured hex evidence, consistent with §1's honesty | **(a)** |
-| M7 | History bonus shape | (a) flat `+1` per cutoff; (b) depth-scaled (`+= depth_plies` or `+= depth²`) | (b) is the chess-lineage default and lets deep refutations outrank shallow ones; it also adds a tuning axis with NO hex evidence behind any exponent, and the argmax-only reading (M2a) makes the two shapes differ only in relative order among candidates with different cutoff depths — a second-order distinction this WP's honestly-null expected effect does not license tuning | **(a)**, recorded as an ADR line; a depth-scaled bonus is licensed-not-scheduled for a future WP that has a reason to expect it to matter |
+| M7 | History bonus shape | (a) flat `+1` per cutoff; (b) depth-scaled (`+= depth_plies` or `+= depth²`) | (b) is the chess-lineage default and lets deep refutations outrank shallow ones WITHIN a search; across searches it also extends history's memory horizon (a ~50-point bonus survives ~6 agings where a flat 1 dies at the first), which is a memory knob wearing a ranking knob's clothes — an unlicensed tuning axis. Flat +1 keeps history's cross-search footprint at exactly the thin residue M5 admits, and its ties fall back to the delta order, which is weakly safer under M2(a) | **(a)**, recorded as an ADR line; depth-scaled bonuses are licensed-not-scheduled for a future WP that has a reason to expect them to matter |
+| M8 | The update/promotion boundary | (a) unforced-only: only cutoffs whose cell sits at or after `forced` update the tables, and promotions never touch `cells[..forced]`; (b) all cutoffs update, promotions may rotate the whole set | (b) lets Tier-F cells masquerade as quiet-refutation hints and would disturb the deterministic internal order of the forced prefix (Tier F's ascending `(q, r)`), changing committed behaviour of forced-cell ordering for no strength claim; (a)'s index test provably excludes winning placements (§3.2) | **(a)** |
+| M9 | Order within the report's "history/countermove" tier | (a) countermove promoted before the history cell; (b) history before countermove | The report's line 83 treats them as one tier, so the split is this design's to make: countermove is the MORE SPECIFIC key (the exact opponent stone just placed), so it goes first; the reverse order would let the blunter key displace the sharper one whenever both hit | **(a)** |
+
+**The composite, owned once here rather than row by row:** M2(a) + M5(a) +
+M7(a) deliberately select the weakest viable member of each of history's
+axes — one cell of influence (landing late in the stack), a thin cross-search
+residue, frequency-only signal — on top of a delta-ranked candidate set that
+§1 already expects to make the heuristics largely redundant. That is not
+timidity, it is the registered expectation: the SPRT judges the trio, and if
+it reads null the licensed-not-scheduled relaxations (top-K promotions,
+depth-scaled bonuses) are the natural next experiments, each carrying its own
+pre-registration.
 
 ## 5. Determinism (CLAUDE.md rule 4, D-7)
 
@@ -365,11 +392,17 @@ Mutation receipts (each in a separate worktree, mutant dies):
 ## 9. ADR lines this design records
 
 One ADR line per non-obvious call, landing with the commits that implement
-them: the gate placement (M1), the unforced-only update/promotion boundary,
-the aging scheme (M5), the pair-killer slot and its rule-4/canonical
-validation seam (M3/M4), the flat history bonus (M7), the quiescence scope
-cut, and the bench bracket with its receipt. The SPRT verdict line lands at
-closure.
+them: the gate placement (M1), the unforced-only update/promotion boundary
+(M8), the aging scheme and its honest thin-residue reading (M5), the
+pair-killer slot with its rule-4/canonical validation seam (M3/M4), the flat
+history bonus (M7), the countermove-before-history order (M9), the
+quiescence scope cut, and the bench bracket with its receipt. Per CLAUDE.md's
+matrix rule, each ADR line records the STRONGEST SURVIVING ATTACK from the
+matrix's fresh-context red team: for M3/M4 that attack is the play-order /
+first-stone-credit alternative the dispatch's own keying and credit contract
+rule out; for M5 it is that floor-halving with a flat bonus preserves almost
+none of the cross-search memory its row originally claimed; for M2 it is the
+deliberately minimal composite. The SPRT verdict line lands at closure.
 
 ## 10. Out of scope
 
