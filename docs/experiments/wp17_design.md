@@ -1,5 +1,13 @@
 # WP-1.7 — design: killers, history, countermove on pair moves
 
+**Revision 2.** It closes all eight findings of the design review
+(`038e458`, 1 BLOCKING / 2 MAJOR / 5 MINOR): §7's command block was rewritten
+(the registered extraction matched ZERO fixture lines — the wrong-answer class
+the dry-run rule exists for) and gained a recorded dry run, a total verdict
+space, an IQR gate and a cost statement; §4's M1/M2 cost claims were corrected
+to measured ones and M7 added; §3.4 now points at §7 for cost instead of
+contradicting it. Sections not named here are revision 1's, unchanged.
+
 **Pinned at the commit this document lands in (see the ADR line that lands with
 it).** Governing inputs: the commissioning dispatch ("[GROUNDWORK] WP-1.7"),
 CLAUDE.md, `docs/ROADMAP.md` WP-1.7, `docs/research/minimax_report.md` line 83
@@ -83,6 +91,14 @@ One struct, `HeuristicTables` (new module
 Both killer arrays are sized `MAX_PLY` (`crates/pistol-search/src/search.rs:81`),
 the same bound the PV table is sized against.
 
+**Why the killer tables are reset per search** — a premise the review asked to
+have stated rather than left implicit: within ONE search, (mover, phase) is a
+function of the ply index alone (the placement state machine is deterministic
+from the root; turn 1's single stone shifts the parity but keeps it a
+function), so a ply-keyed table cannot mix movers. Across searches with
+different roots the function changes, which is why `begin_search` resets the
+ply-keyed tables rather than carrying them.
+
 Lifecycle:
 
 - **`begin_search()`** — called at the top of `Searcher::search`: killer and
@@ -99,8 +115,9 @@ not aborted, with cutoff cell `c`, mover `m`, ply `p`:
 
 - `killers[p]` shifts (slot 0 ← `c`, slot 1 ← old slot 0), unless `c` is
   already slot 0.
-- `history[(m, c)] += 1` (saturating; magnitude is relative — history is only
-  ever read as an argmax among candidates).
+- `history[(m, c)] += 1` (saturating; the bonus is FLAT — see §4 M7 for why
+  not depth-scaled — and magnitude is relative, since history is only ever
+  read as an argmax among candidates).
 - `countermove[x] = c`, where `x` is the opponent of `m`'s most recent stone
   on the board (walk `GameState::played()` backwards to the first stone not
   owned by `m`; ≤ 2 steps, since at most our own first stone is newer).
@@ -114,8 +131,9 @@ not aborted, with cutoff cell `c`, mover `m`, ply `p`:
 tactical cell the tiers already front-load; recording it would let a Tier-F
 cell masquerade as a quiet-refutation hint. Symmetrically, a `PlyOutcome::Win`
 placement can only come from the forced prefix on every row that has an
-unforced range at all (Tier F is exactly the win-in-one-ply class, and
-`can_win_this_turn` being `None` on BATCHED rows excludes an immediate win
+unforced range at all (Tier F carries the win-in-one-ply class — plus, at
+`StonesLeft::Two`, the count-four pair class — and `can_win_this_turn` being
+`None` on BATCHED rows excludes an immediate win
 outright), so the index test excludes winning placements without a second
 rule.
 
@@ -157,25 +175,31 @@ stronger than bare membership in the candidate set (which would already imply
 them); they are the named seam the dispatch asks to be able to test, and they
 keep the promotion code honest if a future retrieval context relaxes what the
 candidate set guarantees. Their cost is bounded: at most six probes per node,
-each linear in the stone count — no eval roundtrip, no per-candidate probe
-(D-192's finding is about per-candidate cost, and nothing here adds one).
+each linear in the stone count — no per-candidate EVAL roundtrip; the one
+per-candidate cost this WP does add (a single `BTreeMap` lookup per unforced
+candidate, for the history argmax) is stated and bounded in §7, which is the
+section that owns cost.
 
 ## 4. Option matrix
 
-Every numeric claim is marked **MEASURED** or **ESTIMATED**. Per the
-commissioning dispatch's subagent policy, the fresh-context attack on this
-matrix is REVIEW-design itself; no separate DECISION-RED-TEAM dispatch is held
-(the dispatch names exactly REVIEW-design and REVIEW-impl as the dispatched
-reviews).
+Every numeric claim is marked **MEASURED** or **ESTIMATED**. The
+fresh-context attack this matrix's recommendations got is REVIEW-design
+(`038e458`, whose findings this revision closes); a compact fresh-context
+DECISION-RED-TEAM is dispatched against THIS amended matrix before IMPL, so
+the matrix is attacked before selection is treated as final under CLAUDE.md's
+rule — recorded here because the commissioning dispatch's subagent policy
+names REVIEW-design and REVIEW-impl as the dispatched reviews and does not
+name the matrix attack.
 
 | # | Decision | Options | Costs / failure modes | Call |
 |---|---|---|---|---|
-| M1 | Where the config gates live | (a) three keys inside `[search.candidate_policy]` `staged` variant; (b) a top-level `[search.ordering]` section | (b) makes every Radius config state three keys the Radius path never reads — dead keys outside the variant, against the variant-scoped precedent `q_depth_turns`/`q_triggers` set (D-396); (a) costs churn in every `StagedParams` construction site (7 configs, 3 test helpers) — mechanical | **(a)** |
-| M2 | How history orders | (a) promote the single best-history unforced candidate; (b) re-sort the unforced range by history; (c) history as a tie-break in the delta sort | (b)/(c) need the delta scores, which live inside `staged_candidates` (`staged.rs:340-348`) — touching that ranking is touching generation, out of scope; (b) also lets history DOMINATE delta, inverting the tactical signal. (a) is one map lookup per unforced candidate plus one rotation | **(a)** |
+| M1 | Where the config gates live | (a) three keys inside `[search.candidate_policy]` `staged` variant; (b) a top-level `[search.ordering]` section | (b) makes every Radius config state three keys the Radius path never reads — dead keys outside the variant, against the variant-scoped precedent `q_depth_turns`/`q_triggers` set (D-396); (a) costs churn in every `StagedParams` construction site — **MEASURED by grep, 10 sites**: `instance.rs:183`, `quiescence.rs:566`, and eight in the test tree (`staged_differential_gate_tests.rs:126`, `staged_pattern_fixture_tests.rs:51`, `staged_tier_t_threshold_tests.rs:96`, `staged_colony_family_tests.rs:122` and `:153`, `staged_tests.rs:88` and `:401`, `common/mod.rs:76`) — all mechanical, rule 1 forbids a code-side default at each | **(a)** |
+| M2 | How history orders | (a) promote the single best-history unforced candidate; (b) stable re-sort of the unforced range by history score; (c) history as a tie-break in the delta sort | (b) needs no delta scores (a stable sort by history alone preserves the delta order among equal-history cells) but lets history DOMINATE delta, inverting the tactical signal the tiers exist to front-load; (c) needs the delta scores, which live inside `staged_candidates` (`staged.rs:340-348`) — touching that ranking is touching generation, out of scope. (a) is one map lookup per unforced candidate plus one rotation, and caps history's influence at one cell | **(a)** |
 | M3 | Do pair killers earn a slot | (a) one pair slot per phase-First ply; (b) no pair killers at all | (b) loses the pair's FIRST stone (the completing stone is already covered by the single-cell killer keyed at the phase-Second ply); (a) costs one extra table and the rule-4/canonical validation seam. The report's line 83 says "adapt killers … by keying on the completing stone AND on the pair" | **(a)** — the report names both keyings; the first stone is exactly what (b) drops |
 | M4 | Pair promotion shape | (a) promote each present cell of the pair, canonical order; (b) promote only when BOTH cells are candidates | (b) wastes the hint when one cell is occupied/off-set; (a) can promote a pair's second cell as a turn's first stone — a weaker hint, never a wrong move (it reorders legal candidates only) | **(a)** |
 | M5 | History aging | (a) halve at `begin_search`; (b) clear at `begin_search`; (c) no aging | (b) discards cross-search signal within a game, which is where history is supposed to help; (c) unbounded growth, and stale-opening scores would dominate late-game argmax. Halving is the standard chess lineage scheme | **(a)** |
 | M6 | Killer slots per ply | (a) two; (b) one | Chess lineage: two slots capture the two most recent refutations at negligible cost (two rotations) — **ESTIMATED** benefit, zero measured hex evidence, consistent with §1's honesty | **(a)** |
+| M7 | History bonus shape | (a) flat `+1` per cutoff; (b) depth-scaled (`+= depth_plies` or `+= depth²`) | (b) is the chess-lineage default and lets deep refutations outrank shallow ones; it also adds a tuning axis with NO hex evidence behind any exponent, and the argmax-only reading (M2a) makes the two shapes differ only in relative order among candidates with different cutoff depths — a second-order distinction this WP's honestly-null expected effect does not license tuning | **(a)**, recorded as an ADR line; a depth-scaled bonus is licensed-not-scheduled for a future WP that has a reason to expect it to matter |
 
 ## 5. Determinism (CLAUDE.md rule 4, D-7)
 
@@ -220,46 +244,95 @@ reviews).
 
 - **Hotspot:** the heuristics' own per-node overhead — at most six validation
   probes (each linear in stones, `Board::in_legal_region`), at most six
-  membership rotations over the unforced range, and one history lookup per
-  unforced candidate. **No second eval roundtrip per candidate** (D-192
-  measured the first one at 76% of profiled stacks; nothing here adds one).
-- **Instrument:** the command block below, run at the design's own revision —
-  a fixed-node sweep over `crates/pistol-cli/tests/fixtures/bench_positions_v1.txt`
-  (24 positions, two bands: centre-15 and centre-35) under
-  `configs/instrument_staged_v0.toml` (OFF) and
+  membership rotations over the unforced range, and one history `BTreeMap`
+  lookup per unforced candidate. **No second eval roundtrip per candidate**
+  (D-192 measured the first one at 76% of profiled stacks; nothing here adds
+  one).
+- **Instrument:** the command block below, run at this document's own
+  revision — a fixed-node sweep over `crates/pistol-cli/tests/fixtures/bench_positions_v1.txt`
+  (24 positions, two bands: ≤ 17 stones = early, else late, the fixture's own
+  `EARLY_MAX` convention) under `configs/instrument_staged_v0.toml` (OFF) and
   `configs/instrument_staged_h_v0.toml` (ON), 5 repetitions, per-band aggregate
-  nps = Σ nodes / Σ median-time-per-position. IQR of the 5 per-position reps
-  is printed with the number it gates.
-- **Gain bracket (an OVERHEAD bracket — this change is not expected to buy
-  nps):** band-aggregate nps ratio ON/OFF **≥ 0.85** in BOTH bands
-  (ESTIMATED — the overhead is O(stones) probes plus map lookups per node, and
-  a search at 50 000 nodes spends the overwhelmingly larger share of its time
-  in eval-delta ranking and subtree recursion; no hex measurement exists).
-- **Abort threshold:** ratio **< 0.80** in either band — the heuristics are
-  re-scoped (cheaper validation or fewer promotions) and the numbers are
-  recorded as a finding, never a threshold move.
+  nps = Σ nodes / Σ median-time-per-position.
+- **Verdict space — TOTAL, so no reading is chosen after the numbers.**
+  - band-aggregate nps ratio ON/OFF **≥ 0.85 in BOTH bands**: within the
+    bracket — the overhead is accepted and the WP proceeds to SPRT. (The
+    bracket's expected band is ≥ 0.85, **ESTIMATED**: the overhead is
+    O(stones) probes plus map lookups per node against a search whose time is
+    dominated by eval-delta ranking and subtree recursion; no hex measurement
+    exists.)
+  - ratio **< 0.85 in EITHER band**: OUTSIDE the bracket — the heuristics are
+    re-scoped (cheaper validation, fewer promotions) and the numbers are
+    recorded as a finding, never a threshold move.
+- **IQR gate (rule 5's "IQR-gated bench", the D-215/D-362 convention):** for
+  each position, the IQR of its 5 per-rep times must be ≤ 10% of that
+  position's median time. A position exceeding it WITHHOLDS the verdict —
+  that position is re-measured (all 5 reps, both configs) before any ratio is
+  read, and the re-measurement is recorded beside the first.
 - **Time-to-depth:** the per-position completed `depth_turns` at fixed nodes is
   printed for both sides as context — better ordering can buy DEPTH at equal
   nodes, and that is the gain channel this WP actually claims — but it is not
   a gate on this bench.
+- **Cost, stated on the document's own face:** 24 positions × 5 reps × 2
+  configs = 240 sequential engine invocations. **MEASURED on the §7a dry
+  run's stand-in (5 and 7 stones): 136-241 ms per 50 000-node search**; the
+  fixture's 15- and 35-stone positions are heavier (D-215's radius-2 figures
+  ran 185-458 ms at this budget), so **ESTIMATED 3-8 minutes wall on one
+  core**, plus ~240 × ~30 ms process startup (D-236's fixed per-invocation
+  cost). Operator attention: one launch and one read.
 
-Command block (run from the repo root, release build current):
+Command block (run from the repo root, release build current; the extraction
+is the established idiom `tools/staged_cover_bench.sh:118,137` uses — entries
+are the fixture's non-comment lines, the ` # …` commentary stripped per entry,
+the band read from the `stones` annotation):
 
 ```
 for CFG in configs/instrument_staged_v0.toml configs/instrument_staged_h_v0.toml; do
-  while read -r POS; do
+  while IFS= read -r entry; do
+    position="${entry%% #*}"
     for REP in 1 2 3 4 5; do
-      printf 'newgame\nposition %s\ngo nodes 50000\nquit\n' "$POS" \
+      printf 'newgame\nposition %s\ngo nodes 50000\nquit\n' "$position" \
         | target/release/pistol --config "$CFG" \
         | sed -n 's/^info totals //p'
     done
-  done < <(sed -n 's/^position //p' crates/pistol-cli/tests/fixtures/bench_positions_v1.txt)
+  done < <(grep -v '^#' crates/pistol-cli/tests/fixtures/bench_positions_v1.txt | grep .)
 done
 ```
 
-Per-position stones come from the fixture's own `stones` annotations (band
-split at ≤ 17 = early). The receipt quotes per-band Σnodes, Σmedian-ms, ratio,
-and the IQR of each position's 5 reps.
+### 7a. The dry run — recorded, with its criterion
+
+CLAUDE.md: a pre-registration's literal commands are exercised before its
+review passes, on an input of the SAME KIND, never on the registered workload.
+**DONE, this session.**
+
+- **Input:** `/tmp/opencode/wp17/stand_in.txt` — two positions in the
+  fixture's own line form (`position start moves … # src … stones N`, 5 and 7
+  stones), authored for the dry run, not fixture entries. The two configs are
+  `instrument_staged_v0.toml` and
+  `instrument_staged_q_defensive_only_v0.toml` — the heuristics-ON config
+  does not exist yet at design time; what the command block's SYNTAX depends
+  on is two instrument configs, and those two are the same kind differing in
+  identity.
+- **Criterion, and the defect class it excludes:** for each config, the
+  command block must print **exactly one `info totals` line per stand-in
+  position and zero `error` lines**. The defect class is
+  **EXIT-0-WRONG-ANSWER — a sweep that measures nothing and still exits 0**:
+  the extraction this section's revision 1 registered
+  (`sed -n 's/^position //p'`) matches ZERO fixture lines (fixture data lines
+  are position-verb TAILS, not `position`-prefixed lines), so the registered
+  loop body never ran — verified: `sed -n 's/^position //p' … | wc -l` prints
+  `0`. An extraction failure therefore shows up as ZERO totals lines, which
+  this criterion falsifies and a plausible-magnitude check would not. (The
+  count is an externally derived referent in the sense that matters here: it
+  is derived from the INPUT's own line count, not from anything the command
+  under test computes.)
+- **Output recorded:** 2 positions × 2 configs → 4 `info totals` lines, zero
+  `error` lines, per-position searches of 136-241 ms — the full transcript is
+  preserved at `/tmp/opencode/wp17/dryrun_output.txt` and its first lines are:
+  `depth_turns 3 seldepth 4 nodes 50176 nps 362895 time 138 …` (config 1,
+  position 1) and `depth_turns 3 seldepth 5 nodes 50176 nps 207377 time 240 …`
+  (config 2, position 1). The dry run is not a governed sample and consumes
+  nothing.
 
 ## 8. Tests and mutation receipts
 
@@ -294,8 +367,9 @@ Mutation receipts (each in a separate worktree, mutant dies):
 One ADR line per non-obvious call, landing with the commits that implement
 them: the gate placement (M1), the unforced-only update/promotion boundary,
 the aging scheme (M5), the pair-killer slot and its rule-4/canonical
-validation seam (M3/M4), the quiescence scope cut, and the bench bracket with
-its receipt. The SPRT verdict line lands at closure.
+validation seam (M3/M4), the flat history bonus (M7), the quiescence scope
+cut, and the bench bracket with its receipt. The SPRT verdict line lands at
+closure.
 
 ## 10. Out of scope
 
