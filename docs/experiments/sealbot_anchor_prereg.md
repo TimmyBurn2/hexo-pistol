@@ -71,13 +71,20 @@ sha256sum artifacts/sealbot_anchor_v1/report.json \
 Input: `local/sealbot_dryrun.toml` (sha256 `4938e6849cb43eeac0222087d59547458535a6f39654844490df4a0a731f3d6a`) — the same two real engines, the same
 seats rule, at reduced budgets (pistol `nodes 5000`, sealbot `0.05 s`,
 cap 40, **2 games**). Output: `artifacts/sealbot_dryrun_v1/`
-(report `fc8449bc63f2277b15e574a5f60bcd366c43708ab6c9a8e559d7c1b1e2350a9f`,
-transcripts `002d10c0…` and `e4bca9cd…`).
+(report `b7f24c558c5fedc12258f3d04498326b234e2bbb281cb0fa3e87951107c7829e`,
+transcripts `c91a8918…` and `6d883062…`). This is the instance produced by
+the COMMITTED instrument tree (revision `450d7aa`), re-taken after the
+commit so the bytes on disk are the ones these digests name; sealbot is
+time-budgeted, so a further re-run would differ in its bytes while meeting
+the same criteria — the digests pin THIS instance, and only the pistol side
+is reproducible.
 
 **Criteria, with the defect class each exists to exclude:**
 
-- **A. Both games ran without a forfeit** (game 1 capped; game 2 a win at
-  turn 15). *Defect class: a driver-protocol break masquerading as a game
+- **A. Both games ran without a forfeit** (the recorded instance: game 1
+  capped, game 2 a win at turn 15; a re-run's games may differ in identity
+  while meeting the same criterion, because sealbot is time-budgeted).
+  *Defect class: a driver-protocol break masquerading as a game
   outcome — a seat that cannot speak its protocol loses by forfeit and the
   anchor would silently measure plumbing.* A forfeit here fails this
   criterion.
