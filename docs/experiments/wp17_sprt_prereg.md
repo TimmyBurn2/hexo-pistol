@@ -1,20 +1,22 @@
 # WP-1.7 — SPRT pre-registration: the three ordering heuristics (killers, history, countermove, all ON) vs the committed staged policy
 
-**Revision 2. It closes the six findings of revision 1's fresh-context review
-(`be5cbdb`, 0 BLOCKING / 2 MAJOR / 4 MINOR): §5's verdict space is made
-TOTAL (the cap-inconclusive, aborted and no-report outcomes get rows, and the
-`distinct_n == n/2` degenerate case gets THIS matchup's own registered
-discrimination rather than a misrouted singular pointer); §7's cost estimate
-is re-derived from the document's own measurements; §8.1's mechanism sentence
-is corrected (the first divergence was game 1 turn 5, a CONFIRMED inversion —
-game 5 turn 14 is the first UNCONFIRMABLE one) and registers the criterion's
-looseness; §7A.1/§8.1 stop claiming "pointed at, not restated" where they
-restated; the dispatch quotations that fix `elo1` and delegate the launch are
-recorded in the ADR log (D-432), the D-382 pattern. Sections not named here
-are revision 1's, unchanged.**
+**Revision 3. It closes the five findings of revision 2's scoped re-review
+(`64f6a05`, 0 BLOCKING / 1 new MAJOR / 3 new MINOR / 1 not-closed): the
+degenerate rows are re-keyed so the verdict space is total for real (the
+`n/2` signature gets its own row; EVERY other degenerate shape — including
+the interior `n/2 < distinct_n < n` mixes the old keying dropped — routes to
+the pentanomial reading); §8.1's mechanism sentence is rewritten off the
+artifact itself with one explicit indexing convention; the cap row stops
+restating WP-1.6's sentence under a not-restated claim; §7's bracket
+justification is corrected (the dry-run book's openings are one turn
+LONGER, not shorter); the header names §11. Sections not named here are
+revision 1's, unchanged except as revisions 2 and 3 state.**
 
-**Revision 1. UNREVIEWED AT DISPATCH; this revision governs no run until a
-fresh-context review passes it.**
+**Revision 2 closed the six findings of revision 1's review (`be5cbdb`, 0
+BLOCKING / 2 MAJOR / 4 MINOR) — see §11 for the ledger.**
+
+**Revision 1 was UNREVIEWED AT DISPATCH; this revision governs no run until
+a fresh-context review passes it.**
 
 **Provenance, so a reviewer does not have to reconstruct it from the ADR
 log.** The design (`docs/experiments/wp17_design.md`, revision 3 at
@@ -114,18 +116,18 @@ The exit-code taxonomy of the Criterion 1'' chain — what exit 0/1/2/3 of
 **WP-1.6 §5's table, imported by reference and not restated here**
 (state-it-once; the partition there was deleted by D-424 after failing three
 reviews and must not be reborn here). WP-1.6 §5's rows for
-`inconclusive_at_game_cap`, `arena_report_aborted`, and a pre-game refusal
-with NO REPORT AT ALL are imported the same way. What follows are the rows
-THIS WP replaces or adds, because their consequences are WP-1.7's own:
+`arena_report_aborted` and a pre-game refusal with NO REPORT AT ALL are
+imported the same way. What follows are the rows THIS WP replaces or adds,
+because their consequences are WP-1.7's own:
 
 | Outcome | Action |
 |---|---|
 | `verdict h1` **at or above 100 pairs** | The three gates are accepted as stronger AT THIS BUDGET AND BOOK. The committed instrument configs — `configs/instrument_staged_v0.toml` and `configs/instrument_v0.toml`, identical in policy — flip `killers`/`history`/`countermove` to `true` in a separate commit after the run, subject to the closure gate. The gate and play configs do not move: they are not strength seats, and the determinism gate already exercises the ON path through its own third seat (`configs/gate_staged_heuristics_v0.toml`) |
 | `verdict h1` **below 100 pairs** | WITHHELD. A confirmatory run on the DISJOINT book decides it — the same document with `openings_file` changed to `crates/pistol-cli/tests/fixtures/openings_v1.txt` (1591 openings) and `openings_take` re-stated, D-190's own instrument, exactly as D-385/D-386 executed for WP-1.5b |
-| `verdict inconclusive_degenerate` **with `distinct_n == n`** | Read the direction off the pentanomial exactly as WP-1.6 §5's first degenerate row prescribes (k = 3 or 4 → the H1 row above, subject to the same floor; k = 0, 1 or 2 → the `h0` row below; `llr_pair last none`, so no crossing is quoted) |
 | `verdict inconclusive_degenerate` **with `distinct_n == n/2`** | **THIS matchup's own row, registered here because the case is live for it**: two deterministic seats differing only in move ordering can legitimately play identical games — §6's own redundancy expectation points exactly there — so the n/2 signature has TWO causes and the discrimination is REGISTERED BEFORE THE RUN, off the report's own bytes: check each seat's `config_sha256` against the digest of its named config (`configs/instrument_staged_h_v0.toml` for seat A, `configs/instrument_staged_v0.toml` for seat B). A MISMATCH is an instrument or document error — the run is not a measurement, investigate the instrument, never the engine (WP-1.6 §5's own n/2 consequence). A MATCH on both seats means the gates genuinely never changed a chosen move over the whole sample — a STRONG LEGITIMATE NULL, read as the `h0` row below (gates not accepted, committed configs do not move, the WP closes as a measured finding) |
+| `verdict inconclusive_degenerate` **in every other case** — `distinct_n == n`, and the interior mixes `n/2 < distinct_n < n` a k=2 sample of drawn-and-decided pairs produces | Read the direction off the pentanomial exactly as WP-1.6 §5's first degenerate row prescribes, floor, `capped_fraction`-beside-`k` and `llr_pair last none` caveats included by that pointer: k = 3 or 4 → the H1 row above; k = 0, 1 or 2 → the `h0` row below. **Keyed as "every other case" rather than `distinct_n == n` because k ∈ {0,1,3,4} forces `distinct_n == n` (the inert-pair theorem: a pair outside bucket 2 cannot be internally identical) while k = 2 admits any mix — the interior shapes are the modal degenerate outcome for two closely matched deterministic engines, this matchup above all, and must not fall between keys** |
 | `verdict h0` | The gates are NOT accepted. **A planning finding, never a threshold move**: the committed configs keep all three gates `false`, no re-read of `elo1`, no budget change, no book change, no run-until-favourable. The licensed-not-scheduled relaxations (top-K history promotions, depth-scaled bonuses, play-order pair keying — the design §4's recorded strongest surviving attacks) are future pre-registrations, not this WP's business |
-| `verdict inconclusive_at_game_cap` | Imported from WP-1.6 §5 by reference. **Registered here because §6 makes this outcome likely**: the gates are not accepted and the committed configs do not move, AND — distinct from an `h0` — the WP does NOT close as a measured null on a cap-inconclusive run: the sample is reported with its LLR and its distance from both bounds, and what happens next (a larger `openings_take`, or closure as inconclusive) is the architect's call under a NEW pre-registration, never a re-reading of this one |
+| `verdict inconclusive_at_game_cap` | **A WP-1.7 row that ADDS to WP-1.6 §5's cap row, not an import of it** (registered because §6 makes this outcome likely): the gates are not accepted and the committed configs do not move, AND — distinct from an `h0` — the WP does NOT close as a measured null on a cap-inconclusive run; what happens next (a larger `openings_take`, or closure as inconclusive) is the architect's call under a NEW pre-registration, never a re-reading of this one |
 | `invalid_forfeit`, or `forfeits > 0` at any verdict | **The run is not a measurement.** Investigate the forfeit's cause (D-158) |
 | `arena_report_aborted`; a pre-game refusal with NO REPORT AT ALL; Criterion 1'' fails; the instruments disagree; any checker exit other than 0 | **WP-1.6 §5's rows govern, imported by reference and not restated here** |
 
@@ -151,7 +153,7 @@ is what stops it being said afterwards as an excuse.
 | Item | DECLARED | MEASURED |
 |---|---|---|
 | The dry run (§8) | minutes | **17.4 s** run (`timing n_workers 4 wall_ms 17367`) + **17.4 s** replay (`wall_ms 17379`) for 8 games at 4 workers, plus both checkers |
-| The governed run | **ESTIMATED ~12 min wall at 4 workers if the SPRT early-stops near WP-1.6's 450-game crossing (D-428 measured 707 s there), ~26-36 min at the full 1000-game cap** — the cap figure derived from the document's own two measurements: `707 s × 1000/450 ≈ 26 min`, and this dry run's `17.4 s × 1000/8 ≈ 36 min` (the dry run's openings are shorter than the book's five-stone openings, so the two bracket it from below and above). At the arena's fixed-node budget both seats spend the same nodes per search — WP-1.6's 2.48x figure was a fixed-DEPTH node ratio, not a fixed-nodes time tax, and prices this matchup's seats within ~6% of each other (D-431) | the run itself, Step 6 |
+| The governed run | **ESTIMATED ~12 min wall at 4 workers if the SPRT early-stops near WP-1.6's 450-game crossing (D-428 measured 707 s there), ~26-36 min at the full 1000-game cap** — the cap range derived from the document's own two measurements: `707 s × 1000/450 ≈ 26 min`, and this dry run's `17.4 s × 1000/8 ≈ 36 min`. The two anchors differ ~40% for reasons this document does not model (the dry run's book holds 4-turn openings against the governed book's 3-turn, and its openings are not five-stone random samples); the cap estimate is read as the RANGE they span, not as either anchor. At the arena's fixed-node budget both seats spend the same nodes per search — WP-1.6's 2.48x figure was a fixed-DEPTH node ratio, not a fixed-nodes time tax, and prices this matchup's seats within ~6% of each other (D-431) | the run itself, Step 6 |
 | The warm replay | ~1x the run (WP-1.6 §7's four samples straddling 1.0; this WP's dry run: `17379/17367 = 1.00x`) | the pass itself |
 | `tools/wp16_warm_attribution_check.py` | seconds | WP-1.6 §7: `0.029 s` per 8 games |
 | The second instrument | minutes at 500 openings | WP-1.6 §7: `6.485 s` per 8 games |
@@ -284,16 +286,20 @@ NOT pass: `arena --replay` exits **1** with a divergence in every game, and
 the checker exits **NON-ZERO with a named finding**. *Defect class excluded:
 an attribution chain that cannot see a seat swap.* **REGISTERED AS OBSERVED —
 the exit is 3, not WP-1.6's exit-1-confirmed-inversion shape, and the reason
-is load-bearing**: the swapped report's first divergences (game 1 turn 5,
-then turn 11 in games 3, 4, 6-8) ARE dual-probe-confirmable inversions, but
-the scan stops at the first one that is not — game 5, turn 14 — because by
-then the other seat's COLD probe no longer reproduces what the WARM seat
-recorded (D-383's own measured mechanism): both probes answer `4,-1/5,-1`
-where the report records `-2,-1/5,-1`, the dual probe cannot confirm an
-inversion, and the checker names the only thing it can,
-`DETERMINISM VIOLATION`, with its own two-possible-causes message. The
-corrupted report is still refused and nothing downstream of it is read; on
-the GOVERNED run, exit 3's consequence is WP-1.6 §5's row, imported by
+is load-bearing.** The swapped replay document's eight `divergence` records,
+in document order (games 0-7 of the checker's 0-indexed vocabulary), sit at
+turns 5, 5, 11, 11, 14, 14, 11, 11. The checker probes them in document
+order and the first five (games 0-4) resolve as CONFIRMED inversions; the
+SIXTH — its `game 5`, the message's own 0-indexed spelling — is the first the
+dual probe cannot confirm: by turn 14 the other seat's COLD probe no longer
+reproduces what the WARM seat recorded (D-383's own measured mechanism), both
+probes answering `4,-1/5,-1` where the report records `-2,-1/5,-1`, so the
+checker names the only thing it can, `DETERMINISM VIOLATION`, with its own
+two-possible-causes message. The last two records (games 6-7) are NEVER
+probed — the instrument exits at the first unexplained divergence — so
+nothing is claimed about their confirmability either way. The corrupted
+report is still refused and nothing downstream of it is read; on the
+GOVERNED run, exit 3's consequence is WP-1.6 §5's row, imported by
 reference. **The criterion's registered looseness, stated rather than left**:
 any non-zero exit with a named finding satisfies W-2′ — a future re-take of
 this dry run exiting 1 or 2 would also pass it. On this transformation no
@@ -372,7 +378,8 @@ three-key diff of §1 stops being the only difference between the seats.
 | Revision | State |
 |---|---|
 | 1 (`be5cbdb`) | **FAILED its fresh-context review — 0 BLOCKING, 2 MAJOR, 4 MINOR** (report at `/tmp/opencode/wp17_prereg_REVIEW.md`; every receipt it tested held — pins, digests, quotations, the dry-run record, the seeded arm's byte-identical reproduction — and the mechanism story was verified true). The two MAJORs: the verdict space was not total (cap-inconclusive, aborted, no-report outcomes unreachable from the document), and the `distinct_n == n/2` degenerate case was misrouted by a singular pointer into the `h0` row. The four MINORs: a cost estimate derived by misreading a fixed-depth node ratio as a fixed-nodes time tax (D-291 shape), a mechanism sentence the artifact falsifies, dispatch quotations resting outside the repository, and three false "pointed at, not restated" claims (the D-419-MINOR-F shape) |
-| 2 (this text) | Closes all six: §5 is total and carries this matchup's own n/2 discrimination (config-digest check first, registered before the run); the cost row derives from the document's own measurements; the mechanism sentence is corrected; D-432 records the dispatch quotations in the ADR log; the false pointer claims are deleted. **UNREVIEWED — a fresh-context review must pass it before the governed run may be launched.** |
+| 2 (`64f6a05`) | Closed the six above, but **FAILED its scoped re-review — 0 BLOCKING, 1 new MAJOR, 3 new MINOR, 1 of the six not closed** (report at `/tmp/opencode/wp17_prereg_rev2_REVIEW.md`). The new MAJOR: the degenerate rows' `distinct_n == n` / `== n/2` keying dropped the interior mixes (`n/2 < distinct_n < n`) a k=2 sample produces — the modal degenerate shape for THIS matchup — while the header claimed totality. Not closed: the mechanism sentence, rewritten off the REVIEW's gloss rather than the artifact, mixed indexing conventions and asserted the unprobed records confirmable. Three more MINORs: the cap row restating WP-1.6's sentence under a not-restated claim, a backwards openings-length "fact" checkable in seconds, and the header omitting §11 from its own account |
+| 3 (this text) | Closes all five: the degenerate rows are re-keyed (`== n/2` vs EVERY OTHER CASE, the interior explicitly named); the mechanism sentence is rewritten off `artifacts/wp17_dryrun_swapped_replay.txt` with the checker's 0-indexed vocabulary stated and the unprobed records left unclaimed; the cap row declares itself an ADDITION rather than an import and drops WP-1.6's sentence; §7's bracket justification is corrected; the header names §11. **UNREVIEWED — a fresh-context review must pass it before the governed run may be launched.** |
 
 This WP's review ledger so far: design REVIEW-design + DECISION-RED-TEAM
 (D-429), REVIEW-impl (closed at `fc4bc69`), and this document's own review —
