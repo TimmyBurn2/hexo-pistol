@@ -141,6 +141,17 @@ and it does not block WP-1.6.
 static eval answers at turn boundaries only, so quiescence stands pat and
 extends in TURNS, never in plies.
 
+**WP-1.6 — CLOSED, `h0`, PREMATURE AT EVAL v0 (D-428).** The governed SPRT
+run was taken at `a4d5fbb` and IS a measurement under Criterion 1'' (0
+unattributable pairs of 225). `defensive_only` quiescence is NOT accepted
+against the committed staged policy at 50 000 nodes on `random_openings_v1`:
+`verdict h0`, 225 pairs, `llr_pair -2.9787`. The extension stays GATED OFF
+(`q_depth_turns = 0`) and the committed config did not move. **This is a
+planning finding about EVAL v0, not about quiescence as a class** — the
+design's claim is that quiescence corrects a horizon the STATIC eval
+misreads, so **the Stage-2 re-test STAYS SCHEDULED** below and
+`defensive_and_offensive` remains licensed-not-scheduled (D-396).
+
 **WP-1.7 — killers/history/countermove on pair moves.** Ordering changes worth
 measuring only once the candidate set they order is the threat-first one. Keyed
 on the completing stone and on the pair, per the report's move-ordering stack.
