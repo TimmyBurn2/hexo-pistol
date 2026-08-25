@@ -44,10 +44,10 @@ measured against them — is unchanged by anything here.
 
 | Instrument | Revision | Digest/identity |
 |---|---|---|
-| The match platform (`tools/sealbot/`, whole tree) | **INSTRUMENT_SHA** (the commit recorded in the ADR at run time) | the adapter + matchserver + shim + tests + this document's tree |
+| The match platform (`tools/sealbot/`, whole tree) | `450d7aa5cebc0ed2e51ef27327faf55c637776ef` on branch `sealbot-anchor` | the adapter + matchserver + shim + tests + this document's tree |
 | `run_match.sh` | same commit | drives the match; builds with `--locked` |
 | `replay_check` (second instrument) | same commit | replays transcripts against pistol-core |
-| The run config | `local/sealbot_anchor.toml` | sha256 recorded in the ADR at run time |
+| The run config | `local/sealbot_anchor.toml` | sha256 `773787cf7f1bde2f2677ffcdba151f8eb5acc5fc3ba2b27e8de068f8591f1dfa` |
 | pistol binary | `e2280ca` | `665d2815…` (§1) |
 | sealbot | local tree, unversioned | recorded as the shim's argv in the config; UNVERIFIED by design |
 
@@ -68,7 +68,7 @@ sha256sum artifacts/sealbot_anchor_v1/report.json \
 
 ## 5. The dry run (taken before this registration; same kind, not the sample)
 
-Input: `local/sealbot_dryrun.toml` — the same two real engines, the same
+Input: `local/sealbot_dryrun.toml` (sha256 `4938e6849cb43eeac0222087d59547458535a6f39654844490df4a0a731f3d6a`) — the same two real engines, the same
 seats rule, at reduced budgets (pistol `nodes 5000`, sealbot `0.05 s`,
 cap 40, **2 games**). Output: `artifacts/sealbot_dryrun_v1/`
 (report `fc8449bc63f2277b15e574a5f60bcd366c43708ab6c9a8e559d7c1b1e2350a9f`,
