@@ -262,36 +262,53 @@ fn replay_turn(state: &mut GameState, entry: &serde_json::Value) -> Result<(), S
         "illegal" => {
             let recorded = coord_of(&entry["outcome"]["stone"])
                 .map_err(|why| format!("the recorded illegal stone is malformed: {why}"))?;
-            if coords.len() > owed as usize {
-                // Illegal BY COUNT: the referee refuses the first stone past
-                // the owed count without placing it, and the rules would
-                // often accept that cell — so the replay checks the count,
-                // never the cell.
-                let over = coords[owed as usize];
-                if recorded != over {
-                    return Err(format!(
-                        "record names {recorded} as the illegal stone; the first stone past \
-                         the owed {owed} is {over}"
-                    ));
+            // The referee classifies by WHICH SUBMITTED STONE FAILED FIRST —
+            // walking the stones, the count boundary is checked before each
+            // placement and a refused cell fires wherever it sits — so a
+            // three-stone submission whose second cell is occupied is BY
+            // PLACE at that cell, and one whose first two cells are legal is
+            // BY COUNT at the third. The replay walks the same walk: it must
+            // stop at exactly the stone and for exactly the reason the
+            // referee's record names, or agree with a record the referee
+            // would never write.
+            let mut stopped: Option<(Coord, bool)> = None;
+            for (index, at) in coords.iter().enumerate() {
+                if index >= owed as usize {
+                    stopped = Some((*at, true));
+                    break;
                 }
-                place_all_without_winning(state, &coords[..owed as usize])
-            } else {
-                // Illegal BY PLACE: the stones before it applied and did not
-                // win; the recorded cell itself is refused by the rules.
-                let position = coords
-                    .iter()
-                    .position(|at| *at == recorded)
-                    .ok_or_else(|| {
-                        format!("the recorded illegal stone {recorded} was never submitted")
-                    })?;
-                place_all_without_winning(state, &coords[..position])?;
-                match state.place(recorded) {
-                    Err(_) => Ok(()), // refused exactly where the record says
-                    Ok(_) => Err(format!(
-                        "the record calls {recorded} illegal but the rules accepted it"
-                    )),
+                match state.place(*at) {
+                    Err(_) => {
+                        stopped = Some((*at, false));
+                        break;
+                    }
+                    Ok(_) => {
+                        if state.outcome().is_decided() {
+                            return Err(format!(
+                                "stone {at} decided the game; the record would have said \
+                                 win, not illegal"
+                            ));
+                        }
+                    }
                 }
             }
+            let Some((stone, by_count)) = stopped else {
+                return Err(
+                    "record says illegal but every submitted stone was accepted".to_string()
+                );
+            };
+            if recorded != stone {
+                return Err(format!(
+                    "record names {recorded} as the illegal stone; replaying the submitted \
+                     stones stops at {stone} ({})",
+                    if by_count {
+                        "past the owed count".to_string()
+                    } else {
+                        "refused by the rules".to_string()
+                    }
+                ));
+            }
+            Ok(())
         }
         "engine_failure" => {
             if !coords.is_empty() {

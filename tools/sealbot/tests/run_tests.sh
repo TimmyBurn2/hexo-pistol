@@ -66,6 +66,18 @@ scratch.joinpath("m4_sealbot.json").write_text(json.dumps([
     [[1, 1], [-1, 1], [2, 2]],
 ]))
 scratch.joinpath("m4_pistol.json").write_text(json.dumps([]))
+# m5/m6: MIXED over-submissions (R1's class) — a place-refusal at index 1
+# (m5) and at index 0 (m6) inside a three-stone turn. The referee classifies
+# by which stone failed FIRST, so both are illegal BY PLACE, and the replay
+# must stop at exactly the referee's stone.
+scratch.joinpath("m5_sealbot.json").write_text(json.dumps([
+    [[1, 1], [0, 0], [2, 2]],
+]))
+scratch.joinpath("m5_pistol.json").write_text(json.dumps([]))
+scratch.joinpath("m6_sealbot.json").write_text(json.dumps([
+    [[50, 50], [1, 1], [-1, 1]],
+]))
+scratch.joinpath("m6_pistol.json").write_text(json.dumps([]))
 
 def config(name, sealbot_script):
     return f'''schema_version = 1
@@ -94,13 +106,15 @@ scratch.joinpath("m1.toml").write_text(config("m1", "m1_sealbot.json"))
 scratch.joinpath("m2.toml").write_text(config("m2", "m2_sealbot.json"))
 scratch.joinpath("m3.toml").write_text(config("m3", "m3_sealbot.json"))
 scratch.joinpath("m4.toml").write_text(config("m4", "m4_sealbot.json"))
+scratch.joinpath("m5.toml").write_text(config("m5", "m5_sealbot.json"))
+scratch.joinpath("m6.toml").write_text(config("m6", "m6_sealbot.json"))
 PY
 [ -s "$SCRATCH/m1.toml" ] || refuse "the config generator wrote nothing"
 
 # --- run the shipped script four times ---------------------------------------
 # timeout is the wedge guard: a referee that re-asks a silent engine forever
 # (the F1 class) surfaces as exit 124 with a named refusal, not a hung suite.
-for MATCH in m1 m2 m3 m4; do
+for MATCH in m1 m2 m3 m4 m5 m6; do
   timeout 90 tools/sealbot/run_match.sh "$SCRATCH/$MATCH.toml" \
     || fail "run_match.sh refused, failed, or wedged on $MATCH"
 done
@@ -118,7 +132,7 @@ esac
 
 # --- the replay checker: the second instrument, with negative controls ------
 REPLAY="$MS_DIR/target/release/replay_check"
-for MATCH in m1 m2 m3 m4; do
+for MATCH in m1 m2 m3 m4 m5 m6; do
   "$REPLAY" "$SCRATCH/$MATCH" || fail "replay_check refused $MATCH's record"
 done
 # The control runs: a tampered record must FAIL, each naming a class the
@@ -254,5 +268,20 @@ check(len(turns) == 1 and turns[0]["turn"] == 2,
       "the over-submitted turn is recorded at the ASKED turn 2")
 check(turns[0]["outcome"]["kind"] == "illegal" and turns[0]["outcome"]["stone"] == [2, 2],
       "the illegal stone is the first one past the owed count")
+# Match 5/6: mixed over-submissions are illegal BY PLACE at the first
+# refused stone (R1's class — the referee classifies by first failing index,
+# never by length).
+for name, illegal, why in (("m5", [0, 0], "already holds a stone"),
+                           ("m6", [50, 50], "outside the legal region")):
+    report = load(scratch / name / "report.json")
+    game = report["games_detail"][0]
+    check(game["kind"] == "forfeit", f"{name} ended in a forfeit")
+    check(why in game["detail"], f"{name}'s forfeit names the refusal")
+    turns = [line for line in transcript_lines(scratch / name / "g001.jsonl")
+             if line["event"] == "turn"]
+    check(len(turns) == 1 and turns[0]["outcome"]["kind"] == "illegal"
+          and turns[0]["outcome"]["stone"] == illegal
+          and turns[0]["turn"] == 2,
+          f"{name}'s illegal stone is the first REFUSED one, at the asked turn")
 print("sealbot-tests: PASS (all scripted matches matched their hand-derived outcomes)")
 PY

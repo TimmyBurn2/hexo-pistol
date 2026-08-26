@@ -201,7 +201,8 @@ pub fn run_game(
                     why: failure.describe(),
                 };
             }
-        };        if is_a {
+        };
+        if is_a {
             a_wall_ms += reply.wall_ms;
             a_nodes = match (a_nodes, reply.nodes) {
                 (Some(total), Some(delta)) => Some(total + delta),
