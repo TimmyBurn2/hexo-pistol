@@ -617,12 +617,19 @@ deep solves in bounded time" open, and that question is WP-1.8c's
 licence input. The probe ladders the table size upward per case family
 (the 8 decoys at 64/256/1024/4096 entries, 600 s per rung; decoy-m0 at
 1024/2048/4096/8192, 900 s per rung) with the shipped selftest binary
-in release, stopping at the first size that returns a verdict; the top
-rung (8192) exceeds decoy-m0's 634-node full-table working set, so the
-ladder provably terminates there whatever the knee's shape. It decides
-whether a future gate (d) re-extension at a knee-sized table is
-possible at all, and it is the first measured point on the
-seesaw-vs-table-size curve for the 1.8c line.
+in release, stopping at the first size that returns a verdict. MEASURED
+at closure (`artifacts/wp18a_tt_knee_v1.txt`): the top rung (8192)
+terminated decoy-m0's ladder in practice; the decoy family's knee
+lies between 1024 and 4096 entries, decoy-m0's between 4096 and 8192,
+and every rung that returned did so with digests, node counts and
+seesaw IDENTICAL to the full table — values are stable across a
+128-256x table reduction, so a future gate (d) re-extension at a
+knee-sized table is possible in principle (1.8b/1.8c's call, with its
+own pre-registration). The same receipts falsify the sizing assumption
+this paragraph first carried — that a table exceeding the PROOF size
+provably suffices: the TT working set measures 11-40x the proof DAG
+(92-node proofs needed >1024 entries), and 8192 sufficed for decoy-m0
+in practice, not by the proof-size argument.
 
 ## 10. Dry run and receipts
 
