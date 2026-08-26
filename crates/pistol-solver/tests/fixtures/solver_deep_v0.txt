@@ -1,0 +1,41 @@
+# pistol solver DEEP fixture v0 — WP-1.8a's deep positions.
+#
+# The eight decoy wins: the canonical-first policy pair is a failing decoy,
+# the search re-selects onto the overload pair. 40-92 nodes, 38-90 seesaw
+# events each. These are EXCLUDED from gate (a)'s R3' differential — R3' is
+# measured intractable on them (25+ min, no verdict, one position) — and are
+# covered instead by gate (b)'s independent full-width verifier, the design's
+# own instrument for deep positions. Pinned separately in
+# tests/common/fixture_loader.rs (SOLVER_DEEP_V0_SHA256).
+
+case decoy-0
+plies 0,0 1,1 2,1 -1,1 -1,2 0,3 0,4 -2,3 -2,4 2,2 3,2 -2,5 1,3 5,1 5,2 -1,4 -3,3 -6,-1 -6,0 7,-1 7,1
+expect win
+
+case decoy-1
+plies 0,0 1,1 2,1 -1,1 -1,2 0,3 0,4 -2,3 -2,4 2,2 3,2 -2,5 1,3 5,1 5,2 -1,4 -3,3 -5,-2 -5,-1 7,0 7,2
+expect win
+
+case decoy-2
+plies 0,0 1,1 2,1 -1,1 -1,2 0,3 0,4 -2,3 -2,4 2,2 3,2 -2,5 1,3 5,1 5,2 -1,4 -3,3 -4,5 -3,5 6,-1 6,1
+expect win
+
+case decoy-3
+plies 0,0 1,1 2,1 -1,1 -1,2 0,3 0,4 -2,3 -2,4 2,2 3,2 -2,5 1,3 5,1 5,2 -1,4 -3,3 -6,1 -5,1 7,-2 7,2
+expect win
+
+case decoy-4
+plies 0,0 1,1 2,1 -1,1 -1,2 0,3 0,4 -2,3 -2,4 2,2 3,2 -2,5 1,3 5,1 5,2 -1,4 -3,3 -5,4 -5,5 6,2 7,2
+expect win
+
+case decoy-5
+plies 0,0 1,1 2,1 -1,1 -1,2 0,3 0,4 -2,3 -2,4 2,2 3,2 -2,5 1,3 5,1 5,2 -1,4 -3,3 -4,-4 -3,-4 6,0 7,1
+expect win
+
+case decoy-6
+plies 0,0 1,1 2,1 -1,1 -1,2 0,3 0,4 -2,3 -2,4 2,2 3,2 -2,5 1,3 5,1 5,2 -1,4 -3,3 -6,3 -5,3 7,3 7,4
+expect win
+
+case decoy-7
+plies 0,0 1,1 2,1 -1,1 -1,2 0,3 0,4 -2,3 -2,4 2,2 3,2 -2,5 1,3 5,1 5,2 -1,4 -3,3 -4,-3 -3,-4 6,-1 7,0
+expect win

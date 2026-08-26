@@ -457,6 +457,48 @@ retired by D-436), perf tuning, strength claims, attacker free-stone widening,
 free-stone range shrinking below the legal region, 12-fold TT canonicalization.
 The seesaw number is measured at the gates and NOT read as a licence.
 
+## 9a. IMPL-TIME AMENDMENT: the deep fixture and the instrument split
+
+Taken at impl, recorded here rather than discovered later by a reviewer:
+
+**R3' is measured intractable on deep positions.** The eight decoy wins
+(the canonical-first policy pair is a failing decoy; the search
+re-selects onto the overload pair) cost the SOLVER 40-92 nodes each — and
+cost R3' **25+ minutes with no verdict on ONE position** (a standalone
+timing probe, `/tmp` scratch, never committed). R3' has no LAW-OVERLOAD
+shortcut and enumerates every legal defender reply at every AND node, so
+its cost explodes with region size, not depth. The design's own §7b cost
+row anticipated this shape for the VERIFIER; it applies to R3' a
+fortiori.
+
+**The split, therefore**: the fixture becomes two files. `solver_v0.txt`
+(61 bounded positions, R3'-differentialable — gate (a) covers it in
+under a second) and `solver_deep_v0.txt` (8 decoy wins, excluded from
+gates (a) AND (c), covered by gate (b)'s independent full-width verifier
+— the design's own instrument for deep positions). The deep positions'
+`expect win` is verified by the verifier's re-proof, not by R3'.
+Gate (c) also left the deep set, MEASURED: with the decoys attached the
+σ-sweep leg exceeded its registered 60-minute wall cap (62+ min CPU,
+killed, SIGMA-SAMPLE-OVERRUN by name). The coverage reduction is real
+and named — the deep trees get no σ replay, keeping (b)'s solver-zone ==
+verifier-zone cross-check as their zone instrument.
+
+**Why the decoys exist at all**: the mutation receipts found the
+original fixture vacuous — all 61 positions solved in one node, so
+M-A/M-B/M-D touched code the fixture never executed and all four
+mutants SURVIVED. The decoys put OR steps, AND steps, re-selection
+(seesaw 38-90 events per solve), threshold recomputation and INF
+summation on the fixture's execution path.
+
+**A second measured finding, recorded**: the human corpus
+(timmyburn/hexo-bootstrap-corpus, 8.7k games) contains NO deep
+policy-solver wins under the v0 both-stones-threat-relevant policy —
+every winner-to-move position near the end either wins now (one node) or
+searches unboundedly (87+ timeouts at 8s, zero deep wins found, even
+restricted to games with both players rated 1200+). That is a real
+measurement about the v0 policy's narrowness, and it is the concrete
+argument for the M4 widening (licensed-not-scheduled).
+
 ## 10. Dry run and receipts
 
 **M5's receipt is above (§6), taken before selection.**

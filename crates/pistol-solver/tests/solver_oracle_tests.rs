@@ -68,7 +68,10 @@ fn gate_a_differential_matches_the_brute_force_reference() {
 /// Gate (b): the proof-tree re-verification, on every Win case.
 #[test]
 fn gate_b_proof_trees_reverify_full_width() {
-    let cases = fixture_loader::load_solver_fixture(FIXTURE);
+    // Bounded AND deep: the verifier is the design's instrument for deep
+    // positions, where R3' is measured intractable.
+    let mut cases = fixture_loader::load_solver_fixture(FIXTURE);
+    cases.extend(fixture_loader::load_deep_fixture());
     let mut solver = solver();
     let mut checked = 0;
     let mut failures = Vec::new();
@@ -108,6 +111,12 @@ fn gate_b_proof_trees_reverify_full_width() {
 /// filler policy to be specified.
 #[test]
 fn gate_c_relevance_zone_property_holds() {
+    // Bounded only: the sigma sweep multiplies each position's solve cost
+    // by thousands, and with the deep decoys attached the leg exceeded its
+    // registered 60-minute wall cap (62+ min CPU, killed, MEASURED). The
+    // deep positions' zones remain covered by gate (b)'s cross-check; the
+    // reduction — no sigma replay on the deep trees — is recorded in the
+    // design's §9a amendment.
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
     let mut solver = solver();
     let mut checked = 0;
