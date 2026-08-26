@@ -131,3 +131,30 @@ Re-check obligations, by finding:
 
 Anything OUTSIDE this diff is out of scope unless it is a NEW defect the
 fix introduced. Verdict format as above; APPROVE releases the governed run.
+
+---
+
+## ADDENDUM 2 — the R1 re-check (mechanical, per round 1's own closing)
+
+Round 1's re-check found R1 (MAJOR): the F2 fix's length-dispatch made
+`replay_check` disagree with CORRECT referee records on mixed
+over-submissions — a submission of three stones whose first illegal thing is
+a place-refusal (mix1: occupied second cell; mix2: out-of-region first cell)
+got a correct by-place record the checker rejected. The fix, at `37cdf81`:
+the illegal branch mirrors the referee's walk (the count boundary is checked
+before each placement; a refused cell fires wherever it sits), the suite
+gains the mixed-class cases m5/m6, and the dry run was re-taken.
+
+The re-check obligations, all mechanical:
+
+- `replay_check` on the two round-1 reproducers (rebuild them or take the
+  referee's own record: `[[1,1],[0,0],[2,2]]` → illegal by place at `0,0`;
+  `[[50,50],[1,1],[-1,1]]` → illegal by place at `50,50`) must AGREE (exit
+  0) — and the pure by-count class (`m4`) must still agree too.
+- The suite must be green including m5/m6 (which pin the referee's own
+  by-place classification on the mixed class).
+- The prereg's §3 pin must read `37cdf81` and §5's digests must match the
+  bytes on disk (`fc5a23d3…` report; `759fb084…`, `a5ac12e9…` transcripts);
+  grep for the superseded strings (`b4d8fecf`, `ee8647df`, `daf61837`,
+  `f254e33`) and expect zero hits in §5.
+- No other surface re-opens (round 1's verdict, own words).

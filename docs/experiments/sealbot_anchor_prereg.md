@@ -44,7 +44,7 @@ measured against them — is unchanged by anything here.
 
 | Instrument | Revision | Digest/identity |
 |---|---|---|
-| The match platform (`tools/sealbot/`, whole tree) | `f254e33` on branch `sealbot-anchor` (the REVIEW fix round: F1 zero-stone forfeit, F2 replay over-count parity, F4 frame checks, F6 asked-turn records, F7 spawn-failure forfeit, F5 the suite as ci gate 16) | the adapter + matchserver + shim + tests + this document's tree |
+| The match platform (`tools/sealbot/`, whole tree) | `37cdf81` on branch `sealbot-anchor` (the review fix rounds: F1–F7/N4/N5 at `f254e33`, then R1 — replay_check's illegal branch mirrors the referee's first-failing-index walk — with the mixed-class suite cases) | the adapter + matchserver + shim + tests + this document's tree |
 | `run_match.sh` | same commit | drives the match; builds with `--locked` |
 | `replay_check` (second instrument) | same commit | replays transcripts against pistol-core |
 | The run config | `local/sealbot_anchor.toml` | sha256 `773787cf7f1bde2f2677ffcdba151f8eb5acc5fc3ba2b27e8de068f8591f1dfa` |
@@ -71,13 +71,13 @@ sha256sum artifacts/sealbot_anchor_v1/report.json \
 Input: `local/sealbot_dryrun.toml` (sha256 `4938e6849cb43eeac0222087d59547458535a6f39654844490df4a0a731f3d6a`) — the same two real engines, the same
 seats rule, at reduced budgets (pistol `nodes 5000`, sealbot `0.05 s`,
 cap 40, **2 games**). Output: `artifacts/sealbot_dryrun_v1/`
-(report `b4d8fecfb4beff6af217ce56ec012107eed5e333c78ed07221bbcc729c024c31`,
-transcripts `ee8647df…` and `daf61837…`). This is the instance the FIXED
-instrument tree (`f254e33`) produced. Its observations, from the digested
-bytes and nowhere else: **game 1 — win, winner p2 at turn 28; game 2 — win,
-winner p1 at turn 15; zero forfeits; nodes_total 89829, equal to the
-transcript sum 89829.** (It reproduces the pre-fix re-take's numbers
-exactly — pistol is node-budgeted and deterministic, and sealbot at 0.05 s
+(report `fc5a23d345b7fab86a6d46585c2b31bde3b46c1c2d0f68fe2dfc393e2ea4f67f`,
+transcripts `759fb084…` and `a5ac12e9…`). This is the instance the FIXED
+instrument tree (`37cdf81`, the R1 round) produced. Its observations, from
+the digested bytes and nowhere else: **game 1 — win, winner p2 at turn 28;
+game 2 — win, winner p1 at turn 15; zero forfeits; nodes_total 89829, equal
+to the transcript sum 89829.** (The same numbers as the two prior instances
+— pistol is node-budgeted and deterministic, and sealbot at 0.05 s has
 repeated — which is a comfort and not a claim: the digests pin THIS
 instance.)
 
