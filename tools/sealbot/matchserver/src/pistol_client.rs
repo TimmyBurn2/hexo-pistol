@@ -141,6 +141,17 @@ impl PistolClient {
         if plies.is_empty() {
             return Ok("position start".to_string());
         }
+        // Turn 1 is one stone and every later turn two (rule 3), so a ply
+        // list at a turn boundary is 1 + 2k long. An even-length list is not
+        // a position any game is ever AT — refused by name rather than
+        // silently truncating the dangling half-turn (CLAUDE.md rule 3).
+        if plies.len().is_multiple_of(2) {
+            return Err(format!(
+                "the ply stream has {} stones: turn 1 is one stone and every later turn \
+                 two, so a turn boundary is an odd count",
+                plies.len()
+            ));
+        }
         let coords: Vec<Coord> = plies.iter().map(|(at, _)| *at).collect();
         let mut line = String::from("position start moves");
         line.push(' ');

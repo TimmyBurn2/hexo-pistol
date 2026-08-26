@@ -70,6 +70,11 @@ except Exception as error:
 PY
 )"
 [ -n "$OUT_DIR" ] || fail "config has an empty output_dir"
+# Item 9, output_dir direction: it is interpolated into the digest record
+# below; refuse the unprintable rather than emit a split line.
+case "$OUT_DIR" in
+  *[![:print:]]*) fail "output_dir is not printable text" ;;
+esac
 # Item 11, write direction: this path feeds a listing and the record below;
 # absolute or upward-traversing values are refused so the record can only name
 # a place under the repository root.

@@ -1,20 +1,32 @@
 //! `replay-check` — the second instrument: replay every transcript a match
 //! wrote, stone by stone, and confirm the record agrees with the rules.
 //!
+//! RULE9-JUSTIFICATION: the per-kind replay semantics the review round
+//! demanded — frame checks (mover, turn), stone-count checks against the
+//! rules' own owed count, count-vs-place illegality, first_stone_win — are
+//! one contract over one pistol-core state machine; splitting them per kind
+//! would duplicate the frame block and the placement helpers each branch
+//! leans on.
+//!
 //! The referee and this tool share pistol-core deliberately: the rules are
 //! not the stage under doubt. The stage under doubt is the RECORD — whether
-//! what was written to disk (stone order, turn boundaries, the win the
-//! referee claims) is the game that was played. A transcript that replays to
-//! the same outcome, turn count and winner is evidence about the record that
-//! no in-run check can give, because the in-run check is the thing being
-//! checked.
+//! what was written to disk is the game that was played. A transcript that
+//! replays to the same outcome, turn count and winner is evidence about the
+//! record that no in-run check can give, because the in-run check is the
+//! thing being checked.
 //!
-//! Replay semantics per recorded outcome, mirroring the referee's own:
-//! `continue` turns apply all their stones; a `win` turn applies stones only
-//! until the rules decide the game (a first-stone win's second submitted
-//! stone is never applied); an `illegal` turn applies its prefix and must be
-//! refused exactly at the recorded stone; `incomplete` applies all its
-//! stones; `engine_failure` records carry none.
+//! What is checked, per recorded turn, against the replay's own pistol-core
+//! state: the mover is the side the rules have to move; the turn number is
+//! the turn the rules are at; the stone count matches what the rules say the
+//! turn owed (a `continue` submits exactly the owed stones, an `incomplete`
+//! fewer, an over-submission is illegal BY COUNT — the referee never places
+//! a stone past the owed count, so neither does the replay); a win is
+//! decided by one of the record's own stones at the recorded turn, seat and
+//! `first_stone_win` flag (true iff the deciding stone was the first of a
+//! two-stone turn); an illegal-by-place stone is refused by the rules at
+//! exactly the recorded cell. The residual — a record whose stones differ
+//! from the game's but stay self-consistently legal — is inherent to any
+//! replay and is what the rules-not-under-doubt registration owns.
 //!
 //! Usage: replay-check <artifacts-dir>
 //! Exit:  0 every game replayed to its recorded outcome;
@@ -154,70 +166,155 @@ fn replay_turn(state: &mut GameState, entry: &serde_json::Value) -> Result<(), S
         .iter()
         .map(coord_of)
         .collect::<Result<_, _>>()?;
-    match entry["outcome"]["kind"].as_str() {
-        Some("continue") | Some("incomplete") => {
-            for at in &coords {
-                state
-                    .place(*at)
-                    .map_err(|error| format!("stone {at} was refused by the rules: {error}"))?;
-            }
-            Ok(())
+    let kind = entry["outcome"]["kind"]
+        .as_str()
+        .ok_or_else(|| "turn without an outcome kind".to_string())?;
+
+    // THE FRAME: the record's mover and turn number must be the rules' own.
+    // An engine-failure record is the one exception on mover — the referee
+    // records the seat that FAILED, which at a pregame spawn failure is not
+    // the side to move.
+    if kind != "engine_failure" {
+        let mover = entry["mover"]
+            .as_str()
+            .ok_or_else(|| "turn without a mover".to_string())?;
+        if mover != seat_of(state.to_move()) {
+            return Err(format!(
+                "record says mover {mover}; the rules have {} to move",
+                seat_of(state.to_move())
+            ));
         }
-        Some("win") => {
-            for at in &coords {
+    }
+    let turn = entry["turn"]
+        .as_u64()
+        .ok_or_else(|| "turn without a number".to_string())? as u32;
+    if turn != state.turn() {
+        return Err(format!(
+            "record says turn {turn}; the rules are at turn {}",
+            state.turn()
+        ));
+    }
+    let owed = state.stones_owed();
+
+    match kind {
+        "continue" => {
+            if coords.len() != owed as usize {
+                return Err(format!(
+                    "record says continue with {} stones; the turn owed {owed}",
+                    coords.len()
+                ));
+            }
+            place_all_without_winning(state, &coords)
+        }
+        "incomplete" => {
+            if coords.len() >= owed as usize {
+                return Err(format!(
+                    "record says incomplete with {} stones; the turn owed {owed}",
+                    coords.len()
+                ));
+            }
+            place_all_without_winning(state, &coords)
+        }
+        "win" => {
+            // Apply stones in submitted order until the rules decide; the
+            // referee never places a stone past the owed count, and neither
+            // does this.
+            let mut deciding = None;
+            for (index, at) in coords.iter().enumerate().take(owed as usize) {
                 state
                     .place(*at)
                     .map_err(|error| format!("stone {at} was refused by the rules: {error}"))?;
                 if let Outcome::Win { winner, turn } = state.outcome() {
-                    check_win_fields(entry, winner, turn)?;
-                    // The instant a stone completes a line the game is over;
-                    // any further submitted stone was never played.
-                    return Ok(());
+                    deciding = Some((index, winner, turn));
+                    break;
                 }
             }
-            Err("turn records a win but no stone of it decided the game".to_string())
+            let Some((index, winner, rules_turn)) = deciding else {
+                return Err(
+                    "record says win but no submitted stone decided the game".to_string()
+                );
+            };
+            let seat = seat_of(winner);
+            if entry["outcome"]["winner"] != seat {
+                return Err(format!(
+                    "record says winner {} but the rules say {seat}",
+                    entry["outcome"]["winner"]
+                ));
+            }
+            let recorded_turn = entry["outcome"]["turn"].as_u64().unwrap_or(u64::MAX) as u32;
+            if recorded_turn != rules_turn {
+                return Err(format!(
+                    "record says the win is at turn {recorded_turn} but the rules say {rules_turn}"
+                ));
+            }
+            let recorded_fsw = entry["outcome"]["first_stone_win"]
+                .as_bool()
+                .ok_or_else(|| "win without first_stone_win".to_string())?;
+            let expected_fsw = owed == 2 && index == 0;
+            if recorded_fsw != expected_fsw {
+                return Err(format!(
+                    "record says first_stone_win {recorded_fsw}; the deciding stone was \
+                     index {index} of a turn owed {owed}, so it is {expected_fsw}"
+                ));
+            }
+            Ok(())
         }
-        Some("illegal") => {
-            let illegal = coord_of(&entry["outcome"]["stone"])
+        "illegal" => {
+            let recorded = coord_of(&entry["outcome"]["stone"])
                 .map_err(|why| format!("the recorded illegal stone is malformed: {why}"))?;
-            for at in &coords {
-                if *at == illegal {
-                    return match state.place(*at) {
-                        Err(_) => Ok(()), // refused exactly where the record says
-                        Ok(_) => Err(format!(
-                            "the record calls {at} illegal but the rules accepted it"
-                        )),
-                    };
+            if coords.len() > owed as usize {
+                // Illegal BY COUNT: the referee refuses the first stone past
+                // the owed count without placing it, and the rules would
+                // often accept that cell — so the replay checks the count,
+                // never the cell.
+                let over = coords[owed as usize];
+                if recorded != over {
+                    return Err(format!(
+                        "record names {recorded} as the illegal stone; the first stone past \
+                         the owed {owed} is {over}"
+                    ));
                 }
-                state
-                    .place(*at)
-                    .map_err(|error| format!("stone {at} was refused by the rules: {error}"))?;
+                place_all_without_winning(state, &coords[..owed as usize])
+            } else {
+                // Illegal BY PLACE: the stones before it applied and did not
+                // win; the recorded cell itself is refused by the rules.
+                let position = coords
+                    .iter()
+                    .position(|at| *at == recorded)
+                    .ok_or_else(|| {
+                        format!("the recorded illegal stone {recorded} was never submitted")
+                    })?;
+                place_all_without_winning(state, &coords[..position])?;
+                match state.place(recorded) {
+                    Err(_) => Ok(()), // refused exactly where the record says
+                    Ok(_) => Err(format!(
+                        "the record calls {recorded} illegal but the rules accepted it"
+                    )),
+                }
             }
-            Err(format!("the recorded illegal stone {illegal} was never submitted"))
         }
-        Some("engine_failure") => Ok(()),
+        "engine_failure" => {
+            if !coords.is_empty() {
+                return Err("an engine-failure record carries stones".to_string());
+            }
+            Ok(())
+        }
         other => Err(format!("unknown turn outcome kind {other:?}")),
     }
 }
 
-/// The win fields a recorded turn claims must be the ones the rules reached.
-fn check_win_fields(
-    entry: &serde_json::Value,
-    winner: Player,
-    turn: u32,
-) -> Result<(), String> {
-    let seat = seat_of(winner);
-    if entry["outcome"]["winner"] != seat {
-        return Err(format!(
-            "turn records winner {} but the rules say {seat}",
-            entry["outcome"]["winner"]
-        ));
-    }
-    let recorded_turn = entry["outcome"]["turn"].as_u64().unwrap_or(u64::MAX) as u32;
-    if recorded_turn != turn {
-        return Err(format!(
-            "turn records the win at turn {recorded_turn} but the rules say {turn}"
-        ));
+/// Place every stone; any refusal or win is a record the referee never
+/// would have written (it records `illegal` or `win` instead).
+fn place_all_without_winning(state: &mut GameState, coords: &[Coord]) -> Result<(), String> {
+    for at in coords {
+        state
+            .place(*at)
+            .map_err(|error| format!("stone {at} was refused by the rules: {error}"))?;
+        if state.outcome().is_decided() {
+            return Err(format!(
+                "stone {at} decided the game; the record would have said win, not this"
+            ));
+        }
     }
     Ok(())
 }

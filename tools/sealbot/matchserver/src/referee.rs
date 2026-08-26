@@ -1,5 +1,12 @@
 //! The referee: one game, driven over pistol-core, judged by pistol-core.
 //!
+//! RULE9-JUSTIFICATION: this module is the whole judging policy in one place
+//! — the platform's turn protocol, every forfeit class (illegal by place,
+//! illegal by count, incomplete, engine failure at ask AND at spawn), the
+//! transcript records, and the per-game accounting the report reads — and
+//! the spawn-failure path the review round added is a third copy of the
+//! forfeit summary a split would have to duplicate.
+//!
 //! No rule lives here (CLAUDE.md rule 2). What lives here is the platform's
 //! JUDGING POLICY, spelled as the official server behaves (tools/sealbot/
 //! README.md, "The platform's game rules"): the server plays the opening
@@ -111,8 +118,47 @@ pub fn run_game(
     }
     let mut plies: Vec<(Coord, Player)> = vec![(OPENING, Player::P1)];
 
-    let _ = a.new_game(game_no);
-    let _ = b.new_game(game_no);
+    // A spawn failure at new_game is a forfeit AT THE SITE, not a discarded
+    // Result that surfaces later misattributed (CLAUDE.md rule 3).
+    let mut pregame: Option<(Player, String, String)> = None;
+    if let Err(failure) = a.new_game(game_no) {
+        pregame = Some((
+            if a_is_p1 { Player::P1 } else { Player::P2 },
+            a.label().to_string(),
+            failure.describe(),
+        ));
+    }
+    if pregame.is_none() && let Err(failure) = b.new_game(game_no) {
+        pregame = Some((
+            if a_is_p1 { Player::P2 } else { Player::P1 },
+            b.label().to_string(),
+            failure.describe(),
+        ));
+    }
+    if let Some((loser, label, why)) = pregame {
+        a.finish_game();
+        b.finish_game();
+        return GameSummary {
+            game: game_no,
+            a_is_p1,
+            result: GameResult::Forfeit { loser, why: why.clone() },
+            turns: vec![TurnRecord {
+                // Turn 2 is the first turn an engine is ever asked for.
+                turn: 2,
+                mover: loser,
+                engine: label,
+                stones: Vec::new(),
+                nodes: None,
+                engine_time_ms: None,
+                wall_ms: 0,
+                raw: String::new(),
+                outcome: TurnOutcome::EngineFailure { detail: why },
+            }],
+            a_nodes: None,
+            a_wall_ms: 0,
+            b_wall_ms: 0,
+        };
+    }
 
     let mut turns: Vec<TurnRecord> = Vec::new();
     let mut a_nodes: Option<u64> = Some(0);
@@ -155,8 +201,7 @@ pub fn run_game(
                     why: failure.describe(),
                 };
             }
-        };
-        if is_a {
+        };        if is_a {
             a_wall_ms += reply.wall_ms;
             a_nodes = match (a_nodes, reply.nodes) {
                 (Some(total), Some(delta)) => Some(total + delta),
@@ -166,8 +211,11 @@ pub fn run_game(
             b_wall_ms += reply.wall_ms;
         }
 
+        let asked_turn = state.turn();
         let mut outcome = apply_turn(&mut state, &mut plies, mover, owed, &reply.stones);
-        if outcome == TurnOutcome::Continue && state.phase() != Phase::First {
+        if outcome == TurnOutcome::Continue
+            && (reply.stones.is_empty() || state.phase() != Phase::First)
+        {
             outcome = TurnOutcome::Incomplete {
                 submitted: reply.stones.len(),
                 owed,
@@ -197,7 +245,10 @@ pub fn run_game(
             }
         };
         turns.push(TurnRecord {
-            turn: record_turn_of(&state, &outcome),
+            // The turn the record belongs to is the turn that was ASKED — a
+            // win freezes the same number inside its outcome, and a failed
+            // attempt must not inherit a counter its own stones advanced.
+            turn: asked_turn,
             mover,
             engine: label,
             stones: reply.stones.clone(),
@@ -265,18 +316,4 @@ fn apply_turn(
         }
     }
     outcome
-}
-
-/// The turn a record belongs to. A win carries its own turn number (frozen
-/// at the deciding stone); otherwise a COMPLETED turn is the one before the
-/// state advanced, and a FAILED attempt is the in-progress one, which is the
-/// state's own turn whenever stones are still owed.
-fn record_turn_of(state: &GameState, outcome: &TurnOutcome) -> u32 {
-    if let TurnOutcome::Win { turn, .. } = outcome {
-        return *turn;
-    }
-    match outcome {
-        TurnOutcome::Continue => state.turn().saturating_sub(1),
-        _ => state.turn(),
-    }
 }

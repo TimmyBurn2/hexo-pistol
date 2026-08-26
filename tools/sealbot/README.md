@@ -153,12 +153,15 @@ sha256 digests of everything written. Transcript and report land in
 `artifacts/`, content-named, never committed (CLAUDE.md rule 8); their
 digests are what the ADR anchors.
 
-Tests: `tools/sealbot/tests/run_tests.sh` drives the SHIPPED script with two
-stub engines through a scripted game with hand-computed outcomes (a
-first-stone win and an illegal-move forfeit), plus the replay checker over
-both records and a tampered-record negative control — because any tools/
-artefact that produces a recorded number carries a test driving it
-(tools/SHELL_CHECKLIST.md item 10).
+Tests: `tools/sealbot/tests/run_tests.sh` — wired as CI gate 16 — drives the
+SHIPPED script with scripted stub engines through matches with hand-computed
+outcomes (a first-stone win, an illegal-move forfeit, a zero-stone answer, an
+over-submission), runs the replay checker over every record, and carries
+three tampered-record negative controls (a flipped winner, an extra legal
+stone on a continue turn, a relabeled mover) — because any tools/ artefact
+that produces a recorded number carries a test driving it
+(tools/SHELL_CHECKLIST.md item 10), and a checker nobody watches fail is not
+a checker.
 
 `pistol_hexo_adapter.py` is smoke-tested by hand against the real binary
 (positive: a two-stone answer under `go movetime`; negative: a free_setup
