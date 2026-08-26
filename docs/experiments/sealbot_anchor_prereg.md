@@ -44,7 +44,7 @@ measured against them — is unchanged by anything here.
 
 | Instrument | Revision | Digest/identity |
 |---|---|---|
-| The match platform (`tools/sealbot/`, whole tree) | `450d7aa5cebc0ed2e51ef27327faf55c637776ef` on branch `sealbot-anchor` | the adapter + matchserver + shim + tests + this document's tree |
+| The match platform (`tools/sealbot/`, whole tree) | `f254e33` on branch `sealbot-anchor` (the REVIEW fix round: F1 zero-stone forfeit, F2 replay over-count parity, F4 frame checks, F6 asked-turn records, F7 spawn-failure forfeit, F5 the suite as ci gate 16) | the adapter + matchserver + shim + tests + this document's tree |
 | `run_match.sh` | same commit | drives the match; builds with `--locked` |
 | `replay_check` (second instrument) | same commit | replays transcripts against pistol-core |
 | The run config | `local/sealbot_anchor.toml` | sha256 `773787cf7f1bde2f2677ffcdba151f8eb5acc5fc3ba2b27e8de068f8591f1dfa` |
@@ -71,19 +71,21 @@ sha256sum artifacts/sealbot_anchor_v1/report.json \
 Input: `local/sealbot_dryrun.toml` (sha256 `4938e6849cb43eeac0222087d59547458535a6f39654844490df4a0a731f3d6a`) — the same two real engines, the same
 seats rule, at reduced budgets (pistol `nodes 5000`, sealbot `0.05 s`,
 cap 40, **2 games**). Output: `artifacts/sealbot_dryrun_v1/`
-(report `b7f24c558c5fedc12258f3d04498326b234e2bbb281cb0fa3e87951107c7829e`,
-transcripts `c91a8918…` and `6d883062…`). This is the instance produced by
-the COMMITTED instrument tree (revision `450d7aa`), re-taken after the
-commit so the bytes on disk are the ones these digests name; sealbot is
-time-budgeted, so a further re-run would differ in its bytes while meeting
-the same criteria — the digests pin THIS instance, and only the pistol side
-is reproducible.
+(report `b4d8fecfb4beff6af217ce56ec012107eed5e333c78ed07221bbcc729c024c31`,
+transcripts `ee8647df…` and `daf61837…`). This is the instance the FIXED
+instrument tree (`f254e33`) produced. Its observations, from the digested
+bytes and nowhere else: **game 1 — win, winner p2 at turn 28; game 2 — win,
+winner p1 at turn 15; zero forfeits; nodes_total 89829, equal to the
+transcript sum 89829.** (It reproduces the pre-fix re-take's numbers
+exactly — pistol is node-budgeted and deterministic, and sealbot at 0.05 s
+repeated — which is a comfort and not a claim: the digests pin THIS
+instance.)
 
 **Criteria, with the defect class each exists to exclude:**
 
-- **A. Both games ran without a forfeit** (the recorded instance: game 1
-  capped, game 2 a win at turn 15; a re-run's games may differ in identity
-  while meeting the same criterion, because sealbot is time-budgeted).
+- **A. Both games ran without a forfeit** (game 1: win, p2 at turn 28;
+  game 2: win, p1 at turn 15 — the digested instance's own outcomes, read
+  from its bytes).
   *Defect class: a driver-protocol break masquerading as a game
   outcome — a seat that cannot speak its protocol loses by forfeit and the
   anchor would silently measure plumbing.* A forfeit here fails this
@@ -93,11 +95,12 @@ is reproducible.
   boundaries, or win bookkeeping corrupted in the transcript path.* Any
   disagreement fails this criterion.
 - **C. The report's `nodes_total` equals the sum of the per-turn `nodes` in
-  the transcripts** (verified: 124747 == 124747). *Defect class: compute
+  the transcripts** (verified: 89829 == 89829). *Defect class: compute
   misattribution — per-side compute is a reporting requirement (CLAUDE.md
   rule 6) and a driver that bills the wrong seat's nodes misreports it.*
-- **D. The stub suite passes**, including the tampered-record negative
-  control. *Defect class: an instrument that cannot say no.*
+- **D. The stub suite passes**, including all three tampered-record negative
+  controls (winner flip, extra legal stone, mover relabel). *Defect class:
+  an instrument that cannot say no.*
 
 ## 6. The governed run's agreement criterion, and its consequence
 

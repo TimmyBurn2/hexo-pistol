@@ -96,3 +96,38 @@ defect, and your per-item SHELL_CHECKLIST answers. End with a verdict:
 APPROVE (as-is or with named non-blocking notes) or BLOCK (named findings).
 You get the code and the documents; the governed run does not launch until
 your verdict lands and any fix round closes.
+
+---
+
+## ADDENDUM — the fix-round re-check (scoped)
+
+The first review returned **BLOCK** (F1) with F2–F7 required in the same
+round. The fix round is committed and the re-check is a DIFF REVIEW of
+exactly these changes, per the review's own closing instruction:
+
+- instrument tree: `f254e33` (fix round) vs `450d7aa` (as first reviewed)
+- pre-registration: this document's new HEAD vs `3a53624` (as first
+  reviewed)
+
+Re-check obligations, by finding:
+
+- **F1** — re-run the zero-stone reproducer against the fixed binary; it must
+  forfeit `incomplete 0 of 2` and the run must COMPLETE (the suite's `m3`
+  drives it under `timeout`, but re-derive it yourself, not through the
+  suite).
+- **F2** — re-run the three-stone reproducer; the referee's record and
+  `replay_check` must AGREE (exit 0), and the record's turn must be the
+  asked turn (F6).
+- **F4** — re-attempt the two tamper classes that passed (extra legal stone
+  on a continue turn; `first_stone_win` flip) plus a mover relabel; all
+  three must now fail `replay_check`.
+- **F5** — `tools/ci.sh` gate 16/19 must invoke the suite; confirm the
+  numbering is coherent end to end.
+- **F3** — §5's recorded observations must match the digested instance's own
+  bytes (winner, turn, nodes) at every site; grep the document for the
+  superseded numbers (`124747`, `game 1 capped`, the old digests) and expect
+  zero hits.
+- **F6/F7, N4/N5** — spot-check by reading; each is small.
+
+Anything OUTSIDE this diff is out of scope unless it is a NEW defect the
+fix introduced. Verdict format as above; APPROVE releases the governed run.
