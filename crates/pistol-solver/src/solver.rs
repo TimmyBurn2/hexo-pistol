@@ -225,7 +225,9 @@ impl Solver {
 /// Walk the proof DAG from the root, replaying the game to re-derive child
 /// keys, and emit the witness tree in deterministic order. The second return
 /// is the containment tripwire: whether every node's zone cells lie within
-/// reach (13) of that node's own board stones.
+/// reach (13) of SOME proof node's stones — the full stone union of the
+/// completed walk, checked once after the walk so the verdict cannot depend
+/// on DFS visit order (the red-team B-1 fix).
 fn emit(
     state: &mut GameState,
     threat: &mut ThreatState,
@@ -243,6 +245,20 @@ fn emit(
     emit_node(state, threat, attacker, root, &mut walk);
     if walk.out.is_empty() {
         return (None, walk.zone_ok);
+    }
+    // The tripwire, per the design's registered invariant: every zone cell
+    // of every node within reach (13) of SOME proof node's stones — the
+    // completed walk's full union, order-independent by construction.
+    for node in &walk.out {
+        for at in node.zone.all_cells() {
+            let near = walk
+                .stones
+                .iter()
+                .any(|&stone| hex_distance(at, stone) <= 13);
+            if !near {
+                walk.zone_ok = false;
+            }
+        }
     }
     (
         Some(ProofTree {
@@ -287,18 +303,10 @@ fn emit_node(
     for (stone, _) in state.board().stones() {
         walk.stones.insert(stone);
     }
-    // The tripwire, per the design's registered invariant: every zone cell
-    // within reach (13) of SOME proof node's stones — the union the walk
-    // accumulates, not the current node alone.
-    for at in record.zone.all_cells() {
-        let near = walk
-            .stones
-            .iter()
-            .any(|&stone| hex_distance(at, stone) <= 13);
-        if !near {
-            walk.zone_ok = false;
-        }
-    }
+    // No zone check here: the stones accumulated so far are a DFS-order-
+    // dependent subset of the union, and a check against them refuses
+    // legitimate trees (the red team's 9917-node reproducer). The one
+    // registered check runs in emit(), after the walk completes.
     let mut children = Vec::new();
     match &record.kind {
         ProofKind::OrWinLeaf { .. } | ProofKind::AndOverloadLeaf => {}

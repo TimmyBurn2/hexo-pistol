@@ -12,6 +12,11 @@
 //! (AT-1/DT-1/EP-1/T3-1 over the walk), which gate (b) compares against
 //! the solver's memoised zones.
 
+// RULE9-JUSTIFICATION: the verifier is one instrument — its per-node
+// re-derivations, the non-edge resolution and the zone recomputation form
+// one full-width re-proof that §7b adjudicates as a single gate; splitting
+// it by node kind would replicate the walk and the zone accumulation the
+// gate's zone cross-check depends on.
 use pistol_core::{Coord, GameState, Player, Turn};
 
 use pistol_solver::dfpn::ProofKind;

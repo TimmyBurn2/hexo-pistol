@@ -65,7 +65,12 @@ fn gate_a_differential_matches_the_brute_force_reference() {
         let result = solver.solve(&position);
         let solver_value = match result.outcome {
             SolveOutcome::Win(_) => "win",
-            SolveOutcome::NoWin | SolveOutcome::NoWinUnderZone => "nowin",
+            // The registered semantics (§7a): NoWinUnderZone is a MISMATCH
+            // that fails the gate, never a nowin — the laundering path the
+            // red team named (a false win whose zone overflows printing
+            // "nowin" on a nowin-registered case and passing) closes here.
+            SolveOutcome::NoWin => "nowin",
+            SolveOutcome::NoWinUnderZone => "nowin-under-zone",
         };
         let reference_value = match reference {
             common::r3::RefValue::Win => "win",
@@ -226,11 +231,28 @@ fn gate_c_relevance_zone_property_holds() {
     );
 }
 /// Gate (d): the TT cross-check. A 32-entry table returns the same VALUES
-/// as the full one, under the registered 50x node cap.
+/// as the full one, under the registered 50x node cap. The wall cap is
+/// named like (b)/(c)'s: a tiny-table solve that cannot return is a named
+/// failure, never a silent hang.
+const TT_CROSS_WALL: std::time::Duration = std::time::Duration::from_secs(10 * 60);
+
 #[test]
 #[ignore = "release-only: tools/solver_oracle_check.sh runs all four gates with --ignored (the tactical gate's split, D-54)"]
 fn gate_d_tt_size_does_not_change_values() {
+    // BOUNDED ONLY, MEASURED at closure. The red-team vacuity finding
+    // (leaf-only bounded cases cannot differ at two table sizes) invited a
+    // deep extension; the extension is infeasible in bounded time and was
+    // withdrawn: NO deep case returns at a 32-entry table at all (the 8
+    // original decoys had no verdict in 300 s; decoy-m0 none in 120 s at
+    // every size up to 512 entries; against 0.1 s and ~1 s at the full
+    // table — receipts in artifacts/wp18a_tt_knee_v1.txt). The registered
+    // 50x node cap can only fire on a solve that RETURNS, so a deep leg
+    // here is a hang with an unreachable detector. Gate (b) remains the
+    // only multi-node instrument (§9a); the knee ladder's measurements
+    // are WP-1.8c's input for any future re-extension at a knee-sized
+    // table.
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
+    let started = std::time::Instant::now();
     let mut failures = Vec::new();
     for case in &cases {
         let position = case.position().expect("the loader validated every case");
@@ -252,6 +274,9 @@ fn gate_d_tt_size_does_not_change_values() {
                 "{}: TT-NONTERMINATION: 32-entry run used {} nodes against {} full-run nodes",
                 case.name, tiny.nodes, full.nodes
             ));
+        }
+        if started.elapsed() > TT_CROSS_WALL {
+            panic!("TT-CROSS-OVERRUN: gate (d) exceeded its 10-minute wall cap");
         }
     }
     assert!(

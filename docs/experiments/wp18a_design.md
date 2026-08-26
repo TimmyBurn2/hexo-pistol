@@ -544,6 +544,86 @@ or recorded here; the report lands with this WP's closure):
   `timmyburn/hexo-bootstrap-corpus`@`1a82e15`, run 2026-08-25, never
   committed).
 
+**The RED-TEAM closure** (verdict: YES, a false proof could pass —
+every named route closed in code or recorded here; the report lands with
+this WP's closure):
+
+- **The tripwire's order dependence (B-1, REACHABLE)**: the red team
+  constructed a legal position where a legitimate 9917-node win was
+  refused as `NoWinUnderZone` — the check ran against the stones
+  accumulated *so far* in the DFS, so the root was checked against root
+  stones only while its zone carries cells propagated from deep
+  descendants. FIXED: the tripwire now runs after the walk completes,
+  against the full stone union (order-independent by construction), and
+  `emit_node` no longer refuses mid-walk.
+- **The NoWinUnderZone laundering path (B-1's second half)**: gate (a)
+  mapped `NoWinUnderZone` to "nowin", so a FALSE win whose zone
+  overflows would print "nowin", agree with R3' and the expectation on a
+  nowin-registered case, and pass. FIXED: the mapping is now the
+  registered §7(a) semantics — `NoWinUnderZone` is a MISMATCH that
+  fails the gate.
+- **The bounded differential is leaf-only (B-2, MEASURED, strengthened)**:
+  all 61 bounded cases solve in one node, so gates (a), (c) and (d) never
+  executed a search — the red team's own M-A receipt is the evidence
+  (gates (a), (c) and (d) all PASSED under that known zone defect; only
+  gate (b) died, on the decoys). The stronger finding, MEASURED after
+  the review: R3' is intractable on ANY position whose solution contains
+  an AND node — the minimal 15-ply overload shape ran 12+ minutes
+  without answering (a standalone probe, killed with the session's
+  crash; not re-attempted after the operator's restart). The instrument
+  split is therefore not "bounded vs deep" but "leaf-only vs
+  everything": gate (a)'s differential can never exercise the df-pn
+  loop on this game's board size. What ships: gate (b) is the ONLY
+  multi-node instrument (a genuine full-width re-proof, the only gate
+  that has ever killed a mutant); gate (d)'s deep extension was
+  attempted and WITHDRAWN, MEASURED at closure — no deep case returns
+  at a 32-entry table in bounded time (the 8 original decoys had no
+  verdict in 300 s; decoy-m0 none in 120 s at every size up to 512
+  entries, against 0.1 s and ~1 s at the full table), so the 50x node
+  cap, which can only fire on a solve that RETURNS, was an unreachable
+  detector over a hang; (d) stays bounded, carries a named 10-minute
+  wall watchdog (TT-CROSS-OVERRUN) like (b)/(c)'s, and its bounded
+  vacuity is recorded here alongside (c)'s tautology; gate (c) remains
+  bounded-only and is TAUTOLOGOUS on one-node trees by the same
+  measurement (σ cannot touch witness cells that AT-1 puts in every
+  order) — its live check is the pre-placement defender-six tripwire
+  alone.
+- **Deep diversity (B-2's construction route)**: the deep set was one
+  base geometry with different anchors; it now carries the 180-degree
+  mirror of decoy-0 (634 nodes, 624 seesaw events — a genuinely
+  different search shape because canonical-first ordering differs under
+  mirroring). Deep NoWin adjudication remains beyond the v0 instrument
+  complex (R3' intractable; the verifier re-proves claimed wins only)
+  — licensed-not-scheduled with the M4 widening.
+- **The filler construction (M-1, recorded)**: leg (c2) measures
+  P+σ+fillers, and the red team demonstrated filler-sensitivity on the
+  class gate (c) was excluded from (fillers rescuing a σ-broken proof).
+  Unobservable on the shipped leaf-only set; the finding binds the
+  licensed deep re-inclusion of gate (c), which must re-argue the
+  filler policy before its first non-trivial run.
+- **The zone certificate's semantic backstop (M-2, recorded)**: with
+  gate (c) tautological on the shipped set, no gate can currently
+  falsify a consistent-but-wrong zone (the §9a m-2 shared-arithmetic
+  risk). The value path never consults zones (verified by the red team:
+  `Solver::new` takes only ε and tt_entries), so no false VALUE proof
+  is reachable through it — but the zone is the artifact future
+  zone-pruning WPs consume, and its certificate is unfalsifiable by the
+  v0 gates. That is the concrete debt the M4/1.8c line inherits.
+
+**The TT knee probe (registered as a probe, not a governed run; run at
+closure, receipts in `artifacts/wp18a_tt_knee_v1.txt`)**: the gate (d)
+withdrawal left the question "does ANY reduced table size terminate the
+deep solves in bounded time" open, and that question is WP-1.8c's
+licence input. The probe ladders the table size upward per case family
+(the 8 decoys at 64/256/1024/4096 entries, 600 s per rung; decoy-m0 at
+1024/2048/4096/8192, 900 s per rung) with the shipped selftest binary
+in release, stopping at the first size that returns a verdict; the top
+rung (8192) exceeds decoy-m0's 634-node full-table working set, so the
+ladder provably terminates there whatever the knee's shape. It decides
+whether a future gate (d) re-extension at a knee-sized table is
+possible at all, and it is the first measured point on the
+seesaw-vs-table-size curve for the 1.8c line.
+
 ## 10. Dry run and receipts
 
 **M5's receipt is above (§6), taken before selection.**

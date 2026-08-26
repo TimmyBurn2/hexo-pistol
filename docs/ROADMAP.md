@@ -174,6 +174,36 @@ not inherited business.
 **WP-1.8 — AND-OR solver**, upgraded to relevance-zone Deep df-pn (+1+epsilon,
 GHI).
 
+**WP-1.8a — CLOSED, CORRECTNESS LANDED, NO STRENGTH CLAIM (D-437).** The
+policy-game df-pn solver lives in `pistol-solver` (Pawlewicz-Lew thresholds
+plus 1+epsilon, paper-faithful EP-1 zone sequence, 128-bit-keyed
+epoch-stamped TT with the proven-retention law, proof-DAG witness emission)
+and is adjudicated by four oracle gates through `tools/solver_oracle_check.sh`
+(CI gate 12/18), ALL GREEN: (a) 61 bounded cases agree with R3'; (b) 38
+proof trees re-verified full-width, the ONLY multi-node instrument, R3' being
+MEASURED intractable on any position whose solution contains an AND node;
+(c) 29 wins, 118,135 sigma placements revalued, 26,865 refused on collision;
+(d) TT values agree at both table sizes, bounded-only after the deep extension was MEASURED infeasible (no deep case returns at a 32-entry table in bounded time; §9a records the withdrawal and the knee probe, WP-1.8c's input). The determinism
+seat is byte-identical (CI gate 13/18). Four mutants dead: M-A at gate (b)
+on the decoys, M-B/M-D in the lib suite, M-C at compile. The RED-TEAM
+verdict was YES a false proof could pass, and every named route is closed
+in code or recorded in design §9a: the order-dependent zone tripwire
+(FIXED, now runs after the walk against the full stone union), the
+NoWinUnderZone laundering path (FIXED, gate-(a) mismatch semantics), the
+leaf-only bounded set (STRENGTHENED FINDING: gates (a), (c) and (d) never
+executed a search on it; only (b) has ever killed a mutant), deep diversity
+(the mirrored decoy, 634 nodes / 624 seesaw). GHI machinery was skipped
+outright (D-436: the game is monotone, the state graph a DAG). The solver
+is NOT on the search path; WP-1.8b wires it. Open debts are named in §9a
+(the zone certificate unfalsifiable by v0 gates; the filler policy binds
+gate (c)'s licensed deep re-inclusion; deep NoWin adjudication beyond the
+v0 instruments).
+
+**WP-1.8b — wire the solver into pistol-search.** The WP-1.8a solver is not
+on the search path; this package wires it. Its first debt is a second shape
+family for gate (b)'s deep set (one base geometry plus its mirror is not
+diversity, the red team's finding).
+
 **WP-1.9 — eval window-map storage** (docs/decisions.md D-225, renumbered by
 D-249). Replace `pistol-eval`'s `BTreeMap<Window, Counts>` with the storage
 shape WP-1.5a's matrix selects. LICENSED, NOT SCHEDULED: it owes its own option

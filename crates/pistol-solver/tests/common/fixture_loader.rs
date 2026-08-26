@@ -28,7 +28,7 @@ pub fn fixture_path(name: &str) -> PathBuf {
 /// (a)'s differential (R3' measured intractable on them) and covered by
 /// gate (b)'s verifier.
 pub const SOLVER_DEEP_V0_SHA256: &str =
-    "59461fe17d0dd66d686724ec1e9b638be3bdfbec56dc09b21b94ba4e3a9e7951";
+    "f4163382c8fbd1d49374a7d315ecf09675c578b0f43fa9dcdb6ef280dfde1323";
 
 /// Load the registered fixture, pin first.
 pub fn load_solver_fixture(name: &str) -> Vec<FixtureCase> {
