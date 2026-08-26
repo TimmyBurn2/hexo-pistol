@@ -35,7 +35,9 @@ trap 'rm -f "$OUT"' EXIT
 # Release: the fixture's deep cases and gate (c)'s sigma sweep need it; the
 # debug cost is minutes per gate against seconds here (the tactical gate's
 # split, D-54's precedent).
-if ! cargo test --release -p pistol-solver --test solver_oracle_tests -- --nocapture >"$OUT" 2>&1; then
+# --ignored: the four gates are release-only (the debug workspace run in
+# CI gate 3 would take hours on gate (c); the tactical gate's split).
+if ! cargo test --release -p pistol-solver --test solver_oracle_tests -- --ignored --nocapture >"$OUT" 2>&1; then
 	# The test harness prints the failing gate's own FAIL block; surface it
 	# verbatim rather than paraphrasing it (the receipts rule).
 	grep -E "^gate \(|panicked|FAILED" "$OUT" || true

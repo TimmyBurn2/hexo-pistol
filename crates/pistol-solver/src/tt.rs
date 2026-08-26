@@ -21,6 +21,10 @@
 //! the certificate's raw material — overwriting it with `(1, 1)` would be
 //! exactly the silent information loss df-pn's proof integrity forbids.
 
+// RULE9-JUSTIFICATION: the table, its epoch filter and the replacement law
+// are one invariant — a stale epoch reads as absent precisely so the
+// proven-retention law can hold within an epoch, and gate (d)'s value
+// cross-check at two table sizes pins the whole file as one mechanism.
 use pistol_core::Key128;
 
 use crate::pn::{Value, value_of};
@@ -107,6 +111,14 @@ impl SolverTT {
     }
 
     /// Store `entry` under its key, honouring the replacement law.
+    ///
+    /// ONE DOCUMENTED EXCEPTION to the law's letter: the same-key refresh
+    /// path below can overwrite a PROVEN entry from a STALE epoch with an
+    /// unproven one from the live epoch. The law's substance is untouched —
+    /// the stale entry already reads as absent to every lookup, so nothing
+    /// the search can see has been lost — but a reader matching the law's
+    /// wording alone would expect the check here, and this comment is why
+    /// it is not.
     ///
     /// The two slots divide the labour: the PREFERRED slot holds the entry
     /// worth keeping (same key, empty slot, or an unproven entry an at

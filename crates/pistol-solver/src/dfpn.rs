@@ -33,6 +33,14 @@
 //! the parent's next descent selects a different child. Printed per solve,
 //! measured at the gates, no threshold (that number is WP-1.8c's input).
 
+// RULE9-JUSTIFICATION: this module holds one algorithm whose parts are
+// read as a whole — the node loop, the child-table arithmetic, the
+// threshold formulas the design quotes, the proof DAG and the zone
+// construction at proof time all name each other, and the §7 oracle gates
+// verify exactly this file's invariants as one cross-check. Splitting the
+// search from the zones would put the AT-1/DT-1 propagation the gates
+// compare against the verifier on the far side of a module boundary from
+// the loop that computes it.
 use pistol_core::{GameState, Key128, Player, Turn};
 
 use crate::pn::{Epsilon, INF, Value, saturating_sum, value_of};
@@ -155,16 +163,24 @@ impl<'a> Search<'a> {
     /// Run to a definitive root value, refusing to spin: a pass that proves
     /// nothing and disproves nothing raises the stall outcome by name.
     pub fn solve_root(&mut self, state: &mut GameState, threat: &mut ThreatState) -> Value {
+        // A node count alone cannot detect a stall — `dfpn` increments it
+        // on every entry, so a root that returns the same numbers forever
+        // still "makes progress". The guard is the ROOT'S OWN ANSWER: a
+        // pass that returns the same (pn, dn) as the previous pass has
+        // learned nothing the next pass could use, and re-searching with
+        // the same thresholds would walk the same tree — that is the spin
+        // the design refuses to allow.
+        let mut previous: Option<(u64, u64)> = None;
         loop {
-            let before = self.stats.nodes;
             let (pn, dn) = self.dfpn(state, threat, INF, INF);
             match value_of(pn, dn) {
                 Value::Proven => return Value::Proven,
                 Value::Disproven => return Value::Disproven,
                 Value::Unknown => {
-                    if self.stats.nodes == before {
+                    if previous == Some((pn, dn)) {
                         panic!("{STALLED}");
                     }
+                    previous = Some((pn, dn));
                     self.generation += 1;
                 }
             }

@@ -17,6 +17,11 @@
 //! move cells are legal placements); a violation is a zone-construction
 //! defect and refuses as `NoWinUnderZone` rather than certifying the win.
 
+// RULE9-JUSTIFICATION: the entry, the witness emission walk and the digest
+// are one traversal of the proof DAG — the walk's per-node zone tripwire is
+// the design §3 containment invariant stated over the same nodes the
+// emission produces, and separating them would let the certificate and its
+// check drift.
 use pistol_core::{GameState, Key128, Player, Turn};
 
 use crate::dfpn::{ProofDag, ProofKind, Search, SearchStats};
@@ -122,9 +127,7 @@ fn mix(mut z: u64) -> u64 {
     z ^ (z >> 31)
 }
 
-/// A solver: configuration plus nothing. One instance, many solves; each
-/// solve starts from empty tables, so nothing crosses positions and
-/// determinism needs no cleanup story.
+/// A solver: configuration plus ONE table, reused across solves.
 pub struct Solver {
     epsilon: Epsilon,
     /// ONE table, reused across solves. Entries carry the epoch of the
@@ -235,6 +238,7 @@ fn emit(
         out: Vec::new(),
         seen: std::collections::BTreeMap::new(),
         zone_ok: true,
+        stones: std::collections::BTreeSet::new(),
     };
     emit_node(state, threat, attacker, root, &mut walk);
     if walk.out.is_empty() {
@@ -256,6 +260,12 @@ struct Walk<'a> {
     out: Vec<EmittedNode>,
     seen: std::collections::BTreeMap<Key128, usize>,
     zone_ok: bool,
+    /// Every stone on every proof board the walk visits — the "some proof
+    /// node" the design's containment invariant names. Checking a node's
+    /// zone against ONLY that node's stones would be a stronger claim than
+    /// the registered one and would falsely refuse a depth-2 proof whose
+    /// descendant zone cells sit beyond 13 of the ancestor's stones.
+    stones: std::collections::BTreeSet<pistol_core::Coord>,
 }
 
 fn emit_node(
@@ -274,13 +284,17 @@ fn emit_node(
         );
     };
     walk.seen.insert(key, walk.out.len());
-    // The tripwire, checked AT the node, against the node's own board: a
-    // zone cell more than 13 from every stone is a construction defect.
+    for (stone, _) in state.board().stones() {
+        walk.stones.insert(stone);
+    }
+    // The tripwire, per the design's registered invariant: every zone cell
+    // within reach (13) of SOME proof node's stones — the union the walk
+    // accumulates, not the current node alone.
     for at in record.zone.all_cells() {
-        let near = state
-            .board()
-            .stones()
-            .any(|(stone, _)| hex_distance(at, stone) <= 13);
+        let near = walk
+            .stones
+            .iter()
+            .any(|&stone| hex_distance(at, stone) <= 13);
         if !near {
             walk.zone_ok = false;
         }

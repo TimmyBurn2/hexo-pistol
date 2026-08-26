@@ -16,7 +16,7 @@ use super::sha256::sha256_hex;
 /// The registered fixture's SHA-256. Editing the fixture without updating
 /// this constant in the same commit is a red test.
 pub const SOLVER_V0_SHA256: &str =
-    "ed336ed419950d779b29ef667ee044b76be21a85cd218653d8e04194e3b0deb0";
+    "b0afde0349675c41655a920aca96387db172b2a26d920202d982b1498105a194";
 
 pub fn fixture_path(name: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))

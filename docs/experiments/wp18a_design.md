@@ -499,6 +499,51 @@ restricted to games with both players rated 1200+). That is a real
 measurement about the v0 policy's narrowness, and it is the concrete
 argument for the M4 widening (licensed-not-scheduled).
 
+**The REVIEW-impl amendments** (the review's findings, each closed in code
+or recorded here; the report lands with this WP's closure):
+
+- **σ-class narrowing, recorded (M-1)**: the implemented class is |σ| = 2
+  ONLY. The registered |σ| = 1 and |σ| = 3 require pre-placement stones
+  beyond σ itself (a turn places exactly two stones), and the design never
+  specified those stones' zone class — the gap the implementation hit at
+  perturb() and closed by refusing to guess. The 17.5% of pairs refused on
+  region collision (25,346 of 145,000) is announced in the gate's output
+  and is a third narrowing the design also never specified; both are now
+  stated here rather than in code comments alone.
+- **Fixture composition actuals, recorded (M-2)**: the bounded set's
+  registered composition was authored without measuring (the D-291 class).
+  What shipped: stone counts 7-21 (53/61 over the registered ≤ 10); depth
+  3-4 positions ZERO (the depth-win family degenerated to one-node wins);
+  the riposte family was eight byte-identical duplicates until the
+  review caught it — now eight distinct positions, re-pinned, re-verified
+  by R3' in gate (a). The deep set (8 decoys, 40-92 nodes) is the search-
+  exercising half; registered "depth 3-4" positions are licensed-not-
+  scheduled — neither hand construction nor the 8.7k-game corpus produced
+  one inside the session.
+- **Mutation venues, recorded (m-1)**: M-A died at gate (b); M-B, M-C and
+  M-D died in the LIB suite and at compile time, not at the four oracle
+  gates. The design's receipt table said "a gate dies" for all four; the
+  honest reading is "the CI gate complex catches each" (the lib tests and
+  the oracle gates run in the same `tools/ci.sh`), and the receipts are
+  the four logs in `artifacts/`.
+- **Verifier independence is partial, recorded (m-2)**: the verifier
+  shares `ZoneP::add_graded`/`union_with` with the solver, so a grading-
+  index defect passes the zone cross-check identically in both. The
+  verifier's plan families, threat moves, blocking pairs and EP-1 scan
+  ARE independent (board reads, no ThreatState); the zone arithmetic is
+  shared and the design's "two independent constructions" overstates it.
+- **(c1) scope, recorded (m-3)**: the replay checks move legality, not
+  that the move still creates its hot window; (c2)'s revaluation is the
+  value-axis compensation.
+- **Measured figures, now with homes (m-7)**: the σ sweep's 119,654
+  placements / 25,346 refused (gate (c) stdout, `artifacts/
+  wp18a_selftest_v1.txt` context); the deep fixture's 571 total seesaw
+  events (`artifacts/wp18a_selftest_deep_v1.txt`); the corpus measurement
+  (87+ unbounded searches, 0 deep wins, both players 1200+ Elo — the
+  probe was a scratch binary over
+  `timmyburn/hexo-bootstrap-corpus`@`1a82e15`, run 2026-08-25, never
+  committed).
+
 ## 10. Dry run and receipts
 
 **M5's receipt is above (§6), taken before selection.**

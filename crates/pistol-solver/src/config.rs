@@ -111,3 +111,75 @@ impl SolverConfigFile {
         self.solver.validate()
     }
 }
+
+impl SolverConfigFile {
+    /// Parse and validate the config's own text — THE one parser for this
+    /// schema. The bin, the validator example and the oracle gates all call
+    /// this same function (CLAUDE.md rule 1: the tunables live in exactly
+    /// one schema place, and nothing re-reads them from literals). The
+    /// grammar is deliberately tiny — five integer keys in one `[solver]`
+    /// table plus a schema_version — and anything else is refused by name.
+    pub fn parse(text: &str) -> Result<SolverConfigFile, String> {
+        let mut schema_version: Option<u32> = None;
+        let mut keys: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
+        let mut section = false;
+        for (index, raw) in text.lines().enumerate() {
+            let line = raw.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            if line.starts_with('[') && line.ends_with(']') {
+                let found = line[1..line.len() - 1].trim();
+                if found != "solver" {
+                    return Err(format!("line {}: unknown section [{found}]", index + 1));
+                }
+                section = true;
+                continue;
+            }
+            let Some((key, value)) = line.split_once('=') else {
+                return Err(format!("line {}: not `key = value`", index + 1));
+            };
+            let key = key.trim();
+            let value: i64 = value
+                .trim()
+                .parse()
+                .map_err(|_| format!("line {}: not an integer", index + 1))?;
+            if !section {
+                if key != "schema_version" {
+                    return Err(format!("line {}: unknown key {key}", index + 1));
+                }
+                schema_version = Some(
+                    u32::try_from(value).map_err(|_| "schema_version does not fit".to_owned())?,
+                );
+            } else if keys.insert(key.to_owned(), value).is_some() {
+                return Err(format!("line {}: key {key} given twice", index + 1));
+            }
+        }
+        if keys.len() != 5 {
+            return Err(format!(
+                "the [solver] table holds {} keys, expected 5",
+                keys.len()
+            ));
+        }
+        let integer = |name: &str| -> Result<i64, String> {
+            keys.get(name)
+                .copied()
+                .ok_or_else(|| format!("missing key {name}"))
+        };
+        Ok(SolverConfigFile {
+            schema_version: schema_version.ok_or("missing schema_version")?,
+            solver: SolverSection {
+                epsilon_num: u32::try_from(integer("epsilon_num")?)
+                    .map_err(|_| "epsilon_num does not fit".to_owned())?,
+                epsilon_den: u32::try_from(integer("epsilon_den")?)
+                    .map_err(|_| "epsilon_den does not fit".to_owned())?,
+                zone_orders: u32::try_from(integer("zone_orders")?)
+                    .map_err(|_| "zone_orders does not fit".to_owned())?,
+                free_stone_radius: u32::try_from(integer("free_stone_radius")?)
+                    .map_err(|_| "free_stone_radius does not fit".to_owned())?,
+                tt_entries: u32::try_from(integer("tt_entries")?)
+                    .map_err(|_| "tt_entries does not fit".to_owned())?,
+            },
+        })
+    }
+}

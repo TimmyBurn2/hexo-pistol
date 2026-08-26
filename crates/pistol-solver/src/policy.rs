@@ -9,6 +9,12 @@
 //! canonical order, the enumeration deterministic on every run (D-7). Nothing
 //! consults a clock, a hasher, or anything but the position.
 
+// RULE9-JUSTIFICATION: the policy is one move-generation arithmetic — the
+// candidate cells, the threat-pair filter and the blocking-pair filter all
+// express the design's §2 over the same window reading, and the §7
+// verifier re-derives exactly these three against a second implementation;
+// a split would move one of the three out from under the test that pins
+// their agreement.
 use pistol_core::{GameState, Player, Turn, generate_turns};
 
 use crate::state::ThreatState;

@@ -754,20 +754,37 @@ fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary
     );
     let stdout = out(&ran);
     assert!(
-        stdout.contains("solver_link_check: 5 shipped binaries,"),
-        "this workspace ships five binaries, machine-invariant across a run: {stdout}"
+        stdout.contains("solver_link_check: 6 shipped binaries,"),
+        "this workspace ships six binaries, machine-invariant across a run: {stdout}"
     );
 
-    // The externally derived referent: the crate's own `src/` directory,
-    // enumerated by this test and not read from the gate's output.
-    let src_dir = repo("crates/pistol-solver/src");
-    let mut on_disk: Vec<String> = std::fs::read_dir(&src_dir)
-        .unwrap_or_else(|error| panic!("{} must read: {error}", src_dir.display()))
-        .map(|entry| entry.expect("a directory entry reads").file_name())
-        .map(|name| name.to_str().expect("utf-8 file name").to_owned())
-        .filter(|name| name.ends_with(".rs"))
-        .map(|name| format!("crates/pistol-solver/src/{name}"))
-        .collect();
+    // The externally derived referent: the crate's own `src/` tree,
+    // enumerated by this test and not read from the gate's output. Recursive
+    // since the solver crate gained `src/bin/` with its selftest binary
+    // (WP-1.8a): a flat read_dir would miss the bin target the hit set
+    // legitimately reaches.
+    let mut on_disk: Vec<String> = Vec::new();
+    let mut queue = vec![repo("crates/pistol-solver/src")];
+    while let Some(dir) = queue.pop() {
+        for entry in std::fs::read_dir(&dir)
+            .unwrap_or_else(|error| panic!("{} must read: {error}", dir.display()))
+        {
+            let entry = entry.expect("a directory entry reads");
+            let path = entry.path();
+            if path.is_dir() {
+                queue.push(path);
+                continue;
+            }
+            if entry.file_name().to_string_lossy().ends_with(".rs") {
+                on_disk.push(
+                    path.strip_prefix(repo_root())
+                        .expect("under the repo root")
+                        .to_string_lossy()
+                        .replace('\\', "/"),
+                );
+            }
+        }
+    }
     on_disk.sort();
     on_disk.dedup();
     assert!(
@@ -776,7 +793,7 @@ fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary
     );
 
     // The hit set the gate reports, canonicalised down to the repo-relative
-    // subject path and deduplicated across the five binaries — a hit line
+    // subject path and deduplicated across the six binaries — a hit line
     // repeats per binary by design, which is not a second file.
     let mut hit: Vec<String> = stdout
         .lines()

@@ -3,33 +3,58 @@
 //! TT cross-check. Each gate prints its own PASS/FAIL line; any failure
 //! fails the target.
 //!
-//! The fixture is sha-pinned by its own test; the gates run in release only
-//! through `tools/solver_oracle_check.sh` (the deep cases need it), and the
-//! cheap differential half runs here in debug too.
+//! The fixture is sha-pinned by its own test; all four gates are
+//! `#[ignore]`d here and run in release only, through
+//! `tools/solver_oracle_check.sh` with `--ignored` — the tactical gate's
+//! split (gate (c) alone is minutes in release and unbounded in debug).
 
+// RULE9-JUSTIFICATION: the four oracle gates are one instrument — they
+// share the fixture loaders, the sigma class and the perturb construction,
+// and the design's §7 adjudicates them as one gate leg with one exit
+// story. Splitting per gate would replicate the loaders and the sigma
+// sweep harness four times.
 use common::fixture_loader;
 use common::r3::Reference;
 use common::r3_zone;
 use common::verifier::{Verdict, verify};
 use pistol_core::{Coord, GameState, Player, Turn};
 use pistol_solver::fixture::Expectation;
-use pistol_solver::{Epsilon, SolveOutcome, Solver, ZoneP};
+use pistol_solver::{SolveOutcome, Solver, ZoneP};
 
 mod common;
 
 const FIXTURE: &str = "solver_v0.txt";
 
+/// The gates' parameters come from the committed config — the same file,
+/// the same parser, the same values the shipped binary reads (rule 1). A
+/// future edit to configs/solver_v0.toml moves the gates with it instead of
+/// leaving them on stale literals.
+fn gate_params() -> pistol_solver::SolverParams {
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../configs/solver_v0.toml");
+    let text = std::fs::read_to_string(path)
+        .unwrap_or_else(|error| panic!("the committed config must read: {error}"));
+    let file = pistol_solver::SolverConfigFile::parse(&text)
+        .unwrap_or_else(|what| panic!("the committed config must parse: {what}"));
+    file.validate()
+        .unwrap_or_else(|what| panic!("the committed config must validate: {what:?}"))
+}
+
 fn solver() -> Solver {
-    Solver::new(Epsilon::new(1, 4).expect("the registered 1/4"), 1 << 20)
+    let params = gate_params();
+    Solver::new(params.epsilon, params.tt_entries)
 }
 
 fn tiny_solver() -> Solver {
-    Solver::new(Epsilon::new(1, 4).expect("the registered 1/4"), 32)
+    let params = gate_params();
+    // The 32-entry table is the gate's OWN registered instrument knob, not
+    // a solver tunable: the cross-check's subject.
+    Solver::new(params.epsilon, 32)
 }
 
 /// Gate (a): the differential. Solver value == R3' value == the registered
 /// expectation, on every case.
 #[test]
+#[ignore = "release-only: tools/solver_oracle_check.sh runs all four gates with --ignored (the tactical gate's split, D-54)"]
 fn gate_a_differential_matches_the_brute_force_reference() {
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
     let mut solver = solver();
@@ -66,12 +91,20 @@ fn gate_a_differential_matches_the_brute_force_reference() {
 }
 
 /// Gate (b): the proof-tree re-verification, on every Win case.
+/// The gate's registered wall cap, in the test itself: exceeding it is the
+/// named failure VERIFIER-OVERRUN, never a hang. Test-side wall clock only —
+/// the solver's choice paths consult nothing but the position.
+const VERIFIER_WALL: std::time::Duration = std::time::Duration::from_secs(30 * 60);
+const SIGMA_WALL: std::time::Duration = std::time::Duration::from_secs(60 * 60);
+
 #[test]
+#[ignore = "release-only: tools/solver_oracle_check.sh runs all four gates with --ignored (the tactical gate's split, D-54)"]
 fn gate_b_proof_trees_reverify_full_width() {
     // Bounded AND deep: the verifier is the design's instrument for deep
     // positions, where R3' is measured intractable.
     let mut cases = fixture_loader::load_solver_fixture(FIXTURE);
     cases.extend(fixture_loader::load_deep_fixture());
+    let started = std::time::Instant::now();
     let mut solver = solver();
     let mut checked = 0;
     let mut failures = Vec::new();
@@ -88,6 +121,9 @@ fn gate_b_proof_trees_reverify_full_width() {
         match verify(&position, &tree) {
             Verdict::Verified { .. } => checked += 1,
             Verdict::Failed(what) => failures.push(format!("{}: {what}", case.name)),
+        }
+        if started.elapsed() > VERIFIER_WALL {
+            panic!("VERIFIER-OVERRUN: gate (b) exceeded its 30-minute wall cap");
         }
     }
     assert!(
@@ -110,6 +146,7 @@ fn gate_b_proof_trees_reverify_full_width() {
 /// exactly. |σ| = 1 and |σ| = 3 sampling is licensed-not-scheduled with a
 /// filler policy to be specified.
 #[test]
+#[ignore = "release-only: tools/solver_oracle_check.sh runs all four gates with --ignored (the tactical gate's split, D-54)"]
 fn gate_c_relevance_zone_property_holds() {
     // Bounded only: the sigma sweep multiplies each position's solve cost
     // by thousands, and with the deep decoys attached the leg exceeded its
@@ -119,6 +156,7 @@ fn gate_c_relevance_zone_property_holds() {
     // design's §9a amendment.
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
     let mut solver = solver();
+    let started = std::time::Instant::now();
     let mut checked = 0;
     let mut failures = Vec::new();
     let mut sigma_count = 0u64;
@@ -157,6 +195,11 @@ fn gate_c_relevance_zone_property_holds() {
                 continue;
             };
             sigma_count += 1;
+            if started.elapsed() > SIGMA_WALL {
+                panic!(
+                    "SIGMA-SAMPLE-OVERRUN: gate (c) exceeded its 60-minute wall cap at {sigma_count} placements"
+                );
+            }
             // (c1): the sequence replay in P+sigma.
             if let Err(what) = replay(&perturbed, &tree) {
                 failures.push(format!("{} sigma {sigma:?}: replay: {what}", case.name));
@@ -185,6 +228,7 @@ fn gate_c_relevance_zone_property_holds() {
 /// Gate (d): the TT cross-check. A 32-entry table returns the same VALUES
 /// as the full one, under the registered 50x node cap.
 #[test]
+#[ignore = "release-only: tools/solver_oracle_check.sh runs all four gates with --ignored (the tactical gate's split, D-54)"]
 fn gate_d_tt_size_does_not_change_values() {
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
     let mut failures = Vec::new();

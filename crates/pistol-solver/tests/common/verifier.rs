@@ -104,7 +104,7 @@ fn verify_node(
                 return Err("an overload leaf with the defender able to win this turn".into());
             }
             let families = super::r3_zone::plan_families(state.board(), attacker);
-            if families.len() < 3 || !three_disjoint(&families) {
+            if !min_hitting_set_exceeds_two(&families) {
                 return Err(format!(
                     "an overload leaf with {} plan families that two stones can hit",
                     families.len()
@@ -243,26 +243,43 @@ fn resolve_non_edge(state: &GameState, attacker: Player, turn: &Turn) -> Result<
     }
 }
 
-fn three_disjoint(families: &[Vec<Coord>]) -> bool {
-    // Greedy pairwise-disjoint subfamily of size 3: small families, so the
-    // cubic check is honest and exact here.
-    for i in 0..families.len() {
-        for j in i + 1..families.len() {
-            if families[i].iter().any(|c| families[j].contains(c)) {
-                continue;
-            }
-            for k in j + 1..families.len() {
-                if families[k]
-                    .iter()
-                    .any(|c| families[i].contains(c) || families[j].contains(c))
-                {
-                    continue;
-                }
-                return true;
+/// The registered re-derivation (design §7b): the exact minimum hitting
+/// set over the plan families EXCEEDS two — no single cell and no pair of
+/// cells hits every family. Pairwise-disjoint-3 (the earlier reading) is
+/// sufficient but not necessary: a family hypergraph with matching number 2
+/// can still have covering number 3, and a legitimate overload leaf in
+/// that gap would have failed the verifier. The enumeration is exact and
+/// small: families of at most two cells, a universe of at most a dozen.
+fn min_hitting_set_exceeds_two(families: &[Vec<Coord>]) -> bool {
+    if families.is_empty() {
+        return false;
+    }
+    let universe: Vec<Coord> = {
+        let mut cells: Vec<Coord> = families.iter().flat_map(|f| f.iter().copied()).collect();
+        cells.sort_unstable();
+        cells.dedup();
+        cells
+    };
+    let hits_all = |cells: &[Coord]| -> bool {
+        families
+            .iter()
+            .all(|family| cells.iter().any(|c| family.contains(c)))
+    };
+    // Sizes 0 and 1 first, then every pair.
+    if hits_all(&[]) {
+        return false;
+    }
+    if universe.iter().any(|&c| hits_all(&[c])) {
+        return false;
+    }
+    for i in 0..universe.len() {
+        for j in i + 1..universe.len() {
+            if hits_all(&[universe[i], universe[j]]) {
+                return false;
             }
         }
     }
-    false
+    true
 }
 
 fn witness_turn(witness: &pistol_solver::WinWitness) -> Turn {
