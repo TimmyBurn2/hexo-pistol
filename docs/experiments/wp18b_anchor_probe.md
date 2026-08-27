@@ -169,7 +169,46 @@ Extraction: seconds. The probe: minutes expected, ≤ 85 min bounded,
 detached (`setsid nohup`) and polled. Operator attention: one read of
 `probe_results.txt` against §2.
 
-## 8. What this probe is NOT
+## 8. THE RESULT (governed probe, taken under this registration at `194d02d`)
+
+Artifacts (gitignored, rule 8): `artifacts/wp18b_probe_v1_results.txt`
+(sha256 `fb43e534…`), `artifacts/wp18b_probe_v1_positions.tsv`,
+`artifacts/wp18b_probe_v1_run.log` (`0f74c0c3…`). 85/85 positions answered:
+44 `nowin`, 35 `wall-cap`, **6 `win`**. Node costs of the returning solves:
+1 to 33,856 (the big NoWin searches), the wins 1-1,599 nodes.
+
+**The six wins:**
+
+| position | mover | nodes | depth_turns | branch-relevant? |
+|---|---|---|---|---|
+| g001-t44-p2 | sealbot | 86 | 2 | winner, but t44 > collapse bound 42 — NOT A |
+| g001-t46-p2 | sealbot | 1 | 1 | winner, but t46 > 42 — NOT A |
+| g002-t10-p2 | **pistol** | 1,599 | 5 | NOT the winner — a win the LOSER missed |
+| g002-t12-p2 | **pistol** | 397 | 4 | NOT the winner — a win the LOSER missed |
+| g002-t39-p1 | sealbot | 714 | 2 | winner, but t39 > collapse bound 37 — NOT A |
+| g002-t41-p1 | sealbot | 1 | 1 | winner, but t41 > 37 — NOT A |
+
+**THE BRANCH IS B.** The solver DOES prove the eventual winner's
+conversion in both games — but every winner-proof lands exactly two turns
+AFTER the registered collapse turn (game 1: proofs at 44/46 vs bound 42;
+game 2: proofs at 39/41 vs bound 37). §2's registered rule ("a win proven
+only at later turns … is NOT A") reads this as B, and the strict
+first-turn-of-tail bound was registered precisely so doubt would break
+toward B. **B's consequence is §2's own: the M4 one-free-stone widening —
+ONE design round, ONE impl round, both reviewed, gates (a) (b) (d)
+re-run green, then this probe re-runs ONCE. Whatever it says the second
+time, section 2 proceeds. No second widening.**
+
+**Two diagnostics the branch does not consume, recorded because they are
+the WP's motivation measured**: (1) the v0 solver proves PISTOL — the
+loser of game 2 — a forced win at turns 10 and 12 (depths 5 and 4), wins
+pistol's own 50,176-node search did not find and did not refute; the
+solver sees tactical truth the search misses, which is h1's case in one
+row. (2) 35 of 85 positions wall-capped at 60 s — the v0 policy's
+unbounded NoWin searches are the cost shape the per-call node cap in
+section 2's design exists for.
+
+## 9. What this probe is NOT
 
 Not an SPRT, not a strength claim, not a config move, not a re-reading of
 D-438. Its output selects the branch; the branch's consequences are the
