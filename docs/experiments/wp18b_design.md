@@ -1,6 +1,45 @@
 # WP-1.8b §2 — the solver on the search path (design)
 
-**Revision 2. Closes the DECISION-RED-TEAM's findings (MATRIX FALLS on
+**Revision 3. Closes REVIEW-design's 1 BLOCKING and 5 MAJORs. B-1: the
+per-call node cap is DESIGNED (§2a) instead of presumed — it does not
+exist in the code, every cost claim leaned on it, and `solve_root`'s stall
+guard would panic on a truncated re-search unless the spent flag is
+checked first; the cap bounds VISITS and one visit's own enumeration is
+O(region²) pair checks (MEASURED ~480-cell regions → ~10⁵ checks ≈
+milliseconds), so the wall bound per call is cap × enumeration, stated.
+M-2: call sites are TURN-BOUNDARY nodes only (`Phase::First`, two owed) —
+mid-turn nodes never call (the policy game is defined at turn boundaries;
+`Solver::solve` refuses mid-turn positions by panic, and the trigger is
+evaluated only where a call is legal). M-3: the bench's fixture is the
+WP-1.3 CORPUS fixture (the "anchor positions" attribution deleted), the
+trigger frequency over it is now MEASURED — 8 of 24 positions hold a hot
+window at the mover's boundary, so the bench exercises the hotspot, not
+vacuously — and a second, committed, sha-pinned TRIGGER-RICH fixture
+(`bench_solver_positions_v1.txt`, late-game threat shapes) benches the
+stress class the corpus under-represents. M-4: `solver_nodes` prints ONLY
+on gate-ON configs — the field set of every committed (gate-off) config
+is unchanged, D-88's pinned order stands, and byte-identity holds; the
+print order and the sealbot word-boundary fix are unchanged. M-5: TWO
+INDEPENDENT COUNTERS — `search_nodes` incremented at every visit
+(+quiescence), `solver_nodes` incremented per call, `nodes` DERIVED as
+their sum at report time; the sum test compares two independent writers
+and the drop-accounting mutation kills it. M-6: the stop contract's full
+amendment (a call after the last check can let the final iteration
+complete over budget with the overshoot absorbed — deterministic,
+overshoot ≤ one capped call per intervening visit between checks OR the
+completion overshoot; `stop.rs`'s module doc and D-74's wording are
+amended at impl/closure, named here). And the MINORs: the reset's
+unobservability stated once in the honest form (epoch isolation makes the
+skip unobservable until 2³² solves; the mutation is registered as
+PREDICTED-UNKILLABLE with the honest receipt the process allows), the
+parity test asserts the t-relative invariant (attacker ≡ t+1, defender ≡
+t mod 2) rather than an unconditional ODD/EVEN, SCHEMA_VERSION moves 2 →
+3 (the D-16 class, named), the dependency sentence corrected (the edge
+exists since WP-1.5b; what is new is CALLING the solver), and D1's
+quiet-node cost sentence now matches the code (the zero-plan defender
+call refuses by assert, not by enumerating).**
+
+**Revision 2 closed the DECISION-RED-TEAM's findings (MATRIX FALLS on
 three code-grounded claims; every RECOMMENDATION survived). BLOCKING 1:
 the defender score was parity-violating — the opponent's d-th turn from N
 sits at root-offset `t+2d` (EVEN, `score.rs`'s law; the code's own
@@ -42,19 +81,29 @@ surviving attack recorded.
 
 ## 1. The seam
 
-`pistol-search` gains a dependency on `pistol-solver` (the normal
-direction — search USES solver; the WP-1.5a `p = 0` posture is superseded
-BY THIS WP, which exists to wire it, and the WP-1.8a edge-check tool
-remains the adjudicator for any future claim about who links whom).
+`pistol-search` has DEPENDED on `pistol-solver` since WP-1.5b (the
+manifest edge is old; `staged.rs` already consumes `ThreatState`); what
+this WP adds is the first CALL of the df-pn solver from the search path.
+The WP-1.5a `p = 0` posture (no binary LINKS the solver's proof
+machinery) is superseded BY THIS WP, which exists to wire it, and the
+WP-1.8a edge-check tool remains the adjudicator for any future claim
+about who links whom.
 `pistol-search` re-implements no rule (rule 2): the solver is called with
 the search's own `GameState`, and every verdict flows from pistol-core's
 rules through the solver's policy game.
 
 **Where the solver lives**: in `Searcher`, constructed from the same
 config seam as everything else, ONE instance per engine — its epoch TT is
-reused across every call in a game (the epoch mechanism isolates solves;
-`Searcher::clear` — what a new game is — resets it wholesale, the
-belt-and-braces the determinism seat's C-vs-D comparison can see). The
+reused across every call in a game, the epoch mechanism isolates solves,
+and `Searcher::clear` — what a new game is — calls `Solver::reset()`
+(wholesale table-and-epoch clear, wiring code §5 names). **The reset's
+observability, stated once and honestly**: epoch isolation already makes
+every earlier-solve entry read as absent, so a SKIPPED reset changes no
+observable until the epoch counter wraps — the C-vs-D seat cannot see it,
+the registered mutation is PREDICTED-UNKILLABLE, and if the receipts
+confirm that, the honest record is the process's own form for it (the
+attempted reproducer, the unobservability argument) — the reset stands as
+memory hygiene and defence-in-depth, which is what it is. The
 per-call node cap and trigger live in the engine config (rule 1); no
 code-side default.
 
@@ -68,6 +117,34 @@ The dispatch's default, taken with one sharpening:
 | D2 | directions | (a) attacker only; (b) attacker + defender; (c) defender only | **(b)**, the dispatch's own default, with the defender entry spelled AS THE CODE ALREADY ADMITS IT (the red team's correction, adopted wholesale): `Solver::solve_defender(state)` is a THIN WRAPPER — the attacker is `state.to_move().opponent()`, the root is the SAME `solve_root`, and the df-pn's own to-move dispatch lands it in the existing AND path (`dfpn_and`), ZERO df-pn changes. At every D1-reachable input the AND assert passes UNRELAXED (opponent-hot means the opponent-of-the-policy-attacker — the mover — faces plans... precisely: at a defender call the policy-attacker is O and O's hot windows ARE the plans the assert wants); the zero-plan AND root is UNREACHABLE under the registered trigger, and if a future trigger ever admits it the existing assert refuses it LOUDLY — the refusal semantics come free. NOT a null-move/pass formulation: a pass-proof is OPTIMISTIC for the non-mover and unsound as a loss claim. Attack on (b), recorded: *the AND root is the widest node in the game — every legal mover pair that covers — so defender proofs complete only near conversion, and midgame calls burn their cap for `Unknown`.* Accepted and measured by the bench: that is what the per-call cap is for, and near-conversion is where the anchor's games were decided. |
 | D3 | root behaviour | (a) root attacker proof answers immediately (proof's first move, mate score); root defender proof restricts the root candidate set to the proof's zone cells for the whole search; (b) no root special-casing | **(a)**, both dispatch defaults. The proof's first move: the root `OrStep`'s witness turn, or the `OrWinLeaf`'s completing stones as a turn — extracted from the emitted tree, so the move is the PROOF's, not the search's ordering. The zone restriction is a VALUE-motivated candidate restriction on a proven loss (the dispatch's own words: "a proven opponent win prunes to the zone cells as the only candidates") — registered here as such so it is never read as an ordering hint. **THE ZONE ORDER IS Z2** (`zone.order(1)`, pinned: Z1 is too tight to hold a two-stone defense's cells, Z3 absorbs every k≥3 EP-1 segment and nears the whole legal region — the paper's own two-stone cap suggests the middle order; a test pins the choice so it cannot drift silently). The operative property is CONTAINMENT, not exactness: the zone is a strict superset of the opponent's plan cells (all children's win trees union EP-1), and the Tier-F cover cells sit inside it by construction — the red team's wording correction, adopted. The move extraction keys by `tree.root` against the emitted node map — the emission is POST-ORDER (the module's own doc comment says root-first and is corrected at impl), so an implementer reading nodes[0] would read a leaf. Attack, recorded: *the zone cells might exclude every Tier-F candidate and leave the root with only Tier-Q filler.* Answered: the zone is built from the OPPONENT's plan cells — exactly where the forced defense lives — and an empty intersection leaves the candidate set untouched (fail-open on the intersection, never fail-closed; a test pins this). |
 | D4 | unknown results | (a) a cap-exhausted or `NoWinUnderZone` solve returns NO information and the search continues normally; (b) treat as NoWin | **(a)** — (b) is the unsound reading: an unfinished proof is not a refutation. `Unknown` is a third solver outcome, distinct from `NoWin`, and the search treats it as "no verdict here". |
+
+## 2a. The per-call node cap — designed, not presumed (REVIEW-design B-1)
+
+The cap does not exist in the shipped solver; it is wiring code, and this
+section is its design. `Solver::solve` grows a `node_cap: u64` argument
+(explicit, no default — rule 1; the engine passes the config value, the
+selftest and the probe example pass an explicit unbounded constant, and
+the probe registration's instrument table is re-pinned for the signature
+change). Mechanics: `Search` carries `node_cap` and a `spent` flag; at
+`dfpn` entry, after the node count increments, `nodes >= node_cap` sets
+`spent` and returns the node's CURRENT `(pn, dn)` unchanged — a
+truncation, never a fabricated convergence — so proof numbers do not
+reach 0/INF and the parents unwind on unchanged values.
+**`solve_root` checks `spent` BEFORE the stall guard, every pass**: a
+truncated re-descent leaves the root's `(pn, dn)` exactly where the last
+pass left it, which is byte-for-byte the stall signature, and the
+distinction is the flag, not the numbers — the check order is a
+correctness requirement, not a style choice. The spent solve returns a
+new `SolveOutcome::Unknown` (distinct from `NoWin`; D4's semantics), with
+its nodes still counted. TT hygiene: a truncated solve's partial entries
+are mid-search state exactly like any aborted pass, the solve ENDS (no
+continuation), and the epoch isolates every later solve — no poisoning
+path. **What the cap bounds, stated**: VISITS. One visit's own
+enumeration is O(region²) pair checks (MEASURED ~480-cell regions → ~10⁵
+checks ≈ milliseconds) for an AND node's cover filter, or |R|·|L| for an
+OR node's arm B — so one call's wall bound is cap × enumeration, not cap
+alone; at cap 16384 that is seconds-worst-case, and the search-path
+aggregate is bounded by the shared node budget (§3).
 
 ## 3. Node accounting (the fork the dispatch settled)
 
@@ -90,24 +167,36 @@ bounded by the shared budget itself (solver nodes count against it) —
 "equal per-side compute" is enforced as equal BUDGET, with the ON seat's
 spend split reported per turn.** `SearchInfo` grows `solver_nodes`
 (written on the `Run`, threaded through `search.rs`'s final overwrite
-block so a Deadline-salvaged answer reports it too), and the CLI prints
+block so a Deadline-salvaged answer reports it too), **and the counters
+are TWO INDEPENDENT WRITERS** (REVIEW-design M-5): `search_nodes`
+increments at every visit and quiescence node, `solver_nodes` increments
+per solver call, and `nodes` is DERIVED as their sum at report time —
+the budget-sum test then compares two independent counters, and the
+drop-accounting mutation genuinely kills it. The CLI prints
 `solver_nodes` STRICTLY AFTER `nodes` on both the `info` and `totals`
-lines — PINNED BY A REPORT TEST, because `tools/sealbot`'s parser reads
-`nodes` by SUBSTRING (`field_after(rest, "nodes ")`), and `"solver_nodes
-300"` contains `"nodes "`: field order is load-bearing for that parser,
-and the impl word-boundaries it as well (a `tools/sealbot` edit, reviewed
-under the SHELL_CHECKLIST as a tools/ change; NOT an arena/replay/
-Criterion-1'' change, so the dispatch's RED-TEAM trigger does not fire).
-The budget-sum test pins `nodes == search_nodes + solver_nodes` exactly (a
-one-node drift fails it).
+lines, **ONLY WHEN THE GATE IS ON** — every committed config is gate-off,
+so their field sets are byte-unchanged (D-88's pinned order stands, the
+golden transcripts stand, gate-off byte-identity holds) and only an ON
+seat's line grows the field. The print order and a word-boundary fix for
+`tools/sealbot`'s substring parser (`field_after(rest, "nodes ")` —
+`"solver_nodes 300"` contains `"nodes "`) are both PINNED BY REPORT
+TESTS: field order is load-bearing for that parser even though it only
+ever reads gate-off seats today. The `tools/sealbot` edit is a tools/
+change reviewed under the SHELL_CHECKLIST; it is NOT an arena/replay/
+Criterion-1'' change, so the dispatch's RED-TEAM trigger does not fire.
+The budget-sum test pins `nodes == search_nodes + solver_nodes` exactly
+against the two independent writers (a one-node drift fails it).
 
 ## 4. Scores and the TT
 
 An attacker proof at interior node N with witness depth `d` (attacker
 turns) scores `mate_in(turns_from_root + 2d − 1)` — the mover's `d`-th
 turn from N sits at root offset `t + 2d − 1`, ODD, as `score.rs`'s law
-demands for a win read at the node it is written at; the parity is
-asserted in a test. A defender proof at N — the OPPONENT is the
+demands for a win read at the node it is written at; the parity is asserted in a test — as the t-RELATIVE invariant (attacker
+distance ≡ t+1 mod 2, defender distance ≡ t mod 2), not an unconditional
+odd/even, because the same formulas yield both parities across call sites
+of either ply parity and both are correct in the root frame (D-98). A
+defender proof at N — the OPPONENT is the
 policy-game attacker, whose turns from N sit at offsets `t+2, t+4, …` —
 scores `−mate_in(turns_from_root + 2d)`, EVEN, exactly the shape of the
 staged generator's own OverloadReturn row (`−mate_in(turns_from_root +
@@ -178,18 +267,25 @@ section through the engine's existing seam.
   receipts must demonstrate the mutant dies or record why the clear is
   unobservable, honestly).
 
-## 7. The rule-5 bench, registered before measuring
+## 7. The rule-5 bench, registered before measuring (REVISION 3's form)
 
-- **Hotspot**: the per-node cost shift at trigger nodes (the anchor's own
-  positions are the stress class: `bench_positions_v1.txt`, 50 000 nodes,
-  both bands ON vs OFF).
-- **Bracket**: band-aggregate nps ratio ON/OFF ≥ 0.5 in both bands
-  (ESTIMATED: a trigger-node call costs up to the cap in solver nodes
-  against 50 000 budget, but triggers are rare in the bench positions —
-  the bracket is on WALL PER REPORTED NODE, which is exactly where solver
-  calls land their cost); **abort** < 0.5 — a config-default-on engine
-  that halves throughput at equal budget is not a candidate for h1
-  regardless of what the SPRT says about the gated seat.
+- **Hotspot**: the per-node cost shift at trigger nodes — measured on TWO
+  committed, sha-pinned fixtures: the WP-1.3 corpus fixture
+  `bench_positions_v1.txt` (24 midgame positions, both bands, MEASURED 8
+  of 24 holding a hot window at the mover's boundary — the bench exercises
+  trigger nodes, not vacuously) and a NEW trigger-rich fixture
+  `bench_solver_positions_v1.txt` (late-game threat shapes, the class the
+  corpus under-represents; committed and sha-pinned per rule 7 —
+  positions, not run artifacts).
+- **Bracket**: band-aggregate nps ratio ON/OFF ≥ 0.5 in both bands on the
+  CORPUS fixture (the regression axis: gate-on must not halve ordinary
+  throughput), and ≥ 0.25 on the TRIGGER-RICH fixture (the stress axis:
+  late-game trigger-heavy searching spends solver budget by design —
+  ESTIMATED, and the whole point of measuring it); **abort** if the
+  corpus bracket fires (< 0.5) or the trigger-rich ratio is below 0.1 —
+  a config-default-on engine that spends nine tenths of equal budget
+  inside solver calls is not a candidate for h1 regardless of what the
+  SPRT says about the gated seat.
 - IQR gate at the D-215/D-362 convention.
 
 ## 8. What this design does NOT do
