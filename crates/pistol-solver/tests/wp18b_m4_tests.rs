@@ -15,6 +15,20 @@ use pistol_solver::policy;
 use pistol_solver::state::ThreatState;
 use pistol_solver::{SolveOutcome, Solver};
 
+// The verifier and its board readings, included beside this test exactly
+// as the oracle tests include them (one common root, so the verifier's own
+// `super::r3_zone` references resolve).
+#[path = "common/r3_zone.rs"]
+mod r3_zone;
+#[path = "common/verifier.rs"]
+mod verifier;
+
+/// The verifier's wall cap for the flip tree (release-only, minutes-scale:
+/// the AND nodes re-derive covering defender pairs over a ~570-cell legal
+/// region; the MEASURED cost is recorded in the test's receipt comment
+/// below once first run).
+const FLIP_VERIFY_WALL: std::time::Duration = std::time::Duration::from_secs(600);
+
 /// Anchor game 1, sealbot (P2) to move at turn 42 — the collapse-adjacent
 /// position the v0 probe could not answer in 60 s and the widened solver
 /// proves in seconds.
@@ -48,13 +62,27 @@ fn table_entries() -> usize {
     1_048_576
 }
 
-/// The widening's value in one position: v0 wall-capped here, M4 proves
-/// the win — and the proof NEEDS arm B (a move pair with a cell outside
-/// `C`), so this is a widening of what the policy game can express, not a
-/// speed difference the narrow policy could close with more time.
+/// The widening's value in one position (REVIEW-impl M-1's honest form):
+/// v0 REFUTES g001-t42 — `nowin` at 955 nodes, the anchor probe's own
+/// receipt (`artifacts/wp18b_probe_v1_results.txt`, line 41) — and the
+/// widened solver proves the WIN at 10,726 nodes / depth 3. A true value
+/// flip, exactly design §4's first bullet, with both halves asserted.
 #[test]
-fn the_widening_proves_a_win_v0_cannot_express() {
+fn the_widening_proves_a_win_v0_refutes() {
     let state = g001_t42();
+    // The v0 half, receipt-backed (955 nodes, sub-second).
+    let mut narrow = Solver::new(
+        epsilon(),
+        table_entries(),
+        AttackerPolicy::BothStonesRelevant,
+    );
+    let narrow_result = narrow.solve(&state);
+    assert_eq!(narrow_result.outcome, SolveOutcome::NoWin);
+    assert_eq!(
+        narrow_result.nodes, 955,
+        "pinned by the probe artifact's receipt"
+    );
+    // The widened half.
     let mut solver = Solver::new(epsilon(), table_entries(), AttackerPolicy::OneFreeStone);
     let result = solver.solve(&state);
     let SolveOutcome::Win(tree) = result.outcome else {
@@ -62,7 +90,8 @@ fn the_widening_proves_a_win_v0_cannot_express() {
     };
     // Some OR step's witness pair carries a cell OUTSIDE the position's C:
     // arm B. If every witness pair were both-in-C, v0 could in principle
-    // find this same line, and the flip would be a speed story.
+    // find this same line — and v0's refutation above would then be a
+    // solver bug, which gate (a)'s differential exists to catch.
     let mut threat = ThreatState::new();
     for (at, player) in state.board().stones() {
         threat.apply(at, player);
@@ -81,9 +110,33 @@ fn the_widening_proves_a_win_v0_cannot_express() {
     }
     assert!(
         used_arm_b,
-        "the witness must need arm B — else the flip is not a widening"
+        "the witness must need arm B — else v0's refutation and M4's win cannot both hold"
     );
     assert!(tree.win_depth_turns() >= 1);
+}
+
+/// REVIEW-impl M-2: the flip's own proof tree, re-proved full-width by the
+/// INDEPENDENT verifier (gate (b)'s instrument, invoked per design M4-4's
+/// flip seat). Release-only and minutes-scale; the wall cap is the test's
+/// own registered watchdog.
+#[test]
+#[ignore = "release-only, minutes-scale: the verifier re-derives covering defender pairs at every AND node"]
+fn the_flips_proof_tree_reverifies_full_width() {
+    let state = g001_t42();
+    let mut solver = Solver::new(epsilon(), table_entries(), AttackerPolicy::OneFreeStone);
+    let result = solver.solve(&state);
+    let SolveOutcome::Win(tree) = result.outcome else {
+        panic!("the widened solver proves g001-t42");
+    };
+    let started = std::time::Instant::now();
+    match verifier::verify(&state, &tree, AttackerPolicy::OneFreeStone) {
+        verifier::Verdict::Verified { .. } => {}
+        verifier::Verdict::Failed(what) => panic!("the flip's tree failed verification: {what}"),
+    }
+    assert!(
+        started.elapsed() < FLIP_VERIFY_WALL,
+        "FLIP-VERIFY-OVERRUN: the verifier exceeded its 600 s wall cap"
+    );
 }
 
 /// Arm B's shape, order and dedup on a live-three position (design §2):
@@ -203,5 +256,51 @@ fn a_scattered_position_is_identically_nowin_under_both_policies() {
         let result = solver.solve(&state);
         assert_eq!(result.outcome, SolveOutcome::NoWin, "{policy_kind:?}");
         assert_eq!(result.nodes, 1, "an empty policy set is one visit");
+    }
+}
+
+/// REVIEW-impl M-3: the three policy implementations AGREE, elementwise,
+/// on a live-three position with live twos (so arm A and arm B both fire)
+/// — the agreement M4-3's answer rests on, which no shipped gate exercises
+/// for arm B (the bounded fixture is all one-node, where arm B never
+/// executes). `r3.rs`'s board scan must produce the same sequence as
+/// `policy.rs`'s ThreatState path and `r3_zone.rs`'s board scan, under
+/// BOTH policies.
+#[path = "common/r3.rs"]
+mod r3;
+
+#[test]
+fn the_three_policy_sites_agree_elementwise_under_both_policies() {
+    let state = g001_t42();
+
+    let mut threat = ThreatState::new();
+    for (at, player) in state.board().stones() {
+        threat.apply(at, player);
+    }
+    for policy_kind in [
+        AttackerPolicy::BothStonesRelevant,
+        AttackerPolicy::OneFreeStone,
+    ] {
+        let mut mine = Vec::new();
+        policy::threat_pairs(&state, &mut threat, Player::P2, policy_kind, &mut mine);
+        let reference = r3::Reference::moves_only(Player::P2);
+        let verifier_moves = r3_zone::threat_moves(&state, Player::P2, policy_kind);
+        assert!(
+            !mine.is_empty(),
+            "g001-t42 has policy moves under {policy_kind:?}"
+        );
+        let reference_moves = reference.threat_moves(&state, policy_kind);
+        assert_eq!(
+            mine, reference_moves,
+            "policy.rs and R3' agree elementwise under {policy_kind:?}"
+        );
+        assert_eq!(
+            mine, verifier_moves,
+            "policy.rs and the verifier's r3_zone agree elementwise under {policy_kind:?}"
+        );
+        if policy_kind == AttackerPolicy::OneFreeStone {
+            let narrow = Vec::<pistol_core::Turn>::new();
+            let _ = narrow; // the strict-superset check lives in the shape test above
+        }
     }
 }

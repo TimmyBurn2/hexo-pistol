@@ -114,14 +114,22 @@ pub fn threat_pairs(
     for &raiser in &raisers {
         for &cell in &free {
             let turn = Turn::pair(raiser, cell).expect("a raiser and a legal cell are distinct");
-            threat.apply(raiser, attacker);
-            threat.apply(cell, attacker);
-            debug_assert!(
-                !threat.hot_windows(attacker).is_empty(),
-                "a raiser alone creates a hot window, so the pair keeps the AND-node plan assertion"
-            );
-            threat.undo(cell, attacker);
-            threat.undo(raiser, attacker);
+            // Debug-build-only belt-and-braces: the raiser alone keeps a hot
+            // window, so the pair preserves the AND-node plan assertion
+            // (policy.rs's construction argument). Release builds skip the
+            // PROBE COST the design §2 registered as avoided; the always-on
+            // backstop is dfpn.rs's NO_PLAN_ASSERT at every AND node.
+            #[cfg(debug_assertions)]
+            {
+                threat.apply(raiser, attacker);
+                threat.apply(cell, attacker);
+                assert!(
+                    !threat.hot_windows(attacker).is_empty(),
+                    "a raiser alone creates a hot window, so the pair keeps the plan assertion"
+                );
+                threat.undo(cell, attacker);
+                threat.undo(raiser, attacker);
+            }
             out.push(turn);
         }
     }

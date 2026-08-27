@@ -161,7 +161,24 @@ impl Reference {
     /// `C`-pairs that create a hot window; arm B, under `OneFreeStone`, is
     /// raiser x legal-region-cell-not-in-`C`, appended after arm A in the
     /// design's order. This mirror computes both from its own board scan.
-    fn threat_moves(&self, state: &GameState, policy: pistol_solver::AttackerPolicy) -> Vec<Turn> {
+    /// The attacker's policy moves, callable directly (the three-site
+    /// agreement test drives it beside `policy::threat_pairs` and
+    /// `r3_zone::threat_moves`; `solve` remains the value entry point).
+    /// A moves-only instance for the three-site agreement test: no solve,
+    /// no memo content — just the attacker whose moves are asked for.
+    pub fn moves_only(attacker: Player) -> Reference {
+        Reference {
+            attacker,
+            policy: pistol_solver::AttackerPolicy::BothStonesRelevant,
+            memo: BTreeMap::new(),
+        }
+    }
+
+    pub fn threat_moves(
+        &self,
+        state: &GameState,
+        policy: pistol_solver::AttackerPolicy,
+    ) -> Vec<Turn> {
         let board = state.board();
         let attacker = self.attacker;
         let mut candidates = candidate_cells(board, attacker);

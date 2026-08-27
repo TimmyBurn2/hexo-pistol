@@ -178,7 +178,16 @@ impl SolverConfigFile {
             } else if key == "attacker_policy" {
                 // The one string-valued key: quoted per the TOML files the
                 // committed configs write, tolerated unquoted so hand edits
-                // fail on the VALUE (below) rather than on spelling.
+                // fail on the VALUE (below) rather than on spelling. Given
+                // twice is refused exactly like every integer key — a
+                // last-wins branch would be the one lax spot in a strict
+                // parser (REVIEW-impl MINOR, closed at the fix round).
+                if policy.is_some() {
+                    return Err(format!(
+                        "line {}: key attacker_policy given twice",
+                        index + 1
+                    ));
+                }
                 let spelling = value.trim_matches('"');
                 policy = Some(match spelling {
                     "one_free_stone" => AttackerPolicy::OneFreeStone,
@@ -227,5 +236,44 @@ impl SolverConfigFile {
                 attacker_policy: policy.ok_or("missing key attacker_policy")?,
             },
         })
+    }
+}
+
+#[cfg(test)]
+mod wp18b_config_tests {
+    use super::*;
+
+    #[test]
+    fn a_doubled_attacker_policy_is_refused_like_every_integer_key() {
+        let text = "schema_version = 1\n[solver]\nepsilon_num = 1\nepsilon_den = 4\n\
+                    zone_orders = 3\nfree_stone_radius = 8\ntt_entries = 1024\n\
+                    attacker_policy = \"one_free_stone\"\nattacker_policy = \"both_stones_relevant\"\n";
+        assert_eq!(
+            SolverConfigFile::parse(text).unwrap_err(),
+            "line 9: key attacker_policy given twice"
+        );
+    }
+
+    #[test]
+    fn the_widened_and_narrow_spellings_both_parse() {
+        for (spelling, expected) in [
+            ("one_free_stone", AttackerPolicy::OneFreeStone),
+            ("both_stones_relevant", AttackerPolicy::BothStonesRelevant),
+        ] {
+            let text = format!(
+                "schema_version = 1\n[solver]\nepsilon_num = 1\nepsilon_den = 4\n\
+                 zone_orders = 3\nfree_stone_radius = 8\ntt_entries = 1024\n\
+                 attacker_policy = \"{spelling}\"\n"
+            );
+            let params = SolverConfigFile::parse(&text).unwrap().validate().unwrap();
+            assert_eq!(params.attacker_policy, expected);
+        }
+        let refused = SolverConfigFile::parse(
+            "schema_version = 1\n[solver]\nepsilon_num = 1\nepsilon_den = 4\n\
+             zone_orders = 3\nfree_stone_radius = 8\ntt_entries = 1024\n\
+             attacker_policy = \"narrow\"\n",
+        )
+        .unwrap_err();
+        assert!(refused.contains("is not one of"), "{refused}");
     }
 }
