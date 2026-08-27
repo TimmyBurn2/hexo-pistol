@@ -19,6 +19,20 @@ pub const SUPPORTED_ZONE_ORDERS: u32 = 3;
 /// The free-stone radius v0 implements: the full legal region, no pruning.
 pub const SUPPORTED_FREE_STONE_RADIUS: u32 = 8;
 
+/// The attacker policy the solver plays (design wp18b_m4 §2): which pairs
+/// the OR node may move with. `BothStonesRelevant` is v0; `OneFreeStone`
+/// is the M4 widening — arm B (`raiser × legal-region cell not in C`)
+/// appended after v0's arm A, dedup-free by construction because arm B's
+/// free stone is never a `C`-cell while arm A's pairs are always both-in-`C`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AttackerPolicy {
+    /// v0: both stones threat-relevant (both cells in `C`).
+    BothStonesRelevant,
+    /// M4: one raiser stone plus one free stone anywhere legal.
+    OneFreeStone,
+}
+
 /// A named refusal: what was wrong, and the value that was wrong.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SolverConfigError {
@@ -33,6 +47,8 @@ pub enum SolverConfigError {
     FreeStoneRadius { found: u32 },
     /// `tt_entries` is not a power of two ≥ 2.
     TtEntries { found: u32 },
+    /// `attacker_policy` is not one of the two policies this code reads.
+    AttackerPolicy { found: String },
 }
 
 /// The file's whole shape.
@@ -59,6 +75,8 @@ pub struct SolverSection {
     pub free_stone_radius: u32,
     /// The transposition table's entry count.
     pub tt_entries: u32,
+    /// The attacker policy (see [`AttackerPolicy`]).
+    pub attacker_policy: AttackerPolicy,
 }
 
 /// The validated parameters a solver is built from.
@@ -68,6 +86,8 @@ pub struct SolverParams {
     pub epsilon: Epsilon,
     /// The table's entry count.
     pub tt_entries: usize,
+    /// The attacker policy.
+    pub attacker_policy: AttackerPolicy,
 }
 
 impl SolverSection {
@@ -96,6 +116,7 @@ impl SolverSection {
         Ok(SolverParams {
             epsilon,
             tt_entries: self.tt_entries as usize,
+            attacker_policy: self.attacker_policy,
         })
     }
 }
@@ -122,6 +143,7 @@ impl SolverConfigFile {
     pub fn parse(text: &str) -> Result<SolverConfigFile, String> {
         let mut schema_version: Option<u32> = None;
         let mut keys: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
+        let mut policy: Option<AttackerPolicy> = None;
         let mut section = false;
         for (index, raw) in text.lines().enumerate() {
             let line = raw.trim();
@@ -140,24 +162,47 @@ impl SolverConfigFile {
                 return Err(format!("line {}: not `key = value`", index + 1));
             };
             let key = key.trim();
-            let value: i64 = value
-                .trim()
-                .parse()
-                .map_err(|_| format!("line {}: not an integer", index + 1))?;
+            let value = value.trim();
             if !section {
                 if key != "schema_version" {
                     return Err(format!("line {}: unknown key {key}", index + 1));
                 }
                 schema_version = Some(
-                    u32::try_from(value).map_err(|_| "schema_version does not fit".to_owned())?,
+                    u32::try_from(
+                        value
+                            .parse::<i64>()
+                            .map_err(|_| format!("line {}: not an integer", index + 1))?,
+                    )
+                    .map_err(|_| "schema_version does not fit".to_owned())?,
                 );
-            } else if keys.insert(key.to_owned(), value).is_some() {
-                return Err(format!("line {}: key {key} given twice", index + 1));
+            } else if key == "attacker_policy" {
+                // The one string-valued key: quoted per the TOML files the
+                // committed configs write, tolerated unquoted so hand edits
+                // fail on the VALUE (below) rather than on spelling.
+                let spelling = value.trim_matches('"');
+                policy = Some(match spelling {
+                    "one_free_stone" => AttackerPolicy::OneFreeStone,
+                    "both_stones_relevant" => AttackerPolicy::BothStonesRelevant,
+                    other => {
+                        return Err(format!(
+                            "line {}: attacker_policy {other:?} is not one of \
+                             `one_free_stone`, `both_stones_relevant`",
+                            index + 1
+                        ));
+                    }
+                });
+            } else {
+                let value: i64 = value
+                    .parse()
+                    .map_err(|_| format!("line {}: not an integer", index + 1))?;
+                if keys.insert(key.to_owned(), value).is_some() {
+                    return Err(format!("line {}: key {key} given twice", index + 1));
+                }
             }
         }
         if keys.len() != 5 {
             return Err(format!(
-                "the [solver] table holds {} keys, expected 5",
+                "the [solver] table holds {} integer keys, expected 5",
                 keys.len()
             ));
         }
@@ -179,6 +224,7 @@ impl SolverConfigFile {
                     .map_err(|_| "free_stone_radius does not fit".to_owned())?,
                 tt_entries: u32::try_from(integer("tt_entries")?)
                     .map_err(|_| "tt_entries does not fit".to_owned())?,
+                attacker_policy: policy.ok_or("missing key attacker_policy")?,
             },
         })
     }

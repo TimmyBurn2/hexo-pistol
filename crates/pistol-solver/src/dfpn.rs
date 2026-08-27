@@ -10,7 +10,12 @@
 //! 1. re-derive `p`/`d` from the children's CURRENT table numbers;
 //! 2. TERMINATE if the node is definitive (`p == 0` / `d == 0`) or if
 //!    `p >= pt` or `d >= dt`;
-//! 3. re-select the minimum child — least by canonical move order on ties;
+//! 3. re-select the minimum child — least by ENUMERATION ORDER on ties
+//!    (the policy's own order: arm A's v0 order first, arm B's
+//!    raiser-major/free-ascending order appended — design wp18b_m4 §2,
+//!    which is why the enumeration order is a determinism decision and
+//!    not an implementation detail; it is NOT global canonical-pair order
+//!    under the widened policy);
 //! 4. recompute `p2`/`d2` against the CURRENT ordering;
 //! 5. descend with the formulas evaluated against current values.
 //!
@@ -125,6 +130,7 @@ pub struct SearchStats {
 pub struct Search<'a> {
     attacker: Player,
     epsilon: Epsilon,
+    attacker_policy: crate::config::AttackerPolicy,
     generation: u32,
     /// The solve's epoch: stamped on every entry this search stores, and
     /// the only epoch its lookups accept.
@@ -145,6 +151,7 @@ impl<'a> Search<'a> {
     pub fn new(
         attacker: Player,
         epsilon: Epsilon,
+        attacker_policy: crate::config::AttackerPolicy,
         tt: &'a mut SolverTT,
         dag: &'a mut ProofDag,
         stats: &'a mut SearchStats,
@@ -152,6 +159,7 @@ impl<'a> Search<'a> {
         Search {
             attacker,
             epsilon,
+            attacker_policy,
             generation: 0,
             epoch: 0,
             tt,
@@ -244,7 +252,13 @@ impl<'a> Search<'a> {
         }
         // §2.2-3: the policy moves; none at all is a leaf disproof.
         let mut moves = Vec::new();
-        policy::threat_pairs(threat, self.attacker, &mut moves);
+        policy::threat_pairs(
+            state,
+            threat,
+            self.attacker,
+            self.attacker_policy,
+            &mut moves,
+        );
         if moves.is_empty() {
             self.tt.store(Entry {
                 key,

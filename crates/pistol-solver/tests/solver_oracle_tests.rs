@@ -28,7 +28,11 @@ const FIXTURE: &str = "solver_v0.txt";
 /// The gates' parameters come from the committed config — the same file,
 /// the same parser, the same values the shipped binary reads (rule 1). A
 /// future edit to configs/solver_v0.toml moves the gates with it instead of
-/// leaving them on stale literals.
+/// leaving them on stale literals. ONE EXCEPTION, landed with the M4
+/// widening (design wp18b_m4 §3, M4-3): gate (c) alone reads
+/// configs/solver_v0_narrow.toml — its registered semantics and measured
+/// cost are the narrow policy's, pinned by a second complete committed
+/// document rather than a code-side override.
 fn gate_params() -> pistol_solver::SolverParams {
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../configs/solver_v0.toml");
     let text = std::fs::read_to_string(path)
@@ -39,16 +43,32 @@ fn gate_params() -> pistol_solver::SolverParams {
         .unwrap_or_else(|what| panic!("the committed config must validate: {what:?}"))
 }
 
+/// Gate (c)'s own config: the NARROW policy, pinned by file (M4-3, design
+/// wp18b_m4 §3). Same parser, same rule-1 discipline — a second complete
+/// committed document, not a code-side override.
+fn narrow_params() -> pistol_solver::SolverParams {
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../configs/solver_v0_narrow.toml"
+    );
+    let text = std::fs::read_to_string(path)
+        .unwrap_or_else(|error| panic!("the narrow config must read: {error}"));
+    let file = pistol_solver::SolverConfigFile::parse(&text)
+        .unwrap_or_else(|what| panic!("the narrow config must parse: {what:?}"));
+    file.validate()
+        .unwrap_or_else(|what| panic!("the narrow config must validate: {what:?}"))
+}
+
 fn solver() -> Solver {
     let params = gate_params();
-    Solver::new(params.epsilon, params.tt_entries)
+    Solver::new(params.epsilon, params.tt_entries, params.attacker_policy)
 }
 
 fn tiny_solver() -> Solver {
     let params = gate_params();
     // The 32-entry table is the gate's OWN registered instrument knob, not
     // a solver tunable: the cross-check's subject.
-    Solver::new(params.epsilon, 32)
+    Solver::new(params.epsilon, 32, params.attacker_policy)
 }
 
 /// Gate (a): the differential. Solver value == R3' value == the registered
@@ -57,11 +77,12 @@ fn tiny_solver() -> Solver {
 #[ignore = "release-only: tools/solver_oracle_check.sh runs all four gates with --ignored (the tactical gate's split, D-54)"]
 fn gate_a_differential_matches_the_brute_force_reference() {
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
+    let params = gate_params();
     let mut solver = solver();
     let mut failures = Vec::new();
     for case in &cases {
         let position = case.position().expect("the loader validated every case");
-        let reference = Reference::solve(&position);
+        let reference = Reference::solve(&position, params.attacker_policy);
         let result = solver.solve(&position);
         let solver_value = match result.outcome {
             SolveOutcome::Win(_) => "win",
@@ -110,6 +131,7 @@ fn gate_b_proof_trees_reverify_full_width() {
     let mut cases = fixture_loader::load_solver_fixture(FIXTURE);
     cases.extend(fixture_loader::load_deep_fixture());
     let started = std::time::Instant::now();
+    let params = gate_params();
     let mut solver = solver();
     let mut checked = 0;
     let mut failures = Vec::new();
@@ -123,7 +145,7 @@ fn gate_b_proof_trees_reverify_full_width() {
             failures.push(format!("{}: expected a win, got none", case.name));
             continue;
         };
-        match verify(&position, &tree) {
+        match verify(&position, &tree, params.attacker_policy) {
             Verdict::Verified { .. } => checked += 1,
             Verdict::Failed(what) => failures.push(format!("{}: {what}", case.name)),
         }
@@ -160,7 +182,13 @@ fn gate_c_relevance_zone_property_holds() {
     // reduction — no sigma replay on the deep trees — is recorded in the
     // design's §9a amendment.
     let cases = fixture_loader::load_solver_fixture(FIXTURE);
-    let mut solver = solver();
+    // M4-3 (design wp18b_m4): gate (c) is PINNED to the narrow policy via
+    // its own committed config — its registered semantics and measured cost
+    // are v0's, and the sigma sweep does not ride the widened solver. The
+    // other three gates read configs/solver_v0.toml (the committed widened
+    // default) through gate_params(); this leg reads the narrow file.
+    let params = narrow_params();
+    let mut solver = Solver::new(params.epsilon, params.tt_entries, params.attacker_policy);
     let started = std::time::Instant::now();
     let mut checked = 0;
     let mut failures = Vec::new();
@@ -176,7 +204,7 @@ fn gate_c_relevance_zone_property_holds() {
             failures.push(format!("{}: expected a win, got none", case.name));
             continue;
         };
-        let Verdict::Verified { zone } = verify(&position, &tree) else {
+        let Verdict::Verified { zone } = verify(&position, &tree, params.attacker_policy) else {
             failures.push(format!("{}: gate (b) must pass before (c) runs", case.name));
             continue;
         };

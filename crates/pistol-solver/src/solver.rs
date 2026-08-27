@@ -180,6 +180,7 @@ fn mix(mut z: u64) -> u64 {
 /// A solver: configuration plus ONE table, reused across solves.
 pub struct Solver {
     epsilon: Epsilon,
+    attacker_policy: crate::config::AttackerPolicy,
     /// ONE table, reused across solves. Entries carry the epoch of the
     /// solve that wrote them and read as absent for every later solve, so
     /// nothing crosses positions — the isolation of a fresh table without
@@ -192,9 +193,14 @@ pub struct Solver {
 
 impl Solver {
     /// From validated parameters (the config's `validate`).
-    pub fn new(epsilon: Epsilon, tt_entries: usize) -> Solver {
+    pub fn new(
+        epsilon: Epsilon,
+        tt_entries: usize,
+        attacker_policy: crate::config::AttackerPolicy,
+    ) -> Solver {
         Solver {
             epsilon,
+            attacker_policy,
             table: SolverTT::new(tt_entries),
             epoch: 0,
         }
@@ -230,6 +236,7 @@ impl Solver {
             let mut search = Search::new(
                 attacker,
                 self.epsilon,
+                self.attacker_policy,
                 &mut self.table,
                 &mut dag,
                 &mut stats,
@@ -403,7 +410,11 @@ mod tests {
     use pistol_core::{Coord, Outcome, Turn};
 
     fn solver() -> Solver {
-        Solver::new(Epsilon::new(1, 4).unwrap(), 1024)
+        Solver::new(
+            Epsilon::new(1, 4).unwrap(),
+            1024,
+            crate::config::AttackerPolicy::BothStonesRelevant,
+        )
     }
 
     fn game_of_turns(turns: &[Turn]) -> GameState {

@@ -17,6 +17,7 @@
 // their agreement.
 use pistol_core::{GameState, Player, Turn, generate_turns};
 
+use crate::config::AttackerPolicy;
 use crate::state::ThreatState;
 
 /// Asserted by the solver at every AND node: the attacker's last move left a
@@ -47,16 +48,35 @@ pub fn candidate_cells(threat: &ThreatState, attacker: Player, out: &mut Vec<pis
     out.dedup();
 }
 
-/// The attacker's threat pairs: canonical pairs from `C` after which the
-/// attacker owns at least one hot window (DEF-PLAN).
+/// The attacker's threat pairs: the policy's OR-node move set (design
+/// wp18b_m4 §2 — the spec; `r3.rs` and `r3_zone.rs` mirror it).
+///
+/// Under `BothStonesRelevant` (v0): canonical pairs from `C` after which
+/// the attacker owns at least one hot window (DEF-PLAN).
+///
+/// Under `OneFreeStone` (M4): v0's arm A VERBATIM and in v0's order, then
+/// arm B appended — pairs `{c, f}` with `c` a raiser (alone it raises a
+/// live three to hot) and `f` any empty legal-region cell NOT in `C`.
+/// Arm B needs no DEF-PLAN check (the raiser alone creates the plan) and
+/// no dedup: its free stone is never a `C`-cell while arm A's pairs are
+/// always both-in-`C`, and a two-raiser pair `{c1, c2}` is arm A's to
+/// emit (both cells are `C`-cells, and a raiser pair always creates a hot
+/// window). This is the design §2 order-and-dedup spec, implemented once.
 ///
 /// The win check has already absorbed every completing pair before this is
 /// called (a hot window at the mover's turn is always completable, so
 /// `can_win_this_turn` fires first), so no pair here completes six and no
 /// pair is missing from `generate_turns`' set.
-pub fn threat_pairs(threat: &mut ThreatState, attacker: Player, out: &mut Vec<Turn>) {
+pub fn threat_pairs(
+    state: &GameState,
+    threat: &mut ThreatState,
+    attacker: Player,
+    policy: AttackerPolicy,
+    out: &mut Vec<Turn>,
+) {
     let mut candidates = Vec::new();
     candidate_cells(threat, attacker, &mut candidates);
+    // Arm A: v0's enumeration, order and all.
     out.clear();
     for (index, &first) in candidates.iter().enumerate() {
         for &second in &candidates[index + 1..] {
@@ -69,6 +89,40 @@ pub fn threat_pairs(threat: &mut ThreatState, attacker: Player, out: &mut Vec<Tu
             if creates {
                 out.push(turn);
             }
+        }
+    }
+    if policy == AttackerPolicy::BothStonesRelevant {
+        return;
+    }
+    // Arm B: raisers ascending, free cells ascending (the design §2 order).
+    let mut raisers = Vec::new();
+    threat.cells_raising_to_hot(attacker, crate::NearHot::Three, &mut raisers);
+    raisers.sort_unstable();
+    raisers.dedup();
+    if raisers.is_empty() {
+        return;
+    }
+    // The free cell is any legal empty cell OUTSIDE C (see the doc comment
+    // for why outside-C is the dedup-free spelling of the design's union).
+    let in_c = |cell: pistol_core::Coord| candidates.binary_search(&cell).is_ok();
+    let mut free: Vec<pistol_core::Coord> = pistol_core::legal_placements(state.board())
+        .into_iter()
+        .filter(|&cell| !in_c(cell))
+        .collect();
+    free.sort_unstable();
+    free.dedup();
+    for &raiser in &raisers {
+        for &cell in &free {
+            let turn = Turn::pair(raiser, cell).expect("a raiser and a legal cell are distinct");
+            threat.apply(raiser, attacker);
+            threat.apply(cell, attacker);
+            debug_assert!(
+                !threat.hot_windows(attacker).is_empty(),
+                "a raiser alone creates a hot window, so the pair keeps the AND-node plan assertion"
+            );
+            threat.undo(cell, attacker);
+            threat.undo(raiser, attacker);
+            out.push(turn);
         }
     }
 }
@@ -219,7 +273,13 @@ mod tests {
         let state = live_three_position();
         let mut threat = threat_of(&state);
         let mut pairs = Vec::new();
-        threat_pairs(&mut threat, Player::P1, &mut pairs);
+        threat_pairs(
+            &state,
+            &mut threat,
+            Player::P1,
+            crate::config::AttackerPolicy::BothStonesRelevant,
+            &mut pairs,
+        );
         assert!(!pairs.is_empty(), "a live three admits threat pairs");
         for turn in &pairs {
             let [first, second] = turn_cells(turn);

@@ -50,7 +50,7 @@ fn main() -> ExitCode {
             return ExitCode::from(2);
         }
     };
-    let mut solver = Solver::new(params.epsilon, params.tt_entries);
+    let mut solver = Solver::new(params.epsilon, params.tt_entries, params.attacker_policy);
     for case in &cases {
         let position = match case.position() {
             Ok(position) => position,

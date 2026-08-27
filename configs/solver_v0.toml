@@ -1,4 +1,5 @@
-# pistol — solver v0 configuration (WP-1.8a).
+# pistol — solver v0 configuration (WP-1.8a; attacker policy widened by
+# WP-1.8b/M4, design docs/experiments/wp18b_m4_design.md).
 #
 # The single source of the solver's tunables (CLAUDE.md rule 1): every key
 # required, none defaulted in code, validated by pistol-solver's own schema
@@ -8,6 +9,11 @@
 # marked ESTIMATED and non-transferable; free_stone_radius 8 is the full
 # legal region, the no-prune value the design's §3 argues for; tt_entries
 # is an engineering start, unmeasured until the gates first run.
+# attacker_policy is the M4 widening's knob: "one_free_stone" is the
+# committed default (the anchor probe's branch B applied it — a raiser
+# stone plus a free stone anywhere legal); "both_stones_relevant" is v0,
+# still selectable and still gate (c)'s registered policy through
+# configs/solver_v0_narrow.toml.
 
 schema_version = 1
 
@@ -17,3 +23,4 @@ epsilon_den = 4
 zone_orders = 3
 free_stone_radius = 8
 tt_entries = 1048576
+attacker_policy = "one_free_stone"

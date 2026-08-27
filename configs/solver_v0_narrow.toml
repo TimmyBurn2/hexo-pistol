@@ -1,0 +1,19 @@
+# pistol — solver v0 NARROW-policy configuration (WP-1.8b/M4, design
+# docs/experiments/wp18b_m4_design.md §3 M4-3).
+#
+# Gate (c)'s own committed config: the σ relevance sweep's registered
+# semantics and measured cost (118,135 placements, D-437) are the v0
+# both-stones-relevant policy's, and the M4 round pins the gate to this
+# file rather than re-registering the sweep on the widened solver. A
+# second complete document (CLAUDE.md rule 1), read by the same strict
+# parser as configs/solver_v0.toml — never a code-side override.
+
+schema_version = 1
+
+[solver]
+epsilon_num = 1
+epsilon_den = 4
+zone_orders = 3
+free_stone_radius = 8
+tt_entries = 1048576
+attacker_policy = "both_stones_relevant"

@@ -37,8 +37,14 @@ pub fn defender_wins_now(state: &GameState, attacker: Player) -> bool {
 }
 
 /// The attacker's policy moves, from the board: `C`-pairs that create a
-/// hot window. Mirrors `policy::threat_pairs` with none of its machinery.
-pub fn threat_moves(state: &GameState, attacker: Player) -> Vec<Turn> {
+/// hot window, plus — under `OneFreeStone` (design wp18b_m4 §2, the spec)
+/// — arm B appended: raiser x legal-region-cell-not-in-`C`. Mirrors
+/// `policy::threat_pairs` with none of its machinery.
+pub fn threat_moves(
+    state: &GameState,
+    attacker: Player,
+    policy: pistol_solver::AttackerPolicy,
+) -> Vec<Turn> {
     let board = state.board();
     let mut candidates = candidate_cells(board, attacker);
     candidates.sort_unstable();
@@ -56,7 +62,59 @@ pub fn threat_moves(state: &GameState, attacker: Player) -> Vec<Turn> {
             }
         }
     }
+    if policy == pistol_solver::AttackerPolicy::BothStonesRelevant {
+        return moves;
+    }
+    // Arm B, from this module's own scan.
+    let mut raisers: Vec<Coord> = Vec::new();
+    for window in live_three_windows(board, attacker) {
+        raisers.extend(
+            (0..6u8)
+                .map(|index| window.cell(index))
+                .filter(|&at| !board.is_occupied(at)),
+        );
+    }
+    raisers.sort_unstable();
+    raisers.dedup();
+    let in_c = |cell: Coord| candidates.binary_search(&cell).is_ok();
+    let mut free: Vec<Coord> = pistol_core::legal_placements(board)
+        .into_iter()
+        .filter(|&cell| !in_c(cell))
+        .collect();
+    free.sort_unstable();
+    free.dedup();
+    for &raiser in &raisers {
+        for &cell in &free {
+            moves.push(Turn::pair(raiser, cell).expect("a raiser and a legal cell are distinct"));
+        }
+    }
     moves
+}
+
+/// The attacker's live three-own windows, from the board (the raiser
+/// cells' home).
+fn live_three_windows(board: &Board, side: Player) -> Vec<Window> {
+    let mut windows: BTreeSet<Window> = BTreeSet::new();
+    for (at, _) in board.stones() {
+        for window in windows_through(at) {
+            let mut own = 0u32;
+            let mut live = true;
+            for index in 0..6u8 {
+                match board.get(window.cell(index)) {
+                    Some(player) if player == side => own += 1,
+                    Some(_) => {
+                        live = false;
+                        break;
+                    }
+                    None => {}
+                }
+            }
+            if live && own == 3 {
+                windows.insert(window);
+            }
+        }
+    }
+    windows.into_iter().collect()
 }
 
 /// The blocking pairs, from the board: every legal turn whose cells hit

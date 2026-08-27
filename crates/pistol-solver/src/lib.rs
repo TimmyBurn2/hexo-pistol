@@ -120,8 +120,8 @@ mod sets;
 mod table;
 
 pub use config::{
-    SOLVER_SCHEMA_VERSION, SUPPORTED_FREE_STONE_RADIUS, SUPPORTED_ZONE_ORDERS, SolverConfigError,
-    SolverConfigFile, SolverParams, SolverSection,
+    AttackerPolicy, SOLVER_SCHEMA_VERSION, SUPPORTED_FREE_STONE_RADIUS, SUPPORTED_ZONE_ORDERS,
+    SolverConfigError, SolverConfigFile, SolverParams, SolverSection,
 };
 pub use cover::{Cover, MinimalCover};
 pub use dfpn::{ProofDag, ProofKind, ProofNode, SearchStats};

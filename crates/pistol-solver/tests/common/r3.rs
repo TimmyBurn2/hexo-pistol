@@ -35,6 +35,7 @@ pub enum RefValue {
 /// the lifetime).
 pub struct Reference {
     attacker: Player,
+    policy: pistol_solver::AttackerPolicy,
     memo: BTreeMap<Key128, RefValue>,
 }
 
@@ -47,11 +48,12 @@ impl Reference {
     /// two stones — the same precondition the solver asserts, stated here
     /// by the same panic text so a fixture feeding one a different position
     /// than the other fails loudly.
-    pub fn solve(state: &GameState) -> RefValue {
+    pub fn solve(state: &GameState, policy: pistol_solver::AttackerPolicy) -> RefValue {
         assert_precondition(state);
         let attacker = state.to_move();
         let mut reference = Reference {
             attacker,
+            policy,
             memo: BTreeMap::new(),
         };
         let mut work = state.clone();
@@ -84,7 +86,7 @@ impl Reference {
         }
         // §2.2-3, independently: the threat pairs, from this module's own
         // window scan.
-        let moves = self.threat_moves(state);
+        let moves = self.threat_moves(state, self.policy);
         if moves.is_empty() {
             return RefValue::NoWin;
         }
@@ -155,8 +157,11 @@ impl Reference {
         None
     }
 
-    /// §2.2, independently: pairs of `C`-cells that create a hot window.
-    fn threat_moves(&self, state: &GameState) -> Vec<Turn> {
+    /// §2.2, independently (design wp18b_m4 §2 is the spec): arm A is v0's
+    /// `C`-pairs that create a hot window; arm B, under `OneFreeStone`, is
+    /// raiser x legal-region-cell-not-in-`C`, appended after arm A in the
+    /// design's order. This mirror computes both from its own board scan.
+    fn threat_moves(&self, state: &GameState, policy: pistol_solver::AttackerPolicy) -> Vec<Turn> {
         let board = state.board();
         let attacker = self.attacker;
         let mut candidates = candidate_cells(board, attacker);
@@ -178,6 +183,37 @@ impl Reference {
                 {
                     moves.push(turn);
                 }
+            }
+        }
+        if policy == pistol_solver::AttackerPolicy::BothStonesRelevant {
+            return moves;
+        }
+        // Arm B, from this module's own scan: raisers = empties of live
+        // threes; free cells = legal placements outside C.
+        let mut raisers: Vec<Coord> = Vec::new();
+        for (window, own) in live_windows(board, attacker) {
+            if own == 3 {
+                raisers.extend(
+                    (0..6u8)
+                        .map(|index| window.cell(index))
+                        .filter(|&at| !board.is_occupied(at)),
+                );
+            }
+        }
+        raisers.sort_unstable();
+        raisers.dedup();
+        let in_c = |cell: Coord| candidates.binary_search(&cell).is_ok();
+        let mut free: Vec<Coord> = pistol_core::legal_placements(board)
+            .into_iter()
+            .filter(|&cell| !in_c(cell))
+            .collect();
+        free.sort_unstable();
+        free.dedup();
+        for &raiser in &raisers {
+            for &cell in &free {
+                let turn =
+                    Turn::pair(raiser, cell).expect("a raiser and a legal cell are distinct");
+                moves.push(turn);
             }
         }
         moves
