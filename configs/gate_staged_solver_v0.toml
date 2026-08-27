@@ -8,8 +8,13 @@
 # strength seat: it is never an SPRT arm and never the committed config.
 #
 # The solver knobs mirror configs/solver_v0.toml's committed values; the
-# wiring knobs are the design §5 registrations (cap 16384 ESTIMATED from
-# the anchor probe's win costs, trigger any_open_four by calculus ID).
+# trigger is the design §5 registration (any_open_four by calculus ID).
+# THE CAP IS 512, NOT the design's 16384: this seat's job is the ON path's
+# DETERMINISM, not its strength, and at cap 16384 one trigger search runs
+# minutes (the bench abort's own receipt, artifacts/wp18b_bench_v1.txt) —
+# a CI gate that takes hours is not a gate. 512 keeps the ON path's choice
+# plane (calls, budget absorption, both counters) exercised at bounded
+# wall; the SPRT seat carries the registered 16384.
 #
 # Validate this file with tools/config_check.sh.
 
@@ -36,7 +41,7 @@ countermove = false
 
 [solver]
 on_search_path = true
-per_call_node_cap = 16384
+per_call_node_cap = 512
 trigger = "any_open_four"
 epsilon_num = 1
 epsilon_den = 4
