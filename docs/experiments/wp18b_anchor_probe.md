@@ -208,6 +208,46 @@ row. (2) 35 of 85 positions wall-capped at 60 s — the v0 policy's
 unbounded NoWin searches are the cost shape the per-call node cap in
 section 2's design exists for.
 
+## 8a. THE M4 RE-RUN (licensed once by branch B; this section is the
+## amendment M4-5 registered)
+
+**The instrument table, amended**: the probe example and the extractor are
+re-read at `9550327` (the M4 impl commit; `Solver::new`'s signature changed
+with the policy knob — the instrument binary rebuilt). The solver CONFIG is
+still `configs/solver_v0.toml`, whose committed `attacker_policy` is now
+`one_free_stone` — the widening this re-run measures. **The driver is
+SHARDED (8 workers)**: the 85 per-case invocations are independent
+processes, each with its own `timeout(1)` cap, so sharding changes wall
+time only; results are concatenated in CASE ORDER and the results file is
+byte-comparable with the v0 run's. The registered caps stand unchanged
+(60 s per position; wall-cap = no answer, never a verdict). **The
+wall-cap-on-a-winner-position reading (M4-5): a winner-to-move position
+that wall-caps is NO ANSWER — neither "earlier" nor "not earlier"; the
+EARLIER question is answered only over positions that returned.** This
+amendment reopens nothing (this registration is diagnostic and
+dispatch-licensed; it has never had a subagent review to reopen) — the
+branch is already read and is NOT re-adjudicated by the re-run.
+
+**THE DRIVER'S OWN DRY-RUN RECORD, because the first sharded draft
+DESERVED one and did not get one before launch.** The first sharded draft
+shared one `one.txt` scratch across all 8 workers; the write/grep race
+silently dropped 40 of 85 cases and the driver exited as if fine — caught
+only by counting the output. That draft was never dry-run on the stub
+input, which is exactly the discipline §6 exists to enforce; the breach
+is recorded here rather than argued away. The fixed driver (per-worker
+scratch files, a completeness check that REFUSES any count short of the
+case list, duplicate-with-different-answers refused) was then dry-run on
+the SAME stub pair as §6 before launch: `sharded 5 cases over 2 workers`,
+`wrote 5 results in case order`, exit 0, all five answers byte-identical
+to §6's record — AND the dry run itself caught two further driver bugs
+(a doubled path prefix; a `shunk`/`chunk` spelling slip in the shard
+writer) before any governed launch. The racy 45/85 launch is a VOID of
+the driver, receipted by this paragraph and the 40-missing-case count; it
+produced no reading and consumed nothing — the re-run the dispatch
+licenses is the one the fixed, dry-run driver takes.
+
+**§8b. THE M4 RE-RUN'S RESULT (filled when the run completes)**
+
 ## 9. What this probe is NOT
 
 Not an SPRT, not a strength claim, not a config move, not a re-reading of
