@@ -169,20 +169,91 @@ pub fn blocking_pairs(
     out: &mut Vec<Turn>,
 ) {
     out.clear();
-    for turn in generate_turns(state).expect("an AND node is an undecided position at Phase::First")
-    {
-        match turn {
-            Turn::Single(_) => panic!(
-                "pistol-solver invariant {NO_PLAN_SINGLE_TURN}: generate_turns emitted a single-stone turn for the defender at a node the race check passed"
-            ),
-            Turn::Pair(..) => {
-                if covers_plans(state, threat, attacker, &turn) {
-                    out.push(turn);
+    // THE FAST PATH (WP-1.8b §7a's bench-abort fix, semantics-preserving):
+    // a covering pair CONTAINS a minimal cover, and a pair is exactly two
+    // cells, so the covering-pair set is CONSTRUCTED from the minimal
+    // covers — each one-cell cover `a` with every legal partner `x`, each
+    // two-cell cover as itself — instead of scanned out of ~10^5 legal
+    // pairs with a per-pair window check (the spec form, ~26 ms per AND
+    // visit MEASURED at the anchor's t38; this form is the same SET for a
+    // small multiple of |minimal covers| x |legal| constructions).
+    // `covers_plans` stays as the specification, and the pinned agreement
+    // test below now drives BOTH directions of the equivalence.
+    let covers = threat.blocking_covers(attacker.opponent(), crate::HitBudget::Two);
+    let crate::Cover::Minimal(minimal_covers) = covers else {
+        panic!(
+            "pistol-solver invariant {COVER_CLASS_MISMATCH}: expected minimal covers, got {covers:?}"
+        )
+    };
+    for minimal in minimal_covers {
+        match minimal {
+            crate::MinimalCover::One(at) => {
+                for other in pistol_core::legal_placements(state.board()) {
+                    if other != at {
+                        out.push(Turn::pair(at, other).expect("a plan cell and a legal cell differ"));
+                    }
                 }
+                // The first stone OPENS ITS OWN BALL (movegen's rule-5
+                // reading): a partner outside the CURRENT region is a legal
+                // second stone iff within LEGAL_RADIUS of `at` — the exact
+                // pairs the spec scan emits through its `checked_offset`
+                // arm, and the ones a region-only construction misses (the
+                // 12-pair divergence the equivalence check caught).
+                for dq in -8i16..=8 {
+                    for dr in -8i16..=8 {
+                        let hex = (dq.unsigned_abs() + dr.unsigned_abs() + (dq + dr).unsigned_abs()) / 2;
+                        if hex == 0 || hex > 8 {
+                            continue;
+                        }
+                        if let Some(other) = at.checked_offset(pistol_core::Coord::new(dq, dr))
+                            && !state.board().in_legal_region(other)
+                        {
+                            // A cell outside the region holds no stone (a
+                            // stone's own cell is in the region), so there
+                            // is no occupancy test to make.
+                            out.push(
+                                Turn::pair(at, other)
+                                    .expect("a plan cell and an opened cell differ"),
+                            );
+                        }
+                    }
+                }
+            }
+            crate::MinimalCover::Two { first, second } => {
+                out.push(Turn::pair(first, second).expect("the cover's cells are distinct"));
             }
         }
     }
+    out.sort_unstable();
+    out.dedup();
+    // DEDUP, and the equivalence the fast path owes: a sorted, deduplicated
+    // construction equals the spec form's scan. The debug build checks it
+    // inline (the bench registered the release form); the unit test below
+    // pins it permanently.
+    #[cfg(debug_assertions)]
+    {
+        let mut spec = Vec::new();
+        for turn in generate_turns(state)
+            .expect("an AND node is an undecided position at Phase::First")
+        {
+            if let Turn::Pair(..) = turn {
+                if covers_plans(state, threat, attacker, &turn) {
+                    spec.push(turn);
+                }
+            }
+        }
+        spec.sort_unstable();
+        spec.dedup();
+        debug_assert!(
+            out == &spec,
+            "the fast path constructs the spec form's set exactly (|fast| {} vs |spec| {})",
+            out.len(),
+            spec.len()
+        );
+    }
 }
+
+const COVER_CLASS_MISMATCH: &str = "SOLVER_COVER_CLASS_MISMATCH";
 
 /// Whether the defender can no longer block against the attacker's plans:
 /// the exact minimum hitting set over the attacker's hot windows exceeds two
