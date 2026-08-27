@@ -29,3 +29,8 @@
 # commit once (docs/decisions.md D-426 MAJOR 4).
 /.agents/
 /.claude/
+
+# Local match configs: machine-specific (sealbot paths, budgets, run labels),
+# never committed — local/sealbot.example.toml is the committed shape.
+/local/*
+!/local/sealbot.example.toml
