@@ -16,7 +16,8 @@
 #            neither can see whether `newgame` really clears everything the
 #            previous position left in the table; this pair is that question.
 #
-# THREE SEATS, RADIUS, STAGED AND STAGED-WITH-HEURISTICS (docs/decisions.md
+# FOUR SEATS, RADIUS, STAGED, STAGED-WITH-HEURISTICS AND
+# STAGED-WITH-SOLVER (docs/decisions.md
 # D-370 for the second; docs/experiments/wp17_design.md §5 for the third): the
 # same one binary, built once and reused, run against each configuration in
 # turn — each is a choice path this gate did not touch before it existed.
@@ -65,6 +66,7 @@ SEATS=(
 	"radius configs/gate_v0.toml crates/pistol-cli/tests/fixtures/tactical_v0.txt"
 	"staged configs/gate_staged_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"
 	"staged-heuristics configs/gate_staged_heuristics_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"
+	"staged-solver configs/gate_staged_solver_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"
 )
 
 # The budgets, both reproducible. A wall-clock budget could not be compared at

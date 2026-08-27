@@ -67,11 +67,14 @@ fn main() -> ExitCode {
                 return ExitCode::from(2);
             }
         };
-        let result = solver.solve(&position);
+        let result = solver.solve(&position, pistol_solver::UNCAPPED);
         let (value, digest, zone) = match &result.outcome {
             SolveOutcome::Win(tree) => ("win", tree.digest(), "ok"),
             SolveOutcome::NoWin => ("nowin", 0, "-"),
             SolveOutcome::NoWinUnderZone => ("nowin-under-zone", 0, "OVERFLOW"),
+            // The selftest runs UNCAPPED: an Unknown is the cap plumbing
+            // leaking into an uncapped run — named, not a value.
+            SolveOutcome::Unknown => panic!("an uncapped selftest solve returned Unknown"),
         };
         println!(
             "case {} value {} nodes {} seesaw {} digest {digest:016x} zone {zone}",

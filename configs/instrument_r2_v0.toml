@@ -20,7 +20,7 @@
 
 # Schema version this document is written against. The build refuses a version
 # it does not read, rather than guessing at the difference.
-schema_version = 2
+schema_version = 3
 
 [engine]
 # Instrument mode, as the arena requires of both sides: single-threaded, fixed
@@ -72,3 +72,17 @@ tie_break = "lexicographic"
 # in milliseconds, promised as `go movetime N` answering within N + epsilon and
 # advertised on the play-mode handshake (docs/decisions.md, WP-1.4 series).
 movetime_epsilon_ms = 50
+
+[solver]
+# WP-1.8b (design docs/experiments/wp18b_design.md §5): the solver on the
+# search path, gate OFF in every committed config until an SPRT says
+# otherwise. The knobs mirror configs/solver_v0.toml's committed values.
+on_search_path = false
+per_call_node_cap = 16384
+trigger = "any_open_four"
+epsilon_num = 1
+epsilon_den = 4
+zone_orders = 3
+free_stone_radius = 8
+tt_entries = 1048576
+attacker_policy = "one_free_stone"

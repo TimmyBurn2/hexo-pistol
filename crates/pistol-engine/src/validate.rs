@@ -31,6 +31,7 @@ impl Config {
         self.eval.validate()?;
         self.instrument.validate()?;
         self.play.validate()?;
+        self.solver.validate(&self.search)?;
 
         // The determinism law: instrument mode is the source of every strength
         // claim, so it may not race (CLAUDE.md rule 4).
@@ -215,6 +216,52 @@ impl PlaySection {
                 ),
             ));
         }
+        Ok(())
+    }
+}
+
+impl crate::config::SolverSection {
+    /// The solver section's validation (design wp18b §5): the three wiring
+    /// keys here, the six solver keys through the solver's own validator
+    /// (`SolverConfigFile::parse` is its single parser, so the validation
+    /// is the same one the selftest and the gates run).
+    pub fn validate(&self, search: &crate::config::SearchSection) -> Result<(), EngineError> {
+        if self.on_search_path && matches!(search.candidate_policy, CandidatePolicy::Radius { .. })
+        {
+            return Err(EngineError::config(
+                "solver.on_search_path",
+                "is true under a Radius-kind search.candidate_policy: the trigger reads the \
+                 staged policy's threat state, and a silent no-op is refused — set the policy \
+                 staged or the gate false",
+            ));
+        }
+        if self.per_call_node_cap == 0 {
+            return Err(EngineError::config(
+                "solver.per_call_node_cap",
+                "must be at least 1: a cap of 0 would refuse every call without answering",
+            ));
+        }
+        // The solver's own knobs, through the solver's own validator: the
+        // same text the committed solver config spells, re-read by the one
+        // parser that owns the schema.
+        let solver_text = format!(
+            "schema_version = 1\n[solver]\nepsilon_num = {}\nepsilon_den = {}\n\
+             zone_orders = {}\nfree_stone_radius = {}\ntt_entries = {}\n\
+             attacker_policy = \"{}\"\n",
+            self.epsilon_num,
+            self.epsilon_den,
+            self.zone_orders,
+            self.free_stone_radius,
+            self.tt_entries,
+            match self.attacker_policy {
+                crate::config::AttackerPolicyDoc::BothStonesRelevant => "both_stones_relevant",
+                crate::config::AttackerPolicyDoc::OneFreeStone => "one_free_stone",
+            },
+        );
+        let file = pistol_solver::SolverConfigFile::parse(&solver_text)
+            .map_err(|what| EngineError::config("solver", what))?;
+        file.validate()
+            .map_err(|error| EngineError::config("solver", format!("{error:?}")))?;
         Ok(())
     }
 }

@@ -29,8 +29,8 @@ const VALUE_SUPPLYING_CONSTRUCTS: [&str; 6] = [
 fn config_rejects_unknown_field() {
     // At the top level.
     let (key, why) = rejection(&replacing(
-        "schema_version = 2",
-        "schema_version = 2\nbogus_top = true",
+        "schema_version = 3",
+        "schema_version = 3\nbogus_top = true",
     ));
     assert_eq!(key, "bogus_top");
     assert!(why.contains("unknown field"), "unexpected reason: {why}");

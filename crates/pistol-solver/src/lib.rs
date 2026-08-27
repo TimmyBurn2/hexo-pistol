@@ -128,7 +128,9 @@ pub use dfpn::{ProofDag, ProofKind, ProofNode, SearchStats};
 pub use fixture::{Expectation, FixtureCase, FixtureError};
 pub use pn::{Epsilon, INF, Value, value_of};
 pub use query::{HitBudget, LiveCount, NearHot, StonesLeft, WinWitness};
-pub use solver::{EmittedNode, ProofTree, SolveOutcome, SolveResult, Solver, WRONG_POSITION};
+pub use solver::{
+    EmittedNode, ProofTree, SolveOutcome, SolveResult, Solver, UNCAPPED, WRONG_POSITION,
+};
 pub use state::{THREAT_DESYNC, ThreatState};
 pub use table::WindowMasks;
 pub use zone::{ZONE_ORDERS, ZoneP, ep1_contribution, t31_contribution};

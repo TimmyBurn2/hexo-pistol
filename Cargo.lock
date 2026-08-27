@@ -68,6 +68,7 @@ dependencies = [
  "pistol-core",
  "pistol-eval",
  "pistol-search",
+ "pistol-solver",
  "serde",
  "serde_path_to_error",
  "toml",

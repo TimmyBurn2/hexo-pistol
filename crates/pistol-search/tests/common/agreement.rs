@@ -76,6 +76,7 @@ pub fn agreement(
         });
     let params = SearchParams {
         tt_bytes,
+        solver: None,
         candidate_policy: policy,
     };
     let mut searcher = Searcher::new(params, Box::new(HandcraftedV0::new(weights.clone())))
@@ -109,6 +110,7 @@ pub fn search_only(
 ) -> SearchOutcome {
     let params = SearchParams {
         tt_bytes,
+        solver: None,
         candidate_policy: CandidatePolicy::Radius { radius },
     };
     let mut searcher = Searcher::new(params, Box::new(HandcraftedV0::new(weights.clone())))

@@ -1,0 +1,57 @@
+# pistol — instrument-mode configuration, staged policy, SOLVER GATE ON.
+#
+# WP-1.8b's determinism seat for the solver-on-the-search-path wiring
+# (design docs/experiments/wp18b_design.md §6, D-7's law gaining a solver
+# seat): the committed staged seat with the gate flipped, so the CI gate
+# exercises the ON path's choice plane — solver calls, budget absorption,
+# the conditional solver_nodes field — under the byte-identity law. NOT a
+# strength seat: it is never an SPRT arm and never the committed config.
+#
+# The solver knobs mirror configs/solver_v0.toml's committed values; the
+# wiring knobs are the design §5 registrations (cap 16384 ESTIMATED from
+# the anchor probe's win costs, trigger any_open_four by calculus ID).
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 3
+
+[engine]
+mode = "instrument"
+
+[search]
+tt_bytes = 268435456
+
+[search.candidate_policy]
+kind = "staged"
+quiet_radius = 2
+quiet_top_k = 16
+widen_schedule = [32]
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+q_depth_turns = 0
+q_triggers = "defensive_only"
+killers = false
+history = false
+countermove = false
+
+[solver]
+on_search_path = true
+per_call_node_cap = 16384
+trigger = "any_open_four"
+epsilon_num = 1
+epsilon_den = 4
+zone_orders = 3
+free_stone_radius = 8
+tt_entries = 1048576
+attacker_policy = "one_free_stone"
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+movetime_epsilon_ms = 50

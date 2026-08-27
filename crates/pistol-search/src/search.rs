@@ -40,7 +40,7 @@
 
 use std::time::Instant;
 
-use pistol_core::{GameState, Outcome, Phase, stones_in_turn};
+use pistol_core::{Coord, GameState, Outcome, Phase, Turn, stones_in_turn};
 use pistol_eval::Eval;
 
 use crate::candidates::candidate_cells;
@@ -97,6 +97,11 @@ pub const NO_MOVE_FROM_A_COMPLETED_ITERATION: &str = "NO_MOVE_FROM_A_COMPLETED_I
 pub struct Searcher {
     params: SearchParams,
     table: Table,
+    /// The solver on the search path (design wp18b §2): constructed IFF the
+    /// gate is on and the policy is Staged; `None` otherwise, which is what
+    /// makes a gate-off search byte-identical to the pre-wiring search by
+    /// construction — no solver, no calls, no counters, no fields printed.
+    solver: Option<pistol_solver::Solver>,
     position: Position,
     /// WP-1.7's ordering-heuristic tables — they persist across the searches
     /// of one game like the transposition table does, are begun afresh by
@@ -183,9 +188,33 @@ impl Searcher {
             }
         }
         let tracks_threats = matches!(params.candidate_policy, CandidatePolicy::Staged(_));
+        // The wiring's own refusal (design wp18b §2 D1, the engine refuses
+        // first; this is the belt for a `SearchParams` built in code): the
+        // trigger reads a `ThreatState` only the Staged policy maintains,
+        // and a gate that silently did nothing would be rule 3's sin.
+        let solver = match params.solver {
+            Some(wiring) if !tracks_threats => {
+                return Err(SearchError::params(
+                    "solver.on_search_path",
+                    "is true under a Radius-kind candidate_policy: the trigger reads the staged \
+                     policy's threat state, and a silent no-op is refused — set the policy staged \
+                     or the gate false",
+                ));
+            }
+            Some(wiring) => {
+                let inner = wiring.inner;
+                Some(pistol_solver::Solver::new(
+                    inner.epsilon,
+                    inner.tt_entries,
+                    inner.attacker_policy,
+                ))
+            }
+            None => None,
+        };
         Ok(Searcher {
             params,
             table: Table::new(params.tt_bytes)?,
+            solver,
             position: Position::new(eval, tracks_threats),
             heuristics: crate::heuristics::HeuristicTables::new(),
         })
@@ -205,6 +234,12 @@ impl Searcher {
     pub fn clear(&mut self) {
         self.table.clear();
         self.heuristics.clear();
+        // Wholesale (design wp18b §1): epoch isolation already makes
+        // earlier solves read as absent, so this is memory hygiene and
+        // defence-in-depth, stated once and honestly there.
+        if let Some(solver) = self.solver.as_mut() {
+            solver.reset();
+        }
     }
 
     /// Search `state` under `stop`, reporting once per completed depth.
@@ -241,6 +276,59 @@ impl Searcher {
             )),
             Stop::DepthTurns(_) | Stop::Nodes(_) => None,
         };
+        // THE ROOT'S OWN CALLS (design wp18b §2 D3), before any deepening
+        // and only at a two-stone turn boundary (turn 1 owes one stone and
+        // is never a legal solver position). An attacker proof ANSWERS the
+        // search with the proof's own first move; a defender proof restricts
+        // the root's candidates to the proof's Z2 zone. Ply 0 in `Run` never
+        // calls again — these are the root's calls, and double-paying them
+        // would double-count the same nodes against the budget.
+        let wiring_copy = self.params.solver;
+        let mut root_restrict: Option<Vec<Coord>> = None;
+        let mut root_solver_nodes = 0u64;
+        let mut root_refusals = 0u32;
+        if let Some(wiring) = self.params.solver
+            && self.solver.is_some()
+            && state.stones_owed() == 2
+            && state.phase() == Phase::First
+        {
+            let cap = wiring.per_call_node_cap;
+            let Some(solver) = self.solver.as_mut() else {
+                unreachable!("the wiring exists only when the solver does")
+            };
+            let attacker = solver.solve(state, cap);
+            root_solver_nodes += attacker.nodes;
+            if let pistol_solver::SolveOutcome::Win(tree) = attacker.outcome {
+                return Ok(solver_proof_outcome(
+                    &tree,
+                    root_solver_nodes,
+                    root_refusals,
+                    started,
+                ));
+            }
+            if matches!(
+                attacker.outcome,
+                pistol_solver::SolveOutcome::NoWinUnderZone
+            ) {
+                root_refusals += 1;
+            }
+            let defender = solver.solve_defender(state, cap);
+            root_solver_nodes += defender.nodes;
+            if let pistol_solver::SolveOutcome::Win(tree) = defender.outcome {
+                // The proof's Z2 zone, sorted for the binary search at
+                // ply 0: the opponent's plan cells are where the forced
+                // defense lives, and the restriction fails open there.
+                let zone = proof_root_zone(&tree);
+                if !zone.is_empty() {
+                    root_restrict = Some(zone);
+                }
+            } else if matches!(
+                defender.outcome,
+                pistol_solver::SolveOutcome::NoWinUnderZone
+            ) {
+                root_refusals += 1;
+            }
+        }
         let mut run = Run::new(
             &mut self.position,
             &mut self.table,
@@ -249,6 +337,15 @@ impl Searcher {
             MAX_PLY,
             &mut self.heuristics,
         );
+        run.solver = self.solver.as_mut().map(|solver| {
+            (
+                solver,
+                wiring_copy.expect("wiring exists when the solver does"),
+            )
+        });
+        run.root_restrict = root_restrict;
+        run.solver_nodes = root_solver_nodes;
+        run.solver_refusals = root_refusals;
 
         let mut outcome = None;
         for depth_turns in 1..=max_depth {
@@ -271,8 +368,11 @@ impl Searcher {
             let info = SearchInfo {
                 depth_turns,
                 seldepth_turns: run.seldepth_turns,
-                nodes: run.nodes,
-                nps: per_second(run.nodes, elapsed),
+                nodes: run.total_nodes(),
+                search_nodes: run.search_nodes,
+                solver_nodes: run.solver_nodes,
+                solver_refusals: run.solver_refusals,
+                nps: per_second(run.total_nodes(), elapsed),
                 time_ms: elapsed.as_millis() as u64,
                 pv,
                 score,
@@ -318,6 +418,9 @@ impl Searcher {
                     depth_turns: completed_depth,
                     seldepth_turns: 0,
                     nodes: 0,
+                    search_nodes: 0,
+                    solver_nodes: 0,
+                    solver_refusals: 0,
                     nps: 0,
                     time_ms: 0,
                     pv,
@@ -350,6 +453,9 @@ impl Searcher {
                     depth_turns: 0,
                     seldepth_turns: 0,
                     nodes: 0,
+                    search_nodes: 0,
+                    solver_nodes: 0,
+                    solver_refusals: 0,
                     nps: 0,
                     time_ms: 0,
                     pv: vec![answer.turn()],
@@ -368,8 +474,9 @@ impl Searcher {
         // U2-M item 2: "a counter that silently reads zero on a wall-clock path
         // would make the play-mode stage shares unreadable").
         let elapsed = started.elapsed();
-        outcome.info.nodes = run.nodes;
-        outcome.info.nps = per_second(run.nodes, elapsed);
+        outcome.info.nodes = run.total_nodes();
+        outcome.info.search_nodes = run.search_nodes;
+        outcome.info.nps = per_second(run.total_nodes(), elapsed);
         outcome.info.time_ms = elapsed.as_millis() as u64;
         outcome.info.seldepth_turns = run.seldepth_turns;
         outcome.info.hashfull_permille = run.hashfull_permille();
@@ -426,4 +533,123 @@ fn per_second(nodes: u64, elapsed: std::time::Duration) -> u64 {
         return 0;
     }
     u64::try_from(u128::from(nodes) * 1_000_000_000 / nanos).unwrap_or(u64::MAX)
+}
+
+/// The proof's first move: the root `OrStep`'s witness turn, or the
+/// `OrWinLeaf`'s completing stones as a turn (design wp18b §2 D3). Keyed by
+/// `tree.root` — the emission is POST-ORDER, so the root is never
+/// `nodes.first()`.
+pub fn proof_first_move(tree: &pistol_solver::ProofTree) -> Option<Turn> {
+    let node = tree.nodes.iter().find(|node| node.key == tree.root)?;
+    match &node.kind {
+        pistol_solver::ProofKind::OrStep { witness } => Some(*witness),
+        pistol_solver::ProofKind::OrWinLeaf { witness } => {
+            let cells = witness_cells(witness);
+            Turn::pair(cells[0], cells[1]).ok()
+        }
+        // An AND-rooted proof (the defender direction) has no single first
+        // move of the mover's — the search never asks for one there.
+        pistol_solver::ProofKind::AndStep | pistol_solver::ProofKind::AndOverloadLeaf => None,
+    }
+}
+
+/// The Z2 zone cells of the proof's root node (design wp18b §2 D3): the
+/// committed restriction order, `order(1)`.
+pub fn proof_root_zone(tree: &pistol_solver::ProofTree) -> Vec<Coord> {
+    let node = tree
+        .nodes
+        .iter()
+        .find(|node| node.key == tree.root)
+        .expect("the emitted tree carries its root");
+    let mut cells: Vec<Coord> = node.zone.order(1).iter().copied().collect();
+    cells.sort_unstable();
+    cells.dedup();
+    cells
+}
+
+/// The witness line as a principal variation, for a solver-proved root:
+/// the attacker's own turns following `OrStep` witnesses, the defender's
+/// first listed reply between them — a line the PROOF certifies, not one
+/// the search ordered.
+pub fn proof_line(tree: &pistol_solver::ProofTree, max_turns: usize) -> Vec<Turn> {
+    use std::collections::BTreeMap;
+    let by_key: BTreeMap<pistol_core::Key128, &pistol_solver::EmittedNode> =
+        tree.nodes.iter().map(|node| (node.key, node)).collect();
+    let mut line = Vec::new();
+    let mut cursor = tree.root;
+    while line.len() < max_turns {
+        let Some(node) = by_key.get(&cursor) else {
+            break;
+        };
+        match &node.kind {
+            pistol_solver::ProofKind::OrWinLeaf { witness } => {
+                let cells = witness_cells(witness);
+                if let Ok(turn) = Turn::pair(cells[0], cells[1]) {
+                    line.push(turn);
+                }
+                break;
+            }
+            pistol_solver::ProofKind::OrStep { witness } => {
+                line.push(*witness);
+                let Some((_, child)) = node.children.first() else {
+                    break;
+                };
+                cursor = *child;
+            }
+            pistol_solver::ProofKind::AndStep => {
+                let Some((turn, child)) = node.children.first() else {
+                    break;
+                };
+                line.push(*turn);
+                cursor = *child;
+            }
+            pistol_solver::ProofKind::AndOverloadLeaf => break,
+        }
+    }
+    line
+}
+
+/// One solver-proved turn's cells as the completing pair. A single-stone
+/// witness (a five-own window's last cell) spells its cell twice, which a
+/// `Turn` cannot carry — the completing pair degenerates to the one cell,
+/// spelled as `Turn::Single`'s shape.
+fn witness_cells(witness: &pistol_solver::WinWitness) -> [Coord; 2] {
+    match witness {
+        pistol_solver::WinWitness::OnePly { at, .. } => [*at, *at],
+        pistol_solver::WinWitness::Pair { first, second, .. } => [*first, *second],
+    }
+}
+
+/// The outcome a root attacker proof answers with (design wp18b §2 D3):
+/// the proof's first move, its own witness line as the PV, the mate score
+/// at the proof's distance, and the solver's nodes as the whole cost.
+fn solver_proof_outcome(
+    tree: &pistol_solver::ProofTree,
+    solver_nodes: u64,
+    refusals: u32,
+    started: Instant,
+) -> SearchOutcome {
+    let depth = tree.win_depth_turns();
+    let best = proof_first_move(tree)
+        .unwrap_or_else(|| panic!("pistol-search invariant SOLVER_PROOF WITHOUT A MOVE: an OR-rooted proof always carries one"));
+    let pv = proof_line(tree, 2 * depth as usize + 1);
+    let elapsed = started.elapsed();
+    SearchOutcome {
+        best,
+        info: SearchInfo {
+            depth_turns: depth,
+            seldepth_turns: depth,
+            nodes: solver_nodes,
+            search_nodes: 0,
+            solver_nodes,
+            solver_refusals: refusals,
+            nps: per_second(solver_nodes, elapsed),
+            time_ms: elapsed.as_millis() as u64,
+            pv,
+            score: crate::score::mate_in(2 * depth - 1),
+            hashfull_permille: 0,
+            stages: crate::info::StageCounters::default(),
+        },
+        provenance: Provenance::SolverProof,
+    }
 }

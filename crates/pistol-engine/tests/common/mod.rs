@@ -8,7 +8,7 @@ use pistol_engine::{Config, EngineError};
 
 /// A complete, in-range, instrument-mode document.
 pub const VALID: &str = r#"
-schema_version = 2
+schema_version = 3
 
 [engine]
 mode = "instrument"
@@ -30,6 +30,17 @@ tie_break = "lexicographic"
 
 [play]
 movetime_epsilon_ms = 50
+
+[solver]
+on_search_path = false
+per_call_node_cap = 16384
+trigger = "any_open_four"
+epsilon_num = 1
+epsilon_den = 4
+zone_orders = 3
+free_stone_radius = 8
+tt_entries = 1048576
+attacker_policy = "one_free_stone"
 "#;
 
 /// [`VALID`] with one substring rewritten.
@@ -41,7 +52,7 @@ pub fn replacing(from: &str, to: &str) -> String {
 /// A complete, in-range, instrument-mode document under
 /// `CandidatePolicy::Staged` (`U3_tier_t.md` §10's schema).
 pub const VALID_STAGED: &str = r#"
-schema_version = 2
+schema_version = 3
 
 [engine]
 mode = "instrument"
@@ -72,6 +83,17 @@ tie_break = "lexicographic"
 
 [play]
 movetime_epsilon_ms = 50
+
+[solver]
+on_search_path = false
+per_call_node_cap = 16384
+trigger = "any_open_four"
+epsilon_num = 1
+epsilon_den = 4
+zone_orders = 3
+free_stone_radius = 8
+tt_entries = 1048576
+attacker_policy = "one_free_stone"
 "#;
 
 /// [`VALID_STAGED`] with one substring rewritten.

@@ -25,14 +25,20 @@
 # instrument-behavior change naming the new revision." A workspace member
 # added inside pistol-solver's reverse-dependency cone, an accidental new edge,
 # or a workspace version bump are each a red run here — and each is the class
+# REGENERATED at WP-1.8b §3: the engine now depends on pistol-solver
+# directly (the [solver] section's two-validator design, wp18b_design §5),
+# which adds one line to the cone — the fixture's own failure message
+# named this as the legitimate-change branch, and the ADR line is the
+# WP-1.8b closure's.
 # U1_gate_supersession.md §4.4's surviving attack names as this transcript's
 # residual: the same-looking diff with the same one-command repair, deferred
 # to whoever is looking at a red suite. That residual is recorded, not solved,
 # by this fixture (U1-Z's OPEN bullet).
-solver_edge_check: inverted normal-edge tree for pistol-solver (6 lines)
+solver_edge_check: inverted normal-edge tree for pistol-solver (7 lines)
 solver_edge_check:   pistol-solver v0.0.1 (<workspace>/crates/pistol-solver)
+solver_edge_check:   ├── pistol-engine v0.0.1 (<workspace>/crates/pistol-engine)
+solver_edge_check:   │   ├── pistol-arena v0.0.1 (<workspace>/crates/pistol-arena)
+solver_edge_check:   │   └── pistol-cli v0.0.1 (<workspace>/crates/pistol-cli)
+solver_edge_check:   │       └── pistol-arena v0.0.1 (<workspace>/crates/pistol-arena)
 solver_edge_check:   └── pistol-search v0.0.1 (<workspace>/crates/pistol-search)
-solver_edge_check:       └── pistol-engine v0.0.1 (<workspace>/crates/pistol-engine)
-solver_edge_check:           ├── pistol-arena v0.0.1 (<workspace>/crates/pistol-arena)
-solver_edge_check:           └── pistol-cli v0.0.1 (<workspace>/crates/pistol-cli)
-solver_edge_check:               └── pistol-arena v0.0.1 (<workspace>/crates/pistol-arena)
+solver_edge_check:       └── pistol-engine v0.0.1 (<workspace>/crates/pistol-engine) (*)

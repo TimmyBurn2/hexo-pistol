@@ -49,6 +49,10 @@ pub enum SolveOutcome {
     /// refused loudly rather than certified. Unreachable at the v0 config by
     /// construction; the outcome exists so the invariant has a failure mode.
     NoWinUnderZone,
+    /// The visit cap truncated the search before any definitive value
+    /// (design wp18b §2a). NOT a refutation: the caller treats it as "no
+    /// verdict here", never as `NoWin`.
+    Unknown,
 }
 
 /// Everything one solve produced.
@@ -77,8 +81,9 @@ pub struct EmittedNode {
     pub children: Vec<(Turn, Key128)>,
 }
 
-/// The emitted witness tree: nodes in deterministic walk order, the root
-/// first.
+/// The emitted witness tree: nodes in deterministic POST-ORDER walk order
+/// (children before the parent that proved them), so the ROOT is
+/// `nodes.last()` — key by `self.root`, never by position.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProofTree {
     /// The root position's key.
@@ -177,10 +182,15 @@ fn mix(mut z: u64) -> u64 {
     z ^ (z >> 31)
 }
 
+/// The unbounded cap: what the WP-1.8a gates' registered runs and the
+/// probe instruments pass (an explicit constant, not a default — rule 1).
+pub const UNCAPPED: u64 = u64::MAX;
+
 /// A solver: configuration plus ONE table, reused across solves.
 pub struct Solver {
     epsilon: Epsilon,
     attacker_policy: crate::config::AttackerPolicy,
+    tt_entries: usize,
     /// ONE table, reused across solves. Entries carry the epoch of the
     /// solve that wrote them and read as absent for every later solve, so
     /// nothing crosses positions — the isolation of a fresh table without
@@ -201,9 +211,20 @@ impl Solver {
         Solver {
             epsilon,
             attacker_policy,
+            tt_entries,
             table: SolverTT::new(tt_entries),
             epoch: 0,
         }
+    }
+
+    /// Wholesale reset — what a new game does (design wp18b §1): the table
+    /// is rebuilt and the epoch restarted. Memory hygiene and
+    /// defence-in-depth; epoch isolation already makes earlier solves read
+    /// as absent, so nothing observable rides on this call (stated once,
+    /// honestly, in the design's §1).
+    pub fn reset(&mut self) {
+        self.table = SolverTT::new(self.tt_entries);
+        self.epoch = 0;
     }
 
     /// Solve `state` for the policy game.
@@ -214,14 +235,31 @@ impl Solver {
     /// `Phase::First` position owing two stones, and with the df-pn module's
     /// own named invariants otherwise. Panics are this crate's fail-loud
     /// channel for states its own callers must not reach.
-    pub fn solve(&mut self, state: &GameState) -> SolveResult {
+    pub fn solve(&mut self, state: &GameState, node_cap: u64) -> SolveResult {
+        self.solve_attacking(state, state.to_move(), node_cap)
+    }
+
+    /// The defender direction (design wp18b §2 D2): does the NON-mover
+    /// force a policy-game win against the mover's best defense? A thin
+    /// wrapper — the attacker is the opponent, the SAME `solve_root`, and
+    /// df-pn's own to-move dispatch lands it in the existing AND path
+    /// from the first node. Zero df-pn changes.
+    pub fn solve_defender(&mut self, state: &GameState, node_cap: u64) -> SolveResult {
+        self.solve_attacking(state, state.to_move().opponent(), node_cap)
+    }
+
+    fn solve_attacking(
+        &mut self,
+        state: &GameState,
+        attacker: Player,
+        node_cap: u64,
+    ) -> SolveResult {
         if state.outcome().is_decided()
             || state.phase() != pistol_core::Phase::First
             || state.stones_owed() != 2
         {
             panic!("{WRONG_POSITION}");
         }
-        let attacker = state.to_move();
         let mut work = state.clone();
         let mut threat = ThreatState::new();
         for (at, player) in work.board().stones() {
@@ -237,6 +275,7 @@ impl Solver {
                 attacker,
                 self.epsilon,
                 self.attacker_policy,
+                node_cap,
                 &mut self.table,
                 &mut dag,
                 &mut stats,
@@ -250,7 +289,11 @@ impl Solver {
                 nodes: stats.nodes,
                 seesaw: stats.seesaw,
             },
-            Value::Unknown => unreachable!("solve_root returns a definitive value or panics"),
+            Value::Unknown => SolveResult {
+                outcome: SolveOutcome::Unknown,
+                nodes: stats.nodes,
+                seesaw: stats.seesaw,
+            },
             Value::Proven => {
                 let (tree, zone_ok) = emit(&mut work, &mut threat, attacker, state.key(), &dag);
                 if let Some(tree) = tree {
@@ -450,7 +493,7 @@ mod tests {
         ]);
         assert_eq!(state.to_move(), pistol_core::Player::P1);
         let mut solver = solver();
-        let result = solver.solve(&state);
+        let result = solver.solve(&state, UNCAPPED);
         match &result.outcome {
             SolveOutcome::Win(tree) => {
                 assert_eq!(result.nodes, 1, "a win-now leaf is one visit");
@@ -462,6 +505,7 @@ mod tests {
             }
             SolveOutcome::NoWin => panic!("an open four for the mover is a win"),
             SolveOutcome::NoWinUnderZone => panic!("an immediate win has a trivial zone"),
+            SolveOutcome::Unknown => panic!("an uncapped solve cannot return Unknown"),
         }
     }
 
@@ -478,7 +522,7 @@ mod tests {
         ]);
         assert_eq!(state.to_move(), pistol_core::Player::P1);
         let mut solver = solver();
-        let result = solver.solve(&state);
+        let result = solver.solve(&state, UNCAPPED);
         assert_eq!(result.outcome, SolveOutcome::NoWin);
         assert_eq!(result.nodes, 1, "an empty policy set is one visit");
     }
@@ -545,7 +589,7 @@ mod tests {
             "the winning pair is the canonical-first threat pair"
         );
         let mut solver = solver();
-        let result = solver.solve(&state);
+        let result = solver.solve(&state, UNCAPPED);
         match &result.outcome {
             SolveOutcome::Win(tree) => {
                 assert!(
@@ -572,6 +616,6 @@ mod tests {
         // Force a mid-turn state by placing one stone of P1's turn.
         state.place(Coord::new(1, 0)).expect("legal ply");
         let mut solver = solver();
-        let _ = solver.solve(&state);
+        let _ = solver.solve(&state, UNCAPPED);
     }
 }

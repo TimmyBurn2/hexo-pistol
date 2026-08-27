@@ -59,11 +59,12 @@ fn main() -> ExitCode {
                 return ExitCode::from(2);
             }
         };
-        let result = solver.solve(&position);
+        let result = solver.solve(&position, pistol_solver::UNCAPPED);
         let (value, depth) = match &result.outcome {
             SolveOutcome::Win(tree) => ("win", tree.win_depth_turns()),
             SolveOutcome::NoWin => ("nowin", 0),
             SolveOutcome::NoWinUnderZone => ("nowin-under-zone", 0),
+            SolveOutcome::Unknown => ("unknown", 0),
         };
         println!(
             "case {} value {} nodes {} seesaw {} depth_turns {depth}",

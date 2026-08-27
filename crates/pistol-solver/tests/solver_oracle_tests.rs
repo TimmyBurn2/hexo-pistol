@@ -83,7 +83,7 @@ fn gate_a_differential_matches_the_brute_force_reference() {
     for case in &cases {
         let position = case.position().expect("the loader validated every case");
         let reference = Reference::solve(&position, params.attacker_policy);
-        let result = solver.solve(&position);
+        let result = solver.solve(&position, pistol_solver::UNCAPPED);
         let solver_value = match result.outcome {
             SolveOutcome::Win(_) => "win",
             // The registered semantics (§7a): NoWinUnderZone is a MISMATCH
@@ -92,6 +92,9 @@ fn gate_a_differential_matches_the_brute_force_reference() {
             // "nowin" on a nowin-registered case and passing) closes here.
             SolveOutcome::NoWin => "nowin",
             SolveOutcome::NoWinUnderZone => "nowin-under-zone",
+            // The gates run UNCAPPED; Unknown means the cap plumbing leaked
+            // into an uncapped solve — a defect, named, not a value.
+            SolveOutcome::Unknown => panic!("an uncapped gate solve returned Unknown"),
         };
         let reference_value = match reference {
             common::r3::RefValue::Win => "win",
@@ -140,7 +143,7 @@ fn gate_b_proof_trees_reverify_full_width() {
             continue;
         }
         let position = case.position().expect("the loader validated every case");
-        let result = solver.solve(&position);
+        let result = solver.solve(&position, pistol_solver::UNCAPPED);
         let SolveOutcome::Win(tree) = result.outcome else {
             failures.push(format!("{}: expected a win, got none", case.name));
             continue;
@@ -199,7 +202,7 @@ fn gate_c_relevance_zone_property_holds() {
             continue;
         }
         let position = case.position().expect("the loader validated every case");
-        let result = solver.solve(&position);
+        let result = solver.solve(&position, pistol_solver::UNCAPPED);
         let SolveOutcome::Win(tree) = result.outcome else {
             failures.push(format!("{}: expected a win, got none", case.name));
             continue;
@@ -238,7 +241,7 @@ fn gate_c_relevance_zone_property_holds() {
                 failures.push(format!("{} sigma {sigma:?}: replay: {what}", case.name));
             }
             // (c2): the solver's value on P+sigma is still Win.
-            let result = solver.solve(&perturbed);
+            let result = solver.solve(&perturbed, pistol_solver::UNCAPPED);
             if !matches!(result.outcome, SolveOutcome::Win(_)) {
                 failures.push(format!(
                     "{} sigma {sigma:?}: the win does not survive the irrelevant placement",
@@ -285,9 +288,9 @@ fn gate_d_tt_size_does_not_change_values() {
     for case in &cases {
         let position = case.position().expect("the loader validated every case");
         let mut full_solver = solver();
-        let full = full_solver.solve(&position);
+        let full = full_solver.solve(&position, pistol_solver::UNCAPPED);
         let mut tiny_solver = tiny_solver();
-        let tiny = tiny_solver.solve(&position);
+        let tiny = tiny_solver.solve(&position, pistol_solver::UNCAPPED);
         let full_value = matches!(full.outcome, SolveOutcome::Win(_));
         let tiny_value = matches!(tiny.outcome, SolveOutcome::Win(_));
         if full_value != tiny_value {

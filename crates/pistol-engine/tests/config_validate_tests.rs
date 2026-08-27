@@ -60,7 +60,7 @@ fn config_rejects_zero_threads() {
 
 #[test]
 fn config_rejects_foreign_schema_version() {
-    let (key, why) = rejection(&replacing("schema_version = 2", "schema_version = 1"));
+    let (key, why) = rejection(&replacing("schema_version = 3", "schema_version = 1"));
     assert_eq!(key, "schema_version");
     assert!(
         why.contains(&SCHEMA_VERSION.to_string()),

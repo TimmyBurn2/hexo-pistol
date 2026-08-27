@@ -76,7 +76,7 @@ fn the_widening_proves_a_win_v0_refutes() {
         table_entries(),
         AttackerPolicy::BothStonesRelevant,
     );
-    let narrow_result = narrow.solve(&state);
+    let narrow_result = narrow.solve(&state, pistol_solver::UNCAPPED);
     assert_eq!(narrow_result.outcome, SolveOutcome::NoWin);
     assert_eq!(
         narrow_result.nodes, 955,
@@ -84,7 +84,7 @@ fn the_widening_proves_a_win_v0_refutes() {
     );
     // The widened half.
     let mut solver = Solver::new(epsilon(), table_entries(), AttackerPolicy::OneFreeStone);
-    let result = solver.solve(&state);
+    let result = solver.solve(&state, pistol_solver::UNCAPPED);
     let SolveOutcome::Win(tree) = result.outcome else {
         panic!("the widened solver proves g001-t42 (10,726 nodes at impl)");
     };
@@ -124,7 +124,7 @@ fn the_widening_proves_a_win_v0_refutes() {
 fn the_flips_proof_tree_reverifies_full_width() {
     let state = g001_t42();
     let mut solver = Solver::new(epsilon(), table_entries(), AttackerPolicy::OneFreeStone);
-    let result = solver.solve(&state);
+    let result = solver.solve(&state, pistol_solver::UNCAPPED);
     let SolveOutcome::Win(tree) = result.outcome else {
         panic!("the widened solver proves g001-t42");
     };
@@ -253,7 +253,7 @@ fn a_scattered_position_is_identically_nowin_under_both_policies() {
         AttackerPolicy::OneFreeStone,
     ] {
         let mut solver = Solver::new(epsilon(), 1024, policy_kind);
-        let result = solver.solve(&state);
+        let result = solver.solve(&state, pistol_solver::UNCAPPED);
         assert_eq!(result.outcome, SolveOutcome::NoWin, "{policy_kind:?}");
         assert_eq!(result.nodes, 1, "an empty policy set is one visit");
     }
@@ -266,6 +266,10 @@ fn a_scattered_position_is_identically_nowin_under_both_policies() {
 /// executes). `r3.rs`'s board scan must produce the same sequence as
 /// `policy.rs`'s ThreatState path and `r3_zone.rs`'s board scan, under
 /// BOTH policies.
+// Shared with the oracle tests, which use everything; this target drives
+// the moves and the agreement only, so the rest is allowed to sit quiet
+// here (it is dead in THIS target, not in the tree).
+#[allow(dead_code)]
 #[path = "common/r3.rs"]
 mod r3;
 

@@ -14,7 +14,7 @@
 # Validate this file with tools/config_check.sh.
 
 # Schema version this document is written against.
-schema_version = 2
+schema_version = 3
 
 [engine]
 # "play" — all three budget kinds are accepted, including movetime.
@@ -81,3 +81,17 @@ tie_break = "lexicographic"
 # raising this value to green a failing movetime gate is a post-hoc threshold
 # move CLAUDE.md forbids.
 movetime_epsilon_ms = 50
+
+[solver]
+# WP-1.8b (design docs/experiments/wp18b_design.md §5): the solver on the
+# search path, gate OFF in every committed config until an SPRT says
+# otherwise. The knobs mirror configs/solver_v0.toml's committed values.
+on_search_path = false
+per_call_node_cap = 16384
+trigger = "any_open_four"
+epsilon_num = 1
+epsilon_den = 4
+zone_orders = 3
+free_stone_radius = 8
+tt_entries = 1048576
+attacker_policy = "one_free_stone"

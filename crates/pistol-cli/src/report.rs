@@ -66,9 +66,24 @@ fn render_info(info: &SearchInfo, totals: bool) -> String {
     } else {
         String::new()
     };
+    // STRICTLY AFTER `nodes`, and ONLY when the solver ran (design
+    // wp18b §3 and the dispatch's own "prints search nodes and solver
+    // nodes separately every turn"): gate-off searches print neither, so
+    // every committed config's line is byte-identical to the pre-wiring
+    // engine's (D-88's pinned order stands); the order is load-bearing
+    // for the one substring parser in the tree (`tools/sealbot`),
+    // word-boundary-fixed at this WP — a report test pins both.
+    let solver_field = if info.solver_nodes > 0 {
+        format!(
+            " search_nodes {} solver_nodes {}",
+            info.search_nodes, info.solver_nodes
+        )
+    } else {
+        String::new()
+    };
     let mut line = format!(
-        "{INFO_PREFIX}{marker} depth_turns {} seldepth {} nodes {} {NPS_FIELD} {} {TIME_FIELD} \
-         {} hashfull {} score {} pv",
+        "{INFO_PREFIX}{marker} depth_turns {} seldepth {} nodes {}{solver_field} {NPS_FIELD} {} \
+         {TIME_FIELD} {} hashfull {} score {} pv",
         info.depth_turns,
         info.seldepth_turns,
         info.nodes,

@@ -46,6 +46,7 @@ pub fn committed_weights() -> Weights {
 pub fn params(radius: u32, tt_bytes: u64) -> SearchParams {
     SearchParams {
         tt_bytes,
+        solver: None,
         candidate_policy: CandidatePolicy::Radius { radius },
     }
 }
@@ -77,6 +78,7 @@ pub fn staged_params(
 ) -> SearchParams {
     SearchParams {
         tt_bytes,
+        solver: None,
         candidate_policy: CandidatePolicy::Staged(StagedParams {
             quiet_radius,
             tier_t_own_count,

@@ -265,7 +265,17 @@ impl EngineClient for PistolClient {
 
 /// The integer field that follows `key` in an info tail, if it is there.
 fn field_after(rest: &str, key: &str) -> Option<u64> {
-    rest.find(key)
+    word_bounded(rest, key)
         .and_then(|at| rest[at + key.len()..].split_whitespace().next())
         .and_then(|word| word.parse().ok())
+}
+
+/// The WORD-BOUNDARY find (WP-1.8b §3's fix): a plain `find` would match
+/// `key` inside a longer field name — `nodes ` inside `solver_nodes 300`,
+/// the exact hazard the widened engine's ON seats print — and read the
+/// wrong counter as the node total. The match must start a field: at the
+/// line's head or after a space.
+fn word_bounded(rest: &str, key: &str) -> Option<usize> {
+    (0..rest.len().saturating_sub(key.len() - 1))
+        .find(|&at| rest[at..].starts_with(key) && (at == 0 || rest[..at].ends_with(' ')))
 }

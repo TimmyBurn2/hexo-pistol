@@ -297,7 +297,7 @@ fn a_crate_name_that_would_be_read_as_an_option_is_refused() {
 #[test]
 fn the_solver_edge_matches_the_transcript_u1_gate_supersession_pinned() {
     const SOLVER_EDGE_V1_SHA256: &str =
-        "6e4b2c135ce725513d1ff707b38e9ed6ffdcef5f5fe2af76c5c28c0001ffc4c4";
+        "818aa9d10117bcf05ae7b47d124c3e286c87a83bc03191a710ded1835eb569de";
     let fixture_path = repo("crates/pistol-cli/tests/fixtures/solver_edge_v1.txt");
     let fixture_bytes = std::fs::read(&fixture_path).expect("the golden transcript reads");
     assert_eq!(

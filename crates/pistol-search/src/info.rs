@@ -147,6 +147,20 @@ pub struct SearchInfo {
     /// 2), whole-search totals like [`SearchInfo::nodes`]. All zero under
     /// `CandidatePolicy::Radius`.
     pub stages: StageCounters,
+    /// SEARCH nodes this search — the first of the two counters the
+    /// instrument prints separately every turn a solver call spent anything
+    /// (the commissioning dispatch's own wording; design wp18b §3). Zero
+    /// difference from `nodes` whenever the gate is off.
+    pub search_nodes: u64,
+    /// Solver nodes spent on the search path this search (design wp18b §3:
+    /// counted against the same budget as `nodes`, printed separately).
+    /// ONE OF THE TWO INDEPENDENT COUNTERS — `nodes` is their derived sum
+    /// at report time, and the sum test compares the two writers. Zero
+    /// whenever the gate is off.
+    pub solver_nodes: u64,
+    /// How many solver calls returned `NoWinUnderZone` (design wp18b §8:
+    /// loud, never swallowed — a counter, not a silent drop).
+    pub solver_refusals: u32,
 }
 
 /// What a search returns: the move, and the report that goes with it.
@@ -192,6 +206,10 @@ pub enum Provenance {
     /// DEEPER than `depth_turns` inside the aborted iteration, its score exact
     /// for that move there — a lower bound on the position, not its value.
     PartialRoot,
+    /// The root solver proof answered before any deepening (design wp18b
+    /// §2 D3): the move is the PROOF's first move, the score is the proof's
+    /// mate distance, `depth_turns` is the proof's depth in turns.
+    SolverProof,
     /// A wall-clock abort before any iteration completed: the pre-deepening
     /// fallback. The score is the root static evaluation — or a mate score,
     /// when the fallback's instant-win check proved the turn wins (rule 4).

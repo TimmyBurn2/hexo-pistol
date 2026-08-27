@@ -136,4 +136,36 @@ pub struct SearchParams {
     pub tt_bytes: u64,
     /// Which cells the search is allowed to consider.
     pub candidate_policy: CandidatePolicy,
+    /// The solver-on-the-search-path wiring (design wp18b §2). `None` is
+    /// the OFF gate — the committed default in every config until an SPRT
+    /// says otherwise — and OFF constructs no solver at all, so a gate-off
+    /// search is byte-identical to the pre-wiring search by construction.
+    /// `Some(wiring)` is the gate ON, refused under a Radius-kind policy.
+    pub solver: Option<SolverWiring>,
+}
+
+/// What fires a solver call at a node (design wp18b §2 D1): the calculus
+/// ID names the pattern class, and v0 wires exactly one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SolverTrigger {
+    /// PAT-O4+ on either side: any hot window (an open four or better)
+    /// held by the mover or the opponent, read off the staged policy's
+    /// own `ThreatState`.
+    AnyOpenFour,
+}
+
+/// The wiring the search consumes (design wp18b §2 §5): the gate, the
+/// per-call cap, the trigger, and the solver's own validated parameters
+/// (carried as `pistol_solver::SolverParams` — validated once, at the
+/// engine's config layer, by the solver's own validator; the search never
+/// re-reads a literal, rule 1).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SolverWiring {
+    /// The per-call visit cap (design wp18b §2a). An EXPLICIT value, never
+    /// defaulted in code.
+    pub per_call_node_cap: u64,
+    /// Which nodes fire calls.
+    pub trigger: SolverTrigger,
+    /// The solver's own parameters, validated at the config layer.
+    pub inner: pistol_solver::SolverParams,
 }

@@ -131,6 +131,16 @@ pub struct Search<'a> {
     attacker: Player,
     epsilon: Epsilon,
     attacker_policy: crate::config::AttackerPolicy,
+    /// The visit cap (design wp18b §2a): `UNCAPPED` for the gates'
+    /// registered runs. When the node count reaches it, `spent` latches
+    /// and every further visit truncates immediately.
+    node_cap: u64,
+    /// Latched the first time the count reaches `node_cap`. `solve_root`
+    /// reads it BEFORE the stall guard: a truncated re-descent leaves the
+    /// root's numbers exactly where the last pass left them — byte-for-byte
+    /// the stall signature — and the flag, not the numbers, distinguishes
+    /// spent from spinning.
+    pub spent: bool,
     generation: u32,
     /// The solve's epoch: stamped on every entry this search stores, and
     /// the only epoch its lookups accept.
@@ -152,6 +162,7 @@ impl<'a> Search<'a> {
         attacker: Player,
         epsilon: Epsilon,
         attacker_policy: crate::config::AttackerPolicy,
+        node_cap: u64,
         tt: &'a mut SolverTT,
         dag: &'a mut ProofDag,
         stats: &'a mut SearchStats,
@@ -160,6 +171,8 @@ impl<'a> Search<'a> {
             attacker,
             epsilon,
             attacker_policy,
+            node_cap,
+            spent: false,
             generation: 0,
             epoch: 0,
             tt,
@@ -181,6 +194,11 @@ impl<'a> Search<'a> {
         let mut previous: Option<(u64, u64)> = None;
         loop {
             let (pn, dn) = self.dfpn(state, threat, INF, INF);
+            // Spent-before-stall (design wp18b §2a): the check order is a
+            // correctness requirement, not style — see the field's doc.
+            if self.spent {
+                return Value::Unknown;
+            }
             match value_of(pn, dn) {
                 Value::Proven => return Value::Proven,
                 Value::Disproven => return Value::Disproven,
@@ -205,6 +223,13 @@ impl<'a> Search<'a> {
         dt: u64,
     ) -> (u64, u64) {
         self.stats.nodes += 1;
+        // The cap (design wp18b §2a): a truncation, never a fabricated
+        // convergence — (INF, INF) unwinds the parents without moving any
+        // number toward 0, and once latched every further visit is O(1).
+        if self.stats.nodes >= self.node_cap {
+            self.spent = true;
+            return (INF, INF);
+        }
         let key = state.key();
         if let Some(entry) = self.tt.lookup(key, self.epoch) {
             if entry.pn == 0 {

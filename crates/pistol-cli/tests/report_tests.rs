@@ -17,6 +17,9 @@ fn info() -> SearchInfo {
         depth_turns: 3,
         seldepth_turns: 4,
         nodes: 1234,
+        search_nodes: 0,
+        solver_nodes: 0,
+        solver_refusals: 0,
         nps: 5678,
         time_ms: 90,
         pv: vec![
@@ -108,4 +111,34 @@ fn an_error_line_names_the_error_and_stays_one_line() {
 fn an_id_line_is_prefixed_and_folded() {
     assert_eq!(id_line("name pistol"), "id name pistol");
     assert_eq!(id_line("config a\nconfig b"), "id config a; config b");
+}
+
+/// The solver field's print discipline (design wp18b §3): it appears
+/// STRICTLY AFTER `nodes`, and only when nonzero — so a gate-off search's
+/// line is byte-identical to the pre-wiring engine's, and the one
+/// substring parser in the tree (`tools/sealbot`, which matches `"nodes "`)
+/// reads the true `nodes` even on an ON seat's line.
+#[test]
+fn solver_nodes_prints_after_nodes_and_only_when_nonzero() {
+    let mut with_solver = info();
+    with_solver.search_nodes = 934;
+    with_solver.solver_nodes = 300;
+    let line = totals_line(&with_solver);
+    let nodes_at = line.find("nodes 1234").expect("the nodes field prints");
+    let search_at = line
+        .find("search_nodes 934")
+        .expect("a nonzero solver pair prints the search counter too");
+    let solver_at = line
+        .find("solver_nodes 300")
+        .expect("a nonzero solver_nodes prints");
+    assert!(
+        nodes_at < search_at && search_at < solver_at,
+        "the pair prints strictly after nodes, search first: {line}"
+    );
+    // And a zero solver_nodes prints NOTHING (the gate-off shape).
+    let without = totals_line(&info());
+    assert!(
+        !without.contains("solver_nodes"),
+        "a gate-off line carries no solver field: {without}"
+    );
 }

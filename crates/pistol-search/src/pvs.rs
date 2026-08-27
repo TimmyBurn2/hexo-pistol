@@ -89,8 +89,26 @@ pub struct Run<'a> {
     pub(crate) heuristics: &'a mut HeuristicTables,
     stop: Stop,
     root_turn: u32,
-    /// Nodes visited, leaves included. Incremented once per [`Run::visit`].
-    pub nodes: u64,
+    /// SEARCH nodes visited, leaves included — ONE of the two independent
+    /// counters (design wp18b §3): incremented once per visit and
+    /// quiescence node, never by a solver call. The budget counter callers
+    /// read is [`Run::total_nodes`], the derived sum.
+    pub search_nodes: u64,
+    /// SOLVER nodes spent on calls from this search — the OTHER independent
+    /// counter, incremented the moment each call returns.
+    pub solver_nodes: u64,
+    /// How many solver calls were refused by the zone containment
+    /// invariant (`NoWinUnderZone`) — loud, never swallowed (design
+    /// wp18b §8).
+    pub solver_refusals: u32,
+    /// The solver on the search path and its wiring (design wp18b §2),
+    /// bundled so the OFF gate is ONE `None` — no solver, no wiring, no
+    /// dead values. Borrowed from the [`crate::search::Searcher`].
+    pub(crate) solver: Option<(&'a mut pistol_solver::Solver, crate::params::SolverWiring)>,
+    /// The root candidate restriction a proven defender loss imposes
+    /// (design wp18b §2 D3): zone cells at the root, applied at ply 0,
+    /// fail-open on an empty intersection.
+    pub(crate) root_restrict: Option<Vec<pistol_core::Coord>>,
     /// The deepest turn count any line reached.
     pub seldepth_turns: u32,
     /// The node protocol's stage-share counters — all zero under
@@ -138,7 +156,11 @@ impl<'a> Run<'a> {
             heuristics,
             stop,
             root_turn,
-            nodes: 0,
+            search_nodes: 0,
+            solver_nodes: 0,
+            solver_refusals: 0,
+            solver: None,
+            root_restrict: None,
             seldepth_turns: 0,
             stages: crate::info::StageCounters::default(),
             aborted: false,
@@ -146,6 +168,12 @@ impl<'a> Run<'a> {
             root_score: None,
             pv: PvTable::new(max_ply),
         }
+    }
+
+    /// The budget counter: the derived sum of the two independent counters
+    /// (design wp18b §3). Every stop check and every report reads THIS.
+    pub fn total_nodes(&self) -> u64 {
+        self.search_nodes + self.solver_nodes
     }
 
     /// Search one iteration to `depth_plies`, returning its score, or `None` if
@@ -206,7 +234,7 @@ impl<'a> Run<'a> {
     /// deeper, given that the caller already has `alpha` and will not pay more
     /// than `beta`.
     fn visit(&mut self, depth_plies: u32, mut alpha: i32, beta: i32, ply: usize) -> i32 {
-        self.nodes += 1;
+        self.search_nodes += 1;
         self.pv.clear(ply);
         self.seldepth_turns = self.seldepth_turns.max(self.turns_from_root());
         if self.should_stop() {
@@ -262,6 +290,22 @@ impl<'a> Run<'a> {
             return record.score;
         }
 
+        // THE SOLVER ON THE SEARCH PATH (design wp18b §2 D1): at turn
+        // boundaries under the Staged policy, when the trigger fires, a
+        // proven policy-game value ends the node — a VALUE, never an
+        // ordering hint. Ply 0 never calls: the root's own calls happened
+        // before deepening (`crate::search::Searcher::search`), and paying
+        // for them twice would double-count the same nodes against the
+        // budget.
+        if ply > 0
+            && self.position.state().phase() == Phase::First
+            && self.solver.is_some()
+            && matches!(self.policy, CandidatePolicy::Staged(_))
+            && let Some(verdict) = self.solver_verdict()
+        {
+            return verdict;
+        }
+
         // A deadline can land inside the scoring loop — its length is the
         // candidate count, which the opponent partly grows (D-95) — so under a
         // wall-clock stop the ordering itself checks the clock and the node
@@ -302,7 +346,7 @@ impl<'a> Run<'a> {
                     // `k+1`, the opponent's overload win at `k+2`); the
                     // `!is_pv` gate is `staged_candidates`'s own `is_pv`
                     // argument, so `visit` never re-asks it. No child is
-                    // expanded — `self.nodes` was already incremented at entry,
+                    // expanded — `self.search_nodes` was already incremented at entry,
                     // and that is the whole node cost this row pays.
                     StagedRow::OverloadReturn => {
                         return -mate_in(self.turns_from_root() + 2);
@@ -317,6 +361,25 @@ impl<'a> Run<'a> {
                     return self.position.value();
                 }
                 set.promote_table_move(table_move);
+                // The root's proven-loss zone restriction (design wp18b §2
+                // D3): candidates outside the opponent proof's Z2 zone drop
+                // out at ply 0 ONLY, the forced prefix is never touched
+                // (its cells are the plan covers, inside the zone by
+                // construction), and an empty filtered set — or any forced
+                // cell outside the zone, which the containment argument
+                // says cannot happen — FAILS OPEN to the unrestricted set.
+                if let Some(zone) = self.root_restrict.as_ref().filter(|_| ply == 0) {
+                    let forced_intact = set.cells[..set.forced]
+                        .iter()
+                        .all(|cell| zone.binary_search(cell).is_ok());
+                    if forced_intact {
+                        let unrestricted = set.cells.clone();
+                        set.cells.retain(|cell| zone.binary_search(cell).is_ok());
+                        if set.cells.is_empty() {
+                            set.cells = unrestricted;
+                        }
+                    }
+                }
                 // WP-1.7: the ordering heuristics reorder the unforced range
                 // AFTER the table's own move, never across the Tier-F
                 // boundary (`docs/experiments/wp17_design.md` §2-§3).
@@ -505,6 +568,72 @@ impl<'a> Run<'a> {
     /// run past the clock, which is D-95's magnitude class, and a deadline stop
     /// is not reproducible anyway, so granularity buys it nothing.
     ///
+
+    /// One trigger evaluation and its calls (design wp18b §2 D1's dispatch,
+    /// D2's directions, §4's scores). Returns `Some(score)` when a proof
+    /// ends the node, `None` when there is no verdict here. Solver nodes
+    /// are absorbed into the budget the moment each call returns.
+    ///
+    #[allow(clippy::empty_line_after_doc_comments)]
+    fn solver_verdict(&mut self) -> Option<i32> {
+        // The &self reads first, so the position borrow below never has to
+        // coexist with them through the receiver.
+        let cap = self.solver.as_ref()?.1.per_call_node_cap;
+        let from_root = self.turns_from_root();
+        let (state, threats, _) = self.position.staged_context();
+        let mover = state.to_move();
+        let opponent = mover.opponent();
+        let mover_hot = !threats.hot_windows(mover).is_empty();
+        let opponent_hot = !threats.hot_windows(opponent).is_empty();
+        if !mover_hot && !opponent_hot {
+            return None;
+        }
+        // One clone serves both calls (the solver never mutates its input).
+        let state_view = state.clone();
+        // The attacker direction: does the MOVER force a policy-game win?
+        // Asked whenever the trigger fired at all — a mover in check may
+        // still force a deeper win through it (LAW-FORCE admits that).
+        {
+            let solver = &mut self.solver.as_mut()?.0;
+            let result = solver.solve(&state_view, cap);
+            self.solver_nodes = self.solver_nodes.saturating_add(result.nodes);
+            match result.outcome {
+                pistol_solver::SolveOutcome::Win(tree) => {
+                    // The mover's d-th turn from this node sits at root
+                    // offset from_root + 2d - 1 (design §4; the t-relative
+                    // parity invariant is pinned by test).
+                    let distance = from_root + 2 * tree.win_depth_turns() - 1;
+                    return Some(crate::score::mate_in(distance));
+                }
+                pistol_solver::SolveOutcome::NoWin => {}
+                pistol_solver::SolveOutcome::NoWinUnderZone => self.solver_refusals += 1,
+                pistol_solver::SolveOutcome::Unknown => {}
+            }
+        }
+        // The defender direction: does the OPPONENT force a win against the
+        // mover's best defense? At a mover-hot-only node the race check
+        // answers it in one visit (NoWin for the opponent) — correct, and
+        // still made because one node is what it costs.
+        {
+            let solver = &mut self.solver.as_mut()?.0;
+            let result = solver.solve_defender(&state_view, cap);
+            self.solver_nodes = self.solver_nodes.saturating_add(result.nodes);
+            match result.outcome {
+                pistol_solver::SolveOutcome::Win(tree) => {
+                    // The OPPONENT's d-th turn from this node sits at root
+                    // offset from_root + 2d — the OverloadReturn shape's own
+                    // d=1 instance (design §4).
+                    let distance = from_root + 2 * tree.win_depth_turns();
+                    return Some(-crate::score::mate_in(distance));
+                }
+                pistol_solver::SolveOutcome::NoWin => {}
+                pistol_solver::SolveOutcome::NoWinUnderZone => self.solver_refusals += 1,
+                pistol_solver::SolveOutcome::Unknown => {}
+            }
+        }
+        None
+    }
+
     /// `pub(crate)`: `crate::quiescence` calls this SAME method at its own
     /// entry rather than duplicating it (docs/wp16_quiescence_design.md §7).
     pub(crate) fn should_stop(&mut self) -> bool {
@@ -516,12 +645,19 @@ impl<'a> Run<'a> {
         }
         let check_now = match self.stop {
             Stop::Deadline(_) => true,
-            Stop::DepthTurns(_) | Stop::Nodes(_) => self.nodes.is_multiple_of(NODE_CHECK_INTERVAL),
+            Stop::DepthTurns(_) | Stop::Nodes(_) => {
+                // The mask check runs on the DERIVED total (design wp18b
+                // §3): solver nodes absorbed since the last check shift
+                // the residue, and the stop fires at the next multiple the
+                // total lands on — deterministic on every run, with the
+                // overshoot bounded by the intervening calls' caps.
+                self.total_nodes().is_multiple_of(NODE_CHECK_INTERVAL)
+            }
         };
         if !check_now {
             return false;
         }
-        self.aborted = self.stop.is_spent(self.nodes);
+        self.aborted = self.stop.is_spent(self.total_nodes());
         self.aborted
     }
 

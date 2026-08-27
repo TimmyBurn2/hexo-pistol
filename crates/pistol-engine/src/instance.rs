@@ -55,6 +55,7 @@ impl Pistol {
         check_consumed(&config)?;
         let eval = build_eval(&config)?;
         let params = SearchParams {
+            solver: solver_wiring(&config.solver),
             tt_bytes: config.search.tt_bytes,
             candidate_policy: search_policy(&config.search.candidate_policy),
         };
@@ -157,6 +158,39 @@ fn build_eval(config: &Config) -> Result<Box<dyn Eval>, EngineError> {
             Ok(Box::new(HandcraftedV0::new(weights)))
         }
     }
+}
+
+/// The solver wiring, from the config's `[solver]` section (design wp18b
+/// §5): `None` is the OFF gate; `Some` carries the cap, the trigger and
+/// the solver's own validated parameters (re-derived through the solver's
+/// single parser at validation time, reconstructed here from the same
+/// section — never re-read from a literal).
+fn solver_wiring(section: &crate::config::SolverSection) -> Option<pistol_search::SolverWiring> {
+    if !section.on_search_path {
+        return None;
+    }
+    let epsilon = pistol_solver::pn::Epsilon::new(section.epsilon_num, section.epsilon_den)
+        .expect("the section validated");
+    Some(pistol_search::SolverWiring {
+        per_call_node_cap: section.per_call_node_cap,
+        trigger: match section.trigger {
+            crate::config::SolverTriggerDoc::AnyOpenFour => {
+                pistol_search::SolverTrigger::AnyOpenFour
+            }
+        },
+        inner: pistol_solver::SolverParams {
+            epsilon,
+            tt_entries: section.tt_entries as usize,
+            attacker_policy: match section.attacker_policy {
+                crate::config::AttackerPolicyDoc::BothStonesRelevant => {
+                    pistol_solver::AttackerPolicy::BothStonesRelevant
+                }
+                crate::config::AttackerPolicyDoc::OneFreeStone => {
+                    pistol_solver::AttackerPolicy::OneFreeStone
+                }
+            },
+        },
+    })
 }
 
 /// The search's candidate policy, from the config's.

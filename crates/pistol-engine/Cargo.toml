@@ -17,6 +17,7 @@ pistol-eval = { workspace = true }
 # The search this engine drives, and the types it reports with. The engine is
 # the only place a `Budget` becomes a `Stop` (docs/decisions.md D-73).
 pistol-search = { workspace = true }
+pistol-solver = { workspace = true }
 serde = { workspace = true }
 toml = { workspace = true }
 # Recovers the exact key path of a rejected field, so every config failure can

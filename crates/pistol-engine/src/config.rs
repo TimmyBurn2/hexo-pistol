@@ -40,7 +40,10 @@ use crate::error::{self, EngineError};
 /// 2 since WP-1.4: the schema gained the required `[play]` section, and a
 /// version-1 document must fail by version rather than by a puzzling
 /// missing-key error (docs/decisions.md D-16).
-pub const SCHEMA_VERSION: u32 = 2;
+/// Version 3 adds the required `[solver]` section (WP-1.8b, design
+/// wp18b §5): a document without it fails BY VERSION, not by a puzzling
+/// missing-key error — the D-16 class.
+pub const SCHEMA_VERSION: u32 = 3;
 
 /// Smallest transposition table this build accepts, in bytes.
 ///
@@ -121,6 +124,61 @@ pub struct Config {
     /// Settings that only bind in play mode, but are always stated — the same
     /// completeness rule that puts `[instrument]` in a play document.
     pub play: PlaySection,
+    /// The solver on the search path (WP-1.8b, design wp18b §5): complete in
+    /// every document, gate `off` in every committed config until an SPRT
+    /// says otherwise.
+    pub solver: SolverSection,
+}
+
+/// `[solver]` — the solver-on-the-search-path wiring plus the solver's
+/// own knobs, one table for one engine (design wp18b §5). The three wiring
+/// keys are THIS validator's; the six solver keys are derived into
+/// `pistol_solver::SolverParams` and validated by the solver's own
+/// validator — two validators over one table, neither re-reading the
+/// other's literals (rule 1).
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SolverSection {
+    /// Whether the solver sits on the search path. FALSE in every committed
+    /// config until h1; TRUE under a Radius-kind `candidate_policy` is
+    /// refused by name (the trigger reads the staged policy's threat
+    /// state, and a silent no-op is rule 3's sin).
+    pub on_search_path: bool,
+    /// The per-call visit cap (design wp18b §2a). An explicit value, never
+    /// defaulted.
+    pub per_call_node_cap: u64,
+    /// Which nodes fire calls, by calculus ID (design wp18b §2 D1).
+    pub trigger: SolverTriggerDoc,
+    /// ε's numerator (the solver's own knob).
+    pub epsilon_num: u32,
+    /// ε's denominator.
+    pub epsilon_den: u32,
+    /// The zone sequence's order count.
+    pub zone_orders: u32,
+    /// The defender free-stone range, as a radius.
+    pub free_stone_radius: u32,
+    /// The solver transposition table's entry count.
+    pub tt_entries: u32,
+    /// The attacker policy (WP-1.8b/M4).
+    pub attacker_policy: AttackerPolicyDoc,
+}
+
+/// `[solver].trigger` — the calculus ID of the trigger pattern class.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SolverTriggerDoc {
+    /// PAT-O4+ on either side: any hot window (an open four or better).
+    AnyOpenFour,
+}
+
+/// `[solver].attacker_policy` — the solver's attacker policy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AttackerPolicyDoc {
+    /// v0: both stones threat-relevant.
+    BothStonesRelevant,
+    /// M4: one raiser stone plus one free stone anywhere legal.
+    OneFreeStone,
 }
 
 /// `[engine]`.

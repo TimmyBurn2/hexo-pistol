@@ -51,7 +51,10 @@ pub use candidates::candidate_cells;
 pub use error::SearchError;
 pub use fallback::{FallbackAnswer, fallback_turn};
 pub use info::{Provenance, SearchInfo, SearchOutcome, StageCounters};
-pub use params::{CandidatePolicy, OrderingHeuristics, QTriggers, SearchParams, StagedParams};
+pub use params::{
+    CandidatePolicy, OrderingHeuristics, QTriggers, SearchParams, SolverTrigger, SolverWiring,
+    StagedParams,
+};
 pub use score::{MATE, ScoreKind};
-pub use search::{MAX_DEPTH_TURNS, Searcher};
+pub use search::{MAX_DEPTH_TURNS, Searcher, proof_first_move, proof_line, proof_root_zone};
 pub use stop::{NODE_CHECK_INTERVAL, Stop};

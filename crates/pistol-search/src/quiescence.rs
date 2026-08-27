@@ -91,7 +91,7 @@ impl<'a> Run<'a> {
     /// free checks (win-now, `LAW-OVERLOAD`) still run, but neither trigger
     /// may grant.
     pub(crate) fn quiescence(&mut self, alpha: i32, beta: i32, ply: usize, q_budget: u32) -> i32 {
-        self.nodes += 1;
+        self.search_nodes += 1;
         self.pv.clear(ply);
         self.seldepth_turns = self.seldepth_turns.max(self.turns_from_root());
         if self.should_stop() {
@@ -282,7 +282,7 @@ impl<'a> Run<'a> {
         ply: usize,
         q_budget: u32,
     ) -> i32 {
-        self.nodes += 1;
+        self.search_nodes += 1;
         self.pv.clear(ply);
         self.stages.qnodes += 1;
         self.seldepth_turns = self.seldepth_turns.max(self.turns_from_root());
@@ -777,7 +777,7 @@ mod tests {
                 &mut heuristics,
             );
             let score = run.quiescence(-INFINITY, INFINITY, 0, 3);
-            (score, run.nodes, run.stages)
+            (score, run.total_nodes(), run.stages)
         };
         let first = run_once();
         let second = run_once();

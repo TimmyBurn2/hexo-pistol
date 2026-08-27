@@ -451,6 +451,7 @@ fn a_q_depth_turns_this_search_cannot_honour_is_refused_by_name() {
     let refused = pistol_search::Searcher::new(
         pistol_search::SearchParams {
             tt_bytes: common::SMALL_TT,
+            solver: None,
             candidate_policy: pistol_search::CandidatePolicy::Staged(bad),
         },
         eval(),
