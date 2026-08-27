@@ -246,7 +246,21 @@ the driver, receipted by this paragraph and the 40-missing-case count; it
 produced no reading and consumed nothing — the re-run the dispatch
 licenses is the one the fixed, dry-run driver takes.
 
-**§8b. THE M4 RE-RUN'S RESULT (filled when the run completes)**
+**§8b. THE M4 RE-RUN'S RESULT** (85/85 positions, taken under this
+registration as amended; artifact `artifacts/wp18b_probe_v2_results.txt`,
+sha256 `b48fad38…`): 32 `nowin`, 48 `wall-cap`, 5 `win`. **The EARLIER
+question's answer is MIXED, and both halves are measured**: game 1's
+earliest winner-proof moved from v0's t44 to **t42 — the collapse turn
+itself** (a true value flip: v0 REFUTED t42 at 955 nodes, M4 proves it at
+10,726 / depth 3, the flip REVIEW-impl M-1 corrected and M-2 independently
+verified); game 2's earliest winner-proof stayed at t39, with t37
+WALL-CAPPED under the widened policy — NO ANSWER under the registered
+reading, neither earlier nor not-earlier. v0's own pistol-wins at g2
+t10/t12 became wall-caps (value-monotone: still winnable, unproven within
+60 s — the disproof-widening cost the M4-1 attack predicted, also visible
+as 48 wall-caps against v0's 35 and v0's 820-node t40 refutation becoming
+a wall-cap). No branch re-adjudication: B stands, section 2 proceeds on
+the widened solver.
 
 ## 9. What this probe is NOT
 

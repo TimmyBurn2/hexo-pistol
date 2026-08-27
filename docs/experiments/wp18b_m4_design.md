@@ -170,12 +170,20 @@ bracket is in §5.
 - Determinism: two runs of the widened selftest byte-identical (the
   solver determinism seat re-runs unchanged — it uses the committed
   config, now widened).
-- Mutations: drop the arm-A union (v0 pairs vanish) → the arm-B-value
-  unit test dies only if the chosen position also needs arm A (pick one
-  that needs both arms' union... the honest form: drop arm B → the
-  widening-value test dies; corrupt the dedup (duplicate pairs) → the
-  count check dies; skip the raiser-order sort → the determinism
-  differential dies.
+- Mutations (as EXECUTED at the impl's fix round, `6f3c00e`, receipts in
+  `artifacts/wp18b_m4_mutations.log`): drop arm B → the flip and shape
+  tests die; drop the outside-C filter (the naive union) → the shape and
+  agreement tests die; reverse arm B's free-cell order at source → the
+  exact-enumeration and agreement tests die. **Two registered predictions
+  drifted and are corrected here rather than left standing** (the §4 list
+  as first authored): "corrupt the dedup" has nothing to corrupt — the
+  shipped spelling is dedup-free by construction, and the naive-union
+  mutation is its killable stand-in; "skip the raiser-order sort → the
+  determinism differential dies" was wrong twice over — the differential
+  compares a binary to itself and can never see an order change, and the
+  queries already emit ascending output at source (a no-op mutant,
+  honestly recorded as surviving); the order-reversal mutation is the
+  killable form.
 
 ## 5. The rule-5 bench bracket, registered before measuring
 
