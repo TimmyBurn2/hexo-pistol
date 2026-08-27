@@ -17,11 +17,12 @@
 //! move cells are legal placements); a violation is a zone-construction
 //! defect and refuses as `NoWinUnderZone` rather than certifying the win.
 
-// RULE9-JUSTIFICATION: the entry, the witness emission walk and the digest
-// are one traversal of the proof DAG — the walk's per-node zone tripwire is
-// the design §3 containment invariant stated over the same nodes the
-// emission produces, and separating them would let the certificate and its
-// check drift.
+// RULE9-JUSTIFICATION: the entry, the witness emission walk, the digest
+// and the win-depth walk are one traversal of the proof DAG — the walk's
+// per-node zone tripwire is the design §3 containment invariant stated
+// over the same nodes the emission produces, the depth reads the same
+// emitted tree the digest fingerprints, and separating them would let the
+// certificate and its checks drift.
 use pistol_core::{GameState, Key128, Player, Turn};
 
 use crate::dfpn::{ProofDag, ProofKind, Search, SearchStats};
@@ -109,6 +110,55 @@ impl ProofTree {
             }
         }
         mix(z)
+    }
+
+    /// The witness strategy's win depth in TURNS: the longest attacker
+    /// line the proof certifies, counted in the ATTACKER's own turns
+    /// (sudden death is scored in turns, rule 4, and the defender's blocking
+    /// turns are not the attacker's). An [`ProofKind::OrWinLeaf`] completes
+    /// on its own attacker turn; an [`ProofKind::OrStep`] spends one; an
+    /// [`ProofKind::AndOverloadLeaf`] makes the attacker's COMPLETING turn
+    /// inevitable without expanding it (LAW-OVERLOAD: the surviving plan,
+    /// size ≤ 2, is placed next turn); an [`ProofKind::AndStep`] is the
+    /// defender's turn and adds nothing.
+    ///
+    /// Max over root-to-leaf paths of the emitted DAG — transpositions
+    /// collapse, so a node can carry two parents; the walk is memoized and
+    /// keyed, never hash-ordered (D-7). A child key absent from the node map
+    /// is a bug, not an answer: it panics, because an emitted tree is
+    /// complete by construction.
+    pub fn win_depth_turns(&self) -> u32 {
+        let by_key: std::collections::BTreeMap<Key128, &EmittedNode> =
+            self.nodes.iter().map(|node| (node.key, node)).collect();
+        let mut memo: std::collections::BTreeMap<Key128, u32> = std::collections::BTreeMap::new();
+        self.depth_of(self.root, &by_key, &mut memo)
+    }
+
+    fn depth_of(
+        &self,
+        key: Key128,
+        by_key: &std::collections::BTreeMap<Key128, &EmittedNode>,
+        memo: &mut std::collections::BTreeMap<Key128, u32>,
+    ) -> u32 {
+        if let Some(seen) = memo.get(&key) {
+            return *seen;
+        }
+        let node = by_key.get(&key).expect("emitted trees are complete");
+        let own = match &node.kind {
+            ProofKind::OrWinLeaf { .. } | ProofKind::OrStep { .. } | ProofKind::AndOverloadLeaf => {
+                1
+            }
+            ProofKind::AndStep => 0,
+        };
+        let deepest = node
+            .children
+            .iter()
+            .map(|(_, child)| self.depth_of(*child, by_key, memo))
+            .max()
+            .unwrap_or(0);
+        let value = own + deepest;
+        memo.insert(key, value);
+        value
     }
 }
 
@@ -390,8 +440,18 @@ mod tests {
         assert_eq!(state.to_move(), pistol_core::Player::P1);
         let mut solver = solver();
         let result = solver.solve(&state);
-        assert!(matches!(result.outcome, SolveOutcome::Win(_)));
-        assert_eq!(result.nodes, 1, "a win-now leaf is one visit");
+        match &result.outcome {
+            SolveOutcome::Win(tree) => {
+                assert_eq!(result.nodes, 1, "a win-now leaf is one visit");
+                assert_eq!(
+                    tree.win_depth_turns(),
+                    1,
+                    "the win completes on the mover's own turn"
+                );
+            }
+            SolveOutcome::NoWin => panic!("an open four for the mover is a win"),
+            SolveOutcome::NoWinUnderZone => panic!("an immediate win has a trivial zone"),
+        }
     }
 
     /// No live window at own >= 2 anywhere for the attacker — every pair of
@@ -483,6 +543,12 @@ mod tests {
                     result.nodes
                 );
                 assert_ne!(tree.digest(), 0);
+                assert_eq!(
+                    tree.win_depth_turns(),
+                    2,
+                    "one attacker pair (OrStep) plus the overload leaf's completing \
+                     turn is two attacker turns"
+                );
             }
             other => panic!("three disjoint plans from one pair is a policy win: {other:?}"),
         }
