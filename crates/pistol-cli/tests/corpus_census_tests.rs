@@ -1,9 +1,5 @@
 mod common;
 
-// RULE9-JUSTIFICATION: one suite per instrument, and this one binds every
-// number the census reports plus the nine mutants two reviews found alive;
-// splitting it would let a reader believe one half certifies the whole.
-
 use pistol_cli::corpus::census::{
     Census, Keys, Kind, OFF_ADDRESSABLE_LATTICE, flatten, keys_of, keys_of_all, keys_or_refusal,
     uncoloured,

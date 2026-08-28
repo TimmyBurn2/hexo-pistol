@@ -6,11 +6,6 @@ use pistol_core::{Board, FIRST_TURN, Player, WIN_LEN, stones_in_turn};
 
 use super::record::Record;
 
-// RULE9-JUSTIFICATION: the per-game replay, the aggregation it feeds and the
-// rendered block are one instrument — the reviews found the aggregate and the
-// renderer unbound while the per-game flags were bound, which is exactly the
-// seam a split would put a file boundary through.
-
 /// The move floor `source_filter` claims: "rated, >=20 moves, decisive by
 /// six-in-a-row" (`dataset_metadata.json`).
 pub const CLAIMED_MIN_MOVES: usize = 20;

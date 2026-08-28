@@ -32,16 +32,6 @@
 # grows with `turn_cap` because the candidate set grows with the stone count, so
 # a change to that key in the config is a change to this gate's runtime.
 #
-# RULE9-JUSTIFICATION: one end-to-end claim about one instrument, and the larger
-# half of this file is the reasons three separately reproduced defects are
-# guarded the way they are — the binary cargo built, the document the arena
-# actually reads its seats out of, and the content each seat is bound to. Every
-# one of those was a gate that printed a verdict and exited 0 while playing
-# something nobody built, and the guard for each is only correct BECAUSE of the
-# one before it: splitting the resolution, the rebinding and the verdict
-# assertions apart would put a guard in one file and the thing it guards in
-# another, which is precisely the shape the second of those defects had.
-#
 # Usage: tools/arena_smoke.sh
 # Exit:  0 the gate holds
 #        1 it does not — AN ANSWER, and it is no

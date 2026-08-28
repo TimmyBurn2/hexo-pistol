@@ -1,13 +1,6 @@
 //! `replay-check` — the second instrument: replay every transcript a match
 //! wrote, stone by stone, and confirm the record agrees with the rules.
 //!
-//! RULE9-JUSTIFICATION: the per-kind replay semantics the review round
-//! demanded — frame checks (mover, turn), stone-count checks against the
-//! rules' own owed count, count-vs-place illegality, first_stone_win — are
-//! one contract over one pistol-core state machine; splitting them per kind
-//! would duplicate the frame block and the placement helpers each branch
-//! leans on.
-//!
 //! The referee and this tool share pistol-core deliberately: the rules are
 //! not the stage under doubt. The stage under doubt is the RECORD — whether
 //! what was written to disk is the game that was played. A transcript that

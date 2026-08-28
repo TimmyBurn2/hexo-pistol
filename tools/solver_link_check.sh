@@ -39,7 +39,7 @@
 # So this script REFUSES TO ANSWER when the workspace has any build script,
 # rather than answering under an assumption it cannot check.
 #
-# RULE9-JUSTIFICATION: one question, and the reasons it is asked this way rather
+# One question, and the reasons it is asked this way rather
 # than the two obvious ways are the larger half of the file — both of those ways
 # were tried, both are in this repository's history, and both are wrong for
 # reasons a reader would otherwise rediscover.

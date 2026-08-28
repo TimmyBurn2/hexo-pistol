@@ -1,12 +1,5 @@
 //! The referee: one game, driven over pistol-core, judged by pistol-core.
 //!
-//! RULE9-JUSTIFICATION: this module is the whole judging policy in one place
-//! — the platform's turn protocol, every forfeit class (illegal by place,
-//! illegal by count, incomplete, engine failure at ask AND at spawn), the
-//! transcript records, and the per-game accounting the report reads — and
-//! the spawn-failure path the review round added is a third copy of the
-//! forfeit summary a split would have to duplicate.
-//!
 //! No rule lives here (CLAUDE.md rule 2). What lives here is the platform's
 //! JUDGING POLICY, spelled as the official server behaves (tools/sealbot/
 //! README.md, "The platform's game rules"): the server plays the opening

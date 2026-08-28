@@ -3,10 +3,6 @@ use std::fmt;
 
 use pistol_core::symmetry::{Symmetry, canonical_form, canonical_sequence};
 
-// RULE9-JUSTIFICATION: the five keys, the class describer and the rendered
-// block are one instrument — a class must be described on the shape its key was
-// built from, and splitting the keys from the describer is exactly the seam
-// where that invariant was broken three times before it was made generic.
 use pistol_core::{Coord, FIRST_TURN, Player, Turn};
 
 use super::record::Record;

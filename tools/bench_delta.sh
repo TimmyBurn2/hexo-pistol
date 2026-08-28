@@ -80,13 +80,6 @@
 # bump into a refusal of the bench (D-226). The unguarded lines are still
 # printed when they differ, as a NOTE and never as a refusal.
 #
-# RULE9-JUSTIFICATION: one measurement over one pre-registration. The verdict
-# rule, the instrument it is taken with and the two ways of naming a side are
-# one responsibility and one argument — splitting the side resolution out would
-# put the provenance of the measured bytes in a different file from the
-# measurement whose citation depends on it, which is the seam this script exists
-# to keep closed.
-#
 # Usage: tools/bench_delta.sh SIDE_A SIDE_B [REPS]
 #        SIDE is a path to an executable, or rev:<commit-ish>.
 # Exit:  0 measured and verdict printed, 1 a precondition or the run failed.

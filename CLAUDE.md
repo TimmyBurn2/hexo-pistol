@@ -96,8 +96,9 @@ technique.
 8. **Artifacts.** Nets, books, match logs, bench outputs are never committed; a
    committed manifest may sha-index them.
 9. **Files.** Single responsibility, ~300-line soft cap; exceeding requires a
-   why-justification comment that never states a line count (counts are derived,
-   never asserted).
+   why-justification entry in docs/rule9_justifications.md — not a comment in the
+   file, which a comment sweep deletes by accident — that never states a line
+   count (counts are derived, never asserted).
 10. **Decisions.** Every non-obvious design choice = one ADR line in
     docs/decisions.md (`D-n: choice — reason — what flips it`). Silent architecture
     drift is a breach; amend the ADR instead.
@@ -139,7 +140,11 @@ dispatched against a NAMED REVISION — a commit SHA, or a `git stash create` SH
 the work is uncommitted — stated in the reviewer's report header together with
 whether it still matches HEAD. Mutation testing runs in a separate git worktree,
 never the live tree: a mutation is a deliberate break, and a break left in the tree
-the implementing session is editing is indistinguishable from a regression.
+the implementing session is editing is indistinguishable from a regression. A
+worktree is REMOVED only after its gitignored `artifacts/` and `sessions/` are
+exported to the main tree with a digest receipt — a `sha256sum` list committed or
+sha-anchored — because removal takes them with it, and WP-1.8c's four review reports
+survive only in a transcript.
 
 THE OPERATOR OVERRULE, a first-class move and not an escape hatch. Where the CODE is
 done — tested, green, its mutations dying — and what blocks it is a claim in a
@@ -204,6 +209,7 @@ report cites the gate's own log output, never a wrapper's exit status.
 
 - docs/decisions.md — append-only ADR log (hard rule 10).
 - docs/process.md — pre-registration methodology detail (Process section above).
+- docs/rule9_justifications.md — where hard rule 9's why lives, one entry per file.
 - docs/process_readings.md — the T-bucket of adversarial prereg-paragraph readings
   and their status.
 - docs/research/ — the design report (minimax_report.md) and the threat calculus.

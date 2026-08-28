@@ -104,12 +104,6 @@
 # THE RECORD IS AN ARTIFACT (CLAUDE.md rule 8) and is never committed;
 # tools/artifact_check.sh refuses it by CONTENT, under any filename.
 #
-# RULE9-JUSTIFICATION: one record over one instrument. The corpus pass, the
-# ladder and the emit are three stages of producing a SINGLE document whose
-# invariance claim is the whole point of the file; splitting them would put the
-# claim in one file and the things that can falsify it in another, and every
-# defect this script has had was a line that quietly stopped being invariant.
-#
 # Usage: tools/baseline_snapshot.sh --config PATH [--out PATH] [--nodes N]
 #                                   [--corpus PATH] [--ladder-depth D]
 #                                   [--ladder-cap-s S] [--binary PATH]

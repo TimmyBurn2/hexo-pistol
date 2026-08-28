@@ -1,8 +1,3 @@
-// RULE9-JUSTIFICATION: one agreement vocabulary — the value, bestmove-set
-// and bestmove-value assertions over the same reference pairing — stated
-// once for every consumer; splitting it would give each shard a private
-// spelling of "agrees" and the oracle's comparisons would drift apart.
-//!
 //! Every assertion this oracle makes is here, so that a test states WHICH
 //! agreement it is about and over which positions, and never how the comparison
 //! is done. The three the work package names are [`Agreement::value_agrees`],

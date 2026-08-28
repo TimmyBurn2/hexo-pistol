@@ -1,9 +1,3 @@
-// RULE9-JUSTIFICATION: the entry, the witness emission walk, the digest
-// and the win-depth walk are one traversal of the proof DAG — the walk's
-// per-node zone tripwire is the design §3 containment invariant stated
-// over the same nodes the emission produces, the depth reads the same
-// emitted tree the digest fingerprints, and separating them would let the
-// certificate and its checks drift.
 use pistol_core::{GameState, Key128, Player, Turn};
 
 use crate::dfpn::{ProofDag, ProofKind, Search, SearchStats};

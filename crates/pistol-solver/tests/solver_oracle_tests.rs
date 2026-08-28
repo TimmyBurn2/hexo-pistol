@@ -1,8 +1,3 @@
-// RULE9-JUSTIFICATION: the four oracle gates are one instrument — they
-// share the fixture loaders, the sigma class and the perturb construction,
-// and the design's §7 adjudicates them as one gate leg with one exit
-// story. Splitting per gate would replicate the loaders and the sigma
-// sweep harness four times.
 use common::fixture_loader;
 use common::r3::Reference;
 use common::r3_zone;

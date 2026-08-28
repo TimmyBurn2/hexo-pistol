@@ -1,9 +1,5 @@
 mod common;
 
-// RULE9-JUSTIFICATION: one suite per instrument, and this one binds every count
-// the audit publishes plus the sixteen mutants two reviews found alive;
-// splitting it would let a reader believe one half certifies the whole.
-
 use pistol_cli::corpus::audit::{Audit, CLAIMED_MIN_MOVES, audit_game};
 use pistol_cli::corpus::record::Record;
 use pistol_core::{Coord, Player};

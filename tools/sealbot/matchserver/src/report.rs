@@ -1,11 +1,5 @@
 //! The anchor report: results, interval, compute — written, not argued.
 //!
-//! RULE9-JUSTIFICATION: this module renders ONE result set three ways — the
-//! seat tallies the walk computes, the JSON the ADR digests, and the plain-
-//! text summary the operator reads first — over a shared tally walk that a
-//! split would have to duplicate or hoist behind a boundary nobody else
-//! needs; the three renderings are one responsibility.
-//!
 //! What the numbers are allowed to mean is fixed by the pre-registration
 //! (docs/experiments/sealbot_anchor_prereg.md): wins by line are the sample;
 //! capped games and forfeits are reported separately and excluded from the

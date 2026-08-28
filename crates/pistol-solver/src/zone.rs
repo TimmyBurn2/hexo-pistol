@@ -1,8 +1,3 @@
-// RULE9-JUSTIFICATION: the zone sequence, its two contribution sources
-// (EP-1's active-segment grading, T3-1's threat cells) and the grading
-// index math are one arithmetic — the design's §3 semantics and the
-// gate-(b) verifier both read the same add_graded order mapping, and a
-// split would duplicate the k-mapping the oracle cross-check pins.
 use std::collections::BTreeSet;
 
 use pistol_core::window::{Window, windows_through};

@@ -42,9 +42,6 @@
 # identical instrument (config, fixture, REPS), each independently IQR-gated
 # clean, which is what makes the two numbers comparable at all.
 #
-# RULE9-JUSTIFICATION: not applicable — this file is under the ~300-line soft
-# cap.
-#
 # Usage: tools/staged_cover_bench.sh [REPS]   (REPS defaults to 5, >= 5)
 # Exit:  0 a clean measurement was taken (bands may still be individually
 #          NOISY — see the per-band line), 1 a precondition or the run failed,

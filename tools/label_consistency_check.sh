@@ -70,13 +70,6 @@
 # `matrix_META1_REDTEAM.md` K2), which is why the row this gate implements is R4
 # and not that one.
 #
-# RULE9-JUSTIFICATION: one gate, one subject, three checks that share it. All
-# three read the SAME six documents in the same awk pass, and the larger half of
-# this file is the reasons each check is spelled the way it is and the reason
-# the fourth check this gate once ran is gone. Its self-test and its documented
-# WHY are what a reader of a gate that landed one commit after the defect it
-# catches needs to see.
-#
 # Usage: tools/label_consistency_check.sh
 # Exit:  0 every document's counted claims agree with themselves
 #        1 a document's stated count disagrees with what it counts, or an

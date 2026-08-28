@@ -1,11 +1,3 @@
-// RULE9-JUSTIFICATION: every test here drives the SAME gated searcher over
-// the SAME two pinned anchor positions — the wiring's answer, its parity
-// law, its two node counters and (WP-1.8c) the budget those counters are
-// spent against are four readings of one seat, and the seat is the
-// `wiring`/`searcher` harness at the top. Splitting them would copy that
-// harness and its pinned plies into each shard, and a second copy of a
-// position is what lets two shards drift onto different positions while
-// both claim to test the same wiring.
 use pistol_core::{Coord, GameState, Player, Turn};
 use pistol_eval::{HandcraftedV0, Weights};
 use pistol_search::params::{SolverTrigger, SolverWiring};

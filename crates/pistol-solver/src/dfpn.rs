@@ -1,11 +1,3 @@
-// RULE9-JUSTIFICATION: this module holds one algorithm whose parts are
-// read as a whole — the node loop, the child-table arithmetic, the
-// threshold formulas the design quotes, the proof DAG and the zone
-// construction at proof time all name each other, and the §7 oracle gates
-// verify exactly this file's invariants as one cross-check. Splitting the
-// search from the zones would put the AT-1/DT-1 propagation the gates
-// compare against the verifier on the far side of a module boundary from
-// the loop that computes it.
 use pistol_core::{GameState, Key128, Player, Turn};
 
 use crate::pn::{Epsilon, INF, Value, saturating_sum, value_of};

@@ -1,10 +1,3 @@
-// RULE9-JUSTIFICATION: every test here pins the SHAPE of one rule set over
-// one shared vocabulary — the same `perft_case` positions, the same legal
-// region, the same turn grammar — and the cases only mean anything beside each
-// other: what makes a missing turn a finding is the neighbouring test that says
-// which turns do exist. Splitting them would copy the position helpers into
-// each shard and let two shards disagree about the region they are both
-// describing, which is the defect the lattice-edge case exists to catch.
 mod common;
 
 use common::perft_positions::perft_case;

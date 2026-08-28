@@ -1,7 +1,3 @@
-// RULE9-JUSTIFICATION: the table, its epoch filter and the replacement law
-// are one invariant — a stale epoch reads as absent precisely so the
-// proven-retention law can hold within an epoch, and gate (d)'s value
-// cross-check at two table sizes pins the whole file as one mechanism.
 use pistol_core::Key128;
 
 use crate::pn::{Value, value_of};

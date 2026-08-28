@@ -8,12 +8,19 @@ use std::process::Command;
 /// The exit code IS the audit's machine-readable verdict, and nothing exercised
 /// it (WP-P1d REVIEW-impl MA5).
 fn audit(corpus: &std::path::Path, extra: &[&str]) -> (i32, String) {
-    let mut command = Command::new(repo_root().join("target/release/corpus-audit"));
+    // `CARGO_BIN_EXE_` rather than a `target/release` path: cargo builds a
+    // package's binaries before its own integration tests, so the dependency is
+    // enforced by the build rather than known by the reader. The path form left
+    // all six of these failing wherever nobody had run a release build first
+    // (docs/decisions.md D-466).
+    let mut command = Command::new(env!("CARGO_BIN_EXE_corpus-audit"));
     command.arg("--corpus").arg(corpus);
     for word in extra {
         command.arg(word);
     }
-    let done = command.output().expect("the release binary is built");
+    let done = command
+        .output()
+        .expect("the binary cargo built for this test runs");
     let mut text = String::from_utf8_lossy(&done.stdout).into_owned();
     text.push_str(&String::from_utf8_lossy(&done.stderr));
     (done.status.code().expect("the process exited"), text)
