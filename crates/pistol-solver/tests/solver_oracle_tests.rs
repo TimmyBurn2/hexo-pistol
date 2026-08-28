@@ -594,6 +594,88 @@ fn every_pinned_case_agrees_across_the_three_policy_sites() {
     );
 }
 
+/// The `solver-cost` instrument's own driving test (WP-1.8c §6): the
+/// REPRODUCTION bracket is read off this binary's output, so the binary is
+/// driven rather than trusted — the coverage rule `tools/SHELL_CHECKLIST.md`
+/// states for gate scripts, applied to the instrument that produces the number.
+///
+/// What it pins is the SHAPE the bracket parses: one `case` line per fixture
+/// case with a node count, then one `TOTAL` line whose node count is their sum.
+/// A binary that printed a `TOTAL` without the cases, or a `TOTAL` that did not
+/// add up, would still exit 0 — which is the failure mode being excluded.
+#[test]
+fn the_cost_instrument_reports_one_line_per_case_and_a_total_that_adds_up() {
+    let fixture = fixture_loader::fixture_path(FIXTURE);
+    let config = concat!(env!("CARGO_MANIFEST_DIR"), "/../../configs/solver_v0.toml");
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_solver-cost"))
+        .args([fixture.as_os_str(), config.as_ref(), "512".as_ref()])
+        .current_dir(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
+        .output()
+        .expect("the instrument runs");
+    assert!(
+        output.status.success(),
+        "solver-cost exited {:?}: {}",
+        output.status.code(),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let text = String::from_utf8(output.stdout).expect("the instrument prints UTF-8");
+    let field = |line: &str, name: &str| -> u64 {
+        let mut words = line.split_whitespace();
+        while let Some(word) = words.next() {
+            if word == name {
+                return words
+                    .next()
+                    .and_then(|value| value.parse().ok())
+                    .unwrap_or_else(|| panic!("{name} carries a count in {line:?}"));
+            }
+        }
+        panic!("{line:?} has no {name} field");
+    };
+    let cases: Vec<&str> = text.lines().filter(|l| l.starts_with("case ")).collect();
+    let expected = fixture_loader::load_solver_fixture(FIXTURE).len();
+    assert_eq!(cases.len(), expected, "one line per fixture case");
+    let total = text
+        .lines()
+        .find(|l| l.starts_with("TOTAL "))
+        .expect("the instrument prints a TOTAL line");
+    assert_eq!(field(total, "cases"), expected as u64);
+    assert_eq!(
+        field(total, "nodes"),
+        cases.iter().map(|line| field(line, "nodes")).sum::<u64>(),
+        "the TOTAL's node count is the sum of the cases', not a separate number"
+    );
+    // AND THE TIMING FIELDS, because `us_per_visit` IS the reproduction bracket
+    // (design §6) and a criterion that never reads it cannot fail on a broken
+    // timer. It could not: moving `Instant::now()` below the solve leaves this
+    // test green while the binary prints `us 0 us_per_visit 0.00` for every
+    // case and for the total — REVIEW-impl's I-1.
+    assert_eq!(
+        field(total, "us"),
+        cases.iter().map(|line| field(line, "us")).sum::<u64>(),
+        "the TOTAL's wall is the sum of the cases', not a separate number"
+    );
+    assert!(
+        field(total, "us") > 0,
+        "a solve takes measurable time; a zero here is a stopped clock, not a fast solver"
+    );
+    for line in &cases {
+        let (micros, nodes) = (field(line, "us"), field(line, "nodes"));
+        let printed: f64 = line
+            .split_whitespace()
+            .skip_while(|word| *word != "us_per_visit")
+            .nth(1)
+            .expect("every case line carries us_per_visit")
+            .parse()
+            .expect("us_per_visit is a number");
+        let derived = micros as f64 / nodes as f64;
+        assert!(
+            (printed - derived).abs() < 0.01,
+            "us_per_visit must be the case's own us/nodes: printed {printed}, \
+             derived {derived} in {line:?}"
+        );
+    }
+}
+
 /// WP-1.8c §4e: how trigger-rich the trigger-rich bench fixture actually is.
 ///
 /// `wp18b_design.md` §7 registered, as MEASURED, that "every position below

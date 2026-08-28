@@ -697,8 +697,13 @@ fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary
     );
     let stdout = out(&ran);
     assert!(
-        stdout.contains("solver_link_check: 8 shipped binaries,"),
-        "this workspace ships eight binaries, machine-invariant across a run: {stdout}"
+        stdout.contains("solver_link_check: 9 shipped binaries,"),
+        // The count is RE-DERIVED at every merge that adds a binary, never
+        // carried from either side: six became seven twice over on two open
+        // branches (this WP's `solver-cost`, the corpus work's own additions)
+        // and a merge that kept either side's number would compile and assert
+        // a false one — which is what this gate exists to refuse.
+        "this workspace ships nine binaries, machine-invariant across a run: {stdout}"
     );
 
     // The externally derived referent: the crate's own `src/` tree,
@@ -736,7 +741,7 @@ fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary
     );
 
     // The hit set the gate reports, canonicalised down to the repo-relative
-    // subject path and deduplicated across the eight binaries — a hit line
+    // subject path and deduplicated across the shipped binaries — a hit line
     // repeats per binary by design, which is not a second file.
     let mut hit: Vec<String> = stdout
         .lines()
