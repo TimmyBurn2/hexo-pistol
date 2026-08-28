@@ -140,16 +140,29 @@ impl SolverTT {
         // working, not an error.
     }
 
-    /// The law: proven entries are never replaced by unproven ones, and the
-    /// preferred slot keeps the fresher generation.
+    /// The law, and the epoch qualification the body carries: WITHIN AN EPOCH
+    /// proven entries are never replaced by unproven ones and the preferred
+    /// slot keeps the fresher generation. Across epochs the occupant is stale,
+    /// invisible to `lookup`, and always replaceable (WP-1.8c §4c).
     fn may_replace(slot: &Option<Entry>, entry: &Entry) -> bool {
         match slot {
             None => true,
             Some(existing) => {
-                if existing.is_proven() && !entry.is_proven() {
+                if existing.epoch > entry.epoch {
                     return false;
                 }
-                if existing.epoch > entry.epoch {
+                // A STALE occupant is always replaceable, and this clause is
+                // the whole of WP-1.8c §4c. `lookup` filters on the epoch, so a
+                // stale entry is invisible to every read; protecting it under
+                // the proven-retention law or the generation test therefore
+                // shields nothing and only shrinks the live table, which is why
+                // a later solve through the same `Solver` could turn a 714-node
+                // win into an `Unknown` at a cap of 4,096. The law's substance
+                // is untouched: within an epoch, proven still beats unproven.
+                if existing.epoch < entry.epoch {
+                    return true;
+                }
+                if existing.is_proven() && !entry.is_proven() {
                     return false;
                 }
                 entry.generation >= existing.generation
@@ -168,6 +181,87 @@ impl SolverTT {
 
 #[cfg(test)]
 mod tests {
+    /// WP-1.8c §4c, the mechanism: a STALE occupant does not hold a slot
+    /// against a live newcomer, however proven or however fresh it was.
+    ///
+    /// Before the epoch clause, `may_replace` refused a displacement when the
+    /// occupant `is_proven()` and the newcomer was not — with no epoch guard —
+    /// and refused again on the generation test. A stale PROVEN entry was then
+    /// invisible to every `lookup` and unevictable by every displacement, so a
+    /// `Solver`'s table filled with dead weight as it served solve after solve.
+    /// MEASURED on the anchor positions: three of 85 non-answers recovered, and
+    /// one position that answered `win` at 714 nodes alone had answered
+    /// `unknown` at 4,096 in company.
+    #[test]
+    fn a_stale_occupant_never_blocks_a_live_entry() {
+        let mut table = SolverTT::new(2);
+        // EVERY slot of the smallest table filled by a PROVEN entry of a past
+        // epoch at the freshest generation there is — the strongest occupant
+        // the old law could produce. Enough keys that no slot is left empty
+        // whichever index each hashes to: an empty slot is taken before
+        // `may_replace` is ever consulted, and a test that left one would pass
+        // without exercising the law at all (which is how this test first
+        // failed to kill its own mutant).
+        for low in 1u64..=16 {
+            table.store(Entry {
+                key: key(low),
+                epoch: 1,
+                pn: 0,
+                dn: crate::pn::INF,
+                zone: None,
+                generation: u32::MAX,
+            });
+        }
+        assert!(
+            table
+                .preferred
+                .iter()
+                .zip(&table.replace)
+                .all(|(first, second)| first.is_some() && second.is_some()),
+            "the table is full, so the newcomer below must DISPLACE rather than \
+             find an empty slot"
+        );
+        // A live, UNPROVEN, generation-zero newcomer: everything the old law
+        // refused a displacement for.
+        let newcomer = key(17);
+        table.store(Entry {
+            key: newcomer,
+            epoch: 2,
+            pn: 1,
+            dn: 1,
+            zone: None,
+            generation: 0,
+        });
+        assert!(
+            table.lookup(newcomer, 2).is_some(),
+            "a live entry displaces a stale one whatever the stale one holds"
+        );
+        // And the law itself is untouched WITHIN an epoch.
+        let held = key(64);
+        table.store(Entry {
+            key: held,
+            epoch: 2,
+            pn: 0,
+            dn: crate::pn::INF,
+            zone: None,
+            generation: 5,
+        });
+        for low in 65u64..=80 {
+            table.store(Entry {
+                key: key(low),
+                epoch: 2,
+                pn: 1,
+                dn: 1,
+                generation: 0,
+                zone: None,
+            });
+        }
+        assert!(
+            table.lookup(held, 2).is_some(),
+            "within an epoch a proven entry is still never replaced by an unproven one"
+        );
+    }
+
     use super::*;
 
     fn key(low: u64) -> Key128 {
