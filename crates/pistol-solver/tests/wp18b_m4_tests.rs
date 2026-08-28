@@ -9,6 +9,11 @@
 //! the VALUE and the STRUCTURE (the witness needs arm B, which v0 cannot
 //! even represent).
 
+// RULE9-JUSTIFICATION: one widening, its flip, its shape, its theorem and
+// its three-site agreement — five statements over the same two pinned
+// anchor positions and the same three policy implementations; splitting
+// them would move the positions out from under the tests that share them
+// and leave each shard re-deriving the other's fixtures.
 use pistol_core::{Coord, GameState, Player};
 use pistol_solver::config::AttackerPolicy;
 use pistol_solver::policy;
