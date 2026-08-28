@@ -301,3 +301,18 @@ Offline JL-PN/SPDFPN solving of symmetry-distinct openings; 12-fold
 canonicalized book; balanced-opening generator; pentanomial paired-game
 manager; full reporting fields per the report's Deliverable 4 (instrument,
 protocol, n, distinct-n, per-side compute, first-player win rate).
+
+## Corpus grade (D-453, D-454, D-457)
+
+The human corpus `b2fe61eb…` **cannot be re-acquired**: the scraper that built
+it is gone and no endpoint, script or token for it survives anywhere. It is
+ARTIFACT-GRADE. That licenses statements *about the artifact* and existence
+proofs needing only authenticity — so D-446's zero-duplicates census, D-447's
+turn-14 sharing horizon and D-218's radius-6 refutation all stand. It does not
+license anything generalising to the platform's players, so **D-434's Stage-2
+Texel-style calibration and independent holdout are BLOCKED** until a
+POPULATION-GRADE corpus supersedes it. The corpus's own `source_filter` was
+audited at the byte level and its two checkable conjuncts hold (D-457); what
+that cannot establish is that the stated filter was the *only* filter applied
+(D-456), and the platform reporting 101257 finished games against this corpus's
+8698 makes that residual larger, not smaller.

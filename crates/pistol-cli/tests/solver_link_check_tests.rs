@@ -697,8 +697,8 @@ fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary
     );
     let stdout = out(&ran);
     assert!(
-        stdout.contains("solver_link_check: 7 shipped binaries,"),
-        "this workspace ships seven binaries, machine-invariant across a run: {stdout}"
+        stdout.contains("solver_link_check: 8 shipped binaries,"),
+        "this workspace ships eight binaries, machine-invariant across a run: {stdout}"
     );
 
     // The externally derived referent: the crate's own `src/` tree,
@@ -736,7 +736,7 @@ fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary
     );
 
     // The hit set the gate reports, canonicalised down to the repo-relative
-    // subject path and deduplicated across the seven binaries — a hit line
+    // subject path and deduplicated across the eight binaries — a hit line
     // repeats per binary by design, which is not a second file.
     let mut hit: Vec<String> = stdout
         .lines()

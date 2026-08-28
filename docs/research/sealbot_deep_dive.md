@@ -1165,7 +1165,12 @@ branches — master is the pure alpha-beta bot.
     legality rule. D-101's radius 8 stands untouched. Measured, not
     argued: `corpus-extract`'s placement-distance histogram over the
     human corpus (SHA-256 `b2fe61eb360b91d77873a751446d28287955cad49e331fc32c156b4e1316840c`,
-    the digest D-184 pins, verified before the run), 8698 games,
+    the digest D-184 pins, verified before the run — **ARTIFACT-GRADE, not
+    population-grade: this corpus cannot be re-acquired (D-453), so the reading
+    below is an existence proof about genuine games and never a statement about
+    the platform's player population; the radius ruling itself now rests on the
+    operator's confirmation of radius 8, not on this histogram (D-457)**),
+    8698 games,
     538553 stones measured — distance 1: 471674, 2: 44785, 3: 11811,
     4: 2912, 5: 1542, 6: 805, **7: 845, 8: 4179**, MAX 8. Of the 5024
     placements beyond distance 6, **2812 are ORDER-INDEPENDENT** (479 at
