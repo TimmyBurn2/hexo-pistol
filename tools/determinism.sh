@@ -86,7 +86,8 @@ fail() { printf 'determinism: FAIL: %s\n' "$*" >&2; exit 1; }
 
 command -v cargo >/dev/null || fail "cargo is not on PATH"
 for seat in "${SEATS[@]}"; do
-	read -r _ seat_config seat_fixture <<<"$seat"
+	# The trailing `_` absorbs a seat's budget-override words.
+	read -r _ seat_config seat_fixture _ <<<"$seat"
 	[ -f "$seat_config" ] || fail "no config at $seat_config"
 	[ -f "$seat_fixture" ] || fail "no fixture at $seat_fixture"
 done
@@ -165,11 +166,16 @@ run_seat() {
 	# Per-seat budget overrides (WP-1.8b's solver seat): trailing words
 	# spell budgets with `_` for the space, because the seat list is
 	# whitespace-split. Empty means the standing BUDGETS.
-	local -a budgets=("${@:-}")
-	if [ "${#budgets[@]}" -eq 0 ]; then
-		budgets=("${BUDGETS[@]}")
-	else
+	# NOT "${@:-}": that default expands to ONE EMPTY STRING when no
+	# override words were passed — an empty `go ` budget, twenty protocol
+	# refusals, and a gate that fails on its own plumbing (caught on the
+	# radius seat, which the override feature was never meant to touch).
+	local -a budgets=()
+	if (( $# )); then
+		budgets=("$@")
 		budgets=("${budgets[@]//_/ }")
+	else
+		budgets=("${BUDGETS[@]}")
 	fi
 	echo "determinism: seat $name: config $config"
 

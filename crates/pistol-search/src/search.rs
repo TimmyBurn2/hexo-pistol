@@ -291,7 +291,14 @@ impl Searcher {
             && self.solver.is_some()
             && state.stones_owed() == 2
             && state.phase() == Phase::First
+            && root_triggers(&mut self.position, wiring.trigger)
         {
+            // THE TRIGGER GATES THE ROOT TOO (design §2 D1; the S-4 note
+            // was this bug in a cost costume): without it, a quiet root's
+            // defender call is the ZERO-PLAN AND root the §2 red team
+            // proved unreachable ONLY under the trigger — the
+            // SOLVER_NO_PLAN panic the solver seat's own session
+            // reproduced.
             let cap = wiring.per_call_node_cap;
             let Some(solver) = self.solver.as_mut() else {
                 unreachable!("the wiring exists only when the solver does")
@@ -540,6 +547,20 @@ fn per_second(nodes: u64, elapsed: std::time::Duration) -> u64 {
         return 0;
     }
     u64::try_from(u128::from(nodes) * 1_000_000_000 / nanos).unwrap_or(u64::MAX)
+}
+
+/// Whether the root position fires the solver trigger (design §2 D1):
+/// any hot window — an open four or better — held by either side, read off
+/// the staged policy's own threat state.
+fn root_triggers(position: &mut Position, trigger: crate::params::SolverTrigger) -> bool {
+    let (state, threats, _) = position.staged_context();
+    match trigger {
+        crate::params::SolverTrigger::AnyOpenFour => {
+            let mover = state.to_move();
+            !threats.hot_windows(mover).is_empty()
+                || !threats.hot_windows(mover.opponent()).is_empty()
+        }
+    }
 }
 
 /// The proof's first move: the root `OrStep`'s witness turn, or the
