@@ -387,6 +387,17 @@ impl<'a> Search<'a> {
             apply_turn(state, threat, turn);
             let returned = self.dfpn(state, threat, pt1, dt1);
             undo_turn(state, threat, turn);
+            // SPENT MEANS STORE NOTHING (design §2a as amended, REVIEW-impl
+            // W-2): the truncation's (INF, INF) merged into a stored entry
+            // can RAISE a proven (0, INF) child to (INF, INF), and the
+            // emission walk then meets an AND child with no proof record —
+            // the determinism seat's SOLVER_CHILD_ZONE panic, reproduced
+            // and closed here. The unwind propagates the abort without
+            // touching any entry; solve_root's spent check (before the
+            // stall guard) turns the whole solve into Unknown.
+            if self.spent {
+                return (INF, INF);
+            }
             self.merge_store(child_key, returned, None);
         }
     }
@@ -535,6 +546,10 @@ impl<'a> Search<'a> {
             apply_turn(state, threat, turn);
             let returned = self.dfpn(state, threat, pt1, dt1);
             undo_turn(state, threat, turn);
+            // Same spent-means-store-nothing rule as the OR loop above.
+            if self.spent {
+                return (INF, INF);
+            }
             self.merge_store(child_key, returned, None);
         }
     }

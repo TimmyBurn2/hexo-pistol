@@ -276,6 +276,7 @@ fn field_after(rest: &str, key: &str) -> Option<u64> {
 /// wrong counter as the node total. The match must start a field: at the
 /// line's head or after a space.
 fn word_bounded(rest: &str, key: &str) -> Option<usize> {
+    debug_assert!(!key.is_empty(), "an empty key would underflow the range");
     (0..rest.len().saturating_sub(key.len() - 1))
         .find(|&at| rest[at..].starts_with(key) && (at == 0 || rest[..at].ends_with(' ')))
 }

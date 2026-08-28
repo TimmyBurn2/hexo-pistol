@@ -190,7 +190,9 @@ pub fn blocking_pairs(
             crate::MinimalCover::One(at) => {
                 for other in pistol_core::legal_placements(state.board()) {
                     if other != at {
-                        out.push(Turn::pair(at, other).expect("a plan cell and a legal cell differ"));
+                        out.push(
+                            Turn::pair(at, other).expect("a plan cell and a legal cell differ"),
+                        );
                     }
                 }
                 // The first stone OPENS ITS OWN BALL (movegen's rule-5
@@ -201,7 +203,8 @@ pub fn blocking_pairs(
                 // 12-pair divergence the equivalence check caught).
                 for dq in -8i16..=8 {
                     for dr in -8i16..=8 {
-                        let hex = (dq.unsigned_abs() + dr.unsigned_abs() + (dq + dr).unsigned_abs()) / 2;
+                        let hex =
+                            (dq.unsigned_abs() + dr.unsigned_abs() + (dq + dr).unsigned_abs()) / 2;
                         if hex == 0 || hex > 8 {
                             continue;
                         }
@@ -233,8 +236,8 @@ pub fn blocking_pairs(
     #[cfg(debug_assertions)]
     {
         let mut spec = Vec::new();
-        for turn in generate_turns(state)
-            .expect("an AND node is an undecided position at Phase::First")
+        for turn in
+            generate_turns(state).expect("an AND node is an undecided position at Phase::First")
         {
             if let Turn::Pair(..) = turn {
                 if covers_plans(state, threat, attacker, &turn) {

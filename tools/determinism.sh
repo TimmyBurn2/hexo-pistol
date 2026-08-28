@@ -66,7 +66,12 @@ SEATS=(
 	"radius configs/gate_v0.toml crates/pistol-cli/tests/fixtures/tactical_v0.txt"
 	"staged configs/gate_staged_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"
 	"staged-heuristics configs/gate_staged_heuristics_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"
-	"staged-solver configs/gate_staged_solver_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"
+	# The solver seat carries its OWN budgets (WP-1.8b): its searches spend
+	# real wall inside solver calls at every budget, and the standing
+	# budgets would make this seat an hours-long run where its job is the
+	# ON path's byte-identity under the D-7 law — reproducibility, not the
+	# registered strength budgets (which the SPRT seat owns alone).
+	"staged-solver configs/gate_staged_solver_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt depth_turns_2 nodes_10000"
 )
 
 # The budgets, both reproducible. A wall-clock budget could not be compared at
@@ -156,6 +161,16 @@ $(grep -m 5 '^error ' "$transcript")"
 # transcripts.
 run_seat() {
 	local name="$1" config="$2" fixture="$3"
+	shift 3
+	# Per-seat budget overrides (WP-1.8b's solver seat): trailing words
+	# spell budgets with `_` for the space, because the seat list is
+	# whitespace-split. Empty means the standing BUDGETS.
+	local -a budgets=("${@:-}")
+	if [ "${#budgets[@]}" -eq 0 ]; then
+		budgets=("${BUDGETS[@]}")
+	else
+		budgets=("${budgets[@]//_/ }")
+	fi
 	echo "determinism: seat $name: config $config"
 
 	# The positions, exactly as the fixture spells them: a fixture `position`
@@ -180,7 +195,7 @@ run_seat() {
 	: >"$script"
 	local goes=0
 	local budget position
-	for budget in "${BUDGETS[@]}"; do
+	for budget in "${budgets[@]}"; do
 		for position in "${positions[@]}"; do
 			printf 'newgame\nposition %s\ngo %s\n' "$position" "$budget" >>"$script"
 			goes=$((goes + 1))
@@ -237,8 +252,9 @@ $(head -40 "$WORK/$name.diff.cd")"
 }
 
 for seat in "${SEATS[@]}"; do
-	read -r seat_name seat_config seat_fixture <<<"$seat"
-	run_seat "$seat_name" "$seat_config" "$seat_fixture"
+	read -r seat_name seat_config seat_fixture extra_budgets <<<"$seat"
+	# shellcheck disable=SC2086 # the override words are the seat's own list
+	run_seat "$seat_name" "$seat_config" "$seat_fixture" $extra_budgets
 done
 
 printf 'determinism: ok — %d seat(s), no difference outside nps/time in any of them\n' \

@@ -146,6 +146,39 @@ OR node's arm B — so one call's wall bound is cap × enumeration, not cap
 alone; at cap 16384 that is seconds-worst-case, and the search-path
 aggregate is bounded by the shared node budget (§3).
 
+## 2b. IMPL-TIME AMENDMENTS (REVIEW-impl's W-2/S-1/S-3/S-4, and the bench)
+
+- **§2a AS SHIPPED (W-2)**: the truncation returns `(INF, INF)`, not "the
+  node's current numbers", and the shipped safety argument is
+  **spent-before-stall plus spent-means-store-nothing plus epoch
+  quarantine**: the unwind never merges into a stored entry (both descent
+  loops return without storing once `spent` latches — the mechanism of the
+  determinism seat's `SOLVER_CHILD_ZONE` panic, reproduced and closed),
+  and a spent solve returns `Unknown` regardless of its unwound numbers.
+  §2a's original "numbers do not move" sentence is retired by this
+  paragraph.
+- **§4 AS SHIPPED (S-1)**: solver verdicts RETURN directly and store
+  nothing — the safer shape (no re-basing path exists to get wrong);
+  §4's "store through to_table/from_table" sentence is retired. Re-visits
+  re-solve, cap-bounded, deterministic.
+- **The AND-children enumeration order changed with the fast path (S-3)**:
+  canonical-sorted where `generate_turns` emission order stood before —
+  deterministic, value-neutral, node counts shift; df-pn's tie-break is
+  enumeration-order-sensitive and the registered order spec covers it.
+- **§2 D1's quiet row (S-4)**: the shipped root block calls both
+  directions whenever the gate is on and the root is a two-stone boundary
+  — including quiet roots, where both calls are real capped searches.
+  Registered here rather than left as design silence; the bench's abort
+  finding is the cost story that covers it.
+- **THE §7 BENCH ABORT (the registered instrument's outcome)**:
+  `artifacts/wp18b_bench_v1.txt` — OFF 223,668 nps; ON searches 9-240+ s
+  at cap 16384 (2 of 5 calibration positions hit a 240 s timeout; one
+  position ran >10 min), ratio ≤ 0.02 against the ≥ 0.5 corpus bound. The
+  registered consequence applies verbatim: the ON seat is not a candidate
+  for h1 REGARDLESS of the SPRT, and every committed config keeps the gate
+  false. **The SPRT's own status is the operator's overrule record
+  (docs/decisions.md, the closure lines)**.
+
 ## 3. Node accounting (the fork the dispatch settled)
 
 **Solver nodes COUNT against the per-side node budget**, and are printed

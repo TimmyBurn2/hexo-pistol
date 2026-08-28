@@ -300,6 +300,7 @@ impl Searcher {
             root_solver_nodes += attacker.nodes;
             if let pistol_solver::SolveOutcome::Win(tree) = attacker.outcome {
                 return Ok(solver_proof_outcome(
+                    state,
                     &tree,
                     root_solver_nodes,
                     root_refusals,
@@ -476,6 +477,12 @@ impl Searcher {
         let elapsed = started.elapsed();
         outcome.info.nodes = run.total_nodes();
         outcome.info.search_nodes = run.search_nodes;
+        // REVIEW-impl W-1: the salvage/fallback arms construct these as
+        // zero, and without this overwrite a Deadline answer would break
+        // the registered sum law the moment a solver call had spent
+        // anything before the abort.
+        outcome.info.solver_nodes = run.solver_nodes;
+        outcome.info.solver_refusals = run.solver_refusals;
         outcome.info.nps = per_second(run.total_nodes(), elapsed);
         outcome.info.time_ms = elapsed.as_millis() as u64;
         outcome.info.seldepth_turns = run.seldepth_turns;
@@ -539,14 +546,30 @@ fn per_second(nodes: u64, elapsed: std::time::Duration) -> u64 {
 /// `OrWinLeaf`'s completing stones as a turn (design wp18b §2 D3). Keyed by
 /// `tree.root` — the emission is POST-ORDER, so the root is never
 /// `nodes.first()`.
-pub fn proof_first_move(tree: &pistol_solver::ProofTree) -> Option<Turn> {
+///
+/// A ONE-PLY completing witness (a mover live five — the shape the
+/// determinism seat's own fixture is full of, REVIEW-impl C-1's
+/// characterization) is a single cell, and a turn at `stones_owed == 2` is
+/// a PAIR: the completing stone plus the lexicographically-least other
+/// legal placement. Rule 4 ends the turn on the completing stone, so the
+/// partner changes nothing about the proof — it only makes the answer a
+/// legal turn. REFUSES (None) if the board offers no partner, which a
+/// real position cannot do.
+pub fn proof_first_move(tree: &pistol_solver::ProofTree, state: &GameState) -> Option<Turn> {
     let node = tree.nodes.iter().find(|node| node.key == tree.root)?;
     match &node.kind {
         pistol_solver::ProofKind::OrStep { witness } => Some(*witness),
-        pistol_solver::ProofKind::OrWinLeaf { witness } => {
-            let cells = witness_cells(witness);
-            Turn::pair(cells[0], cells[1]).ok()
-        }
+        pistol_solver::ProofKind::OrWinLeaf { witness } => match witness {
+            pistol_solver::WinWitness::Pair { first, second, .. } => {
+                Turn::pair(*first, *second).ok()
+            }
+            pistol_solver::WinWitness::OnePly { at, .. } => {
+                let partner = pistol_core::legal_placements(state.board())
+                    .into_iter()
+                    .find(|cell| cell != at)?;
+                Turn::pair(*at, partner).ok()
+            }
+        },
         // An AND-rooted proof (the defender direction) has no single first
         // move of the mover's — the search never asks for one there.
         pistol_solver::ProofKind::AndStep | pistol_solver::ProofKind::AndOverloadLeaf => None,
@@ -571,7 +594,11 @@ pub fn proof_root_zone(tree: &pistol_solver::ProofTree) -> Vec<Coord> {
 /// the attacker's own turns following `OrStep` witnesses, the defender's
 /// first listed reply between them — a line the PROOF certifies, not one
 /// the search ordered.
-pub fn proof_line(tree: &pistol_solver::ProofTree, max_turns: usize) -> Vec<Turn> {
+pub fn proof_line(
+    tree: &pistol_solver::ProofTree,
+    state: &GameState,
+    max_turns: usize,
+) -> Vec<Turn> {
     use std::collections::BTreeMap;
     let by_key: BTreeMap<pistol_core::Key128, &pistol_solver::EmittedNode> =
         tree.nodes.iter().map(|node| (node.key, node)).collect();
@@ -583,9 +610,28 @@ pub fn proof_line(tree: &pistol_solver::ProofTree, max_turns: usize) -> Vec<Turn
         };
         match &node.kind {
             pistol_solver::ProofKind::OrWinLeaf { witness } => {
-                let cells = witness_cells(witness);
-                if let Ok(turn) = Turn::pair(cells[0], cells[1]) {
-                    line.push(turn);
+                match witness {
+                    pistol_solver::WinWitness::Pair { first, second, .. } => {
+                        line.push(
+                            Turn::pair(*first, *second)
+                                .expect("a pair witness is two distinct cells"),
+                        );
+                    }
+                    pistol_solver::WinWitness::OnePly { at, .. } => {
+                        // Same degeneration as `proof_first_move`: the
+                        // completing stone paired with the least legal
+                        // partner, so the PV line ends with a legal TURN
+                        // (REVIEW-impl's catch that this arm silently
+                        // dropped the completing turn).
+                        let partner = pistol_core::legal_placements(state.board())
+                            .into_iter()
+                            .find(|cell| cell != at)
+                            .expect("a live five's board has a partner cell");
+                        line.push(
+                            Turn::pair(*at, partner)
+                                .expect("the completing cell and a partner differ"),
+                        );
+                    }
                 }
                 break;
             }
@@ -609,30 +655,20 @@ pub fn proof_line(tree: &pistol_solver::ProofTree, max_turns: usize) -> Vec<Turn
     line
 }
 
-/// One solver-proved turn's cells as the completing pair. A single-stone
-/// witness (a five-own window's last cell) spells its cell twice, which a
-/// `Turn` cannot carry — the completing pair degenerates to the one cell,
-/// spelled as `Turn::Single`'s shape.
-fn witness_cells(witness: &pistol_solver::WinWitness) -> [Coord; 2] {
-    match witness {
-        pistol_solver::WinWitness::OnePly { at, .. } => [*at, *at],
-        pistol_solver::WinWitness::Pair { first, second, .. } => [*first, *second],
-    }
-}
-
 /// The outcome a root attacker proof answers with (design wp18b §2 D3):
 /// the proof's first move, its own witness line as the PV, the mate score
 /// at the proof's distance, and the solver's nodes as the whole cost.
 fn solver_proof_outcome(
+    state: &GameState,
     tree: &pistol_solver::ProofTree,
     solver_nodes: u64,
     refusals: u32,
     started: Instant,
 ) -> SearchOutcome {
     let depth = tree.win_depth_turns();
-    let best = proof_first_move(tree)
+    let best = proof_first_move(tree, state)
         .unwrap_or_else(|| panic!("pistol-search invariant SOLVER_PROOF WITHOUT A MOVE: an OR-rooted proof always carries one"));
-    let pv = proof_line(tree, 2 * depth as usize + 1);
+    let pv = proof_line(tree, state, 2 * depth as usize + 1);
     let elapsed = started.elapsed();
     SearchOutcome {
         best,
