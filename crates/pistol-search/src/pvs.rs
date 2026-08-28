@@ -951,4 +951,64 @@ mod tests {
             "every cutoff whose node follows an opponent stone writes a countermove"
         );
     }
+
+    /// The root-restriction mechanism (design wp18b §2 D3), pinned directly: a
+    /// `root_restrict` of one far, legal, eval-terrible cell makes the answered
+    /// pair's promotion that cell; with the restriction's application disabled
+    /// (the registered zone-leak mutation), the answer is the unrestricted best
+    /// and this dies. The anchor positions cannot pin this — there the eval-best
+    /// block already sits inside the proof's zone, so answers coincide with and
+    /// without the mechanism (MEASURED at g001-t45: OFF's answer `-5,-1/2,4`
+    /// intersects the zone {-6,0 -5,-1 0,-6 1,-7 4,-5 4,-3} either way).
+    #[test]
+    fn a_root_restrict_zone_forces_the_answered_promotion_into_it() {
+        let state = root();
+        // Staged: the restriction is the staged policy's own (the wiring is
+        // staged-only, design wp18b §2 D1).
+        let mut position = Position::new(Box::new(Flat), true);
+        position.reset_to(&state);
+        let mut table = Table::new(1 << 16).expect("test table");
+        let mut heuristics = crate::heuristics::HeuristicTables::new();
+        // A cell inside the quiet ball (radius 2), legal, and never the flat
+        // eval's lexicographic pick on its own: the restriction is the only
+        // reason it answers. A cell OUTSIDE the ball would empty the filtered
+        // set and fail open — the D3 clause working, tested elsewhere by the
+        // fail-open shape itself.
+        let far = Coord::new(2, 0);
+        assert!(state.board().is_legal_placement(far) && !state.board().is_occupied(far));
+        let staged = crate::StagedParams {
+            quiet_radius: 2,
+            tier_t_own_count: 2,
+            tier_t_opponent_count: 3,
+            q_depth_turns: 0,
+            q_triggers: crate::QTriggers::DefensiveOnly,
+            ordering: crate::OrderingHeuristics {
+                killers: false,
+                history: false,
+                countermove: false,
+            },
+        };
+        let mut run = Run::new(
+            &mut position,
+            &mut table,
+            CandidatePolicy::Staged(staged),
+            Stop::DepthTurns(1),
+            MAX_PLY_FOR_RESTRICTION_TEST,
+            &mut heuristics,
+        );
+        run.root_restrict = Some(vec![far]);
+        let _ = run.iterate(2, false);
+        let pv = turns_from_plies(&state, run.line());
+        let first = pv.first().expect("the restricted root answers a move");
+        let [a, b] = match first {
+            pistol_core::Turn::Pair(a, b) => [*a, *b],
+            pistol_core::Turn::Single(at) => [*at, *at],
+        };
+        assert!(
+            a == far || b == far,
+            "the answered pair's promotion is the restricted cell: {first:?}"
+        );
+    }
+
+    const MAX_PLY_FOR_RESTRICTION_TEST: usize = 130;
 }

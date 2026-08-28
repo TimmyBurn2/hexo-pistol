@@ -181,7 +181,14 @@ fn a_root_defender_proof_restricts_candidates_to_the_zone() {
 #[test]
 fn nodes_is_exactly_the_sum_of_the_two_counters() {
     for gate_on in [false, true] {
-        let state = state_of(G001_T42);
+        // t45, NOT t42: the t42 gate-on search answers through the root
+        // proof constructor, whose `nodes` is the solver count directly —
+        // mutation-proof by construction. t45 runs a FULL search with
+        // interior calls, whose `nodes` is the derived sum the accounting
+        // mutation breaks (the first mutation round survived exactly
+        // because only t42 was driven; the fix is the fixture, not a
+        // weaker claim).
+        let state = state_of(G001_T45);
         let mut engine = searcher(gate_on);
         let outcome = engine
             .search(&state, Stop::Nodes(50_000), &mut |_| {})
