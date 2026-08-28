@@ -1,3 +1,10 @@
+// RULE9-JUSTIFICATION: every test here pins the SHAPE of one rule set over
+// one shared vocabulary — the same `perft_case` positions, the same legal
+// region, the same turn grammar — and the cases only mean anything beside each
+// other: what makes a missing turn a finding is the neighbouring test that says
+// which turns do exist. Splitting them would copy the position helpers into
+// each shard and let two shards disagree about the region they are both
+// describing, which is the defect the lattice-edge case exists to catch.
 mod common;
 
 use common::perft_positions::perft_case;
@@ -213,21 +220,51 @@ fn legal_placements_stop_at_the_edge_of_the_addressable_lattice() {
     // cells at all. A cell that cannot be addressed is not a cell, so it is not
     // a placement either (D-47) — and enumerating the region must answer that
     // rather than overflow a coordinate (D-34).
+    // BOTH CORNERS, and the pair is the test rather than one of them twice: the
+    // region is built from a per-row interval clamped at each end, and a test
+    // that only ever drives the far corner cannot see the near clamp go. It
+    // could not: dropping the low clamp alone leaves this whole crate green
+    // while putting cells eight rows past the near end of the lattice into the
+    // region and un-sorting it — REVIEW-impl's tenth mutant.
+    for corner in [
+        Coord::new(i16::MAX - 2, i16::MAX - 2),
+        Coord::new(i16::MIN + 2, i16::MIN + 2),
+    ] {
+        let mut board = Board::empty();
+        board.apply(corner, Player::P1).expect("an empty cell");
+
+        let cells = legal_placements(&board);
+        assert!(
+            cells
+                .iter()
+                .all(|&at| at.distance(corner) <= LEGAL_RADIUS && at != corner),
+            "{corner:?}: every placement is in the ball, and the stone's own cell is not one"
+        );
+        // The order the region is returned in is load-bearing — `generate_turns`
+        // binary-searches it — and a wrapped coordinate breaks it before it
+        // breaks the ball test on some inputs.
+        assert!(
+            cells.windows(2).all(|pair| pair[0] < pair[1]),
+            "{corner:?}: the region is returned strictly ascending"
+        );
+    }
     let corner = Coord::new(i16::MAX - 2, i16::MAX - 2);
     let mut board = Board::empty();
     board.apply(corner, Player::P1).expect("an empty cell");
-
     let cells = legal_placements(&board);
-    assert!(
-        cells
-            .iter()
-            .all(|&at| at.distance(corner) <= LEGAL_RADIUS && at != corner),
-        "every placement is in the ball, and the stone's own cell is not one"
-    );
     assert!(
         cells.contains(&Coord::new(i16::MAX, i16::MAX - 2))
             && cells.contains(&Coord::new(i16::MAX - 2, i16::MAX)),
         "the cells that do exist at the edge are still placements"
+    );
+    let near = Coord::new(i16::MIN + 2, i16::MIN + 2);
+    let mut near_board = Board::empty();
+    near_board.apply(near, Player::P1).expect("an empty cell");
+    let near_cells = legal_placements(&near_board);
+    assert!(
+        near_cells.contains(&Coord::new(i16::MIN, i16::MIN + 2))
+            && near_cells.contains(&Coord::new(i16::MIN + 2, i16::MIN)),
+        "the near edge's own surviving cells are placements too"
     );
     let ball_at_the_origin = legal_placements(&{
         let mut board = Board::empty();

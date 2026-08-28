@@ -1,5 +1,3 @@
-use std::collections::BTreeSet;
-
 use crate::board::{Board, Player};
 use crate::coord::Coord;
 use crate::error::CoreError;
@@ -104,18 +102,62 @@ fn region_cells(board: &Board) -> Vec<Coord> {
     if board.is_empty() {
         return vec![Coord::ORIGIN];
     }
-    let offsets = ball_offsets();
-    let mut cells = BTreeSet::new();
-    for (stone, _) in board.stones() {
-        for &delta in &offsets {
-            // A ball cell off the addressable lattice is not a cell, so it is
-            // not in the region either (docs/decisions.md D-47).
-            if let Some(cell) = stone.checked_offset(delta) {
-                cells.insert(cell);
+    let radius = i32::from(RADIUS);
+    let stones: Vec<Coord> = board.stones().map(|(at, _)| at).collect();
+    let first_q = stones[0].q;
+    let last_q = stones[stones.len() - 1].q;
+    let low_q = first_q.saturating_sub(RADIUS);
+    let high_q = last_q.saturating_add(RADIUS);
+    let mut cells = Vec::new();
+    let mut spans: Vec<(i32, i32)> = Vec::new();
+    let (mut start, mut end) = (0usize, 0usize);
+    let mut q = low_q;
+    loop {
+        while start < stones.len() && i32::from(stones[start].q) < i32::from(q) - radius {
+            start += 1;
+        }
+        while end < stones.len() && i32::from(stones[end].q) <= i32::from(q) + radius {
+            end += 1;
+        }
+        spans.clear();
+        for stone in &stones[start..end] {
+            let dq = i32::from(q) - i32::from(stone.q);
+            let low = i32::from(stone.r) + (-radius).max(-radius - dq);
+            let high = i32::from(stone.r) + radius.min(radius - dq);
+            let low = low.max(i32::from(i16::MIN));
+            let high = high.min(i32::from(i16::MAX));
+            if low <= high {
+                spans.push((low, high));
             }
         }
+        spans.sort_unstable();
+        let mut run: Option<(i32, i32)> = None;
+        for &(low, high) in &spans {
+            match run {
+                None => run = Some((low, high)),
+                Some((run_low, run_high)) => {
+                    if low <= run_high + 1 {
+                        run = Some((run_low, run_high.max(high)));
+                    } else {
+                        for r in run_low..=run_high {
+                            cells.push(Coord::new(q, r as i16));
+                        }
+                        run = Some((low, high));
+                    }
+                }
+            }
+        }
+        if let Some((run_low, run_high)) = run {
+            for r in run_low..=run_high {
+                cells.push(Coord::new(q, r as i16));
+            }
+        }
+        if q == high_q {
+            break;
+        }
+        q += 1;
     }
-    cells.into_iter().collect()
+    cells
 }
 
 /// The offsets of a radius-[`LEGAL_RADIUS`] ball, ascending, centre included.
