@@ -506,3 +506,91 @@ fn perturb(
     assert_eq!(state.to_move(), root.to_move());
     Some(state)
 }
+
+/// WP-1.8c §5.1: the three policy sites agree over EVERY pinned fixture case,
+/// not just the one anchor position `wp18b_m4_tests.rs` drives.
+///
+/// `r3.rs` computes arm A by its own board scan — clone, play the pair, look
+/// for a live window at `own >= 4` — touching neither `ThreatState` nor the
+/// predicate under suspicion, so this is an externally derived referent for
+/// the WP-1.8c leg that replaced the apply/undo filter, and not an internal
+/// agreement. Debug-cheap: it enumerates move sets and solves nothing.
+#[test]
+fn every_pinned_case_agrees_across_the_three_policy_sites() {
+    let mut drives = 0usize;
+    let mut skipped = 0usize;
+    for (name, cases) in [
+        (FIXTURE, fixture_loader::load_solver_fixture(FIXTURE)),
+        ("solver_deep_v0.txt", fixture_loader::load_deep_fixture()),
+    ] {
+        for case in cases {
+            let state = case
+                .position()
+                .unwrap_or_else(|error| panic!("{name}/{}: {error}", case.name));
+            let attacker = state.to_move();
+            let mut threat = pistol_solver::ThreatState::new();
+            for (at, player) in state.board().stones() {
+                threat.apply(at, player);
+            }
+            // `threat_pairs`' documented precondition: step 1 has already
+            // absorbed every completing pair. On a position where the attacker
+            // wins THIS turn the two implementations legitimately diverge and
+            // always have — `policy.rs` never asks about legality, while R3'
+            // plays each pair and drops the ones rule 4 refuses (at
+            // `shallow-win-0`, `(-1,0)/(5,0)` is refused because either cell
+            // completes a line on its own). The search never asks the question
+            // there, so neither does this gate.
+            if threat
+                .can_win_this_turn(attacker, pistol_solver::StonesLeft::Two)
+                .is_some()
+            {
+                skipped += 1;
+                continue;
+            }
+            for policy_kind in [
+                pistol_solver::AttackerPolicy::BothStonesRelevant,
+                pistol_solver::AttackerPolicy::OneFreeStone,
+            ] {
+                let mut mine = Vec::new();
+                pistol_solver::policy::threat_pairs(
+                    &state,
+                    &mut threat,
+                    attacker,
+                    policy_kind,
+                    &mut mine,
+                );
+                // No `mine.is_empty()` short-circuit: a predicate that drops a
+                // clause emits a SUBSET, and a subset that empties out is
+                // exactly what this gate is for. Skipping it would suppress the
+                // one direction M-2 and M-3 push (REVIEW-impl's I-3); comparing
+                // two empty vectors costs nothing.
+                drives += 1;
+                let reference = Reference::moves_only(attacker).threat_moves(&state, policy_kind);
+                assert_eq!(
+                    mine, reference,
+                    "{name}/{} under {policy_kind:?}: policy.rs and R3' agree elementwise",
+                    case.name
+                );
+                let verifier_moves = r3_zone::threat_moves(&state, attacker, policy_kind);
+                assert_eq!(
+                    mine, verifier_moves,
+                    "{name}/{} under {policy_kind:?}: policy.rs and r3_zone agree elementwise",
+                    case.name
+                );
+            }
+        }
+    }
+    // The coverage this gate actually has, asserted rather than hoped for. A
+    // hot attacker window IS a win this turn (hot means live at own >= 4, and
+    // `can_win_this_turn` answers every one of those), so the skip above
+    // removes every position that would exercise the predicate's
+    // `hot_already` arm — that arm's own gate is
+    // `policy::tests::a_hot_position_emits_every_candidate_pair`, not this one.
+    assert!(drives > 0, "the fixtures drive the policy at all");
+    assert!(
+        skipped > 0,
+        "the pinned set contains win-this-turn positions, which is why the \
+         skip above exists rather than being dead"
+    );
+}
+

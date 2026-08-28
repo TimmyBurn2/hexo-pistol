@@ -7,6 +7,7 @@
 use pistol_core::{GameState, Player, Turn, generate_turns};
 
 use crate::config::AttackerPolicy;
+
 use crate::state::ThreatState;
 
 /// Asserted by the solver at every AND node: the attacker's last move left a
@@ -65,17 +66,60 @@ pub fn threat_pairs(
 ) {
     let mut candidates = Vec::new();
     candidate_cells(threat, attacker, &mut candidates);
-    // Arm A: v0's enumeration, order and all.
+    // ARM A'S DEF-PLAN FILTER, AS A PREDICATE (WP-1.8c leg 3). The set and the
+    // ORDER are the ones the apply/undo filter emitted — the same `i < j` walk
+    // over the same candidates — so df-pn's first-minimum tie-break sees the
+    // same sequence. What changes is the test.
+    //
+    // A pair creates a hot window iff, after it, some live attacker window
+    // holds four or more own stones. Own counts never fall, and attacker stones
+    // never kill an attacker window's liveness, so from a live window at own k
+    // the pair reaches four exactly two ways: k == 3 and the pair supplies one
+    // of that window's empties (the `cells_raising_to_hot` class), or k == 2
+    // and the pair supplies TWO of them. k <= 1 cannot reach four with two
+    // stones. The classes NEST (`sets.rs`), so "hot" here is exactly
+    // `own >= 4 && live` and those two routes are all of them.
+    //
+    // `hot_already` is the general statement for a position that is already
+    // hot, where the committed filter passes every pair. A search node past
+    // step 1 is never such a position, but this function is public and the
+    // three-site agreement test drives it directly on fixture positions that
+    // ARE — so the arm is exercised rather than dead.
     out.clear();
+    let hot_already = !threat.hot_windows(attacker).is_empty();
+    let mut raisers = Vec::new();
+    threat.cells_raising_to_hot(attacker, crate::NearHot::Three, &mut raisers);
+    raisers.sort_unstable();
+    raisers.dedup();
+    let mut joint: Vec<(pistol_core::Coord, pistol_core::Coord)> = Vec::new();
+    if !hot_already {
+        let board = state.board();
+        for window in threat.live_windows_at_count(attacker, crate::LiveCount::Two) {
+            // A live window holds no defender stone, so its non-own cells are
+            // empty and there are exactly WINDOW_LEN - 2 of them.
+            let empties: Vec<pistol_core::Coord> = (0..6u8)
+                .map(|index| window.cell(index))
+                .filter(|&at| !board.is_occupied(at))
+                .collect();
+            for (index, &first) in empties.iter().enumerate() {
+                for &second in &empties[index + 1..] {
+                    joint.push((first.min(second), first.max(second)));
+                }
+            }
+        }
+        joint.sort_unstable();
+        joint.dedup();
+    }
     for (index, &first) in candidates.iter().enumerate() {
         for &second in &candidates[index + 1..] {
-            let turn = Turn::pair(first, second).expect("candidate cells are distinct");
-            threat.apply(first, attacker);
-            threat.apply(second, attacker);
-            let creates = !threat.hot_windows(attacker).is_empty();
-            threat.undo(second, attacker);
-            threat.undo(first, attacker);
+            let creates = hot_already
+                || raisers.binary_search(&first).is_ok()
+                || raisers.binary_search(&second).is_ok()
+                || joint
+                    .binary_search(&(first.min(second), first.max(second)))
+                    .is_ok();
             if creates {
+                let turn = Turn::pair(first, second).expect("candidate cells are distinct");
                 out.push(turn);
             }
         }
@@ -84,10 +128,8 @@ pub fn threat_pairs(
         return;
     }
     // Arm B: raisers ascending, free cells ascending (the design §2 order).
-    let mut raisers = Vec::new();
-    threat.cells_raising_to_hot(attacker, crate::NearHot::Three, &mut raisers);
-    raisers.sort_unstable();
-    raisers.dedup();
+    // The raiser set is the one leg 3 already computed above — same query, same
+    // sort, same dedup — so it is reused rather than asked for twice.
     if raisers.is_empty() {
         return;
     }
@@ -174,10 +216,11 @@ pub fn blocking_pairs(
             "pistol-solver invariant {COVER_CLASS_MISMATCH}: expected minimal covers, got {covers:?}"
         )
     };
+    let legal = pistol_core::legal_placements(state.board());
     for minimal in minimal_covers {
         match minimal {
             crate::MinimalCover::One(at) => {
-                for other in pistol_core::legal_placements(state.board()) {
+                for &other in &legal {
                     if other != at {
                         out.push(
                             Turn::pair(at, other).expect("a plan cell and a legal cell differ"),
@@ -441,6 +484,47 @@ mod tests {
         for turn in &pairs {
             assert!(covers_plans(&state, &threat, Player::P1, turn));
         }
+    }
+
+    /// The `hot_already` arm of arm A's predicate, which nothing else gates.
+    ///
+    /// It is the branch for a position where the attacker ALREADY holds a hot
+    /// window, and there the committed apply/undo filter passed every pair —
+    /// placing two more attacker stones cannot un-hot a window. A hot attacker
+    /// window is also a win THIS turn, so `dfpn_or` answers such a position at
+    /// step 1 and never reaches this function; the three-site agreement gate
+    /// skips them for the same reason, and the arm exists so `threat_pairs`
+    /// stays total on an input its callers do not produce. Dropping it is a
+    /// registered mutant, and this is what kills it.
+    #[test]
+    fn a_hot_position_emits_every_candidate_pair() {
+        let state = open_four_position();
+        let attacker = Player::P1;
+        let mut threat = threat_of(&state);
+        assert!(
+            !threat.hot_windows(attacker).is_empty(),
+            "the open-four shape is hot for P1"
+        );
+        let mut candidates = Vec::new();
+        candidate_cells(&threat, attacker, &mut candidates);
+        let mut expected = Vec::new();
+        for (index, &first) in candidates.iter().enumerate() {
+            for &second in &candidates[index + 1..] {
+                expected.push(Turn::pair(first, second).expect("candidates are distinct"));
+            }
+        }
+        let mut emitted = Vec::new();
+        threat_pairs(
+            &state,
+            &mut threat,
+            attacker,
+            crate::config::AttackerPolicy::BothStonesRelevant,
+            &mut emitted,
+        );
+        assert_eq!(
+            emitted, expected,
+            "every candidate pair keeps a window that is already hot"
+        );
     }
 
     #[test]

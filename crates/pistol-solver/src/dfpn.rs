@@ -110,6 +110,12 @@ pub struct Search<'a> {
     stats: &'a mut SearchStats,
 }
 
+/// Named refusal for a constructed child key that is not the key the turn
+/// produces. Unreachable while `child_keys`' precondition holds; the outcome
+/// exists so the invariant has a failure mode rather than a wrong answer.
+pub const CHILD_KEY_MISMATCH: &str =
+    "SOLVER_CHILD_KEY: the constructed child key is not the key the turn produces";
+
 /// A named outcome for the case the policy game outgrows the INF sentinel:
 /// neither provable nor disprovable within it. Not an answer.
 pub const STALLED: &str =
@@ -345,6 +351,11 @@ impl<'a> Search<'a> {
             let dt1 = dt - rest;
             let pt1 = pt.min(self.epsilon.loosen(p2));
             apply_turn(state, threat, turn);
+            // The child whose key is about to be stored under: one comparison
+            // against the key `child_keys` constructed, on every build, because
+            // a wrong key here is a silent wrong answer rather than a crash.
+            // `GameState::key` is carried incrementally, so this is a read.
+            assert_eq!(state.key(), child_key, "{CHILD_KEY_MISMATCH}");
             let returned = self.dfpn(state, threat, pt1, dt1);
             undo_turn(state, threat, turn);
             // SPENT MEANS STORE NOTHING (design §2a as amended, REVIEW-impl
@@ -504,6 +515,7 @@ impl<'a> Search<'a> {
             let pt1 = pt - rest;
             let dt1 = dt.min(self.epsilon.loosen(d2));
             apply_turn(state, threat, turn);
+            assert_eq!(state.key(), child_key, "{CHILD_KEY_MISMATCH}");
             let returned = self.dfpn(state, threat, pt1, dt1);
             undo_turn(state, threat, turn);
             // Same spent-means-store-nothing rule as the OR loop above.
@@ -522,15 +534,58 @@ impl<'a> Search<'a> {
         threat: &mut ThreatState,
         moves: &[Turn],
     ) -> Vec<(Turn, Key128)> {
-        moves
+        // The key is a pure XOR of one `cell_key` per stone with the side and
+        // phase words, so a child's key is the parent's with two stones and the
+        // side turned over — no board mutation, no `ThreatState` traffic. The
+        // phase word cancels because the turn starts and ends at `Phase::First`.
+        //
+        // THE PRECONDITION IS THAT THE TURN DOES NOT COMPLETE A WIN, and it is
+        // not the weaker "both stones are placed": `GameState::place` restores
+        // `Phase::First` on a winning ply and returns BEFORE turning the side
+        // over, so a pair whose second stone completes six places both stones,
+        // lands at `Phase::First`, and leaves the side unflipped — this formula
+        // would then be wrong by exactly the two side words. Both call sites
+        // discharge it: the OR node has already answered
+        // `can_win_this_turn(attacker, Two)` with a leaf proof and the AND node
+        // `can_win_this_turn(defender, Two)` with a leaf disproof, and that
+        // query is complete for two-stone completions. The debug assert below
+        // and the descent assert in both loops are what keep it discharged.
+        let mover = state.to_move();
+        let base = state
+            .key()
+            .xor(pistol_core::side_key(mover))
+            .xor(pistol_core::side_key(mover.opponent()));
+        let out: Vec<(Turn, Key128)> = moves
             .iter()
             .map(|&turn| {
-                apply_turn(state, threat, turn);
-                let key = state.key();
-                undo_turn(state, threat, turn);
+                // A SINGLE-stone turn would key as the parent with the side
+                // turned over, because `turn_cells` repeats its one cell and
+                // the two `cell_key` XORs cancel. No policy emits one —
+                // `blocking_pairs` says so and `threat_pairs` builds only
+                // pairs — and the descent assert below only sees children the
+                // search descends into, so the exclusion is stated here where
+                // a future policy would meet it.
+                debug_assert!(
+                    matches!(turn, Turn::Pair(..)),
+                    "the policies emit pairs; a single-stone turn would key as its own parent"
+                );
+                let [first, second] = turn_cells(&turn);
+                let key = base
+                    .xor(pistol_core::cell_key(first, mover))
+                    .xor(pistol_core::cell_key(second, mover));
                 (turn, key)
             })
-            .collect()
+            .collect();
+        debug_assert!(
+            out.iter().all(|&(turn, key)| {
+                apply_turn(state, threat, turn);
+                let played = state.key();
+                undo_turn(state, threat, turn);
+                played == key
+            }),
+            "every constructed child key equals the key the turn actually produces"
+        );
+        out
     }
 
     /// A child's current numbers: the table's, or the unsolved-leaf
