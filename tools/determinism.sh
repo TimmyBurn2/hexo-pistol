@@ -71,7 +71,7 @@ SEATS=(
 	# budgets would make this seat an hours-long run where its job is the
 	# ON path's byte-identity under the D-7 law — reproducibility, not the
 	# registered strength budgets (which the SPRT seat owns alone).
-	"staged-solver configs/gate_staged_solver_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt depth_turns_2 nodes_10000"
+	"staged-solver configs/gate_staged_solver_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt depth_turns-2 nodes-10000"
 )
 
 # The budgets, both reproducible. A wall-clock budget could not be compared at
@@ -164,8 +164,10 @@ run_seat() {
 	local name="$1" config="$2" fixture="$3"
 	shift 3
 	# Per-seat budget overrides (WP-1.8b's solver seat): trailing words
-	# spell budgets with `_` for the space, because the seat list is
-	# whitespace-split. Empty means the standing BUDGETS.
+	# spell budgets with `-` for the space (NOT `_`, which the budget
+	# keywords themselves contain — `depth_turns-2`, not `depth_turns_2`,
+	# which substituted into `depth turns 2` and refused twenty times).
+	# Empty means the standing BUDGETS.
 	# NOT "${@:-}": that default expands to ONE EMPTY STRING when no
 	# override words were passed — an empty `go ` budget, twenty protocol
 	# refusals, and a gate that fails on its own plumbing (caught on the
@@ -173,7 +175,7 @@ run_seat() {
 	local -a budgets=()
 	if (( $# )); then
 		budgets=("$@")
-		budgets=("${budgets[@]//_/ }")
+		budgets=("${budgets[@]//-/ }")
 	else
 		budgets=("${BUDGETS[@]}")
 	fi
