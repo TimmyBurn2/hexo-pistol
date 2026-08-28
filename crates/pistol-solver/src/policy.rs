@@ -239,10 +239,10 @@ pub fn blocking_pairs(
         for turn in
             generate_turns(state).expect("an AND node is an undecided position at Phase::First")
         {
-            if let Turn::Pair(..) = turn {
-                if covers_plans(state, threat, attacker, &turn) {
-                    spec.push(turn);
-                }
+            if let Turn::Pair(..) = turn
+                && covers_plans(state, threat, attacker, &turn)
+            {
+                spec.push(turn);
             }
         }
         spec.sort_unstable();
@@ -274,8 +274,6 @@ pub fn turn_cells(turn: &Turn) -> [pistol_core::Coord; 2] {
         Turn::Pair(first, second) => [*first, *second],
     }
 }
-
-const NO_PLAN_SINGLE_TURN: &str = "SOLVER_SINGLE_TURN_AT_AND";
 
 #[cfg(test)]
 mod tests {

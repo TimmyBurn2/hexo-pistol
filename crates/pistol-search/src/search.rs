@@ -193,7 +193,7 @@ impl Searcher {
         // trigger reads a `ThreatState` only the Staged policy maintains,
         // and a gate that silently did nothing would be rule 3's sin.
         let solver = match params.solver {
-            Some(wiring) if !tracks_threats => {
+            Some(_wiring) if !tracks_threats => {
                 return Err(SearchError::params(
                     "solver.on_search_path",
                     "is true under a Radius-kind candidate_policy: the trigger reads the staged \
