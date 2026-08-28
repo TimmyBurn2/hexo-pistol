@@ -1,4 +1,5 @@
 pub mod bench;
+pub mod census;
 pub mod distance;
 pub mod documents;
 pub mod emit;

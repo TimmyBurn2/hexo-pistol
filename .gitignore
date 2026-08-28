@@ -34,3 +34,8 @@
 # never committed — local/sealbot.example.toml is the committed shape.
 /local/*
 !/local/sealbot.example.toml
+
+# Python bytecode from the tools/ scripts: build output, never committed
+# (CLAUDE.md rule 8).
+__pycache__/
+*.pyc

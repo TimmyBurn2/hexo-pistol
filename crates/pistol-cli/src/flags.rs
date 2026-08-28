@@ -36,6 +36,27 @@ pub fn one<'a>(found: &[(&'a str, &'a str)], name: &str, usage: &str) -> Result<
     Ok(value)
 }
 
+/// The one value of a flag that may be absent.
+///
+/// `Ok(None)` means absent, which is the only difference from [`one`]. Given
+/// twice is still an error: an `if let Ok(..)` over [`one`] would discard that
+/// refusal along with the flag, and silently skip whatever the flag gates
+/// (CLAUDE.md rule 3).
+///
+/// # Errors
+///
+/// When the flag appears more than once.
+pub fn optional<'a>(found: &[(&'a str, &'a str)], name: &str) -> Result<Option<&'a str>, String> {
+    let mut matches = found.iter().filter(|(flag, _)| *flag == name);
+    let Some((_, value)) = matches.next() else {
+        return Ok(None);
+    };
+    if matches.next().is_some() {
+        return Err(format!("`{name}` is given more than once"));
+    }
+    Ok(Some(value))
+}
+
 /// Refuse a flag this command does not have.
 pub fn only(found: &[(&str, &str)], allowed: &[&str], usage: &str) -> Result<(), String> {
     for (flag, _) in found {
