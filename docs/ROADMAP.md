@@ -199,10 +199,37 @@ is NOT on the search path; WP-1.8b wires it. Open debts are named in §9a
 gate (c)'s licensed deep re-inclusion; deep NoWin adjudication beyond the
 v0 instruments).
 
-**WP-1.8b — wire the solver into pistol-search.** The WP-1.8a solver is not
-on the search path; this package wires it. Its first debt is a second shape
-family for gate (b)'s deep set (one base geometry plus its mirror is not
-diversity, the red team's finding).
+**WP-1.8b — CLOSED, IMPLEMENTED AND GATED OFF, NO STRENGTH CLAIM (D-441).**
+The solver is wired into `pistol-search` behind `[solver] on_search_path`
+(false in every committed config, schema v3), the M4 one-free-stone
+widening applied first (the anchor probe's branch B: v0 proved the
+winners' conversions only two turns after sealbot's own collapse; M4
+moves game 1's winner-proof TO the collapse turn itself — a measured
+value flip, v0 refutes g001-t42 at 955 nodes where M4 proves it at
+10,726, independently re-verified full-width in 37 s). The wiring: root
++ turn-boundary trigger calls (any open four-or-better, by calculus
+ID), both directions (the defender entry is a thin wrapper over df-pn's
+own to-move dispatch — zero df-pn changes), solver nodes counted against
+the shared per-side budget with `search_nodes`/`solver_nodes` as two
+independent printed counters, the per-call cap with
+spent-means-store-nothing semantics, the root defender proof's Z2 zone
+restriction (fail-open), and `SolveOutcome::Unknown` never laundering as
+`NoWin`. **The rule-5 bench ABORTED its registered bracket: at cap 16384
+the ON seat's nps ratio measured ≤ 0.02 against the ≥ 0.5 bound (OFF
+223,668 nps; ON searches 9–240+ s, receipts
+`artifacts/wp18b_bench_v1.txt`) — the ON seat is not a candidate for h1
+regardless of any SPRT, per the pre-registered clause, and the governed
+SPRT was FORECLOSED BY OPERATOR OVERRULE (D-441): no verdict branch
+could move the committed config.** The wiring stays exercised in CI by
+the determinism gate's fourth seat (its own budgets, cap 512). **The
+cost findings are WP-1.8c's inputs**: the AND-side enumeration was
+50–100× too slow and got its minimal-cover fast path (with the rule-5
+opened-ball subtlety the inline equivalence check caught live); the
+OR-side arm-B enumeration (`|R|·|L|` constructions per visit, MEASURED
+|R| mean 5.2 / |L| mean 480) is the remaining hotspot; the M4 probe
+artifacts (`wp18b_probe_v{1,2}_results.txt`) and the TT knee probe
+(1.8a) are the rest of the file. The deep-shape-family debt (a second
+family for gate (b)) is unscheduled as before.
 
 **WP-1.9 — eval window-map storage** (docs/decisions.md D-225, renumbered by
 D-249). Replace `pistol-eval`'s `BTreeMap<Window, Counts>` with the storage
