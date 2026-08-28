@@ -231,6 +231,32 @@ artifacts (`wp18b_probe_v{1,2}_results.txt`) and the TT knee probe
 (1.8a) are the rest of the file. The deep-shape-family debt (a second
 family for gate (b)) is unscheduled as before.
 
+**WP-1.8c — CLOSED, BRACKET ABORT, AND THE WP-1.8 ARC CLOSES WITH IT
+(docs/decisions.md D-461..D-465).** The registered hotspot was real and the
+commissioning dispatch located it one layer too early: arm B's own construction
+is 0.15 % of the solve wall, while the `|R|·|L|` count it generates is paid in
+`child_keys` — MEASURED 79.6 % of the committed wall — exactly as
+`wp18b_m4_design.md` §2 said it would be. Four OUTPUT-IDENTICAL legs (child keys
+by zobrist delta; `legal_placements` hoisted out of the cover loop; arm A's
+DEF-PLAN filter as a predicate over raisers and live-two windows;
+`region_cells` by row sweep) take one df-pn visit from **2,904 to 91.80 µs on
+the WP-1.3 corpus and 2,201 to 85.02 on the 85 anchor positions — 31.63× and
+25.89×** at IDENTICAL node counts on every rung of a five-revision ladder.
+**AND THE BRACKET STILL ABORTS**: corpus bands 0.0809 and 0.0458 against ≥ 0.5,
+trigger-rich 0.0488 against ≥ 0.25, IQR gate clean, so no SPRT (D-465). The cap
+is not the lever and the WP measured that rather than argued it — 64× less cap
+buys 2.3× of ratio. **Three defects inherited from 1.8a/1.8b were found by this
+WP's own instruments and fixed here**: the TT replacement law was not
+epoch-aware, so a solve's answer depended on the solves before it (D-462); the
+node budget was not enforced on the gate-on seat, which spent a measured mean
+3× its budget (D-463); and the trigger-rich bench fixture was neither sha-pinned
+nor loadable nor as trigger-rich as registered, so half the bracket had never
+been runnable (D-464). The gate stays `false` in every committed config; the
+solver stays implemented, oracle-gated and determinism-seated. **RE-TEST
+SCHEDULED** alongside WP-1.6's quiescence re-test at the Stage-2 exit, and
+whenever a measured nps jump lands — the bench re-runs first, new
+pre-registration, fresh slice, never a re-read.
+
 **WP-1.9 — eval window-map storage** (docs/decisions.md D-225, renumbered by
 D-249). Replace `pistol-eval`'s `BTreeMap<Window, Counts>` with the storage
 shape WP-1.5a's matrix selects. LICENSED, NOT SCHEDULED: it owes its own option
@@ -307,7 +333,7 @@ protocol, n, distinct-n, per-side compute, first-player win rate).
 The human corpus `b2fe61eb…` **cannot be re-acquired**: the scraper that built
 it is gone and no endpoint, script or token for it survives anywhere. It is
 ARTIFACT-GRADE. That licenses statements *about the artifact* and existence
-proofs needing only authenticity — so D-446's zero-duplicates census, D-447's
+proofs needing only authenticity — so D-463's zero-duplicates census, D-464's
 turn-14 sharing horizon and D-218's radius-6 refutation all stand. It does not
 license anything generalising to the platform's players, so **D-434's Stage-2
 Texel-style calibration and independent holdout are BLOCKED** until a
