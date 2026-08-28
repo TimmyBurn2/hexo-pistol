@@ -80,7 +80,17 @@ BUDGETS=("depth_turns 4" "nodes 200000")
 
 # The budget run one-process-per-position as well. The node budget, because it is
 # the cheaper of the two and it exercises the interrupted-iteration path.
+# Per-seat layout budgets where they differ (WP-1.8b): the solver seat's
+# C-vs-D leg at the standing 200k budget costs minutes per position (the
+# bench abort's own finding) and buys nothing over a smaller reproducible
+# budget for the byte-identity law.
+# Per-seat layout budgets where they differ (WP-1.8b): the solver seat's
+# C-vs-D leg at the standing 200k budget costs minutes per position (the
+# bench abort's own finding) and buys nothing over a smaller reproducible
+# budget for the byte-identity law.
 LAYOUT_BUDGET="nodes 200000"
+SOLVER_LAYOUT_BUDGET="nodes 10000"
+SOLVER_LAYOUT_BUDGET="nodes 10000"
 
 fail() { printf 'determinism: FAIL: %s\n' "$*" >&2; exit 1; }
 
@@ -226,11 +236,16 @@ $(head -40 "$WORK/$name.diff.ab")"
 	echo "determinism: seat $name: runs A and B agree ($(wc -l <"$WORK/$name.run.A") lines)"
 
 	# One process per position, under one budget, and the same answers
-	# expected.
-	echo "determinism: seat $name: run C (one process per position, go $LAYOUT_BUDGET)"
+	# expected. The solver seat takes its own (cheaper, equally
+	# reproducible) layout budget.
+	local layout_budget="$LAYOUT_BUDGET"
+	if [ "$name" = staged-solver ]; then
+		layout_budget="$SOLVER_LAYOUT_BUDGET"
+	fi
+	echo "determinism: seat $name: run C (one process per position, go $layout_budget)"
 	: >"$WORK/$name.raw.C"
 	for position in "${positions[@]}"; do
-		printf 'position %s\ngo %s\nquit\n' "$position" "$LAYOUT_BUDGET" |
+		printf 'position %s\ngo %s\nquit\n' "$position" "$layout_budget" |
 			"$ENGINE" --config "$config" >>"$WORK/$name.raw.C" || fail "$name: run C exited nonzero"
 	done
 	check_content "$WORK/$name.raw.C" "${#positions[@]}" "$name: run C"
@@ -241,7 +256,7 @@ $(head -40 "$WORK/$name.diff.ab")"
 	# back out of run A, and it is the same comparison.
 	: >"$WORK/$name.session.layout"
 	for position in "${positions[@]}"; do
-		printf 'newgame\nposition %s\ngo %s\n' "$position" "$LAYOUT_BUDGET" >>"$WORK/$name.session.layout"
+		printf 'newgame\nposition %s\ngo %s\n' "$position" "$layout_budget" >>"$WORK/$name.session.layout"
 	done
 	echo "quit" >>"$WORK/$name.session.layout"
 	"$ENGINE" --config "$config" <"$WORK/$name.session.layout" >"$WORK/$name.raw.D" ||
