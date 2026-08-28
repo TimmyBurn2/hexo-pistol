@@ -611,12 +611,22 @@ impl<'a> Run<'a> {
         let check_now = match self.stop {
             Stop::Deadline(_) => true,
             Stop::DepthTurns(_) | Stop::Nodes(_) => {
-                // The mask check runs on the DERIVED total (design wp18b
-                // §3): solver nodes absorbed since the last check shift
-                // the residue, and the stop fires at the next multiple the
-                // total lands on — deterministic on every run, with the
-                // overshoot bounded by the intervening calls' caps.
-                self.total_nodes().is_multiple_of(NODE_CHECK_INTERVAL)
+                // THE MASK RUNS ON THE COUNTER THAT MOVES BY ONE (WP-1.8c §4d).
+                // wp18b §3 put it on the DERIVED total, and a solver call
+                // absorbs its whole node count at once — so an exact-multiple
+                // test on that total steps OVER the multiples and does not
+                // fire. MEASURED: the ON seat spent a mean 156,313 nodes per
+                // position against a 50,000 budget, max 648,192. `search_nodes`
+                // increments once per visit and so lands on every multiple; the
+                // SPENT test below still reads the derived total, so the budget
+                // stopped at is still the shared one.
+                //
+                // The second disjunct bounds the ON seat's overshoot by ONE
+                // visit's own calls — which is what wp18b §3 claimed and did
+                // not have. It is `false` for the whole life of every gate-off
+                // search, so every committed config's node counts are
+                // byte-unchanged.
+                self.search_nodes.is_multiple_of(NODE_CHECK_INTERVAL) || self.solver_nodes > 0
             }
         };
         if !check_now {

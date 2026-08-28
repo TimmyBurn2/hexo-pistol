@@ -22,6 +22,14 @@
 #
 # Usage: tools/search_oracle_check.sh
 # Exit:  0 the search and the reference agree everywhere, 1 they do not.
+#
+# THIS SCRIPT HAS NO VOID CLASS, and that is a limitation rather than a claim
+# (SHELL_CHECKLIST item 12.1). Every block below reports a non-zero `cargo test`
+# as a disagreement between the search and its reference, so a run that could
+# not be taken at all — a cargo lock, a full disk, an OOM — is reported as a
+# regression in the subject. Adding a third exit would mean distinguishing those
+# from a real failure by parsing cargo's output, which is the parse this
+# checklist exists to discourage; the honest thing is to say so here.
 
 set -euo pipefail
 
@@ -60,3 +68,11 @@ echo "search_oracle_check: the depths a debug build cannot afford"
 cargo test --release --locked --package pistol-search --test search_oracle_deep_tests -- \
 	--include-ignored --nocapture ||
 	fail "the search and the reference disagree at depth 3 or 4"
+
+# The gated seat's node budget (WP-1.8c §4d). Release-only for the same reason
+# as the depths above: a gated visit pays the solver's blanket agreement
+# asserts in debug, and this one has to spend a whole budget to say anything.
+echo "search_oracle_check: the gated seat spends the budget it is given"
+cargo test --release --locked --package pistol-search --test wp18b_solver_path_tests -- \
+	--include-ignored --nocapture ||
+	fail "the solver-on-the-search-path wiring's own tests failed"

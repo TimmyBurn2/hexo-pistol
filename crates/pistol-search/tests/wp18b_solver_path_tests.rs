@@ -1,3 +1,11 @@
+// RULE9-JUSTIFICATION: every test here drives the SAME gated searcher over
+// the SAME two pinned anchor positions — the wiring's answer, its parity
+// law, its two node counters and (WP-1.8c) the budget those counters are
+// spent against are four readings of one seat, and the seat is the
+// `wiring`/`searcher` harness at the top. Splitting them would copy that
+// harness and its pinned plies into each shard, and a second copy of a
+// position is what lets two shards drift onto different positions while
+// both claim to test the same wiring.
 use pistol_core::{Coord, GameState, Player, Turn};
 use pistol_eval::{HandcraftedV0, Weights};
 use pistol_search::params::{SolverTrigger, SolverWiring};
@@ -6,8 +14,15 @@ use pistol_solver::pn::Epsilon;
 use pistol_solver::{AttackerPolicy, Solver, SolverParams};
 
 fn wiring() -> SolverWiring {
+    wiring_capped(16384)
+}
+
+/// The same wiring at a stated cap: §4d's budget gate needs a cap small
+/// enough that a DEBUG build finishes, and the bound it asserts is stated in
+/// terms of the cap rather than of a literal.
+fn wiring_capped(per_call_node_cap: u64) -> SolverWiring {
     SolverWiring {
-        per_call_node_cap: 16384,
+        per_call_node_cap,
         trigger: SolverTrigger::AnyOpenFour,
         inner: SolverParams {
             epsilon: Epsilon::new(1, 4).expect("1/4 is valid"),
@@ -39,9 +54,13 @@ fn weights() -> Weights {
 }
 
 fn searcher(gate_on: bool) -> Searcher {
+    searcher_capped(gate_on, 16384)
+}
+
+fn searcher_capped(gate_on: bool, cap: u64) -> Searcher {
     let params = SearchParams {
         tt_bytes: 1 << 24,
-        solver: gate_on.then(wiring),
+        solver: gate_on.then(|| wiring_capped(cap)),
         candidate_policy: pistol_search::CandidatePolicy::Staged(staged()),
     };
     Searcher::new(params, Box::new(HandcraftedV0::new(weights())))
@@ -271,5 +290,115 @@ fn newgames_solver_clear_is_observably_neutral() {
         (first.best, first.info.nodes, first.info.score),
         (second.best, second.info.nodes, second.info.score),
         "a cleared solver answers identically — the reset is hygiene, not state"
+    );
+}
+
+/// WP-1.8c §4d: the node budget binds the ON seat too.
+///
+/// wp18b §3 masked the stop on the DERIVED total, which a solver call moves
+/// by its whole node count at once — so the exact-multiple test stepped over
+/// every multiple and the stop did not fire. MEASURED before the fix: a mean
+/// 156,313 nodes per corpus position against a 50,000 budget, maximum 648,192.
+/// The bound below is what wp18b §3 CLAIMED and did not have: one interval of
+/// search nodes, plus one visit's own two capped calls.
+///
+/// THE POSITION IS PART OF THE GATE TOO. `G001_T45` answers through a root
+/// proof in about a thousand nodes, so the budget never binds there and NO
+/// budget check — broken or fixed — is ever consulted; the mutation round found
+/// that too. This one is a midgame position where the gated seat runs long
+/// enough to be stopped.
+///
+/// THE CAP IS PART OF THE GATE, not a convenience. A solver call moves the
+/// derived total by up to `2 * CAP`, and the broken check misses a multiple of
+/// `NODE_CHECK_INTERVAL` only when the jump can step over one — so at a cap
+/// below half the interval the old check still lands often enough to pass this
+/// bound, and the mutant survives. It did: the first version of this test used
+/// 256 and the mutation round found it. At the registered 2048 a call's two
+/// directions move the derived total by up to four intervals, which is what the
+/// broken check cannot see past.
+const CORPUS_B35_BUDGET_BOUND: &[&str] = &[
+    "0,0", "0,-1", "1,0", "-1,1", "1,-1", "-4,4", "2,-2", "-2,1", "0,1", "-4,1", "1,1", "-4,3",
+    "-3,2", "-5,2", "-5,4", "-7,4", "-2,4", "-3,0", "-2,-1", "-1,-2", "0,4", "0,3", "1,2", "-1,4",
+    "4,-1", "-2,3", "-1,3", "1,3", "4,0", "3,-2", "4,-2", "1,-2", "6,-2", "0,2", "2,2",
+];
+
+#[test]
+#[ignore = "minutes in a debug build (the solver's blanket agreement asserts): \
+            tools/search_oracle_check.sh runs it in release"]
+fn the_node_budget_binds_the_gated_seat() {
+    // Small enough that a DEBUG build finishes — the blanket agreement asserts
+    // make a debug solver visit expensive — and large enough that the seat is
+    // stopped BY THE BUDGET, which the assertion below insists on rather than
+    // hopes for.
+    const BUDGET: u64 = 20_000;
+    let state = state_of(CORPUS_B35_BUDGET_BOUND);
+    // TWO CAPS, and the pair is the gate rather than a belt-and-braces. 2048 is
+    // §4b's registered value, so the seat that ships is covered. 1024 is there
+    // because the broken check's severity depends on ARITHMETIC the registered
+    // cap happens to be kind to: two capped calls at 2048 move the derived
+    // total by close to 4 x NODE_CHECK_INTERVAL, which PRESERVES the residue,
+    // so the exact-multiple test keeps landing and the overshoot stays inside
+    // the bound. MEASURED: with the fix reverted, cap 2048 stays under bound
+    // and cap 1024 spends 11,264 nodes against a 4,000 budget. A gate run only
+    // at the registered cap would have passed through the defect.
+    for cap in [1024u64, 2048] {
+        let mut engine = searcher_capped(true, cap);
+        let outcome = engine
+            .search(&state, Stop::Nodes(BUDGET), &mut |_| {})
+            .expect("the search runs");
+        assert!(
+            outcome.info.solver_nodes > 0,
+            "cap {cap}: the seat must actually call the solver, or this gate is vacuous"
+        );
+        // THE GATE'S OWN NON-VACUITY: a search that answers before its budget
+        // binds satisfies ANY upper bound, including the one the broken check
+        // satisfied. The first version of this test ran a position that did
+        // exactly that, and the mutation round found it green with the fix
+        // reverted.
+        assert!(
+            outcome.info.nodes >= BUDGET,
+            "cap {cap}: the seat must be STOPPED by the budget, not finish under \
+             it: {} nodes",
+            outcome.info.nodes
+        );
+        let bound = BUDGET + pistol_search::NODE_CHECK_INTERVAL + 2 * cap;
+        assert!(
+            outcome.info.nodes <= bound,
+            "cap {cap}: gated seat spent {} nodes against a {BUDGET} budget \
+             (bound {bound})",
+            outcome.info.nodes
+        );
+    }
+}
+
+/// The other half of §4d's claim: the ungated seat's own bound is the tight
+/// one the gated seat had lost, and the added disjunct does not loosen it.
+///
+/// `solver_nodes` is zero for the whole life of a gate-off search, so the
+/// disjunct never fires and the mask lands where it always landed. Byte-
+/// identity of gate-off node counts is carried by `search_budget_tests.rs`,
+/// which pins the stopping node at several ragged budgets and is what kills a
+/// mutant that checks too eagerly — NOT by `tools/determinism.sh`, which runs
+/// one binary twice and so is invariant under any code change (REVIEW-impl's
+/// I-5). What this pins is the overshoot the gated seat measured at 3x its
+/// budget before §4d.
+#[test]
+fn the_ungated_seat_keeps_the_tight_overshoot_bound() {
+    const BUDGET: u64 = 20_000;
+    let state = state_of(CORPUS_B35_BUDGET_BOUND);
+    let mut engine = searcher(false);
+    let outcome = engine
+        .search(&state, Stop::Nodes(BUDGET), &mut |_| {})
+        .expect("the search runs");
+    assert_eq!(outcome.info.solver_nodes, 0);
+    assert!(
+        outcome.info.nodes >= BUDGET,
+        "the ungated seat must be stopped by the budget too: {} nodes",
+        outcome.info.nodes
+    );
+    assert!(
+        outcome.info.nodes <= BUDGET + pistol_search::NODE_CHECK_INTERVAL,
+        "an ungated search overshoots by less than one check interval, got {}",
+        outcome.info.nodes
     );
 }
