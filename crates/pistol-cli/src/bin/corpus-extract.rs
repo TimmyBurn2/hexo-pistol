@@ -1,18 +1,3 @@
-//! `corpus-extract` — human game records in, sha-pinned fixtures out.
-//!
-//! A separate binary from `pistol`, deliberately. It builds no engine, loads no
-//! config and searches nothing, and a one-shot curation tool has no business
-//! being linked into the program that ships (docs/decisions.md D-136). It is in
-//! pistol-cli because this crate holds the workspace's binaries and already owns
-//! the fixture forms and the digest that pins them — the alternative, pistol-arena,
-//! has no SHA-256 and would grow the workspace's third copy of one.
-//!
-//! Fails loudly and says which document it refused (CLAUDE.md rule 3). Every
-//! extraction parameter is a named constant in the library, echoed into each
-//! header, so a fixture states what produced it; there is no flag to tune one,
-//! because a fixture whose shape depended on an operator's typing would not be
-//! reproducible from its own header.
-
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 

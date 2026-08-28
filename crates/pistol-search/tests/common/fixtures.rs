@@ -1,34 +1,3 @@
-//! The oracle's positions: where they come from, and why they are these.
-//!
-//! Four sources, and the point of having four is that they fail differently.
-//!
-//! - **tactical-v0**, read in place from pistol-cli's sha-pinned fixture. Twenty
-//!   positions somebody reasoned about: mates in one, must-blocks, mates in
-//!   three, quiet.
-//! - **the perft oracle's positions**, read in place from pistol-core's
-//!   sha-pinned fixture. Openings and clouds chosen to stress the *legal region*
-//!   — a lone stone, a tight cluster, two lobes joined by a bridge, a win the
-//!   mover can take, and one already-decided position that both the search and
-//!   the reference must refuse.
-//! - **seeded playouts**: positions nobody designed ([`super::playouts`]).
-//! - **two built positions** that carry the mate distances this suite could not
-//!   otherwise reach, [`COMPACT_MATE_IN_3`] and the position one turn inside it.
-//!
-//! # Why the SHAs are not re-pinned here
-//!
-//! A fixture is pinned by SHA where it carries GOLDEN VALUES, so that editing
-//! the file without editing the expectation is a red test (docs/decisions.md
-//! D-37). This suite carries no golden values: its expectation is *agreement
-//! between two implementations*, which is invariant under any edit to the
-//! position set. A third std-only SHA-256 in the workspace would pin a file
-//! whose contents cannot change this suite's verdict. Drift is still caught, by
-//! the owning crates' own pins, in the same `cargo test --workspace` run.
-//!
-//! The coupling this does create is a cross-crate read: moving either fixture
-//! file breaks a test in a crate that does not own it, with no compile-time
-//! signal. That is stated here and in docs/decisions.md D-122 rather than left
-//! to be discovered.
-
 use std::fs;
 use std::path::PathBuf;
 

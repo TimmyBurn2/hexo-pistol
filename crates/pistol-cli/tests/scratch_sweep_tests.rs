@@ -1,17 +1,3 @@
-//! The test scaffolding's own scratch sweep (`tests/common/mod.rs`), which is
-//! the only code in this workspace that DELETES directories it did not create.
-//!
-//! It matched the bare prefix `pistol-`, which is this workspace's own naming
-//! scheme: `pistol-core`, `pistol-cli`, `pistol-eval`, `pistol-search` and every
-//! other crate directory starts with it. A `TMPDIR` pointed at a directory
-//! holding those names — a checkout, a copy of one, a scratch tree beside one —
-//! and a PASSING test removed four crate directories on its way to making one of
-//! its own. REPRODUCED at ccba146: `TMPDIR=<dir> cargo test -p pistol-cli --test
-//! bench_delta_tests` left `unrelated-dir` and its own two scratch directories
-//! and nothing else.
-//!
-//! A sweep by prefix must own the prefix. These tests are what says it does.
-
 mod common;
 
 use std::time::Duration;

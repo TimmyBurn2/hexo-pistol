@@ -1,13 +1,3 @@
-//! The transposition table, and the one conversion that makes it safe to share
-//! a mate score between two positions at different distances from the root.
-//!
-//! A mate score is a *distance*, so it means something different at every node.
-//! Storing one without converting it is the classic transposition-table bug:
-//! the engine announces a mate in three that is really a mate in seven, or
-//! prefers a longer win over a shorter one. The conversion is in turns here,
-//! which is the unit rule 4 scores sudden death in and the unit both plies of a
-//! turn share (docs/decisions.md D-9, D-72).
-
 mod common;
 
 use common::SMALL_TT;

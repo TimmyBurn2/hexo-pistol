@@ -1,11 +1,3 @@
-//! What the search is for: seeing a win, seeing a loss coming, and counting the
-//! distance in turns.
-//!
-//! Every position here is built from a move list, so it is one a legal game
-//! could have reached (docs/decisions.md D-6, D-42), and every candidate radius
-//! is stated in the test body rather than inherited from a config file
-//! (CLAUDE.md rule 1).
-
 mod common;
 
 use common::{blob, line, position, searcher};

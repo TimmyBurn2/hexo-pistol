@@ -1,31 +1,3 @@
-//! The per-window store: what each side holds in every window that holds a
-//! stone.
-//!
-//! # The record is a MASK and not a pair of counts
-//!
-//! Six occupancy bits per side. The counts are `count_ones()` and the *empty
-//! cells* fall out as `!(p1 | p2)`, with no board access at all. A record of
-//! two counts cannot say WHICH cells are empty, so a state carrying only counts
-//! would have to hold or be handed a `&Board` on every query path — a second
-//! source of occupancy beside the one it is already maintaining, which is
-//! exactly the drift `EVAL_DESYNC` exists to catch in the eval. The per-stone
-//! update costs the same either way: one bit set or cleared per window instead
-//! of one increment.
-//!
-//! # The store
-//!
-//! A `std::HashMap` keyed by an order-preserving packed `u64`, hashed by
-//! splitmix64 with written-down constants and no seed state (docs/decisions.md
-//! D-225, D-254). It is legal for this to be hashed *because the table is never
-//! iterated on a choice path*: every query answers out of the maintained sorted
-//! sets in [`crate::sets`], and the only enumeration of the table is
-//! [`WindowTable::snapshot`], which sorts (CLAUDE.md rule 4).
-//!
-//! An entry exists exactly while the window holds at least one stone, and
-//! [`WindowTable::set`] prunes the moment it empties. That is D-62's rule for
-//! the eval's own map, and it is what makes a state that has been unwound
-//! EQUAL to a fresh one rather than merely equal in every answer.
-
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{BuildHasherDefault, Hasher};
 

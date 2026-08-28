@@ -1,11 +1,3 @@
-//! The pinned rule constants.
-//!
-//! Every value here is a **game rule**, not a tunable. None of it is
-//! configurable, none of it has a code-side default to override, and no other
-//! crate re-states any of it (CLAUDE.md rule 2). A search knob that happens to
-//! be a distance — the candidate radius — lives in the engine config and is
-//! never compared with [`LEGAL_RADIUS`] (docs/decisions.md D-20).
-
 /// Stones in a contiguous own run that win the game.
 ///
 /// The test is `run >= WIN_LEN`, never `run == WIN_LEN`: an overline of seven or

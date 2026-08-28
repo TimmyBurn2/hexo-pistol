@@ -1,15 +1,3 @@
-//! What a replayed corpus game turned out to be.
-//!
-//! The vocabulary [`super::replay`] produces and everything downstream consumes:
-//! the turn as both the record and pistol-core spell it, the reason a game is or
-//! is not eligible, and the two cross-check counts. It is a separate file for
-//! size discipline (CLAUDE.md rule 9), not a separate concept — the machine that
-//! produces these values is next door.
-//!
-//! A verdict names the flat `moves` index it points at wherever it points at
-//! one, because that is the coordinate an operator can grep the corpus with; the
-//! turn number is stated beside it but a corpus line is a flat array.
-
 use pistol_core::{Coord, Player, Turn};
 
 /// One turn of a game, as the record spells it and as pistol-core names it.

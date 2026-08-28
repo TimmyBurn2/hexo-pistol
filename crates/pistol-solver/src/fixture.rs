@@ -1,10 +1,3 @@
-//! The solver fixture loader (the `pattern_v0.txt` discipline).
-//!
-//! Strict on purpose: an unknown directive, a missing expectation, an
-//! unparseable cell, a case that does not reach an ongoing two-stone
-//! position for the mover — each is a named error, because a golden file
-//! that is quietly half-read reports a pass for cases nobody ran (rule 3).
-
 use std::fmt;
 
 use pistol_core::{Coord, GameState};

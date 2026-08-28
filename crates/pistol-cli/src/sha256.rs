@@ -1,35 +1,3 @@
-//! SHA-256, in `std` alone.
-//!
-//! CLAUDE.md rule 7 wants fixtures sha-pinned, and this workspace has no hashing
-//! dependency to do it with (docs/decisions.md D-37). So the pinning digest is
-//! computed here, and the implementation is itself pinned against the published
-//! FIPS 180-4 test vectors below, because a fixture pin computed by an
-//! unverified hash pins nothing.
-//!
-//! # Why this is library code, and why it is public
-//!
-//! It began in this crate's test tree, where a pin is only ever *checked*. WP-1.2a
-//! made the digest something a program *computes*: `corpus-extract` hashes the
-//! corpus it read and the payload it wrote, and puts both in a fixture header
-//! (docs/decisions.md D-144). A digest a binary needs at run time is library code.
-//!
-//! It is `pub` rather than `pub(crate)` for a reason worth stating, because the
-//! obvious objection is right in general: this crate's public surface is the
-//! contract the API layer will adapt (CLAUDE.md rule 11), and a hashing utility
-//! is not part of that contract. But an integration test is a separate crate and
-//! cannot see `pub(crate)`, and `tests/tactical_v0_tests.rs` pins the tactical
-//! fixture with this digest. Hiding it would leave that test needing a second
-//! copy inside pistol-cli — which is exactly what promoting the file was meant to
-//! stop. One implementation that both the binary and the pinning tests call is
-//! worth a utility module in the public surface; the alternative buys a narrower
-//! API with a duplicated hash under it.
-//!
-//! pistol-core's test tree keeps its own copy regardless, and that is a different
-//! argument: D-37 makes that crate std-only including dev-dependencies, so it
-//! cannot depend on this one. Both copies carry the FIPS vectors, so a copy that
-//! drifted would fail on its own (the argument D-69 makes for the duplicated
-//! key-path mapper).
-
 const ROUND_CONSTANTS: [u32; 64] = [
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,

@@ -1,12 +1,3 @@
-//! Turn generation: rules 3, 4 and 5 as they show up in the turns a position
-//! has.
-//!
-//! The counts are the perft oracle's business (`perft_tests.rs`). What is
-//! pinned here is the *shape* of the rules — which particular turns exist and
-//! which do not — in the cases where a plausible wrong implementation would
-//! differ by a handful of turns that a count comparison would still catch, but
-//! would not explain.
-
 mod common;
 
 use common::perft_positions::perft_case;

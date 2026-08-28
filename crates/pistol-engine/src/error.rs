@@ -1,10 +1,3 @@
-//! Named failures.
-//!
-//! Nothing in this workspace fails silently, falls back to a default, or
-//! swallows an error (CLAUDE.md rule 3). Every rejection surfaces as one of the
-//! variants below, and a configuration rejection always names the key that
-//! caused it.
-
 use std::fmt;
 
 /// The key reported when a failure cannot be attributed to a single field —

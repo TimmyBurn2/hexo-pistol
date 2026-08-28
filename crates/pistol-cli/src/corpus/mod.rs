@@ -1,30 +1,3 @@
-//! `corpus-extract` — turning a corpus of human games into pinned fixtures.
-//!
-//! The corpus is an external artifact and is never committed (CLAUDE.md rule 8);
-//! what this module produces are two sha-pinned fixtures that are, and a stats
-//! block that is neither. The corpus is identified everywhere by its SHA-256 and
-//! never by a path, so two machines given the same bytes write the same files
-//! (CLAUDE.md rule 4).
-//!
-//! - [`json`] — the corpus line's grammar, which is a strict subset of JSON.
-//! - [`record`] — the five fields, and the q/r mapping nothing downstream can
-//!   check.
-//! - [`replay`] and [`verdict`] — every game through pistol-core, and what can
-//!   be wrong with one. This is the module's most valuable output and its
-//!   least visible: replaying thousands of real platform games under the
-//!   radius-8 legal region is the first independent evidence for D-101.
-//! - [`distance`] — how far each stone landed from the stones already down,
-//!   which is the *sufficient* side of that same question: the replay shows no
-//!   game exceeds radius 8, and only this shows a game exceeding radius 6.
-//! - [`openings`] and [`bench`] — the two curations.
-//! - [`emit`] — the header and digest discipline both fixtures share, and
-//!   [`documents`] — what the two particular fixtures say.
-//! - [`stats`] — what the corpus turned out to contain.
-//!
-//! Rules truth stays in pistol-core (CLAUDE.md rule 2): nothing here decides
-//! whether a stone is legal, whether a line wins, or whose turn it is. It
-//! regroups, asks, and records the answer.
-
 pub mod bench;
 pub mod distance;
 pub mod documents;

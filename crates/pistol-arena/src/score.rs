@@ -1,24 +1,3 @@
-//! Turning games into the numbers a verdict is read off.
-//!
-//! # The observation unit
-//!
-//! The PAIR decides. Under determinism at a fixed budget an opening yields
-//! exactly one pair outcome, so the pair — not the game — is the independent
-//! observation, and a game-level test treats correlated samples as independent.
-//! The game-level LLR is still computed and reported, as a diagnostic beside
-//! the verdict rather than as the verdict (docs/decisions.md D-154).
-//!
-//! The magnitude of the difference is derived rather than asserted, because an
-//! earlier draft asserted it and had the DIRECTION backwards. Writing the LLR as
-//! evidence minus drift, the sample mean is identical at both units, so the two
-//! differ only through `sigma` — and `var_pair <= var_game` always. The upper
-//! bound on the game-level statistic is therefore attained when no pair is 1-1,
-//! and once 1-1 pairs are common enough the game-level test is CONSERVATIVE
-//! rather than anti-conservative. Measured on a constructed sample of 200 pairs
-//! of which 150 are 1-1: `llr_game` 1.1625 against `llr_pair` 1.8535. Two
-//! deterministic engines produce exactly that regime, which is why the direction
-//! an operator would have guessed is the wrong one.
-
 use crate::config::SprtSection;
 use crate::record::{GameRecord, GameResult};
 use crate::sprt::{Bounds, Sample, Unit, Verdict, crossing};

@@ -1,29 +1,3 @@
-//! `tools/staged_cover_bench.sh` — the D-263 BASELINE/remedy instrument
-//! (`docs/decisions.md` D-362, D-363, D-365; WP-1.5b Phase 4's MAJOR 3
-//! finding, `docs/experiments/wp15b_IMPL_REVIEW_REDTEAM.md`).
-//!
-//! # Why this file exists at all
-//!
-//! It produced every number D-362 and D-363 cite, and D-363's PASS verdict
-//! rests entirely on them. `tools/SHELL_CHECKLIST.md` item 10 — "any `tools/`
-//! script that produces a recorded number carries at least one test... driving
-//! the SHIPPED script" — is exactly the rule `tools/tactical_check.sh` went
-//! untested against until a review found the stale-binary class in it
-//! (`crates/pistol-cli/tests/tactical_check_gate_tests.rs`), and this script's
-//! own artifact-resolution ladder is that script's, copied for the same
-//! reason (D-250).
-//!
-//! # Scope
-//!
-//! Not the numeric measurement itself — that is what `tools/staged_soundness_check.sh`'s
-//! own gates and this WP's committed ADR lines already exercise live. This
-//! file drives the ONE class this project has a measured incident of: a stale
-//! binary at a redirected `CARGO_TARGET_DIR` silently certifying a defective
-//! engine. The stub answers the `pistol` handshake and every `go` command with
-//! a fixed, deterministic reading, so a control run completes in well under a
-//! second at the pre-registered `REPS >= 5` floor rather than needing a real
-//! search.
-
 mod common;
 
 use std::path::{Path, PathBuf};

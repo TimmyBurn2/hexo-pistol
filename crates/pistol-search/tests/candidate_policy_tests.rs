@@ -1,9 +1,3 @@
-//! The candidate policy is configuration, and the rule-5 legal region is not.
-//!
-//! Two radii, two provably different candidate sets, both checked against a
-//! brute-force scan written here rather than against the generator under test
-//! (CLAUDE.md rules 2 and 7, docs/decisions.md D-20).
-
 mod common;
 
 use std::collections::BTreeSet;

@@ -1,14 +1,3 @@
-//! Parse and validate every eval weight table named on the command line.
-//!
-//! The weights half of `tools/config_check.sh`. A weight table is a different
-//! document kind from an engine config (docs/decisions.md D-64), so it has its
-//! own validator; it lives here as an example rather than as a pistol-cli
-//! subcommand for the same reason `validate_config` does — pistol-cli's surface
-//! mirrors the `Engine` trait one to one, and checking a committed document is a
-//! tools-side gate (docs/decisions.md D-25).
-//!
-//! Exit codes: 0 all valid, 1 at least one rejected, 2 nothing to check.
-
 use std::path::PathBuf;
 use std::process::ExitCode;
 

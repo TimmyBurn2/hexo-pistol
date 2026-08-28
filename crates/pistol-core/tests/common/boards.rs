@@ -1,6 +1,3 @@
-//! The golden-board fixture: positions, the stone played last, and the verdict
-//! that stone must get (game rules 2 and 4).
-
 use pistol_core::{Board, Coord, Player};
 
 use super::{directives, fixture_text, parse_coord, parse_coords};

@@ -1,19 +1,3 @@
-//! THE PATTERN FIXTURES UNDER STAGED (docs/decisions.md D-316;
-//! `U4_soundness_instrument.md` §8.3), one of the four soundness-gate names.
-//!
-//! Re-scoped so it is ABOUT THE STAGE: `crates/pistol-solver/tests/fixtures/pattern_v0.txt`
-//! pins the calculus's own named patterns as claims about `ThreatState`
-//! alone; this suite runs the same positions through the staged generator
-//! and asserts `PAT-GAP`'s singleton gap cell is forced — `LAW-HIT`, the
-//! singleton plan must be hit, and every row this crate's node protocol can
-//! take at a node with a singleton plan (`Cover::Minimal` with a
-//! `MinimalCover::One`/`Two` containing it) makes the WHOLE emitted set
-//! forced, not only the plan's own cell.
-//!
-//! The position is `pattern_v0.txt`'s own `PAT-GAP` ply list, replayed here
-//! rather than re-derived by hand — the same plies that fixture's own case
-//! pins, so a claim about the position is not a second, drifting copy of it.
-
 mod common;
 
 use pistol_core::{Coord, GameState};

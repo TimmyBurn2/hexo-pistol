@@ -1,13 +1,3 @@
-//! Validate random-openings configs, for the config gate.
-//!
-//! An example rather than a subcommand, for the reason docs/decisions.md D-25
-//! gives for the engine's and pistol-arena repeats for its own: config checking
-//! is a tools-side gate, and a binary's surface should not grow a general
-//! maintenance command to hold it.
-//!
-//! Usage: `cargo run -p pistol-cli --example validate_random_openings_config -- <path> …`
-//! Exit:  0 every document validates, 1 one or more were refused, 2 no path.
-
 use std::path::PathBuf;
 use std::process::ExitCode;
 

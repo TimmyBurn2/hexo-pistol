@@ -1,14 +1,3 @@
-//! The M4 one-free-stone widening's own tests (design wp18b_m4 §4).
-//!
-//! The flip fixture is anchor position g001-t42 (sealbot to move, one turn
-//! before v0 first proves the conversion): under `OneFreeStone` the solver
-//! proves the win at 10,726 nodes / depth 3 (MEASURED at impl; v0
-//! WALL-CAPPED at 60 s on the same position — the anchor probe's receipt,
-//! `artifacts/wp18b_probe_v1_results.txt`). The position is pinned by its
-//! plies, and the test does not depend on the node count: what it pins is
-//! the VALUE and the STRUCTURE (the witness needs arm B, which v0 cannot
-//! even represent).
-
 // RULE9-JUSTIFICATION: one widening, its flip, its shape, its theorem and
 // its three-site agreement — five statements over the same two pinned
 // anchor positions and the same three policy implementations; splitting

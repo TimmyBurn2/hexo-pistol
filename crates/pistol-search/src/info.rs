@@ -1,18 +1,3 @@
-//! What a search reports: once per completed depth, and once at the end.
-//!
-//! Every depth in **turns**, every score in the band [`crate::score`] describes,
-//! every move a [`Turn`]. Plies are an implementation detail of the recursion
-//! and do not appear here (docs/decisions.md D-9).
-//!
-//! # What is comparable between two runs
-//!
-//! Everything except [`SearchInfo::time_ms`] and [`SearchInfo::nps`]. Those two
-//! are measurements of the machine, not of the search: the determinism law is
-//! about what the search *chose* and how much work it did, so two runs of the
-//! same position under the same reproducible budget must agree on the move, the
-//! node count, the principal variation and the score, and are free to disagree
-//! about how long it took (CLAUDE.md rule 4, docs/decisions.md D-7).
-
 use pistol_core::Turn;
 
 use crate::staged::StagedRow;

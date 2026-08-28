@@ -1,29 +1,3 @@
-//! Choosing the bench positions: two stone counts, twelve games each.
-//!
-//! A bench position has to sit at a turn boundary, because the move-list
-//! encoding names one (docs/decisions.md D-6) and because a search is asked for
-//! a turn. Turn `t` carries `2t - 1` stones, so the reachable counts are the odd
-//! ones, and a band is the odd counts inside it.
-//!
-//! # The rule, spelled as what it is
-//!
-//! "Closest to the centre, ties to the smaller" always lands on the largest odd
-//! count at or below the centre, so the upper half of a band is unreachable: on
-//! this corpus band 15 selects 15 every time and band 35 selects 35, 33 or 31,
-//! never 37 or 39. Rather than ship a symmetric `±` that half of never fires,
-//! the rule is written as it behaves — the largest odd count at or below the
-//! centre, and no lower than the centre less the width. The width is what lets a
-//! game that ends early still contribute; the centres are what the bench is
-//! about (docs/decisions.md D-146).
-//!
-//! # Consumer
-//!
-//! `bench` is deliberately unimplemented until there is a change to justify one
-//! (CLAUDE.md rule 5, docs/decisions.md D-14). These positions are its
-//! pre-registered input, and ROADMAP WP-1.3(c) names the shape: fixed-node runs
-//! at two stone counts. D-127 already measured against two ad-hoc positions;
-//! these are those two, chosen by a rule instead of by hand.
-
 use pistol_engine::PositionSpec;
 
 use super::openings::Candidate;

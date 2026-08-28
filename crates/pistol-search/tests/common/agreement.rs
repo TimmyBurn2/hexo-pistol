@@ -1,5 +1,3 @@
-//! One position, two implementations, and what has to be true of both.
-//!
 // RULE9-JUSTIFICATION: one agreement vocabulary — the value, bestmove-set
 // and bestmove-value assertions over the same reference pairing — stated
 // once for every consumer; splitting it would give each shard a private

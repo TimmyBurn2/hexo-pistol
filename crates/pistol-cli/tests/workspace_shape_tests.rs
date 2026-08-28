@@ -1,14 +1,3 @@
-//! Two of CLAUDE.md's structural rules, made executable.
-//!
-//! Rule 11: pistol-api stays empty until the API layer is specified, and the
-//! `Engine` trait plus this crate's line protocol are the contract that layer will
-//! adapt. Rule 2 and the crate map: this crate talks to an engine through that
-//! trait and to the rules through pistol-core, and to nothing else.
-//!
-//! A rule that lives only in a review checklist rots quietly; this makes breaking
-//! either one a red test, which is the same argument docs/decisions.md D-29 makes
-//! for the no-code-side-default probe.
-
 mod common;
 
 use common::repo;

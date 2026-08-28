@@ -1,32 +1,3 @@
-//! When a search stops.
-//!
-//! This is the search's side of the engine's `Budget` (docs/decisions.md D-4):
-//! the engine validates the operator's budget, refuses the ones its mode cannot
-//! honour, and translates what is left into one of these. The translation is not
-//! a copy — a duration becomes the [`Instant`] it expires at, because a search
-//! that computed its own deadline would be reading the clock on a path that must
-//! not exist in instrument mode (docs/decisions.md D-73).
-//!
-//! There is no "no limit". A search always has exactly one stop condition, and
-//! an absent one is the engine's `BudgetMissing`, never a default here
-//! (CLAUDE.md rule 1).
-//!
-//! # Granularity
-//!
-//! The node condition is tested every [`NODE_CHECK_INTERVAL`] nodes, at a node
-//! boundary, which makes the stopping point exact and reproducible: a search
-//! given `n` nodes stops on node `n.next_multiple_of(NODE_CHECK_INTERVAL)`, on
-//! every machine and in every run (CLAUDE.md rule 4). The interval is a pinned
-//! constant of that contract, not a tunable: a configurable granularity would
-//! make two runs with different configs incomparable at the same node budget.
-//!
-//! The deadline condition is NOT masked (WP-1.4, docs/decisions.md D-207): it
-//! is tested at every abortable node, and inside the move-ordering scoring
-//! loop every `ORDER_CHECK_INTERVAL` cells, because a mask tuned for node
-//! budgets would let up to [`NODE_CHECK_INTERVAL`] nodes — each with a whole
-//! ordering pass — run past the clock, which is D-95's magnitude class. A
-//! deadline is not reproducible anyway, so granularity buys it nothing.
-
 use std::time::Instant;
 
 /// How many nodes pass between two tests of the stop condition.

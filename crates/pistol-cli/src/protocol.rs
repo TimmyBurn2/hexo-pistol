@@ -1,32 +1,3 @@
-//! The line protocol: one input line, one call on the `Engine` seam.
-//!
-//! The protocol is the trait spelled as text and nothing more
-//! (docs/decisions.md D-5): five verbs for the trait's verbs, and no verb that
-//! does not correspond to one. It is also the semantic contract the future API
-//! layer will adapt, which is why it lives beside the engine rather than being
-//! invented again per transport (CLAUDE.md rule 11).
-//!
-//! ```text
-//! pistol                                  -> id lines, then `pistolok`
-//! newgame                                 -> (silence)
-//! position start [moves <turn> ...]       -> (silence)
-//! position set p1:<q,r> ... p2:<q,r> ... tomove:<p1|p2> phase:<0|1>
-//! go depth_turns <n> | go nodes <n> | go movetime <ms>
-//!                                         -> one `info` per completed depth,
-//!                                            a final `info` with the totals,
-//!                                            then `bestmove <turn>`
-//! quit                                    -> stop reading
-//! ```
-//!
-//! # Silence, and the absence of it
-//!
-//! A verb that succeeded and has nothing to report says nothing. A verb that
-//! failed — for any reason, malformed or illegal — answers with exactly one
-//! `error <NamedError>: <why>` line and the engine stays alive and stays where
-//! it was (CLAUDE.md rule 3). There is no third case: no partial application, no
-//! repaired input, no ignored line. A blank line is not a verb and is refused
-//! like any other line that is not one.
-
 use std::str::FromStr;
 
 use pistol_engine::{Engine, EngineError, ParsePositionError, PositionSpec};

@@ -1,36 +1,3 @@
-//! Spawning the engines one game is played between, setting them up, and taking
-//! them down again — ONE sequence, and every driver in this crate calls it.
-//!
-//! # Why this is a function and not a paragraph
-//!
-//! It used to be four statements inside `schedule::one_game`, and the replay
-//! mode needs the identical four. Three consecutive fresh-context design
-//! reviews each caught a hand-written DESCRIPTION or COPY of them being wrong —
-//! the last one on a document written specifically to stop that from happening
-//! (docs/decisions.md D-403, D-404, D-406, D-407). A copy that makes the same
-//! calls today is not an inheritance: nothing fails when a future edit moves one
-//! of them. So the sequence is extracted here, both drivers call it, and
-//! `crates/pistol-arena/tests/seat_setup_identity_tests.rs` pins that the
-//! extraction changed no game record byte.
-//!
-//! # The order, and why each step is where it is
-//!
-//! Every channel is STARTED before any is shaken. That is the order the
-//! generation path has always run and it is preserved exactly: an engine
-//! refused at handshake must be refused with the other side already spawned, so
-//! the run fails the same way whichever side is at fault.
-//!
-//! `NEW_GAME` is sent unconditionally on every fresh spawn even though the
-//! process is new. `schedule.rs`'s own module documentation says why the spawn
-//! is fresh at all (worker-invariance, docs/decisions.md D-164); the send stays
-//! because D-7's gate certifies what it clears and this crate has never relied
-//! on fresh-spawn emptiness in its place.
-//!
-//! Teardown runs only on a driver that RETURNED. A driver that failed leaves its
-//! channels to `Channel`'s own `Drop`, which kills the child rather than asking
-//! it to quit — a search still running would otherwise be measured into the next
-//! game's timings. That asymmetry is the generation path's, kept.
-
 use crate::channel::Channel;
 use crate::config::EngineSection;
 use crate::error::ArenaError;

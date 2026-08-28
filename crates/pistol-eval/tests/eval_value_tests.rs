@@ -1,12 +1,3 @@
-//! What the value *means*: it is side-relative, and the two players are treated
-//! exactly alike.
-//!
-//! Both properties are load bearing for a search. Side-relative is what lets a
-//! negamax search negate a child's value instead of tracking whose number it is,
-//! and player symmetry is what stops the engine from playing better as one
-//! player than the other — a bug that no strength measurement over paired
-//! openings would attribute correctly (CLAUDE.md rule 6).
-
 mod common;
 
 use common::reference::value_from_scratch;

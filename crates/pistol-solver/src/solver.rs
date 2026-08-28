@@ -1,22 +1,3 @@
-//! The solver entry: precondition checks, the search, and the witness tree
-//! the oracle gates consume (docs/experiments/wp18a_design.md §4).
-//!
-//! # What the solver claims
-//!
-//! The value of the POLICY game (§1): a lower bound on the true game value,
-//! computed over the §2 move policy with every defender-side shortcut
-//! falsifiable by the differential gate. The zone is the derived artifact:
-//! the certificate is the verifier's, and the solver's own copy exists to be
-//! cross-checked against it (gate (b)).
-//!
-//! # The fail-loud zone invariant
-//!
-//! After a `Win`, every cell of the root zone must lie within reach of the
-//! stones on the proof boards — the tripwire half of §3's containment. It
-//! holds by construction (EP-1 scans windows intersecting the legal region;
-//! move cells are legal placements); a violation is a zone-construction
-//! defect and refuses as `NoWinUnderZone` rather than certifying the win.
-
 // RULE9-JUSTIFICATION: the entry, the witness emission walk, the digest
 // and the win-depth walk are one traversal of the proof DAG — the walk's
 // per-node zone tripwire is the design §3 containment invariant stated

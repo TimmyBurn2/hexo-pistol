@@ -1,38 +1,3 @@
-//! The half of the differential search oracle a debug build cannot afford.
-//!
-//! `search_oracle_tests.rs` carries what runs on every commit. This carries the
-//! depths that do not: a full-width reference pays the candidate count squared
-//! per TURN, and the smallest position this game has still offers six cells, so
-//! a third turn costs a quarter of a million reference nodes on the smallest
-//! position with a branching factor at all, and a mate distance of three costs
-//! millions. Every test here is therefore `#[ignore]`d
-//! and run by `tools/search_oracle_check.sh` in release, which is the split
-//! `perft_tests.rs` already uses for the movegen oracle's wide sample
-//! (docs/decisions.md D-54, D-120).
-//!
-//! # What depth 3 buys, what depth 4 costs, and where the cost is
-//!
-//! Depth 3 is where an exact mate distance greater than two first appears, and
-//! therefore the only place D-72's root-anchored re-basing is exercised across
-//! more than one turn of each side. Depth 4 is reached on one position only, and
-//! which one is a measurement rather than a preference: see
-//! `search_value_matches_reference_negamax_at_depth_4`.
-//!
-//! Measured on the development machine, release, the tests in parallel as the
-//! gate runs them, with the reference valuing each unordered turn once
-//! (docs/decisions.md D-126): **18.1 s**, of which the mate-in-three case at
-//! depth 3 is 6 714 383 reference nodes and 18.0 s run on its own. The whole
-//! gate, this file plus the always-on tiers re-run in release, is **19.6 s**.
-//! Every run reports its own reference node count under `--nocapture`, which the
-//! gate script passes, so those numbers regenerate instead of being remembered.
-//!
-//! Where the power is, as against where the cost is: the mate-in-three case buys
-//! the only exact mate distance above two and catches NEITHER of the two window
-//! bugs both reviews injected, while `tight_cluster_at_a_turn_boundary` at depth
-//! 3 — 1 879 674 nodes — is the only comparison in the suite that catches either
-//! (docs/decisions.md D-125). A trim of this gate has to know which second is
-//! which.
-
 mod common;
 
 use common::agreement::agreement;

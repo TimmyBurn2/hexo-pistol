@@ -1,22 +1,3 @@
-//! The referee: one game, two subprocesses, and pistol-core as the only judge.
-//!
-//! Every turn an engine answers with is replayed into a `GameState` this module
-//! owns. A turn the rules refuse is a forfeit, and the arena never asks an
-//! engine whether its own move was legal (CLAUDE.md rule 2).
-//!
-//! The position is sent as the WHOLE move list every turn rather than as a
-//! diff, so an engine that mis-tracks state is re-synced each turn. That is also
-//! what bounds this module's one named blind spot: an engine answering for a
-//! DIFFERENT position is detectable only when its answer is illegal in the real
-//! one. The protocol has no position echo and D-2 pins the verb set, so the
-//! arena cannot ask; what it can do is make a wrong answer overwhelmingly likely
-//! to be an illegal one.
-//!
-//! Nothing here waits for silence. The protocol answers a good `position` with
-//! nothing at all, so a refusal is found where it actually arrives — in the
-//! stream of lines that follows `go` — rather than by timing how long the engine
-//! stays quiet, which would be a wall-clock decision inside the referee.
-
 use pistol_core::{Outcome, Turn};
 
 use crate::channel::Channel;

@@ -1,14 +1,3 @@
-//! `random-openings` as a program: what it writes, what it refuses, what it
-//! exits with, and what it leaves behind when it refuses.
-//!
-//! These run the binary rather than the library, because the claims are about a
-//! RUN. Two of them cannot be made any other way: that the book is byte-
-//! identical across two PROCESSES — matching `tools/determinism.sh`'s shape,
-//! since a run that agreed with itself inside one process could still be
-//! depending on something that process happened to hold — and that a refusal
-//! leaves the directory as it found it, which is a claim about files and not
-//! about a return value.
-
 mod common;
 
 use common::{repo, scratch};

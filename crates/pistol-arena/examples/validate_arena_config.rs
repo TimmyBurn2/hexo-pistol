@@ -1,13 +1,3 @@
-//! Validate arena configs, for the config gate.
-//!
-//! An example rather than a subcommand of `arena`, for the reason
-//! docs/decisions.md D-25 gives for the engine's: config checking is a
-//! tools-side gate, and the binary's surface should not grow a general
-//! maintenance command to hold it.
-//!
-//! Usage: `cargo run -p pistol-arena --example validate_arena_config -- <path> …`
-//! Exit:  0 every document validates, 1 one or more were refused, 2 no path.
-
 use std::path::PathBuf;
 use std::process::ExitCode;
 

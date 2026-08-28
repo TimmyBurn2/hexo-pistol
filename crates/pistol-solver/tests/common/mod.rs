@@ -1,14 +1,3 @@
-//! Shared test scaffolding: the sha-pinned fixture, the hash that pins it, the
-//! two references and the playout generator.
-//!
-//! The loaders are strict on purpose. A fixture line they do not understand is
-//! a panic naming the line number, and so is a fixture record that is missing an
-//! expectation: a golden file that is quietly half-read reports a pass for cases
-//! nobody ran (CLAUDE.md rule 3, docs/decisions.md D-37's own list, which
-//! refuses an unknown directive AND a missing verdict).
-//!
-//! The SHA-256 here is copied from pistol-core's test tree rather than depended
-//! on, because this crate takes no dev-dependency either.
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
 pub mod fixture_loader;

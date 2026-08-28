@@ -1,15 +1,3 @@
-//! Named failures.
-//!
-//! The search refuses four things, and says which: parameters it cannot build a
-//! table or a candidate set from, a root position it cannot search from, a depth
-//! past the horizon it is built for, and a candidate policy that offers the
-//! mover nothing at the root. None of them is repaired, defaulted, or clamped
-//! (CLAUDE.md rule 3).
-//!
-//! [`SearchError::Params`] carries a key in the engine config's spelling, so
-//! that the engine can map it to `EngineError::Config` with the key an operator
-//! actually has to go and edit (docs/decisions.md D-10, D-24).
-
 use std::fmt;
 
 use pistol_core::Player;

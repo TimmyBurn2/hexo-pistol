@@ -1,38 +1,3 @@
-//! Principal variation search, one ply at a time.
-//!
-//! A turn is two stones by the same side, so the recursion alternates between
-//! two kinds of child: the **second stone of this turn**, which is the same
-//! side moving again and inherits the window unchanged, and the **first stone
-//! of the opponent's turn**, which is the ordinary negamax flip. The alpha-beta
-//! cutoff between the two stones of a turn is where most of the pruning in this
-//! game comes from (the research report, Section A), and it falls out of the
-//! ply-level recursion rather than being arranged for (docs/decisions.md D-9).
-//!
-//! Rule 4 also falls out: a stone that completes a line ends the turn, so the
-//! node returns a mate score without the second stone ever being placed.
-//!
-//! # Stage 0 scope
-//!
-//! Null-window scans with a re-search on a fail-high, a transposition table, and
-//! move ordering. No quiescence, no null move, no reductions, no aspiration
-//! window: the research report parks each of those behind an SPRT the arena
-//! cannot run yet (docs/ROADMAP.md, Stage 1 and Stage 4).
-//!
-//! # RULE9-JUSTIFICATION: `visit` is one recursion and splitting it would not
-//! reduce what a reader has to hold (CLAUDE.md rule 9).
-//!
-//! Its parts are not independent: the window a child inherits depends
-//! on whether the ply was the mover's second stone or the opponent's reply, the
-//! table's bound depends on the alpha it started with, the abort path has to
-//! unwind through every one of them without a result being used, and the
-//! invariants that make it correct — the mate re-basing, the no-cutoff-at-a-PV
-//! -node rule, the two horizons — are stated against the whole. Cutting it into
-//! free functions would pass six values back and forth and put the reasoning
-//! that justifies them in a different file from the code they constrain. The
-//! honest reductions are elsewhere and are scheduled: the doc comments here
-//! carry the arguments, and Stage 1 moves candidate generation out entirely
-//! (docs/decisions.md D-117, WP-1.5).
-
 use std::time::Instant;
 
 use pistol_core::{Coord, Phase, PlyOutcome};

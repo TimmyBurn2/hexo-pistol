@@ -1,15 +1,3 @@
-//! SplitMix64: the generator's one source of randomness.
-//!
-//! Reimplemented rather than depended on. A fixture's bytes are pinned, so the
-//! number stream under them must not move because someone else's crate changed
-//! a constant or its default algorithm — the same argument that keeps
-//! pistol-core std-only. What makes a reimplementation safe is an oracle:
-//! SplitMix64's reference implementation publishes its stream, and
-//! `random_openings_rng_tests.rs` pins this one against it.
-//!
-//! Every operation is `wrapping_*` on `u64`, so the stream is identical on
-//! every target and under `overflow-checks` (docs/decisions.md D-127).
-
 use super::error::RandomOpeningsError;
 
 /// The golden-ratio increment, and the two mixing multipliers.

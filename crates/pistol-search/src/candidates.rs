@@ -1,20 +1,3 @@
-//! Which cells the search considers: the candidate policy, intersected with the
-//! rule-5 legal region.
-//!
-//! The intersection is computed, never reasoned about. A cell is a candidate iff
-//! the policy offers it **and** `pistol_core` says a stone may go there — the
-//! two radii are never compared, and no shortcut is taken on the grounds that
-//! one is smaller than the other (CLAUDE.md rule 2, docs/decisions.md D-20).
-//! That also means a policy radius wider than the legal region simply yields the
-//! legal region, without this module knowing why.
-//!
-//! # Order
-//!
-//! Ascending `(q, r)`, each cell once. That is the order the whole engine breaks
-//! ties in (docs/decisions.md D-5, D-7), and move ordering leans on it: a stable
-//! sort by score leaves equal-scoring cells in coordinate order, so the final
-//! tie-break costs nothing and cannot drift between runs (CLAUDE.md rule 4).
-
 use std::collections::BTreeSet;
 
 use pistol_core::{Board, Coord, legal_placements};

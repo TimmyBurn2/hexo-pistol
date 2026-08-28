@@ -1,22 +1,3 @@
-//! The three line axes of the hex lattice, and the six neighbour directions.
-//!
-//! A hex cell has six neighbours, which pair up into **three** axes — three
-//! directions and their opposites (rule 1). Six-in-a-row is a run along one of
-//! these three (rule 2), and everything downstream that says "per axis" —
-//! eval windows, threat lines, zobrist-free line scans — means these three and
-//! nothing else.
-//!
-//! **Naming rule: each axis is named for the coordinate that stays constant
-//! along it** (docs/decisions.md D-33). A line of constant `q` runs in
-//! direction `(0, +1)`, so it is [`Axis::ConstQ`]. The alternative convention —
-//! naming an axis for the coordinate that varies — has no consistent answer for
-//! the third axis, along which both `q` and `r` change.
-//!
-//! The `Const` prefix is there so that the invariant travels in the identifier
-//! rather than in this paragraph: `step(Axis::ConstQ, k)` moves along `r`, and
-//! an eval or threat table that reads `Axis::Q` and assumes otherwise is an
-//! off-by-one-axis bug that no test would obviously catch.
-
 use crate::coord::Coord;
 
 /// One of the three line axes.

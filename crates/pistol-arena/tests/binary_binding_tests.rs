@@ -1,32 +1,3 @@
-//! Each engine seat is bound to a BINARY BY CONTENT, and a file that is not
-//! that binary refuses the run before a game is played (docs/decisions.md
-//! D-283).
-//!
-//! # The defect class this closes, which has exited 0 twice
-//!
-//! `target/release/pistol` is a different program after every build. A run
-//! played by a STALE binary at that path is a different experiment reported
-//! under this one's name, and the failure mode is silence: a decoy sitting where
-//! cargo did not write is a regular file, is executable, speaks the protocol,
-//! and plays every game. That was reproduced twice — `tools/tactical_check.sh`
-//! (D-250) and `tools/arena_smoke.sh` (D-252), the second with 54 of 54 engine
-//! invocations going to a decoy while the gate printed `ok` and exited 0.
-//!
-//! Both of those were closed inside `tools/`. The four OPERATOR-RUN SPRT
-//! documents were not, and CLAUDE.md rule 6 makes them the judge of every search
-//! and eval change: WP-1.5b's acceptance runs on a document of exactly this
-//! shape. The binding lives in the DOCUMENT because the arena's only arguments
-//! are `--config` and `--out` — the document is the seam.
-//!
-//! # RULE9-JUSTIFICATION: one binding, its schema half and its run half.
-//!
-//! The refusal is a shape rule at validation time and a content comparison at
-//! run start, and testing either alone leaves the other's failure invisible: a
-//! well-formed digest that is never compared, or a comparison against a value
-//! the schema would have let through as an empty string. The sweep over the
-//! committed documents is the third half — a rule with no instances in the tree
-//! is a rule the next document will not have (D-251's class-versus-list ruling).
-
 mod common;
 
 use std::process::Command;

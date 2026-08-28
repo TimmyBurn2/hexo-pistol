@@ -1,20 +1,3 @@
-//! The from-scratch eval reference: the oracle the incremental value is checked
-//! against (CLAUDE.md rule 7, docs/decisions.md D-68).
-//!
-//! Two readings of the same rule, both written the slow obvious way and neither
-//! sharing code with the implementation beyond what every reading must agree on
-//! — [`Board`] as the container, [`Axis`] and [`Coord`] as the geometry, and
-//! `WIN_LEN` because restating `6` here would make the test tree a second source
-//! of a pinned rule constant rather than a second implementation:
-//!
-//! 1. [`value_from_scratch`] collects the windows through each stone, dedupes
-//!    them, and scores each one by looking its six cells up on the board. It is
-//!    linear in the stones, so the incremental test can afford it at every ply.
-//! 2. [`value_by_region_scan`] scores *every* window whose start lies in a
-//!    padded bounding box of the stones, touching a stone or not. It is the
-//!    independent statement of the assumption the other two share — that only a
-//!    window holding a stone can score — and it is far too slow to run per ply.
-
 use std::collections::BTreeSet;
 
 use pistol_core::{Axis, Board, Coord, Player, WIN_LEN};

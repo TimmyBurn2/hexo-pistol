@@ -1,39 +1,3 @@
-//! Who each engine IS, by content — captured once before the first game and
-//! re-verified at every spawn.
-//!
-//! # Why identity closes over the eval weights
-//!
-//! A path is not identity: `target/release/pistol` is a different program after
-//! every build (docs/decisions.md D-147), so the run digests the binary and the
-//! config document. What that still missed was the eval weight table: two
-//! workspaces differing only in `eval_v0_weights.toml` produced byte-identical
-//! `experiment_sha256` and every other recorded digest while `nelo_pair` moved
-//! by 98 points (docs/decisions.md D-188, wp13_results §6b). The engine now
-//! digests the weights file it loads and reports `id weights_sha256 <hex>` in
-//! its handshake; the arena REQUIRES that field and folds it into the identity.
-//! The ENGINE digests rather than the arena because the engine is the process
-//! that actually reads the file, resolved against its own working directory —
-//! an arena-side digest could attest bytes the engine never loaded, and would
-//! couple this crate to the engine's config schema, which it deliberately does
-//! not read (docs/decisions.md D-198).
-//!
-//! # Why identity is re-verified at every spawn
-//!
-//! Engines are respawned from disk for every game, while digests used to be
-//! taken once: a config edited eighteen seconds into a live run produced exit 0
-//! and a report attesting the OLD config (docs/decisions.md D-188's operating
-//! rule). That rule is now code: every spawn re-digests the config document and
-//! re-states the whole handshake (which is deterministic by construction), and
-//! any drift from the run-start capture is the named abort
-//! [`crate::error::ArenaError::IdentityDrift`] — never a game result, never a
-//! silent continuation (docs/decisions.md D-199).
-//!
-//! Two windows stay open and are recorded rather than implied: the binary is
-//! not re-digested per spawn (re-digesting a multi-megabyte file per game buys
-//! a case nobody has observed), and a swap landing between a spawn's own
-//! verification and that engine's config read — on the LAST game, with no later
-//! spawn to catch it — is invisible to any check made from outside the process.
-
 use std::path::Path;
 
 use crate::channel::Channel;

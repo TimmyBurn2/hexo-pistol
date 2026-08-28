@@ -1,16 +1,3 @@
-//! What one finished game is, as a value.
-//!
-//! Separated from the referee loop that produces it so that the report, the
-//! summary and the scheduler read one shape rather than three, and so that a
-//! test can build a game without running two subprocesses.
-//!
-//! The field that took the most argument is [`GameRecord::end`]. A forfeit is a
-//! LOSS — the offender loses that game and the winner is known — so the result
-//! and the manner of ending are two facts, not one. Collapsing them into a
-//! `result forfeit` token would throw the winner away and leave a reason with no
-//! party attached to it, which is a reason nobody can diagnose from
-//! (docs/decisions.md D-158).
-
 use pistol_core::Turn;
 
 /// Which seat won, or that nobody did.

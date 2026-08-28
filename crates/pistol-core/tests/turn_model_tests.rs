@@ -1,14 +1,3 @@
-//! The turn structure (game rules 3 and 4).
-//!
-//! One stone on turn 1, two on every turn after it, by the same side. A stone
-//! that completes a line ends the game where it stands: the turn does not
-//! advance, the second stone of that turn is never played, and the turn number
-//! the win is recorded on is the one that was being played — that number is
-//! what a mate distance is measured in (docs/decisions.md D-3).
-//!
-//! Taking a turn back is the other half of the same machine, and it is tested
-//! in `undo_tests.rs`.
-
 mod common;
 
 use common::games::golden_game;

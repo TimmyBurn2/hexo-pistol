@@ -1,16 +1,3 @@
-//! Choosing the openings: the rating band, the canonical dedupe, the
-//! representative rule, the emission order, and the balance evidence.
-//!
-//! Each rule is exercised against the committed synthetic corpus, which is built
-//! to make it bite — a mirrored pair for the dedupe, an unrated game for the
-//! rated clause, a mismatched pair for the ceiling, and classes more than one
-//! game reaches so the balance counts have something to count.
-//!
-//! Every assertion here pins a CONSEQUENCE rather than a constant against
-//! itself: an earlier round of these tests compared `elo_gap() <= ELO_GAP_CEILING`,
-//! which holds whatever the constant holds, and the mutation that widened the
-//! ceiling to its maximum left the suite green (docs/decisions.md D-152).
-
 mod common;
 
 use common::repo;

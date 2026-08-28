@@ -1,37 +1,3 @@
-//! `tools/label_consistency_check.sh` — CI gate 16 of 16, the WP-1.5b carve
-//! documents' self-state (docs/decisions.md D-338 row R4;
-//! tools/SHELL_CHECKLIST.md item 10).
-//!
-//! # What is being guarded, and why a gate rather than care
-//!
-//! `docs/experiments/matrix_META1_REDTEAM.md` M2: both landed claim inventories
-//! ship a headline count of their own table that their own table falsifies —
-//! fifty-four rows under a stated thirty-four, eleven failing rows under a
-//! stated six — uncaught by every round including the reviewer who read the
-//! earlier one closely. Inside this gate's subject the same form appears twice
-//! over: a summand line's arithmetic against its own stated total and against
-//! the section heading above it, and a group-count line against the names it
-//! introduces. A document that misdescribes its own count is
-//! docs/decisions.md D-335's generator (2).
-//!
-//! # The head/foot u-rev label check this gate once ran is retired
-//!
-//! `docs/decisions.md` D-311's appended amendment: revision identity for these
-//! six documents is the commit SHA, not an in-document label — `e42ca88`
-//! appended 14 lines to `U4_soundness_instrument.md` without bumping its head
-//! label, so `u-rev 9` came to name two different texts, the exact ambiguity a
-//! label exists to prevent, produced by the commit that amended D-311 to
-//! reaffirm the rule the label had just broken. This suite no longer builds
-//! label-bearing fixtures or exercises the retired check; what a document says
-//! about its own revision history is struck under D-346 rather than checked
-//! here.
-//!
-//! # RULE9-JUSTIFICATION: one gate, one scratch repository, one fixture builder.
-//! Every test drives the same shipped script over the same scratch git
-//! repository holding the same six-document fixture set, and each verdict is one
-//! planted defect against that one builder. Splitting the file splits the
-//! builder, and two builders that drift apart is the defect this gate is for.
-
 mod common;
 
 use std::path::{Path, PathBuf};

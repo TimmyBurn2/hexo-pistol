@@ -1,24 +1,3 @@
-//! Who the engine on the other end is, and whether a strength claim may come
-//! from it.
-//!
-//! Two refusals, both before a single game is played:
-//!
-//! **The protocol version.** The two sides may be distinct builds — that is the
-//! point of naming a binary per configuration — so the arena cannot assume the
-//! program it spawned speaks the protocol it was compiled against. It reads
-//! `id protocol` and refuses anything else by name.
-//!
-//! **The mode.** Every strength claim comes from an instrument mode (CLAUDE.md
-//! rule 6), and instrument mode is where `threads = 1` is enforced
-//! (docs/decisions.md D-7). A play-mode engine given a depth budget is a
-//! perfectly legal request that nothing else in the stack would question — the
-//! engine's own `Budget::check_supported` refuses only a wall-clock budget — so
-//! this is the only place the rule can be enforced (docs/decisions.md D-162).
-//!
-//! The `id` lines are kept verbatim and copied into the report, because a claim
-//! ships the instrument it was measured with and an arena log that cannot
-//! recover the candidate radius and the table size cannot be re-run.
-
 use crate::channel::{Channel, Received};
 use crate::error::ArenaError;
 

@@ -1,11 +1,3 @@
-//! The evaluation contract: what every backend in this crate promises a search.
-//!
-//! The contract is **incremental**, and that is a design decision rather than an
-//! optimization (docs/decisions.md D-11, D-61). The Stage-2 backend is a pattern
-//! codebook net that is only affordable because it is updated per placed stone;
-//! writing the trait that way now means swapping the backend later is not also a
-//! search change.
-
 use pistol_core::{Coord, Player};
 
 /// The largest magnitude a static evaluation may report.

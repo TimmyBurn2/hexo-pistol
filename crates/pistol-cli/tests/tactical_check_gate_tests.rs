@@ -1,37 +1,3 @@
-//! `tools/tactical_check.sh` — CI gate 8 of 16 (`tools/ci.sh:101`), the sha-pinned
-//! tactical fixture at its pre-registered threshold.
-//!
-//! # Why this file exists at all
-//!
-//! NOTHING IN THIS REPOSITORY DROVE THIS SCRIPT. Its stdout carries `selftest: 20
-//! of 20 cases solved (required 20), 0 failed to reproduce` and its exit status IS
-//! the gate verdict, which is a recorded number under `tools/SHELL_CHECKLIST.md`'s
-//! coverage rule however the number is arrived at — the rule asks what a script
-//! RECORDS, not whether it computed the digits itself (docs/decisions.md D-240,
-//! D-250). It went untested until a `tools/`-scoped review found the class the
-//! checklist opens with in it: EXIT-0-WRONG-ANSWER.
-//!
-//! # The defect these tests pin
-//!
-//! The gate built with `cargo build --release --bin pistol` and then ran the
-//! hardcoded `./target/release/pistol`. Cargo's target directory is redirectable
-//! — `CARGO_TARGET_DIR`, `[build] target-dir`, and `[build] target`, which moves
-//! the artifact into a per-triple subdirectory — so with a STALE binary at the
-//! hardcoded path the gate ran the stale one, printed `20 of 20` and exited 0 for
-//! an engine that had just been built failing the suite; and with nothing there,
-//! bash's 127 flowed into the suite's own refusal and blamed the ENGINE for a
-//! tactical regression that never happened.
-//!
-//! # Why they run in a SCRATCH TREE with a STUB engine
-//!
-//! The claim is about the script's choice of BINARY, not about the engine: it
-//! needs two binaries that disagree about the suite, which the real engine cannot
-//! be asked for, and it needs a `cargo build` whose target directory the test
-//! controls. Pointing either at the live checkout would have a test redirect the
-//! builds of the repository it is being reviewed in. The scratch tree holds a
-//! zero-dependency crate whose `--bin pistol` is the stub, plus a copy of the
-//! SHIPPED script and the one fixture path it stats.
-
 mod common;
 
 use std::path::{Path, PathBuf};

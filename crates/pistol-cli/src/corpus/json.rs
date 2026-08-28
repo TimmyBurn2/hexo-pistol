@@ -1,25 +1,3 @@
-//! A scanner for the corpus line's grammar — which is a *subset* of JSON, on
-//! purpose.
-//!
-//! This reads exactly what `SCHEMA.md` describes and names everything else. It
-//! is deliberately not a JSON parser, and the difference is the whole argument
-//! (docs/decisions.md D-139): the corpus is external data, so the failure that
-//! matters is a malformed line read as a plausible game rather than refused
-//! (CLAUDE.md rule 3). A general parser's risk sits in the features this corpus
-//! never uses — `\uXXXX` and surrogate pairs, the number grammar's exponents and
-//! fractions, nested containers — which is surface that no test here would
-//! exercise and no corpus would reveal. A reader that accepts only the schema's
-//! shape cannot silently mis-read, because every deviation is a refusal.
-//!
-//! So: no escapes, no floats, no exponents, no nesting beyond the one array of
-//! two-element arrays the schema has. Each of those is a named refusal, and the
-//! refusal *is* the rule-3 property.
-//!
-//! Whitespace between tokens is spaces and tabs. A newline cannot appear — the
-//! caller has already split on it — and a carriage return is refused by the
-//! caller rather than skipped, so a CRLF corpus fails loudly instead of hashing
-//! differently on two platforms (CLAUDE.md rule 4).
-
 /// A refusal, as a named constant so a test can pin it without restating the
 /// wording — the convention `pistol_core::error` uses.
 pub const EXPECTED_OBJECT: &str = "a corpus line is one JSON object";

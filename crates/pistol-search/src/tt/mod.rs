@@ -1,30 +1,3 @@
-//! The transposition table: what the search already knows about a position.
-//!
-//! The table is indexed by the low bits of the 128-bit position key and verifies
-//! with the high 64, which is ample for a heuristic table — the solver's
-//! proof-carrying table is a different one and keeps all 128
-//! (docs/decisions.md D-8, D-57). One probe reads one bucket of
-//! [`BUCKET_ENTRIES`] packed entries and nothing else.
-//!
-//! # Determinism
-//!
-//! Replacement is a pure function of the bucket's contents and the current
-//! generation: the shallowest entry of the oldest generation goes, ties broken
-//! by slot order. No clock, no random victim, no thread (CLAUDE.md rule 4,
-//! docs/decisions.md D-7). Two identical store sequences leave identical tables,
-//! which `tt_replacement_prefers_depth_and_is_the_same_every_run` pins.
-//!
-//! # Sizing
-//!
-//! The bucket count is the largest power of two whose buckets fit inside
-//! `tt_bytes`, because the index is a mask. A bucket is 96 bytes and a byte
-//! budget is a power of two, so the two never divide evenly and the table takes
-//! three quarters of the budget in the worst case; [`Table::bytes`] reports what
-//! it took. That is a ceiling honoured, not a stated value rounded — the config
-//! rule that `search.tt_bytes` is a power of two stays exactly what
-//! docs/decisions.md D-19 made it, and the number of entries this yields is the
-//! same one a padded 32-byte entry would have given (D-75).
-
 pub mod entry;
 
 use std::fmt;

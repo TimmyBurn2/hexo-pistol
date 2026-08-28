@@ -1,10 +1,3 @@
-//! Every way this tool refuses, each with its own name.
-//!
-//! One enum rather than a string, because the tests match on the variant: a
-//! refusal identified by its message is a refusal that changes identity when
-//! someone improves the wording (CLAUDE.md rule 3, and the lesson D-152 records
-//! about assertions that hold a constant against itself).
-
 use std::fmt;
 use std::path::PathBuf;
 

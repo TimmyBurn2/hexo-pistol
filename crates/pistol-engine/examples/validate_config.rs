@@ -1,21 +1,3 @@
-//! Parse and validate every config file named on the command line.
-//!
-//! This is the executable half of `tools/config_check.sh`. It lives here rather
-//! than in pistol-cli because pistol-cli's surface mirrors the `Engine` trait
-//! one to one, and config checking is a tools-side gate
-//! (docs/decisions.md D-25).
-//!
-//! With `--check-weights-file` it also checks that the file each config's
-//! `eval.weights_file` names is there and readable. That check belongs to a gate
-//! and not to `Config::validate`, which stays pure, offline and independent of
-//! the working directory: a missing weights file is pistol-eval's loud error at
-//! load time, and this is the deployment gate docs/decisions.md D-21 defers to
-//! and D-66 places here. It says nothing about the file's *contents* — that is
-//! the pistol-eval example `validate_weights`, which reads a different schema.
-//!
-//! Exit codes: 0 all valid, 1 at least one rejected, 2 nothing to check or an
-//! unknown flag.
-
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 

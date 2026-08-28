@@ -1,23 +1,3 @@
-//! Proof and disproof numbers: the INF sentinel, the 1+ε loosening, and the
-//! three-valued reading of a (pn, dn) pair.
-//!
-//! The threshold FORMULAS that consume these numbers live in `dfpn`; this
-//! module owns only the arithmetic they are safe over, and the safety is the
-//! point (docs/experiments/wp18a_design.md §4):
-//!
-//! - `INF` is `1 << 62`, far from `u64::MAX`, so no saturating sum and no
-//!   ε-multiple of a sentinel value can wrap;
-//! - every addition is saturating, so `INF + x = INF` and `INF + INF = INF`
-//!   by construction rather than by hope;
-//! - the values are unsigned, so no negative exists to produce;
-//! - the one subtraction the formulas perform (`dt − d`, `pt − p`) is argued
-//!   where it is performed, in `dfpn`: it runs only after the caller
-//!   confirmed `p < pt ∧ d < dt`, which makes `dt − d ≥ 1`.
-//!
-//! `Epsilon::loosen` is Pawlewicz & Lew's ⌈x(1+ε)⌉ (CG 2006, §3.2), computed
-//! as an exact rational ceiling in `u128`. It is applied to THRESHOLDS only;
-//! the stored pn/dn never pass through it.
-
 /// The saturating sentinel for "no finite proof/disproof number".
 ///
 /// Chosen so that `INF + INF` and `INF` scaled by the largest ε the config

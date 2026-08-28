@@ -1,26 +1,3 @@
-//! One question and one answer: `position`, `go`, and the line that comes back.
-//!
-//! Split from `game.rs` on that line — that module is the referee's loop over a
-//! whole game, and this one is a single exchange with a single engine. The split
-//! matters because the exchange is where the protocol is enforced, and every
-//! rule here is about a peer that answered wrongly rather than about the game.
-//!
-//! # The framing this module adds
-//!
-//! The protocol is request and response, and it carries no request identifier
-//! (docs/decisions.md D-2 pins the verb set). The channel underneath is a plain
-//! queue, so a line an engine volunteers would be read as the answer to the NEXT
-//! question, from a position it was never shown — which is exactly what happened
-//! before this check existed, and it recorded games whose move lists were not
-//! what either engine intended (docs/decisions.md D-172). So the queue must be
-//! empty before the question and empty after the answer, and both checks ask
-//! only what has ALREADY arrived: waiting would be a wall-clock decision inside
-//! the referee, which is the thing D-159 forbids.
-//!
-//! Nothing here waits for silence either. The protocol answers a good `position`
-//! with nothing at all, so a refusal is found where it actually arrives — in the
-//! stream of lines that follows `go`.
-
 use pistol_core::Turn;
 
 use crate::channel::{Channel, Received};

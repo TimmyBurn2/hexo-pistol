@@ -1,11 +1,3 @@
-//! The stones themselves: putting one down, taking it back, and reading them
-//! out in a fixed order.
-//!
-//! `Board::apply`/`undo` is the per-stone seam that WP-04's incremental zobrist
-//! and the incremental eval will hook (docs/decisions.md D-41), so a silent
-//! overwrite or a wrong player handed back would desynchronize state that has
-//! no other way to notice. That is what these tests exist to make impossible.
-
 use pistol_core::{Board, Coord, CoreError, Player};
 
 #[test]

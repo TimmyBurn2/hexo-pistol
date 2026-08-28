@@ -1,22 +1,3 @@
-//! What a turn is made of: its phase, what one stone did to it, the whole turn
-//! as one value, and how the game ends.
-//!
-//! These types are the vocabulary the state machine in [`crate::state`]
-//! produces and every other crate consumes; the machine that moves between them
-//! lives there, and the turn-level transitions live in [`crate::play`].
-//!
-//! There is no draw. Rule 6 gives the game no drawing mechanism at all, so
-//! [`Outcome`] has no variant for one; a match turn cap is an evaluation
-//! horizon that lives in the search, and never reaches these types.
-//!
-//! There is also no stalemate, and that is a lemma rather than an oversight: an
-//! ongoing game always has a legal move. Take the stone with the largest `q`
-//! (ties broken by `r` — the board is finite and non-empty); the cell eight
-//! steps further along `+q` is within [`crate::LEGAL_RADIUS`] of it and cannot
-//! hold a stone, since a stone there would have had the larger `q`. So
-//! [`Outcome`] needs no "no legal move" variant, and no caller needs a branch
-//! for one.
-
 use std::fmt;
 use std::str::FromStr;
 

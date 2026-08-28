@@ -1,20 +1,3 @@
-//! Stones on the lattice, and the legal region they create.
-//!
-//! The board is unbounded, so occupancy is sparse: a map from cell to player,
-//! holding only the stones that exist. It is a [`BTreeMap`], ordered by
-//! `(q, r)`. That is a determinism decision, not a performance one — a
-//! `HashMap` carries per-process random state, and any iteration a caller can
-//! observe would then be able to change a move choice between two runs of the
-//! same position (CLAUDE.md rule 4, docs/decisions.md D-7, D-32).
-//!
-//! A `Board` is storage plus one rules question: *is this cell in the legal
-//! region* (rule 5). It deliberately does **not** enforce that a position is
-//! reachable — [`Board::apply`] refuses an occupied cell and nothing else.
-//! Reachability is a property of a *game*, and [`crate::GameState::place`] is
-//! the single place that enforces it (docs/decisions.md D-35). Golden fixtures
-//! and the legal-region tests need synthetic positions that no game reaches,
-//! and a container that refused them would be lying about what it is.
-
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::fmt;

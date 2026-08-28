@@ -1,17 +1,3 @@
-//! The determinism law across process boundaries (CLAUDE.md rule 4,
-//! docs/decisions.md D-7).
-//!
-//! This test is the logic of `tools/determinism.sh` in one place where it can
-//! fail fast: it runs the compiled binary twice over positions from the
-//! sha-pinned fixture and compares the transcripts line for line, minus the two
-//! fields that measure the machine rather than the search.
-//!
-//! The script is still the gate, and it is not redundant with this: it runs the
-//! whole fixture set in a release build under the two budgets the gate pins, and
-//! it also compares a session against one-process-per-position. This runs a
-//! stated subset in whatever profile `cargo test` was invoked with, so that a
-//! determinism break shows up in `cargo test` and not only in a shell script.
-
 mod common;
 
 use std::process::{Command, Stdio};

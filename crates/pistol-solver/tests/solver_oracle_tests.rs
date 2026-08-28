@@ -1,13 +1,3 @@
-//! The solver oracle gates (design §7): the differential against R3', the
-//! proof-tree re-verification, the RZ property over the σ class, and the
-//! TT cross-check. Each gate prints its own PASS/FAIL line; any failure
-//! fails the target.
-//!
-//! The fixture is sha-pinned by its own test; all four gates are
-//! `#[ignore]`d here and run in release only, through
-//! `tools/solver_oracle_check.sh` with `--ignored` — the tactical gate's
-//! split (gate (c) alone is minutes in release and unbounded in debug).
-
 // RULE9-JUSTIFICATION: the four oracle gates are one instrument — they
 // share the fixture loaders, the sigma class and the perturb construction,
 // and the design's §7 adjudicates them as one gate leg with one exit

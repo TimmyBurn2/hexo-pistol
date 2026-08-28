@@ -1,13 +1,3 @@
-//! What the arena does when an engine stops behaving.
-//!
-//! Split from `run_tests.rs` on the line that matters for reading them: that
-//! file is about a run where everything worked, and this one is about the four
-//! ways it does not — a turn the rules refuse, a peer that stops speaking the
-//! protocol, a peer that goes silent, and a peer a strength claim may not come
-//! from. The refusals differ in KIND and the distinction is load-bearing: a
-//! deterministic wrong answer is adjudicated, and silence is not
-//! (docs/decisions.md D-159).
-
 mod common;
 
 use common::{Scratch, openings_prefix, run, self_match};

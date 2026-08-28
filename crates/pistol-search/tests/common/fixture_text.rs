@@ -1,12 +1,3 @@
-//! Strict readers for the two fixture files this suite borrows.
-//!
-//! Both files are owned by other crates and pinned by them; these readers take
-//! only the positions and ignore the expectations, which belong to the suites
-//! that state them. "Ignore" is narrow: every directive the format defines is
-//! recognised, and anything else is a panic naming the line. A fixture that is
-//! quietly half-read reports a pass for cases nobody ran (docs/decisions.md
-//! D-37's argument, applied to a reader rather than to a pin).
-
 use pistol_core::{Coord, GameState, Player};
 
 use super::position;

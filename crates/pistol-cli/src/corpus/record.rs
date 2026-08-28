@@ -1,24 +1,3 @@
-//! One corpus line, as the five fields `SCHEMA.md` defines.
-//!
-//! The grammar this accepts is in [`super::json`]; what the fields *mean* is
-//! here. Every narrowing of the published schema is deliberate and is named in
-//! its own constant, so a corpus that does not fit is refused with the clause it
-//! violated rather than being read as something else (CLAUDE.md rule 3).
-//!
-//! # The q/r mapping, and why the replay cannot check it
-//!
-//! `SCHEMA.md` says `moves` holds `[x, y]` with `(x, y) == (q, r)`. So element
-//! zero is [`Coord::q`] and element one is [`Coord::r`], and
-//! `element_zero_is_q_not_r` pins it.
-//!
-//! That test exists because nothing downstream can catch this. Swapping q and r
-//! is one of the twelve lattice symmetries ([`pistol_core::symmetry`]): it
-//! preserves hex distance and permutes the three axes, so a swapped reader
-//! produces a legal, self-consistent, *reflected* corpus — every game replays,
-//! every winner agrees, zero exclusions. The replay oracle is structurally blind
-//! to it, which is exactly why the mapping is pinned at the parser instead
-//! (docs/decisions.md D-140).
-
 use pistol_core::{Coord, Player};
 
 use super::json::Scanner;

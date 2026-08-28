@@ -1,31 +1,3 @@
-//! Which candidate the search tries first.
-//!
-//! Alpha-beta's whole yield depends on this: a node whose best ply is tried
-//! first cuts after one child, and a node whose best ply is tried last searches
-//! everything. Stage 0 orders on two things and no more — killers, history and
-//! countermoves arrive in Stage 1 with the arena that can measure them
-//! (docs/ROADMAP.md):
-//!
-//! 1. the table's move for this position, if it has one;
-//! 2. every other candidate by what the evaluation makes of a stone there.
-//!
-//! The static score is the [`Eval`](pistol_eval::Eval) backend's own reading —
-//! the search does not carry a second opinion about what a pattern is worth
-//! (docs/decisions.md D-76). Since D-214 the reading arrives through
-//! [`Eval::delta`](pistol_eval::Eval::delta) — the same number the D-76
-//! apply/value/undo roundtrip produced, without mutating the eval — because
-//! that roundtrip was measured at 76.27% of profiled stacks under this
-//! module's `order` (D-192). A cell that completes a line saturates the eval
-//! band, so a winning ply sorts to the front without the ordering knowing what
-//! a win is.
-//!
-//! # Determinism
-//!
-//! The sort is **stable** and the candidates arrive in ascending `(q, r)`, so
-//! equal scores stay in coordinate order and the lexicographic tie-break
-//! (docs/decisions.md D-5, D-7) costs nothing and cannot drift. Nothing here
-//! reads a clock, a hasher, or a node count (CLAUDE.md rule 4).
-
 use std::cmp::Reverse;
 use std::time::Instant;
 

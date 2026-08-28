@@ -1,21 +1,3 @@
-//! The principal variation: the line the search believes both sides will play.
-//!
-//! It is collected as it is found, in a triangular table — each node keeps the
-//! best line beneath it, and a node that improves on alpha takes its child's
-//! line and puts its own ply in front. Reading it back out of the transposition
-//! table afterwards would be cheaper and would also be a guess: entries get
-//! overwritten, and the line that comes back can be a different line from the
-//! one the score was proved on.
-//!
-//! # Plies in, turns out
-//!
-//! The table holds plies, because that is what the search moves in. What a
-//! caller sees is [`Turn`]s, because that is what the rules and the protocol
-//! are written in (docs/decisions.md D-5, D-9). [`turns_from_plies`] converts by
-//! **replaying** the line through `GameState`, so the grouping is the rules'
-//! own: a first stone that completes a line ends its turn (rule 4) and is a
-//! `Single`, and everything else pairs up.
-
 use pistol_core::{Coord, GameState, PlyOutcome, Turn};
 
 /// Named invariant: a principal variation that is not playable from the root,

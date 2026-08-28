@@ -1,20 +1,3 @@
-//! The sha-pinned tactical suite under `CandidatePolicy::Staged` — THE
-//! TACTICAL SUITE UNDER STAGED (docs/decisions.md D-316;
-//! `U4_soundness_instrument.md` §8.3), one of the four soundness-gate names.
-//!
-//! Mirrors `tactical_v0_tests.rs`'s own three-test split (CLAUDE.md rule 7,
-//! `tools/perft_check.sh`'s precedent): the fixture's pin and legality run in
-//! every `cargo test`; the depth-one cases are solved as a debug-build
-//! plumbing check; the whole suite meeting its pre-registered threshold is
-//! `#[ignore]`d on the DEBUG cost and run by `tools/staged_soundness_check.sh`.
-//!
-//! The twenty positions are `tactical_v0.txt`'s own twenty — see that
-//! fixture's header for the soundness argument
-//! (`crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt`'s own header
-//! restates it for the staged generator: three `[PROVEN]` laws bound how
-//! Staged and Radius can differ at a node, and none of the three directions
-//! can turn a game fact into a different one with the quiet cut disabled).
-
 mod common;
 
 use std::collections::BTreeSet;

@@ -1,10 +1,3 @@
-//! Counting DISTINCT games: what makes two games the same evidence.
-//!
-//! Split from `scoring_tests.rs`, which counts a run's outcomes. This file is
-//! about identity — a game against its mirror image, and two games that reach
-//! the same stones by different routes — because that is where the key had to
-//! be something other than the obvious thing (docs/decisions.md D-163).
-
 use pistol_arena::dedupe;
 use pistol_arena::record::{Compute, End, GameRecord, GameResult};
 use pistol_arena::score;

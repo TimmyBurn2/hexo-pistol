@@ -1,10 +1,3 @@
-//! The golden games: rules 3 and 4, pinned to a file that cannot drift.
-//!
-//! A board says where the stones are. Rule 4 is about *when* one was played —
-//! whether the stone that completed the line was the first of its turn, whose
-//! second is then never played, or the second. That needs a move list, so it
-//! gets its own fixture (docs/decisions.md D-12, D-43).
-
 mod common;
 
 use common::assert_pinned;

@@ -1,38 +1,3 @@
-//! `tools/arena_smoke.sh` — CI gate 13 of 16 (`tools/ci.sh:141`), the SPRT
-//! instrument itself run end to end as a self-match.
-//!
-//! # The defect these tests pin
-//!
-//! The gate resolved its engine from cargo's artifact stream, validated it with
-//! four refusals, and then NEVER READ IT AGAIN. The arena takes its engines from
-//! the config's `binary = ` lines, so all three runs played the literal
-//! `target/release/pistol` whatever cargo had just built and wherever it built
-//! it: with `CARGO_TARGET_DIR` redirected, every engine invocation went to a
-//! stale binary and the gate printed its verdict and exited 0. The variable was
-//! validated and unread, which is the shape worth remembering — a guard can be
-//! correct and reach nothing (docs/decisions.md D-252).
-//!
-//! # Why a STUB arena and a STUB engine
-//!
-//! The claim is about WHICH BINARY PLAYS, not about the engine or the arena. It
-//! needs a `cargo build` whose target directory the test controls, and binaries
-//! that can say which file they are; pointing either at the live checkout would
-//! have a test redirect the builds of the repository it is being reviewed in.
-//! The scratch tree holds the SHIPPED script and the SHIPPED config — the
-//! config's `binary = ` spelling is what the rewrite matches on, so a change to
-//! it has to break this test — over a zero-dependency workspace whose `--bin
-//! pistol` and `--bin arena` stand in for the two the gate builds.
-//!
-//! The stub arena LAUNCHES the binary its config names and each stub engine logs
-//! the file it is, so the assertion is about processes that really ran rather
-//! than about a string this gate rewrote.
-//!
-//! # RULE9-JUSTIFICATION: one gate's choice of binary, over one scratch tree.
-//! The two stubs are not a second subject: they are the fixture the claim needs,
-//! since an assertion about WHICH binary played can only be made by binaries
-//! that report which one they are, and splitting them out would put the fixture
-//! and the assertion it exists for in different files.
-
 mod common;
 
 use std::path::{Path, PathBuf};

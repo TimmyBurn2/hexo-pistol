@@ -1,19 +1,3 @@
-//! Adversarial inputs on the two paths that can be handed something impossible:
-//! a caller whose stones contradict what the eval holds, and a cell at the edge
-//! of the addressable lattice.
-//!
-//! Neither is operator input. A cell that may not hold a stone is refused by
-//! `pistol_core::GameState` long before an eval hears about it, so being told
-//! about one anyway means a caller's board and its eval have drifted — a bug in
-//! pistol, reported as a named panic rather than as an error nobody could handle
-//! (CLAUDE.md rule 3).
-//!
-//! The checks below are *opportunistic*, and the tests say which case each one
-//! catches. The guarantee that the bookkeeping is right is
-//! `eval_incremental_matches_from_scratch_on_random_playouts`, not these; these
-//! are here so that the cheap cross-checks the update already affords are loud
-//! rather than absent (docs/decisions.md D-70).
-
 mod common;
 
 use common::reference::value_from_scratch;

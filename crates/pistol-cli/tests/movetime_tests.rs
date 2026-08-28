@@ -1,37 +1,3 @@
-//! WP-1.4: `movetime` is a ceiling, not a floor (docs/decisions.md D-95
-//! superseded).
-//!
-//! Every test here runs the play-mode engine in-process on the sha-pinned D-95
-//! reproducer class (`fixtures/spread_v1.txt`) and asserts two things about a
-//! `go movetime N`: the answer is a LEGAL turn (replayed through pistol-core,
-//! the one source of game truth — CLAUDE.md rule 2), and it arrives within
-//! N + epsilon, where epsilon is `play.movetime_epsilon_ms` from the committed
-//! play config and never a number invented here (CLAUDE.md rule 1).
-//!
-//! # The debug relaxation, stated rather than hidden
-//!
-//! The strict N + epsilon bound is a promise about the RELEASE build — the one
-//! that plays — and `tools/movetime_check.sh` enforces it there. Under
-//! `cargo test`'s debug profile the bounded sections epsilon covers (the
-//! fallback stage, one node's ordering tail) run tens of times slower, so the
-//! bound here relaxes to N + [`DEBUG_SLACK_MS`]: still red on every regression
-//! of D-95's magnitude (its smallest measured overshoot was 1.4 s past the
-//! budget in release, minutes in debug), and honest about what a debug wall
-//! clock can promise. The same pattern as the release-profile assertion in
-//! pistol-search's build_profile_tests (docs/decisions.md D-127).
-//!
-//! # RULE9-JUSTIFICATION: one acceptance suite over one measuring harness
-//! (CLAUDE.md rule 9).
-//!
-//! Every test here is a claim about the same contract — `go movetime N`
-//! answers legally within N + epsilon — measured through the same strict
-//! fixture loader and the same timed-search harness, whose invariants (the
-//! sha pin, the stone-count cross-check, the legality replay, the
-//! debug-relaxation rule) are stated once above them. Splitting the suite
-//! would either duplicate that harness per file or hoist it into the shared
-//! test scaffolding where no other suite uses it, and would scatter the
-//! ceiling contract's assertions across files a reviewer has to reassemble.
-
 mod common;
 
 use std::str::FromStr;

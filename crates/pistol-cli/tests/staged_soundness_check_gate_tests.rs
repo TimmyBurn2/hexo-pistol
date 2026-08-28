@@ -1,29 +1,3 @@
-//! `tools/staged_soundness_check.sh` part 1 — CI gate 11 of 16
-//! (`tools/ci.sh:130`), the D-316 soundness gate's own artifact-resolution
-//! ladder (`docs/decisions.md` D-361; WP-1.5b Phase 4's MAJOR 4 finding,
-//! `docs/experiments/wp15b_IMPL_REVIEW_REDTEAM.md`).
-//!
-//! # Why this file exists at all
-//!
-//! D-361 exempted this script from `tools/SHELL_CHECKLIST.md` item 10 on the
-//! reasoning that `tools/ci.sh` is its precedent. The Phase 4 review found the
-//! actual precedent is `tools/tactical_check.sh`, whose artifact-resolution
-//! ladder this script's part 1 copies nearly line for line — and that script
-//! DOES carry a driving test
-//! (`crates/pistol-cli/tests/tactical_check_gate_tests.rs`), added after a
-//! stale binary at a redirected `CARGO_TARGET_DIR` let a gate print
-//! `20 of 20` and exit 0 for an engine that had just been rebuilt failing the
-//! suite (D-250). This file is that same test, pointed at this script.
-//!
-//! # Scope
-//!
-//! Part 1 only. Parts 2-4 are `cargo test -p pistol-search --test ...`
-//! invocations of suites this scratch tree does not vendor, and they are
-//! never reached in either scenario below: the control run's stub answers
-//! part 1's `selftest` truthfully and part 1 passes; the regression's stub
-//! answers falsely and part 1 refuses under `set -e` before part 2 starts,
-//! which the "not blamed on parts 2-4" assertion checks for by name.
-
 mod common;
 
 use std::path::{Path, PathBuf};

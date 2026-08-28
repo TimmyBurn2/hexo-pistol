@@ -1,9 +1,3 @@
-//! Replaying a corpus game through pistol-core, and what can be wrong with one.
-//!
-//! The verdicts and the two cross-check counts. Each count has a game here that
-//! makes it nonzero: a measurement whose value no fixture can move is not a
-//! measurement (docs/decisions.md D-141).
-
 mod common;
 
 use common::{repo, scratch_file};

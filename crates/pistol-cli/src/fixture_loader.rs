@@ -1,11 +1,3 @@
-//! Reading a tactical fixture: the strict loader for the format
-//! [`crate::fixtures`] describes.
-//!
-//! Strict on purpose. A directive it does not know, a case without a config, a
-//! position, a budget or an expectation, a repeated name, a threshold larger than
-//! the suite — each is a named refusal citing the line, because a fixture that is
-//! quietly half-read reports a pass for cases nobody ran (CLAUDE.md rule 3).
-
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;

@@ -1,28 +1,3 @@
-//! `arena-stub-engine` — a deliberately misbehaving protocol speaker.
-//!
-//! **This is a test instrument, not an engine.** It exists because the forfeit,
-//! garbage, hang, exit, wrong-position and mode paths of the arena are
-//! otherwise unreachable by any test, and a referee nobody has watched refuse
-//! is not a referee (docs/decisions.md D-166).
-//!
-//! Its protocol conformance is the ENGINE's own code: it implements the
-//! `Engine` trait with a one-line search and serves it through the real
-//! `pistol_cli::Session`, so everything except the named deviation is the same
-//! code path the shipping binary uses. Only the misbehaviour is its own.
-//!
-//! The behaviour is read from the `--config` file rather than from an
-//! environment variable, so two tests running at once cannot change each
-//! other's engine. It refuses to start without one: a stub that defaulted to
-//! honest could be pointed at by a real experiment and would look like a very
-//! weak engine rather than like a mistake.
-//!
-//! # RULE9-JUSTIFICATION: every deviation this instrument makes lives in one
-//! file on purpose. Its whole value is that a reader can see the complete set
-//! of ways it differs from a real engine in one place, beside the real
-//! `Session` it otherwise serves through. Splitting the behaviour set from the
-//! code that acts on it would scatter exactly what a reviewer comes here to
-//! audit, and would let a mode exist that nothing acts on.
-
 use std::collections::BTreeSet;
 use std::io::{self, BufRead, Write};
 use std::process::ExitCode;

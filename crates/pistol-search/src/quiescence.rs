@@ -1,28 +1,3 @@
-//! Threat-only, zone-bounded quiescence at the search horizon (WP-1.6,
-//! docs/wp16_quiescence_design.md).
-//!
-//! A dedicated module, not a reuse of [`crate::staged::staged_candidates`]:
-//! Ruling 1 (the design's §3) excludes `staged_candidates`' width from
-//! quiescence entirely — its completeness licence is `LAW-SUPPORT`'s
-//! k-TURNS-OUT argument, and a horizon extension has no turns of remaining
-//! depth to spend that completeness on. Every candidate cell here traces to
-//! one of four `pistol-solver` queries named in the design's §3.1–§3.3/§3.5a:
-//! `can_win_this_turn`, `blocking_covers`, `cells_raising_to_hot`, and the
-//! completion stone's own eight-query "live windows' support" union — never
-//! `staged_candidates`, never `within_radius`.
-//!
-//! # RULE9-JUSTIFICATION: one extension, over the one recursion that realises
-//! it (CLAUDE.md rule 9).
-//!
-//! [`Run::quiescence`] (the gate), [`Run::granted_turn`] (ply-1),
-//! [`Run::quiescence_ply2`] (ply-2) and [`Run::completion_stone`] are one
-//! argument split across the shape the game's own turn structure imposes —
-//! a gate decision, then two plies — not four independent features. Splitting
-//! the gate's trigger classification into a free function that does not touch
-//! `self` is the one reduction that is honest without re-threading the whole
-//! position through call boundaries the design's own §3 already keeps inside
-//! one `staged_context()` borrow.
-
 use pistol_core::{Coord, NEIGHBOUR_DIRECTIONS, PlyOutcome};
 use pistol_solver::{Cover, HitBudget, LiveCount, MinimalCover, NearHot, StonesLeft};
 

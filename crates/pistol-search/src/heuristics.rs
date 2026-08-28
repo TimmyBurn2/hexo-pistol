@@ -1,33 +1,3 @@
-//! WP-1.7's three ordering heuristics — killers, history, countermove — and
-//! the tables they live in (`docs/experiments/wp17_design.md`).
-//!
-//! What these tables do is REORDER: they promote validated remembered cells
-//! to the front of the staged candidate set's UNFORCED range, after the
-//! table's own move and never across the Tier-F boundary
-//! (`crate::staged::StagedSet::promote_table_move`'s rule, theirs too). They
-//! never add a cell, never touch threat generation, the eval or the TT, and
-//! never run under `CandidatePolicy::Radius` or inside `crate::quiescence`.
-//!
-//! # Determinism (CLAUDE.md rule 4, docs/decisions.md D-7)
-//!
-//! Storage is plain arrays and `BTreeMap` — no hasher, so no randomized
-//! iteration exists to reach a choice path; the only iteration the tables
-//! themselves perform is `begin_search`'s aging sweep, over a sorted map.
-//! Nothing here reads a clock, a node count or a thread. Every tie breaks
-//! left-to-right over the delta-ranked candidates, so the lexicographic
-//! final tie-break (D-5, D-7) survives underneath.
-//!
-//! # RULE9-JUSTIFICATION: the three tables and their one seam (CLAUDE.md
-//! rule 9).
-//!
-//! The killers, the pair killers, the history map and the countermove map
-//! are one mechanism: they are written by ONE event (a beta cutoff at an
-//! unforced candidate), read by ONE call (`order_candidates`), aged by ONE
-//! lifecycle (`begin_search`/`clear`), and validated by ONE pair of
-//! predicates. Splitting them by table would put the promotion order — the
-//! load-bearing decision, since it decides which hint outranks which — in a
-//! different file from the tables it sequences.
-
 use std::collections::BTreeMap;
 
 use pistol_core::{Board, Coord, GameState, Phase, Player};

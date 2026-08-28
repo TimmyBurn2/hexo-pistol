@@ -1,11 +1,3 @@
-//! [`canonical_form`]: one position, one spelling, whichever of the twelve ways
-//! round it arrives.
-//!
-//! This is the promise the opening corpus deduplicates on (docs/decisions.md
-//! D-137), so it is pinned from both sides: every image of a position must give
-//! the same answer, and a position that is genuinely different — a colour swap —
-//! must not collapse into it.
-
 use std::collections::BTreeSet;
 
 use pistol_core::symmetry::transform;

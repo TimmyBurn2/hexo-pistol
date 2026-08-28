@@ -1,15 +1,3 @@
-//! The verifier's own readings of the position: plan families, threat
-//! moves, blocking pairs, the defender's race check, and EP-1 — all from
-//! the board, all independent of `ThreatState` and of the solver's policy
-//! module (design §7b).
-//!
-//! `r3` holds the reference VALUES; this module holds the pieces the
-//! verifier and the gate-(c) walker share. They live apart from `r3`
-//! because the value reference and the tree verifier are separate
-//! instruments that happen to need the same board readings, and merging
-//! them would make the verifier's re-derivation a restatement of the
-//! reference's internals instead of an independent one.
-
 use std::collections::BTreeSet;
 
 use pistol_core::window::{Window, windows_through};

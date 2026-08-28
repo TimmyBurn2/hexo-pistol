@@ -1,33 +1,3 @@
-//! Win detection, at the completing stone.
-//!
-//! A game is won the instant a single placed stone completes a contiguous own
-//! run of [`WIN_LEN`] or more along one of the three axes (rules 2 and 4). The
-//! run may be longer: an overline of seven or more wins exactly as a six does,
-//! so the test is `>=` and there is nothing to un-win.
-//!
-//! The only question this module answers is about the stone just placed. There
-//! is no whole-board scan here: rule 4 makes the completing stone the unit that
-//! matters, a search that placed a stone already knows which one it was, and a
-//! scan on the hot path would cost the whole board per node. Position
-//! validation — *does this board handed to me from outside already contain a
-//! completed line* — is a different question, asked once at a seam, and it
-//! arrives with `set_position` (docs/decisions.md D-6, D-36).
-//!
-//! The player is read from the board rather than passed in. A player argument
-//! admits a caller that passes the wrong one, and there is no legitimate caller
-//! who would; asking about an empty cell is a bug and panics with the named
-//! invariant [`WIN_CHECK_ON_EMPTY_CELL`].
-//!
-//! That panic is not a way for bad input to kill the engine. The one caller
-//! inside pistol is [`crate::GameState::place`], which asks only about the
-//! stone it has just successfully placed, and every refusal a protocol line
-//! could provoke — occupied cell, cell outside the legal region, stone after
-//! the game is decided — has already been named and returned before the win
-//! check runs, so the engine answers and stays alive (docs/decisions.md D-5,
-//! D-36). [`crate::CoreError::UnoccupiedCell`], the error shape of the same
-//! mistake, belongs to [`Board::undo`], where a caller genuinely can ask about
-//! a cell whose contents it does not know.
-
 use crate::axis::Axis;
 use crate::board::{Board, Player};
 use crate::coord::Coord;

@@ -1,10 +1,3 @@
-//! A stated position: its token grammar, and the replay that turns it into a
-//! game.
-//!
-//! Two forms, one door (docs/decisions.md D-6, D-42): whatever a caller states is
-//! replayed through the rules in pistol-core, so every refusal here is a rules
-//! refusal wearing the engine's name for it.
-
 use pistol_core::{Coord, Phase, Player, Turn};
 use pistol_engine::{EngineError, PositionSpec};
 

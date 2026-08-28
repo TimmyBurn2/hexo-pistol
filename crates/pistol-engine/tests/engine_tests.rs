@@ -1,17 +1,3 @@
-//! The `Engine` seam: what each verb promises, and what it refuses.
-//!
-//! These tests use the trait, not the protocol. The protocol's own tests live in
-//! pistol-cli and drive the same engine through text; if the two ever disagree,
-//! the protocol is the one that is wrong (docs/decisions.md D-5).
-//!
-//! # RULE9-JUSTIFICATION: one seam, over every verb it exposes (CLAUDE.md rule 9).
-//!
-//! `new_game`, `set_position` and `go`/`go_reporting` are read and asserted
-//! together because a caller of `Engine` uses them together — a test isolating
-//! one verb from the position and mode it runs under would either rebuild that
-//! context per file or share it through a module boundary the trait itself
-//! does not have. It grows again only if `Engine` gains a verb.
-
 mod common;
 
 use common::{VALID, VALID_STAGED, buildable, replacing};

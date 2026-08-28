@@ -1,10 +1,3 @@
-//! The read loop, and the input a hostile pipe can put through it.
-//!
-//! Everything here is the same claim in different clothes: one bad line is one
-//! refusal, and the engine is still there afterwards (CLAUDE.md rule 3,
-//! docs/decisions.md D-5). A driver that can kill the engine by writing a byte is
-//! a driver that can lose a match.
-
 mod common;
 
 use std::io::Cursor;

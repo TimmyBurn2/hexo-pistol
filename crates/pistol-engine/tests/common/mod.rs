@@ -1,7 +1,3 @@
-//! Shared fixture for the config tests: one valid document, and edits to it.
-//!
-//! Every test states its case as a difference from [`VALID`], so a test that
-//! fails says exactly which edit the schema failed to catch.
 #![allow(dead_code)] // each test file uses a subset of these helpers.
 
 use pistol_engine::{Config, EngineError};

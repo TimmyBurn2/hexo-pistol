@@ -1,14 +1,3 @@
-//! `random_openings_v1.txt` as a document: its pin, its in-band digest, its
-//! header, and the one property its corpus siblings can never have — that this
-//! build reproduces it byte for byte.
-//!
-//! WP-1.2a's review found fixtures whose committed bytes the build could no
-//! longer produce, because every test read the committed file and none compared
-//! it against freshly generated output (docs/decisions.md D-152). That hole is
-//! closed here rather than mitigated: this book's only input is a committed
-//! config, so the regeneration is a test rather than an errand with an external
-//! corpus in it.
-
 mod common;
 
 use common::repo;

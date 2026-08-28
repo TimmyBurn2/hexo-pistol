@@ -1,11 +1,3 @@
-//! The legal region (game rule 5), and the first stone (game rule 3).
-//!
-//! The region is the **union** of the radius-8 balls around the stones. Every
-//! test here is written so that it would fail against the plausible wrong
-//! implementations: distance from the first stone, distance from the last
-//! stone, distance from the centroid, a bounding box, or a union with an
-//! off-by-one where two balls overlap.
-
 use pistol_core::{Board, Coord, CoreError, GameState, LEGAL_RADIUS, Player};
 
 /// Cells the implementation calls legal region, over a box that reaches at

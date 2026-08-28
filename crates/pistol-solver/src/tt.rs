@@ -1,26 +1,3 @@
-//! The solver transposition table.
-//!
-//! Design §4: a fixed-size two-level bucket table (Breuker's TwoBig, the
-//! scheme the Pawlewicz-Lew paper itself used) keyed by pistol-core's full
-//! 128-bit position key (D-8) — side to move and phase bit included (D-9), so
-//! half-move positions key correctly and no GHI machinery is needed (D-436:
-//! the game is monotone, the state graph a DAG).
-//!
-//! # Determinism
-//!
-//! Indexing is a fixed splitmix64 of the key into a fixed array; replacement
-//! is a pure function of (slot contents, new entry). No hasher iteration on
-//! any choice path, no clocks, no allocator-dependent order (D-7): two runs
-//! with the same search produce byte-identical tables.
-//!
-//! # The replacement law
-//!
-//! Each index holds TWO entries: a generation-preferred slot and an
-//! always-replace slot. One law overrides both, from the dispatch itself:
-//! a PROVEN entry is never replaced by an unproven one. A proven entry is
-//! the certificate's raw material — overwriting it with `(1, 1)` would be
-//! exactly the silent information loss df-pn's proof integrity forbids.
-
 // RULE9-JUSTIFICATION: the table, its epoch filter and the replacement law
 // are one invariant — a stale epoch reads as absent precisely so the
 // proven-retention law can hold within an epoch, and gate (d)'s value

@@ -1,14 +1,3 @@
-//! What the reference asserts about ITSELF, by name.
-//!
-//! Seven statements the walk makes about its own workings, split out because
-//! they are one concept read from three modules and because the inventory below
-//! — which of them can actually fire — is the part a reader needs and the part
-//! that goes stale (CLAUDE.md rule 9's soft cap on [`super::reference`] is what
-//! forced the question; being one concept is why the answer is a module).
-//!
-//! The naming convention is `pvs.rs`'s: a violated assumption names itself, so a
-//! failure says which assumption rather than which line.
-
 /// Named invariant: a horizon landed half way through a turn, where no static
 /// value is an answer (docs/decisions.md D-111).
 pub const REFERENCE_HORIZON_MID_TURN: &str = "REFERENCE_HORIZON_MID_TURN";

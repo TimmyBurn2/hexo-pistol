@@ -1,17 +1,3 @@
-//! Every way a run refuses, by name.
-//!
-//! One closed enum, `Display` and `Error` written by hand rather than derived
-//! from a dependency, for the reason docs/decisions.md D-23 gives for
-//! `EngineError`: the text is part of the operator contract, so it is written.
-//!
-//! The division that matters here is not between kinds of failure but between
-//! **a game that was adjudicated** and **a run that cannot be trusted**. A
-//! forfeit is not in this enum at all — it is a game outcome, carried in the
-//! report (docs/decisions.md D-158). What is in this enum is everything that
-//! stops the run: a document that will not load, an engine that is not the kind
-//! of engine a strength claim may come from, and the two ways a child dies that
-//! the arena must not turn into a result.
-
 use std::fmt;
 use std::path::Path;
 

@@ -1,22 +1,3 @@
-//! `CandidatePolicy::Staged`: the node protocol (`crate::staged`) and its
-//! wiring into `pvs::visit`.
-//!
-//! Positions here are replayed `GameState::from_plies` ply lists, several of
-//! them the same plies `crates/pistol-solver/tests/fixtures/threat_v0.txt`
-//! pins for its own cases — so a claim like "P1's hot windows are unblockable
-//! by P2" is not re-derived by hand, it is the same position that fixture
-//! already certifies.
-//!
-//! # RULE9-JUSTIFICATION: one generator, over the fixed set of fixtures its
-//! rows need (CLAUDE.md rule 9).
-//!
-//! Every row the node protocol can take (WIN-NOW, FILTERED, the overload
-//! return, BATCHED and BATCHED-lost, the opening's own safety net) needs its
-//! own position, and several tests reuse the same one under a different
-//! `is_pv` to isolate the one branch that decision controls. Splitting by row
-//! would duplicate the shared `params()`/`eval()` helpers and the position
-//! builders per file; it grows again only if the protocol gains a row.
-
 mod common;
 
 use pistol_core::{Coord, GameState, Phase, Player};

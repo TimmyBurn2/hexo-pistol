@@ -1,16 +1,3 @@
-//! Reading a count the way this project reads a coordinate: one spelling only.
-//!
-//! `str::parse` accepts a leading `+` and any number of leading zeros, so
-//! `depth_turns 4`, `depth_turns +4` and `depth_turns 004` would all be the same
-//! search under three different lines. pistol-core's stone token refuses both
-//! forms by name, on the ground that each cell has exactly one spelling
-//! (docs/decisions.md D-46) — and the argument does not stop at coordinates: a
-//! protocol line, a fixture directive and a command-line flag are all inputs that
-//! a log, a diff or a dedupe by string will eventually compare.
-//!
-//! So every count this crate reads comes through here, and the diagnostics that
-//! say "a plain non-negative decimal" are telling the truth.
-
 use std::str::FromStr;
 
 /// A count, or why the text is not one.

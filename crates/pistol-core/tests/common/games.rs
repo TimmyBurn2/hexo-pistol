@@ -1,6 +1,3 @@
-//! The golden-game fixture: move lists, and what the last stone did to the
-//! turn (game rules 3 and 4).
-
 use pistol_core::{Coord, Phase, Player};
 
 use super::{directives, fixture_text, parse_coords};

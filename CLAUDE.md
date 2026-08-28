@@ -1,11 +1,11 @@
 # CLAUDE.md — pistol (working name; operator may rename)
 
 pistol is a maximum-strength CLASSICAL search engine (alpha-beta + threat search, no
-MCTS) for hex-lattice Connect(6,2,1) — the same game the mantis project trains an
+MCTS) for hex-lattice Connect(6,2,1) — the game the mantis project trains an
 AlphaZero-style system for. Rust cargo workspace. Design source of record:
-docs/research/minimax_report.md — its BUILD/PROTOTYPE/SKIP verdict table and staged
-plan are the prior; SPRT match results are the judge. Read it before proposing any
-search or eval technique.
+docs/research/minimax_report.md (BUILD/PROTOTYPE/SKIP verdicts + staged plan are the
+prior; SPRT results are the judge) — read it before proposing any search or eval
+technique.
 
 ## Game rules (pinned — every line below has a pinning test in pistol-core)
 
@@ -28,37 +28,44 @@ search or eval technique.
 - Deployment budget: a strong move consistently within **0.5 s** (stretch 0.1–0.3 s)
   on a single workstation; online evaluation on CPU. GPU is offline-only (net
   training, opening solving).
-- Deterministic instrument mode is a first-class requirement: fixed depth (in TURNS)
-  or fixed nodes, single-thread, stable tie-breaking, CPU eval. Every strength claim
-  comes from an instrument mode.
-- Extension axes the architecture must keep cheap: new eval backends (handcrafted →
-  incremental codebook net), new budget kinds, new search features, alternative
-  candidate policies, and the future API layer.
+- Deterministic instrument mode — fixed depth (in TURNS) or fixed nodes,
+  single-thread, stable tie-breaking, CPU eval (hard rule 4) — is first-class: every
+  strength claim comes from an instrument mode.
+- Extension axes the architecture must keep cheap: new eval backends, new budget
+  kinds, new search features, alternative candidate policies, and the future API
+  layer.
+
+## Commands
+
+- Build/test: `cargo build --workspace --locked` / `cargo test --workspace --locked`
+  (add `--release` to ship).
+- CI: `tools/ci.sh` — sole definition of the gates, no truer list exists elsewhere
+  (its own header says so); it prints `gate N/19: <name>` as each one runs.
+- Determinism: `tools/determinism.sh` — the hard-rule-4 self-test (same position +
+  budget twice ⇒ identical bestmove + node count).
+- Bench: `tools/bench_delta.sh` — pre-registered hotspot, IQR-gated, per-side
+  revision mode; reports nps AND time-to-depth per hard rule 5.
 
 ## Map
 
 - crates/pistol-core — board, hex geometry, rules, win detection, pair-move
   generation, zobrist (lazy per-cell keys; side-to-move + intra-turn phase in the
   key). Zero deps beyond std. THE one source of game truth.
-- crates/pistol-eval — `Eval` trait + implementations (v0: handcrafted 3-axis
-  line-window pattern tables; later: incremental codebook net). Contract is
-  incremental: apply/undo per placed stone.
+- crates/pistol-eval — `Eval` trait + implementations (v0 handcrafted 3-axis
+  line-window tables; later incremental codebook net). Incremental contract:
+  apply/undo per placed stone.
 - crates/pistol-search — PVS + iterative deepening + TT + move ordering + threat-only
   quiescence; budget handling; `SearchInfo`.
 - crates/pistol-solver — threat generation, TSS/DBS, df-pn family (later stages;
   starts as the threat generator only).
-- crates/pistol-engine — composition: the `Engine` trait
-  (`new_game / set_position / go(Budget) -> BestMove + SearchInfo`), config
-  load + validation. The ONLY seam the future API layer wraps.
+- crates/pistol-engine — composition: the `Engine` trait (`new_game / set_position /
+  go(Budget) -> BestMove + SearchInfo`), config load + validation. The ONLY seam the
+  future API layer wraps.
 - crates/pistol-arena — match runner: paired openings, SPRT, Elo, distinct-game
   dedupe, per-side compute accounting.
 - crates/pistol-cli — binaries: line-protocol engine (I/O mirrors `Engine` 1:1),
   perft, bench, selftest.
-- crates/pistol-api — RESERVED, empty until the API spec lands.
-- configs/ — explicit, complete, schema-validated configs. docs/decisions.md —
-  append-only ADR log. docs/process_readings.md — the T-bucket: adversarial readings
-  of the pre-registration paragraphs, with their status. docs/research/ — the report
-  and the threat calculus. docs/ROADMAP.md — stage plan.
+- crates/pistol-api — RESERVED, empty until the API spec lands (hard rule 11).
 
 ## Hard rules
 
@@ -68,19 +75,18 @@ search or eval technique.
    absent budget is an error, never a fallback.
 2. **Rules truth.** Game geometry, legality, and win detection live in pistol-core
    only; no other crate re-implements them. The radius-8 legal region is a pinned
-   constant; the SEARCH candidate policy is config, never a literal. Do not conflate
-   the two radii.
+   constant; the SEARCH candidate policy is config, never a literal — do not conflate
+   the two.
 3. **Fail loud.** No silent fallback, swallowed error, or skip-with-default.
    Wrong-kind/wrong-shape input raises a named error.
 4. **Determinism law.** In instrument mode nothing nondeterministic may influence
    move choice: no unseeded hash-iteration order on choice paths (fixed-seed hasher
-   or sorted iteration), no time-based tie-breaks, no thread races. A determinism
-   self-test (same position + budget twice ⇒ identical bestmove + node count) is a
-   CI gate.
-5. **Bench discipline.** A perf-sensitive change ships with a pre-registered hotspot,
-   expected gain bracket, and abort threshold; one change = one commit = one
-   IQR-gated bench; report nps AND time-to-depth. A measured structural floor is a
-   finding, not a failure.
+   or sorted iteration), no time-based tie-breaks, no thread races.
+   `tools/determinism.sh` is the CI gate.
+5. **Bench discipline.** A perf-sensitive change ships with a pre-registered
+   hotspot, expected gain bracket, and abort threshold; one change = one commit =
+   one IQR-gated bench; report nps AND time-to-depth. A measured structural floor is
+   a finding, not a failure.
 6. **Strength claims.** Ship instrument (fixed depth/nodes), protocol, n, distinct-n
    (identical games deduped), and per-side compute. Search/eval changes are accepted
    or rejected by SPRT over paired balanced openings. Never wall-clock-only.
@@ -103,138 +109,105 @@ search or eval technique.
 
 DESIGN → REVIEW-design (fresh context, attacks the premise) → IMPL → REVIEW-impl
 (fresh context, not the implementer, checks against the design) → RED-TEAM on
-rules/data paths (adversarial inputs). Pre-register verdicts before experiments; no
+rules/data paths (adversarial inputs). Pre-register verdicts before experiments — no
 post-hoc threshold moves. Reviewers flag correctness and requirement gaps, not style.
 
-A named design decision with more than one viable option is settled by an OPTION
-MATRIX — options, costs, failure modes, recommendation — attacked by a fresh-context
+A named decision with more than one viable option is settled by an OPTION MATRIX —
+options, costs, failure modes, recommendation — attacked by a fresh-context
 DECISION-RED-TEAM subagent BEFORE selection; the surviving option's ADR line records
 the strongest surviving attack. An option adopted without a matrix, or a matrix never
-attacked, is the same breach as silent architecture drift. EVERY NUMERIC CLAIM IN
-THE MATRIX IS MARKED **MEASURED** OR **ESTIMATED**, and an estimate that could have
-been measured in seconds is a finding — twice in one round a matrix argued that
-unmeasured claims are the failure mode while resting on one (D-291).
+attacked, is the same breach as silent architecture drift. Every numeric claim in the
+matrix is marked **MEASURED** or **ESTIMATED**; an estimate that could have been
+measured in seconds is a finding (D-291).
 
-A pre-registration is reviewed at the revision that GOVERNS the run: the revision
-that governs a run must itself pass a fresh-context review before the first run it
-governs. Reviews of superseded revisions do not transfer — an amendment reopens the
-review, however small the diff.
-
-THE INSTRUMENT HAS A GOVERNING REVISION TOO. An artefact that produces a registered
-number — a `tools/` script, a scratchpad harness, or a command block the document
-prints — is named in the pre-registration WITH ITS REVISION, and a change to it
-reopens the review exactly as an amendment to the document does. `tools/` is where
-such artefacts usually live; living there is not what makes the rule apply. Without
-this, a run stands on an instrument whose own review had failed and is licensed by
-argument rather than by this text.
-
-A pre-registration's literal commands are exercised before its review passes, on an
-input of the SAME KIND as the registered workload — the same sort of artefact,
-differing only in identity — and never on the registered workload itself. A synthetic
-stand-in exercises syntax; only a real instance of the kind exercises ATTRIBUTION,
-which is where a command that counted the wrong symbols passed a synthetic dry run and
-still shipped. The dry run is not a governed sample and does not consume the
-pre-registration's first run. The pre-registration records the dry-run input and its
-output. This constrains the dry run's input; it constrains no reviewer, who may run
-anything, the registered workload included.
-
-AND IT RECORDS WHAT THAT OUTPUT MUST SHOW, together with the DEFECT CLASS the
-criterion is meant to exclude. Recording without a criterion is a dry run nothing can
-fail. A criterion that is a property the named defect class PRESERVES — internal
-agreement between components sharing an input, output shape, plausible magnitude,
-exit status — passes vacuously and is not a criterion; it must be one that defect
-could falsify. An externally derived referent, a value computed by something that does
-not share the suspect input, is the operationalisation that reliably achieves this and
-is what a reviewer looks for first: sufficient, not necessary. This binds ANY
-registered criterion, dry-run or governed alike.
-
-A pre-registration states what its governed run COSTS — wall time, operator attention,
-machine hours — so the proportion between the document and the run is visible on the
-document's own face. Where the run is cheap, doubt about the instrument is answered by
-REPLICATION and by a SECOND INSTRUMENT whose agreement criterion is registered before
-either runs, never by a margin derived to defend a single sample. A registered
-agreement criterion carries a REGISTERED CONSEQUENCE: the pre-registration states,
-before either instrument runs, what DISAGREEMENT does to the verdict, or the criterion
-leaves standing the after-the-numbers decision it exists to forbid. AND IT NAMES THE STAGE
-UNDER DOUBT, and says how the second instrument does not share it: two instruments blind to the
-same stage are one instrument reported twice, and their agreement is invariant under a defect in
-what they are both blind to — measured, a dependency-graph check and a two-build digest
-comparison both missed what a build script READ, agreed, and confirmed a tree where the subject
-reached the binary. A derived margin is
-the instrument of a measurement that cannot be taken again, and it is the wrong
-instrument for a workload measured in seconds. Neither this rule nor the dry-run rule
-is mechanized, and neither catches a run whose answer is already known before it is
-taken — that defect is judged, not checked.
+A pre-registration is reviewed at the revision that GOVERNS the run — that revision
+must itself pass a fresh-context review before the first run it governs, and reviews
+of superseded revisions do not transfer — and an amendment reopens the review however
+small the diff. Dry-run discipline, the instrument's own governing revision, the
+criterion/defect-class a registered output must satisfy, the
+cost/replication/second-instrument rule for a cheap instrument under doubt, and the
+tools/ review's coverage rule are detailed methodology binding exactly as this file
+would — see docs/process.md.
 
 REVIEW-design, REVIEW-impl and RED-TEAM are dispatched as subagents with fresh
 contexts; the implementing session never reviews its own work. A WP is not landable
 while its reviews are outstanding. A session that cannot dispatch subagents states so
 and stops after IMPL; the operator launches the reviews. A reviewer finding is
 verified with a minimal reproducer before its fix lands; a finding that cannot be
-reproduced is recorded as rejected with the attempted reproducer.
+reproduced is recorded as rejected with the attempted reproducer. Each review is
+dispatched against a NAMED REVISION — a commit SHA, or a `git stash create` SHA where
+the work is uncommitted — stated in the reviewer's report header together with
+whether it still matches HEAD. Mutation testing runs in a separate git worktree,
+never the live tree: a mutation is a deliberate break, and a break left in the tree
+the implementing session is editing is indistinguishable from a regression.
 
-A review is dispatched against a NAMED REVISION — a commit SHA, or a `git stash
-create` SHA where the work is uncommitted — and every reviewer states that revision
-in its report header together with whether it still matches HEAD. Mutation testing
-runs in a separate git worktree, never the live tree: a mutation is a deliberate
-break, and a break left in the tree the implementing session is editing is
-indistinguishable from a regression.
+THE OPERATOR OVERRULE, a first-class move and not an escape hatch. Where the CODE is
+done — tested, green, its mutations dying — and what blocks it is a claim in a
+governing DOCUMENT or a rule of this file, the session states the problem in a SHORT
+paragraph and asks the operator to OVERRULE. The paragraph names three things and no
+more: the finding, why the blocked claim does no work, and what would be deleted. The
+operator's answer is an ADR line, and the deletion is the fix. THE TEST IS WHETHER THE
+DISPUTED CLAIM CHANGES WHAT ANYONE MAY CONCLUDE — where both sides of a distinction
+license the same conclusion it is not a distinction, and it is DELETED rather than
+refined. IT IS NOT A LICENCE OVER CORRECTNESS: a finding that names a way the code can
+produce a wrong answer is never overruled, only fixed, and the overrule reaches only
+prose that constrains nothing (D-424).
 
-A change under tools/ is reviewed against tools/SHELL_CHECKLIST.md — the review
-prompt cites it and the reviewer answers its items by name — because three
-consecutive rounds found ONE class in those scripts: shell under `set -euo
-pipefail` parsing unvalidated output and failing as EXIT-0-WRONG-ANSWER. Its
-coverage rule is the binding one: any tools/ script that produces a recorded
-number carries at least one test driving the shipped script. The checklist is
-judged, not mechanized.
+A pre-registration registers only what constrains the CONCLUSION; operational
+guidance lives in the instrument's own printed message, not in a registered, reviewed
+rule — a rule that cannot change any reading is protecting nothing and is prose a
+reviewer must still attack. A CLAIM THE DOCUMENT MAKES TWICE IS A DEFECT WAITING —
+state it once, in the section that owns it, and have every other section point there
+instead (D-423).
 
-THE OPERATOR OVERRULE, a first-class move and not an escape hatch. Where the
-CODE is done — tested, green, its mutations dying — and what blocks it is a
-claim in a governing DOCUMENT or a rule of this file, the session states the
-problem in a SHORT paragraph and asks the operator to OVERRULE. The paragraph
-names three things and no more: the finding, why the blocked claim does no work,
-and what would be deleted. The operator's answer is an ADR line, and the
-deletion is the fix. THE TEST IS WHETHER THE DISPUTED CLAIM CHANGES WHAT ANYONE
-MAY CONCLUDE — where both sides of a distinction license the same conclusion it
-is not a distinction, and it is DELETED rather than refined. IT IS NOT A LICENCE
-OVER CORRECTNESS: a finding that names a way the code can produce a wrong answer
-is never overruled, only fixed, and the overrule reaches only prose that
-constrains nothing. Measured, the alternative costs a full review round per
-revision and buys nothing — WP-1.6's exit taxonomy produced one MAJOR in each of
-three consecutive revisions, every one inside the paragraph written to fix the
-last, while both sides of the distinction it drew meant the same thing: the run
-is not a measurement (D-424).
+**Closure.** All work on `dev`; `main` = gate-passing merges only. One feature = one
+commit, `type(scope): what changed and why it matters`, one line. Commit only when
+the operator asks; merges/pushes are operator acts. A gate or test claim in any
+report cites the gate's own log output, never a wrapper's exit status.
 
-A pre-registration registers only what constrains the CONCLUSION. Operational
-guidance — what to do after a refusal, which file to look at next, whether to
-re-run — is NOT registered, is not reviewed, and lives in the instrument's own
-printed message. Pre-registration exists to stop a reading being chosen after
-the numbers are seen; a rule that cannot change any reading is protecting
-nothing and is prose a reviewer must still attack.
+## Code style (Rust)
 
-A CLAIM THE DOCUMENT MAKES TWICE IS A DEFECT WAITING. State it once, in the
-section that owns it, and have every other section POINT at that section rather
-than restate it — because a fix then lands once instead of needing to land
-twice, and the second site is what gets missed. Measured: revision 7 of WP-1.6's
-pre-registration corrected the exit taxonomy in §5 and left §7A.1's copy
-byte-identical, and the document shipped self-contradicting (D-423).
+- rustfmt default settings and clippy clean (`-D clippy::all`) are mechanical law; a
+  style dispute rustfmt can settle is not discussed in reviews.
+- Comments say WHY, never WHAT: no narration, no restating names, types, or asserts.
+  Line comments (`//`), own line, one space after the sigil. Brief — if a comment
+  needs a paragraph, the code or the design doc is the wrong shape.
+- No file-top narrative headers. No `//!` module descriptions in ordinary modules; a
+  module's name and its public item docs carry its purpose. `//!` is permitted only
+  at a crate root, at most a few lines, only if rustdoc genuinely needs it.
+- Public items get `///` docs, with `# Errors` / `# Panics` sections where a caller
+  would reasonably handle them; no doc that restates the signature.
+- Naming follows RFC 430 shapes; no domain-convention exceptions.
+- Tests are named for the behaviour pinned, not the function called; deterministic;
+  no wall-clock waits.
+- When brevity and reviewability collide, reviewability wins. When a comment and a
+  test could carry the same fact, the test carries it.
 
-## Roadmap pointer
+## Environment
 
-Stages per the research report: 0 foundations (correct + reproducible) → 1 tactical
-core (threat gen, ordering, quiescence, df-pn) → 2 incremental codebook eval →
-3 forcing search (TSS/DBS/CTSS/RZOP) → 4 Lazy SMP + tuning → 5 opening book + full
-harness. Stage gates and work-package cuts live in docs/ROADMAP.md (authored in
-session 1, changed only by ADR).
+- Toolchain: rustup-managed `cargo`/`rustc` on PATH; no pinned toolchain file here.
+- The agent shell's `grep` is wrapped by the harness (D-265) — multithreaded,
+  order-nondeterministic, visiting a different file set than plain `grep`. Anything
+  RECORDED or ADJUDICATED is produced with `/usr/bin/grep` or `git grep`, pinned to a
+  revision, sorted `LC_ALL=C sort`; a captured transcript is evidence of shape, never
+  "the exact output".
+- Never export `CARGO_TARGET_DIR` around `cargo test` in the live tree: several
+  gate-test suites build their own scratch cargo workspaces, and a shared target
+  directory makes one fixture read another's dep-info. Verification/mutation work
+  happens in a separate `git worktree add --detach` with its own `CARGO_TARGET_DIR`,
+  never the live tree.
+- This machine's `/tmp` is a 24 GiB RAM-backed tmpfs (`tools/ci.sh` preflights it);
+  build-heavy work goes on real disk, not `/tmp`. A long-running background job runs
+  detached (`setsid nohup`) and is polled, never watched synchronously.
 
-## Workflow
+## Pointers
 
-- All work on `dev`; `main` = gate-passing merges only. One feature = one commit,
-  `type(scope): what changed and why it matters`, one line. Commit only when the
-  operator asks. Merges/pushes are operator acts.
-- CI gates, all locally runnable scripts under tools/: fresh-clone build;
-  `cargo test --workspace --locked` + clippy (`-D clippy::all`); perft oracle;
-  determinism self-test; artifact rejection; config validation; file-justification
-  check.
-- A gate or test claim in any report cites the gate's own log output, never a
-  wrapper's exit status.
+- docs/decisions.md — append-only ADR log (hard rule 10).
+- docs/process.md — pre-registration methodology detail (Process section above).
+- docs/process_readings.md — the T-bucket of adversarial prereg-paragraph readings
+  and their status.
+- docs/research/ — the design report (minimax_report.md) and the threat calculus.
+- docs/ROADMAP.md — the stage plan (0 foundations through 5 opening book/harness),
+  changed only by ADR; its own headers name each stage.
+- configs/ — explicit, complete, schema-validated configs (hard rule 1).
+- tools/SHELL_CHECKLIST.md — the tools/ review checklist (Process section above).

@@ -1,10 +1,3 @@
-//! One spelling per number, wherever this crate reads one.
-//!
-//! `str::parse` would accept `+4` and `004` as four. pistol-core's stone token
-//! refuses both by name because each cell has exactly one spelling
-//! (docs/decisions.md D-46), and a budget, a threshold and a depth are inputs a
-//! log or a diff compares just as a coordinate is.
-
 use pistol_cli::count::plain_count;
 
 #[test]

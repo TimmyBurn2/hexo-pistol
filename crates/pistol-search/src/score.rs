@@ -1,33 +1,3 @@
-//! The score band, and the one conversion a shared table needs.
-//!
-//! A score is an `i32`. Below [`MATE_THRESHOLD`] in magnitude it is a static
-//! evaluation, which pistol-eval clamps to `EVAL_MAX` (16000). At or above it,
-//! it is a **distance**: [`MATE`] less the number of turns until the line
-//! completes (docs/decisions.md D-3).
-//!
-//! # What the distance counts
-//!
-//! Every turn from the root, both sides'. `MateIn(1)` is the side to move
-//! completing a run of six this turn, with its first stone or its second — rule
-//! 4 makes those one turn, not two. `MateIn(2)` is therefore the *opponent*
-//! completing one on the turn after, which is a loss for the side to move and
-//! spells `MatedIn(2)` from where they sit. A win for the side to move is always
-//! an odd distance and a loss always an even one, which is the sanity check a
-//! reader should apply to any mate score this engine prints
-//! (docs/decisions.md D-72).
-//!
-//! Both plies of a turn share one distance, because they share one turn number:
-//! from the phase-second node, "this turn" is still this turn.
-//!
-//! # Why the conversion exists
-//!
-//! A distance means something different at every node, so a transposition table
-//! cannot store one as it stands: an entry written six turns down the tree and
-//! read three turns down would claim a win three turns sooner than it is.
-//! [`to_table`] re-bases a root-relative score onto the node that stores it and
-//! [`from_table`] re-bases it back onto the node that asks. The table applies
-//! both itself ([`crate::tt::Table`]), so no caller can forget.
-
 use pistol_eval::EVAL_MAX;
 
 /// A completed line, scored at zero distance. No position ever holds this

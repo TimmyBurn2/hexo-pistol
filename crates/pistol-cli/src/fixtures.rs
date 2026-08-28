@@ -1,32 +1,3 @@
-//! The tactical fixture: positions, what the engine is given, and what it must
-//! find.
-//!
-//! The format's types live here and its loader in [`crate::fixture_loader`], which
-//! is the same file split for size (CLAUDE.md rule 9) rather than a second
-//! concept.
-//!
-//! One loader, in the library, read by both the `selftest` command and the tests
-//! (CLAUDE.md rule 7 wants the suite sha-pinned; the pin fires in the test that
-//! reads the file, docs/decisions.md D-37). Two loaders for one format would
-//! drift, and the one in the binary would be the one nobody pinned.
-//!
-//! The format is line-oriented and the loader is strict: a directive it does not
-//! know, a case without a position, a case without an expectation, a repeated
-//! name — each is a named refusal citing the line. A fixture that is quietly
-//! half-read reports a pass for cases nobody ran (CLAUDE.md rule 3).
-//!
-//! ```text
-//! require <n>                 the pre-registered pass threshold, once
-//! case <name>                 starts a case
-//! config <path>               the engine config this case is a claim about
-//! position <tail>             the position, as the `position` verb spells it
-//! budget depth_turns <n> | budget nodes <n>
-//! expect move <turn>          the engine plays exactly this turn
-//! expect cell <q,r>           the turn it plays includes this cell
-//! expect mate <n>             the score is a win in n turns
-//! expect not-mated            the score is not a loss
-//! ```
-
 use std::fmt;
 use std::path::PathBuf;
 

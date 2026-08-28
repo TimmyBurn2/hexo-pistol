@@ -1,13 +1,3 @@
-//! Named failures of the evaluation layer.
-//!
-//! There are two of them, and they are the two halves of docs/decisions.md D-21:
-//! config validation checks that `eval.weights_file` has the *shape* of a path,
-//! and everything else about that file — that it is there, that it parses, that
-//! it says what this backend needs — is a loud error raised here, at load time.
-//!
-//! A rejected key is always named, because a weight table is configuration and
-//! an operator has to be told which line to go and edit (CLAUDE.md rule 1).
-
 use std::fmt;
 use std::path::PathBuf;
 

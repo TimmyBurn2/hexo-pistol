@@ -1,9 +1,3 @@
-//! Budgets, and the reports a search makes on the way.
-//!
-//! A node budget is one of the two instrument budgets (docs/decisions.md D-4),
-//! so where it stops has to be a property of the search and not of the machine:
-//! the same position and the same count stop on the same node, every run.
-
 mod common;
 
 use std::cell::RefCell;

@@ -1,18 +1,3 @@
-//! The arena configuration schema.
-//!
-//! The same three properties `pistol-engine`'s config holds, enforced the same
-//! way (CLAUDE.md rule 1, docs/decisions.md D-15, D-16, D-17): every field is
-//! required, every struct denies unknown fields, and `schema_version` is
-//! checked for equality. There is no `serde` default, no `Default`
-//! implementation, and no code path that invents a tunable's value.
-//!
-//! [`ARENA_SCHEMA_VERSION`] is this document's version and is never compared
-//! with `pistol_engine::SCHEMA_VERSION`. They version different documents that
-//! change for different reasons, and comparing them would couple an arena
-//! config to an engine config release for release.
-//!
-//! Cross-field rules live in `validate.rs` and run in [`ArenaConfig::validate`].
-
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;

@@ -1,17 +1,3 @@
-//! `random-openings` — the arena's primary SPRT book, from a committed config.
-//!
-//! A separate binary from `corpus-extract` and from `pistol`, for the reason
-//! docs/decisions.md D-136 gives and D-176 extends: a one-shot curation tool has
-//! no business linked into the program that ships, and this one shares no input,
-//! no output and no code path with its corpus sibling — that tool's every route
-//! starts by reading an external corpus of human games, and this one reads a
-//! committed TOML document and nothing else.
-//!
-//! Fails loudly and says which document it refused (CLAUDE.md rule 3). There is
-//! no flag for any generation parameter: the four that shape the book live in
-//! the config, are echoed into the header of the file, and are regenerated from
-//! there by a test.
-
 use std::path::PathBuf;
 use std::process::ExitCode;
 

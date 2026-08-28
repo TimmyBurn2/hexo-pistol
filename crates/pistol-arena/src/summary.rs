@@ -1,10 +1,3 @@
-//! The human sentence, on stdout.
-//!
-//! Everything here is also in the report file; this exists so that an operator
-//! reading a terminal does not have to parse one. The one thing it adds is
-//! emphasis: a run with a forfeit in it says so in a way that cannot be skimmed
-//! past, because such a run is not a measurement (docs/decisions.md D-158).
-
 use std::fmt::Write as _;
 
 use crate::config::ArenaConfig;

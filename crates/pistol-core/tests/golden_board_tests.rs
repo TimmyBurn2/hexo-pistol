@@ -1,12 +1,3 @@
-//! The golden boards: rules 2 and 4, pinned to a file that cannot drift.
-//!
-//! The fixture is hashed by the test that reads it, so a fixture edit without a
-//! matching pin update is a red test rather than a quietly different oracle
-//! (CLAUDE.md rule 7, docs/decisions.md D-37). The hash is computed in the test
-//! tree because pistol-core takes no dependency, dev-dependencies included, and
-//! the hasher is itself pinned against the published vectors below — a pin
-//! computed by an unverified hash pins nothing.
-
 mod common;
 
 use common::assert_pinned;

@@ -1,10 +1,3 @@
-//! Choosing the bench positions: the band rule, and who may contribute to it.
-//!
-//! The band arithmetic is pinned as arithmetic — including the tie the rule
-//! resolves and the counts it can never reach — because on the real corpus the
-//! upper half of a band never fires, so a test that only looked at output would
-//! not see the rule at all (docs/decisions.md D-146).
-
 mod common;
 
 use common::repo;

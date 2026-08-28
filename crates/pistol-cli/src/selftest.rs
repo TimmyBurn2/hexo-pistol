@@ -1,28 +1,3 @@
-//! The in-process gate: every fixture case, searched twice, against what it must
-//! find.
-//!
-//! Two questions, and they are answered separately because they fail for
-//! different reasons and carry different consequences:
-//!
-//! - **Determinism.** Two runs of the same position under the same reproducible
-//!   budget must agree on the move, the node count, the score, the depth and the
-//!   whole principal variation. That is a law, not a percentage: one
-//!   disagreement fails the gate (CLAUDE.md rule 4, docs/decisions.md D-7). The
-//!   two runs are deliberately unalike — one from a freshly built engine, one
-//!   from an engine that has already played other games and been told `newgame`
-//!   — because the failure this catches in a single process is state that bleeds
-//!   from one search into the next.
-//! - **Tactics.** How many cases the engine actually solves, against the
-//!   threshold the fixture pre-registered before the suite was first run
-//!   (CLAUDE.md §Process). The threshold is read from the fixture, never from a
-//!   flag, and this module has no opinion about what it should be.
-//!
-//! The cross-process half of the determinism gate is `tools/determinism.sh`,
-//! which runs the compiled binary twice and diffs the transcripts. This half
-//! cannot see what that one sees (two processes really are two processes) and
-//! that one cannot see what this one does (a single process's carried state), so
-//! both exist.
-
 use std::fmt;
 use std::path::{Path, PathBuf};
 

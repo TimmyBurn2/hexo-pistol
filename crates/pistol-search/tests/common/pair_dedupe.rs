@@ -1,11 +1,3 @@
-//! The pair dedupe: which orderings of a turn's two stones the reference walks.
-//!
-//! One node's worth of bookkeeping, in its own module because the argument that
-//! it is EXACT is the whole of why the reference may skip anything at all
-//! (docs/decisions.md D-120 and its amendment). The walk that uses it is
-//! [`super::reference_walk`]; the mode that switches it off is
-//! [`PairOrder::BothOrderings`].
-
 use pistol_core::Coord;
 
 use super::reference::PairOrder;

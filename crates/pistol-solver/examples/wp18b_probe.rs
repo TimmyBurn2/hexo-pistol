@@ -1,15 +1,3 @@
-//! `wp18b_probe`: the WP-1.8b anchor-probe instrument.
-//!
-//! Reads a solver fixture, solves every case, prints one line per case with
-//! the shipped solver's verdict plus the witness tree's win depth in TURNS —
-//! the diagnostic the anchor probe records (`docs/experiments/
-//! wp18b_anchor_probe.md`). Unlike `solver-selftest` it asserts NO
-//! expectation: the probe's purpose is to learn the verdicts, and a fixture
-//! whose `expect` is a placeholder must not fail the run.
-//!
-//! Deterministic end to end (D-7): the solver consults no clock, and this
-//! binary adds no nondeterminism of its own.
-
 use std::env;
 use std::process::ExitCode;
 

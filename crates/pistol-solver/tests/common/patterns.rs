@@ -1,18 +1,3 @@
-//! The pattern pack's loader and renderer: `tests/fixtures/pattern_v0.txt`.
-//!
-//! Strict for the reason `common::fixtures` is strict — a golden file that is
-//! quietly half-read reports a pass for cases nobody ran. An unknown key, a
-//! missing key, a repeated key and a record left unclosed are each a panic
-//! naming the line (CLAUDE.md rule 3, docs/decisions.md D-37).
-//!
-//! It is a SECOND loader beside `common::fixtures` and not an extension of it,
-//! because the two files answer different questions: `threat_v0.txt` pins the
-//! whole shipped query surface per position, and this pins three sentences of
-//! the calculus — DEF-SUPPORT, DEF-PLAN, DEF-T — per NAMED PATTERN. Folding the
-//! pattern rows into that record type would make every one of its sixteen
-//! positions owe a pattern id, and folding the loaders together would put one
-//! parser in charge of two grammars that change for different reasons.
-
 use pistol_core::{Coord, Player};
 
 use super::plans::{Plan, plan_list};

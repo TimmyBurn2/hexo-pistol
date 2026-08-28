@@ -1,11 +1,3 @@
-//! The `"q,r"` stone token: one grammar, one spelling per cell.
-//!
-//! The token is the protocol's stone (docs/decisions.md D-5), and it is parsed
-//! and written in pistol-core so that the CLI and every fixture loader read the
-//! same grammar rather than each inventing one (D-39). It is canonical: every
-//! cell has exactly one spelling, so `display(parse(t)) == t` for everything the
-//! parser accepts (D-46).
-
 use pistol_core::Coord;
 
 #[test]

@@ -1,32 +1,3 @@
-//! The oracle: the incremental state against a from-scratch reference, at every
-//! ply of seeded playouts, plus the invariants no fixture can express.
-//!
-//! # The regime is MECHANIZED, not cited
-//!
-//! Seeds `1..=PLAYOUTS` with `Rng::new(seed)`, cap [`PLIES`], plies coloured by
-//! `GameState::place` and never by ply parity — and **one `random_ply` draw per
-//! ply, and that draw is the ply**. The schedule is part of the registration
-//! because it is not free: drawing twice and playing the first advances the
-//! generator between plies, changes every trajectory, and drops the unblockable
-//! count far below the floor below, so an implementer copying that loop shape
-//! would write a test that fails on a correct implementation (docs/decisions.md
-//! D-256).
-//!
-//! The floors are asserted rather than trusted: a shrunken playout is a shrunken
-//! oracle, not a pass. They are floors and not targets — the regime produces
-//! comfortably more than each — so a change that quietly narrows the coverage
-//! fails here instead of passing thinly.
-//!
-//! # RULE9-JUSTIFICATION: one playout regime, one suite (CLAUDE.md rule 9).
-//!
-//! Every test here drives the same registered regime — same seeds, same cap,
-//! same one-draw-per-ply schedule — and the whole-surface comparison is a single
-//! claim that cannot be cut in half without comparing half a state. Splitting
-//! the file would duplicate the loop per part and let the parts drift apart on
-//! the one thing that must not drift, which is the schedule. The desync pins sit
-//! here rather than beside the fixtures because they are about the apply/undo
-//! contract this suite exercises and no fixture can express.
-
 mod common;
 
 use std::collections::BTreeMap;

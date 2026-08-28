@@ -1,11 +1,3 @@
-//! The weight table is configuration, and it obeys the config rules: explicit,
-//! complete, closed, versioned (CLAUDE.md rule 1, docs/decisions.md D-11, D-64).
-//!
-//! No value in the document has a code-side default, so every rejection below
-//! has to name the key an operator can go and edit. The one entry that is *not*
-//! in the document — a window of six own stones — is not a tunable either: that
-//! is a win, and a win's score belongs to the search's mate band (D-3, D-63).
-
 mod common;
 
 use std::path::PathBuf;

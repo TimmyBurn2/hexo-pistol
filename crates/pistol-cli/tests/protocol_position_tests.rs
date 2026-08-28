@@ -1,9 +1,3 @@
-//! The `position` verb: both forms, what they land on, and what they refuse.
-//!
-//! Split from `protocol_tests` for size (CLAUDE.md rule 9). The engine-level tests
-//! of the same value live in pistol-engine's `position_tests`; these drive it
-//! through the protocol, which is where an operator meets it.
-
 mod common;
 
 use common::{GATE, engine, only_line, talk};

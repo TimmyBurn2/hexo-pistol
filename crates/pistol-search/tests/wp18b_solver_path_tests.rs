@@ -1,11 +1,3 @@
-//! The solver-on-the-search-path wiring's own tests (design wp18b §6).
-//!
-//! Positions are pinned by their plies; two come from the anchor games
-//! (the probe's own artifacts name them) because they are MEASURED
-//! instances of the classes the wiring exists for: a root attacker proof
-//! (g001-t42, the M4 flip) and a root defender proof (g001-t45, the
-//! overload conversion one turn before the end).
-
 use pistol_core::{Coord, GameState, Player, Turn};
 use pistol_eval::{HandcraftedV0, Weights};
 use pistol_search::params::{SolverTrigger, SolverWiring};

@@ -1,36 +1,3 @@
-//! Choosing the openings: who is eligible, which position is which, and the
-//! order they come out in.
-//!
-//! Every number here is a pre-registered extraction parameter, stated as a named
-//! constant and echoed into the fixture header, so a file says what produced it
-//! (CLAUDE.md rule 7). None of them is a tunable with a code-side default: there
-//! is nothing to override, because there is no config that reaches this tool.
-//!
-//! # The three rules, and what each is for
-//!
-//! - **The mismatch ceiling** ([`ELO_GAP_CEILING`]). Measured on the corpus, the
-//!   higher-rated player scores .532, .558 and .609 in the gap buckets below
-//!   100, then .675, .747, .860 and .941 above it. Below the ceiling an opening
-//!   is a contest both sides contributed to; above it one side was outclassed,
-//!   and half of the opening is that player's mistake (docs/decisions.md D-142).
-//! - **The rating floor** — the lower median of `min(elo)` over the candidates,
-//!   computed rather than asserted, because a quantile travels to another corpus
-//!   and a hard-coded rating does not. Lower median means the element at index
-//!   `(n - 1) / 2` of the ascending sort: an integer, no averaging, no rounding
-//!   rule to get wrong (CLAUDE.md rule 4).
-//! - **The canonical form** ([`pistol_core::canonical_form`]). Two openings that
-//!   are the same shape reflected are one opening; deduplicating by position
-//!   identity alone keeps both, and CLAUDE.md rule 6 counts distinct games
-//!   (docs/decisions.md D-137).
-//!
-//! # Order, and why it is not the priority rule
-//!
-//! Within a class the representative is the highest `min(elo)`, then the lowest
-//! `game_hash` — a total order, so the representative is deterministic. But the
-//! file is *emitted* in `game_hash` order, not in that priority order, because
-//! there is no cap: a runner takes a prefix, and a prefix of a rating-sorted
-//! list is the extreme tail rather than a sample of the pool (D-143).
-
 use std::collections::BTreeMap;
 
 use pistol_core::{Coord, GameState, Key128, Player, canonical_form};

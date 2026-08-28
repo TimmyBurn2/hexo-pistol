@@ -1,33 +1,3 @@
-//! R1 — the from-scratch reference: the WHOLE query surface, computed the slow
-//! obvious way from a `Board`.
-//!
-//! D-68's pattern, third instance after the eval and the search (D-106). It
-//! shares only `pistol-core`: it never touches [`ThreatState`], never calls
-//! `windows_through`, and never carries anything incrementally. Every window it
-//! knows about it built by stepping back from a stone and reading all six cells
-//! with `Board::get`.
-//!
-//! **Its scope is deliberately the whole query surface and not the table.** A
-//! reference scoped to the table, with the shipped queries then run over it,
-//! would compare the cover enumeration, the phase conditioning and the witness
-//! selection AGAINST THEMSELVES — and those are exactly the arithmetic that has
-//! been wrong before. So the covers here are enumerated by a different
-//! algorithm (all subsets within budget, then keep the ones no proper subset
-//! covers), the minimum hitting set is computed by trying sizes rather than by
-//! a per-budget predicate, and the witness is chosen by sorting the candidates
-//! rather than by a running minimum.
-//!
-//! R1 still shares the implementation's CENTRAL ASSUMPTION — that only a window
-//! holding a stone can matter — which is why [`super::region`] exists.
-//!
-//! # RULE9-JUSTIFICATION: one oracle over one query surface (CLAUDE.md rule 9).
-//!
-//! This is a second implementation of everything the shipped queries answer, and
-//! its value is that it is ONE reading of the definitions rather than several.
-//! Splitting it by query would either share helpers with the code under test or
-//! duplicate the window table per part; either way the independence that makes
-//! it an oracle is what gets spent. It shrinks only if the query surface does.
-
 use std::collections::BTreeMap;
 
 use pistol_core::window::{WINDOW_LEN, Window};

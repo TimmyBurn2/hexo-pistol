@@ -1,12 +1,3 @@
-//! What a BOOK of generated openings guarantees, as opposed to any one of them:
-//! the same seed gives the same bytes, no two openings are one reflection
-//! apart, every line survives the round trip through the `position` verb, and a
-//! pool that cannot supply the book refuses instead of coming up short.
-//!
-//! Split from `random_openings_tests.rs` for CLAUDE.md rule 9; that file holds
-//! the claims about a single opening. Both refusals live here because both are
-//! about a POOL — one about a pool too small to fill the book, one about a
-//! generation radius that reaches past the region game rule 5 allows.
 mod common;
 
 use common::repo;

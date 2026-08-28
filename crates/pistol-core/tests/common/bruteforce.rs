@@ -1,36 +1,3 @@
-//! The brute-force reference generator: the movegen oracle (CLAUDE.md rule 7,
-//! docs/decisions.md D-12).
-//!
-//! This is a second, independent reading of rules 3, 4 and 5, written the slow
-//! obvious way so that it has no bug in common with the fast one. It shares no
-//! code with `pistol_core::movegen` beyond the types every reading of the rules
-//! must agree on — [`Board`] and [`Coord`] as containers, [`wins_at`] because
-//! win detection is rules truth that lives in one place (CLAUDE.md rule 2), and
-//! [`LEGAL_RADIUS`] because restating `8` here would make the test tree a
-//! second source of a pinned rule constant rather than a second implementation
-//! of the rule.
-//!
-//! Where the real generator enumerates the balls around the stones and reasons
-//! about which end of a pair may be played first, this one:
-//!
-//! 1. sweeps a bounding box big enough to contain anything reachable;
-//! 2. asks, cell by cell, whether a stone may go there — by scanning every
-//!    stone on the board and measuring, which is rule 5 said literally;
-//! 3. enumerates **ordered** placements, first stone then second, replaying the
-//!    legality question on the board the first stone has already changed;
-//! 4. truncates a first stone that completes a line to a turn of one (rule 4);
-//! 5. drops the ordering by collecting into a `BTreeSet` of canonical turns.
-//!
-//! It also keeps its own game state — board, side, turn number, decided — and
-//! replays a move list by its own grouping of plies into turns (1, then 2, then
-//! 2, …), so that a fixture position is reached twice by two implementations
-//! and compared.
-//!
-//! The box is padded by `2 * LEGAL_RADIUS + 1` around the stones. A second
-//! stone is within `LEGAL_RADIUS` of a first, which is within `LEGAL_RADIUS` of
-//! a stone, and hex distance bounds both axial components (`dist >= |dq|` and
-//! `dist >= |dr|`), so nothing legal can fall outside it.
-
 use std::collections::BTreeSet;
 
 use pistol_core::{Board, Coord, FIRST_TURN, LEGAL_RADIUS, Player, stones_in_turn, wins_at};

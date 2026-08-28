@@ -1,23 +1,3 @@
-//! Deterministic random playouts, for the test that checks the incremental
-//! threat state against a from-scratch reference.
-//!
-//! Incremental state is only as good as the last position it was carried
-//! through, so the test that checks it wants many *arbitrary* positions rather
-//! than a handful of chosen ones. Arbitrary, not random: the seed is given by
-//! the caller and the generator is written out here, so a failure names a
-//! playout a later run reproduces exactly (CLAUDE.md rule 4).
-//!
-//! This is the same generator pistol-core's and pistol-eval's test trees use on
-//! the zobrist key and the incremental eval, restated here rather than shared
-//! because a test tree is per crate and this one takes no dev-dependency.
-//! Nothing it produces reaches a value the engine plays on.
-//!
-//! THE SAMPLING SCHEDULE IS PART OF THE ORACLE'S REGISTRATION and is stated at
-//! the one caller: ONE [`random_ply`] draw per ply, and that draw is the ply.
-//! A second draw advances this generator and changes the trajectory, which
-//! moves the oracle's coverage enough to fail its own floors on a correct
-//! implementation (docs/decisions.md D-256).
-
 use std::sync::OnceLock;
 
 use pistol_core::{Board, Coord, LEGAL_RADIUS};

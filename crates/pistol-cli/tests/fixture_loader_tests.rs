@@ -1,9 +1,3 @@
-//! The fixture loader, and everything it refuses.
-//!
-//! The loader is a data path: it decides what a gate runs, so a document it
-//! half-understands would report a pass for cases nobody ran (CLAUDE.md rule 3).
-//! Every refusal here names the file and, where there is one, the line.
-
 use std::path::Path;
 
 use pistol_cli::fixture_loader;

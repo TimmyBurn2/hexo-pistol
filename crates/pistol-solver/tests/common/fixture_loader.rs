@@ -1,11 +1,3 @@
-//! The solver fixture loader for the test tree: reads
-//! `tests/fixtures/solver_v0.txt` through the crate's own strict loader and
-//! pins its SHA-256 (CLAUDE.md rule 7).
-//!
-//! The pin is asserted HERE, at load time, so every gate that loads the
-//! fixture is already standing on the pinned bytes: an edited fixture is a
-//! red test before any gate runs.
-
 use std::fs;
 use std::path::PathBuf;
 

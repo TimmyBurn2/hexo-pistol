@@ -1,34 +1,3 @@
-//! The engine configuration schema.
-//!
-//! Three properties hold for every type below and are enforced, not merely
-//! intended (CLAUDE.md rule 1):
-//!
-//! 1. **Complete.** Every field is required. There is no `serde` field default,
-//!    no `Default` implementation, and no code path that invents a tunable's
-//!    value. A value exists because an operator wrote it in a file.
-//! 2. **Closed.** Every struct denies unknown fields, so a mistyped key is a
-//!    loud error rather than a setting that silently does nothing.
-//! 3. **Versioned.** `schema_version` is checked against [`SCHEMA_VERSION`], so
-//!    a config written for another build fails at load rather than at the first
-//!    divergent behaviour.
-//!
-//! Cross-field rules live in `validate.rs` and run in [`Config::validate`].
-//!
-//! # RULE9-JUSTIFICATION: one schema, over the one document it describes
-//! (CLAUDE.md rule 9).
-//!
-//! Every type here is a section or a field of ONE `toml` document
-//! (`[engine]`, `[search]`, `[search.candidate_policy]`, `[eval]`,
-//! `[instrument]`, `[play]`), and the three properties in this module's own
-//! doc — complete, closed, versioned — are stated once and hold for all of
-//! them together. Splitting by section would separate a table
-//! (`[search.candidate_policy]`) from the enum tag (`kind`) that selects its
-//! shape, or the schema from the one comment that states what "complete"
-//! and "closed" mean for every field below it; a reader checking whether a
-//! new key is schema-complete would then read two files to confirm one
-//! property. It grows again only if the document gains a new top-level
-//! section.
-
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;

@@ -1,16 +1,3 @@
-//! `corpus-extract` as a program: what it writes, what it refuses, and what it
-//! exits with.
-//!
-//! These run the binary rather than the library, because the claims are about a
-//! run: byte-identity across two PROCESSES (matching `tools/determinism.sh`'s
-//! shape), a header written in this run carrying nothing machine-specific, and
-//! an exit code contract of 0 clean / 1 games excluded / 2 refused.
-//!
-//! The prose comparison is the guard against the failure that actually happened:
-//! the fixtures were generated, the source's ADR citations were then renumbered,
-//! and nothing noticed that the committed bytes could no longer be reproduced
-//! (docs/decisions.md D-152).
-
 mod common;
 
 use common::{repo, scratch};

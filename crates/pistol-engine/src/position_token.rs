@@ -1,26 +1,3 @@
-//! The token grammar of a stated position: what the `position` verb carries.
-//!
-//! The grammar ships beside the value it encodes, for the reason
-//! docs/decisions.md D-39 and D-56 give for the stone and turn tokens: a
-//! formatter shipped without its parser grows its second implementation in
-//! whichever crate needs one first, and the two then drift on exactly the cases
-//! nobody tests. pistol-cli owns the *verb* layer — which line means which trait
-//! call — and hands the tail to [`FromStr`] here.
-//!
-//! There are two forms and they are two grammars. This module owns the choice
-//! between them and the move-list form; the stone-list form lives in
-//! `position_set_token`, which is the bigger of the two and keeps both directions
-//! of its own grammar together, as D-39 requires of each.
-//!
-//! # One position, one spelling
-//!
-//! The parser refuses what it could have repaired (D-46's argument, applied to a
-//! line rather than to a cell), so `display(parse(line)) == line` for every line
-//! the parser accepts and two lines that differ never mean the same position —
-//! which an arena log, a fixture diff or a dedupe by string eventually depends on.
-//! Whitespace between tokens is the exception: any run of it is read, and exactly
-//! one space is written.
-
 use std::fmt;
 use std::str::FromStr;
 

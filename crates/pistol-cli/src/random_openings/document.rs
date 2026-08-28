@@ -1,17 +1,3 @@
-//! What `random_openings_v1.txt` says.
-//!
-//! [`crate::corpus::emit`] owns the header and digest *discipline* — what a
-//! fixture header is made of and where its payload begins (docs/decisions.md
-//! D-147, D-148). This file owns what this particular document says: the prose
-//! a reader meets, the parameters it states, and the shape of a payload line.
-//! The split is the same one `corpus::documents` makes, and for the same
-//! reason: the discipline is reusable and the prose is not.
-//!
-//! Every line here is compared against the committed file by
-//! `random_openings_v1_is_what_this_build_produces`, so editing this prose
-//! without regenerating the book is a red test. That is the hole D-152 found in
-//! the corpus fixtures, closed by construction rather than by care.
-
 use crate::corpus::emit::Fixture;
 
 use super::Book;

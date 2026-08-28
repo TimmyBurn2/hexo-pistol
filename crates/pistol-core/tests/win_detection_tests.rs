@@ -1,13 +1,3 @@
-//! Win detection at the completing stone (game rules 2 and 4).
-//!
-//! Six or more contiguous own stones along one of the three axes wins.
-//! Overlines win. Five does not. A run does not bend, does not jump a gap, and
-//! does not pass through an opponent's stone. Each of those is a separate way
-//! for an implementation to be wrong, so each gets its own test — and the
-//! six-in-a-row tests place the completing stone at every position in the run,
-//! because a scan that only looks forward passes the end-stone case and fails
-//! every other one.
-
 use pistol_core::win::{run_through, winning_run};
 use pistol_core::{Axis, Board, Coord, Player, WIN_LEN, wins_at};
 

@@ -1,17 +1,3 @@
-//! The `go` verb's budget grammar: `depth_turns <n>`, `nodes <n>`, `movetime <ms>`.
-//!
-//! Its own module because it is its own grammar, and because the answer to "which
-//! budgets does this engine take" has to be derived from the engine rather than
-//! restated: [`budget_tokens`] asks `Budget::check_supported`, so the handshake
-//! and a real `go` can never disagree about a mode's policy (docs/decisions.md
-//! D-22).
-//!
-//! Two amounts are deliberately NOT this module's business. A missing budget is
-//! `EngineError::BudgetMissing`, because a budget is always explicit and that
-//! variant exists to say exactly this (CLAUDE.md rule 1, D-4); and a budget of
-//! zero or past the search horizon is the engine's own named refusal, because the
-//! line was understood and the amount was not acceptable.
-
 use std::str::FromStr;
 
 use pistol_engine::{Budget, EngineError, EngineMode};

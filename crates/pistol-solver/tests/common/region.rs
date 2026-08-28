@@ -1,15 +1,3 @@
-//! R2 — the region scan: every window in the stones' bounding box, grown, with
-//! no reference to where the stones are.
-//!
-//! R1 shares the shipped implementation's central assumption — that only a
-//! window holding a stone can matter — so R1 alone cannot check it. This is the
-//! independent statement of it: it enumerates windows by POSITION rather than by
-//! stone, and the test asserts that every window it finds holding a stone is one
-//! R1 knows about, and that every window R1 does not know about holds nothing.
-//!
-//! Quadratic in the spread and far too slow to run per ply, which is why it runs
-//! on the golden fixtures and R1 runs on the playouts (docs/decisions.md D-68).
-
 use std::collections::BTreeMap;
 
 use pistol_core::window::{WINDOW_LEN, Window};

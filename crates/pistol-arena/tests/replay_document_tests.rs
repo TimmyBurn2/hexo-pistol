@@ -1,18 +1,3 @@
-//! The warm-replay DOCUMENT, including the shape nothing else produces.
-//!
-//! `replay_report::render` has two kinds. The ordinary one is written by every
-//! test that runs `arena --replay`. The other — `warm_replay_aborted`, for a pass
-//! that did not cover every game of its report — is reachable live only through a
-//! hang or a killed child, which no test can produce deterministically. So it is
-//! driven here through the crate's own public API instead: a real report, read
-//! back by `transcript::read`, rendered against a `Replayed` with a hole in it.
-//!
-//! That kind matters more than its rarity suggests. A criterion computed over
-//! SOME of a report's games is a criterion over a sample nobody registered, and
-//! the only thing stopping a consumer from reading one is that this document
-//! spells itself differently and carries no `divergences` line at all
-//! (docs/decisions.md D-409, D-413's MINOR 11).
-
 mod common;
 
 use common::{ConfigSpec, Ran, STUB, Scratch, openings_prefix, run};

@@ -1,26 +1,3 @@
-//! The sha-pinned tactical suite (CLAUDE.md rule 7).
-//!
-//! Three tests, and the split is the one `tools/perft_check.sh` already sets for
-//! the movegen oracle (docs/decisions.md D-54): what is cheap runs in every
-//! `cargo test`, and what needs a release build is `#[ignore]`d and run by a
-//! script wired into `tools/ci.sh`.
-//!
-//! - the fixture is pinned, and every position in it replays through the rules;
-//! - the cases that resolve at the first depth are solved, which is the plumbing
-//!   from fixture to engine to answer, end to end, in a debug build;
-//! - the whole suite meets its pre-registered threshold — `#[ignore]`, and the
-//!   reason is the DEBUG cost rather than the release cost. Measured on the
-//!   development machine: the twenty cases, each searched twice, cost 4.8 s
-//!   through the release binary and 63 s as this test in a debug build. No case
-//!   in this fixture runs at the shipping radius 3 — the depth-3 cases run at
-//!   `configs/gate_v0.toml`'s radius 1 and the rest at the instrument radius 2 —
-//!   so the 84-100 s in that file's measurement table is the reason gate_v0
-//!   exists and is not this suite's cost.
-//!
-//! The threshold itself is read from the fixture and is never chosen here: it was
-//! pre-registered in the file's header before the suite was first run
-//! (CLAUDE.md §Process).
-
 mod common;
 
 use std::collections::BTreeSet;

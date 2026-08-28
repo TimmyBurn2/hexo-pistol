@@ -1,10 +1,3 @@
-//! The cross-field rules, which `serde` cannot express.
-//!
-//! Every refusal names the exact key an operator can go and edit, and every
-//! bound here is a REJECTION rather than a value: nothing in this file
-//! completes a configuration, so a document that omits a key is still an error
-//! (docs/decisions.md D-18).
-
 use crate::config::{ARENA_SCHEMA_VERSION, ArenaConfig, BudgetSection};
 use crate::error::ArenaError;
 use crate::sprt::Bounds;

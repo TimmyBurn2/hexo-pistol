@@ -1,25 +1,3 @@
-//! What one position takes up in the table, packed.
-//!
-//! [`ENTRY_BYTES`] per entry: a 64-bit verification word, the ply that scored
-//! best, two scores, a depth, a bound with the generation that wrote it, and a
-//! flags byte. The score fields are `i16` because the whole score band fits in
-//! one — the mate band tops out at 30000 (docs/decisions.md D-3) — and the
-//! depth is a `u8` because the search's horizon is far inside it.
-//!
-//! **Zero depth means empty.** No stored record has it: a leaf is not worth an
-//! entry, so the depth field doubles as the occupancy flag and no separate one
-//! is needed.
-//!
-//! **The `flags` byte is spent alignment padding, not new size.** The
-//! declared fields before it sum to 18 bytes (`verification: u64` = 8, four
-//! `i16` fields = 8, `depth_plies: u8` + `bound_age: u8` = 2), and
-//! `align_of::<u64>() == 8` already forces [`Entry`] to 24 bytes — six bytes
-//! of padding the layout was paying for and not using. One of those six
-//! becomes `flags`, carrying [`FLAG_FROM_QUIESCENCE`] in its low bit
-//! (docs/wp16_quiescence_design.md §6, WP-1.6 D-390/D-392/D-393); the
-//! `size_of::<Entry>() == ENTRY_BYTES` assertion below is what would catch a
-//! wrong layout assumption on some target, not a new gate this field adds.
-
 use pistol_core::Coord;
 
 /// Bytes per packed entry.

@@ -1,11 +1,3 @@
-//! Shared test scaffolding: the committed weight table, one valid weights
-//! document to state edits against, and the from-scratch reference the
-//! incremental eval is checked against.
-//!
-//! The reference is the oracle here, in the same role the brute-force generator
-//! plays for movegen (CLAUDE.md rule 7, docs/decisions.md D-12, D-68): it reads
-//! the same rule out of the same weights the slow obvious way, sharing no code
-//! with `pistol_eval::window` or `pistol_eval::handcrafted`.
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
 pub mod playouts;

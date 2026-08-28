@@ -1,12 +1,3 @@
-//! Who speaks for a canonical opening class, and what the corpus says about how
-//! that opening turned out.
-//!
-//! Both are counted over the class rather than the game, and both are re-derived
-//! here from the records rather than read back from the selector — an inverted
-//! winner test would otherwise flip every `p1` column with nothing noticing, and
-//! a representative rule inverted from min-elo-descending to ascending changed
-//! the fixture while the suite stayed green (docs/decisions.md D-152).
-
 mod common;
 
 use common::repo;

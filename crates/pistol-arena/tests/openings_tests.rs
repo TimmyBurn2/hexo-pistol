@@ -1,10 +1,3 @@
-//! The openings fixture is verified against its own in-band digest, and
-//! anything that is not a fixture is refused by name.
-//!
-//! docs/decisions.md D-148 pre-registered this crate as the consumer that would
-//! either use the body digest or retire it as dead weight. These tests are the
-//! use.
-
 mod common;
 
 use common::{Scratch, committed_body, openings_fixture, openings_prefix, repo};

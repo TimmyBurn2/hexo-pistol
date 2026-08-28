@@ -1,35 +1,3 @@
-//! R3 — the PLAN FAMILY and the EXACT threat number `t`, by the calculus's own
-//! definitions, with NO CEILING on the hitting set.
-//!
-//! docs/research/threat_calculus_v1.md DEF-PLAN and DEF-T:
-//!
-//!   - a **plan** is the empty-cell set of an OPEN window holding at least four
-//!     own stones — the mover's immediate winning completions;
-//!   - **t(F)** is the size of a MINIMUM HITTING SET over the plan family F.
-//!
-//! # Why a third reading exists beside R1 and R2
-//!
-//! Neither of the other two can state the §5 table. `common::reference` (R1)
-//! answers the SHIPPED query surface, and that surface stops at
-//! [`pistol_solver::HitBudget`], which is closed at two: R1's own
-//! `min_hitting_set` carries a `CEILING` of 2 and returns `None` for anything
-//! above it. That is exactly right for the queries — no caller asks how far
-//! above two a minimum is — and it makes R1 unable to say `t = 3`, which is the
-//! whole content of RULE-EXACT's two enumerated counterexamples (LAW-OVERLOAD's
-//! addition floor: crossing fours `t = 3 != 4`, same-line double `t = 3 != 4`).
-//!
-//! So this module computes `t` unbounded. It also enumerates windows BY
-//! POSITION, the way `common::region` (R2) does and R1 does not, so the pattern
-//! pack does not inherit R1's central assumption either.
-//!
-//! # RULE9-JUSTIFICATION: one definition set, read once (CLAUDE.md rule 9).
-//!
-//! DEF-WINDOW, DEF-PLAN, DEF-T and DEF-SUPPORT are four sentences of one
-//! definition and the value of reading them here is that it is ONE reading.
-//! Splitting them across files would either share a helper with the code the
-//! pattern pack tests or duplicate the window enumeration per part, and either
-//! spends the independence that makes this an oracle.
-
 use pistol_core::window::{WINDOW_LEN, Window};
 use pistol_core::{Axis, Board, Coord, Player};
 

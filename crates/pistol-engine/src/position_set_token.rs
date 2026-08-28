@@ -1,16 +1,3 @@
-//! The stone-list form: `set p1:<q,r> … p2:<q,r> … tomove:<p1|p2> phase:<0|1>`.
-//!
-//! Both directions of one grammar, in one file, for the reason docs/decisions.md
-//! D-39 gives: a formatter without its parser grows a second implementation of
-//! the same grammar, and the two drift on the cases nobody tests. The choice
-//! between this form and the move list is [`crate::position_token`].
-//!
-//! Four sections, in this order, each exactly once, every one required. A
-//! section's first value is attached to its prefix — `p1:0,0 1,0` is the position
-//! and `p1: 0,0 1,0` is a rejection — so a side with no stones yet is the bare
-//! prefix and nothing else. That strictness is D-46's argument at the scale of a
-//! line: one position, one spelling.
-
 use std::fmt;
 
 use pistol_core::{Coord, Phase, Player};

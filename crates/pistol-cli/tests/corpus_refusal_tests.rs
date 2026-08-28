@@ -1,11 +1,3 @@
-//! What `corpus-extract` refuses, and what it exits with.
-//!
-//! The contract is 0 clean, 1 games excluded, 2 refused before doing work — and
-//! each value is tested, because each was once possible to break silently: the
-//! exit-1 branch could be deleted with the suite green, and an ordinary corpus
-//! with no rated games used to abort at 101 and take the stats block with it
-//! (docs/decisions.md D-152).
-
 mod common;
 
 use common::{repo, scratch};

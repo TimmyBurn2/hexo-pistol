@@ -1,16 +1,3 @@
-//! The integer queries a forcing search asks of a [`ThreatState`].
-//!
-//! Every one is total, deterministic, and returns windows and cells in the
-//! derived `(axis, start)` / `(q, r)` lexicographic order the protocol and the
-//! search tie-break already use (docs/decisions.md D-5, D-7). None consults a
-//! clock, a hasher's iteration order, or a `&Board`: the state carries the
-//! occupancy it needs, which is the whole reason it carries masks rather than
-//! counts.
-//!
-//! Every cell query CLEARS its `out` buffer and then fills it. They never
-//! append: a caller reusing one scratch buffer across nodes would otherwise
-//! accumulate cells from a position it has already left.
-
 use pistol_core::window::Window;
 use pistol_core::{Coord, GameState, Player};
 

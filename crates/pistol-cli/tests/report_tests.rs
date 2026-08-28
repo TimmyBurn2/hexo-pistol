@@ -1,10 +1,3 @@
-//! Every line the engine writes, field by field.
-//!
-//! The protocol's field names, their order and the three score spellings are the
-//! contract a driver is written against (docs/decisions.md D-5, D-88). Asserting
-//! that an `info` line merely *contains* `nodes` would let a rename, a reorder or
-//! a dropped field pass, so these tests spell the lines out in full.
-
 use pistol_cli::report::{
     TOTALS_MARKER, bestmove_line, error_line, id_line, info_line, score_token, totals_line,
 };

@@ -1,13 +1,3 @@
-//! Shared test scaffolding: positions stated as stones per side, and the
-//! searcher the tests run.
-//!
-//! A tactical fixture is easiest to read as "P1 has these stones, P2 has
-//! these" — but a position is a move list (docs/decisions.md D-6), and the only
-//! way to reach one is to play it (D-42). [`position`] bridges the two: it
-//! interleaves the two sides' stones into the turn structure rule 3 imposes and
-//! replays them through `GameState`, so a fixture that no legal game could reach
-//! fails loudly here rather than quietly producing a position the search should
-//! never see.
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
 pub mod agreement;

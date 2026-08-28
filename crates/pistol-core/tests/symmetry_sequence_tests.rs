@@ -1,12 +1,3 @@
-//! The canonical form of a GAME, which is not the canonical form of a position.
-//!
-//! `canonical_form` folds a stone multiset and says so: play order is not part
-//! of the identity it computes. An arena counting DISTINCT games (CLAUDE.md
-//! rule 6) needs the other thing, and the first test here is the one that
-//! separates them — two different games that reach the same stones must stay
-//! two games. The rest pin invariance under all twelve symmetries and the pair
-//! re-canonicalization a caller composing `apply` by hand would forget.
-
 use pistol_core::symmetry::{canonical_sequence, transform_sequence};
 use pistol_core::{Coord, Symmetry, Turn, canonical_form};
 

@@ -1,13 +1,3 @@
-//! The lines that say what the run FOUND, as against what it was.
-//!
-//! Split from `report.rs` on that line: that module frames a report and
-//! identifies the instrument, and this one writes the games and the conclusion
-//! drawn from them. The two change for different reasons — a new field in the
-//! instrument block is a reporting change, a new field here is usually a
-//! scoring one.
-//!
-//! Everything written here is worker-invariant. Nothing here reads a clock.
-
 use std::fmt::Write as _;
 
 use crate::dedupe;

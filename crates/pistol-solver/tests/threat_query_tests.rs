@@ -1,25 +1,3 @@
-//! The threat state's answers, pinned against sixteen golden positions.
-//!
-//! Each test below is a claim about ONE behaviour, checked on the position that
-//! exhibits it, and each was written against a MUTANT of the reference and
-//! confirmed to fail before it was allowed to pass: a row no fixture separates
-//! is inert however true its prose, and this design shipped two such rows before
-//! anyone made the mutation.
-//!
-//! The fixture's answers were computed by the from-scratch reference in
-//! `common::reference`, cross-checked against the independent region scan in
-//! `common::region`, and compared value for value against a reference written by
-//! a different session. Nothing in the file was read off the code it tests.
-//!
-//! # RULE9-JUSTIFICATION: one golden fixture, one suite (CLAUDE.md rule 9).
-//!
-//! Every test here reads the same sha-pinned file through the same loader and
-//! plays it through the same builder. Splitting the suite would either duplicate
-//! that scaffolding per file or hoist it into shared code no other suite uses,
-//! and it would separate each behaviour from the golden comparison that gives it
-//! its numbers. The suite splits when the solver grows a second fixture class —
-//! forcing sequences, which WP-1.5b brings — and that is when the split pays.
-
 mod common;
 
 use common::fixtures::{

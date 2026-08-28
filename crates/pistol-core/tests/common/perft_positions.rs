@@ -1,11 +1,3 @@
-//! The perft fixture: hand-built positions, as move lists, with the number of
-//! turn sequences each one has.
-//!
-//! A position is written as the game that reaches it (docs/decisions.md D-6,
-//! D-42) rather than as a heap of stones, so every fixture position is one a
-//! legal game can arrive at and both readings of the rules — the engine's and
-//! the reference's — replay it for themselves.
-
 use pistol_core::Coord;
 
 use super::{directives, fixture_text, parse_coords};

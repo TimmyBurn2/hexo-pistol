@@ -1,20 +1,3 @@
-//! `tools/solver_determinism.sh` — CI gate 13 of 18 (`tools/ci.sh`), the
-//! solver's determinism seat (WP-1.8a, D-7's law gaining a solver seat).
-//!
-//! D-289's rule: any `tools/` script that produces a recorded number carries
-//! at least one test driving the SHIPPED script. This is that test — it does
-//! not simulate the script's logic; it runs the script itself, against the
-//! committed fixture and config, and asserts both the exit status and the
-//! PASS line's positive content. The companion gate
-//! `tools/solver_oracle_check.sh` is driven by CI itself (gate 12 of 18,
-//! minutes of release CPU) and its driving test is the registered debt
-//! recorded in the WP-1.8a closure: this file covers the cheap seat, the
-//! oracle leg is covered by the CI gate that runs it every push.
-//!
-//! The script's own failure modes are exercised by mutation in the WP's
-//! receipt table (artifacts/wp18a_mutant_*.log); what this test pins is that
-//! the SHIPPED script, unmodified, passes and says so in its own words.
-
 use std::path::PathBuf;
 use std::process::Command;
 

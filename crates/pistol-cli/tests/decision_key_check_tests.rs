@@ -1,34 +1,3 @@
-//! `tools/decision_key_check.sh` — CI gate 15 of 16, the decision log's own
-//! integrity (docs/decisions.md D-279, D-284; tools/SHELL_CHECKLIST.md item 10).
-//!
-//! # What is being guarded, and why a gate rather than care
-//!
-//! `D-276` and `D-277` were each appended TWICE, in one commit, with DIFFERENT
-//! TEXT. The mechanism was mundane — a two-step commit whose second step failed
-//! and was re-run — and nothing anywhere checked. Every ADR reference in this
-//! repository is by number, so a key denoting two texts breaks the one property
-//! the log is cited for.
-//!
-//! # The exemption is part of the specification and so it is part of the control
-//!
-//! D-279 refused to DELETE the repeated copies, on the log's own "lines are
-//! never edited or deleted" rule, and resolved the ambiguity by ruling that the
-//! second copy of each is operative. So the file the gate guards contains two
-//! repeated keys BY DECISION, and a gate spelled exactly as D-279 registered it
-//! is red on arrival (D-284). What the gate enforces instead is: no repeat
-//! outside that closed, named pair — checked in BOTH directions, so an exemption
-//! whose subject is gone is refused too and the list cannot become the place
-//! repeats go.
-//!
-//! Which is why the CONTROL below seeds a document holding exactly those two
-//! repeats: the shipped gate's passing case is the shipped file's shape.
-//!
-//! # RULE9-JUSTIFICATION: one gate, one scratch repository.
-//! Every test drives the same shipped script over the same scratch git
-//! repository builder, and the three verdicts — clean, an unexpected repeat, a
-//! stale exemption — are one claim about one comparison that cannot be split
-//! without splitting the builder with it.
-
 mod common;
 
 use std::path::{Path, PathBuf};

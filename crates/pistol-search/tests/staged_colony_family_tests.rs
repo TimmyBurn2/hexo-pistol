@@ -1,32 +1,3 @@
-//! THE COLONY FAMILY (docs/decisions.md D-316; `U4_soundness_instrument.md`
-//! §8.3), one of the four soundness-gate names: distant-cluster attack and
-//! defence, where the right answer sits in a cluster far from the board's
-//! other stones — a cluster the delta ranking (a static positional/material
-//! reading) has no reason to favour over anything nearer the origin.
-//!
-//! `LAW-DECOMP`'s regional-eval warning is Stage 3's (deferred, `U2_node_protocol.md`
-//! §3 row 6) and this WP sums no regional eval — what THIS gate actually
-//! checks is narrower and belongs to WP-1.5b: that Tier F and the FILTERED
-//! row's cover union are found by construction, never by search order or by
-//! spatial proximity to anything else on the board. Tier F is never
-//! delta-ranked at all (`crate::staged::tier_f`) and a FILTERED row is
-//! entirely forced (`crate::staged::filtered`), so a generator that quietly
-//! narrowed its reach — a stray radius filter, a "nearest stones only"
-//! shortcut — is exactly the regression six built, verified, distant
-//! positions would catch and a single one might not.
-//!
-//! # RULE9-JUSTIFICATION: one construction, over the six cases it builds
-//! (CLAUDE.md rule 9).
-//!
-//! `bridge`/`win_now_colony`/`filtered_colony` are one technique — walk a
-//! chain of stones out from the origin, spaced within the radius-8 legal
-//! region at every step, then hang a tactic off the far end — parameterised
-//! by AXIS DIRECTION so the same numeric offsets produce a real,
-//! board-distinct case on each of the three axes. Splitting the six cases
-//! into six files would either duplicate the builder six times or hoist it
-//! behind a module boundary this suite alone uses; it grows again only if a
-//! fourth axis or a third row shape needs its own colony case.
-
 mod common;
 
 use pistol_core::{Coord, GameState};

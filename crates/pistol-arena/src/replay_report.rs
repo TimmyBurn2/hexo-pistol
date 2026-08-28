@@ -1,33 +1,3 @@
-//! What a warm-replay pass IS, as a value, and the document it writes.
-//!
-//! Separated from the driver that produces it for the reason `record.rs` is
-//! separated from `game.rs`: the consumer of a replay is a statistics layer in
-//! another language, and it reads ONE shape rather than three.
-//!
-//! # Two kinds, told apart by the first token
-//!
-//! `warm_replay` covers every game of its source report. `warm_replay_aborted`
-//! does not, and carries no `divergences` line at all: a criterion computed over
-//! SOME of a report's games is a criterion over a sample nobody registered, so
-//! no consumer may read one off a pass that did not finish. A different first
-//! token rather than a flag, exactly as `report.rs` does it (docs/decisions.md
-//! D-160).
-//!
-//! # The document binds itself to its source
-//!
-//! `source_report_sha256` is the digest of the WHOLE report file the pass was
-//! taken from. The checker recomputes it and refuses a pair of documents that
-//! are not about each other — which is the one mistake a two-file criterion can
-//! make silently, and the only referent that catches it is one neither file
-//! computes about itself.
-//!
-//! # `at_turn` is ONE-BASED
-//!
-//! It is the turn number of the game, the same count `report.rs`'s `turns` field
-//! and `game::play`'s own `state.turn()` carry. The prefix a consumer must
-//! rebuild to probe that position is therefore the FIRST `at_turn - 1` recorded
-//! moves. One spelling per number: the zero-based index is not also written.
-
 use std::fmt::Write as _;
 
 use pistol_core::Turn;

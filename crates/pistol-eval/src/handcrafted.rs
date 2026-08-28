@@ -1,23 +1,3 @@
-//! `handcrafted_v0`: three axes, length-six windows, one integer table.
-//!
-//! The whole evaluation is one sum. Every window that holds a stone contributes
-//! the table entry for how many stones the owning player holds in it, positive
-//! for P1 and negative for P2; a window holding both players is *dead* and
-//! contributes nothing, because neither side can complete it (docs/decisions.md
-//! D-11).
-//!
-//! The sum is carried, not computed. Placing one stone changes exactly the
-//! windows through that cell — at most [`WINDOWS_PER_CELL`](crate::WINDOWS_PER_CELL)
-//! of them — so an
-//! update is eighteen entries in an ordered map, and taking the stone back is the
-//! same eighteen the other way. The board is unbounded and only a window holding
-//! a stone can score, so a window exists in the map exactly while it holds one:
-//! there is nothing to iterate that is not there, and no bookkeeping over empty
-//! space (docs/decisions.md D-62).
-//!
-//! This is the cheapest evaluation that produces sane play at depth four to six.
-//! Sophistication is Stage 2's job, under this same trait.
-
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::fmt;

@@ -1,10 +1,3 @@
-//! The committed fixtures as documents: their payload round-trips, their
-//! in-band digest describes their own body, and their bytes match their pins.
-//!
-//! Nothing here reads the real corpus — it is an external artifact and is not in
-//! the tree (CLAUDE.md rule 8), so a test that needed it would break the
-//! fresh-clone gate. The pins are what stand in for it.
-
 mod common;
 
 use common::repo;

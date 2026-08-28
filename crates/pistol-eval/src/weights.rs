@@ -1,23 +1,3 @@
-//! The handcrafted_v0 weight table, as committed configuration.
-//!
-//! One document, one backend, one table: what a length-six window is worth to
-//! whoever owns the stones in it, by how many of the six cells they hold. Every
-//! entry is required and none has a code-side default, so a missing entry is a
-//! named error rather than a zero (CLAUDE.md rule 1, docs/decisions.md D-11).
-//!
-//! Two entries are deliberately *not* in the document:
-//!
-//! - **0** — an empty window scores nothing, and an unbounded board has
-//!   infinitely many of them.
-//! - **6** — six own stones in a window is a win, and a win's score is the
-//!   search's mate band, never a number an operator tunes. The table's sixth
-//!   entry is therefore [`DECIDED_WINDOW_VALUE`], derived from the eval band
-//!   rather than configured (docs/decisions.md D-3, D-63).
-//!
-//! This is a different document kind from the engine config, with its own
-//! `schema_version`, and `tools/config_check.sh` validates it with the
-//! `validate_weights` example rather than as a config (docs/decisions.md D-64).
-
 use std::fs;
 use std::path::Path;
 

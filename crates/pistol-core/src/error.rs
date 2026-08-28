@@ -1,14 +1,3 @@
-//! Named failures of the rules layer.
-//!
-//! pistol-core is `std`-only and cannot name `pistol_engine::EngineError`, so
-//! it raises its own closed set and the engine wraps it (docs/decisions.md
-//! D-10, D-31). Every variant here is a refusal an operator or a caller can act
-//! on; nothing is swallowed and nothing falls back (CLAUDE.md rule 3).
-//!
-//! A violated *internal* invariant is not in this set. Those panic with a named
-//! invariant token instead — see [`crate::coord::COORD_OVERFLOW`] — because
-//! they are bugs in pistol rather than answers to a question a caller asked.
-
 use std::fmt;
 
 use crate::board::Player;

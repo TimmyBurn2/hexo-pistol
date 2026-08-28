@@ -1,10 +1,3 @@
-//! The line protocol: what each verb does, and what every refusal says.
-//!
-//! Every test here drives a real engine through [`pistol_cli::Session`], which is
-//! the same code the binary runs (docs/decisions.md D-5). Positions are small and
-//! budgets are shallow, because these tests are about the protocol rather than
-//! about the search.
-
 mod common;
 
 use common::{GATE, INSTRUMENT, PLAY, committed, engine, has_line, only_line, talk};

@@ -1,33 +1,3 @@
-//! `arena` — play two pistol configurations against each other and say which
-//! one the evidence favours.
-//!
-//! Every strength claim in this project comes from a run of this program
-//! (CLAUDE.md rule 6). It therefore refuses more than it accepts: a wall-clock
-//! budget, an engine that is not in instrument mode, an openings file that does
-//! not match its own digest, and a run whose engines stopped answering are each
-//! a named refusal rather than a number.
-//!
-//! Exit: 0 the run completed and no game was forfeited, 1 the run was abandoned
-//! or a game was forfeited — in both cases a report was still written — or 2 a
-//! document this build refuses, in which case there is no report at all.
-//!
-//! # The second mode: `--replay`
-//!
-//! The same binary also re-drives a report it already wrote, WARM, through the
-//! engines that report attests, and says where — if anywhere — one of them no
-//! longer answers what the report records it answering. It is a second mode on
-//! this program and not a second program because it spawns and drives engines
-//! through the SAME code the generation path runs
-//! (`pistol_arena::seats::with_seats`), and a separate binary would be the
-//! invitation to grow a second copy of it (docs/decisions.md D-408, D-409).
-//!
-//! # RULE9-JUSTIFICATION: everything this program will not guess belongs in one
-//! place. Its whole discipline is that a reader can see the complete set of
-//! things it refuses — every flag, every spelling, every exit — beside the two
-//! modes that refuse them, and the second mode exists here rather than in a
-//! second binary precisely because a second binary is what would grow a second
-//! copy of the seat-setup sequence this work package extracted to stop copying.
-
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::time::Instant;

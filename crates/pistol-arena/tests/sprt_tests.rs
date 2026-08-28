@@ -1,17 +1,3 @@
-//! The arithmetic that decides every verdict, pinned against values computed
-//! BY HAND rather than read out of this implementation.
-//!
-//! That is the whole argument for the closed form (docs/decisions.md D-155): a
-//! table produced by the code under test pins nothing. Every row below states
-//! its own intermediates — `mu`, `E[s^2]`, `var`, `t_hat` — so a reviewer can
-//! recompute it with a calculator. The counts are dyadic on purpose, so `mu`,
-//! `E[s^2]` and `var` are exact in binary and only the `sqrt` and the division
-//! by `ln(10)/800` round at all.
-//!
-//! The comparison is to 1e-12 absolute and not to the bit: a decimal literal
-//! transcribed from a calculator can never be bit-equal to an `f64` chain, and
-//! a test that demanded it would be pinning the transcription.
-
 use pistol_arena::sprt::{Bounds, NELO_TO_T, Sample, Unit, Verdict, crossing};
 
 /// How close a hand-computed value has to be.

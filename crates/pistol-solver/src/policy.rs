@@ -1,14 +1,3 @@
-//! The v0 policy move sets (docs/experiments/wp18a_design.md §2).
-//!
-//! The policy is the game the solver solves: the ATTACKER is restricted to
-//! threat moves, the DEFENDER is restricted by nothing but the blocking
-//! predicate. Both restrictions prune the rule-complete turn set
-//! `generate_turns` produces (D-6/D-52) — no move here extends it.
-//!
-//! What each function returns is order-stable: candidates ascending, pairs in
-//! canonical order, the enumeration deterministic on every run (D-7). Nothing
-//! consults a clock, a hasher, or anything but the position.
-
 // RULE9-JUSTIFICATION: the policy is one move-generation arithmetic — the
 // candidate cells, the threat-pair filter and the blocking-pair filter all
 // express the design's §2 over the same window reading, and the §7

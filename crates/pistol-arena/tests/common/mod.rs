@@ -1,10 +1,3 @@
-//! What every arena test needs: a scratch directory, an openings fixture with a
-//! correct in-band digest, a stub engine config, and an arena config.
-//!
-//! Nothing here writes inside the repository. Match logs are artifacts
-//! (CLAUDE.md rule 8) and `tools/determinism.sh` already sets the precedent
-//! that a gate's transcripts live in a temporary directory.
-
 #![allow(dead_code)]
 
 use std::path::{Path, PathBuf};

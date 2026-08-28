@@ -1,22 +1,3 @@
-//! What the reference's ENUMERATION is: that valuing each unordered turn once
-//! reaches the same tree as walking both orderings of every pair.
-//!
-//! Neither an agreement assertion nor a universe one — the engine is not in this
-//! file at all. It is the reference checking itself, and it exists because the
-//! reference is the one component in this oracle that must have no correctness
-//! argument of its own: it stopped walking both orderings to buy depth
-//! (docs/decisions.md D-126), and this is what pays for that.
-//!
-//! It also inherits a claim. The two orderings of a pair reaching the same value
-//! at search depth is D-79's premise, and the reference used to assert it on
-//! every run from inside the walk; a mode that walks one ordering cannot. So the
-//! premise is checked here instead — over four fixtures at the depths a debug
-//! build affords, and one turn deeper in the release tier, where rule 4's
-//! truncation happens below the root rather than at it.
-//!
-//! Split from `search_oracle_universe_tests.rs` for rule 9's soft cap; the four
-//! oracle files are one suite and the gate script runs all of them.
-
 mod common;
 
 use std::collections::BTreeSet;

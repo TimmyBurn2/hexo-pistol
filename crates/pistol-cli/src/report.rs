@@ -1,17 +1,3 @@
-//! The lines the engine writes, and exactly what is in each one.
-//!
-//! Every field name and every token here is part of the protocol contract
-//! (docs/decisions.md D-5), so they are written once, in this module, and both
-//! the engine loop and the tests read them from here.
-//!
-//! # What two runs must agree on
-//!
-//! Every field of an `info` line except [`NPS_FIELD`] and [`TIME_FIELD`]. Those
-//! two measure the machine rather than the search, which is why the
-//! cross-process determinism gate strips them and compares the rest — the move,
-//! the node count, the score, the depth and the whole principal variation
-//! (CLAUDE.md rule 4, docs/decisions.md D-7).
-
 use pistol_core::Turn;
 use pistol_engine::{EngineError, ScoreKind, SearchInfo, classify};
 

@@ -1,15 +1,3 @@
-//! The determinism law, in one process (CLAUDE.md rule 4, docs/decisions.md
-//! D-7).
-//!
-//! The cross-process half of the gate belongs to the CLI and compares two runs
-//! over sha-pinned fixtures. This half catches what that one cannot: state that
-//! bleeds from one search into the next inside a single process — a table that
-//! was not cleared, a counter that was not reset, an ordering that depends on
-//! what the previous search left behind.
-//!
-//! Time and nodes-per-second are deliberately not compared: they measure the
-//! machine, not the search.
-
 mod common;
 
 use common::{blob, position, quiet, searcher, staged_searcher};

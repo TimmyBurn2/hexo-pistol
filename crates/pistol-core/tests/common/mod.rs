@@ -1,9 +1,3 @@
-//! Shared test scaffolding: the sha-pinned fixtures, and the hash that pins
-//! them.
-//!
-//! Both loaders are strict on purpose. A fixture line they do not understand is
-//! a panic naming the line number, never a skipped record: a golden file that
-//! is quietly half-read reports a pass for cases nobody ran (CLAUDE.md rule 3).
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
 pub mod boards;

@@ -1,11 +1,3 @@
-//! What the random-openings config document refuses, and why each refusal has
-//! its own name.
-//!
-//! Every parameter that shapes `random_openings_v1.txt` lives in a committed
-//! TOML document, so these are the tests that keep the document a contract:
-//! CLAUDE.md rule 1 wants it explicit and complete, and rule 3 wants a
-//! wrong-shape one refused by a name rather than repaired.
-
 mod common;
 
 use common::repo;

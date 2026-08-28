@@ -1,20 +1,3 @@
-//! Claiming the report path, atomically.
-//!
-//! `--out` used to be a TOCTOU: an existence check at dispatch and a plain
-//! write at the end, so two runs racing past the check both "succeeded" and
-//! one silently destroyed the other's report — the evidence for a claim
-//! somebody may already have made (wp13_results §6b). The claim is now the
-//! check: the file is created with `create_new` (O_EXCL) at dispatch, the
-//! report is written through the claimed handle, and a second run asking for
-//! the same path fails by name at ITS dispatch, before it has spent anything
-//! (docs/decisions.md D-200).
-//!
-//! Two consequences, stated rather than implied: while a run is live its
-//! `--out` file exists and is empty, which is what makes the claim visible;
-//! and a run that crashes leaves that empty claim behind, blocking a rerun at
-//! the same path until an operator removes it — loud, and evidence that a run
-//! died, which is the correct default for a file whose whole job is evidence.
-
 use std::fs::{File, OpenOptions};
 use std::path::Path;
 

@@ -1,34 +1,3 @@
-//! The position the search walks: a game, an evaluation and a threat state,
-//! kept in step.
-//!
-//! `GameState` moves the stone and `Eval` accounts for it, and the two are only
-//! correct together — an eval updated for a stone the state refused, or a stone
-//! placed without telling the eval, is the drift docs/decisions.md D-41 names
-//! the seam for. WP-1.5b adds a third member on the same terms (U2-Z item 6, an
-//! amendment to D-41): under [`crate::params::CandidatePolicy::Staged`], a
-//! [`ThreatState`] is carried and kept in step the same way, because the node
-//! protocol reads it at every node the search visits. So all three are moved
-//! from one place, here, and the search never holds any of them alone.
-//!
-//! # `Option`, not a bare field
-//!
-//! Under `CandidatePolicy::Radius` nothing consults the threat state, and a
-//! radius search paying to maintain one it never reads would make the SPRT's
-//! incumbent slower for no reason — a measurement hazard in the direction that
-//! flatters the change under test (`U2_node_protocol.md` §2.1). Whether this
-//! position tracks one is fixed at construction from the policy the searcher
-//! was built with, never per-call.
-//!
-//! # Failure
-//!
-//! [`Position::place`] returns the rules' own refusal, because the search asks
-//! about cells it believes are legal and would rather hear that it was wrong.
-//! [`Position::undo`] cannot fail from a search: the search takes back what it
-//! just placed, so a refusal there is a broken invariant and panics with
-//! [`POSITION_DESYNC`]. The threat state's own desync (`THREAT_DESYNC`) fires
-//! from inside `pistol_solver` on the same class of caller bug, through the
-//! same `apply`/`undo` calls this module makes.
-
 use pistol_core::{Board, Coord, CoreError, GameState, Player, PlyOutcome};
 use pistol_eval::Eval;
 use pistol_solver::ThreatState;

@@ -1,9 +1,3 @@
-//! When a search stops.
-//!
-//! The set is closed and the choice is always explicit. There is no default
-//! budget, no "if none given, think for a bit" path, and no way to hand
-//! instrument mode a budget it cannot reproduce (CLAUDE.md rules 1 and 4).
-
 use crate::config::EngineMode;
 use crate::error::EngineError;
 

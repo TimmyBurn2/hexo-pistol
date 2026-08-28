@@ -1,15 +1,3 @@
-//! Shared test scaffolding: the committed configs, an engine built from one, and
-//! a way to say lines to it.
-//!
-//! # Why the weights path is rewritten here
-//!
-//! A config names its weights file relative to the working directory, which is
-//! what `tools/config_check.sh` and the engine binary both rely on (they run from
-//! the repository root, and docs/decisions.md D-21 keeps `Config::validate` from
-//! touching the filesystem at all). A cargo test's working directory is its own
-//! package, and a test cannot change it — the process is shared with every other
-//! test in the binary. So the absolute path is stated here, once, rather than
-//! depending on where cargo was invoked from.
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
 use std::path::PathBuf;

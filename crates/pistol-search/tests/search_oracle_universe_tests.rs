@@ -1,22 +1,3 @@
-//! What the oracle's universe is, and what both implementations refuse.
-//!
-//! The agreement assertions live in `search_oracle_tests.rs`; this is the ground
-//! they stand on. Two different questions, and neither is about a value:
-//!
-//! - the reference walks the SAME move universe the engine does, because it
-//!   calls the same `candidate_cells`. That is deliberate — re-implementing the
-//!   policy would pin nothing — and it means a systematically wrong candidate set
-//!   would be invisible to every agreement assertion in the suite. So the
-//!   universe is tied to something outside both: the movegen oracle.
-//! - the two refuse the same questions, by name. A reference that answered where
-//!   the search refuses would make a comparison meaningless one position at a
-//!   time, and one that walked forever where the search refuses in constant time
-//!   would hang the suite instead of failing it (CLAUDE.md rule 3).
-//!
-//! Split from the agreement half for rule 9's soft cap, and `search_oracle_
-//! dedupe_tests.rs` split from this one for the same reason; the three are one
-//! suite.
-
 mod common;
 
 use std::collections::BTreeSet;

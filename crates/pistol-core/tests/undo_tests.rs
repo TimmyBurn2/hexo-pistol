@@ -1,11 +1,3 @@
-//! Taking a stone back.
-//!
-//! The search applies and takes back one ply per node (docs/decisions.md D-9),
-//! so undo is not a convenience: if a round trip drifted, every line after the
-//! first would be searched from a position nobody chose. The transitions that
-//! have to survive it are the ones with something to restore — a turn boundary,
-//! and the stone that ended the game.
-
 mod common;
 
 use common::games::golden_game;

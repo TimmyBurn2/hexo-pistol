@@ -1,16 +1,3 @@
-//! How a child dies, and how the arena finds out.
-//!
-//! Split from `channel.rs` on that line: that module owns the CONVERSATION, and
-//! this one owns the process's end. The distinction the code here makes is the
-//! one docs/decisions.md D-159 turns on, so it is worth a file of its own.
-//!
-//! A child that exited with a CODE chose to, and a deterministic answer to a
-//! deterministic input may be adjudicated: it forfeits. A child killed from
-//! outside — a signal, an OOM kill — is machine-dependence, and adjudicating it
-//! would make the verdict a function of how loaded the box was. So is a child
-//! that closes its pipe and then refuses to die, which is why the wait is
-//! bounded: those abandon the run.
-
 use std::process::{Child, ExitStatus};
 use std::time::{Duration, Instant};
 

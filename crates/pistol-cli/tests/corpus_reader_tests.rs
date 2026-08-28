@@ -1,11 +1,3 @@
-//! Reading a corpus: the schema this tool accepts, and everything it refuses.
-//!
-//! The committed fixture `fixtures/corpus_synthetic_v1.jsonl` is hand-built and
-//! sha-pinned. Everything a corpus should be *refused* for is written to a temp
-//! directory as a literal instead — sha-pinning garbage is not what rule 7's
-//! pinning discipline is for, and a refusal's input is not a claim about a game
-//! the way a fixture's content is.
-
 mod common;
 
 use common::{repo, scratch_file};

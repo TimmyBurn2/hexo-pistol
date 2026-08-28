@@ -1,13 +1,3 @@
-//! What the reference says a position is worth, in the reference's own words.
-//!
-//! Deliberately **not** `pistol_search::score`'s packed `i32`. The oracle is
-//! asked to certify exact mate distances, and a reference that built its mate
-//! scores with the crate's own `mate_in` would cancel an error in `MATE`, in
-//! `mate_in` or in `classify` against itself. So the reference states the three
-//! things a score can be, and [`engine_score_as_reference`] maps `classify`'s
-//! answer onto them — which puts D-3's encoding among the things under test
-//! rather than among the things assumed.
-
 use std::cmp::Ordering;
 
 use pistol_search::score::{ScoreKind, classify};

@@ -1,13 +1,3 @@
-//! What a length-six window is worth, and which windows exist at all.
-//!
-//! These are the tests that pin D-11's scoring rule itself: three axes, six
-//! window offsets through a cell, a window holding both players is dead, and on
-//! an unbounded board only a window that holds a stone can score. Each
-//! expectation is written as an expression in the weight table rather than as a
-//! number, so the tests pin the rule and not the operator's current values —
-//! except where a full enumeration is spelled out in a comment, which is the
-//! point of that test.
-
 mod common;
 
 use std::collections::BTreeSet;

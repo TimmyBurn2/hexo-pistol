@@ -1,15 +1,3 @@
-//! The engine playing itself, through the protocol, with pistol-core as referee.
-//!
-//! This is the test that would catch a protocol that speaks fluently and plays
-//! illegally: every turn the engine answers with is replayed into a `GameState`
-//! this test owns, so a move outside the legal region, onto an occupied cell, of
-//! the wrong stone count, or after the game was decided fails here by name.
-//!
-//! The config, the budget and the turn cap are the test's own, stated in its body
-//! (CLAUDE.md rule 1). The cap is an evaluation horizon and not a rule: reaching
-//! it is a legitimate end to the game, and the test asserts nothing about who was
-//! ahead (rule 6).
-
 mod common;
 
 use common::{GATE, engine, only_line};

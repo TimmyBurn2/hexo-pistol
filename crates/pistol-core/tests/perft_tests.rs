@@ -1,26 +1,3 @@
-//! Perft: pair-move generation against an independently written brute-force
-//! reference (CLAUDE.md rule 7, docs/decisions.md D-12).
-//!
-//! Every comparison here is exact equality of counts, and at the first level of
-//! exact equality of the turn **sets** — which catches a generator that emits
-//! the right number of the wrong turns, something a count alone cannot see.
-//!
-//! The reference is not a second copy of the generator: it sweeps a bounding
-//! box, asks rule 5 of one cell at a time by measuring against every stone,
-//! enumerates ordered placements and dedupes them, and keeps its own game state
-//! (see `common/bruteforce.rs`). Two implementations that agree on a hundred
-//! thousand turns per position agree about the rules.
-//!
-//! # Depth
-//!
-//! A midgame position has of the order of 10^5 turns, so a second full level is
-//! 10^9 to 10^10 and is not enumerable in a test. Depth 2 is checked in full
-//! where it is reachable — from the initial position, whose first turn is one
-//! stone, and at a decided position, which has none — and elsewhere by a
-//! **divide**: the turns after a deterministic sample of first turns, compared
-//! set for set against the same reference. The fixture header records the
-//! measured branching factors this rests on.
-
 mod common;
 
 use common::assert_pinned;

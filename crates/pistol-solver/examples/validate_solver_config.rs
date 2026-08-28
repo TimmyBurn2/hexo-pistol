@@ -1,12 +1,3 @@
-//! Parse and validate every solver config file named on the command line.
-//!
-//! The solver half of `tools/config_check.sh` (WP-1.8a): reads each file's
-//! bytes, parses them with the crate's own strict reader, and runs
-//! `SolverConfigFile::validate` — the same validation `solver-selftest`
-//! applies, so the gate and the instrument cannot drift apart.
-//!
-//! Exit codes: 0 all valid, 1 at least one rejected, 2 nothing named.
-
 use std::process::ExitCode;
 
 fn main() -> ExitCode {

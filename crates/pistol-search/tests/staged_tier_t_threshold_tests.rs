@@ -1,25 +1,3 @@
-//! `tier_t_own_count`/`tier_t_opponent_count` behavioural coverage
-//! (`docs/decisions.md` D-365; WP-1.5b Phase 4's MAJOR 1/MAJOR 2 findings,
-//! `docs/experiments/wp15b_IMPL_REVIEW_REDTEAM.md`).
-//!
-//! Before this file, every test in this crate instantiated `StagedParams` at
-//! exactly `(own = 2, opponent = 3)`, so nothing distinguished the two keys'
-//! CONFIGURED values from the code that reads them — a mutant deleting the
-//! whole opponent half of Tier T, or hard-coding the mover's own threshold to
-//! `>= 3` regardless of `tier_t_own_count`, passed every gate in the tree
-//! (Phase 4's mutation 2 and mutation M7, both reproduced and reverted in the
-//! review). These four tests hold the position and the eval fixed and vary
-//! only the count under test, so the SIGNAL is that one key's value, not the
-//! position.
-//!
-//! The signature used throughout is `used_quiet_safety_net`, not a direct
-//! private-function call: `tier_t_side`/`tier_t_union` are private to
-//! `crate::staged`, so an external test observes their effect only through the
-//! public `staged_candidates` entry point. Each position is built so the
-//! union is EXACTLY the cells the count under test admits or excludes — empty
-//! when excluded, which flips the safety net on and is therefore observable
-//! without inspecting `out.cells` at all for the exclusion half of each pair.
-
 mod common;
 
 use pistol_core::{Coord, Player};

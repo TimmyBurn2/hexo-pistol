@@ -1,32 +1,3 @@
-//! Writing a fixture: the header, the payload, and the digest over the payload.
-//!
-//! CLAUDE.md rule 7 wants a fixture sha-pinned, and rule 4 wants the same inputs
-//! to produce the same bytes. Both are properties of *serialization*, so the
-//! serialization is spelled out here rather than left to whatever the writer did
-//! (docs/decisions.md D-147):
-//!
-//! - lines end with `\n`, and the file ends with exactly one;
-//! - the header identifies the corpus by its SHA-256 and by nothing else. No
-//!   path, no timestamp, no hostname, no version. A path is machine-specific,
-//!   and a header carrying one would make "identical inputs, identical outputs"
-//!   false between two machines that both did everything right;
-//! - `# param` lines carry inputs, `# derived` lines carry computed values. A
-//!   floor that was measured is not a knob that was chosen, and a reader
-//!   reproducing the file needs to know which is which;
-//! - the exclusion list is ordered by game hash and written as `# excluded none`
-//!   when it is empty, because a missing section and an empty one must not look
-//!   alike (CLAUDE.md rule 3);
-//! - `# body_sha256` is the last header line, and **the body begins at the first
-//!   byte after its newline**. The payload contains `#` comment lines of its
-//!   own, so "the leading run of comments" would not have been a usable rule.
-//!
-//! The whole-file digest is pinned in the test that reads the file, matching the
-//! convention `tactical_v0.txt` already uses. The body digest is not a weaker
-//! copy of it: the whole-file digest catches strictly more edits, but it lives
-//! out of band, and the body digest is in-band — a consumer holding only the
-//! file can refuse a corrupted one without carrying a constant from a test
-//! (docs/decisions.md D-148).
-
 use std::fmt::Write as _;
 
 use crate::sha256::sha256_hex;

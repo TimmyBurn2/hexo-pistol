@@ -1,12 +1,3 @@
-//! SHA-256, in the test tree, in `std` alone.
-//!
-//! CLAUDE.md rule 7 wants fixtures sha-pinned, and pistol-core takes no
-//! dependency — dev-dependencies included (docs/decisions.md D-37). So the
-//! pinning digest is computed here. The implementation is itself pinned against
-//! the published FIPS 180-4 test vectors by
-//! `sha256_matches_published_test_vectors`, because a fixture pin computed by
-//! an unverified hash pins nothing.
-
 const ROUND_CONSTANTS: [u32; 64] = [
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,

@@ -1,22 +1,3 @@
-//! R3' — the brute-force reference for the policy game (design §7a).
-//!
-//! D-68's pattern, fourth instance after the eval, the search and the
-//! threat queries: a second implementation sharing NOTHING with the solver
-//! but pistol-core — no df-pn, no thresholds, no TT, no zones, and none of
-//! the solver's §2 defender-side shortcuts. Every legal defender turn from
-//! `generate_turns` is applied and the child evaluated; the classifications
-//! (defender-wins-first, LAW-OVERLOAD, blocking) are never used, which is
-//! what makes them falsifiable here.
-//!
-//! The attacker side IS policy-restricted — that restriction is the game
-//! being solved — but implemented independently: its own window scan over
-//! the board, not `ThreatState`.
-//!
-//! Short-circuiting is value-preserving: OR stops at the first `Win` child,
-//! AND at the first `NoWin` child. Memoised by position key so a shared
-//! subtree is evaluated once — the memo is a `BTreeMap`, never iterated on
-//! a choice path (D-7).
-
 use std::collections::BTreeMap;
 
 use pistol_core::window::{Window, windows_through};

@@ -1,12 +1,3 @@
-//! Engine identity closes over the eval weights, and stays closed for the
-//! whole run.
-//!
-//! WP-1.3 recorded the hole both tests pin (docs/decisions.md D-188,
-//! wp13_results §6b): two engines differing only in the weight table were
-//! byte-identical in every recorded digest while `nelo_pair` moved by 98
-//! points, and a config edited eighteen seconds into a live run produced exit
-//! 0 and a report attesting the old config. D-198 and D-199 close both.
-
 mod common;
 
 use common::{Scratch, openings_prefix, run, self_match};

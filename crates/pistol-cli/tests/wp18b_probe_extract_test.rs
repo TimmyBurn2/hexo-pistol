@@ -1,16 +1,3 @@
-//! `tools/wp18b_probe_extract.py` — the WP-1.8b anchor probe's data path
-//! (docs/experiments/wp18b_anchor_probe.md §4).
-//!
-//! D-289's rule: any `tools/` script that produces a recorded number carries
-//! at least one test driving the SHIPPED script. The probe's recorded numbers
-//! (per-position verdicts, node counts) are all downstream of the position
-//! list this script emits, so the test drives the script itself on stub
-//! transcripts — same JSONL schema, shorter games — and pins the two things a
-//! wrong extraction would silently corrupt: the case ORDER/count and the
-//! stone PREFIX of each position (a prefix that leaked the current turn's own
-//! stones would feed the solver edited positions, and the probe's branch rule
-//! admits only unedited transcript prefixes).
-
 use std::path::{Path, PathBuf};
 use std::process::Command;
 

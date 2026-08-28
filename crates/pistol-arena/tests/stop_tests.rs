@@ -1,23 +1,3 @@
-//! The sequential stop, and worker invariance on a sample that can actually
-//! cross a boundary.
-//!
-//! Every other end-to-end test in this crate runs a SELF-MATCH, where both
-//! games of a pair are the same game and every pair therefore scores alike.
-//! That is the right shape for the smoke gate — its answer is knowable in
-//! advance — but it means no sample in those tests can ever cross, so the stop
-//! is never exercised and both worker-invariance checks would pass unchanged if
-//! the stop were deleted outright. REVIEW-impl found that gap; this file is it
-//! closed.
-//!
-//! The two engines are the honest stub and its mirror image, which grows its
-//! cluster from the largest cells instead of the smallest. They are both
-//! perfectly well-behaved and they win different openings, which is the only
-//! way to get pair-to-pair variation out of two deterministic players.
-//!
-//! `elo1` is deliberately wide. The stop mechanism is what is under test, not a
-//! particular effect size, and a bound reachable in a couple of hundred pairs
-//! keeps this test in seconds rather than minutes.
-
 mod common;
 
 use common::{Scratch, openings_prefix, run, self_match};

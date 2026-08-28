@@ -1,15 +1,3 @@
-//! Peers that abuse the protocol in ways the stub engine cannot.
-//!
-//! Split from `misbehaviour_tests.rs`, which drives the stub's own `--behave`
-//! modes. Everything here needs a hand-written engine instead, for one of two
-//! reasons: the misbehaviour is something safe Rust cannot do to its own file
-//! descriptors (this workspace denies `unsafe`), or it is clearer as three words
-//! of shell than as a Rust loop — writing a megabyte with no newline, for
-//! instance.
-//!
-//! All three peers below were RED-TEAM reproducers first and regression tests
-//! second (docs/decisions.md D-171, D-172).
-
 mod common;
 
 use common::{Scratch, openings_prefix, run, self_match};

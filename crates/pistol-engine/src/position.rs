@@ -1,27 +1,3 @@
-//! The position as the outside world states it, and the one way it becomes a
-//! game.
-//!
-//! Two forms, and the reason there are two is docs/decisions.md D-6: the move
-//! list is the canonical encoding of a position — the board is unbounded, so
-//! there is no FEN analogue — and [`PositionSpec::Set`] exists for fixtures,
-//! which need to say things a move list cannot, namely a position in the middle
-//! of a turn.
-//!
-//! Both forms are turned into a position by **replaying** them through the
-//! rules ([`PositionSpec::replay`]). That is D-42: legality, the turn structure,
-//! rule 4's truncation and rule 5's legal region all fall out of the one
-//! implementation of the rules in pistol-core, rather than being checked a
-//! second time here by whoever loads a fixture. This module states no rule of
-//! its own (CLAUDE.md rule 2); what it knows is how a *document* is laid out.
-//!
-//! # A won position is not a position the engine holds
-//!
-//! Either form is refused with [`EngineError::IllegalPosition`] if the game it
-//! describes is already decided. The work package pins that for the `set` form
-//! ("a set position already containing a >=6 run"), and it holds for the move
-//! list for the same reason: a won position is terminal, so asking this engine
-//! to stand on one is asking it for a move that does not exist (rule 4).
-
 use pistol_core::{Coord, CoreError, GameState, Outcome, Phase, Player, Turn};
 
 use crate::error::EngineError;

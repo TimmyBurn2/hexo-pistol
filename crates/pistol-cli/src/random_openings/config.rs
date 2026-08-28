@@ -1,26 +1,3 @@
-//! The random-openings config document, and everything it refuses.
-//!
-//! The same three properties pistol-engine's and pistol-arena's configs hold,
-//! enforced the same way (CLAUDE.md rule 1, docs/decisions.md D-15, D-16,
-//! D-17): every field is required, the struct denies unknown fields, and
-//! `schema_version` is checked for equality. No `serde` default, no `Default`
-//! implementation, and no code path that invents a tunable's value.
-//!
-//! [`RANDOM_OPENINGS_SCHEMA_VERSION`] is this document's version and is never
-//! compared with any other schema's. They version different documents that
-//! change for different reasons.
-//!
-//! # Why this tool has a config at all, when its sibling has none
-//!
-//! `corpus-extract` states in its own module docs that no config reaches it,
-//! because a fixture whose shape depended on an operator's typing would not be
-//! reproducible from its own header. That argument is about *typing*, not about
-//! configuration: this document is committed, every field of it is echoed into
-//! the header of the file it produced, and a test regenerates that file from
-//! this document and compares the bytes. The parameters are as pinned as a
-//! constant would be, and they are visible in one document instead of spread
-//! across a source tree (docs/decisions.md D-176).
-
 use std::path::Path;
 
 use serde::Deserialize;

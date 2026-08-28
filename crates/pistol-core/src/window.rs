@@ -1,27 +1,3 @@
-//! The windows a stone sits in: three axes, six offsets, eighteen windows.
-//!
-//! A window is [`WINDOW_LEN`] consecutive cells along one of the three line
-//! axes, named by the cell it starts at. **This is the RULES window**: its
-//! length is `WIN_LEN` because rule 2 is about six, so a window that fills with
-//! one player is a won position by that rule and not by a backend's convention.
-//! It composes the geometry this crate already owns ([`Axis::direction`] via
-//! [`Coord::checked_step`]) and restates nothing (CLAUDE.md rule 2).
-//!
-//! It lives here because Stage 1's threat generator needs this enumeration, and
-//! D-67 says in its own flip clause that this is what moves the module into
-//! core rather than copying it (docs/decisions.md D-67, D-253). Before that it
-//! lived in `pistol-eval`, whose module doc argued the opposite — that a window
-//! length is a property of an eval backend — and that sentence did not travel
-//! with the file: it is true of a *backend's* window and false of this one.
-//! Where a backend needs a different length, it defines its own type at its own
-//! length; `pistol_eval::window`'s re-export doc is where that is said, because
-//! `pistol-eval` is the crate it will be true of.
-//!
-//! On an unbounded board only a window holding a stone can matter, so nothing
-//! here ever enumerates windows in general: [`windows_through`] enumerates the
-//! windows through *a cell*, which is how an incremental consumer finds exactly
-//! the entries one stone changes.
-
 use crate::axis::Axis;
 use crate::coord::Coord;
 use crate::rules::WIN_LEN;

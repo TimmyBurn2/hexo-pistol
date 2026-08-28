@@ -1,14 +1,3 @@
-//! The bounded fallback a wall-clock search secures before deepening (WP-1.4):
-//! deterministic given the position, legal by the rules' own replay, and the
-//! answer the whole search returns when the deadline expires before anything
-//! completed.
-//!
-//! Wall-clock searches are not reproducible — the INSTANT an abort lands is the
-//! machine's — so what these tests pin is the property that survives that: the
-//! fallback itself is a pure function of (position, policy), and at an
-//! already-expired deadline the search's answer IS the fallback, every time,
-//! with the report saying honestly that no depth completed.
-
 mod common;
 
 use std::time::{Duration, Instant};

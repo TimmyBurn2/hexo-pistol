@@ -1,11 +1,3 @@
-//! The solver's configuration schema (design §8).
-//!
-//! Hard rule 1: explicit and complete, `deny_unknown_fields`, every key
-//! required, no code-side default for any tunable — a default lives in
-//! exactly one schema place, and for the solver that place is
-//! `configs/solver_v0.toml`. Validation is fail-loud by named error: a value
-//! v0 does not implement is refused, never silently reinterpreted.
-
 use serde::Deserialize;
 
 use crate::pn::Epsilon;

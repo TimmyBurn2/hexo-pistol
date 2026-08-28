@@ -1,21 +1,3 @@
-//! The composition root: one engine, built from one config.
-//!
-//! Everything this workspace has is wired together here and nowhere else — the
-//! rules from pistol-core, an evaluation backend from pistol-eval, the search
-//! from pistol-search — so that a change of backend, of candidate policy or of
-//! table size is a change to a document rather than to code (CLAUDE.md rule 1).
-//!
-//! Two translations live here, and they live here on purpose:
-//!
-//! - **config to parts.** Which eval backend exists, and what a `Searcher` is
-//!   built with. A value that reaches the search came from a validated document.
-//! - **`Budget` to `Stop`.** Which budgets a mode may use is operator-facing
-//!   policy and stays in the engine (docs/decisions.md D-22); *stopping* is the
-//!   search's. The translation is not a copy: a wall-clock budget becomes the
-//!   instant it expires at, so the one clock read on the way into a search
-//!   happens here and the search holds no path that computes a deadline of its
-//!   own (D-73, CLAUDE.md rule 4).
-
 use std::time::{Duration, Instant};
 
 use pistol_core::GameState;

@@ -1,36 +1,3 @@
-//! Playing the games, and deciding when to stop.
-//!
-//! # The invariance this module owes the report
-//!
-//! Every game is a pure function of its opening, its seating and the two engine
-//! configurations: fresh subprocesses per game, no shared state, no shared
-//! table, no shared clock. Results land in a pre-sized slot vector indexed by
-//! game index and are never appended in completion order. So the SET of results
-//! is worker-invariant, and everything the verdict block holds is a function of
-//! that set (docs/decisions.md D-161).
-//!
-//! Fresh subprocesses per game rather than `newgame` on a reused pair: reuse
-//! would be faster and D-7's gate already certifies that `newgame` clears
-//! everything, but under N workers the assignment of games to processes changes
-//! with N, so any residue would make the report depend on the worker count —
-//! the one thing this module must guarantee it does not (docs/decisions.md
-//! D-164).
-//!
-//! # Stopping
-//!
-//! The stop is evaluated ONLY at pair boundaries. An odd prefix would split a
-//! pair — including one seat's game and not the other's — and the truncation
-//! point is correlated with the outcome of the last included game, since a
-//! crossing is likeliest right after a decisive one. That is optional-stopping
-//! bias applied to the one game whose seat is unmatched (docs/decisions.md
-//! D-165).
-//!
-//! `k` is the SMALLEST pair count whose sample crosses a boundary, recomputed
-//! over the whole finished prefix rather than the first crossing a worker
-//! happened to notice — which is what makes it a function of the results alone.
-//! Games in flight past `k` are killed and discarded; they never contributed to
-//! the report, so discarding them cannot bias it.
-
 use std::sync::Mutex;
 
 use crate::config::ArenaConfig;

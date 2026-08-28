@@ -1,25 +1,3 @@
-//! The `Engine` trait — the one seam the future API layer wraps.
-//!
-//! Three verbs, and they are the three docs/decisions.md D-2 pinned:
-//! [`Engine::new_game`], [`Engine::set_position`] and [`Engine::go`]. The trait
-//! is **synchronous and has no stop verb**: at a deployment budget of half a
-//! second a stop verb buys nothing and would force async plumbing through the
-//! one seam everything else adapts. Cancellation arrives with Lazy SMP in
-//! Stage 4, as an additive trait extension and an additive protocol verb.
-//!
-//! The line protocol in pistol-cli mirrors this trait one to one (D-5), and
-//! pistol-api stays empty until the API layer is specified (CLAUDE.md rule 11).
-//! Anything a future transport needs, it needs from here.
-//!
-//! # Reporting
-//!
-//! [`Engine::go`] answers with a [`SearchOutcome`]: the move, and the evidence.
-//! A return value cannot carry a *stream*, and the protocol prints one `info`
-//! line per completed depth, so [`Engine::go_reporting`] is the same call with a
-//! sink for those reports and `go` is a provided method over it. The split keeps
-//! D-2's signature exactly as pinned while giving the protocol the seam it
-//! needs; a caller that does not want the stream writes `go` and pays nothing.
-
 use pistol_core::GameState;
 use pistol_search::{SearchInfo, SearchOutcome};
 

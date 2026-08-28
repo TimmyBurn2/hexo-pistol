@@ -1,17 +1,3 @@
-//! The turn token, `"q,r"` and `"q,r/q,r"` (docs/decisions.md D-5).
-//!
-//! The formatter and the parser ship together and are tested against each
-//! other, for the reason the stone token's are (D-39): a grammar with two
-//! implementations drifts on the cases nobody writes a test for, and a grammar
-//! with a formatter and no parser grows its second implementation in whichever
-//! crate needs one first.
-//!
-//! One turn has one spelling. The parser therefore refuses an uncanonical pair
-//! rather than reordering it, exactly as the stone token refuses `007,0`
-//! (D-46): if `"1,0/0,0"` and `"0,0/1,0"` both parsed, two protocol lines that
-//! differ would mean the same turn, and an arena log or a dedupe by string
-//! would eventually trip over it.
-
 use pistol_core::error::{PAIR_NOT_CANONICAL, PAIR_OF_ONE_CELL};
 use pistol_core::{Coord, ParseTurnError, Turn};
 

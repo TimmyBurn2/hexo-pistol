@@ -1,27 +1,3 @@
-//! Where the static evaluation is allowed to answer.
-//!
-//! The eval scores a position; a position half way through a turn is one no
-//! player will ever be handed, because the mover still owes a stone. So a
-//! horizon that lands there is not a horizon, and `pvs.rs` says so by name
-//! (`STATIC_EVAL_MID_TURN`, docs/decisions.md D-111).
-//!
-//! What is pinned is that no static evaluation is returned as a node's
-//! ANSWER at phase 1 — deliberately narrower than "the eval is never consulted
-//! at phase 1", which is false and which these tests would therefore be lying
-//! about. `Eval::value` is read at phase-1 nodes in two places, and neither is
-//! an answer: move ordering scores a hypothetical stone it takes straight back
-//! off (D-76), and the transposition table fills a `static_eval` field nothing
-//! in Stage 0 reads. D-111 carries the census.
-//!
-//! The invariant is a debug assertion inside the recursion rather than something
-//! a test can read off a result, so what these tests do is *drive* it: reach as
-//! many horizons as possible, from roots at as many different turn numbers as
-//! possible, and let the assertion be the thing that fails. Because "nothing
-//! panicked" is also what a search that did no work would report, each test
-//! additionally counts the horizons it reached and refuses to pass on zero
-//! (the positive-content argument docs/decisions.md D-90 makes for the
-//! determinism gate).
-
 mod common;
 
 use common::{blob, line, position, quiet, searcher};

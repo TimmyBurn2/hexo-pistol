@@ -1,12 +1,3 @@
-//! The load-bearing property of the whole crate: the value carried
-//! incrementally is the value a recompute would give, at every position, on the
-//! way down and on the way back up.
-//!
-//! The search applies and takes back one stone per ply and never recomputes
-//! (docs/decisions.md D-11, D-41). So a drift of one window anywhere on either
-//! path is a wrong evaluation at every node below it, and nothing else in this
-//! crate would notice.
-
 mod common;
 
 use common::playouts::{Rng, random_ply};

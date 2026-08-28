@@ -1,6 +1,3 @@
-//! The schema is complete and closed: nothing may be left out, nothing unknown
-//! may be smuggled in, and no value may come from anywhere but the document.
-
 mod common;
 
 use common::{rejection, replacing, without_key, without_staged_key, without_table};

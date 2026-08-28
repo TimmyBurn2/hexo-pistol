@@ -1,28 +1,3 @@
-//! The bounded answer a wall-clock search secures before it deepens.
-//!
-//! A deadline can land before the first iteration finishes — its cost grows
-//! with the candidate count, which the opponent partly controls
-//! (docs/decisions.md D-95) — so a search that must answer within the budget
-//! needs a move whose cost is bounded and paid up front. This module computes
-//! it: an instant-win check over the candidate set, then the first candidates
-//! of the deterministic (ascending `(q, r)`) ordering, replayed through
-//! `GameState` so legality is the rules' own answer and never an inference
-//! (CLAUDE.md rule 2).
-//!
-//! # Bounded, and what the bound is
-//!
-//! Two candidate generations and two O(|candidates|) win scans, no evaluation
-//! calls, no clock reads, no table probes. The cost grows linearly with the
-//! candidate count and with nothing else; the measured numbers live in the
-//! WP-1.4 decision line together with the epsilon they must fit under.
-//!
-//! # Pure
-//!
-//! A function of (position, candidate policy) only. Two calls on the same
-//! position return the same turn, on any machine, at any wall-clock moment —
-//! which is what lets a test pin the fallback answer even though the instant a
-//! deadline interrupts a real search cannot be pinned.
-
 use pistol_core::{Coord, GameState, PlyOutcome, Turn};
 
 use crate::candidates::candidate_cells;

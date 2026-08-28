@@ -1,13 +1,3 @@
-//! Making and taking back a whole turn: the transition the search will run a
-//! million times a second, and every way it refuses.
-//!
-//! Two properties matter and are pinned here. A turn that is made and taken
-//! back leaves *nothing* behind — not a stone, not a phase, not an outcome —
-//! because a search that drifts by one bit per node is a search whose deep
-//! results are fiction. And a turn that is refused leaves nothing behind
-//! either: every refusal is atomic, so a caller that handles the error and
-//! plays on is not standing on half a turn (CLAUDE.md rule 3).
-
 mod common;
 
 use common::perft_positions::perft_case;

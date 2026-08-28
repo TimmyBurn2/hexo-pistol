@@ -1,21 +1,3 @@
-//! Seeded playout positions: arbitrary rather than chosen.
-//!
-//! The hand-built fixtures in this suite are all *about* something — a mate, a
-//! block, a quiet cluster someone reasoned about. A reference is worth most
-//! against positions nobody designed, so these are grown by a written-out
-//! generator from a seed stated in the source: a failure names a playout a later
-//! run reproduces exactly (CLAUDE.md rule 4).
-//!
-//! The same xorshift64\* pistol-core's and pistol-eval's test trees use,
-//! restated here because a test tree is per crate.
-//!
-//! # Compact on purpose
-//!
-//! The ply is sampled within [`SPREAD`] of an existing stone rather than from
-//! the whole rule-5 region. A scattered cluster makes the candidate set at every
-//! node wider, and a full-width reference pays that squared per turn — the
-//! difference between a suite that runs and one that does not.
-
 use pistol_core::{Coord, GameState, PlyOutcome};
 
 /// How far from an existing stone a playout puts the next one. Well inside the

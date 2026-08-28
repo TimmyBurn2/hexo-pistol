@@ -1,16 +1,3 @@
-//! Reading lines and writing answers.
-//!
-//! The loop is separate from the protocol so that the protocol can be exercised
-//! without a pipe: [`crate::protocol::Session`] turns one line into its answers
-//! in memory, and this adds the input, the output and the flushing.
-//!
-//! Input is read as **bytes** and only then read as text. A line that is not
-//! UTF-8 is a line the engine cannot understand, which is a refusal like any
-//! other — one `error Protocol` line, and the engine stays alive (CLAUDE.md
-//! rule 3). Decoding lossily instead would repair the input silently, which is
-//! the failure mode this project forbids; killing the loop would let one bad
-//! byte end a match.
-
 use std::io::{self, BufRead, Write};
 
 use pistol_engine::EngineError;

@@ -1,12 +1,3 @@
-//! The arena config is complete, closed, versioned, and refuses a wall-clock
-//! budget by name.
-//!
-//! Every test here asserts a CONSEQUENCE rather than a constant against itself.
-//! The WP-1.2a review round found four clauses whose tests read
-//! `gap <= ELO_GAP_CEILING`, which is true whatever the constant holds
-//! (docs/decisions.md D-152); the same shape would be available here and is
-//! avoided.
-
 mod common;
 
 use pistol_arena::config::ArenaConfig;

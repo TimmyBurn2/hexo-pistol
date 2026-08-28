@@ -1,12 +1,3 @@
-//! The twelve symmetries as a GROUP: that there are twelve, that they compose,
-//! invert, preserve hex distance and permute the three line axes — and that a
-//! cell off the addressable lattice is refused rather than wrapped.
-//!
-//! These are properties rather than examples wherever a property is available. A
-//! table of expected images pins one reading of the transform; closure, order and
-//! distance-preservation pin that it is the point group of this lattice at all.
-//! What the group is FOR — the canonical form — is next door.
-
 use std::collections::BTreeSet;
 
 use pistol_core::symmetry::transform;

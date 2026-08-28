@@ -1,9 +1,3 @@
-//! Rules a config must satisfy that `serde` cannot express: value ranges, and
-//! agreements between fields in different sections.
-//!
-//! Every rejection here names the key an operator has to go and edit. Nothing
-//! here repairs a value — a config is right or it is refused (CLAUDE.md rule 3).
-
 use crate::config::{
     CandidatePolicy, Config, EngineMode, EvalSection, InstrumentSection, MAX_CANDIDATE_RADIUS,
     MAX_MOVETIME_EPSILON_MS, MAX_Q_DEPTH_TURNS, MAX_TT_BYTES, MIN_TT_BYTES, PlaySection,

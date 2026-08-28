@@ -1,23 +1,3 @@
-//! The key function: what a cell, a side and a phase are named, and why those
-//! names are the same everywhere.
-//!
-//! The board is unbounded, so there is no table of random numbers to load — a
-//! key is computed from `(q, r, player, ZOBRIST_SEED)` (docs/decisions.md D-8,
-//! D-57). That makes the function itself the thing to pin: it has to be pure,
-//! and it has to give the same 128 bits in this run, in a second process, and
-//! in a build made next year (CLAUDE.md rule 4). Two runs of an engine that
-//! disagreed about what a position is called would disagree about what it is
-//! worth, through a transposition table that answered questions nobody asked.
-//!
-//! The vectors here were computed from the construction D-57 describes,
-//! independently of the implementation they check, so they are an oracle for it
-//! rather than a photograph of it. The SplitMix64 they were computed with was
-//! itself checked against Vigna's published stream for state zero
-//! (`0xE220A8397B1DCDAF`, `0x6E789E6AA1B965F4`, `0x06C45D188009454F`,
-//! `0xF88BB8A8724C81EC`).
-//!
-//! The key a whole *position* carries is `zobrist_position_tests.rs`.
-
 use std::collections::BTreeSet;
 
 use pistol_core::{

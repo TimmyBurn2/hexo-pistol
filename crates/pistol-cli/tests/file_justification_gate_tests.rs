@@ -1,23 +1,3 @@
-//! `tools/file_justification_check.sh` — CLAUDE.md rule 9's soft cap, mechanized.
-//!
-//! The gate had NO test of its own: it self-tests its `verdict` function over
-//! seeded files, and nothing ever drove the half that decides WHICH files that
-//! function is asked about. Two defects lived in that half.
-//!
-//! The first is the one D-233 closed in `tools/artifact_check.sh` in the same
-//! change set and left uncorrected here: `git ls-files` named the tracked path
-//! and `wc -l` then opened the WORKTREE file of that name, which is a different
-//! file. Staging an over-cap unjustified source file and overwriting its
-//! worktree copy with two lines made the gate print `0 over the cap, all
-//! justified` and exit 0 while the real file went to HEAD.
-//!
-//! The second is that the summary line said `.rs/.sh` while a second
-//! `git ls-files` with its own pathspec decided what was counted, so the two
-//! could disagree — and did, under a mutant that dropped `*.sh` from the loop.
-//!
-//! Both are exercised in a scratch git repository, because proving the gate
-//! catches a committed over-cap file would otherwise require committing one.
-
 mod common;
 
 use std::path::{Path, PathBuf};

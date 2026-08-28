@@ -1,18 +1,3 @@
-//! Axial coordinates on the unbounded hex lattice.
-//!
-//! A cell is `(q, r)`; the third cube coordinate `s = -q - r` is derived and
-//! never stored. The board is unbounded (rule 1), so a coordinate type is a
-//! choice about how much board we can address, not about where the edges are:
-//! `i16` addresses ±32767 in each direction, which is some four thousand turns
-//! of legal-region growth away from any game (docs/decisions.md D-34).
-//!
-//! Arithmetic here therefore never wraps and never saturates. Leaving the
-//! range is a bug in pistol, not operator input, so it panics with the named
-//! invariant [`COORD_OVERFLOW`] (CLAUDE.md rule 3). Callers that have a
-//! legitimate reason to ask whether a cell exists at all — a line scan walking
-//! off the addressable lattice, where "no such cell" and "no stone there" are
-//! the same answer — use the `checked_` forms.
-
 use std::fmt;
 use std::str::FromStr;
 

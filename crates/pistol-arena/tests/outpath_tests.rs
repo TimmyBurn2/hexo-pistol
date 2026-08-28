@@ -1,6 +1,3 @@
-//! The report path is claimed atomically, so two racing runs cannot both
-//! believe they own it (wp13_results §6b's TOCTOU, closed by D-200).
-
 mod common;
 
 use common::Scratch;

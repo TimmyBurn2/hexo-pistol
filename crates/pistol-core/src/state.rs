@@ -1,29 +1,3 @@
-//! The turn structure: whose turn it is, and how far into it we are.
-//!
-//! A turn is two stones by the same side — except the first, which is one
-//! (rule 3) — so a turn is represented as two sequential same-side plies with
-//! an intra-turn phase (docs/decisions.md D-9). Everything the outside world
-//! counts is in **turns**: the turn number here is the number sudden death is
-//! scored in (rule 4), and the search's depth and mate distance are the same
-//! unit (D-3).
-//!
-//! Rule 4 falls out of the transition rather than being special-cased on top of
-//! it: a stone that completes a line decides the game, and the state then
-//! accepts no further stone, so the second stone of a winning turn is not
-//! played — it is unreachable, not skipped.
-//!
-//! The vocabulary this machine produces — [`Phase`], [`Outcome`],
-//! [`PlyOutcome`], and the reasons there is neither a draw nor a stalemate —
-//! lives in [`crate::turn`].
-//!
-//! # Counting
-//!
-//! The turn counter is `u32` and counts absolute turns from [`FIRST_TURN`]. It
-//! is not the `u16` of `MateIn`/`MatedIn` (docs/decisions.md D-3): that one is
-//! a *distance* in turns from the root of a search, which is bounded by the
-//! search depth, while this one is a position's own history and is bounded only
-//! by how long a game gets.
-
 use crate::board::{Board, Player};
 use crate::coord::Coord;
 use crate::error::CoreError;

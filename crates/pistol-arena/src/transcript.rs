@@ -1,34 +1,3 @@
-//! Reading an arena report back as the run it describes.
-//!
-//! # Why this exists at all
-//!
-//! The replay mode is handed a REPORT, not a config: it must re-drive the exact
-//! engines, at the exact budget, over the exact games some earlier run produced.
-//! Everything it needs is already on the report's own face — `report.rs` writes
-//! the engine binaries and their digests, the budget, the opening length and
-//! every game's move list — and a report is the only artefact that attests all
-//! of it together. A replay parameterised by a config document instead could be
-//! pointed at a different experiment than the one it claims to be checking.
-//!
-//! Named here because it was the one component D-406 found missing from the
-//! design outright (its MAJOR 5), and a component nobody names is a component
-//! nobody reviews.
-//!
-//! # Everything is refused by name
-//!
-//! This parses a document to decide whether a strength claim may be read, so
-//! nothing here skips, defaults or guesses. A report that does not carry a
-//! verdict, a schema this build does not write, a budget that is not
-//! reproducible, a path with whitespace in it, a repeated key on one record, a
-//! move token that is not a turn, a game index that is not where it should be —
-//! each is its own refusal, with its own sentence.
-//!
-//! # RULE9-JUSTIFICATION: a parser's refusals and the record shapes they refuse
-//! against are one artefact. The field readers exist only to make the record
-//! readers refuse by name, and splitting them apart would put half of every
-//! refusal in another file — which is the arrangement that lets a shape drift
-//! away from the sentence that was supposed to guard it.
-
 use std::path::PathBuf;
 
 use pistol_core::{GameState, Outcome, Turn};

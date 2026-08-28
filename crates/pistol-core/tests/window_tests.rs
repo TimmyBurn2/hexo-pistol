@@ -1,16 +1,3 @@
-//! The rules window: three axes, six offsets, eighteen per cell (game rule 2).
-//!
-//! The enumeration moved here from `pistol-eval` when Stage 1's threat
-//! generator came to need it — D-67's own flip clause (docs/decisions.md D-67,
-//! D-253) — so its pins live here now, beside the constant that fixes its
-//! length. What `pistol-eval` keeps is a re-export, and the test that the
-//! re-export is this very type lives in that crate's tree.
-//!
-//! [`Window::cell`] and [`windows_through_indexed`] are new surface: the index
-//! is the enumeration's own loop variable, and a consumer carrying per-window
-//! occupancy masks needs it to say *which* cell of a window a stone landed in.
-//! Both are pinned here against the enumeration they come from.
-
 use std::collections::BTreeSet;
 
 use pistol_core::window::{

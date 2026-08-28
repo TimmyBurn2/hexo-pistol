@@ -1,22 +1,3 @@
-//! What the build profiles keep, asserted by a build rather than by reading
-//! `Cargo.toml`.
-//!
-//! A profile flag is exactly the kind of setting that reverts silently: nothing
-//! fails when `overflow-checks` goes missing from `[profile.release]`, every
-//! test still passes, and the first thing anybody notices is a wrong answer the
-//! engine played. So the flag gets a test, and the test has to run in the
-//! profile it is about — a debug build has overflow checks by default and would
-//! pass this without saying anything (docs/decisions.md D-127).
-//!
-//! # Why this file is in pistol-search
-//!
-//! It is about the workspace and not about the search. It lives here because
-//! `tools/search_oracle_check.sh` owned the only release `cargo test` in the
-//! gate set when this ride-along landed (tools/movetime_check.sh has since
-//! grown release runs of its own, docs/decisions.md D-213), so this is where a
-//! release-profile assertion could run without adding a gate for one test;
-//! that script names the ride-along where it runs it.
-
 use std::hint::black_box;
 use std::panic;
 

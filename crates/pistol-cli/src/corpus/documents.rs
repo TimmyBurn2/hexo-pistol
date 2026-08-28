@@ -1,16 +1,3 @@
-//! The two documents `corpus-extract` writes.
-//!
-//! [`super::emit`] owns the header and digest *discipline* — what a fixture
-//! header is made of and where its payload begins. This file owns what these two
-//! particular fixtures say: the prose a reader meets, which parameters each
-//! states, and the shape of a payload line. It is a separate file for size
-//! discipline (CLAUDE.md rule 9), and the split is a real one — the discipline is
-//! reusable and the prose is not.
-//!
-//! Both documents carry the same provenance block, because both are claims about
-//! the same corpus and a reader who has one should not need the other to know
-//! which document it came from.
-
 use super::bench;
 use super::emit::Fixture;
 use super::openings::{self, ELO_GAP_CEILING, K_TURNS, OPENING_STONES};

@@ -1,11 +1,3 @@
-//! The walk itself: one position, one evaluation kept in step with it, and the
-//! recursion that values them.
-//!
-//! Split from [`super::reference`] for size discipline (CLAUDE.md rule 9), not
-//! because it is a second concept: that module is the contract and its refusals,
-//! and this is the tree walk behind it. Everything the walk needs to be correct
-//! is stated against the walk, so the two read in either order.
-
 use std::collections::BTreeMap;
 
 use pistol_core::{Coord, GameState, Phase, Player, PlyOutcome, Turn};

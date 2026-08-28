@@ -1,11 +1,3 @@
-//! The arena end to end: two subprocesses per game, the referee between them,
-//! and a report at the end.
-//!
-//! The engines here are `arena-stub-engine`, whose protocol conformance is the
-//! real `pistol_cli::Session` and whose only deviations are the named ones.
-//! That is what makes the forfeit, hang, exit and mode paths reachable at all
-//! (docs/decisions.md D-166).
-
 mod common;
 
 use common::{Ran, Scratch, openings_prefix, run, self_match};

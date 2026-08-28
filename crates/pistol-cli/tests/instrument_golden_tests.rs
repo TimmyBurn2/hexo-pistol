@@ -1,30 +1,3 @@
-//! WP-1.4's acceptance gate R3, made permanent: instrument behavior is
-//! byte-identical to the pre-WP revision.
-//!
-//! `fixtures/instrument_golden_v1.txt` pins the transcripts an instrument-mode
-//! engine produced at revision 3926110 — before the movetime mechanism landed —
-//! over every tactical-fixture position at the gate config, budgets
-//! `depth_turns 3` and `nodes 50000`, with the two machine-measuring fields
-//! (`nps`, `time`) stripped exactly as tools/determinism.sh strips them. This
-//! test replays every case in-process and compares every remaining byte: the
-//! move, the depth, the node count, the score, and the whole principal
-//! variation (CLAUDE.md rule 4, docs/decisions.md D-7, D-90).
-//!
-//! A play-mode change that leaks into an instrument path — a clock read that
-//! shifts a node count, a reordered candidate, a changed report — fails here by
-//! diff, on every machine, forever. Regenerating the fixture is an ADR-level
-//! change that names the new revision; a fixture regenerated against the code
-//! under test would compare post to post and certify nothing.
-//!
-//! # Debug subset
-//!
-//! In release every case runs (~7 s). Under `cargo test`'s debug profile the
-//! full set costs ~90 s, so every [`DEBUG_STRIDE`]-th case runs instead — the
-//! subset is deterministic and spans both budgets and the position variety.
-//! The full set runs in release on every CI pass via tools/movetime_check.sh
-//! (gate 11), which a REVIEW-impl round added after catching this comment
-//! naming a gate that did not run it (docs/decisions.md D-213).
-
 mod common;
 
 use common::{GATE, engine, repo, talk};

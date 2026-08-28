@@ -1,17 +1,3 @@
-//! What a single generated opening IS: its turn structure, its colours, where
-//! its first stone goes, and how far from the origin the rest may land.
-//!
-//! Split from `random_openings_book_tests.rs` for CLAUDE.md rule 9. The line
-//! the split follows is a real one: these are claims about ONE position, and
-//! every one of them could be checked with a book of size one. The properties
-//! that only a whole book has — determinism under a seed, distinctness under
-//! the canonical key, and the two refusals that are about a pool rather than a
-//! position — are over there.
-//!
-//! Where a property is one a *consumer* depends on, these read the committed
-//! `random_openings_v1.txt`; where it is one only the generator can be asked
-//! about, they generate. Reading the committed file alone would pin the file,
-//! which its own digest already does, rather than the tool.
 mod common;
 
 use common::repo;

@@ -1,37 +1,3 @@
-//! Playing and taking back a whole turn.
-//!
-//! [`crate::state`] owns the ply: one stone, one transition, one history
-//! record. This module owns the turn built out of those plies — the unit the
-//! outside world counts in (docs/decisions.md D-3, D-9), the unit
-//! [`crate::movegen`] generates, and the unit perft measures. It is a separate
-//! file for size discipline (CLAUDE.md rule 9), not a separate concept: these
-//! are inherent methods on [`GameState`] and the state machine they drive is
-//! the one in `state.rs`.
-//!
-//! # Which order a pair is played in
-//!
-//! A pair is legal iff **some** ordering of its two placements is legal
-//! (docs/decisions.md D-6), so making one means choosing an order. The choice
-//! is fixed rather than convenient: the canonical order (smaller cell first) is
-//! tried, and the reverse only if it is refused. A turn therefore always leaves
-//! the same ply history behind, which is what keeps the zobrist path (WP-04),
-//! the incremental eval (D-11) and any future repetition accounting from
-//! depending on how a caller happened to spell the same turn (CLAUDE.md
-//! rule 4).
-//!
-//! Rule 4 makes the reverse ordering more than a fallback: if the smaller cell
-//! completes a line, the turn would end there and the larger cell would never
-//! be played, so that ordering does not play *this* turn at all. The other one
-//! may still — one stone that wins as a turn's **second** stone is an ordinary
-//! pair, and generation emits it as one.
-//!
-//! # Atomicity
-//!
-//! Every refusal here leaves the position exactly as it was. An ordering that
-//! places the first stone and is then refused the second takes its stone back
-//! before reporting, so a caller that handles the error and plays on is not
-//! standing on a half-played turn (CLAUDE.md rule 3).
-
 use crate::coord::Coord;
 use crate::error::{
     CoreError, EITHER_STONE_ALREADY_WINS, PAIR_NOT_CANONICAL, PAIR_OF_ONE_CELL,

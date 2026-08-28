@@ -1,32 +1,3 @@
-//! [`ThreatState`]: what each side holds in every window, carried incrementally.
-//!
-//! One stone touches exactly the [`WINDOWS_PER_CELL`](pistol_core::window::WINDOWS_PER_CELL)
-//! windows through its cell, less any that run off the addressable lattice.
-//! Each touch is one mask bit and at most two moves between maintained sets
-//! (see `crate::sets`, which is private), so the whole per-stone cost is bounded
-//! by the enumeration and not by the position.
-//!
-//! # apply then undo leaves the state EQUAL, not merely equivalent
-//!
-//! [`ThreatState`] is `PartialEq + Eq` over everything it carries, and
-//! `apply(c, p)` followed by `undo(c, p)` restores that whole state. What makes
-//! that true rather than nearly true is the pruning rule in
-//! `WindowTable::set`: an entry exists exactly while its window holds a stone,
-//! so an undone stone leaves nothing behind. Without it the table would grow
-//! with the search PATH rather than with the position, and two states holding
-//! the same stones would compare unequal (docs/decisions.md D-62's rule for the
-//! eval's own map, D-214's discipline).
-//!
-//! # A position the rules have already decided
-//!
-//! `GameState::place` returns `Ok` on the winning ply, so a search legitimately
-//! stands on a decided position and this state tolerates one: `completed_windows`
-//! is non-empty exactly there and every other query keeps answering. They answer
-//! about a position the rules have already ended, so **a caller that must not
-//! stand on one asks `GameState::outcome()`** — this type does not, because a
-//! legal search path reaches such a position and rule 3's loudness is for
-//! IMPOSSIBLE states, not for decided ones.
-
 use std::collections::BTreeMap;
 
 use pistol_core::window::{Window, windows_through_indexed};

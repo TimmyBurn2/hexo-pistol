@@ -1,14 +1,3 @@
-//! `--name value` command lines, in one spelling.
-//!
-//! Two curation binaries take a handful of flags each and refuse everything
-//! else by name (CLAUDE.md rule 3). The grammar and its refusals live here for
-//! the reason [`crate::count`] gives for numbers: a rule with two
-//! implementations is a rule that can hold two answers, and "unknown flag" is
-//! exactly the kind of message that drifts.
-//!
-//! The usage text travels as an argument rather than living here, because it is
-//! the one part that is genuinely each tool's own.
-
 /// The `--name value` pairs of a command line, in the order given.
 ///
 /// A bare word, a flag with nothing after it, and a flag whose value is another

@@ -1,39 +1,3 @@
-//! `random-openings` — a seeded, synthetic opening book, from a committed
-//! config and nothing else.
-//!
-//! The book the arena runs its SPRT over (docs/decisions.md D-175). It is a
-//! sibling of [`crate::corpus`] and not a mode of it: that tool's every path
-//! begins by reading an external corpus of human games and identifying it by
-//! digest, and this one has no input but a committed TOML document. What the
-//! two share is the fixture *form* — [`crate::corpus::emit`]'s header, `#
-//! param` and `# derived` lines, and the in-band body digest (D-147, D-148) —
-//! which is a serialization discipline rather than anything about a corpus.
-//!
-//! - [`config`] — the four parameters, and every way a document is refused.
-//!   Validation runs in [`generate`] as well as in the parser, because both
-//!   this function and the config's fields are public and a validator on one of
-//!   two doors is not one (docs/decisions.md D-181).
-//! - [`rng`] — SplitMix64, pinned against its published stream.
-//! - [`document`] — what the emitted file says.
-//! - [`error`] — the named refusals.
-//!
-//! # What a generated opening is
-//!
-//! Game rule 3 fixes the shape: turn 1 is one stone at the origin, and every
-//! later turn is two stones by the mover. So a `k_stones = 5` opening is P1 at
-//! the origin, then P2's two stones, then P1's two — and the colours are not a
-//! choice this module makes, they fall out of asking pistol-core whose stone
-//! comes next.
-//!
-//! Rules truth stays in pistol-core (CLAUDE.md rule 2). Nothing here decides
-//! whether a placement is legal: every stone goes down through
-//! [`GameState::place`], and rule 5 is *asked* about each one at its own point
-//! in the sequence before it is placed. Inside `max_radius` of the origin that
-//! question can only be answered yes — the origin holds the first stone and
-//! `max_radius` is far under `LEGAL_RADIUS` — and it is asked anyway, because a
-//! generator that assumed it would go on writing a book on the day the
-//! assumption stopped holding (rule 3).
-
 pub mod config;
 pub mod document;
 pub mod error;

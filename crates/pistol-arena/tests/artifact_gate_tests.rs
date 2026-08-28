@@ -1,12 +1,3 @@
-//! `tools/artifact_check.sh` recognizes a match report by CONTENT — the report
-//! schema header on its first line — not by extension alone: a report renamed
-//! `report.txt` passed both `.gitignore` and the gate's name patterns
-//! (wp13_results §6b, closed by D-203).
-//!
-//! The gate is exercised in a scratch git repository rather than the real one,
-//! because proving it catches a committed report would otherwise require
-//! committing one (CLAUDE.md rule 8).
-
 mod common;
 
 use std::process::Command;

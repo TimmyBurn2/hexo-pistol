@@ -1,22 +1,3 @@
-//! The key a position carries: what it says about the position, and that it
-//! never drifts from what the stones say.
-//!
-//! Two properties do the work the transposition table (WP-06) and the solver
-//! will lean on. Turn order is *not* part of a position, so two orders that
-//! reach the same stones reach the same key and the search sees one node rather
-//! than two. Everything else that distinguishes two positions *is* in the key —
-//! the side to move, and the intra-turn phase, because a turn with one of its
-//! two stones down is not the node the completed turn is (docs/decisions.md
-//! D-8, D-9).
-//!
-//! The key is carried incrementally through `place` and `undo`, one XOR each
-//! way, and the search takes a position back at every node it leaves. So the
-//! last test here is the load-bearing one: over randomized playouts, the
-//! carried key equals the key recomputed from the stones at every ply, on the
-//! way down and on the way back up.
-//!
-//! The key *function* those keys are built from is `zobrist_key_tests.rs`.
-
 mod common;
 
 use std::collections::BTreeSet;

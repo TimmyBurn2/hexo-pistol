@@ -1,11 +1,3 @@
-//! Counting a run: distinct games, pair buckets, and which verdict outranks
-//! which.
-//!
-//! These are over hand-built records rather than over played games, because the
-//! shapes that matter — a mirrored duplicate, an all-capped run, a forfeit
-//! beside a decisive result — are cheap to construct and expensive to provoke
-//! through two subprocesses.
-
 use pistol_arena::config::SprtSection;
 use pistol_arena::record::{Compute, End, ForfeitReason, GameRecord, GameResult};
 use pistol_arena::score;

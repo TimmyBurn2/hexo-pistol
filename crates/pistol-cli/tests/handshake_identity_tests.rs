@@ -1,13 +1,3 @@
-//! The handshake identifies the eval weight table by CONTENT.
-//!
-//! Two configs differing only in `eval.weights_file` used to produce
-//! byte-identical arena identities while `nelo_pair` moved by 98 points — the
-//! provenance hole WP-1.3 recorded (docs/decisions.md D-188). The engine now
-//! digests the weights file it loads and says so in its own handshake
-//! (docs/decisions.md D-198), so the claim has to be tested against the real
-//! binary: the digest is assembled in the binary's entry point, not in the
-//! library the in-process tests drive.
-
 mod common;
 
 use std::io::Write;

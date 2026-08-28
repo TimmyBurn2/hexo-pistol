@@ -1,9 +1,3 @@
-//! This suite's scratch directories are swept by the OTHER suite's sweeper
-//! (`crates/pistol-cli/tests/common/mod.rs`), because a `Drop` guard does not
-//! run when a test binary aborts or is killed. Two crates therefore have to
-//! agree on one prefix, and an agreement stated only in a comment is one that
-//! breaks silently — this is the arena's half of it (docs/decisions.md D-239).
-
 mod common;
 
 use common::{SCRATCH_PREFIX, Scratch};

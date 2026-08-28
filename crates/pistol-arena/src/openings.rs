@@ -1,31 +1,3 @@
-//! Reading the openings fixture, and refusing anything that is not one.
-//!
-//! The form is WP-1.2a's (docs/decisions.md D-147): `#` comment lines, a
-//! `# body_sha256 <hex>` line, and then a body that begins at the first byte
-//! after the newline ending that line. A body line is a position in the
-//! canonical move-list encoding — the exact tail the `position` verb takes
-//! (D-6) — with everything from ` #` onward commentary a reader may strip.
-//!
-//! Three refusals here are worth their own sentence, because each closes a way
-//! for a run to report a number that is not a measurement:
-//!
-//! 1. **The in-band digest is verified.** D-148 pre-registered this crate as the
-//!    consumer that would either use the body digest or retire it. It is used:
-//!    the arena holds only the file at load time and has no business carrying an
-//!    out-of-band constant from someone else's test tree (CLAUDE.md rule 3).
-//! 2. **Two openings equal up to a lattice symmetry are refused, naming both
-//!    lines.** A repeated opening silently halves the information while doubling
-//!    the reported n, which is the class of error rule 6's distinct-n exists to
-//!    expose. Up to symmetry rather than byte-equal because a mirrored position
-//!    is the same position (D-137) — and because this reader takes whatever file
-//!    it is pointed at, so it may not assume its input was canonicalized.
-//! 3. **Every opening must have the same turn count**, and `turn_cap` must
-//!    exceed it. A mixed-length file would make one `turn_cap` mean a different
-//!    horizon per game.
-//!
-//! Nothing here skips a line. A blank line, a stray `#` line inside the body,
-//! and a line that does not replay are each a named refusal (D-139's precedent).
-
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::str::FromStr;

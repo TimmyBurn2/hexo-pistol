@@ -1,12 +1,3 @@
-//! The generator's randomness, pinned against a published stream.
-//!
-//! A book is only reproducible if its number source is. This one is SplitMix64,
-//! reimplemented here rather than taken as a dependency for the reason
-//! pistol-core is std-only: a fixture's bytes must not move because someone
-//! else's crate changed a constant. What keeps a reimplementation honest is an
-//! oracle, and SplitMix64 has one — Vigna's reference `splitmix64.c`, whose
-//! stream from state 0 is a published sequence.
-
 use pistol_cli::random_openings::rng::{SplitMix64, rejection_remainder};
 
 /// The first four outputs of the reference implementation seeded with 0.

@@ -1,16 +1,3 @@
-//! Deterministic random playouts, for the test that checks the incremental
-//! value against a recompute.
-//!
-//! Incremental state is only as good as the last position it was carried
-//! through, so the test that checks it wants many *arbitrary* positions rather
-//! than a handful of chosen ones. Arbitrary, not random: the seed is given by
-//! the caller and the generator is written out here, so a failure names a
-//! playout a later run reproduces exactly (CLAUDE.md rule 4).
-//!
-//! This is the same generator pistol-core's test tree uses on the zobrist key,
-//! restated here rather than shared because a test tree is per crate. Nothing it
-//! produces reaches a value the engine plays on.
-
 use std::sync::OnceLock;
 
 use pistol_core::{Board, Coord, LEGAL_RADIUS};

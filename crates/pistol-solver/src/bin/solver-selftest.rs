@@ -1,14 +1,3 @@
-//! `solver-selftest`: the solver's instrument (design §7).
-//!
-//! Prints one line per fixture position — name, value, nodes, seesaw, proof
-//! digest, zone status — plus a summary line, and exits 0 only when every
-//! case matches its registered expectation. A malformed fixture refuses by
-//! name at exit 2 (the void); a value mismatch is the finding, exit 1.
-//!
-//! Deterministic end to end (D-7): the solver consults no clock and no
-//! hasher iteration order, so two runs over the same fixture are
-//! byte-identical — which is what `tools/solver_determinism.sh` diffs.
-
 use std::env;
 use std::process::ExitCode;
 

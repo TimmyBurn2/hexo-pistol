@@ -1,6 +1,3 @@
-//! A budget is always present, always positive, and always reproducible when
-//! the mode that will spend it is instrument mode.
-
 use pistol_engine::config::EngineMode;
 use pistol_engine::{Budget, EngineError};
 

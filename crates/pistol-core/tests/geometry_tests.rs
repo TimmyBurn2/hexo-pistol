@@ -1,10 +1,3 @@
-//! The lattice: three axes, six neighbours, one distance (game rule 1).
-//!
-//! Every claim here is checked against an oracle written a different way from
-//! the implementation — a cube-coordinate formula, a breadth-first walk, an
-//! explicit table — because a distance function tested against itself is a
-//! tautology.
-
 use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, VecDeque};
 

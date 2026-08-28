@@ -1,27 +1,3 @@
-//! The WP-1.5b mutation ledger's two BUILT witnesses, pinned as positions a
-//! legal game reaches.
-//!
-//! `docs/experiments/U4_soundness_instrument.md` §8.4 registers eight mutations
-//! and names the position each dies on. Two of them — M4 and M6 — had no corpus
-//! witness and were BUILT, and the revision-7 REVIEW-design found (MAJOR 8) that
-//! both built positions were `ThreatState`-level constructions with stone counts
-//! rule 3 makes unreachable: turn 1 is ONE stone and every later turn is TWO by
-//! the mover, so P1 always holds an ODD number and P2 holds one more or one
-//! fewer. M4's witness held P1 = 8 and M6's held P2 = 15.
-//!
-//! §8.4's claim was "VERIFIED on the shipped solver", which was true of
-//! `ThreatState::apply` driven directly and is not a verification of anything the
-//! SEARCH can reach. A mutation that dies only on a position no game produces is
-//! a mutation the gate never kills. So the two witnesses are rebuilt here and
-//! REPLAYED THROUGH THE RULES: `common::play` drives every ply through
-//! `GameState`, which is the referee (CLAUDE.md rule 2 — geometry, legality and
-//! win detection live in pistol-core and no other crate re-implements them), and
-//! an illegal ply, an out-of-region placement or an early win panics there
-//! rather than here.
-//!
-//! This file measures the witnesses instead of asserting them, which is D-295's
-//! own finding applied to the ledger that quotes it.
-
 mod common;
 
 use common::play;

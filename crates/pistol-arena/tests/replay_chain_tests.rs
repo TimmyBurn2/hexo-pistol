@@ -1,31 +1,3 @@
-//! THE WHOLE INSTRUMENT CHAIN, end to end, on documents nothing hand-wrote.
-//!
-//! # Why this file exists
-//!
-//! `replay_tests.rs` produces real documents and never reads them with the
-//! checker. `wp16_warm_attribution_check_tests.rs` reads documents with the
-//! checker and hand-builds every one of them, in Rust, from string literals
-//! replicating what `report.rs` and `replay_report.rs` write. Both are the right
-//! shape for what they test — a corruption case has to disagree with the
-//! instrument on purpose, and a fixture copied from a run would agree with it by
-//! provenance — but between them they leave the seam untested: a field rename in
-//! `replay_report::render` would break Criterion 1'' in production while
-//! `cargo test --workspace` stayed green, because the checker's regexes and the
-//! fixtures are two copies of one stale description.
-//!
-//! That is the same defect class this work package exists to remove, moved out
-//! of prose and into a pair of agreeing replicas, and a fresh-context review
-//! measured it (docs/decisions.md D-413, MAJOR 4). This file closes it: one
-//! honest chain and one seeded chain, both over documents the shipped `arena`
-//! actually wrote, both read by the shipped checker.
-//!
-//! # The engines are stubs
-//!
-//! Which is enough for the SEAM. What a stub cannot exercise is a warm
-//! transposition table, so the same two chains are also run against the real
-//! engine as an operator procedure, recorded at `docs/decisions.md` D-412 and
-//! registered as `docs/experiments/wp16_sprt_prereg.md` §8.6.
-
 mod common;
 
 use std::path::{Path, PathBuf};

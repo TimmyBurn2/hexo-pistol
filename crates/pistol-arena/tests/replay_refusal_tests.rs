@@ -1,22 +1,3 @@
-//! What `arena --replay` REFUSES, and that a refusal is never a finding.
-//!
-//! Split from `replay_tests.rs` on that line: that file is about what a pass
-//! FINDS in a report it can read, and this one is about the documents and
-//! command lines it will not take an answer from at all. The distinction is the
-//! one `tools/SHELL_CHECKLIST.md` item 12 exists for — "the answer is no" and "I
-//! could not take the answer" are two different things, and a replay that
-//! reported an unreadable report as a divergence would send a reader hunting a
-//! seat-attribution defect that is not there.
-//!
-//! Exit 2 in every case here, and NO document written: the mode promises the
-//! same thing the generation path promises (`arena.rs`'s own exit block).
-//!
-//! # The control
-//!
-//! `an_untouched_report_is_accepted` runs the same helper over the SAME report
-//! with no edit at all. Without it, every case below would pass against a build
-//! that refused everything, which is the way a refusal suite fails silently.
-
 mod common;
 
 use std::path::PathBuf;

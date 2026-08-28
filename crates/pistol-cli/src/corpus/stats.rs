@@ -1,37 +1,3 @@
-//! The stats block: what the corpus turned out to contain.
-//!
-//! Printed, never committed — it is a measurement of an artifact that is itself
-//! never committed (CLAUDE.md rule 8), and its headline numbers land in
-//! docs/decisions.md by hand.
-//!
-//! # Conventions, pinned
-//!
-//! Every quantile is nearest-rank on the ascending sort: the p90 of `n` values
-//! is the element at index `ceil(0.9n) - 1`. Every rate is printed as the
-//! integer ratio it was counted as, never as a formatted float, so nothing here
-//! depends on float formatting or rounding (CLAUDE.md rule 4).
-//!
-//! # The placement-distance histogram
-//!
-//! Reported here and computed in [`super::distance`], where the argument for it
-//! is written out: the replay's zero legality violations are consistent with a
-//! radius-6 platform and a radius-8 one alike, and only an observed placement
-//! beyond 6 tells them apart (docs/decisions.md D-101, D-149). Read the
-//! ORDER-INDEPENDENT column, not the raw one: a stone that is not the last of
-//! its turn can be rescued by a partner recorded after it.
-//!
-//! # What the first-player rate does and does not say
-//!
-//! The research report flags 3-axis fairness as unmeasured, and this is the
-//! first look at real data — but a rated human corpus cannot answer the
-//! game-theoretic question. Seat assignment is independent of strength, so the
-//! aggregate first-player rate is about fifty per cent by construction of the
-//! rating pool, whatever the game's intrinsic tilt. The split at the rating
-//! median inherits the same confound, which is why the evenly-matched subset is
-//! reported beside it: among games whose ratings are close, the rating is not
-//! doing the predicting. Section F's question stays open for engine self-play
-//! (docs/decisions.md D-149).
-
 use std::fmt;
 
 use pistol_core::Player;
