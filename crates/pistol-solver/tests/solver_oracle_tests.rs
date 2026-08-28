@@ -594,3 +594,63 @@ fn every_pinned_case_agrees_across_the_three_policy_sites() {
     );
 }
 
+/// WP-1.8c §4e: how trigger-rich the trigger-rich bench fixture actually is.
+///
+/// `wp18b_design.md` §7 registered, as MEASURED, that "every position below
+/// holds a hot window (an open four or better) for at least one side at the
+/// mover's turn boundary". That measurement was taken over the EXTRACTOR's
+/// positions, because the committed file itself was unreadable — its tails were
+/// cells where the `start moves` grammar wants turns (§4e). Measured here on
+/// the bytes that ship, through the same `ThreatState` the trigger predicate
+/// reads: **twelve of twenty**, not twenty. The repair cannot have caused it —
+/// it only reordered cells WITHIN each pair, and both stones of a turn belong
+/// to the same mover, so every board is the one WP-1.8b committed.
+///
+/// The fixture still does its job — 12/20 against the corpus fixture's own
+/// registered 8/24 — and the count is PINNED here so a regeneration is a
+/// deliberate act rather than a drift, which is what the original registration
+/// lacked.
+#[test]
+fn the_trigger_rich_fixture_is_trigger_rich_in_the_measured_proportion() {
+    const HOT: usize = 12;
+    const TOTAL: usize = 20;
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../pistol-cli/tests/fixtures/bench_solver_positions_v1.txt"
+    );
+    let text = std::fs::read_to_string(path).expect("the committed fixture reads");
+    let (mut checked, mut hot) = (0usize, 0usize);
+    for line in text.lines().filter(|l| l.starts_with("start moves")) {
+        let body = line["start moves".len()..]
+            .split(" #")
+            .next()
+            .expect("a line has a first piece");
+        let plies: Vec<Coord> = body
+            .split_whitespace()
+            .flat_map(|token| token.split('/'))
+            .map(|cell| cell.parse().expect("a fixture cell parses"))
+            .collect();
+        let state = GameState::from_plies(&plies).expect("a fixture position is a legal game");
+        assert_eq!(
+            state.phase(),
+            pistol_core::Phase::First,
+            "a bench position sits at a turn boundary"
+        );
+        let mut threat = pistol_solver::ThreatState::new();
+        for (at, player) in state.board().stones() {
+            threat.apply(at, player);
+        }
+        let mover = state.to_move();
+        if !threat.hot_windows(mover).is_empty() || !threat.hot_windows(mover.opponent()).is_empty()
+        {
+            hot += 1;
+        }
+        checked += 1;
+    }
+    assert_eq!(checked, TOTAL, "the fixture holds its twenty positions");
+    assert_eq!(
+        hot, HOT,
+        "the trigger-rich fixture's hot-window count moved; §6's stress band is \
+         a gate on this proportion, so a change here is a change to the bench"
+    );
+}

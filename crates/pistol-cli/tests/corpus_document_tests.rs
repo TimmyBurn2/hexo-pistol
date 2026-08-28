@@ -12,6 +12,15 @@ const OPENINGS_V1_SHA256: &str = "5ccc3dc0ccfc9ed8df1135c74cc161fafcc0fd8bd8ff75
 /// The SHA-256 of the committed `fixtures/bench_positions_v1.txt`.
 const BENCH_POSITIONS_V1_SHA256: &str =
     "931c50b19411eef5aaf0385df46782bb2babbf3443e65a6e56fe7bd169906e47";
+/// The SHA-256 of the committed `fixtures/bench_solver_positions_v1.txt`.
+///
+/// It had none until WP-1.8c: `wp18b_design.md` §7 registered the file as
+/// "committed and sha-pinned per rule 7" and nothing pinned it, nothing read
+/// it, and its tails were CELLS where the `start moves` grammar wants TURNS —
+/// so the engine refused every line and the trigger-rich bracket it was
+/// written for could not be measured.
+const BENCH_SOLVER_POSITIONS_V1_SHA256: &str =
+    "bf1e41b3ec7b5de9e0d6d815ad6ce61a7b143384dbef918e5b69bea4333e67fa";
 
 fn fixture(name: &str) -> PathBuf {
     repo("crates/pistol-cli/tests/fixtures").join(name)
@@ -135,6 +144,10 @@ fn committed_fixtures_match_their_pinned_sha256() {
     for (name, pin) in [
         ("openings_v1.txt", OPENINGS_V1_SHA256),
         ("bench_positions_v1.txt", BENCH_POSITIONS_V1_SHA256),
+        (
+            "bench_solver_positions_v1.txt",
+            BENCH_SOLVER_POSITIONS_V1_SHA256,
+        ),
     ] {
         let bytes = std::fs::read(fixture(name))
             .unwrap_or_else(|error| panic!("{name} is committed: {error}"));
@@ -142,6 +155,35 @@ fn committed_fixtures_match_their_pinned_sha256() {
             sha256_hex(&bytes),
             pin,
             "{name} changed without its pin being updated, which is what the pin is for"
+        );
+    }
+}
+
+/// A digest attests bytes and says nothing about whether they mean anything.
+/// The trigger-rich fixture carried a header claiming the `start moves`
+/// grammar while holding cells, and a pin would have attested that file
+/// forever; this drives every line through the grammar the bench feeds it to.
+#[test]
+fn every_solver_bench_position_parses_and_replays() {
+    let name = "bench_solver_positions_v1.txt";
+    let text = std::fs::read_to_string(fixture(name))
+        .unwrap_or_else(|error| panic!("{name} is committed: {error}"));
+    let lines: Vec<&str> = text
+        .lines()
+        .filter(|line| line.starts_with("start moves"))
+        .collect();
+    assert_eq!(lines.len(), 20, "the fixture holds its twenty positions");
+    for line in lines {
+        let state = replay_line(line);
+        assert_eq!(
+            state.outcome(),
+            pistol_core::Outcome::Ongoing,
+            "a bench position is one the engine can be asked to move in: {line:?}"
+        );
+        assert_eq!(
+            state.phase(),
+            pistol_core::Phase::First,
+            "a bench position sits at a turn boundary: {line:?}"
         );
     }
 }
