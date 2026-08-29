@@ -1,5 +1,26 @@
 # WP-1.5d — design: the safety-net candidate cap, T-BELOW-T scope
 
+**REVISION 3.** Revision 2 FAILED its fresh-context REVIEW-design
+(`docs/experiments/wp15d_design_REVIEW.md`) with 3 BLOCKING, 5 MAJOR and 4 MINOR
+— **and none of them a correctness finding**: the reviewer attacked §6.3's store
+rule five ways and §2.2's guard at every turn number, and both held. All three
+BLOCKINGs are REGISTRATION failures and this revision is the one fix round the
+round allows. What changed:
+
+- **§8's spread expectation was a `movetime` cell registered against a
+  `Stop::Nodes` bench** — the exact substitution `artifacts/wp15d_turn_axis_v1.txt`'s
+  own header and D-478 forbid, committed by the session that wrote both. The
+  claim "expected exactly inert — MEASURED 0 prune events" is **false at the
+  registered budget**, and §8 now separates the two claims it was conflating.
+- **No test could kill the `ply > 1` mutant** — revision 2's own headline
+  correction shipped with no falsifier. §7 row 5 is replaced by one that can.
+- **§4's file list was short by six files**, because `kind = "staged"` cannot see
+  a `StagedParams` struct literal. The enumeration is now the one that can.
+- Five MAJORs are closed with it: the corpus wall ratios' provenance, the
+  handshake change (DROPPED, and why), §8's missing aggregating instrument and
+  bench configs, §5's flatness anchor, and `lift`'s treatment of a
+  mate-terminated search.
+
 **Revision 2.** Revision 1 was written against matrix M2 revision 3, which
 **FELL** to its DECISION-RED-TEAM (`docs/experiments/matrix_M2_REDTEAM_round3.md`,
 `bc003c9`). Two of that report's findings land on this document directly and both
@@ -34,8 +55,9 @@ turn-coherent is the operative one and `ply > 1` was the defective spelling.
 conditions are the matrix's; the selection is D-478's operator ruling; the price
 of that selection — 153 fewer book openings at depth ≥ 3 than the deferred
 T-ROOT row, a 1.47× wall-time swing against it, and the D-95 depth debt left
-unpaid — is stated on the matrix's face at §4 and is not restated here beyond
-this sentence (D-423: a claim a document makes twice is a defect waiting).
+unpaid in the channel it is defined in (§8, §9) — is stated on the matrix's face
+at §4 and is not restated here beyond this sentence (D-423: a claim a document
+makes twice is a defect waiting).
 
 ---
 
@@ -177,27 +199,50 @@ section restates it.
 
 ## 4. WHERE THE CODE CHANGES — the enumerated set, not a glob
 
-Verified this session with `/usr/bin/grep -l 'kind = "staged"' configs/*.toml`
-and `/usr/bin/grep -rln 'kind = "staged"' crates/ --include=*.rs`.
+**THE ENUMERATION, AND THE COMMAND THAT CAN ACTUALLY SEE THE SITES.** Revision 2
+verified this list with `/usr/bin/grep -l 'kind = "staged"'`, which reads TOML and
+**cannot see a `StagedParams` struct literal in Rust** — REVIEW-design BLOCKING 3,
+which found six files that way. The enumerations are:
+
+```
+/usr/bin/grep -l 'kind = "staged"' configs/*.toml | LC_ALL=C sort     # 12 documents
+/usr/bin/grep -rln 'kind = "staged"' crates/ --include=*.rs           # 1 embedded TOML
+/usr/bin/grep -rln 'StagedParams {' crates/ --include=*.rs            # 11 files, 18 sites
+```
 
 | file | change |
 |---|---|
 | `crates/pistol-engine/src/config.rs` | `safety_net_top_k: u64` on `CandidatePolicy::Staged` |
-| `crates/pistol-engine/src/validate.rs:81-92` | destructures all ten fields with no `..` — **will not compile** without the new one; the bound lives here |
-| `crates/pistol-engine/src/instance.rs:191-200` | passes it through |
+| `crates/pistol-engine/src/validate.rs:81-92` | destructures all fields with no `..` — **will not compile** without the new one; the bound lives here |
+| `crates/pistol-engine/src/instance.rs` | destructures and passes through (`StagedParams` literal) |
 | `crates/pistol-search/src/params.rs` | `StagedParams` gains `safety_net_top_k: u64` |
 | `crates/pistol-search/src/search.rs` | `Searcher::new`'s own bound — a `SearchParams` can be built in code and never pass through a document (rule 1) |
-| `crates/pistol-search/src/pvs.rs` | §2.2's guard AND §6.3's store rule — one binding, `truncated`, read at both sites |
-| `crates/pistol-search/src/info.rs` | `StageCounters` gains `safety_net_capped_rows`, `safety_net_emitted_cells`, `safety_net_pool_cells` — §5's instrument reads these |
-| `crates/pistol-cli/src/bin/pistol.rs:154-159` | destructures; the handshake id gains the key |
+| `crates/pistol-search/src/pvs.rs` | §2.2's guard AND §6.3's store rule — one binding, `truncated`, read at both sites; also a `StagedParams` literal site |
+| `crates/pistol-search/src/quiescence.rs` | `StagedParams` literal site |
+| `crates/pistol-search/src/info.rs` | `StageCounters` gains `safety_net_capped_rows`, `safety_net_emitted_cells`, `safety_net_pool_cells`, `safety_net_stores_withheld` — §5's and §8's instruments read these |
+| `crates/pistol-search/tests/common/mod.rs` | `staged_params` / `staged_searcher` gain the parameter (literal site) |
+| `crates/pistol-search/tests/staged_tests.rs` | literal sites |
+| `crates/pistol-search/tests/staged_colony_family_tests.rs` | literal sites |
+| `crates/pistol-search/tests/staged_differential_gate_tests.rs` | literal sites |
+| `crates/pistol-search/tests/staged_pattern_fixture_tests.rs` | literal sites |
+| `crates/pistol-search/tests/staged_tier_t_threshold_tests.rs` | literal sites |
+| `crates/pistol-search/tests/wp18b_solver_path_tests.rs` | literal sites |
+| `crates/pistol-search/tests/search_determinism_tests.rs` | `staged_params` call sites |
 | the **twelve** `kind = "staged"` documents | each gains `safety_net_top_k = 0` |
 | `crates/pistol-engine/tests/common/mod.rs` | the one embedded staged TOML |
-| `crates/pistol-search/tests/common/mod.rs` | `staged_params` / `staged_searcher` gain the parameter |
-| `crates/pistol-search/tests/{search_determinism_tests,staged_tests}.rs` | 8 call sites |
 | `crates/pistol-engine/tests/{config_validate_tests,config_schema_tests}.rs` | destructures / schema rows |
 | `configs/gate_staged_snk_v0.toml` | **NEW** — `gate_staged_v0.toml` + `safety_net_top_k = 8`, the fifth determinism seat |
 | `tools/determinism.sh:65-75` | the fifth seat, reviewed against `tools/SHELL_CHECKLIST.md` per `docs/process.md`'s tools/ coverage rule |
 | `crates/pistol-search/tests/wp15d_calibration.rs` | **NEW** — §5's instrument, with its own governing revision named in the artifact it writes |
+
+**`crates/pistol-cli/src/bin/pistol.rs` IS NOT ON THIS LIST, AND ITS ABSENCE IS A
+DECISION.** Revision 2 listed it as a forced-compile site; it is not — it
+destructures with `..` (`pistol.rs:154-158`) — and adding the key to the
+handshake's `candidate_policy` line would change a protocol line **D-356 and
+`U2_node_protocol.md` §U2-M item 2 own**, which is an ADR's business and not a
+side effect of this WP. The seat a transcript needs is identified by the config
+path the handshake already prints and by the config digest the pre-registration
+pins. If a later package wants the key on that line it takes its own ADR line.
 
 ---
 
@@ -242,12 +287,31 @@ benefit is the right selection, and "largest K within 90 % of the best" is that
 rule.** It selects a grid extreme only if the benefit truly does not decay, which
 the grid's upper end is chosen to make falsifiable.
 
-**THE UNDEFINED CASE.** If any opening completes depth 0 on any seat, it is
-counted as NOT meeting the ≥ 3 threshold (it did not), it is **named and counted
-in the artifact**, and if more than 1 % of openings are in that state on any seat
-the calibration is VOID rather than read — because `lift` would then be measuring
-how often the engine answers at all rather than how deep it gets, which is a
-different quantity from the one this rule was written for.
+**THE UNDEFINED CASE, AND THE TERMINATED ONE.** If any opening completes depth 0
+on any seat, it is counted as NOT meeting the ≥ 3 threshold (it did not), it is
+**named and counted in the artifact**, and if more than 1 % of openings are in
+that state on any seat the calibration is VOID rather than read — `lift` would
+then be measuring how often the engine answers at all rather than how deep it
+gets. **AND A SEARCH THAT STOPS SHORT BECAUSE IT PROVED A MATE IS NOT A SEARCH
+THAT FAILED TO REACH DEPTH 3** (REVIEW-design MAJOR): a proven mate at depth 1 is
+a better answer than an unproven score at depth 3, so folding it into the
+below-threshold bucket would count a win as a shortfall. Such openings are
+**EXCLUDED from both numerator and denominator, counted, and named in the
+artifact**, which is the same treatment D-395 gave the two positions whose
+candidate found a forced mate early. The `lift` denominator is therefore
+`2 000 − (mate-terminated)` and the artifact prints it.
+
+**THE FLATNESS ANCHOR IS ADVISORY AND SAYS SO** (REVIEW-design MAJOR). The
+535 / 524 / 514 figures were measured WITHOUT §6.3's store rule, which withholds
+records and therefore changes the tree; and round 3 measured 490 at K = 32, so
+the curve is not flat across the whole grid — it is flat across the LOW grid and
+decays above it, which is exactly the shape the rule needs and the grid is sized
+to expose. The registered calibration re-takes every cell at the implementation
+revision, store rule included. **If the re-taken curve is monotone across the
+whole grid with no decay, the 90 % rule selects the grid maximum and the design
+says so now rather than discovering it then**: that outcome is recorded as a
+finding, the grid is NOT extended after the fact (D-374), and K is taken at the
+maximum with the monotonicity stated beside it.
 
 **THE COST OF THE SWEEP, on this document's face.** 6 seats × 2 000 openings +
 one incumbent control = 14 000 searches at 50 000 nodes. MEASURED anchor: a
@@ -338,7 +402,7 @@ can see the class at all, exactly as the red team isolated it.
 | `the_cap_admits_exactly_k_cells_on_a_safety_net_row` | emitted width == K at a node one turn from the root with pool > K | — |
 | `k_and_k_plus_one_differ_by_exactly_the_next_ranked_cell` | the boundary as a set difference | `truncate(k)` → `truncate(k + 1)` |
 | `the_root_turn_emits_the_same_set_with_the_cap_armed` | the emitted set is identical gate-on and gate-off at every node of the root turn | `turns_from_root() > 0` → `>= 0` |
-| `the_root_turn_is_whole_at_turn_one_where_it_is_one_stone` | the same, from a TURN-1 root, where rule 3 gives one stone and the ply-1 node already belongs to the opponent | `turns_from_root() > 0` → `ply > 1`, the defect that failed revision 1 |
+| `at_a_turn_one_root_the_cap_binds_at_ply_one_because_that_ply_is_a_new_turn` | **THE `ply > 1` FALSIFIER** (REVIEW-design BLOCKING 2). From an EMPTY-board root, rule 3 makes turn 1 one stone, so the ply-0 stone COMPLETES the root turn and the ply-1 node is already at `turns_from_root() == 1`. Its pool is the radius-`r` ball around the origin (19 cells at r = 2) and the shipped guard truncates it to K; `ply > 1` leaves it whole. **The test asserts the emitted width at that node is K, and it is the only case in which the two spellings differ at all** | `turns_from_root() > 0` → `ply > 1` |
 | `the_cap_never_fires_off_a_safety_net_row` | a batched row with Tier T non-empty emits its full Tier T with the cap armed | the `used_quiet_safety_net` guard deleted |
 | `a_truncated_fail_low_stores_no_transposition_record` | the table holds nothing for a node that stopped truncated below `alpha` | `!truncated \|\| bound == Bound::Lower` → `true` |
 | `a_truncated_fail_high_still_stores_its_lower_bound` | the sound half is not thrown away with the unsound half | `!truncated \|\| bound == Bound::Lower` → `!truncated` |
@@ -360,39 +424,84 @@ that had argued it away.
 **HOTSPOT.** The additional INTERIOR nodes the cap creates: capping the branching
 factor below the root turn deepens the tree at a fixed node budget, so the ratio
 of ball-paying safety-net nodes to cheap leaves rises. MEASURED on the book:
-1.131× wall at fixed nodes. **This is a cost channel, not a gain channel**, and it
-is registered as one.
+1.131× wall at fixed nodes at K = 8 before the store rule. **This is a cost
+channel, not a gain channel**, and it is registered as one.
 
-**INSTRUMENT.** `tools/bench_block.sh` at its committed revision, over
-`bench_positions_v1.txt` (`--grammar tail`) and `spread_v1.txt`
-(`--grammar line`), `--budget 'nodes 50000'`, `--reps 5`, both seats
-(`safety_net_top_k = 0` and the calibrated K), IQR-gated per position at the
-D-215/D-362 10 % convention.
+**THE SEATS, NAMED** (REVIEW-design MAJOR: revision 2 named none, so its radius
+was undetermined and its spread claim unreadable). Baseline
+`configs/instrument_staged_v0.toml` **as committed** — `quiet_radius = 2`,
+`safety_net_top_k = 0` — digest recorded at the run. Candidate: **the same
+document with `safety_net_top_k` set to §5's calibrated K and nothing else**,
+digest recorded, **not committed to the tree** (rule 8: an uncommitted bench
+variant is not an artifact). This is D-395's and D-398's own two-seat shape.
 
-**BRACKET AND DIRECTION, stated in the house convention (D-388, D-395, D-398).**
-Time-to-depth ratio is **ON/OFF and larger is worse**; nps ratio is ON/OFF and
+**THE INSTRUMENT, AND WHAT IT DOES AND DOES NOT DO.**
+`tools/bench_block.sh` at its committed revision, over
+`crates/pistol-cli/tests/fixtures/bench_positions_v1.txt` (`--grammar tail`) and
+`crates/pistol-cli/tests/fixtures/spread_v1.txt` (`--grammar line`),
+`--budget 'nodes 50000'`, `--reps 5`, one invocation per seat. **The script emits
+one record line per (entry, rep) and aggregates nothing** — its own header says
+medians, IQR gating and ratios are the caller's — so the arithmetic is registered
+here and is not the script's: per position, the MEDIAN of its five `time` values;
+per band, `Σ nodes / Σ median time` for nps and `Σ median time` for
+time-to-depth; the IQR gate is per position at 10 % of that position's median
+(D-215/D-362). The receipt carries the raw record lines AND the derived table, so
+the derivation is checkable rather than asserted.
+
+**BRACKET AND DIRECTION, in the house convention (D-388, D-395, D-398).**
+Time-to-depth ratio is **ON/OFF and LARGER IS WORSE**; nps ratio is ON/OFF,
 larger is better, reported as context and never as the gate (D-374: across seats
 with different candidate policies nps is not a like-for-like unit).
 
 - **Corpus, `bench_positions_v1`:** ttd ratio **≤ 1.10**; **ABORT if > 1.25**.
-  The expectation is ≈ 1.00 and it is MEASURED: at every K the corpus seat's node
-  counts are identical position for position and its wall ratios are 1.002 and
-  0.995. **This is a no-regression check, and the design says so rather than
-  presenting an inert fixture as a gain.**
-- **Spread, `spread_v1`:** REPORTED, NOT GATED, and expected **exactly inert** —
-  MEASURED 0 prune events at 21 / 51 / 99 stones. Reported so no reader infers
-  the D-95 class moved; D-478 leaves that debt open.
+- **Spread, `spread_v1`:** REPORTED, NOT GATED.
+
+**THE CORPUS EXPECTATION, WITH ITS PROVENANCE STATED** (REVIEW-design MAJOR:
+revision 2's "1.002 and 0.995" appear in no artifact and its "node counts
+identical position for position" is not what the harness records). What
+`artifacts/wp15d_turn_axis_v1.txt`'s `S2/CORPUS` lines actually record, at
+`Stop::Nodes(50_000)`, `quiet_radius 2`, is **Σ nodes = 1 104 026 identical on
+every seat**, **per-position completed depths identical seat for seat** (the
+`depths=` field, 24 values), and **Σ wall 4 828 / 4 795 / 4 790 / 4 779 ms**
+across the four seats against the incumbent's 4 825. Per-position node counts are
+NOT recorded and no claim rests on them. The derived wall ratios are 1.001,
+0.993, 0.993 and 0.991 — computed here, from those sums, and marked as derived.
+**So the corpus bench is a NO-REGRESSION check and the design says so rather
+than presenting an inert fixture as a gain channel.**
+
+**THE SPREAD FIXTURE — THE CLAIM REVISION 2 GOT WRONG, SPLIT INTO THE TWO IT WAS
+CONFLATING** (REVIEW-design BLOCKING 1). Revision 2 registered "expected exactly
+inert — MEASURED 0 prune events at 21 / 51 / 99 stones". **That number is a
+`movetime 500` cell, and `artifacts/wp15d_turn_axis_v1.txt`'s own header — and
+D-478, which this session wrote — forbid a movetime cell from governing a
+registered run.** At the budget §8 actually registers it is false: MEASURED on
+the uncapped tree at `nodes 50000`, the guard's predicate
+(`turns_from_root() > 0 && pool > K`) is satisfied **95 / 5 / 152 / 0** times at
+11 / 21 / 51 / 99 stones at `quiet_radius 2`, and **0 / 5 / 130 / 20** at
+`quiet_radius 3`. The two claims are now stated separately, because only one of
+them was ever true:
+
+1. **The cap FIRES on this fixture at this budget.** No inertness is expected or
+   registered. The ON seat REPORTS `safety_net_capped_rows` per position — §4's
+   counter — and that count is the recorded number, taken on the ON seat's own
+   tree rather than inferred from the OFF seat's.
+2. **The cap does not restore completed depth on the D-95 class**, which is the
+   claim §9 and the preamble rest on. That is measured at `movetime 500`, the
+   budget at which the debt is DEFINED (D-95's own units), where completed depth
+   is 1 / 0 / 0 / 0 with the cap armed and without it. **It is a scoping
+   measurement and it governs no threshold here** — it is why the fixture is
+   reported and not gated, and §9 states it in those terms.
 
 **THE STORE RULE'S OWN COST IS REPORTED, NOT BRACKETED** (§6.3,
-`WPQ_seed.md` §12.3): the count of records a truncated node declined to store,
-and the resulting change in `hashfull`, are printed beside the ratio as context.
-It is a cost this design pays for correctness and there is no threshold at which
-it would be traded away, so registering a bound on it would be a threshold that
-can never fire — prose a reviewer must still attack (D-424).
+`WPQ_seed.md` §12.3): `safety_net_stores_withheld` and the resulting change in
+`hashfull` are printed beside the ratio as context. It is a cost this design pays
+for correctness and there is no threshold at which it would be traded away, so a
+bound on it would be a threshold that can never fire — prose a reviewer must
+still attack (D-424).
 
 **THE BOOK'S 1.131× IS NOT IN THIS BRACKET, and that is deliberate**: the book is
 not a bench fixture, and the honest confirmation of a whole-game cost is the
-SPRT report's own per-side compute (rule 6), which is registered with the
+SPRT report's own per-side compute (rule 6), registered with the
 pre-registration rather than here.
 
 ---
@@ -405,5 +514,9 @@ pre-registration rather than here.
   revision that governs the run, fresh `openings_skip` slice with consumed ranges
   receipted, warm-replay Criterion 1'', second-instrument agreement criterion,
   and the slot pass (D-427).
-- **The D-95 depth debt.** OPEN, re-pointed by D-478 at a package of its own, and
-  MEASURED untouched by this one.
+- **The D-95 depth debt.** OPEN, re-pointed by D-478 at a package of its own.
+  **MEASURED untouched by this one in the channel the debt is defined in** —
+  completed depth at `movetime 500` on `spread_v1` is 1 / 0 / 0 / 0 with the cap
+  armed and without it. That is a scoping measurement (D-22, D-478) and it
+  governs nothing here; §8 states what the cap does do on that fixture, which is
+  fire hundreds of times without moving the channel the debt is about.
