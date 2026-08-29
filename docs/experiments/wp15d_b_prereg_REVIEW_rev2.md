@@ -52,7 +52,8 @@ configs; arena-schema key-by-key comparison against §4C, including an empirical
 validation of §4C's TOML block through the committed `validate_arena_config`
 example; `git diff bfdf933..b75c1f6` over the five files §4B pins; and **a
 falsification experiment against §4B's agreement criterion**, running BOTH
-attribution checkers on a deliberately corrupted arena report (NEW FINDING 1).
+attribution checkers end-to-end on a deliberately corrupted arena report
+(NEW FINDING 1).
 
 ---
 
@@ -354,12 +355,52 @@ warm_attribution_check: 1b: 459 decided non-forfeit game(s) adjudicated against 
 warm_attribution_check: 1c: 682 game(s) and 341 pair(s) rebuilt off the score_a path
 ```
 
-**Both criterion terms are unchanged by a defect that changes the verdict**:
-(i) 459 → 459, (ii) 682/341 → 682/341. The cold checker computes (i) and (ii)
-with the same carried-over code from the same file and therefore returns the same
-three numbers — so **"the agreement criterion HOLDS" on a run that is not a
-measurement.** Its registered consequence ("any disagreement … makes the run NOT
-A MEASUREMENT") can never fire.
+And the cold checker — the registered SECOND INSTRUMENT — on the same corrupted
+report:
+
+```
+$ python3 tools/wp15b_attribution_check.py mutated_report.txt target/release/pistol
+attribution_check: 1a: 1364 turns replayed, 78 of them discriminating, 78 of 682 games directly attributed by replay
+attribution_check: 1b: 459 decided non-forfeit games adjudicated against the move list
+attribution_check: 1c: 682 games and 341 pairs rebuilt off the score_a path
+```
+
+against its own lines on the HONEST report, from the registered dry-run artifact
+`artifacts/wp15d_b_dryrun_v1.txt`:
+
+```
+attribution_check: 1a: 1364 turns replayed, 78 of them discriminating, 78 of 682 games directly attributed by replay
+attribution_check: 1b: 459 decided non-forfeit games adjudicated against the move list
+attribution_check: 1c: 682 games and 341 pairs rebuilt off the score_a path
+```
+
+**Byte-identical.** So on a report whose verdict the defect changed from `h0` to
+`inconclusive_at_game_cap`:
+
+| | honest report | corrupted report | criterion |
+|---|---|---|---|
+| warm (i) `1b` | 459 | 459 | agrees |
+| cold (i) `1b` | 459 | 459 | agrees |
+| warm (ii) `1c` | 682 / 341 | 682 / 341 | agrees |
+| cold (ii) `1c` | 682 / 341 | 682 / 341 | agrees |
+
+**"The agreement criterion HOLDS" on a run that is not a measurement.** Its
+registered consequence ("any disagreement … makes the run NOT A MEASUREMENT")
+cannot fire.
+
+**And the signal that does reveal the defect sits in exactly the channel §4B
+excludes.** Both instruments detected the corruption — each emitted **459**
+`FAIL 1b game …` lines (`grep -c 'FAIL 1b game'` = 459 on both), the warm pass
+exiting 1 and the cold `FAIL — 459 failure(s)`. The defect is loudly visible in
+the two checkers' FAILURE sets and completely invisible in the two counts the
+criterion registers. Revision 2 chose the counts and ruled the failures out.
+
+The general form is stronger than this one instance: because both terms are
+computed from the report's own line structure by identical carried-over code,
+**no defect whatsoever — in seat bookkeeping, pairing, referee or scoring — can
+make the two instruments disagree on them.** The only way the criterion could
+fail is if the two parsed the same file differently, which is a claim about the
+parsers, not about the arena.
 
 Note honestly what *did* catch this defect: the warm pass exited **1** with 459
 `FAIL 1b …` lines, so §5's *separate* "Criterion 1″ fails" row would stop the
@@ -370,15 +411,26 @@ no work at all.
 
 ### What would close it
 
-State the criterion over the quantities the two instruments genuinely compute by
-different means — the ones that come from actually re-running the engine and so
-exercise seat and engine binding: the warm pass's `W coverage` / `W
-classification` lines against the cold checker's `1a` line (`1a: 1364 turns
-replayed, 78 of them discriminating, 78 of 682 games directly attributed by
-replay`). Those differ in mechanism between the two instruments and a
-seat-bookkeeping defect can move them. Agreement on a recomputed verdict token
-would also be defect-sensitive. Any of these is a criterion the named defect
-could falsify; the registered pair is not.
+The repair is not to reinstate "both exit 0" — the dry run correctly killed that,
+because the cold checker's clause (b) fails by design on this project's runs. It
+is to state the criterion over the two checkers' **1b and 1c FINDINGS rather than
+their counts**, with clause (b) excluded exactly as §4B already excludes it:
+
+> the two instruments must agree that 1b reports zero move-list mismatches and
+> 1c zero rebuild mismatches; the cold checker's clause-(b) verdict is not an
+> agreement term.
+
+That is defect-sensitive where the registered version is not: under the mutation
+above it moves from 0 to 459 on both instruments, so the criterion fires and the
+registered consequence does its work — while a clause-(b) failure beside a
+Criterion 1″ pass, the shape the dry run found, still passes.
+
+One caveat worth registering honestly, because it bears on how much a second
+instrument can be asked to do here: my mutation left even the cold checker's `1a`
+line unchanged (`1364/78/78` on both reports), since a referee that names the
+wrong winner does not change which engine moved. So `1a` is not the discriminator
+either for this defect class. The quantity that carries the signal is the
+mismatch set, and that is what the criterion should name.
 
 ---
 
