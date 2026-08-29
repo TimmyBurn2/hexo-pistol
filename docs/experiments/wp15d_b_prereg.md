@@ -1,6 +1,6 @@
 # WP-1.5d (B) — PRE-REGISTRATION: the safety-net cap's calibration, bench and SPRT
 
-**REVISION 2 — the one fix round.** Revision 1 (`0dcd0db`) FAILED its
+**REVISION 3 — a further round, scoped by the architect to the four findings of `wp15d_b_prereg_REVIEW_rev2.md` and nothing else.** Revision 2 FAILED (1 BLOCKING, 3 MAJOR), the cap returned the package, and the architect granted this round. **REVISION 2 was the one fix round.** Revision 1 (`0dcd0db`) FAILED its
 fresh-context review (`docs/experiments/wp15d_b_prereg_REVIEW.md`: 3 BLOCKING,
 7 MAJOR, 4 MINOR). **No sixth provenance defect was found** — every figure
 reproduced from the registered artifact and matched no pre-split one, the
@@ -291,35 +291,52 @@ What each may be concluded to mean is **WP-1.6 §5's table, imported by referenc
 and not restated** — that partition was deleted once for being restated (D-424)
 and reborn copies are how it failed three reviews (D-423).
 
-**THE AGREEMENT CRITERION, ITS REGISTERED CONSEQUENCE, AND WHY IT IS NOT "BOTH
-EXIT 0" — WHICH THE DRY RUN FALSIFIED.**
+**THE AGREEMENT CRITERION, ITS REGISTERED CONSEQUENCE, AND THE TWO WAYS THIS
+DOCUMENT GOT IT WRONG BEFORE GETTING IT RIGHT.**
 
-The two instruments answer to DIFFERENT criteria by design: the cold checker
-applies Criterion 1′, whose clause (b) is an adversarial reassignment over
-vacuous pairs; the warm pass applies Criterion 1″, which was BUILT because
-clause (b) failed on a run nobody could otherwise read (D-401, and
-`docs/experiments/wp16_warm_replay_design.md`). **Requiring both to exit 0 would
-therefore register a disagreement on every run**, which is what the dry run below
-demonstrated on a real report. The criterion is stated instead over the
-quantities the two compute INDEPENDENTLY of each other and of the stage under
-doubt:
+Revision 1 registered "both checkers exit 0". The dry run falsified it: the two
+answer to different criteria by design, so that criterion **always fails**.
+Revision 2 replaced it with agreement on the two instruments' `1b` and `1c`
+COUNTS. The review falsified that too, and worse: `1b`'s count increments BEFORE
+its adjudication and a mismatch goes to `failures` rather than to the count
+(`tools/wp16_warm_attribution_check.py:835-841`), so the counts are invariant
+under a corrupted report and that criterion **always passes**. Two vacuities, in
+opposite directions. The criterion is therefore stated over what the instruments
+FLAG, not what they COUNT:
 
-> **THE AGREEMENT CRITERION.** On the governed report, the two instruments must
-> agree exactly on (i) `1b`'s count of decided non-forfeit games adjudicated
-> against the move list, and (ii) `1c`'s counts of games and of pairs rebuilt off
-> the `score_a` path. Both derive these by re-deriving the outcome from the
-> recorded move list rather than from the arena's own bookkeeping, so a defect in
-> the stage under doubt would have to corrupt both identically to pass.
+> **THE AGREEMENT CRITERION.** The governed report is a measurement only if all
+> three hold: **(i)** the warm pass exits `ATTRIBUTABLE (0)` — not `NO_ANSWER`,
+> which is how it refuses a report it cannot vouch for; **(ii)** the cold
+> checker's per-game **`1a` and `1b` failure lists are both EMPTY**; and
+> **(iii)** neither instrument refuses to read the documents at all.
 >
-> **THE REGISTERED CONSEQUENCE**, fixed before either runs: **any disagreement on
-> (i) or (ii) makes the run NOT A MEASUREMENT.** The verdict is not read, neither
-> `h0` nor `h1`, and the package returns to the architect with both reports — the
-> disposition D-401 took, and not a re-run.
->
-> **The cold checker's own clause-(b) VERDICT is explicitly NOT an agreement
-> term.** Criterion 1″ supersedes clause (b) for this project's runs; a
+> **The cold checker's clause-(b) robustness verdict is explicitly NOT a term.**
+> Criterion 1″ supersedes clause (b) for this project's runs (D-401), so a
 > clause-(b) failure beside a Criterion 1″ pass is the expected shape and is
-> reported as context, never as a disagreement.
+> reported as context. That exclusion is what keeps (ii) from collapsing into
+> revision 1's always-fails criterion.
+>
+> **THE REGISTERED CONSEQUENCE**, fixed before either runs: **any of (i), (ii) or
+> (iii) failing makes the run NOT A MEASUREMENT.** The verdict is not read,
+> neither `h0` nor `h1`, and the package returns to the architect with both
+> reports — D-401's own disposition, and not a re-run.
+
+**AND IT IS SHOWN TO FAIL, WHICH IS THE WHOLE POINT** — receipt
+`artifacts/wp15d_b_criterion_falsification_v1.txt`, sha256 `912422cd…`:
+
+| input | what happens | criterion |
+|---|---|---|
+| the clean WP-1.7 report | warm exits 0; cold's `1a`/`1b` lists are **empty** (its one failure is clause (b)) | **PASSES** |
+| game 2's `result` flipped `p1_win`→`p2_win` | warm exits **2**, refusing: the replay document is bound to the report's sha256 and "the two documents are not about each other" | **FAILS (i)** |
+| game 2's move list reordered, replay doc **rebound** to the mutated digest so the binding cannot be what refuses | warm exits **2** on a structural invariant, before any engine is asked: the pair's two games "differ at turn 2, which is inside the 3-turn book" | **FAILS (i)** |
+| an internally consistent seat mislabel | the cold `1a` asks each labelled engine what it would play and flags `answers[mover] != played[free]` (`tools/wp15b_attribution_check.py:286-290`) — it re-derives from the ENGINES, not from the arena's bookkeeping | **FAILS (ii)** — argued from the code, not demonstrated, and marked so |
+
+**THAT IS WHY THE SECOND INSTRUMENT IS NOT BLIND TO THE SAME STAGE.** Both
+re-derive attribution by asking the engines themselves; neither takes the
+arena's seat bookkeeping on trust. `docs/process.md`'s test — "two instruments
+blind to the same stage are one instrument reported twice" — is answered by the
+third row above, where the two react to the same corruption through different
+mechanisms.
 
 **THE DRY RUN — TAKEN, with its input, its criterion, its defect class and what
 it found** (`docs/process.md`).
@@ -430,7 +447,8 @@ should not discover it at launch.
 | fewer than 100 pairs when the LLR crosses | no verdict is read, however it crossed (§4A's floor) |
 | SPRT `h1` | the committed config moves to the selected K, the closure pin is re-recorded with digests, and the 1.8 arc's re-test clause is considered if a material nps jump landed |
 | SPRT `h0` | the gate stays `0`. A measured finding, not a failure; the mechanism stays landed and oracle-gated |
-| `inconclusive_at_game_cap` | reported as such; no config moves |
+| `inconclusive_at_game_cap` | reported as such; no config moves. The gate stays `0` |
+| `inconclusive_degenerate` | **the arena's fourth token**, which revision 2 did not route: the pentanomial is degenerate, so no verdict is available at any n. Reported as such, no config moves, and the run is NOT re-drawn on a fresh slice inside this WP — the book has none left (§4) |
 | Criterion 1'' fails on the governed report | **the run is not a measurement — not `h0`, not `h1`.** The verdict is not read. D-401's own precedent, and a hard stop |
 | arena exit 2 | the run is VOID; the operator reads the instrument's own printed message |
 
@@ -527,8 +545,11 @@ positions are structurally degenerate and terminate early on every seat
 ratio for the same reason. What is true, and is what the ratio needs, is that
 **each position's node count is IDENTICAL ACROSS ALL SEVEN SEATS** — the budget
 is a reproducible node stop, so the seats do equal work per position and the
-Σ-median ratio compares time for the same work. The two degenerate positions
-contribute 0.6 % of the incumbent's Σ and cannot move a ratio of 1.0015.
+Σ-median ratio compares time for the same work. The two degenerate positions contribute
+**0.00 %** of the incumbent's Σ — both read `median_ms=0` in the artifact — so
+they cannot move a ratio at all. **Revision 2 said 0.6 % here, sourced from
+nothing**, in the very sentence correcting a provenance defect; it is the sixth
+instance in this work package and it is recorded rather than quietly replaced.
 
 **7.4 — THE SPREAD REPORT, NOT A GATE.** The ON seat's own
 `safety_net_capped_rows`, on the tree that ran:
@@ -566,10 +587,22 @@ worst single median is **491 ms (a 244× margin)**, which is indicative and no
 more. **The governed workload is the book**, and the registered run walked it in
 the SENS section but emitted no timing there — an observability gap in the
 instrument, recorded rather than papered over. **The registered discharge is
-therefore the SLOT PASS**: before launch, the worst single search of the ARMED
-seat over a sample of the book is measured and compared against
-`hang_timeout_ms`, and if the margin is under 24× the launch STOPS and the
-margin is reported to the architect, per D-376's own watchdog rule.
+therefore the SLOT PASS, and its input is FIXED HERE so its outcome is not
+choosable at launch** (review NEW 4 — revision 2 left the sample unspecified,
+which makes a gate that can stop the launch also a gate whose result the launcher
+selects):
+
+> **THE TIMEOUT PROBE.** Before launch, the ARMED seat
+> (`configs/instrument_staged_snk_v0.toml`) is run at the registered budget
+> `go nodes 50000` over **the first 50 openings of the governed slice —
+> `random_openings_v1.txt` lines `1500..1549`, in file order, none skipped** —
+> through the shipped `target/release/pistol`, reading the `time` field off each
+> `info totals` line. **The statistic is the MAXIMUM of those 50.** If
+> `hang_timeout_ms / max < 24`, the launch STOPS and the margin is reported to
+> the architect (D-376's own watchdog rule, whose form this follows). The 50
+> openings are part of the governed slice and are played by the run itself, so
+> this consumes nothing and biases nothing — it measures the engine's speed, not
+> any game's outcome.
 
 **7.8 — the governed run's own revision**: filled at launch.
 
