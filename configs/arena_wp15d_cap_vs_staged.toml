@@ -1,0 +1,38 @@
+# WP-1.5d (B) — the governed SPRT. Authored FROM the pre-registration
+# docs/experiments/wp15d_b_prereg.md revision 4 (`d205a5f`), section 4C, whose
+# block fixes every value below except the two binary digests, which section 7.5
+# defers to the launch because that is the only moment they can be true of.
+schema_version = 2
+
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+openings_take = 500
+openings_skip = 1500
+turn_cap = 40
+n_workers = 4
+hang_timeout_ms = 120000
+
+[budget]
+kind = "nodes"
+value = 50000
+
+[sprt]
+elo0 = 0.0
+elo1 = 15.0
+alpha = 0.05
+beta = 0.05
+
+# Slot A is the CAPPED seat. The arena's statistic is slot A's score and H1 is
+# "the capped seat is stronger"; reading that sign backwards is the one mistake
+# the pre-registration exists to prevent.
+[engine_a]
+label = "staged_snk"
+binary = "target/release/pistol"
+binary_sha256 = "8dc2f92249022ea76fe4a886e25d1bcd77924a57305d748351959efcf760a328"
+config = "configs/instrument_staged_snk_v0.toml"
+
+[engine_b]
+label = "staged"
+binary = "target/release/pistol"
+binary_sha256 = "8dc2f92249022ea76fe4a886e25d1bcd77924a57305d748351959efcf760a328"
+config = "configs/instrument_staged_v0.toml"
