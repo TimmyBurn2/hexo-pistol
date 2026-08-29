@@ -110,10 +110,14 @@ order of weight:
 2. **It is where the existing ply-scoped set modification already lives.** The
    root's zone restriction (`pvs.rs:336-347`) is a candidate-set edit guarded on
    `ply == 0`. This is the same shape one ply-band over.
-3. **It is exactly where every measurement in the matrix was taken.** The
-   evidence instrument truncates at this point
-   (`artifacts/wp15d_m2_evidence_instrument_v2.txt` PART 6), so shipping it
-   anywhere else would ship something the receipts do not describe.
+3. **It is exactly where every measurement in the matrix was taken — the SITE,
+   and only the site.** The evidence instrument truncates at this point
+   (`artifacts/wp15d_m2_evidence_instrument_v2.txt` PART 6), so shipping the
+   truncation anywhere else would ship a site the receipts do not describe.
+   **It says nothing about the SCOPE**: every matrix cell was taken under a
+   ply-indexed predicate, and `turns_from_root() > 0` is measured nowhere in
+   those artifacts. §5's calibration and §8's bench re-take every number that
+   governs anything, at the implementation revision, under this scope.
 
 ### 2.2 The guard, stated as it will read
 
@@ -188,6 +192,16 @@ ceiling, and no ceiling is `0` meaning "do not truncate". This is the opposite o
 reason WP-1.9's design needed a separate boolean); that asymmetry is why the two
 knobs cannot share a shape.
 
+**THE CHECK, NAMED** (REVIEW-design MINOR 11: revision 2 said "the bound lives
+here" and named no bound). `safety_net_top_k` is refused by name unless it is
+representable as `usize`, which is what `Vec::truncate` takes;
+`EngineError::config` carries the field path and the value. **There is
+deliberately NO upper bound.** A K above every pool the fixture produces is a
+no-op, so refusing it would refuse a document that spells the OFF behaviour a
+second way — a refusal doing no work, which is the class D-424 says to delete
+rather than refine. The `0` case is not a refusal either: it is the off-value,
+and §7's first row pins that it reproduces the pre-change engine.
+
 **`quiet_top_k` and `widen_schedule` are NOT re-purposed and NOT retired.** They
 carry `U3_tier_t.md` §10's committed semantics — a quiet tier ADDED beyond Tier
 T — in twelve documents, `validate.rs:94-121` validates them and the search does
@@ -213,10 +227,10 @@ which found six files that way. The enumerations are:
 | file | change |
 |---|---|
 | `crates/pistol-engine/src/config.rs` | `safety_net_top_k: u64` on `CandidatePolicy::Staged` |
-| `crates/pistol-engine/src/validate.rs:81-92` | destructures all fields with no `..` — **will not compile** without the new one; the bound lives here |
+| `crates/pistol-engine/src/validate.rs:81-92` | destructures all fields with no `..` — **will not compile** without the new one; §3 names the check it adds |
 | `crates/pistol-engine/src/instance.rs` | destructures and passes through (`StagedParams` literal) |
 | `crates/pistol-search/src/params.rs` | `StagedParams` gains `safety_net_top_k: u64` |
-| `crates/pistol-search/src/search.rs` | `Searcher::new`'s own bound — a `SearchParams` can be built in code and never pass through a document (rule 1) |
+| `crates/pistol-search/src/search.rs` | the SAME check again, because a `SearchParams` can be built in code and never pass through a document (rule 1) — the two-crate pattern `radius` and `q_depth_turns` already follow |
 | `crates/pistol-search/src/pvs.rs` | §2.2's guard AND §6.3's store rule — one binding, `truncated`, read at both sites; also a `StagedParams` literal site |
 | `crates/pistol-search/src/quiescence.rs` | `StagedParams` literal site |
 | `crates/pistol-search/src/info.rs` | `StageCounters` gains `safety_net_capped_rows`, `safety_net_emitted_cells`, `safety_net_pool_cells`, `safety_net_stores_withheld` — §5's and §8's instruments read these |
@@ -231,7 +245,7 @@ which found six files that way. The enumerations are:
 | the **twelve** `kind = "staged"` documents | each gains `safety_net_top_k = 0` |
 | `crates/pistol-engine/tests/common/mod.rs` | the one embedded staged TOML |
 | `crates/pistol-engine/tests/{config_validate_tests,config_schema_tests}.rs` | destructures / schema rows |
-| `configs/gate_staged_snk_v0.toml` | **NEW** — `gate_staged_v0.toml` + `safety_net_top_k = 8`, the fifth determinism seat |
+| `configs/gate_staged_snk_v0.toml` | **NEW** — `gate_staged_v0.toml` + `safety_net_top_k = 8`, the fifth determinism seat. **Its 8 is not §5's calibrated K and does not become it** (REVIEW-design MINOR 10): a determinism seat's job is to exercise the mechanism reproducibly, and any value that makes the cap bind on that fixture does it — MEASURED, 151 of 153 safety-net rows on `tactical_staged_v0.txt` under `gate_staged_v0.toml` carry a pool of 33–52, so 8 binds on essentially all of them. If §5 selects a different K this document does not change |
 | `tools/determinism.sh:65-75` | the fifth seat, reviewed against `tools/SHELL_CHECKLIST.md` per `docs/process.md`'s tools/ coverage rule |
 | `crates/pistol-search/tests/wp15d_calibration.rs` | **NEW** — §5's instrument, with its own governing revision named in the artifact it writes |
 
@@ -292,7 +306,13 @@ on any seat, it is counted as NOT meeting the ≥ 3 threshold (it did not), it i
 **named and counted in the artifact**, and if more than 1 % of openings are in
 that state on any seat the calibration is VOID rather than read — `lift` would
 then be measuring how often the engine answers at all rather than how deep it
-gets. **AND A SEARCH THAT STOPS SHORT BECAUSE IT PROVED A MATE IS NOT A SEARCH
+gets. **That threshold is registered even though the incumbent measures ZERO
+openings at completed depth 0, and the reason is specific** (REVIEW-design
+MINOR 9, which is right that §8 refuses thresholds that cannot fire): §6.3's
+store rule WITHHOLDS records and therefore slows the capped search, so the zero
+measured without it does not transfer to the seats this calibration runs. The
+threshold can fire under exactly the change being measured, which is what
+separates it from the bound §8 declines to put on the store rule's own cost. **AND A SEARCH THAT STOPS SHORT BECAUSE IT PROVED A MATE IS NOT A SEARCH
 THAT FAILED TO REACH DEPTH 3** (REVIEW-design MAJOR): a proven mate at depth 1 is
 a better answer than an unproven score at depth 3, so folding it into the
 below-threshold bucket would count a win as a shortfall. Such openings are
