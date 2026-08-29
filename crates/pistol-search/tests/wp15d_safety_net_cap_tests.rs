@@ -252,11 +252,21 @@ fn equal_scoring_safety_net_cells_are_emitted_in_ascending_coordinate_order() {
         &threats,
         &mut *eval,
         false,
-        common::staged_params_for_cap(2, 0),
+        // Radius 3, not 2: the ball must be big enough that an UNSTABLE sort
+        // actually reorders it. Rust's `sort_unstable` falls back to insertion
+        // sort on short slices, where it is stable in practice, so a radius-2
+        // ball of 18 cells cannot discriminate -- MEASURED, the mutant survived
+        // that fixture. This one is 36 cells.
+        common::staged_params_for_cap(3, 0),
         &mut out,
     );
     assert_eq!(row, StagedRow::Batched);
     assert!(out.used_quiet_safety_net, "this row IS the safety net");
+    assert!(
+        out.cells.len() > 20,
+        "and it must stay above the insertion-sort fallback's reach: {} cells",
+        out.cells.len()
+    );
 
     let scored: Vec<(i32, Coord)> = out
         .cells
