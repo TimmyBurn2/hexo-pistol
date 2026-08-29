@@ -199,8 +199,10 @@ fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
             countermove,
             quiet_top_k: _,
             widen_schedule: _,
+            safety_net_top_k,
         } => SearchCandidatePolicy::Staged(pistol_search::StagedParams {
             quiet_radius: *quiet_radius,
+            safety_net_top_k: *safety_net_top_k,
             tier_t_own_count: *tier_t_own_count,
             tier_t_opponent_count: *tier_t_opponent_count,
             q_depth_turns: *q_depth_turns,

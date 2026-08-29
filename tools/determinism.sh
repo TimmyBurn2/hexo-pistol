@@ -72,6 +72,10 @@ SEATS=(
 	# ON path's byte-identity under the D-7 law — reproducibility, not the
 	# registered strength budgets (which the SPRT seat owns alone).
 	"staged-solver configs/gate_staged_solver_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt depth_turns-2 nodes-10000"
+	# The safety-net cap ARMED (docs/decisions.md D-478, D-482). Every other
+	# seat runs it at its committed 0, so without this one the truncation and
+	# its transposition store rule would be reproducible only by argument.
+	"staged-safety-net-cap configs/gate_staged_snk_v0.toml crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"
 )
 
 # The budgets, both reproducible. A wall-clock budget could not be compared at

@@ -30,10 +30,12 @@ quiet_radius = 1
 # 6 * 17 = 102 three turns deeper than the deepest measured ball.
 quiet_top_k = 128
 widen_schedule = [256]
-# The safety-net cap (docs/decisions.md D-478, D-482): cells of the quiet ball a
-# safety-net row may emit, at every node but the root turn's. 0 disables it, and
-# 0 is the committed value everywhere until an SPRT says otherwise.
-safety_net_top_k = 0
+# THE SAFETY-NET CAP ARMED — this document exists for exactly that (D-482).
+# It is `gate_staged_v0.toml` with this one key changed, and it is a DETERMINISM
+# SEAT and nothing else: 8 is a value that makes the cap bind on this seat's
+# fixture, not a calibrated K. The calibration is the measurement package's
+# (D-482), and no strength claim is ever taken here (CLAUDE.md rule 6).
+safety_net_top_k = 8
 tier_t_own_count = 2
 tier_t_opponent_count = 3
 q_depth_turns = 0

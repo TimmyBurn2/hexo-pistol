@@ -70,6 +70,21 @@ pub struct StageCounters {
     pub q_stand_pat_no_trigger: u64,
     /// A trigger fired but the quiescence budget was already spent.
     pub q_stand_pat_cap: u64,
+    /// Safety-net rows where the cap actually truncated the emitted set
+    /// (docs/experiments/wp15d_design.md §2.2): the guard was armed, the node
+    /// was outside the root turn, and the pool exceeded the cap. Zero whenever
+    /// `safety_net_top_k` is `0`, which is every committed config.
+    pub safety_net_capped_rows: u64,
+    /// The cells those rows emitted after truncation, summed.
+    pub safety_net_emitted_cells: u64,
+    /// The cells they held before it, summed — so a reader can see what the
+    /// cap removed without re-running the uncapped seat, which is a different
+    /// tree (docs/decisions.md D-481).
+    pub safety_net_pool_cells: u64,
+    /// Records a truncated node declined to store because the bound was not
+    /// `Bound::Lower` (§6.3's store rule): the cost that rule pays, counted
+    /// where it is paid rather than argued.
+    pub safety_net_stores_withheld: u64,
 }
 
 impl StageCounters {
@@ -95,6 +110,13 @@ impl StageCounters {
     /// a non-empty Tier T. Called separately from [`StageCounters::record`]
     /// because the safety net is this D-scope's own IMPL choice and not a
     /// `StagedRow` of the node protocol itself (`crate::staged`'s doc).
+    /// One safety-net row the cap truncated, with the widths either side of it.
+    pub(crate) fn record_safety_net_cap(&mut self, pool: u64, emitted: u64) {
+        self.safety_net_capped_rows += 1;
+        self.safety_net_pool_cells += pool;
+        self.safety_net_emitted_cells += emitted;
+    }
+
     pub(crate) fn record_quiet_safety_net(&mut self) {
         self.batched_quiet_safety_net += 1;
     }

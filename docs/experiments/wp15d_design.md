@@ -1,5 +1,24 @@
 # WP-1.5d — design: the safety-net candidate cap, T-BELOW-T scope
 
+**REVISION 5 — THE SPLIT APPLIED. WHICH SECTIONS GOVERN WHICH SESSION, AND WHY
+THE DEFERRED ONES ARE FROZEN RATHER THAN FIXED.** `docs/decisions.md` **D-482**
+splits this work package after D-481, and **D-483** makes it a standing law that
+a design document carries no measured numbers at all.
+
+| section | governs |
+|---|---|
+| §1 the quoted facts, §2 the mechanism, §3 the gate, §4 the change surface, §6 the store rule, §7 the tests | **SESSION (A)**, the implementation. Cleared twice with zero correctness findings and unchanged across revisions 3 and 4 |
+| **§5 the calibration, §8 the bench** | **DEFERRED TO SESSION (B)** — every number they carry is re-taken there, in one run by one registered instrument into one digest-named artifact, and **no number in them is admissible as data** (D-482) |
+
+**§5 AND §8 ARE LEFT EXACTLY AS THEY STAND AND ARE NOT REPAIRED.** They are the
+record of the practice D-483 abolishes — five review rounds' worth of numbers
+assembled across runs, budgets, radii and artifacts — and rewriting them now
+would destroy the evidence for the law while changing nothing anyone may use.
+They are cited by (B) as motivation and scoping history, never as measurement.
+**Every measured figure elsewhere in this document is under the same rule**,
+including the ones in the revision headers below: they record what a review found
+and when, not what a run may conclude.
+
 **REVISION 4.** The scoped re-review FAILED revision 3
 (`docs/experiments/wp15d_design_REVIEW_rev3.md`: 3 BLOCKING, 4 MAJOR, 3 MINOR,
 **none a correctness finding**, five of twelve closure rows introducing something
@@ -454,7 +473,7 @@ can see the class at all, exactly as the red team isolated it.
 | `the_cap_admits_exactly_k_cells_on_a_safety_net_row` | emitted width == K at a node one turn from the root with pool > K | — |
 | `k_and_k_plus_one_differ_by_exactly_the_next_ranked_cell` | the boundary as a set difference | `truncate(k)` → `truncate(k + 1)` |
 | `the_root_turn_emits_the_same_set_with_the_cap_armed` | the emitted set is identical gate-on and gate-off at every node of the root turn | `turns_from_root() > 0` → `>= 0` |
-| `at_a_turn_one_root_the_cap_binds_at_ply_one_because_that_ply_is_a_new_turn` | **THE `ply > 1` FALSIFIER** (REVIEW-design BLOCKING 2). From an EMPTY-board root, rule 3 makes turn 1 one stone, so the ply-0 stone COMPLETES the root turn and the ply-1 node is already at `turns_from_root() == 1`; its pool is the radius-2 ball around the origin **minus the occupied origin, so 18 cells** (re-review MINOR 8 — `within_radius` filters by `is_legal_placement`), and the shipped guard truncates it while `ply > 1` leaves it whole. **The assertion is stated in the observable §4 actually provides** (re-review MAJOR 4 — `info.rs`'s counters are whole-search totals, so "the emitted width at that node" is not expressible): at an empty-board root, `depth_turns 2`, `safety_net_top_k = 8`, **`safety_net_capped_rows == 19` shipped and `== 18` under the mutant**. This is the only position at which the two spellings differ at all | `turns_from_root() > 0` → `ply > 1` |
+| `at_a_turn_one_root_the_cap_binds_at_ply_one_because_that_ply_is_a_new_turn` | **THE `ply > 1` FALSIFIER** (REVIEW-design BLOCKING 2). From an EMPTY-board root, rule 3 makes turn 1 one stone, so the ply-0 stone COMPLETES the root turn and the ply-1 node is already at `turns_from_root() == 1`; its pool is the radius-2 ball around the origin **minus the occupied origin, so 18 cells** (re-review MINOR 8 — `within_radius` filters by `is_legal_placement`), and the shipped guard truncates it while `ply > 1` leaves it whole. **The assertion is stated in the observable §4 actually provides** (re-review MAJOR 4 — `info.rs`'s counters are whole-search totals, so "the emitted width at that node" is not expressible): at an empty-board root, `depth_turns 2`, `safety_net_top_k = 8`, **`safety_net_capped_rows == 9` shipped and `== 18` under the mutant.** The constant is **9 and not 19** (re-review rev 4, and D-481's derivation): 19 is the predicate's count on the UNCAPPED tree, and capping is what changes the tree — ply 0 is a one-cell safety-net row at `turns_from_root() == 0` and exempt, ply 1 is turn 2 at `turns_from_root() == 1` with pool `19 − 1 = 18` truncated to 8, and its 8 children are capped rows too, so `1 + 8 = 9`; the mutant leaves ply 1 whole and caps its 18 children, `0 + 18 = 18`. **The receipt is the fixture itself** — the test builds the capped tree and reads the counter, so the derivation is embodied rather than asserted. This is the only position at which the two spellings differ at all | `turns_from_root() > 0` → `ply > 1` |
 | `the_cap_never_fires_off_a_safety_net_row` | a batched row with Tier T non-empty emits its full Tier T with the cap armed | the `used_quiet_safety_net` guard deleted |
 | `a_truncated_fail_low_stores_no_transposition_record` | the table holds nothing for a node that stopped truncated below `alpha` | `!truncated \|\| bound == Bound::Lower` → `true` |
 | `a_truncated_fail_high_still_stores_its_lower_bound` | the sound half is not thrown away with the unsound half | `!truncated \|\| bound == Bound::Lower` → `!truncated` |

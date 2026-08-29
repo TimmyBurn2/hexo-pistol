@@ -73,6 +73,7 @@ fn run(
     let mut eval = Box::new(HandcraftedV0::new(committed_weights()));
     let params = StagedParams {
         quiet_radius: 2,
+        safety_net_top_k: 0,
         tier_t_own_count,
         tier_t_opponent_count,
         q_depth_turns: 0,

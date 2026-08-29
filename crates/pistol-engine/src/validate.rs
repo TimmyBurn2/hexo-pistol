@@ -81,6 +81,10 @@ impl SearchSection {
             CandidatePolicy::Staged {
                 quiet_radius,
                 quiet_top_k,
+                // The safety-net cap has no invalid value to refuse: `0` is the
+                // off-value and every other `u64` names a cap width, so a check
+                // here could never fire (docs/experiments/wp15d_design.md §3).
+                safety_net_top_k: _,
                 widen_schedule,
                 tier_t_own_count,
                 tier_t_opponent_count,

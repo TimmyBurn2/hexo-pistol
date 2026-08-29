@@ -37,6 +37,10 @@ quiet_radius = 2
 quiet_top_k = 16
 # Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
 widen_schedule = [32]
+# The safety-net cap (docs/decisions.md D-478, D-482): cells of the quiet ball a
+# safety-net row may emit, at every node but the root turn's. 0 disables it, and
+# 0 is the committed value everywhere until an SPRT says otherwise.
+safety_net_top_k = 0
 # LAW-SUPPORT's threshold reading (U3_tier_t.md §6.1): own windows qualify at
 # count >= 2.
 tier_t_own_count = 2

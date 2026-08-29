@@ -92,6 +92,7 @@ fn assert_win_now(name: &str, dir: Coord) {
     let mut eval = Box::new(HandcraftedV0::new(committed_weights()));
     let params = StagedParams {
         quiet_radius: 2,
+        safety_net_top_k: 0,
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
         q_depth_turns: 0,
@@ -128,6 +129,7 @@ fn assert_filtered(name: &str, dir: Coord) {
     let mut eval = Box::new(HandcraftedV0::new(committed_weights()));
     let params = StagedParams {
         quiet_radius: 2,
+        safety_net_top_k: 0,
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
         q_depth_turns: 0,

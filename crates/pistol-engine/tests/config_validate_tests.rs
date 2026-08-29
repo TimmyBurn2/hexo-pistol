@@ -186,6 +186,7 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
     let pistol_engine::config::CandidatePolicy::Staged {
         quiet_radius,
         quiet_top_k,
+        safety_net_top_k,
         widen_schedule,
         tier_t_own_count,
         tier_t_opponent_count,
@@ -200,6 +201,9 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
     };
     assert_eq!(quiet_radius, 2);
     assert_eq!(quiet_top_k, 16);
+    // The safety-net cap is OFF in every committed document until an SPRT says
+    // otherwise (docs/decisions.md D-478, D-482).
+    assert_eq!(safety_net_top_k, 0);
     assert_eq!(widen_schedule, vec![32]);
     assert_eq!(tier_t_own_count, 2);
     assert_eq!(tier_t_opponent_count, 3);

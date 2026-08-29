@@ -74,6 +74,7 @@ fn the_filtered_row_matches_r1_at_every_filtered_node_of_the_corpus() {
     let weights = committed_weights();
     let params = StagedParams {
         quiet_radius: 2,
+        safety_net_top_k: 0,
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
         q_depth_turns: 0,

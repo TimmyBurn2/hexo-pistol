@@ -61,6 +61,15 @@ pub struct StagedParams {
     /// U2-Z item 8: "the fallback under Staged reuses the `quiet_radius`
     /// ball"). At least 1, same bound as [`CandidatePolicy::Radius`]'s radius.
     pub quiet_radius: u32,
+    /// The safety-net cap (docs/decisions.md D-478, D-482): how many cells of
+    /// the delta-ranked quiet ball a safety-net row may emit, at every node but
+    /// the root turn's two. `0` disables it, and is the committed value in
+    /// every config until an SPRT says otherwise.
+    ///
+    /// The exemption is spelled in TURNS, not plies: rule 3 gives turn 1 one
+    /// stone and every later turn two, so no ply threshold names the played
+    /// turn at every turn number (docs/experiments/wp15d_design.md §1).
+    pub safety_net_top_k: u64,
     /// `LAW-SUPPORT`'s threshold for the side to move's own qualifying
     /// windows: 2 or 3 (`U3_tier_t.md` §6.1, the THRESHOLD reading — own
     /// windows qualify at count `>= tier_t_own_count`).

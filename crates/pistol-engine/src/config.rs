@@ -222,6 +222,13 @@ pub enum CandidatePolicy {
         /// search does not read it (docs/decisions.md D-353 — stage Q's
         /// widening schedule is not armed).
         quiet_top_k: u64,
+        /// The safety-net cap (docs/decisions.md D-478, D-482): on the batched
+        /// row where Tier F and Tier T are both empty, how many cells of the
+        /// delta-ranked quiet ball the search may consider, at every node but
+        /// the root turn's. `0` disables the cap and is the committed value —
+        /// the `q_depth_turns` shape, and the opposite of `quiet_top_k`, where
+        /// a LARGE value is what disables the cut (`U3_tier_t.md` §10).
+        safety_net_top_k: u64,
         /// Stage Q's own knob: cumulative quiet-cell batch boundaries after
         /// the first, strictly increasing, each greater than `quiet_top_k`.
         /// Validated for schema completeness; not read by this D-scope's

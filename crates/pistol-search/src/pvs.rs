@@ -281,6 +281,10 @@ impl<'a> Run<'a> {
         // the heuristic gates exist only inside `StagedParams`, so nothing
         // is recorded there and the bound is never read).
         let mut forced_bound: Option<usize> = None;
+        // Whether this node's emitted set was cut by the safety-net cap. Read
+        // again at the store below: a node that did not search its whole set
+        // proved a lower bound and nothing else (§6.3's store rule).
+        let mut truncated = false;
         let cells = match self.policy {
             CandidatePolicy::Radius { .. } => {
                 let mut cells = candidate_cells(self.position.board(), self.policy);
@@ -325,6 +329,27 @@ impl<'a> Run<'a> {
                     self.no_candidates_at_a_turn_boundary();
                     return self.position.value();
                 }
+                // THE SAFETY-NET CAP (docs/decisions.md D-478, D-482;
+                // docs/experiments/wp15d_design.md §2.2). On the row where Tier
+                // F and Tier T are both empty the emitted set is the whole quiet
+                // ball, which is unbounded in the stone count. The exemption is
+                // the ROOT TURN, spelled in turns rather than plies because rule
+                // 3 gives turn 1 one stone and every later turn two, so no ply
+                // threshold names the played turn at every turn number.
+                let cap = params.safety_net_top_k as usize;
+                if params.safety_net_top_k > 0
+                    && self.turns_from_root() > 0
+                    && set.used_quiet_safety_net
+                    && set.cells.len() > cap
+                {
+                    truncated = true;
+                    self.stages
+                        .record_safety_net_cap(set.cells.len() as u64, cap as u64);
+                    set.cells.truncate(cap);
+                }
+                // Promotion runs AFTER the truncation, so the table's move is
+                // promoted within the cut set and can never re-admit a cell the
+                // cap removed (§2.3).
                 set.promote_table_move(table_move);
                 // The root's proven-loss zone restriction (design wp18b §2
                 // D3): candidates outside the opponent proof's Z2 zone drop
@@ -447,24 +472,36 @@ impl<'a> Run<'a> {
                 self.heuristics
                     .record_cutoff(self.position.state(), ply, best_cell);
             }
-            self.table.store(
-                key,
-                from_root,
-                Record {
-                    depth_plies,
-                    score: best_score,
-                    static_eval: self.position.value(),
-                    bound: if best_score <= original_alpha {
-                        Bound::Upper
-                    } else if best_score >= beta {
-                        Bound::Lower
-                    } else {
-                        Bound::Exact
+            let bound = if best_score <= original_alpha {
+                Bound::Upper
+            } else if best_score >= beta {
+                Bound::Lower
+            } else {
+                Bound::Exact
+            };
+            // §6.3's store rule (`WPQ_seed.md` §7.2). A truncated node proved a
+            // LOWER bound and nothing else: a move it did search reached beta,
+            // and the full set can only do better. `Upper` and `Exact` claim
+            // that nothing did better, over a set it never exhausted — and the
+            // table outlives the search (`Searcher`'s own doc), so such a claim
+            // is probed later at a node that emits the whole set, inside the
+            // root turn this cap is chosen for leaving whole.
+            if truncated && bound != Bound::Lower {
+                self.stages.safety_net_stores_withheld += 1;
+            } else {
+                self.table.store(
+                    key,
+                    from_root,
+                    Record {
+                        depth_plies,
+                        score: best_score,
+                        static_eval: self.position.value(),
+                        bound,
+                        best: best_cell,
+                        from_quiescence: false,
                     },
-                    best: best_cell,
-                    from_quiescence: false,
-                },
-            );
+                );
+            }
         }
         best_score
     }
@@ -826,6 +863,7 @@ mod tests {
             &mut table,
             CandidatePolicy::Staged(crate::params::StagedParams {
                 quiet_radius: 2,
+                safety_net_top_k: 0,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -895,6 +933,7 @@ mod tests {
             &mut table,
             CandidatePolicy::Staged(crate::params::StagedParams {
                 quiet_radius: 2,
+                safety_net_top_k: 0,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -953,6 +992,7 @@ mod tests {
         assert!(state.board().is_legal_placement(far) && !state.board().is_occupied(far));
         let staged = crate::StagedParams {
             quiet_radius: 2,
+            safety_net_top_k: 0,
             tier_t_own_count: 2,
             tier_t_opponent_count: 3,
             q_depth_turns: 0,
