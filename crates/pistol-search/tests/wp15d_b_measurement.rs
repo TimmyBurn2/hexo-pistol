@@ -136,7 +136,7 @@ fn run_one(engine: &mut Searcher, state: &GameState) -> One {
 /// output to read, so the per-opening detail is folded here and only the
 /// per-seat aggregate is printed, plus the mate-terminated set by index so the
 /// FIXED cross-seat population is checkable rather than asserted.
-fn calibration(book: &[String]) {
+fn calibration(book: &[String]) -> Option<u64> {
     println!(
         "## SECTION CAL — calibration sweep, Stop::Nodes({NODES}), quiet_radius {QUIET_RADIUS}"
     );
@@ -171,21 +171,78 @@ fn calibration(book: &[String]) {
         mate_any.len(),
         mate_any
     );
+    let mut means: Vec<(u64, f64)> = Vec::new();
     for (k, depths, capped, wu, we, ms) in &rows {
-        let lift = depths
+        let kept: Vec<u32> = depths
             .iter()
             .enumerate()
-            .filter(|(i, d)| !mate_any.contains(i) && **d >= 3)
-            .count();
-        let population = depths.len() - mate_any.len();
+            .filter(|(i, _)| !mate_any.contains(i))
+            .map(|(_, d)| *d)
+            .collect();
+        let mean = kept.iter().map(|d| f64::from(*d)).sum::<f64>() / kept.len() as f64;
+        means.push((*k, mean));
         let hist = (0..8)
-            .map(|b| depths.iter().filter(|d| **d as usize == b).count())
+            .map(|b| kept.iter().filter(|d| **d as usize == b).count())
             .collect::<Vec<_>>();
         println!(
-            "CAL/SEAT K={k} lift={lift} population={population} depth_hist={hist:?} \
-             capped_rows={capped} upper_withheld={wu} exact_withheld={we} sum_ms={ms}"
+            "CAL/SEAT K={k} mean_depth={mean:.4} population={} depth_hist={hist:?} \
+             capped_rows={capped} upper_withheld={wu} exact_withheld={we} sum_ms={ms}",
+            kept.len()
         );
     }
+    let line = selection(&means);
+    println!("{line}");
+    line.split_once("CAL/SELECTED K=")
+        .and_then(|(_, rest)| rest.split_whitespace().next())
+        .and_then(|k| k.parse::<u64>().ok())
+}
+
+/// THE REGISTERED SELECTION RULE, APPLIED BY THE INSTRUMENT ITSELF so that the
+/// choice is not a human step taken after the numbers are seen.
+///
+/// Channel: MEAN completed `depth_turns` over the fixed population, larger is
+/// better. It carries no threshold, which matters because a threshold picked
+/// from data nobody may cite would be the after-the-numbers choice a
+/// pre-registration exists to forbid.
+///
+/// `gain(K) = mean(K) - mean(0)`. If the best gain is not positive, NO K is
+/// selected and the work package closes as a measured finding. Otherwise K is
+/// the LARGEST grid point whose gain is at least 75 % of the best gain — the
+/// weakest prune that keeps three quarters of the measured benefit — ties to
+/// the larger K.
+fn selection(means: &[(u64, f64)]) -> String {
+    let base = means
+        .iter()
+        .find(|(k, _)| *k == 0)
+        .expect("the incumbent seat is always present")
+        .1;
+    let gains: Vec<(u64, f64)> = means
+        .iter()
+        .filter(|(k, _)| *k > 0)
+        .map(|(k, m)| (*k, m - base))
+        .collect();
+    let best = gains.iter().map(|(_, g)| *g).fold(f64::MIN, f64::max);
+    let detail: Vec<String> = gains.iter().map(|(k, g)| format!("K{k}:{g:+.4}")).collect();
+    if best <= 0.0 {
+        return format!(
+            "CAL/SELECTED none rule=largest-K-within-75pc-of-best-gain \
+             base_mean={base:.4} best_gain={best:+.4} gains=[{}] \
+             VERDICT=no-seat-gains-over-the-incumbent-the-package-closes-as-a-measured-finding",
+            detail.join(" ")
+        );
+    }
+    let threshold = 0.75 * best;
+    let chosen = gains
+        .iter()
+        .filter(|(_, g)| *g >= threshold)
+        .map(|(k, _)| *k)
+        .max()
+        .expect("a positive best gain qualifies at least its own seat");
+    format!(
+        "CAL/SELECTED K={chosen} rule=largest-K-within-75pc-of-best-gain \
+         base_mean={base:.4} best_gain={best:+.4} threshold={threshold:+.4} gains=[{}]",
+        detail.join(" ")
+    )
 }
 
 /// SECTION BENCH — both fixtures, every seat, five reps, per-position median.
@@ -286,17 +343,21 @@ fn wp15d_b_the_one_measurement_run() {
     let cal: Vec<String> = all.iter().skip(CAL_SKIP).take(CAL_TAKE).cloned().collect();
     assert_eq!(cal.len(), CAL_TAKE, "the calibration slice must be whole");
 
-    calibration(&cal);
+    let selected = calibration(&cal);
     bench(
         "CORPUS",
         "../pistol-cli/tests/fixtures/bench_positions_v1.txt",
         5,
     );
     bench("SPREAD", "../pistol-cli/tests/fixtures/spread_v1.txt", 5);
-    // The sensitivity receipt is taken at every grid point, so whichever K the
-    // registered rule selects, its receipt is already in this artifact.
-    for k in GRID {
-        sensitivity(&cal, k);
+    // The sensitivity receipt is taken at the SELECTED K, inside this same run,
+    // so the honest-expectation section quotes a receipt for the seat that will
+    // actually play rather than for a grid.
+    match selected {
+        Some(k) => sensitivity(&cal, k),
+        None => {
+            println!("SENS/SKIPPED no seat was selected, so there is no arm to be sensitive about")
+        }
     }
     println!("# END OF RUN");
 }
