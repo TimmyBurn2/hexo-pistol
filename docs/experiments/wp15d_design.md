@@ -1,5 +1,25 @@
 # WP-1.5d — design: the safety-net candidate cap, T-BELOW-T scope
 
+**REVISION 4.** The scoped re-review FAILED revision 3
+(`docs/experiments/wp15d_design_REVIEW_rev3.md`: 3 BLOCKING, 4 MAJOR, 3 MINOR,
+**none a correctness finding**, five of twelve closure rows introducing something
+new) and the design gate's cap was exhausted. **`docs/decisions.md` D-480 is an
+architect grant of ONE capped continuation round, scoped to that report's ten
+enumerated remedies and nothing else**, under a single scoped re-review where any
+NEW finding is a STOP and a split. This revision is that round. It touches no
+option, no selection and no mechanism — none of those was ever in question — and
+every change below is one of the ten remedies applied in the words the report
+states it in.
+
+**THE DEFECT CLASS, NAMED ONCE SO THE FIXES READ AS ONE THING.** Every finding in
+both design-review rounds was the same shape: **a number quoted away from the run
+that produced it** — a `movetime` cell under a `Stop::Nodes` bench, an incumbent
+from a different artifact, a depth vector from a different radius, a fraction
+assembled from two budgets, a counter registered against an instrument that
+cannot read it. D-479 is that lesson and this revision applies it mechanically:
+**every number below now names the artifact, the seat, the budget and the radius
+it comes from, or it is deleted.**
+
 **REVISION 3.** Revision 2 FAILED its fresh-context REVIEW-design
 (`docs/experiments/wp15d_design_REVIEW.md`) with 3 BLOCKING, 5 MAJOR and 4 MINOR
 — **and none of them a correctness finding**: the reviewer attacked §6.3's store
@@ -192,15 +212,18 @@ ceiling, and no ceiling is `0` meaning "do not truncate". This is the opposite o
 reason WP-1.9's design needed a separate boolean); that asymmetry is why the two
 knobs cannot share a shape.
 
-**THE CHECK, NAMED** (REVIEW-design MINOR 11: revision 2 said "the bound lives
-here" and named no bound). `safety_net_top_k` is refused by name unless it is
-representable as `usize`, which is what `Vec::truncate` takes;
-`EngineError::config` carries the field path and the value. **There is
-deliberately NO upper bound.** A K above every pool the fixture produces is a
-no-op, so refusing it would refuse a document that spells the OFF behaviour a
-second way — a refusal doing no work, which is the class D-424 says to delete
-rather than refine. The `0` case is not a refusal either: it is the off-value,
-and §7's first row pins that it reproduces the pre-change engine.
+**THERE IS NO VALIDATION CHECK, AND THAT IS THE ANSWER RATHER THAN AN OMISSION.**
+Revision 2 said "the bound lives here" and named no bound; revision 3 named a
+`u64`-representable-as-`usize` check, **which on this target can never fail** —
+and it did so in the paragraph that deletes another check for never firing
+(re-review MINOR 10). Both are now gone, on one principle. **The type is the
+domain**: `safety_net_top_k: u64` admits exactly `0` (off) and `n > 0` (cap at
+`n`), `deny_unknown_fields` and serde's own typing refuse everything else with a
+named error, and there is no invalid value left for a validator to catch. **No
+upper bound** either: a K above every pool is a no-op, so refusing it would
+refuse a document spelling the OFF behaviour a second way. §7's first row pins
+that `0` reproduces the pre-change engine, which is the only property of this
+key a test can carry.
 
 **`quiet_top_k` and `widen_schedule` are NOT re-purposed and NOT retired.** They
 carry `U3_tier_t.md` §10's committed semantics — a quiet tier ADDED beyond Tier
@@ -245,9 +268,10 @@ which found six files that way. The enumerations are:
 | the **twelve** `kind = "staged"` documents | each gains `safety_net_top_k = 0` |
 | `crates/pistol-engine/tests/common/mod.rs` | the one embedded staged TOML |
 | `crates/pistol-engine/tests/{config_validate_tests,config_schema_tests}.rs` | destructures / schema rows |
-| `configs/gate_staged_snk_v0.toml` | **NEW** — `gate_staged_v0.toml` + `safety_net_top_k = 8`, the fifth determinism seat. **Its 8 is not §5's calibrated K and does not become it** (REVIEW-design MINOR 10): a determinism seat's job is to exercise the mechanism reproducibly, and any value that makes the cap bind on that fixture does it — MEASURED, 151 of 153 safety-net rows on `tactical_staged_v0.txt` under `gate_staged_v0.toml` carry a pool of 33–52, so 8 binds on essentially all of them. If §5 selects a different K this document does not change |
+| `configs/gate_staged_snk_v0.toml` | **NEW** — `gate_staged_v0.toml` + `safety_net_top_k = 8`, the fifth determinism seat. **Its 8 is not §5's calibrated K and does not become it** (REVIEW-design MINOR 10): a determinism seat's job is to exercise the mechanism reproducibly, and any value that makes the cap bind on that fixture does it — MEASURED on that seat's own fixture and configs, **every** safety-net row carries a pool of 33–52, so 8 binds on all of them — the counts are **151 of 151** at one of the seat's two budgets and **153 of 153** at the other, and revision 3's "151 of 153" was those two runs' numerators and denominators crossed (re-review MINOR 9). If §5 selects a different K this document does not change |
 | `tools/determinism.sh:65-75` | the fifth seat, reviewed against `tools/SHELL_CHECKLIST.md` per `docs/process.md`'s tools/ coverage rule |
 | `crates/pistol-search/tests/wp15d_calibration.rs` | **NEW** — §5's instrument, with its own governing revision named in the artifact it writes |
+| `crates/pistol-search/tests/wp15d_bench_counters.rs` | **NEW** — §8's COUNTER leg, calling `Searcher::search` directly and reading `SearchOutcome::info.stages`, because `StageCounters` is not on the line protocol (`info.rs:10-12`) and `tools/bench_block.sh` therefore cannot read it. Its own governing revision is named in the receipt beside the timing legs' |
 
 **`crates/pistol-cli/src/bin/pistol.rs` IS NOT ON THIS LIST, AND ITS ABSENCE IS A
 DECISION.** Revision 2 listed it as a forced-compile site; it is not — it
@@ -301,25 +325,33 @@ benefit is the right selection, and "largest K within 90 % of the best" is that
 rule.** It selects a grid extreme only if the benefit truly does not decay, which
 the grid's upper end is chosen to make falsifiable.
 
-**THE UNDEFINED CASE, AND THE TERMINATED ONE.** If any opening completes depth 0
-on any seat, it is counted as NOT meeting the ≥ 3 threshold (it did not), it is
-**named and counted in the artifact**, and if more than 1 % of openings are in
-that state on any seat the calibration is VOID rather than read — `lift` would
-then be measuring how often the engine answers at all rather than how deep it
-gets. **That threshold is registered even though the incumbent measures ZERO
-openings at completed depth 0, and the reason is specific** (REVIEW-design
-MINOR 9, which is right that §8 refuses thresholds that cannot fire): §6.3's
-store rule WITHHOLDS records and therefore slows the capped search, so the zero
-measured without it does not transfer to the seats this calibration runs. The
-threshold can fire under exactly the change being measured, which is what
-separates it from the bound §8 declines to put on the store rule's own cost. **AND A SEARCH THAT STOPS SHORT BECAUSE IT PROVED A MATE IS NOT A SEARCH
-THAT FAILED TO REACH DEPTH 3** (REVIEW-design MAJOR): a proven mate at depth 1 is
-a better answer than an unproven score at depth 3, so folding it into the
-below-threshold bucket would count a win as a shortfall. Such openings are
-**EXCLUDED from both numerator and denominator, counted, and named in the
-artifact**, which is the same treatment D-395 gave the two positions whose
-candidate found a forced mate early. The `lift` denominator is therefore
-`2 000 − (mate-terminated)` and the artifact prints it.
+**THE UNDEFINED CASE.** `lift` is a count of openings reaching completed
+`depth_turns >= 3`, so an opening that completes depth 0 is simply not counted.
+**Revision 3 registered a 1 %-of-openings VOID threshold on that case and argued
+the store rule could fire it. The code forbids it** (re-review MAJOR 6): under
+`Stop::Nodes` the first iteration is not abortable (`search.rs:323`,
+`pvs.rs:730`'s *"a non-abortable iteration completes"*, D-74), so no amount of
+slowing produces completed depth 0. **The threshold is DELETED**, on §3's own
+principle and D-424's: a threshold that cannot fire protects nothing and is prose
+a reviewer must still attack. What remains is the reporting, which costs nothing
+and can be read: the artifact prints the completed-depth histogram for every
+seat, so a depth-0 opening would be visible rather than thresholded.
+
+**THE MATE-TERMINATED SET IS FIXED ACROSS SEATS, WHICH IS THE WHOLE POINT**
+(re-review BLOCKING 3). A search that stops short because it PROVED a mate has
+not failed to reach depth 3, so those openings are excluded — but revision 3
+excluded them PER SEAT, which makes the population move with K and lets a larger
+K flatter itself by shrinking its own denominator. D-395, the precedent revision 3
+cited, did the opposite: it compared *"19 of the 24 … on BOTH sides"*, a
+seat-invariant set. So:
+
+> **`lift(K)` is a COUNT over the FIXED population**
+> **`2 000 − |{openings mate-terminated on ANY seat, the incumbent control
+> included}|`.** That excluded set is computed once over all seats, printed once
+> in the artifact by opening index, and is identical at every K.
+
+`lift` is a count and has no denominator; revision 3's "numerator and
+denominator" sentence is deleted with the per-seat rule that produced it.
 
 **THE FLATNESS ANCHOR IS ADVISORY AND SAYS SO** (REVIEW-design MAJOR). The
 535 / 524 / 514 figures were measured WITHOUT §6.3's store rule, which withholds
@@ -422,7 +454,7 @@ can see the class at all, exactly as the red team isolated it.
 | `the_cap_admits_exactly_k_cells_on_a_safety_net_row` | emitted width == K at a node one turn from the root with pool > K | — |
 | `k_and_k_plus_one_differ_by_exactly_the_next_ranked_cell` | the boundary as a set difference | `truncate(k)` → `truncate(k + 1)` |
 | `the_root_turn_emits_the_same_set_with_the_cap_armed` | the emitted set is identical gate-on and gate-off at every node of the root turn | `turns_from_root() > 0` → `>= 0` |
-| `at_a_turn_one_root_the_cap_binds_at_ply_one_because_that_ply_is_a_new_turn` | **THE `ply > 1` FALSIFIER** (REVIEW-design BLOCKING 2). From an EMPTY-board root, rule 3 makes turn 1 one stone, so the ply-0 stone COMPLETES the root turn and the ply-1 node is already at `turns_from_root() == 1`. Its pool is the radius-`r` ball around the origin (19 cells at r = 2) and the shipped guard truncates it to K; `ply > 1` leaves it whole. **The test asserts the emitted width at that node is K, and it is the only case in which the two spellings differ at all** | `turns_from_root() > 0` → `ply > 1` |
+| `at_a_turn_one_root_the_cap_binds_at_ply_one_because_that_ply_is_a_new_turn` | **THE `ply > 1` FALSIFIER** (REVIEW-design BLOCKING 2). From an EMPTY-board root, rule 3 makes turn 1 one stone, so the ply-0 stone COMPLETES the root turn and the ply-1 node is already at `turns_from_root() == 1`; its pool is the radius-2 ball around the origin **minus the occupied origin, so 18 cells** (re-review MINOR 8 — `within_radius` filters by `is_legal_placement`), and the shipped guard truncates it while `ply > 1` leaves it whole. **The assertion is stated in the observable §4 actually provides** (re-review MAJOR 4 — `info.rs`'s counters are whole-search totals, so "the emitted width at that node" is not expressible): at an empty-board root, `depth_turns 2`, `safety_net_top_k = 8`, **`safety_net_capped_rows == 19` shipped and `== 18` under the mutant**. This is the only position at which the two spellings differ at all | `turns_from_root() > 0` → `ply > 1` |
 | `the_cap_never_fires_off_a_safety_net_row` | a batched row with Tier T non-empty emits its full Tier T with the cap armed | the `used_quiet_safety_net` guard deleted |
 | `a_truncated_fail_low_stores_no_transposition_record` | the table holds nothing for a node that stopped truncated below `alpha` | `!truncated \|\| bound == Bound::Lower` → `true` |
 | `a_truncated_fail_high_still_stores_its_lower_bound` | the sound half is not thrown away with the unsound half | `!truncated \|\| bound == Bound::Lower` → `!truncated` |
@@ -455,7 +487,19 @@ document with `safety_net_top_k` set to §5's calibrated K and nothing else**,
 digest recorded, **not committed to the tree** (rule 8: an uncommitted bench
 variant is not an artifact). This is D-395's and D-398's own two-seat shape.
 
-**THE INSTRUMENT, AND WHAT IT DOES AND DOES NOT DO.**
+**TWO INSTRUMENTS, AND WHICH LEG EACH ONE CARRIES** (re-review BLOCKING 1:
+revision 3 registered a per-position counter and named only an instrument that
+cannot read it — `StageCounters` is not on the line protocol, by
+`info.rs:10-12`'s own design). **The timing legs are
+`tools/bench_block.sh`'s; the counter leg is a harness in the
+`crates/pistol-search/` test tree, `crates/pistol-search/tests/wp15d_bench_counters.rs`,
+calling `Searcher::search` directly and reading `SearchOutcome::info.stages` —
+the same shape §5's `wp15d_calibration.rs` takes and the shape `info.rs:10-12`
+points at.** Both are named in the receipt with their governing revisions, and a
+number from one is never quoted beside a number from the other without saying
+which produced it (D-479).
+
+**THE TIMING INSTRUMENT, AND WHAT IT DOES AND DOES NOT DO.**
 `tools/bench_block.sh` at its committed revision, over
 `crates/pistol-cli/tests/fixtures/bench_positions_v1.txt` (`--grammar tail`) and
 `crates/pistol-cli/tests/fixtures/spread_v1.txt` (`--grammar line`),
@@ -476,41 +520,62 @@ with different candidate policies nps is not a like-for-like unit).
 - **Corpus, `bench_positions_v1`:** ttd ratio **≤ 1.10**; **ABORT if > 1.25**.
 - **Spread, `spread_v1`:** REPORTED, NOT GATED.
 
-**THE CORPUS EXPECTATION, WITH ITS PROVENANCE STATED** (REVIEW-design MAJOR:
-revision 2's "1.002 and 0.995" appear in no artifact and its "node counts
-identical position for position" is not what the harness records). What
-`artifacts/wp15d_turn_axis_v1.txt`'s `S2/CORPUS` lines actually record, at
-`Stop::Nodes(50_000)`, `quiet_radius 2`, is **Σ nodes = 1 104 026 identical on
-every seat**, **per-position completed depths identical seat for seat** (the
-`depths=` field, 24 values), and **Σ wall 4 828 / 4 795 / 4 790 / 4 779 ms**
-across the four seats against the incumbent's 4 825. Per-position node counts are
-NOT recorded and no claim rests on them. The derived wall ratios are 1.001,
-0.993, 0.993 and 0.991 — computed here, from those sums, and marked as derived.
-**So the corpus bench is a NO-REGRESSION check and the design says so rather
-than presenting an inert fixture as a gain channel.**
+**THE CORPUS EXPECTATION, WITH EVERY TERM FROM ONE ARTIFACT AND ONE RUN**
+(re-review BLOCKING 2: revision 3 quoted an incumbent of 4 825 that lives in
+`docs/experiments/matrix_M2.md:236` and belongs to a DIFFERENT run, listed a
+`scope1` seat that is not the selected row, and derived three ratios below 1.000
+— contradicting this section's own cost-channel hotspot. **The wrong baseline
+flattered the change**, which is why D-479 exists).
 
-**THE SPREAD FIXTURE — THE CLAIM REVISION 2 GOT WRONG, SPLIT INTO THE TWO IT WAS
-CONFLATING** (REVIEW-design BLOCKING 1). Revision 2 registered "expected exactly
-inert — MEASURED 0 prune events at 21 / 51 / 99 stones". **That number is a
-`movetime 500` cell, and `artifacts/wp15d_turn_axis_v1.txt`'s own header — and
-D-478, which this session wrote — forbid a movetime cell from governing a
-registered run.** At the budget §8 actually registers it is false: MEASURED on
-the uncapped tree at `nodes 50000`, the guard's predicate
-(`turns_from_root() > 0 && pool > K`) is satisfied **95 / 5 / 152 / 0** times at
-11 / 21 / 51 / 99 stones at `quiet_radius 2`, and **0 / 5 / 130 / 20** at
-`quiet_radius 3`. The two claims are now stated separately, because only one of
-them was ever true:
+Every cell below is from `artifacts/wp15d_turn_axis_v1.txt`'s `S2/CORPUS` block,
+`Stop::Nodes(50_000)`, `quiet_radius 2`, one run:
 
-1. **The cap FIRES on this fixture at this budget.** No inertness is expected or
-   registered. The ON seat REPORTS `safety_net_capped_rows` per position — §4's
-   counter — and that count is the recorded number, taken on the ON seat's own
-   tree rather than inferred from the OFF seat's.
+| seat | Σ nodes | Σ wall ms | ratio to that block's own incumbent |
+|---|---|---|---|
+| incumbent, `scope0/K0` | 1 104 026 | **4 776** | 1.000 |
+| `scope4/K4` | 1 104 026 | 4 828 | **1.011** |
+| `scope4/K8` | 1 104 026 | 4 795 | **1.004** |
+| `scope4/K16` | 1 104 026 | 4 790 | **1.003** |
+
+**All three are at or above 1.000, which AGREES with this section's registered
+hotspot** — the cap is a cost channel on the corpus, a small one. The block's
+fourth seat is `scope1/K8`, a different row entirely (the rejected `ply > 0`
+scope), and it is not quoted here.
+
+What that block records, exactly: **Σ nodes identical on every seat**,
+**per-position completed depths identical seat for seat** (the `depths=` field,
+24 values), and the Σ wall figures above. **Per-position node counts are NOT
+recorded and no claim rests on them.** The ratios are derived here from those
+sums and are marked as derived.
+
+**THE SPREAD FIXTURE — ONE RADIUS, ONE BUDGET, ONE HARNESS, AND THE TWO CLAIMS
+KEPT APART.** Revision 2 registered "expected exactly inert — MEASURED 0 prune
+events", which was a `movetime` cell governing a `Stop::Nodes` bench — forbidden
+by D-478 and by `artifacts/wp15d_turn_axis_v1.txt`'s own header. Revision 3 fixed
+the budget and imported the replacement numbers from the revision-2 reviewer's
+throwaway probe, with no instrument, no artifact, no digest and no K, at two
+radii one of which has no config in the tree (re-review MAJOR 5); and it quoted
+an r = 3 depth vector under the r = 2 seat it had just named (re-review MAJOR 7).
+Both are corrected by **dropping the r = 3 cells entirely and keeping only the
+radius the named seats actually use**:
+
+1. **The cap FIRES on this fixture at this budget, and the count is the ON seat's
+   own.** No inertness is expected or registered. `wp15d_bench_counters.rs`
+   reports `safety_net_capped_rows` per position on the ON seat's own tree — not
+   inferred from the OFF seat's, which is what the imported anchor was. The
+   ADVISORY anchor for what to expect, and it is labelled as one: measured on the
+   UNCAPPED tree at `configs/instrument_staged_v0.toml` (`quiet_radius = 2`),
+   `go nodes 50000`, the guard's predicate `turns_from_root() > 0 && pool > K` is
+   satisfied **95 / 5 / 152 / 0** times at 11 / 21 / 51 / 99 stones, K-invariant
+   over K ∈ {4, 8, 16}. That figure governs nothing; the registered number is the
+   ON seat's counter.
 2. **The cap does not restore completed depth on the D-95 class**, which is the
-   claim §9 and the preamble rest on. That is measured at `movetime 500`, the
-   budget at which the debt is DEFINED (D-95's own units), where completed depth
-   is 1 / 0 / 0 / 0 with the cap armed and without it. **It is a scoping
-   measurement and it governs no threshold here** — it is why the fixture is
-   reported and not gated, and §9 states it in those terms.
+   claim §9 and the preamble rest on. At the r = 2 seat §8 names, the incumbent's
+   completed-depth vector on `spread_v1` at `movetime 500` is **1 / 1 / 0 / 0**
+   (`artifacts/wp15d_turn_axis_v1.txt`, `S1/r2/nocap`) — **not the 1 / 0 / 0 / 0
+   revisions 2 and 3 quoted, which is the r = 3 reading.** It is a SCOPING
+   measurement at the budget the debt is defined in (D-22, D-478) and it governs
+   no threshold here; it is why the fixture is reported and not gated.
 
 **THE STORE RULE'S OWN COST IS REPORTED, NOT BRACKETED** (§6.3,
 `WPQ_seed.md` §12.3): `safety_net_stores_withheld` and the resulting change in
@@ -536,7 +601,8 @@ pre-registration rather than here.
   and the slot pass (D-427).
 - **The D-95 depth debt.** OPEN, re-pointed by D-478 at a package of its own.
   **MEASURED untouched by this one in the channel the debt is defined in** —
-  completed depth at `movetime 500` on `spread_v1` is 1 / 0 / 0 / 0 with the cap
-  armed and without it. That is a scoping measurement (D-22, D-478) and it
+  completed depth at `movetime 500` on `spread_v1` is **1 / 1 / 0 / 0 at the
+  r = 2 seat §8 names** (`S1/r2/nocap`; the 1 / 0 / 0 / 0 revisions 2 and 3 quoted
+  is the r = 3 reading — re-review MAJOR 7), with the cap armed and without it. That is a scoping measurement (D-22, D-478) and it
   governs nothing here; §8 states what the cap does do on that fixture, which is
   fire hundreds of times without moving the channel the debt is about.
