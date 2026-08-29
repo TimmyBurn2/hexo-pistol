@@ -266,7 +266,7 @@ is **10 596 ms** (spread, 99 stones, incumbent seat — D-74's non-interruptible
 first iteration). Against `hang_timeout_ms = 120000` that is a **11.3×** margin.
 **That is below the project's ~24× convention and is flagged here rather than at
 launch**: the SPRT plays `random_openings_v1`, not `spread_v1`, and the worst
-median on the corpus fixture is 424 ms — a 283× margin. The spread figure is not
+single median on `bench_positions_v1` is **491 ms — a 244× margin**. The spread figure is not
 in the governed run's own workload, and §4's timeout is therefore confirmed
 NO-CHANGE on the workload it actually guards, with the reasoning recorded.
 
