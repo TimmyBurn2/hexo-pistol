@@ -81,6 +81,25 @@ pub fn staged_params(
     }
 }
 
+/// `StagedParams` with the safety-net cap stated and everything else at the
+/// committed instrument document's values — for a test that drives
+/// `staged_candidates` directly rather than through a `Searcher`.
+pub fn staged_params_for_cap(quiet_radius: u32, safety_net_top_k: u64) -> StagedParams {
+    StagedParams {
+        quiet_radius,
+        safety_net_top_k,
+        tier_t_own_count: 2,
+        tier_t_opponent_count: 3,
+        q_depth_turns: 0,
+        q_triggers: QTriggers::DefensiveOnly,
+        ordering: OrderingHeuristics {
+            killers: false,
+            history: false,
+            countermove: false,
+        },
+    }
+}
+
 /// A searcher under `CandidatePolicy::Staged`, over the committed weights.
 pub fn staged_searcher(
     quiet_radius: u32,

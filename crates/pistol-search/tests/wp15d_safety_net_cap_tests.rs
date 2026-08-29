@@ -218,3 +218,62 @@ fn a_truncated_node_withholds_its_unproved_bounds_and_keeps_its_proved_one() {
          which a subset genuinely proves"
     );
 }
+
+/// THE TIE-BREAK THE CAP'S BOUNDARY RESTS ON (docs/decisions.md D-5, D-7;
+/// docs/experiments/wp15d_design.md §2.5).
+///
+/// `delta_rank` sorts by `Reverse(Eval::delta)` with a STABLE sort over a ball
+/// that `within_radius` returns ascending, so equal-scoring cells keep
+/// ascending `(q, r)` order. That is what decides which of several tied cells
+/// falls inside K and which is truncated away — so without it the cap's
+/// boundary is whatever the sort implementation happens to do.
+///
+/// **The assertion is the ORDER, not agreement between two runs.** Two runs
+/// agree under an unstable sort too: it is deterministic for a fixed input, so
+/// run-to-run agreement is a property the defect PRESERVES, which
+/// `docs/process.md`'s vacuous-criterion clause forbids as a criterion.
+/// MEASURED before this test existed: `sort_by_key` → `sort_unstable_by_key`
+/// survived every suite in the workspace.
+#[test]
+fn equal_scoring_safety_net_cells_are_emitted_in_ascending_coordinate_order() {
+    use pistol_eval::Eval;
+    use pistol_search::staged::{StagedRow, StagedSet, staged_candidates};
+
+    // One stone: no window holds two of anybody's, so Tier F and Tier T are
+    // both empty and the row is the safety net — the whole quiet ball.
+    let mut state = GameState::new_game();
+    state.place(Coord::new(0, 0)).expect("the opening stone");
+    let threats = common::threats_for(&state);
+    let mut eval: Box<dyn Eval> =
+        Box::new(pistol_eval::HandcraftedV0::new(common::committed_weights()));
+    let mut out = StagedSet::default();
+    let row = staged_candidates(
+        &state,
+        &threats,
+        &mut *eval,
+        false,
+        common::staged_params_for_cap(2, 0),
+        &mut out,
+    );
+    assert_eq!(row, StagedRow::Batched);
+    assert!(out.used_quiet_safety_net, "this row IS the safety net");
+
+    let scored: Vec<(i32, Coord)> = out
+        .cells
+        .iter()
+        .map(|&at| (eval.delta(at, state.to_move()), at))
+        .collect();
+    let ties = scored.windows(2).filter(|w| w[0].0 == w[1].0).count();
+    assert!(
+        ties > 0,
+        "the fixture must contain ties or this test asserts nothing: {scored:?}"
+    );
+    for pair in scored.windows(2) {
+        let (before, after) = (pair[0], pair[1]);
+        assert!(
+            before.0 > after.0 || before.1 < after.1,
+            "the ranking must fall in score, and where it does not the cells \
+             must ascend: {before:?} then {after:?}"
+        );
+    }
+}
