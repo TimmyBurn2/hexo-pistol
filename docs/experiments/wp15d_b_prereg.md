@@ -176,13 +176,31 @@ game one, not after. It is `SENS/TRAJECTORY=…` from the registered run, taken 
 the selected K on the calibration slice — a sample DISJOINT from the governed
 one, so it is a prediction about the governed run and never a look at it.
 
-- **SLOT 6.1** — `SENS/TRAJECTORY=incumbent`: ____ searches, ____ safety-net-bearing, ____ diverged.
-- **SLOT 6.2** — `SENS/TRAJECTORY=capped`: ____ searches, ____ safety-net-bearing, ____ diverged.
-- **SLOT 6.3** — the reading: if the divergence rate on both trajectories is low
-  enough that 500 pairs cannot see it, **this document says so before game one
-  and the honest expectation is `h0`-or-inconclusive**, with the value living on
-  the bench rather than being claimed as strength. No side channel promotes a
-  bench number to a strength claim (rule 6).
+**FILLED BEFORE GAME ONE**, from `artifacts/wp15d_b_measurement_v1.txt` at the
+selected K = 16, quoted verbatim beside the artifact lines they come from:
+
+```
+SENS/TRAJECTORY=incumbent games=25 turn_cap=40 K=16 searches=595 decided_early=20 bearing=125 diverged=29
+SENS/TRAJECTORY=capped    games=25 turn_cap=40 K=16 searches=672 decided_early=15 bearing=135 diverged=39
+```
+
+- **6.1 — the incumbent's own trajectory**: 595 searches, **125
+  safety-net-bearing (21.0 %)**, **29 diverged (4.87 %)**.
+- **6.2 — the capped engine's own trajectory**: 672 searches, **135 bearing
+  (20.1 %)**, **39 diverged (5.80 %)**. Both trajectories are measured because a
+  divergence rate read on one engine's path is a rate on a distribution the
+  other never walks.
+- **6.3 — THE READING, STATED BEFORE GAME ONE.** The class occurs on about a
+  fifth of governed-shape searches and the played turn changes on **4.9 %–5.8 %**
+  of them, on either trajectory. **That is inside what 500 paired openings can
+  see, so this document does NOT predict `h0`-or-inconclusive on grounds of
+  insensitivity**, and it does not predict `h1` either: a turn that differs is
+  not a turn that is better, and which it is is exactly what the SPRT is for and
+  what nothing measured here can anticipate. **The honest expectation is
+  therefore that the run is INFORMATIVE, direction unknown.**
+- **6.4 — and what would have made it uninformative, recorded so the reading is
+  falsifiable**: a divergence rate near zero, or a bearing rate showing the class
+  absent from governed play. Neither holds.
 
 ---
 
@@ -191,14 +209,68 @@ one, so it is a prediction about the governed run and never a look at it.
 Filled at the run's own launch, because a document and its configs drift between
 revisions and D-427 is the record of what that costs.
 
-- **7.1** artifact `artifacts/wp15d_b_measurement_v1.txt` sha256 ____
-- **7.2** `CAL/SELECTED` line, quoted verbatim ____
-- **7.3** the corpus bench ratio, and the bracket verdict ____
-- **7.4** the spread report, ON-seat `safety_net_capped_rows` per position ____
-- **7.5** `binary_sha256` for both seats, confirmed live ____
-- **7.6** the arena config's `openings_skip`, read from the file and compared against §4's **1500** ____
-- **7.7** `hang_timeout_ms` margin against §3's worst single median ____
-- **7.8** the governed run's own revision ____
+**7.1 — THE ARTIFACT.** `artifacts/wp15d_b_measurement_v1.txt`, sha256
+`46aaf3fbafbc93bb4fca6816c023e6611a21a1fe739871f4b3ad945f78eefe3e`. Instrument
+`70cb580`, run at tree revision `4ec470f`, 2662.25 s, exit 0.
+
+**7.2 — THE SELECTION**, the instrument's own line, verbatim:
+
+```
+CAL/SELECTED K=16 rule=largest-K-within-75pc-of-best-gain base_mean=2.0740
+             best_gain=+0.3640 threshold=+0.2730
+             gains=[K4:+0.3640 K8:+0.3370 K16:+0.2990 K32:+0.2350 K64:+0.0140 K128:+0.0000]
+```
+
+**K = 16.** The rule is satisfied at an interior grid point: K16's gain
+(+0.2990) clears the 0.75 threshold (+0.2730) and K32's (+0.2350) does not.
+
+**AND THE GRID VALIDATED ITSELF AT ITS OWN TOP END**, which §2 registered as the
+thing that would make the rule meaningful rather than vacuous: at K = 128 the
+instrument reports `capped_rows=0` and a mean identical to the incumbent's to
+four figures (2.0740 both). **The cap never binds there** — no pool on this book
+exceeds 128 — so the benefit decays to exactly zero inside the registered grid,
+and the selection is a choice among points that differ rather than a pick from a
+flat line.
+
+**7.3 — THE CORPUS BENCH.** Σ per-position medians, 24 positions × 5 reps:
+incumbent **4800 ms**, K = 16 seat **4807 ms**, **ratio ON/OFF = 1.0015**,
+larger-is-worse. Bracket ≤ 1.10: **PASS**, and far from the 1.25 ABORT. **IQR
+gate: 0 of 168 position-seats exceeded 10 % of their own median.** No seat's
+node counts differ — every corpus cell is `nodes=50176` — so the ratio is a
+like-for-like time comparison.
+
+**7.4 — THE SPREAD REPORT, NOT A GATE.** The ON seat's own
+`safety_net_capped_rows`, on the tree that ran:
+
+| stones | incumbent capped | K = 16 capped | median ms OFF → ON |
+|---|---|---|---|
+| 11 | 0 | **95** | 133 → 133 |
+| 21 | 0 | **71** | 449 → 470 |
+| 51 | 0 | **152** | 2761 → 2748 |
+| 99 | 0 | **0** | 10596 → 10573 |
+
+**The cap fires on this fixture and does not move completed depth on it** — every
+seat reads `depth=1` at every position. That is reported, not gated, and it
+discharges nothing: D-95's debt is defined at a wall-clock budget instrument mode
+refuses (D-22), and D-478 leaves it open at its own package.
+
+**7.5 — `binary_sha256` for both seats**: filled at the governed run's launch,
+which is the only moment it can be true of.
+
+**7.6 — `openings_skip`**: to be read from the arena config at launch and
+compared against §4's registered **1500**. This is D-427's own slot and the
+reason it exists.
+
+**7.7 — `hang_timeout_ms` MARGIN.** The worst single median anywhere in the run
+is **10 596 ms** (spread, 99 stones, incumbent seat — D-74's non-interruptible
+first iteration). Against `hang_timeout_ms = 120000` that is a **11.3×** margin.
+**That is below the project's ~24× convention and is flagged here rather than at
+launch**: the SPRT plays `random_openings_v1`, not `spread_v1`, and the worst
+median on the corpus fixture is 424 ms — a 283× margin. The spread figure is not
+in the governed run's own workload, and §4's timeout is therefore confirmed
+NO-CHANGE on the workload it actually guards, with the reasoning recorded.
+
+**7.8 — the governed run's own revision**: filled at launch.
 
 ---
 
