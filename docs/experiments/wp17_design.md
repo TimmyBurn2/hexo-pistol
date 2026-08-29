@@ -308,6 +308,16 @@ pre-registration.
   core**, plus ~240 × ~30 ms process startup (D-236's fixed per-invocation
   cost). Operator attention: one launch and one read.
 
+**THE BLOCK BELOW IS SUPERSEDED FOR ANY LATER RUN — `tools/bench_block.sh`
+(docs/decisions.md D-475). It is left byte-identical because it GOVERNED this
+WP's own bench (§7b, D-431) and a registered instrument is not rewritten after
+its run.** It substitutes the EMPTY BOARD for any entry the engine refuses and
+exits 0 doing it, and it is inoperable on `spread_v1.txt`, whose lines carry
+their own `position ` prefix. Neither defect touches a landed number — every
+entry of both committed bench fixtures loads clean, receipted at D-475 — so the
+successor is prevention, not repair. **A later pre-registration calls the
+script; it does not copy this block.**
+
 Command block (run from the repo root, release build current; the extraction
 is the established idiom `tools/staged_cover_bench.sh:118,137` uses — entries
 are the fixture's non-comment lines, the ` # …` commentary stripped per entry,
