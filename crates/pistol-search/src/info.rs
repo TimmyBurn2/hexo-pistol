@@ -81,10 +81,15 @@ pub struct StageCounters {
     /// cap removed without re-running the uncapped seat, which is a different
     /// tree (docs/decisions.md D-481).
     pub safety_net_pool_cells: u64,
-    /// Records a truncated node declined to store because the bound was not
-    /// `Bound::Lower` (§6.3's store rule): the cost that rule pays, counted
-    /// where it is paid rather than argued.
-    pub safety_net_stores_withheld: u64,
+    /// Records a truncated node declined to store because its bound was
+    /// `Bound::Upper` — a fail-low over a set it never exhausted (§6.3's store
+    /// rule).
+    pub safety_net_upper_withheld: u64,
+    /// The same for `Bound::Exact`. **The two kinds are counted apart because
+    /// one total cannot tell a rule that wrongly stores `Exact` from one that
+    /// wrongly stores `Upper`** — both leave a non-zero total, so an aggregate
+    /// assertion survives either (REVIEW-impl MAJOR 1).
+    pub safety_net_exact_withheld: u64,
 }
 
 impl StageCounters {

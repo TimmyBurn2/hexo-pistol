@@ -487,7 +487,10 @@ impl<'a> Run<'a> {
             // is probed later at a node that emits the whole set, inside the
             // root turn this cap is chosen for leaving whole.
             if truncated && bound != Bound::Lower {
-                self.stages.safety_net_stores_withheld += 1;
+                match bound {
+                    Bound::Upper => self.stages.safety_net_upper_withheld += 1,
+                    _ => self.stages.safety_net_exact_withheld += 1,
+                }
             } else {
                 self.table.store(
                     key,

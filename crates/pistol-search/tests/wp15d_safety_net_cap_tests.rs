@@ -31,6 +31,20 @@ fn searcher(quiet_radius: u32, safety_net_top_k: u64) -> Searcher {
     .expect("the staged parameters are accepted")
 }
 
+/// One capped search from the opening, returning its counters — the three
+/// store-rule halves below all read the same tree.
+fn capped_search(depth_turns: u32) -> pistol_search::StageCounters {
+    searcher(2, 8)
+        .search(
+            &GameState::new_game(),
+            Stop::DepthTurns(depth_turns),
+            &mut |_| {},
+        )
+        .expect("the search runs")
+        .info
+        .stages
+}
+
 /// THE `ply > 1` FALSIFIER (docs/experiments/wp15d_design.md §7).
 ///
 /// An empty-board root is the ONE position where a turn-indexed exemption and a
@@ -80,7 +94,8 @@ fn the_off_value_truncates_nothing_and_records_nothing() {
     assert_eq!(stages.safety_net_capped_rows, 0);
     assert_eq!(stages.safety_net_emitted_cells, 0);
     assert_eq!(stages.safety_net_pool_cells, 0);
-    assert_eq!(stages.safety_net_stores_withheld, 0);
+    assert_eq!(stages.safety_net_upper_withheld, 0);
+    assert_eq!(stages.safety_net_exact_withheld, 0);
     assert!(
         stages.batched_quiet_safety_net > 0,
         "the rows were there to cap; the gate is what declined to"
@@ -190,32 +205,113 @@ fn the_capped_search_is_reproducible_across_runs() {
     assert_eq!(run(), run());
 }
 
-/// §6.3's STORE RULE (`WPQ_seed.md` §7.2). A truncated node proved a LOWER
-/// bound and nothing else, so `Upper` and `Exact` from one are withheld while
-/// `Lower` is kept. The counter is the observable, and the assertion is a
-/// STRICT INEQUALITY on both sides because that is what discriminates: a rule
-/// that stored everything reads 0, and one that stored nothing from a truncated
-/// node reads every truncated node that reached the store.
+/// §6.3's STORE RULE, HALF ONE: a truncated node withholds its FAIL-LOW.
+///
+/// `Bound::Upper` says nothing did better, over a set the node never
+/// exhausted. The counter is split by bound kind because one total cannot tell
+/// a rule that wrongly stores `Exact` from one that wrongly stores `Upper` —
+/// both leave a non-zero total, and the aggregate assertion this test replaces
+/// survived each of them (REVIEW-impl MAJOR 1).
 #[test]
-fn a_truncated_node_withholds_its_unproved_bounds_and_keeps_its_proved_one() {
-    let outcome = searcher(2, 8)
-        .search(&GameState::new_game(), Stop::DepthTurns(3), &mut |_| {})
-        .expect("the search runs");
-    let stages = outcome.info.stages;
+fn a_truncated_fail_low_stores_no_transposition_record() {
+    let stages = capped_search(3);
     assert!(
         stages.safety_net_capped_rows > 0,
         "the tree must contain truncated nodes for this to say anything"
     );
     assert!(
-        stages.safety_net_stores_withheld > 0,
-        "a rule that stored every bound from a truncated node would read 0 here \
-         -- and the table outlives the search, so those bounds reach a later \
-         root turn (docs/experiments/wp15d_design.md §6.2)"
+        stages.safety_net_upper_withheld > 0,
+        "a rule that stored a truncated node's Upper bound would read 0 here, \
+         and the table outlives the search, so that bound reaches a later root \
+         turn (docs/experiments/wp15d_design.md §6.2)"
+    );
+}
+
+/// §6.3's STORE RULE, HALF TWO: a truncated node withholds its EXACT score.
+#[test]
+fn a_truncated_exact_score_stores_no_transposition_record() {
+    let stages = capped_search(3);
+    assert!(
+        stages.safety_net_exact_withheld > 0,
+        "an Exact score over a set that was not exhausted is a claim the node \
+         did not prove, and a rule that stored it would read 0 here"
+    );
+}
+
+/// §6.3's STORE RULE, HALF THREE: the PROVED bound survives it. A rule that
+/// withheld everything from a truncated node would throw away the fail-highs,
+/// which a subset genuinely proves — a move it did search reached beta.
+#[test]
+fn a_truncated_fail_high_still_stores_its_lower_bound() {
+    let stages = capped_search(3);
+    let withheld = stages.safety_net_upper_withheld + stages.safety_net_exact_withheld;
+    assert!(
+        withheld < stages.safety_net_capped_rows,
+        "{withheld} withheld against {} truncated rows: a rule that withheld \
+         every bound would reach the row count",
+        stages.safety_net_capped_rows
+    );
+}
+
+/// §6.4's WARM-TABLE CLASS, INSTANTIATED. Every other test in this file builds
+/// a fresh `Searcher` per search, which is exactly the blind spot §6.2 names:
+/// the transposition table is KEPT across the searches of a game
+/// (`search.rs`'s own doc, "successive searches in one game share what they
+/// learned"), so a node truncated a turn down is the NEXT search's root turn.
+/// That is the class §6.3's store rule exists for, and without this test it
+/// ships never once instantiated (REVIEW-impl BLOCKING 2).
+///
+/// **What this pins, stated exactly.** That the class OCCURS on a warm table —
+/// truncated nodes reach the store across successive searches of one game and
+/// the rule fires there — and that a warm capped game stays reproducible. The
+/// census the design's §6.4 describes, counting cutoffs taken on a record whose
+/// storer was truncated, needs provenance the shipped `Record` does not carry;
+/// that instrumentation is not added here and the shortfall is recorded rather
+/// than papered over.
+#[test]
+fn the_store_rule_fires_across_the_searches_of_one_warm_game() {
+    let play = || {
+        // ONE searcher for the whole game: the table is warm from the second
+        // search onward, as it is in play.
+        let mut engine = searcher(2, 8);
+        let mut state = GameState::new_game();
+        let mut withheld = 0u64;
+        let mut capped = 0u64;
+        let mut line = Vec::new();
+        for _ in 0..6 {
+            if state.outcome().is_decided() {
+                break;
+            }
+            let outcome = engine
+                .search(&state, Stop::DepthTurns(2), &mut |_| {})
+                .expect("the search runs");
+            let stages = outcome.info.stages;
+            withheld += stages.safety_net_upper_withheld + stages.safety_net_exact_withheld;
+            capped += stages.safety_net_capped_rows;
+            line.push(outcome.best);
+            for at in [Some(outcome.best.first()), outcome.best.second()]
+                .into_iter()
+                .flatten()
+            {
+                state.place(at).expect("the engine's own turn is legal");
+            }
+        }
+        (withheld, capped, line)
+    };
+    let (withheld, capped, line) = play();
+    assert!(
+        capped > 0,
+        "the warm game must reach truncated nodes at all"
     );
     assert!(
-        stages.safety_net_stores_withheld < stages.safety_net_capped_rows,
-        "and a rule that withheld EVERY bound would throw away the fail-highs, \
-         which a subset genuinely proves"
+        withheld > 0,
+        "and the store rule must fire on them: {withheld} withheld over \
+         {capped} truncated rows across a warm game"
+    );
+    assert_eq!(
+        play(),
+        (withheld, capped, line),
+        "and a warm capped game is reproducible, table contents included (D-7)"
     );
 }
 
