@@ -239,24 +239,40 @@ fn equal_scoring_safety_net_cells_are_emitted_in_ascending_coordinate_order() {
     use pistol_eval::Eval;
     use pistol_search::staged::{StagedRow, StagedSet, staged_candidates};
 
-    // One stone: no window holds two of anybody's, so Tier F and Tier T are
-    // both empty and the row is the safety net — the whole quiet ball.
+    // A spread position: stones eight apart, so no length-six window holds two
+    // of anybody's and Tier F and Tier T are both empty — the row is the safety
+    // net, the whole quiet ball. Spread rather than a single stone because the
+    // discriminating fixture needs GROUPS of ties: around one stone every ball
+    // cell scores the same, and an all-equal input is the one case an unstable
+    // sort provably leaves alone. MEASURED — the single-stone fixture gave 36
+    // cells all scoring 36, and the mutant survived it.
     let mut state = GameState::new_game();
-    state.place(Coord::new(0, 0)).expect("the opening stone");
+    for at in [(0, 0), (8, 0), (16, 0), (24, 0), (32, 0)] {
+        state
+            .place(Coord::new(at.0, at.1))
+            .expect("a legal spread ply");
+    }
     let threats = common::threats_for(&state);
+    // The eval is INCREMENTAL (`Eval`'s own contract: apply/undo per placed
+    // stone), so it has to be walked onto this board before it can rank cells
+    // on it. Without this the ranking is taken against an EMPTY board, where
+    // every ball cell is symmetric and scores the same — which is a ranking
+    // that discriminates nothing and a test that asserts nothing. The
+    // `groups > 1` guard below is what makes that failure visible rather than
+    // silent.
     let mut eval: Box<dyn Eval> =
         Box::new(pistol_eval::HandcraftedV0::new(common::committed_weights()));
+    for (at, player) in state.board().stones() {
+        eval.apply(at, player);
+    }
     let mut out = StagedSet::default();
     let row = staged_candidates(
         &state,
         &threats,
         &mut *eval,
         false,
-        // Radius 3, not 2: the ball must be big enough that an UNSTABLE sort
-        // actually reorders it. Rust's `sort_unstable` falls back to insertion
-        // sort on short slices, where it is stable in practice, so a radius-2
-        // ball of 18 cells cannot discriminate -- MEASURED, the mutant survived
-        // that fixture. This one is 36 cells.
+        // Radius 3: the ball must also stay clear of the insertion-sort
+        // fallback, which is stable in practice on a short slice.
         common::staged_params_for_cap(3, 0),
         &mut out,
     );
@@ -274,9 +290,11 @@ fn equal_scoring_safety_net_cells_are_emitted_in_ascending_coordinate_order() {
         .map(|&at| (eval.delta(at, state.to_move()), at))
         .collect();
     let ties = scored.windows(2).filter(|w| w[0].0 == w[1].0).count();
+    let groups = 1 + scored.windows(2).filter(|w| w[0].0 != w[1].0).count();
     assert!(
-        ties > 0,
-        "the fixture must contain ties or this test asserts nothing: {scored:?}"
+        ties > 0 && groups > 1,
+        "the fixture must contain SEVERAL groups of ties or it discriminates \
+         nothing: {groups} group(s), {ties} adjacent tie(s)"
     );
     for pair in scored.windows(2) {
         let (before, after) = (pair[0], pair[1]);
