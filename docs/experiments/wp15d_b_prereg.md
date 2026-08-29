@@ -1,6 +1,43 @@
 # WP-1.5d (B) — PRE-REGISTRATION: the safety-net cap's calibration, bench and SPRT
 
-**REVISION 3 — a further round, scoped by the architect to the four findings of `wp15d_b_prereg_REVIEW_rev2.md` and nothing else.** Revision 2 FAILED (1 BLOCKING, 3 MAJOR), the cap returned the package, and the architect granted this round. **REVISION 2 was the one fix round.** Revision 1 (`0dcd0db`) FAILED its
+**REVISION 4 — scoped by `docs/decisions.md` D-489 to the rev-3 review's own
+§7 list and nothing else: its TWELVE MECHANICAL REMEDIES verbatim, plus replacing
+one mislabeled receipt row with the two D-488 receipts cited by digest.** Revision
+3 (`a62ffca`) FAILED its fresh-context review
+(`docs/experiments/wp15d_b_prereg_REVIEW_rev3.md`: 0 BLOCKING, 6 MAJOR, 7 MINOR),
+of which twelve were mechanical and ONE was substantive — a receipt row whose
+captured output belongs to a different input from the one it names. **D-489 rules
+that defect a NARRATIVE-PROVENANCE defect and not a criterion defect**, on the
+ground that the property it concerned now carries two independent, exported,
+re-runnable receipts (D-488), and declines the reconstruction of the lost scratch.
+**D-490 lifts D-489's fresh-session clause**; the scope is unchanged. **NOTHING
+outside that list moves** — the review re-derived every calibration, bench, spread
+and sensitivity figure, re-checked every revision pin and validated the arena
+config key by key, and says in terms: *"Nothing in the calibration, the bench, the
+selection of K = 16, the seat assignment, the slice, the arena config, the
+criterion's own three terms, or the measurement artifact's numbers needs to
+change. The run stands."* **THE AGREEMENT CRITERION IS CLOSED ON ITS MERITS**: the
+rev-3 reviewer rebuilt the referee inversion from scratch and measured term (ii)
+moving from 0 to 459 findings on both instruments, which is the BLOCKING revision
+3 existed to close.
+
+| rev-3 finding | what revision 4 did |
+|---|---|
+| NEW 1 — §7.2 cited a pool-maximum bracket from the rev-1 reviewer's own probe | the clause is DELETED, figure and all; `capped_rows=0` at K = 128 in the registered artifact carries the remainder |
+| NEW 2 — §5 routed 3 of the arena's 5 verdict tokens | rows added for `invalid_forfeit` and arena exit 1, plus one import-by-reference row; "fourth token" corrected to "one of five" |
+| NEW 3 — §5's attribution row was keyed on revision 2's superseded condition | restated over §4B's registered terms (i)/(ii)/(iii) |
+| NEW 4 — §4B read its dry run against the superseded COUNTS criterion | both places restated over the registered terms; the counts are recorded as context |
+| **NEW 5 (SUBSTANTIVE)** | **D-489**: the mislabeled row is REPLACED by the two D-488 receipts cited by digest, and the narrative built on it is WITHDRAWN. The lost scratch is not reconstructed |
+| NEW 6 — the probe's sample was named two incompatible ways | "openings `1500..1549`, i.e. file lines `1562..1611`", with the 61-header-line reason stated |
+| NEW 7 — two sections gave two discharges for one gate | §4's row now points at §7.7 and only there |
+| NEW 8 — a second-instrument discharge duplicated §4B's own | deleted; `:141-146` carries it correctly |
+| NEW 9 — the cost bracket was 3.5–7× its own cited source | derived from `wp17_governed_run_v1.txt`'s `wall_ms 1049514`; the two checker passes are separated into seconds and minutes |
+| NEW 10 — two artifacts consumed without name or digest | both now named with sha256 |
+| NEW 11 — "15- and 35-stone positions" | "15-, 31- and 35-stone" |
+| NEW 12 — a cited line range lacked its expression | cited at `:284` |
+| NEW 13 — the probe registered no command and no replication | both registered at D-376's level, and **the command is now dry-run and its output recorded** |
+
+**REVISION 3 was a further round, scoped by the architect to the four findings of `wp15d_b_prereg_REVIEW_rev2.md` and nothing else.** Revision 2 FAILED (1 BLOCKING, 3 MAJOR), the cap returned the package, and the architect granted this round. **REVISION 2 was the one fix round.** Revision 1 (`0dcd0db`) FAILED its
 fresh-context review (`docs/experiments/wp15d_b_prereg_REVIEW.md`: 3 BLOCKING,
 7 MAJOR, 4 MINOR). **No sixth provenance defect was found** — every figure
 reproduced from the registered artifact and matched no pre-split one, the
@@ -166,8 +203,16 @@ which is the after-the-numbers move §2 refuses two sections earlier.
 The measurement run: 7 seats × 1000 openings + 7 × 24 × 5 + 7 × 4 × 5 searches at
 50 000 nodes, **MEASURED 2662.25 s** single-threaded, one launch and one read.
 The governed run: 500 openings × 2 seats over 4 workers at the same budget —
-**ESTIMATED 1.5–3 hours** wall from WP-1.7's own comparable run, plus one
-Criterion 1'' pass and one second-instrument pass of a few seconds each.
+**ESTIMATED ~26 minutes** wall, DERIVED from the artifact this row cites rather
+than guessed beside it: `artifacts/wp17_governed_run_v1.txt` records `timing
+n_workers 4 wall_ms 1049514` over `n 682`, i.e. 17.5 min for 682 games at 4
+workers, which scales to ≈ 26 min at this run's 1000-game cap. **The two checker
+passes are NOT both seconds** — the warm Criterion 1'' pass returns in **under a
+second** on a report of this kind because it replays nothing, while the
+second-instrument pass takes **~12 minutes**, since the cold checker replays
+1364 turns through both engines. Revision 3 said "1.5–3 hours" and "a few seconds
+each"; both were estimates where the cited artifact carried the measurement,
+which D-291 makes a finding.
 Operator attention: one launch, one read, one slot pass.
 
 **WHAT THE RUN REPORTS, AND WHICH LINES ARE READ** (rule 6; review MAJOR 6). The
@@ -208,7 +253,7 @@ on the tree that actually ran, never inferred from the OFF seat's.
 | budget | `nodes`, 50000 |
 | `turn_cap` | 40 |
 | `n_workers` | 4 |
-| `hang_timeout_ms` | 120000 — liveness only, never an adjudication (D-159); its margin is confirmed at the slot pass against §3's own worst single search |
+| `hang_timeout_ms` | 120000 — liveness only, never an adjudication (D-159); its margin is discharged by **§7.7's registered timeout probe** and by nothing else. §3's bench is NOT the discharge: §7.7 withdraws that reading in terms, because neither bench fixture is the governed workload |
 
 ---
 
@@ -330,33 +375,32 @@ FLAG, not what they COUNT:
 > reports — D-401's own disposition, and not a re-run.
 
 **AND IT IS SHOWN TO FAIL, WHICH IS THE WHOLE POINT** — receipt
-`artifacts/wp15d_b_criterion_falsification_v1.txt`:
+`artifacts/wp15d_b_criterion_falsification_v1.txt`, sha256
+`213ecbef3e6647f4a13d67dfcd083543896b62365c9e2aa4d50445020dded658`:
 
 | input | what happens | criterion |
 |---|---|---|
 | the clean WP-1.7 report | warm exits 0; cold's `1a`/`1b` lists are **empty** (its one failure is clause (b)) | **PASSES** |
-| game 2's `result` flipped `p1_win`→`p2_win` | warm exits **2**, refusing: the replay document is bound to the report's sha256 and "the two documents are not about each other" | **FAILS (i)** |
+| **a self-consistent REFEREE INVERSION, reproduced TWICE INDEPENDENTLY and exported re-runnable** — the launching session's (`artifacts/wp15d_b_referee_inversion_repro_v1.txt` sha256 `b587b8c6…`, its mutated report `c532be4f…` and replay `1c2d7967…`, instrument `d14b0136…`) and the rev-3 reviewer's, built without knowledge of it (`artifacts/wp15d_b_rev3_criterion_reproduction_v1.txt` sha256 `978bb06c…`, instrument `b59f7b49…`) | on the honest report both checkers report ZERO `1b` mismatches; on the inversion **both emit 459 `FAIL 1b` lines** and the warm pass moves from exit 0 to exit 1, while the `1b`/`1c` COUNTS stay byte-identical at `459` and `682/341`. The corrupted report carries `inconclusive_at_game_cap` where the honest one carries `h0` | **FAILS (ii)** — on the findings, which is exactly why the terms are findings and not counts |
 | game 2's move list reordered, replay doc **rebound** to the mutated digest so the binding cannot be what refuses | warm exits **2** on a structural invariant, before any engine is asked: the pair's two games "differ at turn 2, which is inside the 3-turn book" | **FAILS (i)** |
 | **a self-consistent REFEREE INVERSION** — every decided game's winner flipped, the document left internally consistent | the rev-2 review built this and ran both checkers end to end: the counts are byte-identical to the honest run (`1b: 459`, `1c: 682/341`), **and both emit 459 `FAIL 1b` lines** | **FAILS (ii)** — on the findings, which is exactly why the terms are findings and not counts |
-| an internally consistent seat mislabel | the cold `1a` asks each labelled engine what it would play and flags `answers[mover] != played[free]` (`tools/wp15b_attribution_check.py:286-290`) | reported as CONTEXT, not a term — argued from the code, not demonstrated |
+| an internally consistent seat mislabel | the cold `1a` asks each labelled engine what it would play and flags `answers[mover] != played[free]` (`tools/wp15b_attribution_check.py:284`) | reported as CONTEXT, not a term — argued from the code, not demonstrated |
 
-**AND ONE ATTEMPTED REPRODUCTION THAT DID NOT REACH THE TERM IT AIMED AT,
-RECORDED RATHER THAN DRESSED UP AS A SECOND DEMONSTRATION.** This session
-rebuilt the referee inversion independently — 459 decided games flipped, the
-replay document rebound to the new digest — and the warm pass exited **2**,
-refusing before `1b` was reached, because flipping `result` alone leaves the
-`score_a`, `llr` and pentanomial fields inconsistent with it. **That falsifies
-term (i), not term (ii)**, so it does NOT independently reproduce the review's
-construction, which was self-consistent across those fields too. The review's
-measurement stands on the review's own receipt; this session's does not
-corroborate it and is not offered as if it did.
-
-**THAT IS WHY THE SECOND INSTRUMENT IS NOT BLIND TO THE SAME STAGE.** Both
-re-derive attribution by asking the engines themselves; neither takes the
-arena's seat bookkeeping on trust. `docs/process.md`'s test — "two instruments
-blind to the same stage are one instrument reported twice" — is answered by the
-third row above, where the two react to the same corruption through different
-mechanisms.
+**REVISION 3'S ACCOUNT OF A FAILED REPRODUCTION IS WITHDRAWN, AND WHAT REPLACED
+IT IS STRONGER THAN WHAT IT CLAIMED.** Revision 3 recorded an attempted
+reproduction that "did not reach the term it aimed at", and diagnosed the failure
+as a partial mutation. **The rev-3 review found that account rests on a
+mis-identified input** — the digest printed inside the receipt row's own captured
+refusal belongs to a different file from the one the row names — and **D-489
+rules that the lost scratch is NOT reconstructed**, because the property the
+episode was about is now settled by better evidence and re-establishing a deleted
+`/tmp` file would buy nothing. **The property carries TWO INDEPENDENT RECEIPTS**,
+both exported and both re-runnable: the launching session's and the rev-3
+reviewer's, built without knowledge of each other, differing in construction —
+one also repairs `first_player_wins`, which neither checker reads — and agreeing
+completely (D-487, D-488, and the table row above). **No claim in this document
+now rests on the withdrawn account**, and the row that carried it has been
+replaced by the two receipts.
 
 **THE DRY RUN — TAKEN, with its input, its criterion, its defect class and what
 it found** (`docs/process.md`).
@@ -367,13 +411,19 @@ it found** (`docs/process.md`).
   differing from it only in identity. Never the governed report itself, which
   does not exist yet.
 - *Criterion*: the warm pass reproduces the verdict WP-1.7 recorded from it, and
-  the two instruments agree on (i) and (ii).
+  **the agreement criterion's own three registered terms hold on it** — (i) the
+  warm pass exits `ATTRIBUTABLE (0)`; (ii) BOTH instruments report ZERO `1b`
+  move-list mismatches and ZERO `1c` rebuild mismatches; (iii) neither instrument
+  refuses to read the documents. Revision 3 stated this criterion over revision
+  2's superseded COUNTS, which the review proved invariant under the defect class;
+  the terms below are the registered ones.
 - *Defect class excluded*: **a checker that cannot read this arena's report at
   all** — a schema or field-name drift since `6c929da`/`a80a864` that would make
   the governed pass exit non-zero and be mistaken for a void run. Exit status
   alone cannot exclude it; reproducing a KNOWN verdict from a known report does,
   because a checker reading the wrong fields cannot land on the right answer.
-- **WHAT IT RECORDED:**
+- **WHAT IT RECORDED**, quoted from `artifacts/wp15d_b_dryrun_v1.txt`, sha256
+  `c318aa225f832f7744bf0c894e6a474636a512b789bdd0010e3a942916750a93`:
 
 ```
 warm_attribution_check: (b): 3 inert pair(s) excluded by theorem, 338 pair(s) directly attributed at their first differing searched turn, 0 unattributable
@@ -388,8 +438,16 @@ attribution_check: FAIL 1a robustness FAILS: … moves the verdict from `h0` to 
 ```
 
   The warm pass exits **0** and reproduces WP-1.7's own `h0` at 341 pairs. The
-  cold checker exits **non-zero on clause (b)**. **(i) 459 = 459 and (ii)
-  682 games / 341 pairs = 682 / 341: the agreement criterion HOLDS.**
+  cold checker exits **non-zero on clause (b)**, which §4B excludes from the
+  criterion by name. **READ OVER THE REGISTERED TERMS, NOT OVER THE SUPERSEDED
+  COUNTS**: **(i)** the warm pass exits `ATTRIBUTABLE (0)` — its own
+  `PASS — 0 failure(s)` line; **(ii)** BOTH instruments report ZERO `1b` and ZERO
+  `1c` MISMATCHES — neither emits a `FAIL 1b` or `FAIL 1c` line, the cold
+  checker's single failure being clause (b); **(iii)** neither refuses to read.
+  **The agreement criterion HOLDS on this input.** That the two also agree on the
+  counts `459` and `682/341` is recorded as context and is NOT a term: the review
+  measured those counts invariant under a referee inversion, which is why the
+  terms are the mismatch FINDINGS.
 - **AND THE DRY RUN EARNED ITS PLACE BY FALSIFYING THIS DOCUMENT.** Revision 2
   first registered the criterion as "both checkers exit 0 on it". On a real
   report of the kind, that is FALSE for a reason that has nothing to do with any
@@ -463,14 +521,17 @@ should not discover it at launch.
 | corpus ratio in **(1.10, 1.25]** | **no SPRT.** The bracket is missed without the abort being reached; the number is recorded as a finding and nothing is re-scoped to chase it (rule 5, D-374) |
 | corpus ABORT fires (> 1.25) | no SPRT, whatever the calibration said. The package closes on the bench |
 | a position fails the IQR gate | the verdict is WITHHELD until that position is re-measured on both seats; no ratio is read before then |
-| the two attribution instruments DISAGREE | **the run is not a measurement.** The verdict is not read, and the package returns to the architect with both reports (§4B) |
+| **§4B's AGREEMENT CRITERION FAILS on any of (i), (ii) or (iii)** | **the run is not a measurement.** The verdict is not read, and the package returns to the architect with both reports (§4B's own registered consequence). Stated over the criterion's three terms and NOT as "the instruments disagree", which was revision 2's superseded condition: on a corrupted report the two instruments AGREE on the counts and the run is still not a measurement, so a row keyed on disagreement could not be reached by the failure the criterion actually registers |
 | fewer than 100 pairs when the LLR crosses | no verdict is read, however it crossed (§4A's floor) |
 | SPRT `h1` | the committed config moves to the selected K, the closure pin is re-recorded with digests, and the 1.8 arc's re-test clause is considered if a material nps jump landed |
 | SPRT `h0` | the gate stays `0`. A measured finding, not a failure; the mechanism stays landed and oracle-gated |
 | `inconclusive_at_game_cap` | reported as such; no config moves. The gate stays `0` |
-| `inconclusive_degenerate` | **the arena's fourth token**, which revision 2 did not route: the pentanomial is degenerate, so no verdict is available at any n. Reported as such, no config moves, and the run is NOT re-drawn on a fresh slice inside this WP — the book has none left (§4) |
+| `inconclusive_degenerate` | **one of the arena's five tokens** (`crates/pistol-arena/src/sprt.rs`), which revision 2 did not route: the pentanomial is degenerate, so no verdict is available at any n. Reported as such, no config moves, and the run is NOT re-drawn on a fresh slice inside this WP — the book has none left (§4) |
+| `invalid_forfeit`, or `forfeits > 0` at any verdict | **the run is not a measurement.** The arena returns this token whenever any game forfeits (`score.rs`, D-158), and §4's `hang_timeout_ms` is exactly a liveness event that can produce one. The verdict is not read and no config moves; investigate the forfeit's cause (D-158). `wp17_sprt_prereg.md`'s own row, and this document adopts it rather than inventing a second disposition |
+| arena exit 1 (`RUN_FAILED`, `src/bin/arena.rs`) | the run is VOID, exactly as exit 2 is. The operator reads the instrument's own printed message; no verdict is read and no config moves |
 | Criterion 1'' fails on the governed report | **the run is not a measurement — not `h0`, not `h1`.** The verdict is not read. D-401's own precedent, and a hard stop |
-| arena exit 2 | the run is VOID; the operator reads the instrument's own printed message |
+| arena exit 2 (`REFUSED`) | the run is VOID; the operator reads the instrument's own printed message |
+| `arena_report_aborted`; a pre-game refusal with NO REPORT AT ALL; any attribution-checker exit other than the ones routed above | **WP-1.6 §5's rows govern, imported by reference and not restated here** (D-423, D-424: a partition restated is a partition that drifts) |
 
 **One re-run is licensed only on a receipted environment fault**, never on a
 verdict anyone dislikes.
@@ -541,8 +602,12 @@ validated itself at K = 128, where `capped_rows=0`. **That is the grid running
 off the end of the pool-size distribution, not benefit decaying**: where the cap
 never fires, the seat is the incumbent relabelled, and the artifact shows it
 literally — K = 128 and K = 0 agree on the mean, on every histogram bucket and on
-every counter. The reviewer's partial re-run puts the pool maximum in
-**(100, 120]**, so the whole region above it is an inert shelf.
+every counter, so the whole region above it is an inert shelf. **The registered
+artifact is what says so and nothing else is cited for it**: `capped_rows=0` at
+K = 128. Revision 3 also cited a pool-maximum bracket taken from the revision-1
+REVIEWER's own partial re-run — a different instrument, a different grid and a
+different population — which §1 forbids in this document however true it may be,
+and it is deleted rather than re-sourced.
 
 **The evidence the argument wanted is in the same artifact, at K = 64, and
 revision 1 never cited it**: there the cap fires **818 937** times — more than at
@@ -602,7 +667,7 @@ first iteration). Against `hang_timeout_ms = 120000` that is a **11.3×** margin
 launch.** The reasoning is now stated at the strength the evidence supports
 (review MAJOR 7): **neither bench fixture is the governed workload**, so neither
 figure confirms the timeout on the workload it actually guards. `spread_v1` is
-not played at all; `bench_positions_v1` is 15- and 35-stone positions and its
+not played at all; `bench_positions_v1` is 15-, 31- and 35-stone positions (`p16` is the 31, and it is one of the two degenerate positions §7.3 names) and its
 worst single median is **491 ms (a 244× margin)**, which is indicative and no
 more. **The governed workload is the book**, and the registered run walked it in
 the SENS section but emitted no timing there — an observability gap in the
@@ -612,17 +677,58 @@ choosable at launch** (review NEW 4 — revision 2 left the sample unspecified,
 which makes a gate that can stop the launch also a gate whose result the launcher
 selects):
 
-> **THE TIMEOUT PROBE.** Before launch, the ARMED seat
-> (`configs/instrument_staged_snk_v0.toml`) is run at the registered budget
-> `go nodes 50000` over **the first 50 openings of the governed slice —
-> `random_openings_v1.txt` lines `1500..1549`, in file order, none skipped** —
-> through the shipped `target/release/pistol`, reading the `time` field off each
-> `info totals` line. **The statistic is the MAXIMUM of those 50.** If
-> `hang_timeout_ms / max < 24`, the launch STOPS and the margin is reported to
-> the architect (D-376's own watchdog rule, whose form this follows). The 50
-> openings are part of the governed slice and are played by the run itself, so
-> this consumes nothing and biases nothing — it measures the engine's speed, not
-> any game's outcome.
+> **THE TIMEOUT PROBE**, registered at D-376's own level of specificity — the
+> command, the sample, the config, the budget, the statistic, the threshold, the
+> consequence and the procedure, all fixed HERE so none of them is choosable at
+> launch.
+>
+> **THE SAMPLE.** The first 50 openings of the governed slice — **openings
+> `1500..1549`, which are FILE LINES `1562..1611`** of
+> `crates/pistol-cli/tests/fixtures/random_openings_v1.txt`, in file order, none
+> skipped. **The two are not the same thing and the document says which it
+> means**: the book carries 61 comment and blank lines before its first opening,
+> so opening *i* sits at file line *i* + 62, and the literal reading "file lines
+> `1500..1549`" would select openings `1438..1487` — inside WP-1.7's already
+> CONSUMED slice, which would make this clause's own justification false.
+>
+> **THE COMMAND, VERBATIM**, one invocation per opening, `$entry` being that
+> line of the book copied unaltered (each is a position-verb TAIL, so the
+> protocol line is `position ` followed by it):
+>
+> ```
+> printf 'position %s\ngo nodes 50000\nquit\n' "$entry" \
+>   | target/release/pistol --config configs/instrument_staged_snk_v0.toml
+> ```
+>
+> **THE FIELD AND THE STATISTIC.** The `time` field of the single `info totals`
+> line each invocation prints. **The statistic is the MAXIMUM over the 50.**
+>
+> **THE PROCEDURE.** The 50-invocation sweep is run **TWICE, independently**, and
+> the rule is applied to the LARGER of the two maxima — `docs/process.md`'s
+> cheap-run clause, which makes replication the registered answer to instrument
+> doubt, and D-376/D-377's own form, where both runs' worst figures are recorded
+> and the larger governs. The sweep costs about fifteen seconds.
+>
+> **THE THRESHOLD AND THE CONSEQUENCE.** If `hang_timeout_ms / max < 24`, the
+> launch STOPS and the margin is reported to the architect. The 50 openings are
+> part of the governed slice and are played by the run itself, so this consumes
+> nothing and biases nothing — it measures the engine's speed, not any game's
+> outcome.
+>
+> **THE COMMAND'S OWN DRY RUN, on an input of the same kind and NOT on the
+> registered sample** (`docs/process.md`: the literal commands are exercised
+> before this review passes, on the same sort of artefact differing only in
+> identity). Input: **opening 0**, file line 62, `start moves 0,0 -4,3/-1,-1
+> 0,-4/1,3`. Output, the line the statistic is read from:
+>
+> ```
+> info totals depth_turns 2 seldepth 3 nodes 50176 nps 310325 time 161 hashfull 0 score cp -78 pv -1,0/0,-1 -2,1/-1,1
+> ```
+>
+> The command parses, the engine accepts the book line as a position tail, and
+> the `time` field exists where the statistic expects it. Revision 3 registered
+> this probe without ever running it, which is how the sample ambiguity above
+> survived to a third review.
 
 **7.8 — the governed run's own revision**: filled at launch.
 
@@ -653,5 +759,7 @@ registered threshold moved — the review verified all three independently.
 **A future (B)-shaped package reviews its pre-registration before its
 measurement run, not after.**
 
-This revision is **the one fix round**. A second document failure returns the
-package to the architect with the report, and no further round is self-granted.
+Revision 2 was the one fix round; revision 3 was the architect's granted round
+(D-485); **revision 4 is D-489's scoped round and it is the last one**. Its
+re-review is scoped to the rev-3 review's §7 list alone, and **any new finding
+returns the package to the architect with the report — there is no revision 5**.
