@@ -1,5 +1,26 @@
 # WP-1.5d (B) — PRE-REGISTRATION: the safety-net cap's calibration, bench and SPRT
 
+**REVISION 2 — the one fix round.** Revision 1 (`0dcd0db`) FAILED its
+fresh-context review (`docs/experiments/wp15d_b_prereg_REVIEW.md`: 3 BLOCKING,
+7 MAJOR, 4 MINOR). **No sixth provenance defect was found** — every figure
+reproduced from the registered artifact and matched no pre-split one, the
+selection rule and excluded set were verified against the instrument, and the
+commit clock showed registration preceded the run. It failed on OMISSIONS and on
+sentences claiming more than their receipts. What changed:
+
+| revision 1 | revision 2 | why |
+|---|---|---|
+| the SPRT's `elo0`/`elo1`/`alpha`/`beta`/game cap registered nowhere | §4A registers all five | BLOCKING 1 |
+| Criterion 1'' invoked once, undefined; no second instrument, no dry run | §4B registers all three with their pins and consequences | BLOCKING 2 |
+| no arena config named | §4C names it and registers every value it carries | BLOCKING 3 |
+| "the grid validated itself at its own top end" | **WITHDRAWN — measured false.** The decay is at K = 64; K = 128 is inert | MAJOR 2 |
+| "every corpus cell is `nodes=50176`" | false in 14 of 168 cells; restated | MAJOR 1 |
+| the IQR threshold first appeared in the results | registered in §3 | MAJOR 4 |
+| the (1.10, 1.25] band had two instructions and no row | one row, in §5 | MAJOR 3 |
+| no cost statement, no rule-6 reporting | §3 and §4A | MAJOR 5, 6 |
+| §7.7's margin argued off the wrong workload | restated | MAJOR 7 |
+| four MINORs | closed, including §6.3's unnamed denominator | MINOR 1–4 |
+
 **Revision 1.** Written BEFORE the measurement run and before game one. Governed
 by `docs/decisions.md` **D-482** (one run, one instrument, one artifact; no
 pre-split number admissible) and **D-483** (a design carries no measured
@@ -51,9 +72,22 @@ supersedes the first wholesale rather than being merged with it.
 ## 2. THE CALIBRATION — grid, channel, direction, rule, and the undefined case
 
 **THE GRID.** `K ∈ {4, 8, 16, 32, 64, 128}`, plus the incumbent seat `K = 0`.
-It spans widely on purpose: if the benefit does not decay across it, the rule
-selects the largest point and **that outcome is a finding about the channel**
-rather than a calibration, recorded as such.
+
+**THE FALSIFIABILITY BRANCH, REWRITTEN SO THE INSTRUMENT CAN ACTUALLY REACH IT**
+(review MAJOR 2). Revision 1 registered "if the benefit does not decay across the
+grid, the rule selects the largest point". **That branch was unreachable by
+construction**: at a K above every pool the cap never fires, so that seat is the
+incumbent relabelled, its gain is identically 0, and it can never satisfy a
+positive threshold. A criterion the defect it names cannot falsify is no
+criterion (`docs/process.md`). The branch is therefore keyed on the largest grid
+point at which **the treatment is actually applied**:
+
+> **`K_bind` = the largest grid point with `capped_rows > 0`.** If
+> `gain(K_bind) ≥ 0.75 × max gain` — i.e. the benefit has NOT decayed anywhere the
+> cap still binds — the rule selects `K_bind` and **that outcome is a finding
+> about the channel rather than a calibration**, recorded as such. Grid points
+> above `K_bind` are INERT and carry no information about decay; they bound the
+> pool size from above, which is a different fact and is reported as one.
 
 **THE POPULATION.** The book's openings `0..999` —
 `crates/pistol-cli/tests/fixtures/random_openings_v1.txt`, sha-pinned. Every one
@@ -114,6 +148,37 @@ not a like-for-like unit (D-374).
 | `bench_positions_v1` (corpus) | Σ median ms ON / OFF **≤ 1.10** | **> 1.25** |
 | `spread_v1` | **REPORTED, NOT GATED** | — |
 
+**THE BAND BETWEEN THEM IS NOT A GAP** (review MAJOR 3). A ratio in
+**(1.10, 1.25]** misses the bracket without reaching the abort: the SPRT is
+**NOT run**, the number is recorded as a finding, and the change is not
+re-scoped inside this WP to chase it (CLAUDE.md rule 5's own "a measured
+structural floor is a finding, not a failure", and D-374: registered numbers do
+not move). §5 carries this as its own row rather than leaving it to be inferred.
+
+**THE IQR GATE, REGISTERED HERE AND NOT IN THE RESULTS** (review MAJOR 4).
+Per position, the IQR of its five per-rep times must be **≤ 10 % of that
+position's own median** — the D-215/D-362 convention. A position exceeding it
+WITHHOLDS the verdict and is re-measured, both seats, before any ratio is read.
+Revision 1 stated this threshold for the first time while reporting the result,
+which is the after-the-numbers move §2 refuses two sections earlier.
+
+**THE COST, ON THIS DOCUMENT'S OWN FACE** (`docs/process.md`; review MAJOR 5).
+The measurement run: 7 seats × 1000 openings + 7 × 24 × 5 + 7 × 4 × 5 searches at
+50 000 nodes, **MEASURED 2662.25 s** single-threaded, one launch and one read.
+The governed run: 500 openings × 2 seats over 4 workers at the same budget —
+**ESTIMATED 1.5–3 hours** wall from WP-1.7's own comparable run, plus one
+Criterion 1'' pass and one second-instrument pass of a few seconds each.
+Operator attention: one launch, one read, one slot pass.
+
+**WHAT THE RUN REPORTS, AND WHICH LINES ARE READ** (rule 6; review MAJOR 6). The
+arena's own report, unchanged by this WP: `counts n distinct_n wins_a capped
+losses_a forfeits decided`, the `pentanomial` line, `llr_pair`, `nelo_pair` with
+its `ci95`, and the two `timing_engine` lines. **`distinct_n` is reported beside
+`n`** — identical games are deduped and a claim quotes both. **Per-side compute
+is reported** from the two `timing_engine` lines. **The protocol is the line
+protocol** (D-88), the instrument is fixed-nodes, and no wall-clock-only claim is
+made anywhere (rule 6).
+
 **THE CORPUS IS A NO-REGRESSION CHECK AND IS REGISTERED AS ONE.** The cap
 narrows a row this fixture rarely takes, so a large gain here is not expected and
 would itself want explaining. **If the ABORT fires the SPRT is not run** and the
@@ -145,6 +210,207 @@ on the tree that actually ran, never inferred from the OFF seat's.
 | `n_workers` | 4 |
 | `hang_timeout_ms` | 120000 — liveness only, never an adjudication (D-159); its margin is confirmed at the slot pass against §3's own worst single search |
 
+---
+
+## 4A. THE VERDICT PARAMETERS — registered here, not authored at launch
+
+Review BLOCKING 1: revision 1 read `h0`/`h1`/`inconclusive_at_game_cap` in §5
+while the parameters that DEFINE those verdicts appeared nowhere, so they would
+have been written into a config at launch, unreviewed, with the calibration
+numbers already on the page.
+
+| key | value | why this value |
+|---|---|---|
+| `elo0` | **0.0** | H0: the capped seat is no stronger. Every SPRT in this project uses this null |
+| `elo1` | **15.0** | H1's alternative, the same as WP-1.6's and WP-1.7's, so a verdict here is comparable with theirs rather than measured against a bar moved for it |
+| `alpha` | **0.05** | as every prior run |
+| `beta` | **0.05** | as every prior run |
+| game cap | **`openings_take` × 2 = 1000 games (500 pairs)** — the boundary `inconclusive_at_game_cap` names |
+| pair floor | **100 pairs**, below which no verdict is read however the LLR crossed — §2's own floor in every prior prereg |
+
+**H1 IS "THE CAPPED SEAT IS STRONGER", AND ENGINE A IS THE CAPPED SEAT.** The
+arena's statistic is slot A's score; reading that sign backwards is the single
+mistake this document exists to prevent, and §4 states the seat assignment for
+the same reason.
+
+---
+
+## 4B. THE DOUBT, ITS INSTRUMENT, THE SECOND INSTRUMENT, AND THE DRY RUN
+
+Review BLOCKING 2: revision 1 invoked Criterion 1'' once and defined nothing.
+
+**THE STAGE UNDER DOUBT**: everything between the two engine processes and the
+printed verdict — the arena's seat bookkeeping, pairing, referee and scoring.
+This WP changes which engine sits in a seat, not the arena that scores them.
+
+**THE INSTRUMENTS, EACH WITH THE REVISION THAT GOVERNS THIS RUN** — a change to
+any reopens this review exactly as an amendment to this document would:
+
+1. **The warm-replay pass** — `crates/pistol-arena/src/{seats,transcript,replay,replay_report}.rs`
+   and `bin/arena.rs`'s `--replay` mode, at **`a14912a`**, the last commit that
+   touched the crate. **Not the `bfdf933` its predecessors pinned, and the
+   difference is checked rather than assumed**: `git diff bfdf933..HEAD --
+   crates/pistol-arena/src/{replay,replay_report,seats,transcript}.rs
+   src/bin/arena.rs` is **181 deletions and 0 insertions**, all of them the
+   `//!` header sweep (D-443); the only non-comment change anywhere in the crate
+   since is three lines in a TEST STUB engine (`FirstLegal`), outside the replay
+   path.
+2. **The statistics layer** — `tools/wp16_warm_attribution_check.py` at
+   **`6c929da`**, the last commit that touched it.
+3. **THE SECOND INSTRUMENT** — `tools/wp15b_attribution_check.py` at
+   **`a80a864`**, the last commit that touched it. **It does not share the stage
+   under doubt**: it is the COLD checker, replaying each game from its move list
+   without the warm pass's per-engine subprocess state, so a defect in the warm
+   replay's seat bookkeeping cannot reach it. Two instruments blind to the same
+   stage are one instrument reported twice (`docs/process.md`).
+4. **The binaries those actually run** — `target/release/pistol` and
+   `target/release/arena`, built `--release --locked` at the run's revision;
+   **rebuild means re-record**, and §7.5 re-confirms at launch.
+
+**CRITERION 1'', quoted verbatim from `docs/experiments/wp16_warm_replay_design.md`
+§4 point 4, in full and without ellipsis:**
+
+> **Criterion 1''.** A report is a measurement iff (a) zero
+> divergence-confirmed inversions — every divergence found in point 2 above
+> resolves to either "no divergence" or "confirmed inversion" (the
+> other-engine match case), never left unclassified — and (b) every
+> NON-INERT pair (point 3's exclusion, forfeits always non-inert) is
+> directly attributed by first divergence. A DETERMINISM VIOLATION (point
+> 2's other branch) is checked FIRST and, if found anywhere, stops the
+> whole evaluation before (a)/(b) are even asked, per its own exit code.
+> The old clause (b)'s adversarial-reassignment machinery is KEPT, but only
+> as a cross-check run over the INERT pairs alone (expected to be a no-op,
+> since point 3's theorem already fixes their bucket) — its result is
+> cited in the report as confirming evidence, not as the thing the verdict
+> depends on.
+
+**THE EXIT TAXONOMY, the instrument's own constants at `6c929da`**:
+`ATTRIBUTABLE = 0`, `NOT_A_MEASUREMENT = 1`, `NO_ANSWER = 2`,
+`DETERMINISM_VIOLATION = 3` (`tools/wp16_warm_attribution_check.py:133-136`).
+What each may be concluded to mean is **WP-1.6 §5's table, imported by reference
+and not restated** — that partition was deleted once for being restated (D-424)
+and reborn copies are how it failed three reviews (D-423).
+
+**THE AGREEMENT CRITERION, ITS REGISTERED CONSEQUENCE, AND WHY IT IS NOT "BOTH
+EXIT 0" — WHICH THE DRY RUN FALSIFIED.**
+
+The two instruments answer to DIFFERENT criteria by design: the cold checker
+applies Criterion 1′, whose clause (b) is an adversarial reassignment over
+vacuous pairs; the warm pass applies Criterion 1″, which was BUILT because
+clause (b) failed on a run nobody could otherwise read (D-401, and
+`docs/experiments/wp16_warm_replay_design.md`). **Requiring both to exit 0 would
+therefore register a disagreement on every run**, which is what the dry run below
+demonstrated on a real report. The criterion is stated instead over the
+quantities the two compute INDEPENDENTLY of each other and of the stage under
+doubt:
+
+> **THE AGREEMENT CRITERION.** On the governed report, the two instruments must
+> agree exactly on (i) `1b`'s count of decided non-forfeit games adjudicated
+> against the move list, and (ii) `1c`'s counts of games and of pairs rebuilt off
+> the `score_a` path. Both derive these by re-deriving the outcome from the
+> recorded move list rather than from the arena's own bookkeeping, so a defect in
+> the stage under doubt would have to corrupt both identically to pass.
+>
+> **THE REGISTERED CONSEQUENCE**, fixed before either runs: **any disagreement on
+> (i) or (ii) makes the run NOT A MEASUREMENT.** The verdict is not read, neither
+> `h0` nor `h1`, and the package returns to the architect with both reports — the
+> disposition D-401 took, and not a re-run.
+>
+> **The cold checker's own clause-(b) VERDICT is explicitly NOT an agreement
+> term.** Criterion 1″ supersedes clause (b) for this project's runs; a
+> clause-(b) failure beside a Criterion 1″ pass is the expected shape and is
+> reported as context, never as a disagreement.
+
+**THE DRY RUN — TAKEN, with its input, its criterion, its defect class and what
+it found** (`docs/process.md`).
+
+- *Input*: `artifacts/wp17_governed_run_v1.txt` and
+  `artifacts/wp17_governed_replay_v1.txt` — WP-1.7's own preserved governed
+  report and replay, a REAL instance of the kind this run will produce,
+  differing from it only in identity. Never the governed report itself, which
+  does not exist yet.
+- *Criterion*: the warm pass reproduces the verdict WP-1.7 recorded from it, and
+  the two instruments agree on (i) and (ii).
+- *Defect class excluded*: **a checker that cannot read this arena's report at
+  all** — a schema or field-name drift since `6c929da`/`a80a864` that would make
+  the governed pass exit non-zero and be mistaken for a void run. Exit status
+  alone cannot exclude it; reproducing a KNOWN verdict from a known report does,
+  because a checker reading the wrong fields cannot land on the right answer.
+- **WHAT IT RECORDED:**
+
+```
+warm_attribution_check: (b): 3 inert pair(s) excluded by theorem, 338 pair(s) directly attributed at their first differing searched turn, 0 unattributable
+warm_attribution_check: cross-check: reassigning all 3 inert pair(s) leaves the verdict `h0` unchanged, as the theorem says it must
+warm_attribution_check: 1b: 459 decided non-forfeit game(s) adjudicated against the move list
+warm_attribution_check: 1c: 682 game(s) and 341 pair(s) rebuilt off the score_a path
+warm_attribution_check: PASS — 0 failure(s)
+
+attribution_check: 1b: 459 decided non-forfeit games adjudicated against the move list
+attribution_check: 1c: 682 games and 341 pairs rebuilt off the score_a path
+attribution_check: FAIL 1a robustness FAILS: … moves the verdict from `h0` to `inconclusive_at_game_cap`
+```
+
+  The warm pass exits **0** and reproduces WP-1.7's own `h0` at 341 pairs. The
+  cold checker exits **non-zero on clause (b)**. **(i) 459 = 459 and (ii)
+  682 games / 341 pairs = 682 / 341: the agreement criterion HOLDS.**
+- **AND THE DRY RUN EARNED ITS PLACE BY FALSIFYING THIS DOCUMENT.** Revision 2
+  first registered the criterion as "both checkers exit 0 on it". On a real
+  report of the kind, that is FALSE for a reason that has nothing to do with any
+  defect — and had it been registered, the governed run would have been declared
+  not-a-measurement on its own designed behaviour. The criterion above is what
+  replaced it. A dry run on a synthetic stand-in would not have found this,
+  which is the whole of `docs/process.md`'s "only a real instance of the kind
+  exercises ATTRIBUTION".
+
+---
+
+## 4C. THE ARENA CONFIG — named, with every value it carries registered
+
+Review BLOCKING 3. The document that IS the experiment is
+**`configs/arena_wp15d_cap_vs_staged.toml`**, authored and committed at the
+governed run's own launch, because it must carry the launch-time binary digest
+and nothing else about it may drift. Every other value is fixed HERE:
+
+```toml
+schema_version = 2
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+openings_take = 500
+openings_skip = 1500          # §4's fresh slice, FIXED HERE, not at launch
+turn_cap      = 40
+n_workers     = 4
+hang_timeout_ms = 120000
+[budget]
+kind  = "nodes"
+value = 50000
+[sprt]
+elo0 = 0.0                    # §4A
+elo1 = 15.0
+alpha = 0.05
+beta  = 0.05
+[engine_a]                    # THE CAPPED SEAT — H1 is about slot A
+label  = "staged_snk"
+binary = "target/release/pistol"
+binary_sha256 = "<filled at launch, §7.5>"
+config = "configs/instrument_staged_snk_v0.toml"
+[engine_b]
+label  = "staged"
+binary = "target/release/pistol"
+binary_sha256 = "<filled at launch, §7.5>"
+config = "configs/instrument_staged_v0.toml"
+```
+
+**`configs/instrument_staged_snk_v0.toml` IS COMMITTED WITH THIS REVISION** and
+is `configs/instrument_staged_v0.toml` with **one key changed** —
+`safety_net_top_k = 16`, §2's selected value — verified by diffing the two
+documents' non-comment lines, which differ on exactly that line. That is what
+makes a verdict attributable to the key under test.
+
+**THE SLOT PASS (D-427) COMPARES THE AUTHORED FILE AGAINST THIS BLOCK, KEY BY
+KEY**, and §7.6 is that comparison rather than a note to look.
+
+---
+
 **THE BOOK IS NEARLY SPENT AND THIS DOCUMENT SAYS SO**: after this run every
 slice of `random_openings_v1.txt` is consumed, and the next SPRT in this project
 needs a regenerated or extended book. Recorded here because a later session
@@ -157,7 +423,11 @@ should not discover it at launch.
 | outcome | what happens |
 |---|---|
 | calibration selects no K | no SPRT. The package closes as a measured finding; the gate stays `0` |
-| corpus ABORT fires | no SPRT, whatever the calibration said. The package closes on the bench |
+| corpus ratio in **(1.10, 1.25]** | **no SPRT.** The bracket is missed without the abort being reached; the number is recorded as a finding and nothing is re-scoped to chase it (rule 5, D-374) |
+| corpus ABORT fires (> 1.25) | no SPRT, whatever the calibration said. The package closes on the bench |
+| a position fails the IQR gate | the verdict is WITHHELD until that position is re-measured on both seats; no ratio is read before then |
+| the two attribution instruments DISAGREE | **the run is not a measurement.** The verdict is not read, and the package returns to the architect with both reports (§4B) |
+| fewer than 100 pairs when the LLR crosses | no verdict is read, however it crossed (§4A's floor) |
 | SPRT `h1` | the committed config moves to the selected K, the closure pin is re-recorded with digests, and the 1.8 arc's re-test clause is considered if a material nps jump landed |
 | SPRT `h0` | the gate stays `0`. A measured finding, not a failure; the mechanism stays landed and oracle-gated |
 | `inconclusive_at_game_cap` | reported as such; no config moves |
@@ -181,7 +451,7 @@ selected K = 16, quoted verbatim beside the artifact lines they come from:
 
 ```
 SENS/TRAJECTORY=incumbent games=25 turn_cap=40 K=16 searches=595 decided_early=20 bearing=125 diverged=29
-SENS/TRAJECTORY=capped    games=25 turn_cap=40 K=16 searches=672 decided_early=15 bearing=135 diverged=39
+SENS/TRAJECTORY=capped games=25 turn_cap=40 K=16 searches=672 decided_early=15 bearing=135 diverged=39
 ```
 
 - **6.1 — the incumbent's own trajectory**: 595 searches, **125
@@ -191,8 +461,11 @@ SENS/TRAJECTORY=capped    games=25 turn_cap=40 K=16 searches=672 decided_early=1
   divergence rate read on one engine's path is a rate on a distribution the
   other never walks.
 - **6.3 — THE READING, STATED BEFORE GAME ONE.** The class occurs on about a
-  fifth of governed-shape searches and the played turn changes on **4.9 %–5.8 %**
-  of them, on either trajectory. **That is inside what 500 paired openings can
+  fifth of governed-shape searches, and the played turn changes on
+  **4.9 %–5.8 % OF ALL SEARCHES** — `29/595` and `39/672`, the denominator named
+  because "of them" would otherwise read as the bearing subset, where the same
+  divergences are `29/125 = 23.2 %` and `39/135 = 28.9 %` (review MINOR 2). The
+  conclusion below holds under either denominator. **That is inside what 500 paired openings can
   see, so this document does NOT predict `h0`-or-inconclusive on grounds of
   insensitivity**, and it does not predict `h1` either: a turn that differs is
   not a turn that is better, and which it is is exactly what the SPRT is for and
@@ -213,31 +486,49 @@ revisions and D-427 is the record of what that costs.
 `46aaf3fbafbc93bb4fca6816c023e6611a21a1fe739871f4b3ad945f78eefe3e`. Instrument
 `70cb580`, run at tree revision `4ec470f`, 2662.25 s, exit 0.
 
-**7.2 — THE SELECTION**, the instrument's own line, verbatim:
+**7.2 — THE SELECTION**, the instrument's own line, verbatim and unwrapped —
+revision 1 reflowed it across three lines and called it verbatim (review
+MINOR 4):
 
 ```
-CAL/SELECTED K=16 rule=largest-K-within-75pc-of-best-gain base_mean=2.0740
-             best_gain=+0.3640 threshold=+0.2730
-             gains=[K4:+0.3640 K8:+0.3370 K16:+0.2990 K32:+0.2350 K64:+0.0140 K128:+0.0000]
+CAL/SELECTED K=16 rule=largest-K-within-75pc-of-best-gain base_mean=2.0740 best_gain=+0.3640 threshold=+0.2730 gains=[K4:+0.3640 K8:+0.3370 K16:+0.2990 K32:+0.2350 K64:+0.0140 K128:+0.0000]
 ```
 
 **K = 16.** The rule is satisfied at an interior grid point: K16's gain
 (+0.2990) clears the 0.75 threshold (+0.2730) and K32's (+0.2350) does not.
 
-**AND THE GRID VALIDATED ITSELF AT ITS OWN TOP END**, which §2 registered as the
-thing that would make the rule meaningful rather than vacuous: at K = 128 the
-instrument reports `capped_rows=0` and a mean identical to the incumbent's to
-four figures (2.0740 both). **The cap never binds there** — no pool on this book
-exceeds 128 — so the benefit decays to exactly zero inside the registered grid,
-and the selection is a choice among points that differ rather than a pick from a
-flat line.
+**THE DECAY IS MEASURED, BUT NOT WHERE REVISION 1 SAID IT WAS. That claim is
+WITHDRAWN** (review MAJOR 2, which measured it). Revision 1 argued the grid
+validated itself at K = 128, where `capped_rows=0`. **That is the grid running
+off the end of the pool-size distribution, not benefit decaying**: where the cap
+never fires, the seat is the incumbent relabelled, and the artifact shows it
+literally — K = 128 and K = 0 agree on the mean, on every histogram bucket and on
+every counter. The reviewer's partial re-run puts the pool maximum in
+**(100, 120]**, so the whole region above it is an inert shelf.
+
+**The evidence the argument wanted is in the same artifact, at K = 64, and
+revision 1 never cited it**: there the cap fires **818 937** times — more than at
+any smaller K — and still yields `gain = +0.0140`. **A cap that binds harder than
+any other on the grid and buys essentially nothing is decay under real
+treatment**, which is what makes the selection a choice among points that differ.
+`K_bind` (§2) is therefore 64 on this book, `gain(64) = +0.0140` is far below the
+`+0.2730` threshold, and §2's falsifiability branch is reachable and did not
+fire.
 
 **7.3 — THE CORPUS BENCH.** Σ per-position medians, 24 positions × 5 reps:
 incumbent **4800 ms**, K = 16 seat **4807 ms**, **ratio ON/OFF = 1.0015**,
 larger-is-worse. Bracket ≤ 1.10: **PASS**, and far from the 1.25 ABORT. **IQR
-gate: 0 of 168 position-seats exceeded 10 % of their own median.** No seat's
-node counts differ — every corpus cell is `nodes=50176` — so the ratio is a
-like-for-like time comparison.
+gate: 0 of 168 position-seats exceeded 10 % of their own median.**
+
+**THE LIKE-FOR-LIKE CLAIM, CORRECTED** (review MAJOR 1). Revision 1 wrote "every
+corpus cell is `nodes=50176`", which is false in **14 of the 168 cells**: two
+positions are structurally degenerate and terminate early on every seat
+(`p13 = 151` nodes, `p16 = 3`), exactly the two D-395 excluded from its own
+ratio for the same reason. What is true, and is what the ratio needs, is that
+**each position's node count is IDENTICAL ACROSS ALL SEVEN SEATS** — the budget
+is a reproducible node stop, so the seats do equal work per position and the
+Σ-median ratio compares time for the same work. The two degenerate positions
+contribute 0.6 % of the incumbent's Σ and cannot move a ratio of 1.0015.
 
 **7.4 — THE SPREAD REPORT, NOT A GATE.** The ON seat's own
 `safety_net_capped_rows`, on the tree that ran:
@@ -261,14 +552,24 @@ which is the only moment it can be true of.
 compared against §4's registered **1500**. This is D-427's own slot and the
 reason it exists.
 
-**7.7 — `hang_timeout_ms` MARGIN.** The worst single median anywhere in the run
-is **10 596 ms** (spread, 99 stones, incumbent seat — D-74's non-interruptible
+**7.7 — `hang_timeout_ms` MARGIN.** The worst single median **in the two BENCH
+sections** — the calibration prints only per-seat `sum_ms` and no per-search
+figure, so no maximum exists for it in the artifact (review MINOR 1) — is
+**10 596 ms** (spread, 99 stones, incumbent seat — D-74's non-interruptible
 first iteration). Against `hang_timeout_ms = 120000` that is a **11.3×** margin.
 **That is below the project's ~24× convention and is flagged here rather than at
-launch**: the SPRT plays `random_openings_v1`, not `spread_v1`, and the worst
-single median on `bench_positions_v1` is **491 ms — a 244× margin**. The spread figure is not
-in the governed run's own workload, and §4's timeout is therefore confirmed
-NO-CHANGE on the workload it actually guards, with the reasoning recorded.
+launch.** The reasoning is now stated at the strength the evidence supports
+(review MAJOR 7): **neither bench fixture is the governed workload**, so neither
+figure confirms the timeout on the workload it actually guards. `spread_v1` is
+not played at all; `bench_positions_v1` is 15- and 35-stone positions and its
+worst single median is **491 ms (a 244× margin)**, which is indicative and no
+more. **The governed workload is the book**, and the registered run walked it in
+the SENS section but emitted no timing there — an observability gap in the
+instrument, recorded rather than papered over. **The registered discharge is
+therefore the SLOT PASS**: before launch, the worst single search of the ARMED
+seat over a sample of the book is measured and compared against
+`hang_timeout_ms`, and if the margin is under 24× the launch STOPS and the
+margin is reported to the architect, per D-376's own watchdog rule.
 
 **7.8 — the governed run's own revision**: filled at launch.
 
@@ -281,8 +582,23 @@ diff. The instrument's governing revision moving does the same. **Registered
 numbers never move after the run** (D-374): a bracket missed is a finding, and
 the change is reverted and the number recorded.
 
-## 9. REVIEW STATE
+## 9. REVIEW STATE, AND ONE SEQUENCING BREACH RECORDED RATHER THAN LEFT IN THE GIT LOG
 
-Fresh-context review at the revision that governs the run, **one fix round**. A
-second document failure returns the package to the architect with the report, and
-no further round is self-granted.
+**Revision 1 governed the measurement run and was not fresh-context reviewed
+before it** (review MINOR 3). CLAUDE.md is explicit: the revision that governs a
+run "must itself pass a fresh-context review before the first run it governs".
+The session's own addendum sequenced registration → run → slot pass and said
+nothing about where the review sits, and I followed the addendum without noticing
+it conflicted with the general rule. **Recorded here because the document's face
+is where a reader looks, and the git log is not.**
+
+**What the rule protects held, and that is a mitigation rather than an excuse**:
+the commit clock shows the instrument (`70cb580`) and the prereg (`4ec470f`)
+landed ~52 minutes before the run began; the selection rule is CODE INSIDE the
+instrument rather than a step a human took after seeing the table; and no
+registered threshold moved — the review verified all three independently.
+**A future (B)-shaped package reviews its pre-registration before its
+measurement run, not after.**
+
+This revision is **the one fix round**. A second document failure returns the
+package to the architect with the report, and no further round is self-granted.

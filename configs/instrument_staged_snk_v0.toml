@@ -1,0 +1,86 @@
+# pistol — THE SPRT SEAT WITH THE SAFETY-NET CAP ARMED at K = 16.
+#
+# The SPRT seat and the standing snapshot's AFTER measurement (U3_tier_t.md
+# §10; docs/decisions.md D-310, D-353). The staged counterpart of
+# configs/instrument_v0.toml: same schema, same tt_bytes, same eval — the one
+# thing that differs is [search.candidate_policy], which is what the SPRT this
+# document seats judges.
+#
+# THE CUT BINDS HERE (U2_node_protocol.md §7.2, carried from WPQ_seed.md): a
+# seat with the quiet cut disabled would make the SPRT measure nothing about
+# the prune (CLAUDE.md rule 6). `quiet_top_k`/`widen_schedule` are stage Q's
+# own knobs, validated here for schema completeness and not yet read by the
+# search this D-scope ships (docs/decisions.md D-353, D-356) — carrying them
+# is what a `deny_unknown_fields` document requires; whether stage Q's own
+# widening schedule reads them is WP-1.5c's (`WPQ_seed.md`).
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 3
+
+[engine]
+mode = "instrument"
+
+[search]
+# Matches configs/instrument_v0.toml: the two SPRT seats agree on everything
+# but candidate_policy, which is the one axis this WP judges.
+tt_bytes = 268435456
+
+[search.candidate_policy]
+kind = "staged"
+# The fallback's bounded ball (U2-Z item 8) and the D-scope's own safety net
+# when Tier F ∪ Tier T is empty (docs/decisions.md D-353) — matches
+# configs/instrument_v0.toml's radius, so the two seats reach the same cells
+# in the one place they still agree by construction.
+quiet_radius = 2
+# Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
+quiet_top_k = 16
+# Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
+widen_schedule = [32]
+# THE CAP ARMED. K = 16 is not a choice made in this file: it is what the
+# registered calibration selected, by the rule stated before the run and applied
+# inside the instrument itself — `CAL/SELECTED K=16` in
+# artifacts/wp15d_b_measurement_v1.txt (docs/experiments/wp15d_b_prereg.md §2,
+# §7.2). Every other key is `configs/instrument_staged_v0.toml`'s, unchanged, so
+# this document and that one differ by exactly the key under test — which is
+# what makes a verdict attributable to it (CLAUDE.md rule 6).
+safety_net_top_k = 16
+# LAW-SUPPORT's threshold reading (U3_tier_t.md §6.1): own windows qualify at
+# count >= 2.
+tier_t_own_count = 2
+# LAW-SUPPORT's threshold reading: opponent windows qualify at count >= 3.
+tier_t_opponent_count = 3
+q_depth_turns = 0
+q_triggers = "defensive_only"
+# WP-1.7 ordering-heuristic gates (docs/experiments/wp17_design.md §6):
+# default OFF in every committed config until an SPRT says otherwise.
+killers = false
+history = false
+countermove = false
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+# Stated even though the mode is "instrument": a config is complete, and every
+# key is present because no key has a code-side default (CLAUDE.md rule 1).
+movetime_epsilon_ms = 50
+
+[solver]
+# WP-1.8b (design docs/experiments/wp18b_design.md §5): the solver on the
+# search path, gate OFF in every committed config until an SPRT says
+# otherwise. The knobs mirror configs/solver_v0.toml's committed values.
+on_search_path = false
+per_call_node_cap = 16384
+trigger = "any_open_four"
+epsilon_num = 1
+epsilon_den = 4
+zone_orders = 3
+free_stone_radius = 8
+tt_entries = 1048576
+attacker_policy = "one_free_stone"
