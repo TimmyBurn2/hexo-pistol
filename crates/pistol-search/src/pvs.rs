@@ -336,7 +336,13 @@ impl<'a> Run<'a> {
                 // the ROOT TURN, spelled in turns rather than plies because rule
                 // 3 gives turn 1 one stone and every later turn two, so no ply
                 // threshold names the played turn at every turn number.
-                let cap = params.safety_net_top_k as usize;
+                // A K too large for `usize` is a cap above every possible pool,
+                // which is a cap that never binds -- NOT `truncate(0)`, which an
+                // `as` narrowing would produce on a 32-bit target and which
+                // would empty the set and panic at `cells[0]`. No target is
+                // pinned anywhere in this repository, so the saturation is the
+                // guard rather than an argument about which one this is.
+                let cap = usize::try_from(params.safety_net_top_k).unwrap_or(usize::MAX);
                 if params.safety_net_top_k > 0
                     && self.turns_from_root() > 0
                     && set.used_quiet_safety_net

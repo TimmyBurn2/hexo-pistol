@@ -110,11 +110,6 @@ impl StageCounters {
         }
     }
 
-    /// Record that a BATCHED or BATCHED-lost row just recorded used the
-    /// quiet-ball safety net (`StagedSet::used_quiet_safety_net`) rather than
-    /// a non-empty Tier T. Called separately from [`StageCounters::record`]
-    /// because the safety net is this D-scope's own IMPL choice and not a
-    /// `StagedRow` of the node protocol itself (`crate::staged`'s doc).
     /// One safety-net row the cap truncated, with the widths either side of it.
     pub(crate) fn record_safety_net_cap(&mut self, pool: u64, emitted: u64) {
         self.safety_net_capped_rows += 1;
@@ -122,6 +117,11 @@ impl StageCounters {
         self.safety_net_emitted_cells += emitted;
     }
 
+    /// Record that a BATCHED or BATCHED-lost row just recorded used the
+    /// quiet-ball safety net (`StagedSet::used_quiet_safety_net`) rather than
+    /// a non-empty Tier T. Called separately from [`StageCounters::record`]
+    /// because the safety net is this D-scope's own IMPL choice and not a
+    /// `StagedRow` of the node protocol itself (`crate::staged`'s doc).
     pub(crate) fn record_quiet_safety_net(&mut self) {
         self.batched_quiet_safety_net += 1;
     }

@@ -1,5 +1,9 @@
-# pistol — the staged configuration THE COLONY FAMILY and TACTICAL SUITE
-# UNDER STAGED gates run their gate_v0-class cases at.
+# pistol — the DETERMINISM seat that runs with the safety-net cap ARMED
+# (docs/decisions.md D-478, D-482). `tools/determinism.sh` is its only caller.
+#
+# It is `configs/gate_staged_v0.toml` with one key changed, so the rest of this
+# header is that document's and describes the shape both share. It does NOT run
+# the colony-family or tactical-suite gates: those are the other document's.
 #
 # The staged counterpart of configs/gate_v0.toml: candidate radius 1's own
 # quiet ball, quiet cut DISABLED (U3_tier_t.md §10, U4_soundness_instrument.md

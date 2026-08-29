@@ -63,7 +63,7 @@ pub struct StagedParams {
     pub quiet_radius: u32,
     /// The safety-net cap (docs/decisions.md D-478, D-482): how many cells of
     /// the delta-ranked quiet ball a safety-net row may emit, at every node but
-    /// the root turn's two. `0` disables it, and is the committed value in
+    /// the root turn's. `0` disables it, and is the committed value in
     /// every config until an SPRT says otherwise.
     ///
     /// The exemption is spelled in TURNS, not plies: rule 3 gives turn 1 one

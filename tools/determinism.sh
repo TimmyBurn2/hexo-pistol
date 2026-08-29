@@ -16,7 +16,9 @@
 #            neither can see whether `newgame` really clears everything the
 #            previous position left in the table; this pair is that question.
 #
-# FOUR SEATS, RADIUS, STAGED, STAGED-WITH-HEURISTICS AND
+# THE SEATS ARE THE `SEATS` ARRAY BELOW AND ARE NOT COUNTED IN PROSE — a count
+# in a comment is a second place for a fact the array already states, and it went
+# stale the first time a seat was added. RADIUS, STAGED, STAGED-WITH-HEURISTICS,
 # STAGED-WITH-SOLVER (docs/decisions.md
 # D-370 for the second; docs/experiments/wp17_design.md §5 for the third): the
 # same one binary, built once and reused, run against each configuration in
@@ -42,7 +44,7 @@ cd "$ROOT"
 # candidate radius 3 a completed depth of 4 turns costs hours per position, which
 # is the measured Stage-0 floor recorded in that file's own comment table
 # (CLAUDE.md rule 5). The determinism law is about whether two runs agree, not
-# about how strong they are. THREE SEATS, RADIUS, STAGED AND
+# about how strong they are. RADIUS, STAGED AND
 # STAGED-WITH-HEURISTICS (docs/decisions.md D-370; WP-1.5b Phase 4 MINOR 5;
 # WP-1.7): the staged generator is an entirely new choice path — a
 # `ThreatState` carried and unwound in `Position`,

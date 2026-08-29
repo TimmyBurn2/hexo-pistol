@@ -272,7 +272,7 @@ which found six files that way. The enumerations are:
 | `crates/pistol-engine/src/validate.rs:81-92` | destructures all fields with no `..` — **will not compile** without the new one; §3 names the check it adds |
 | `crates/pistol-engine/src/instance.rs` | destructures and passes through (`StagedParams` literal) |
 | `crates/pistol-search/src/params.rs` | `StagedParams` gains `safety_net_top_k: u64` |
-| `crates/pistol-search/src/search.rs` | the SAME check again, because a `SearchParams` can be built in code and never pass through a document (rule 1) — the two-crate pattern `radius` and `q_depth_turns` already follow |
+| ~~`crates/pistol-search/src/search.rs`~~ | **NOT a change site** (REVIEW-impl MINOR 5). §3 deletes the validation check, and with no check there is nothing for `Searcher::new` to re-check: the two-crate pattern `radius` and `q_depth_turns` follow exists because those two have domains their types cannot express, and this key's type IS its domain. `search.rs` holds no `StagedParams` literal and reads the staged fields by name, so it does not even fail to compile |
 | `crates/pistol-search/src/pvs.rs` | §2.2's guard AND §6.3's store rule — one binding, `truncated`, read at both sites; also a `StagedParams` literal site |
 | `crates/pistol-search/src/quiescence.rs` | `StagedParams` literal site |
 | `crates/pistol-search/src/info.rs` | `StageCounters` gains `safety_net_capped_rows`, `safety_net_emitted_cells`, `safety_net_pool_cells`, and the withheld count SPLIT BY BOUND KIND — `safety_net_upper_withheld` and `safety_net_exact_withheld`, because one total cannot tell a rule that wrongly stores `Exact` from one that wrongly stores `Upper` (REVIEW-impl MAJOR 1) — §5's and §8's instruments read these |
