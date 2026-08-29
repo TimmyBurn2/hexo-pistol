@@ -306,9 +306,17 @@ FLAG, not what they COUNT:
 
 > **THE AGREEMENT CRITERION.** The governed report is a measurement only if all
 > three hold: **(i)** the warm pass exits `ATTRIBUTABLE (0)` — not `NO_ANSWER`,
-> which is how it refuses a report it cannot vouch for; **(ii)** the cold
-> checker's per-game **`1a` and `1b` failure lists are both EMPTY**; and
+> which is how it refuses a report it cannot vouch for; **(ii) BOTH instruments
+> report ZERO `1b` move-list mismatches and ZERO `1c` rebuild mismatches** — the
+> per-game FINDINGS, never the counts, which the review proved invariant; and
 > **(iii)** neither instrument refuses to read the documents at all.
+>
+> **`1a` is NOT a term, and the reason is the review's** (rev-2 review's own
+> corrected finding): a wrong winner does not change which engine moved, so `1a`
+> — which asks each labelled engine what it would have played — is blind to a
+> referee inversion. It remains the discriminator for a SEAT MISLABEL, a
+> different defect, and its failure list is reported as context beside the
+> criterion rather than folded into it.
 >
 > **The cold checker's clause-(b) robustness verdict is explicitly NOT a term.**
 > Criterion 1″ supersedes clause (b) for this project's runs (D-401), so a
@@ -322,14 +330,26 @@ FLAG, not what they COUNT:
 > reports — D-401's own disposition, and not a re-run.
 
 **AND IT IS SHOWN TO FAIL, WHICH IS THE WHOLE POINT** — receipt
-`artifacts/wp15d_b_criterion_falsification_v1.txt`, sha256 `912422cd…`:
+`artifacts/wp15d_b_criterion_falsification_v1.txt`:
 
 | input | what happens | criterion |
 |---|---|---|
 | the clean WP-1.7 report | warm exits 0; cold's `1a`/`1b` lists are **empty** (its one failure is clause (b)) | **PASSES** |
 | game 2's `result` flipped `p1_win`→`p2_win` | warm exits **2**, refusing: the replay document is bound to the report's sha256 and "the two documents are not about each other" | **FAILS (i)** |
 | game 2's move list reordered, replay doc **rebound** to the mutated digest so the binding cannot be what refuses | warm exits **2** on a structural invariant, before any engine is asked: the pair's two games "differ at turn 2, which is inside the 3-turn book" | **FAILS (i)** |
-| an internally consistent seat mislabel | the cold `1a` asks each labelled engine what it would play and flags `answers[mover] != played[free]` (`tools/wp15b_attribution_check.py:286-290`) — it re-derives from the ENGINES, not from the arena's bookkeeping | **FAILS (ii)** — argued from the code, not demonstrated, and marked so |
+| **a self-consistent REFEREE INVERSION** — every decided game's winner flipped, the document left internally consistent | the rev-2 review built this and ran both checkers end to end: the counts are byte-identical to the honest run (`1b: 459`, `1c: 682/341`), **and both emit 459 `FAIL 1b` lines** | **FAILS (ii)** — on the findings, which is exactly why the terms are findings and not counts |
+| an internally consistent seat mislabel | the cold `1a` asks each labelled engine what it would play and flags `answers[mover] != played[free]` (`tools/wp15b_attribution_check.py:286-290`) | reported as CONTEXT, not a term — argued from the code, not demonstrated |
+
+**AND ONE ATTEMPTED REPRODUCTION THAT DID NOT REACH THE TERM IT AIMED AT,
+RECORDED RATHER THAN DRESSED UP AS A SECOND DEMONSTRATION.** This session
+rebuilt the referee inversion independently — 459 decided games flipped, the
+replay document rebound to the new digest — and the warm pass exited **2**,
+refusing before `1b` was reached, because flipping `result` alone leaves the
+`score_a`, `llr` and pentanomial fields inconsistent with it. **That falsifies
+term (i), not term (ii)**, so it does NOT independently reproduce the review's
+construction, which was self-consistent across those fields too. The review's
+measurement stands on the review's own receipt; this session's does not
+corroborate it and is not offered as if it did.
 
 **THAT IS WHY THE SECOND INSTRUMENT IS NOT BLIND TO THE SAME STAGE.** Both
 re-derive attribution by asking the engines themselves; neither takes the
