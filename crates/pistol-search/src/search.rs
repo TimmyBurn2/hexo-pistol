@@ -68,6 +68,16 @@ pub struct Searcher {
     /// every [`Searcher::search`], and are cleared by [`Searcher::clear`],
     /// which is what a new game is (`docs/experiments/wp17_design.md` §3.1).
     heuristics: crate::heuristics::HeuristicTables,
+    /// The trigger census, when one has been asked for
+    /// ([`Searcher::collect_trigger_census`]). `None` in every shipped path,
+    /// and no search ever reads a row back, so collecting them cannot move a
+    /// move (CLAUDE.md rule 4).
+    ///
+    /// It lives on the SEARCHER rather than on the run because the root's own
+    /// firing happens before a run exists, and a census missing the one firing
+    /// that can cost two whole caps would rank an option field on the wrong
+    /// rows (docs/decisions.md D-516).
+    census: Option<Vec<crate::info::TriggerObservation>>,
 }
 
 impl Searcher {
@@ -177,12 +187,38 @@ impl Searcher {
             solver,
             position: Position::new(eval, tracks_threats),
             heuristics: crate::heuristics::HeuristicTables::new(),
+            census: None,
         })
     }
 
     /// The parameters this search was built with.
     pub fn params(&self) -> SearchParams {
         self.params
+    }
+
+    /// Collect one row per solver trigger firing from here on.
+    ///
+    /// An INSTRUMENT and never a knob: no search reads a row back, so a
+    /// searcher collecting a census answers exactly what one not collecting
+    /// answers (CLAUDE.md rule 4). Off unless a caller asks, and no committed
+    /// config can ask — the only callers are this crate's own tests and the
+    /// `trigger_census` example.
+    pub fn collect_trigger_census(&mut self) {
+        self.census = Some(Vec::new());
+    }
+
+    /// The rows collected since the last take, leaving collection ON.
+    ///
+    /// # Panics
+    /// If no census was asked for. A caller that reads a census it never
+    /// started has a bug in ITS ordering, and an empty vector would be that
+    /// bug wearing a plausible answer (CLAUDE.md rule 3).
+    pub fn take_trigger_census(&mut self) -> Vec<crate::info::TriggerObservation> {
+        let rows = self
+            .census
+            .as_mut()
+            .expect("take_trigger_census without collect_trigger_census");
+        std::mem::take(rows)
     }
 
     /// How many bytes the transposition table took.
@@ -265,12 +301,21 @@ impl Searcher {
                 unreachable!("the wiring exists only when the solver does")
             };
             root_calls.firings += 1;
+            let root_columns = self
+                .census
+                .is_some()
+                .then(|| root_census_columns(&mut self.position));
             let attacker = solver.solve(state, cap);
             root_solver_nodes += attacker.nodes;
             root_calls.invocations += 1;
+            let attacker_answer = crate::info::TriggerAnswer {
+                visits: attacker.nodes,
+                proved: matches!(attacker.outcome, pistol_solver::SolveOutcome::Win(_)),
+            };
             if let pistol_solver::SolveOutcome::Win(tree) = attacker.outcome {
                 root_calls.proofs += 1;
                 root_calls.root_nodes = root_solver_nodes;
+                push_root_census(&mut self.census, root_columns, attacker_answer, None);
                 return Ok(solver_proof_outcome(
                     state,
                     &tree,
@@ -289,6 +334,15 @@ impl Searcher {
             let defender = solver.solve_defender(state, cap);
             root_solver_nodes += defender.nodes;
             root_calls.invocations += 1;
+            push_root_census(
+                &mut self.census,
+                root_columns,
+                attacker_answer,
+                Some(crate::info::TriggerAnswer {
+                    visits: defender.nodes,
+                    proved: matches!(defender.outcome, pistol_solver::SolveOutcome::Win(_)),
+                }),
+            );
             if let pistol_solver::SolveOutcome::Win(tree) = defender.outcome {
                 root_calls.proofs += 1;
                 // The proof's Z2 zone, sorted for the binary search at
@@ -324,6 +378,7 @@ impl Searcher {
         run.solver_refusals = root_refusals;
         root_calls.root_nodes = root_solver_nodes;
         run.solver_calls = root_calls;
+        run.census = self.census.take();
 
         let mut outcome = None;
         for depth_turns in 1..=max_depth {
@@ -464,6 +519,10 @@ impl Searcher {
         outcome.info.solver_nodes = run.solver_nodes;
         outcome.info.solver_refusals = run.solver_refusals;
         outcome.info.solver_calls = run.solver_calls;
+        // Handed to the run at the start and taken back here, so the rows of
+        // one search and the next accumulate in one place and the run owns
+        // them while it is the thing that fires.
+        self.census = run.census.take();
         outcome.info.nps = per_second(run.total_nodes(), elapsed);
         outcome.info.time_ms = elapsed.as_millis() as u64;
         outcome.info.seldepth_turns = run.seldepth_turns;
@@ -648,6 +707,62 @@ pub fn proof_line(
         }
     }
     line
+}
+
+/// The census columns at the ROOT, read before its calls.
+///
+/// A free function rather than a method because the caller already holds a
+/// mutable borrow of the solver field, and the columns come from the position
+/// field: two disjoint borrows the compiler can see only if they are asked for
+/// separately.
+fn root_census_columns(position: &mut Position) -> (u32, u32, u32, u32, u32, u32, u32) {
+    let (state, threats, _) = position.staged_context();
+    let mover = state.to_move();
+    let opponent = mover.opponent();
+    let counts = |side| {
+        (
+            threats.hot_windows(side).len() as u32,
+            threats.win_in_one_ply_windows(side).len() as u32,
+            threats
+                .live_windows_at_count(side, pistol_solver::LiveCount::Three)
+                .len() as u32,
+        )
+    };
+    let (mover_hot, mover_w1, mover_l3) = counts(mover);
+    let (opponent_hot, opponent_w1, opponent_l3) = counts(opponent);
+    // The root's own firing sits at turn 0 from itself.
+    (
+        0,
+        mover_hot,
+        opponent_hot,
+        mover_w1,
+        opponent_w1,
+        mover_l3,
+        opponent_l3,
+    )
+}
+
+/// Push the ROOT's census row, if a census was asked for.
+fn push_root_census(
+    census: &mut Option<Vec<crate::info::TriggerObservation>>,
+    columns: Option<(u32, u32, u32, u32, u32, u32, u32)>,
+    attacker: crate::info::TriggerAnswer,
+    defender: Option<crate::info::TriggerAnswer>,
+) {
+    let (Some(columns), Some(rows)) = (columns, census.as_mut()) else {
+        return;
+    };
+    rows.push(crate::info::TriggerObservation {
+        turns_from_root: columns.0,
+        mover_hot: columns.1,
+        opponent_hot: columns.2,
+        mover_win_in_one_ply: columns.3,
+        opponent_win_in_one_ply: columns.4,
+        mover_live_three: columns.5,
+        opponent_live_three: columns.6,
+        attacker,
+        defender,
+    });
 }
 
 /// The outcome a root attacker proof answers with (design wp18b §2 D3):

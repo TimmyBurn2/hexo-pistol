@@ -70,6 +70,10 @@ pub struct Run<'a> {
     /// with the root's own firing by [`crate::search`], for the same reason
     /// `solver_nodes` is: the root's calls are inside the same budget.
     pub solver_calls: crate::info::SolverCallCounters,
+    /// The trigger census, when one was asked for. `None` in every shipped
+    /// path, and nothing ever reads a row back, so a search that collects them
+    /// takes the same moves as one that does not (CLAUDE.md rule 4).
+    pub census: Option<Vec<crate::info::TriggerObservation>>,
     /// The solver on the search path and its wiring (design wp18b §2),
     /// bundled so the OFF gate is ONE `None` — no solver, no wiring, no
     /// dead values. Borrowed from the [`crate::search::Searcher`].
@@ -129,6 +133,7 @@ impl<'a> Run<'a> {
             solver_nodes: 0,
             solver_refusals: 0,
             solver_calls: crate::info::SolverCallCounters::default(),
+            census: None,
             solver: None,
             root_restrict: None,
             seldepth_turns: 0,
@@ -610,8 +615,39 @@ impl<'a> Run<'a> {
         // attacker direction proved a win indistinguishable from half a
         // firing.
         self.solver_calls.firings += 1;
+        // The census columns are read HERE, before either call, because they
+        // describe the position a per-node detector would decide on — after
+        // the calls the same slices still answer the same way, but the order
+        // is what makes that a fact about the decision rather than about its
+        // outcome.
+        let observed = self.census.is_some().then(|| {
+            let counts = |side: pistol_core::Player| {
+                (
+                    threats.hot_windows(side).len() as u32,
+                    threats.win_in_one_ply_windows(side).len() as u32,
+                    threats
+                        .live_windows_at_count(side, pistol_solver::LiveCount::Three)
+                        .len() as u32,
+                )
+            };
+            let (mover_hot_n, mover_w1, mover_l3) = counts(mover);
+            let (opponent_hot_n, opponent_w1, opponent_l3) = counts(opponent);
+            (
+                from_root,
+                mover_hot_n,
+                opponent_hot_n,
+                mover_w1,
+                opponent_w1,
+                mover_l3,
+                opponent_l3,
+            )
+        });
         // One clone serves both calls (the solver never mutates its input).
         let state_view = state.clone();
+        // No initialiser: the attacker direction is always asked, so a value
+        // here would be one nothing reads, and the compiler says so.
+        let attacker;
+        let mut defender = None;
         // The attacker direction: does the MOVER force a policy-game win?
         // Asked whenever the trigger fired at all — a mover in check may
         // still force a deeper win through it (LAW-FORCE admits that).
@@ -620,6 +656,10 @@ impl<'a> Run<'a> {
             let result = solver.solve(&state_view, cap);
             self.solver_nodes = self.solver_nodes.saturating_add(result.nodes);
             self.solver_calls.invocations += 1;
+            attacker = crate::info::TriggerAnswer {
+                visits: result.nodes,
+                proved: matches!(result.outcome, pistol_solver::SolveOutcome::Win(_)),
+            };
             match result.outcome {
                 pistol_solver::SolveOutcome::Win(tree) => {
                     self.solver_calls.proofs += 1;
@@ -627,6 +667,10 @@ impl<'a> Run<'a> {
                     // offset from_root + 2d - 1 (design §4; the t-relative
                     // parity invariant is pinned by test).
                     let distance = from_root + 2 * tree.win_depth_turns() - 1;
+                    // `defender` is still None here and saying so with the
+                    // binding rather than a literal is what makes that a
+                    // fact the compiler checks.
+                    self.observe(observed, attacker, defender);
                     return Some(crate::score::mate_in(distance));
                 }
                 pistol_solver::SolveOutcome::NoWin => {}
@@ -643,6 +687,10 @@ impl<'a> Run<'a> {
             let result = solver.solve_defender(&state_view, cap);
             self.solver_nodes = self.solver_nodes.saturating_add(result.nodes);
             self.solver_calls.invocations += 1;
+            defender = Some(crate::info::TriggerAnswer {
+                visits: result.nodes,
+                proved: matches!(result.outcome, pistol_solver::SolveOutcome::Win(_)),
+            });
             match result.outcome {
                 pistol_solver::SolveOutcome::Win(tree) => {
                     self.solver_calls.proofs += 1;
@@ -650,6 +698,7 @@ impl<'a> Run<'a> {
                     // offset from_root + 2d — the OverloadReturn shape's own
                     // d=1 instance (design §4).
                     let distance = from_root + 2 * tree.win_depth_turns();
+                    self.observe(observed, attacker, defender);
                     return Some(-crate::score::mate_in(distance));
                 }
                 pistol_solver::SolveOutcome::NoWin => {}
@@ -657,7 +706,45 @@ impl<'a> Run<'a> {
                 pistol_solver::SolveOutcome::Unknown => {}
             }
         }
+        self.observe(observed, attacker, defender);
         None
+    }
+
+    /// Push one census row, if a census was asked for.
+    ///
+    /// `observed` carries the columns read BEFORE the calls and is `Some`
+    /// exactly when `self.census` is; the two answers are what the calls then
+    /// returned. Called on every exit of [`Run::solver_verdict`] that fired,
+    /// so a firing's row exists whether or not the firing proved.
+    fn observe(
+        &mut self,
+        observed: Option<(u32, u32, u32, u32, u32, u32, u32)>,
+        attacker: crate::info::TriggerAnswer,
+        defender: Option<crate::info::TriggerAnswer>,
+    ) {
+        let (Some(columns), Some(census)) = (observed, self.census.as_mut()) else {
+            return;
+        };
+        let (
+            turns_from_root,
+            mover_hot,
+            opponent_hot,
+            mover_win_in_one_ply,
+            opponent_win_in_one_ply,
+            mover_live_three,
+            opponent_live_three,
+        ) = columns;
+        census.push(crate::info::TriggerObservation {
+            turns_from_root,
+            mover_hot,
+            opponent_hot,
+            mover_win_in_one_ply,
+            opponent_win_in_one_ply,
+            mover_live_three,
+            opponent_live_three,
+            attacker,
+            defender,
+        });
     }
 
     /// `pub(crate)`: `crate::quiescence` calls this SAME method at its own
