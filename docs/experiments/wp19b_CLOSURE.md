@@ -2,7 +2,7 @@
 
 > **Audience: the next agent.** Every claim here names the artifact or command
 > that establishes it, so a successor verifies rather than trusts. §8 is the
-> environment hazards this session actually hit — two of them are new.
+> environment hazards this session actually hit — three of them are new.
 
 ## 0. ONE LINE FOR THE MORNING
 
@@ -168,7 +168,16 @@ and the entry now exists — the condition's own ground is spent.
 `ci: all gates passed`, and `/usr/bin/grep -cE "^ci: FAIL|^ci: RUN VOID|test
 result: FAILED"` returns 0.
 
-At closure: `artifacts/wp19b_ci_closure_v1.txt`, read the same way.
+At closure: `artifacts/wp19b_ci_closure_v2.txt`, read the same way — nineteen
+`gate N/19:` lines, `ci: all gates passed`, and the FAIL/VOID/FAILED count 0.
+`_v1.txt` is the same result one commit earlier and is kept as the replication;
+`_v2.txt` is the run that adjudicates the closure HEAD, because two documentation
+commits landed after `_v1.txt` and a gate claim names the tree it read.
+
+Gate 9 is `tools/determinism.sh` and it covers every seat — `radius`, `staged`,
+`staged-heuristics`, `staged-solver`, `staged-safety-net-cap` — each printing
+`ok — 40 searches, 20 positions, no difference outside nps/time`, and the gate's
+own closing line `determinism: ok — 5 seat(s)`.
 
 **One CI run in this session is VOID and is not a failure.**
 `artifacts/wp19b_ci_start_VOID_v1.txt` was launched against `e299b0e` and reached
@@ -197,7 +206,7 @@ in the same shape. Neither is gated.
 
 ---
 
-## 8. Environment hazards — two of these are NEW
+## 8. Environment hazards — three of these are NEW
 
 1. **`tools/ci.sh` reads the WORKING TREE, so a CI run is only a confirmation of
    the revision it started on if you do not touch the tree while it runs.** This
