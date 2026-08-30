@@ -68,11 +68,21 @@ is the bracket move D-374 forbids.
 ### 1.3 Dry run (docs/process.md dry-run discipline)
 
 **Input, of the same KIND as the registered workload and differing only in
-identity:** `tools/bench_delta.sh rev:wp19/mx-base rev:wp19/mx-O1 1` — two
+identity:** `tools/bench_delta.sh rev:wp19/mx-base rev:wp19/mx-O1 5` — two
 revisions of this engine differing only in the eval's window store, which is what
-the registered workload is, with O-1 in the candidate seat instead of O-3 and one
-rep instead of five. It is not the registered workload and does not consume the
-first governed run.
+the registered workload is, with O-1 in the candidate seat instead of O-3. It is
+not the registered workload and does not consume the first governed run.
+
+**AMENDMENT, taken before any run of this document, and recorded rather than
+edited away.** This line first registered the dry run at ONE rep. The instrument
+refuses it: `tools/bench_delta.sh:136` reads `[ "$REPS" -ge 5 ] || fail "REPS must
+be an integer >= 5 (pre-registered)"`, so `1` was never a spelling of this command
+that could run, and a dry run is exactly the discipline that finds a registered
+literal command the instrument would refuse. The amendment moves the dry run's rep
+count to 5 and nothing else: §1.1's terms are D-501's and do not move, §2's
+brackets do not move, and the criterion below is unchanged. It makes the dry run
+STRICTER, not weaker, and it raises its cost to that of a governed run — which is
+the honest price and is stated in §0 rather than hidden.
 
 **Criterion, with the defect class it excludes.** The defect class is
 MIS-ATTRIBUTION: the command as spelled measuring something other than the pair of
