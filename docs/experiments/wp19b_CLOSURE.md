@@ -236,7 +236,7 @@ in the same shape. Neither is gated.
 | `docs/experiments/wp19b_bench_results.md` | the runs read against what was registered |
 | `docs/experiments/wp19b_o3_impl_REVIEW.md` | REVIEW-impl of O-3 |
 | `docs/experiments/wp19b_landing_impl_REVIEW.md` | REVIEW-impl of the landing |
-| `artifacts/wp19b_*` | the receipts, digest-indexed in `wp19b_export_receipt_v1.txt` |
+| `artifacts/wp19b_*` | the receipts, digest-indexed in `artifacts/wp19b_export_receipt_v1.txt`, whose own sha256 is `d2d80d67529c978148ca1eb3558507c0dbcbf9b90624a6848fa5639c0836ebfb` — D-469 wants that list committed or SHA-ANCHORED, and `artifacts/` is gitignored, so this line is the anchor |
 | `sessions/WP-1.9b/` | a POINTER to this file only — `/sessions/` is gitignored, so a closure written there is one a successor cannot resolve (`6812ddc`'s lesson, applied ahead of the mistake) |
 
 ADR lines: **D-506** (O-3 measured and rejected, the trigger discharged) and
