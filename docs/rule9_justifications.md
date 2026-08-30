@@ -42,6 +42,7 @@ the cap, is a claim that does no work and the gate refuses it.
 - `crates/pistol-engine/src/config.rs`: one schema, over the one document it describes (CLAUDE.md rule 9).
 - `crates/pistol-engine/tests/config_validate_tests.rs`: one cross-field rule set, over one shared fixture (CLAUDE.md rule 9).
 - `crates/pistol-engine/tests/engine_tests.rs`: one seam, over every verb it exposes (CLAUDE.md rule 9).
+- `crates/pistol-eval/src/window_map.rs`: the packed key, the hasher that reads it and the container they address are one artefact — the map's identity IS the key it packs and the hash of that key, and splitting them would let two files disagree about what a window is while both compile. The larger half is the invariant guards, which live here and not in a suite because they pin PRIVATE items (docs/decisions.md D-115): injectivity, which a collision would otherwise break silently by merging two windows' counts; the hasher's seedless digest, which nothing else in the workspace can catch, since a reseeded hasher moves no search output; and the store's refusal to shrink on removal, which is the property a footprint bound rests on. Each is a claim about an item no integration test can name.
 - `crates/pistol-eval/tests/eval_delta_tests.rs`: one oracle over one equivalence claim (CLAUDE.md rule 9).
 - `crates/pistol-search/src/heuristics.rs`: the three tables and their one seam (CLAUDE.md rule 9).
 - `crates/pistol-search/src/pvs.rs`: `visit` is one recursion and splitting it would not reduce what a reader has to hold (CLAUDE.md rule 9).
