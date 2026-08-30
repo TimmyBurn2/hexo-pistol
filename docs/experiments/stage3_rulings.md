@@ -1,11 +1,17 @@
 # Stage-3 detector — the seven rulings, applied
 
-**Revision 2**, after a fresh-context RED TEAM returned **STANDS WITH
-CORRECTIONS** on revision 1 (`2f8f836`) — 3 BLOCKING, 11 MAJOR, 14 MINOR, every
-finding applied or answered in §10. It reproduced revision 1's arithmetic
-exactly with an independently written parser and found no transcription error;
-what it broke was what the numbers were said to be, which is where the premise
-memo's own red team found every defect too.
+**Revision 3.** Revision 1 (`2f8f836`) took a fresh-context RED TEAM —
+**STANDS WITH CORRECTIONS**, 3 BLOCKING / 11 MAJOR / 14 MINOR. Revision 2
+(`ba8e6b2`) took a scoped re-review and **FAILED** it: 25 of the 28 findings
+closed, but 1 new BLOCKING, 2 new MAJOR and 6 new MINOR. This revision is the
+third and last round the operator's grant allows (D-509) and is scoped to that
+review's enumerated remedies.
+
+**The new BLOCKING was that the headline "below one firing per search" is an
+UPPER-bound claim while every count in §1.3 is a LOWER bound — true only if a
+solver invocation spends its whole cap, which nothing had measured.** It is now
+measured, and §1.3 is rebuilt on the measurement. The arithmetic has never been
+in doubt: three independent parsers reproduce it to the last printed digit.
 
 **What this document is.** `docs/experiments/stage3_detector_premise_memo.md` §8
 lists seven rulings the premise STOP left owed, each one an ADR line. The
@@ -32,12 +38,19 @@ The DESIGN that follows this document carries none of them.
 
 ## 0. One line
 
-**The target is a per-search SOLVER BUDGET, and it is not two calls, and it is
-not one: at HEAD the bracket leaves the solver about 4.4 % / 2.2 % / 5.7 % of a
-search's nodes — at least 0.53 / 0.23 / 0.44 trigger FIRINGS per search, against
-12.0 / 9.7 / 6.7 today.** Every band's budget is **below one firing per
-search**. Pass-rate targets are retired; the budget is allocated by precision
-ranking over trigger points.
+**The target is a per-search SOLVER BUDGET. The bracket leaves the solver about
+4.4 % / 2.2 % / 5.7 % of a search's nodes, and MEASURED at HEAD that is
+0.82–0.85 / 0.28–0.29 / 0.58–0.60 trigger FIRINGS per search against 18.3 / 11.8
+/ 9.1 today — a reduction of 21.7x / 41.1x / 15.1x.** Every band's budget is
+**below one firing per search**, and that is now a measurement rather than an
+assumption: the visits an invocation actually spends were counted. Pass-rate
+targets are retired; the budget is allocated by precision ranking over trigger
+points.
+
+**THE FACTOR IS THE FIGURE TO CARRY, and it is the one quantity that does not
+move.** The absolute counts on both sides of it depend on what an invocation
+costs; their RATIO does not, and 21.7x / 41.1x / 15.1x is what the original
+derivation's own *absolute solver-visit factor* column already said.
 
 ---
 
@@ -58,12 +71,17 @@ and not a gloss of it:
 A budget stated in "calls" is not a quantity until three questions are answered,
 and the answers are in the code, not in a preference:
 
-| the unit | the line where it is consumed | what it means there |
+**The citations name the STATEMENT and not only a line**, because a line number
+is invalidated by the next commit to the file and revision 2's were invalidated
+by the commit that landed the counters — the document whose title is *quoted
+where its unit is consumed* stopped quoting it anywhere.
+
+| the unit | the statement that consumes it, in `crates/pistol-search/` | what it means there |
 |---|---|---|
-| a **firing** | `crates/pistol-search/src/pvs.rs:265-272` | the predicate a detector gates: one trigger point, admitted or not |
-| an **invocation** | `pvs.rs:609` (`solve`) and `pvs.rs:630` (`solve_defender`) | one direction of one firing. A firing makes the attacker call and then, **unless it proved a win**, the defender call — so a firing is up to TWO invocations |
-| the **cap** | `pvs.rs:592` — `self.solver.as_ref()?.1.per_call_node_cap` | the ceiling on ONE invocation. A firing therefore costs up to `2 × cap` |
-| the **visit** | `pvs.rs:610` and `pvs.rs:631`, both `solver_nodes = …saturating_add(result.nodes)`, stopped on at `pvs.rs:140-142` and `:681` | what the BUDGET is denominated in. `total_nodes = search_nodes + solver_nodes` |
+| a **firing** | `pvs.rs` — the hot test in `solver_verdict` (`if !mover_hot && !opponent_hot { return None; }`), reached through `visit`'s `self.solver.is_some() && … solver_verdict()` gate; and `search.rs`'s `root_triggers(&mut self.position, wiring.trigger)` | the predicate a detector gates: one trigger point, admitted or not |
+| an **invocation** | `pvs.rs` — `solver.solve(&state_view, cap)` and `solver.solve_defender(&state_view, cap)` | one direction of one firing. A firing makes the attacker call and then, **unless it proved a win**, the defender call — so a firing is up to TWO invocations. **MEASURED at 2.000 / 1.993 / 1.939 invocations per firing** |
+| the **cap** | `pvs.rs` — `let cap = self.solver.as_ref()?.1.per_call_node_cap;` | the ceiling on ONE invocation, not on a firing |
+| the **visit** | `pvs.rs` — `self.solver_nodes = self.solver_nodes.saturating_add(result.nodes)` at both call sites; read as `self.search_nodes + self.solver_nodes` in `Run::total_nodes`, which every stop check and every report reads | what the BUDGET is denominated in |
 
 **The memo said this and called it load-bearing** (§2.2: *"A FIRING IS NOT A
 CALL, and the distinction is load-bearing in §3"*), and revision 1 of this
@@ -71,8 +89,11 @@ document lost it — the D-477 defect recurring one unit further down, inside th
 ruling that supersedes the memo written to prosecute it. The red team recovered
 it from the data as well as from the code: of the 220 ON record rows in the two
 governed artifacts, 60 are exact multiples of the cap and **every one of those
-quotients is even** (18, 22, 24; not one odd), which is the signature of
-invocations arriving in pairs.
+quotients is even** — 0 (ten rows, where the trigger never fired and the seat
+printed no solver field at all), 18, 22 and 24, and not one odd. That is the
+signature of invocations arriving in pairs, and the census has since **counted**
+them: 2.000 / 1.993 / 1.939 invocations per firing, the shortfall from two being
+exactly the firings whose attacker direction proved and skipped the defender.
 
 ### 1.2 What the bracket actually FIXES, and what every other figure borrows
 
@@ -100,7 +121,7 @@ something the bracket does not supply:
   invocations.
 - **firings** = invocations / 2, by §1.1's structural factor.
 
-### 1.3 The budget, on every axis, at both ends of `T`
+### 1.3 The budget, MEASURED
 
 `T_on` is the ON seat's own per-position total and `T_off` is the OFF seat's.
 They differ because a solver call absorbs its whole node count at once, so the
@@ -109,60 +130,75 @@ the bound the detector has gated nearly every firing, so it sits essentially at
 the OFF seat and `T_off` is the nearer end.** Both are stated; the range is the
 honest form.
 
-| band | NOW (firings) | **BUDGET, visits** | **≥ invocations** | **≥ FIRINGS** |
-|---|---|---|---|---|
-| CORPUS band 15 | 12.00 | 2183.6 … 2262.3 | 1.07 … 1.10 | **0.53 … 0.55** |
-| CORPUS band 35 | 9.73 | 937.6 … 970.5 | 0.46 … 0.47 | **0.23 … 0.24** |
-| TRIGGER-RICH | 6.72 | 1799.4 … 1860.5 | 0.88 … 0.91 | **0.44 … 0.45** |
+**WHAT AN INVOCATION ACTUALLY COSTS — `K` — IS NOW COUNTED, AND IT IS NOT THE
+CAP.** Revision 2 priced every invocation at the cap and had no choice: nothing
+counted the visits. The counters D-510 landed do
+(`artifacts/stage3_census_analysis_v1.txt`, both committed bench fixtures at
+`nodes 50000`, cap 2048):
 
-**THE DIRECTION IS ONE WAY, AND REVISION 1 STATED IT BACKWARDS.** `invocations =
-visits / cap` prices an invocation at the cap; an invocation that returns
-earlier costs LESS, so the same visit budget affords **MORE** invocations and
-more firings, never fewer. **Every count above is a LOWER bound**, and `K` — the
-mean visits per invocation, which no counter measured when this was derived — can
-only raise it. What is *not* a bound is the visit column, which is exact given
-the share and the total it is taken of. **Carry the visit figure; the counts are
-a presentation of it.**
+| band | **K, visits per invocation** | invocations per firing | **one firing costs** |
+|---|---|---|---|
+| CORPUS band 15 | **1339.1** | 2.000 | **2678.2 visits** |
+| CORPUS band 35 | **1704.6** | 1.993 | **3397.3 visits** |
+| TRIGGER-RICH | **1601.9** | 1.939 | **3106.1 visits** |
+
+`K` is **below** the cap on every band, which by §1.2's own direction means the
+budget affords MORE firings than pricing at the cap suggested — and it is still
+below one:
+
+| band | **BUDGET, visits** | **BUDGET, firings** | **NOW, firings/search** | **FACTOR** |
+|---|---|---|---|---|
+| CORPUS band 15 | 2183.6 … 2262.3 | **0.815 … 0.845** | **18.33** | **21.7x** |
+| CORPUS band 35 | 937.6 … 970.5 | **0.276 … 0.286** | **11.75** | **41.1x** |
+| TRIGGER-RICH | 1799.4 … 1860.5 | **0.579 … 0.599** | **9.05** | **15.1x** |
+
+**THE FACTOR IS INVARIANT UNDER `K` AND THE COUNTS ARE NOT, WHICH IS WHY THE
+FACTOR IS THE FIGURE TO CARRY.** A cheaper invocation raises the affordable
+count and raises the observed count by the same ratio — the census's 18.33
+firings per search is exactly 2048/1339.1 = 1.53 times the 12.00 that pricing at
+the cap gave. Both moved; 21.7x did not. And 21.7x / 41.1x / 15.1x is what the
+original derivation's own *absolute solver-visit factor* column already said
+(21.7 / 41.1 / 14.8), reached from the other direction.
 
 **`t = 0` throughout, and that is the FAVOURABLE assumption.** The ON seat
 evaluates its trigger predicate at every search node and the OFF seat never
 does, so a real detector's own per-node cost shrinks `u*` and with it every
 figure above. Priced by the same run: at `t = 0.50` µs/node — a fifth of one
-search node — band 15's budget falls from 0.55 to 0.44 firings, band 35's from
-0.24 to 0.19. This is the second reason the figures are not final, and ruling 6
-is where it binds.
+search node — band 15's visit budget falls by about a fifth. This is the second
+reason the figures are not final, and ruling 6 is where it binds.
 
 ### 1.4 THE THREE THINGS A DESIGNER MUST TAKE FROM THIS
 
-1. **Every band's budget is below ONE FIRING PER SEARCH.** Not two calls, not
-   one. The detector must reach a state where the solver is consulted on roughly
-   **one search in two** (band 15), **one in four** (band 35). That is a
-   different brief again from the one revision 1 wrote, and the difference is
-   the firing/invocation factor of two.
-2. **THE ROOT'S OWN FIRING CAN EXCEED THE WHOLE BUDGET.** The search fires the
-   trigger at the root before any deepening iteration
-   (`crates/pistol-search/src/search.rs:250-299`, gated by `root_triggers` at
-   `:515`) and SEEDS the tree's counter with what it spent
-   (`search.rs:325`) — so those visits are inside the same budget. One root
-   firing that caps both directions costs `2 × 2048 = 4096` visits against a
-   budget of 2184 / 938 / 1799. **A design that leaves the root ungated has
-   spent the budget before the first node.** How often the root actually fires
-   is measurable and was not measured when this was written; it is the first
-   thing ruling 2's counter answers.
+1. **Every band's budget is below ONE FIRING PER SEARCH, measured.** The
+   detector must reach a state where the solver is consulted on roughly **five
+   searches in six** (band 15: 0.83 of a firing per search), **two in seven**
+   (band 35), **three in five** (trigger-rich). Stated as the reduction it is:
+   **21.7x / 41.1x / 15.1x fewer firings than today.**
+2. **THE ROOT'S OWN FIRING IS A LARGE SHARE OF A SMALL BUDGET, and it is now
+   measured rather than bounded.** The search fires the trigger at the root
+   before any deepening iteration (`crates/pistol-search/src/search.rs`, the
+   `root_triggers` gate ahead of the deepening loop) and SEEDS the tree's
+   counter with what it spent (`run.solver_nodes = root_solver_nodes`), so those
+   visits are inside the same budget. The census counted it: the root fires in
+   **3 of 12 / 5 of 12 / 12 of 20** searches, and costs a mean **446 / 1150 /
+   1455 visits per search** against budgets of **2184 / 938 / 1799**. **On band
+   35 the root's average cost alone exceeds the whole budget**, and on
+   trigger-rich it is four fifths of it. A design that leaves the root ungated
+   has spent most of the budget before its first node — on the band where the
+   budget is tightest, all of it.
 3. **The cap is a design variable again.** D-465 measured the cap dead as a
    lever on the RATIO. It is not dead as a lever on the COUNT the ratio affords:
-   the visit budget is fixed by the bracket and `count = visits / cap`, so
-   halving the cap doubles the affordable firings. Those are different claims
-   about different quantities and neither refutes the other.
+   the visit budget is fixed by the bracket and a firing costs `2 × K`, with `K`
+   itself bounded by the cap. Those are different claims about different
+   quantities and neither refutes the other.
 
 ### 1.5 What the re-derivation MOVED, stated because the dispatch required it
 
 The dispatch's parenthetical says *~2 calls per search*. That is the memo's §3.4
 arithmetic at the **WP-1.8c-era** nps (2.11 capped calls, band 15), and it is
-correct there. At HEAD the same computation gives **1.07–1.10 invocations, or
-0.53–0.55 firings** — the same WP-1.9/WP-1.9b speedups that halved every band's
-ratio also halve the share, because the search got 1.75x–2.02x faster and the
-solver seat did not.
+correct there. At HEAD the same computation gives **0.82–0.85 firings** on band 15 — the same
+WP-1.9/WP-1.9b speedups that halved every band's ratio also halve the share,
+because the search got 1.75x–2.02x faster and the solver seat did not.
 
 **AND THE SECOND ROUTE THAT ONCE AGREED NOW DISAGREES, WHICH IS ITSELF A
 FINDING.** D-508 grounded "the two" on two independent routes: the bracket
@@ -170,11 +206,13 @@ inversion, and a **deployment-wall** derivation that knows nothing of the
 bracket — `configs/bench_wp18c_solver_on.toml:9-13` derives the cap 2048 from
 the 0.5 s turn as *"two capped calls"*. WP-1.9/WP-1.9b did not touch that route:
 the solver seat got *slower* (0.953 / 0.945 / 0.914). So at HEAD the bracket
-route says ~1.1 invocations and the deployment route still says ~2.
+route says about 1.7 invocations per search (0.85 firings at 2.000 invocations
+each) and the deployment route still says ~2.
 
-**The disagreement is favourable and is stated as such**: the 0.5 s turn can
-afford about twice what the bracket permits, so the binding constraint is the
-bracket and not the clock. The config's derivation is not stale for its own
+**The disagreement is favourable and it has narrowed**: with `K` measured the two
+routes are within about 20 % of each other rather than a factor of two, and the
+0.5 s turn still affords slightly more than the bracket permits — so the binding
+constraint is the bracket and not the clock. The config's derivation is not stale for its own
 purpose — it sized a cap against a wall, and that wall has not moved — and it is
 not re-derived here.
 
@@ -223,15 +261,21 @@ about the engine and reopens ruling 3's field rather than this ruling.
 
 ## 3. Ruling 3 — THE FIELD. The operator decided it; the procedure was not reached. **D-511.**
 
-**Decision: the field is the dispatch's own SIX rows, stated as six without a
-claim about which are new.**
+**Decision: the field is the dispatch's own six rows, and it is a FLOOR rather
+than a closed set — the dispatch says "at least".**
 
-> (a) tightened calculus-class trigger; (b) pattern-level must-block/open-four
-> detection; (c) bounded VCDT-only probe as pre-filter; (d) two-tier detector ->
+> options ranked by precision economics, **at least**: (a) tightened
+> calculus-class trigger; (b) pattern-level must-block/open-four detection;
+> (c) bounded VCDT-only probe as pre-filter; (d) two-tier detector ->
 > certifier; (e) precision-ranked budget allocator over the current trigger
 > (rank all firing points, call top-budget); (f) null.
 >
 > — `docs/experiments/stage3_overnight_dispatch.md` §3
+
+**The two words revision 2 dropped are the ones that matter.** A field recorded
+as closed is D-500's own failure mode — WP-1.9 stopped on an incomplete field —
+and D-511's flip clause already admits a row. The matrix is built over these
+six and a red team may add to them before selection.
 
 **Ground: the operator, directly — not branch (a), (b) or (c).** The memo's own
 words are that *"a session cannot re-open a field on its own authority; the
@@ -345,11 +389,14 @@ D-424's own test — while reading as though it constrains.**
 
 **The registered ceiling is therefore a BUDGET-EROSION bound**: the detector's
 own per-node test must not cost more than the `t` at which band 15's budget
-falls below **90 %** of its `t = 0` value. The bench pre-registration states that
-`t` as a number quoted from the run that produced it, and the design states the
-constraint as a mechanism claim — *every term the detector adds at a search node
-is O(1) in the position's size, quoted at `file:line`* — carrying no number
-(D-483).
+falls below **90 %** of its `t = 0` value. **The instrument prints it**, so the
+ceiling is a figure with a run behind it rather than one this document computed:
+`t_90` = **0.2368 µs/node** on band 15, 0.2713 on band 35, 1.0643 on
+trigger-rich — about a tenth of one search node on the two corpus bands
+(`artifacts/stage3_call_budget_v3.txt`). The design states the constraint as a
+mechanism claim — *every term the detector adds at a search node is O(1) in the
+position's size, quoted at `file:line`* — carrying no number (D-483); the bench
+pre-registration quotes `t_90` from the artifact.
 
 **What flips it:** a detector whose per-node test is not O(1) by inspection,
 which makes `t` a measurement the design owes before its bench.
@@ -425,10 +472,10 @@ two-entry one-rep slice sweeps `artifacts/stage3_premise_dryrun_{off,on}_v1.txt`
 | `u_now` on the ON slice | BY HAND from the two record lines: 97574 / 4552 = 21.435413 | **MET** (`u_now 21.4354`) |
 | `c`, the residual | BY HAND: (4216000 − 1.913266·4552) / 97574 = 43.11897 | **MET** (`c 43.1190`) |
 | the SHARE | BY HAND: u\* = 0.048693 ⇒ 0.048693/1.048693 = 4.643 % | **MET** (`SHARE 4.643%`) |
-| a leg passed under the wrong seat flag | — | **MET** — `FAIL: … is an on-seat sweep passed under --off`, exit 1 |
-| an unreadable input | — | **MET** — `RUN VOID: cannot read …`, exit 2 |
-| an input that is not a completed sweep | — | **MET** — `FAIL: … has no \`bench_block: done:\` line`, exit 1 |
-| a missing or zero `--cap` | — | **MET** — `FAIL: --cap is required …`, exit 1 |
+| a leg passed under the wrong seat flag | — | **MET**, receipted — `FAIL: … is an on-seat sweep passed under --off`, exit 1 |
+| an unreadable input | — | **MET**, receipted — `RUN VOID: cannot read …`, exit 2 |
+| an input that is not a completed sweep | — | **MET**, receipted — `FAIL: … has no \`bench_block: done:\` line`, exit 1 |
+| a missing or zero `--cap`, and an unknown option | — | **MET**, receipted — three distinct named refusals, exit 1 each |
 | determinism | the same argv twice | **MET** — byte-identical |
 
 **Two referents revision 1 claimed were discriminating are NOT, and are dropped
@@ -455,44 +502,65 @@ was registered before either ran**, so the agreement is corroboration and not a
 discharge — and the red team's own independently written parser, which shares no
 code with either, reproduced every figure to the last printed digit.
 
-**Receipt**: `artifacts/stage3_call_budget_v2.txt`, exit 0. The artifact records
+**Receipt**: `artifacts/stage3_call_budget_v3.txt`, exit 0. The artifact records
 its own argv and the sha256 of all four inputs, so it can be tied to what it
-read without re-running. **`artifacts/` is gitignored, so its digest is anchored
-in a committed document**: `docs/experiments/overnight_export_receipt.md`, which
-is this arc's continuation of the receipt the closure's §10 anchored.
-`artifacts/stage3_call_budget_v1.txt` is revision 1's run and is **SUPERSEDED**;
-it is listed there as such.
+read without re-running, **and it now carries the six refusal legs too** — a
+criterion recorded MET with no artifact behind it is a claim, which is what
+revision 2's own review said of three of them and what this file no longer does.
+`artifacts/stage3_census_analysis_v1.txt` is where §1.3's `K` comes from.
+**`artifacts/` is gitignored, so every digest is anchored in a committed
+document**: `docs/experiments/overnight_export_receipt.md`.
+`stage3_call_budget_v1.txt` and `_v2.txt` are revisions 1 and 2's runs and are
+**SUPERSEDED**; they are listed there as such, because the review reports quote
+their figures and a superseded artifact that vanishes makes a report unreadable.
 
 ---
 
-## 10. The red team, and what it changed
+## 10. The two review rounds, and what they changed
 
-Dispatched fresh-context against `2f8f836`, brief: falsify it. **STANDS WITH
-CORRECTIONS.** It reproduced every figure with an independently written parser
-and re-ran the committed instrument to a byte-identical artifact.
+**Round 1** — fresh-context RED TEAM against `2f8f836`, brief: falsify it.
+**STANDS WITH CORRECTIONS**, 3 BLOCKING / 11 MAJOR / 14 MINOR. It reproduced
+every figure with an independently written parser and re-ran the committed
+instrument to a byte-identical artifact.
 
 | finding | what it was | where it landed |
 |---|---|---|
-| BLOCKING 1 | the bound's sign asserted both ways in one paragraph, and the design instruction rested on the wrong one | §1.3 states one direction; the instrument's own closing gloss is corrected; the "one search in two" contrast is rebuilt on the firing axis where it is true |
-| BLOCKING 2 | "capped call" is an INVOCATION; the ranking spends FIRINGS; a firing costs up to 2 × cap | §1.1 is new and quotes the four consuming lines; every figure is stated on both axes; the headline moved from "about one call" to "below one firing" |
-| BLOCKING 3 | the artifact had no committed digest anchor and §9 claimed it did | `docs/experiments/overnight_export_receipt.md` opened and anchored; the instrument now prints its own inputs' digests |
-| MAJOR 1 | `T` is not invariant under gating — 1,808 nodes vanish on band 15 | both ends printed and stated as a range; the invariance claim deleted from the instrument |
-| MAJOR 2 | every figure assumes `t = 0`, the FAVOURABLE assumption, unstated | §1.3 states it and the instrument prices it |
-| MAJOR 3 | ruling 6's `t_max` ceiling does not bind | §6 registers a budget-erosion ceiling instead |
-| MAJOR 4 | ruling 4 did not supply finding 3's denominator and truncated the clause that says so | §4 is two gates; the quotation is restored in full |
-| MAJOR 5 | the governing dispatch existed at no tracked path | transcribed to `docs/experiments/stage3_overnight_dispatch.md`, provenance stated |
-| MAJOR 6 | ruling 3's letters contradict the memo and closure | §3 states six rows and records the discrepancy rather than resolving it |
-| MAJOR 7 | "every other document points here" was false and two documents claimed ownership | the ROADMAP now points here; §0 no longer claims to own the memo's sections |
-| MAJOR 8 | seven decisions, zero ADR lines | D-509 through D-516 land with this revision |
-| MAJOR 9 | the deployment-wall route was severed in silence | §1.5 states it, and states that the disagreement is favourable |
-| MAJOR 10 | the budget is not bracket-intrinsic; the fraction is | §1.2 leads with the share and names what each unit borrows |
+| BLOCKING 1 | the bound's sign asserted both ways in one paragraph | §1.3 states one direction |
+| BLOCKING 2 | "capped call" is an INVOCATION; the ranking spends FIRINGS | §1.1 is new and quotes the consuming statements; every figure is on the firing axis |
+| BLOCKING 3 | the artifact had no committed digest anchor | `docs/experiments/overnight_export_receipt.md` |
+| MAJOR 1 | `T` is not invariant under gating | both ends printed as a range |
+| MAJOR 2 | every figure assumes `t = 0`, unstated | §1.3 states it; the instrument prices it |
+| MAJOR 3 | ruling 6's `t_max` ceiling does not bind | §6 registers a budget-erosion ceiling the instrument prints |
+| MAJOR 4 | ruling 4 did not supply finding 3's denominator | §4 is two gates |
+| MAJOR 5 | the governing dispatch existed at no tracked path | transcribed |
+| MAJOR 6 | ruling 3's letters contradict the memo and closure | §3 records the discrepancy rather than resolving it |
+| MAJOR 7 | two documents claimed to own the target | the ROADMAP points here |
+| MAJOR 8 | seven decisions, zero ADR lines | D-509 through D-516 |
+| MAJOR 9 | the deployment-wall route was severed in silence | §1.5 |
+| MAJOR 10 | the budget is not bracket-intrinsic; the fraction is | §1.2 leads with the share |
 | MAJOR 11 | instrument, registration and result in one commit | §9 says so plainly |
-| MINOR 1-14 | a mis-attributed D-504 quotation, two branch mislabels, an ambiguous fixture row, two vacuous dry-run referents, three unreceipted criteria, an untestable banding, a missing seat guard, "external" misused, "all twelve" overstated, a half-true attribution, a dropped closure assignment, a mean read as a constant | all applied; the seat guard and the input digests are instrument changes, and the mean-vs-median point is why §1.3 carries a range |
+| MINOR 1-14 | citations, branch labels, two vacuous dry-run referents, three unreceipted criteria, an untestable banding, a missing seat guard, "external" misused, a mean read as a constant | applied, except the two round 2 re-opened below |
+
+**Round 2** — scoped re-review against `ba8e6b2`. **FAIL**: 25 of the 28 closed,
+1 new BLOCKING, 2 new MAJOR, 6 new MINOR, and two round-1 MINORs not closed
+while §10 claimed all were. What this revision did with each:
+
+| finding | what it was | what changed |
+|---|---|---|
+| NEW BLOCKING 1 | "below one firing" is an UPPER bound while every count is a LOWER bound — true only at `K = cap`, which nothing had measured | **`K` is now MEASURED** (1339.1 / 1704.6 / 1601.9 visits per invocation) and §1.3 is rebuilt on it. The headline survives as a measurement, and §0 and §1.3 now lead with the FACTOR, which is invariant under `K` |
+| NEW MAJOR 1 | `search.rs:325` is the wrong line for the seeding claim | §1.4 item 2 cites the STATEMENT — `run.solver_nodes = root_solver_nodes` — and §1.1 does the same for every unit, because a line number is invalidated by the next commit and these were |
+| NEW MAJOR 2 | the dispatch says "at least: (a)…(f)"; §3 and D-511 recorded a closed six | §3 restores the words and states the field is a FLOOR |
+| MINOR (r1) 7 | three dry-run criteria recorded MET with no artifact | the artifact carries all six refusal legs |
+| MINOR (r1) 14 | §10's remedy for the mean-vs-median point was a non-sequitur | **it was not fixed, and this row says so rather than claiming it was.** What replaces it is better: the census counts firings directly, so §1.3's `NOW` column is a count and not a mean of a ratio |
+| MINOR | the parity parenthetical omitted quotient 0 | all four quotients stated, with what quotient 0 means |
+| MINOR | §1.1 cited the node gate where the firing predicate is | the statement is quoted instead |
+| MINOR | ruling 6's ceiling was printed by no artifact | the instrument prints `t_90` |
+| MINOR | the ROADMAP's "stated ONCE" is falsified by D-516 | reworded: the ADR log RECORDS, this document OWNS |
 
 **The strongest attack that did not land**, recorded because a later reader will
 try it: *the call-budget step inherits the circularity the memo concedes in
 §3.3*. It does not. The identity's vacuity is about **corroboration** — the check
 "the model reproduces the recorded ratio" cannot fail — and not about
 **inversion**, which consumes `a` and `c` as two separately measured rates and
-depends on `c` essentially (`∂u*/∂c ≠ 0`). The budget step adds nothing on top:
-it consumes `u*`, `T` and `cap`, and neither `T` nor `cap` touches `c`.
+depends on `c` essentially. The budget step adds nothing on top: it consumes
+`u*`, `T` and `cap`, and neither `T` nor `cap` touches `c`.

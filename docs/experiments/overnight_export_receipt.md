@@ -22,20 +22,30 @@ continues it rather than replacing it.
 **`artifacts/overnight_export_receipt_v1.txt` — sha256**
 
 ```
-4a8bbb6d349631682fece77daa3bb292a816b37cc30fc6510cab072d50e84af6
+3672f0c6ecd7fc34aca9a8e9758962812231ab04d7cb3a843c0bbb2253e528d9
 ```
 
-Four files listed, the receipt itself excluded because a file cannot carry its
-own digest.
+Fifteen files listed, the receipt itself excluded because a file cannot carry
+its own digest.
 
 ## What is in it, and what each artifact is
 
 | artifact | what it is |
 |---|---|
-| `stage3_call_budget_v2.txt` | **the governed call-budget derivation at HEAD** — the run every figure in `docs/experiments/stage3_rulings.md` §1 is cited from. Records its own argv and the sha256 of all four inputs |
-| `stage3_call_budget_v1.txt` | **SUPERSEDED** — revision 1's run, kept because revision 1's figures are quoted in the red-team report and a superseded artifact that vanishes makes that report unreadable |
-| `stage3_rulings_redteam_v1.md` | the fresh-context red team on the rulings at `2f8f836`: STANDS WITH CORRECTIONS, 3 BLOCKING / 11 MAJOR / 14 MINOR |
-| `overnight_ci_premerge_21e05f8_v1.txt` | `tools/ci.sh` at `21e05f8`, the pre-merge gate run — 19/19, `ci: all gates passed` |
+| `stage3_call_budget_v3.txt` | **the governed call-budget derivation at HEAD** — the run `docs/experiments/stage3_rulings.md` §1 is cited from. Carries its own argv, the sha256 of all four inputs, ruling 6's `t_90` ceiling, and the six refusal legs |
+| `stage3_call_budget_v2.txt`, `_v1.txt` | **SUPERSEDED** — revisions 2 and 1's runs, kept because the review reports quote their figures and a superseded artifact that vanishes makes a report unreadable |
+| `stage3_trigger_census_corpus_v1.txt` | the trigger census over the corpus bench fixture: one row per firing, with the O(1) columns and what the solver answered |
+| `stage3_trigger_census_trigger_v1.txt` | the same over the trigger-rich fixture |
+| `stage3_census_analysis_v1.txt` | **where the measured `K` comes from** (D-517), and the option matrix's §5 ranking |
+| `book_v2_power_v1.txt` | `book_v2`'s size grounds: the dry run against D-187's four recorded figures, and the registered sweep that answered `P = 4000` |
+| `stage3_rulings_redteam_v1.md` | the fresh-context red team on the rulings at `2f8f836`: STANDS WITH CORRECTIONS, 3 / 11 / 14 |
+| `stage3_rulings_review_rev2.md` | the scoped re-review at `ba8e6b2`: FAIL, 1 new BLOCKING / 2 MAJOR / 6 MINOR |
+| `counter_unit_impl_REVIEW.md` | REVIEW-impl on the solver call counters: PASS WITH FINDINGS, 0 / 5 / 5 |
+| `book_v2_impl_REVIEW.md` | REVIEW-impl on `book_v2`: PASS WITH FINDINGS, 3 / 5 / 5 |
+| `anchor_v2_impl_REVIEW.md` | REVIEW-impl on the movetime seat: PASS WITH FINDINGS, 2 / 6 / 7 |
+| `overnight_ci_premerge_21e05f8_v1.txt` | `tools/ci.sh` at `21e05f8` — 19/19, the pre-merge gate run |
+| `overnight_ci_postmerge_2f8f836_v1.txt` | the same at `2f8f836` — 19/19, post-merge |
+| `overnight_ci_7240e37_v1.txt` | the same at `7240e37` — 19/19, the three landed units |
 
 ## The rule this file follows for the rest of the arc
 

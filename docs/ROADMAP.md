@@ -190,10 +190,11 @@ flagged is spent: D-473 settled the names and D-494 settled the order.
 carried is the nps-ratio shortfall read as a call-count factor, and it is not
 one: search and solver draw from ONE node budget, so a gated call funds the
 search rather than shrinking it. **THE SEVEN RULINGS ARE NOW MADE — D-509
-through D-516 — and the target is stated ONCE, in the section that owns it:**
-`docs/experiments/stage3_rulings.md`. Nothing here or in D-471 restates it,
-which is D-423 applied to a number three documents were inheriting from each
-other. The premise memo's §3.3 and §3.5 keep the RATE FACTORS they measured
+through D-516 — and the section that OWNS the target is
+`docs/experiments/stage3_rulings.md`.** The ADR log RECORDS a figure at the
+moment it was decided, which is its job and is not a second home; what this file
+and D-471 no longer do is restate it, which is D-423 applied to a number three
+documents were inheriting from each other. The premise memo's §3.3 and §3.5 keep the RATE FACTORS they measured
 (379.3x / 507.7x / 88.3x, unchanged and reproduced); what moved to the rulings
 document is the BUDGET the resumed package is designed against, which is a
 different quantity in a different unit.

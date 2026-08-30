@@ -54,6 +54,14 @@ TRIGGER_FIXTURE = "bench_solver_positions_v1.txt"
 INVOCATIONS_PER_FIRING = 2
 # What `t` costs, in microseconds per search node, printed as a sensitivity.
 T_SWEEP = (0.0, 0.03, 0.10, 0.50, 1.00)
+# Ruling 6's registered ceiling: the fraction of its `t = 0` value the budget
+# may fall to before the detector's own per-node test has eaten what it was
+# meant to protect (docs/decisions.md D-514).
+BUDGET_EROSION_FLOOR = 0.90
+# What a firing costs, as a multiple of the cap, when an invocation returns
+# EARLY rather than spending the cap. Printed because the direction of every
+# count below turns on it and a reader must not have to derive it.
+K_SWEEP = (1.0, 0.5, 0.25)
 RECORD = re.compile(
     r"^bench_block: record entry (\d+) stones (\S+) rep (\d+) .*?"
     r"\bnodes (\d+)\b(?:.*?\bsearch_nodes (\d+)\b.*?\bsolver_nodes (\d+)\b)?"
@@ -244,6 +252,39 @@ def main(argv):
                 continue
             visits = (star / (1.0 + star)) * t_on
             cells.append(f"t {t:4.2f}: {visits / (cap * INVOCATIONS_PER_FIRING):5.2f}f")
+        print(f"band {band:>7}  firings at T_on   " + "  ".join(cells))
+
+    print()
+    print("=== ruling 6's registered ceiling: where the detector's own cost eats the budget ===")
+    print("t_90 is the per-node cost at which the band's budget falls to "
+          f"{BUDGET_EROSION_FLOOR:.0%} of its t = 0")
+    print("value. A detector whose own per-node test costs more than this has spent")
+    print("what it was built to protect (docs/decisions.md D-514).")
+    for band, bound, a, c, u, o, n in rows:
+        star = u_star(a, c, bound, 0.0)
+        share0 = star / (1.0 + star)
+        target = BUDGET_EROSION_FLOOR * share0
+        u_target = target / (1.0 - target)
+        # u*(t) is affine in t: u* = (a(1-R) - R.t)/(R.c - a).
+        denom = bound * c - a
+        t_90 = (a * (1.0 - bound) - u_target * denom) / bound
+        print(f"band {band:>7}  share0 {100.0 * share0:7.3f}%  t_90 {t_90:8.4f} us/node"
+              f"  (= {t_90 / a:5.3f} x ONE SEARCH NODE at a = {a:.4f})")
+
+    print()
+    print("=== the direction, priced: what an EARLY-RETURNING invocation buys ===")
+    print("`invocations = visits / cap` prices an invocation at the cap. K is the MEAN")
+    print("visits an invocation actually spends; at K below the cap the same visit")
+    print("budget affords MORE. K has no counter in these artifacts -- it is measured")
+    print("by the counters D-510 landed, not here -- so the sweep stands in for it.")
+    for band, bound, a, c, u, o, n in rows:
+        star = u_star(a, c, bound, 0.0)
+        share = star / (1.0 + star)
+        t_on = (n["search"] + n["solver"]) / n["rows"]
+        cells = []
+        for k in K_SWEEP:
+            per_firing = INVOCATIONS_PER_FIRING * k * cap
+            cells.append(f"K={k:4.2f}cap: {share * t_on / per_firing:5.2f}f")
         print(f"band {band:>7}  firings at T_on   " + "  ".join(cells))
 
     print()
