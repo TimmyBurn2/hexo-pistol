@@ -213,12 +213,17 @@ only row in the field never implemented. The selection is PROVISIONAL on it.
   IQR. One band is a finding, not a flip.
 - Never run: the debt stays open. Silence does not discharge it.
 
-### 6.2 The module-split cost
+### 6.2 The module-split cost — now designated **WP-1.9b** (D-504)
 
 Inlining the storage back into `handcrafted.rs` buys **1.18x-1.21x**. It costs
 ~15 lines over rule 9's soft cap plus one justification entry — and rule 9's cap
 is soft precisely so a measured reason can override it. **This needs its own
 REVIEW-impl and its own bench**; it is not an unreviewed edit.
+
+It is now on the critical path of another package's bracket: D-504 discharges the
+WP-1.8 nps re-test into the Stage-3 detector, whose bench re-measures the solver
+seat under **post-WP-1.9 / post-WP-1.9b** nps. If WP-1.9b lands first, the
+detector measures against the faster engine.
 
 Note 6.1 and 6.2 interact: if O-3 wins, it should land inline from the start.
 
@@ -303,3 +308,10 @@ when checked against the tree**:
   VCDT/TSS detection gating solver calls, targeting the measured ~6x call-count
   cut the WP-1.8c bracket demands, DBS decomposition only after the detector
   earns its own SPRT.
+- **That package's §0 now carries two scheduled obligations** (added after this
+  closure): **`book_v2`** (D-505 — seeded, re-executable, fresh ranges, size
+  registered for the SPRT's worst-case n; `random_openings_v1.txt` is spent and
+  retired for governed use), and **the WP-1.8 nps re-test discharged into it**
+  (D-504 — measured inside the detector's own bracket; its prereg must say which
+  limb of the WP-1.8 clause it answers, because only the nps-jump limb is
+  discharged).
