@@ -61,6 +61,10 @@ fn state_of(cells: &[&str]) -> GameState {
     state
 }
 
+/// A turn-boundary opening at which neither side holds four in any live
+/// window, so the trigger never fires and every counter must stay at zero.
+const QUIET_OPENING: &[&str] = &["0,0", "3,-1", "-2,2", "1,1", "-1,-1"];
+
 /// A midgame position both seats reach hot, so the trigger fires often enough
 /// that the counters have something to count.
 const HOT_MIDGAME: &[&str] = &[
@@ -85,28 +89,34 @@ fn a_gate_off_search_counts_nothing_because_it_asks_nothing() {
 #[test]
 #[ignore = "minutes in a debug build (the solver's blanket agreement asserts): \
             tools/search_oracle_check.sh runs it in release"]
-fn every_firing_makes_one_or_two_invocations_and_never_more() {
+fn every_firing_makes_two_invocations_when_none_of_them_proves() {
     // THE RATIO IS THE POINT, and it is what a designer reading this counter
     // needs: a firing asks the attacker direction, and then the defender one
-    // unless the attacker already proved a win. So invocations sit in
-    // [firings, 2*firings], and a counter incremented at the wrong place
-    // leaves that interval.
+    // unless the attacker already proved a win.
     let mut engine = searcher(true, 2048);
     let outcome = engine
         .search(&state_of(HOT_MIDGAME), Stop::Nodes(20_000), &mut |_| {})
         .expect("the search runs");
     let calls = outcome.info.solver_calls;
+    println!("every_firing_makes_two_when_none_proves: {calls:?}");
     assert!(
         calls.firings > 0,
         "the fixture must actually fire, or this test is vacuous"
     );
-    assert!(
-        calls.invocations >= calls.firings,
-        "a firing makes at least one invocation: {calls:?}"
+    // THE EQUATION AND NOT THE INTERVAL. `firings <= invocations <= 2*firings`
+    // is satisfied by BOTH degenerate readings — one invocation per firing and
+    // two — so it kills neither increment. What pins both is the exact ratio,
+    // and the exact ratio is available because this fixture proves nothing:
+    // the defender direction is skipped only when the attacker PROVED, so at
+    // zero proofs every firing makes exactly two invocations.
+    assert_eq!(
+        calls.proofs, 0,
+        "this fixture must prove nothing, or the equation below is the wrong one: {calls:?}"
     );
-    assert!(
-        calls.invocations <= 2 * calls.firings,
-        "a firing makes at most two invocations: {calls:?}"
+    assert_eq!(
+        calls.invocations,
+        2 * calls.firings,
+        "with no proof to skip on, each firing asks both directions: {calls:?}"
     );
 }
 
@@ -146,15 +156,34 @@ fn the_roots_own_visits_are_a_share_of_the_searchs_own() {
     // are SEEDED into the tree's counter, so they are inside the same budget
     // the bracket measures. A `root_nodes` larger than `solver_nodes` would
     // mean the seed had been double-counted or the tree's total reset.
-    let mut engine = searcher(true, 2048);
+    const CAP: u64 = 2048;
+    let mut engine = searcher(true, CAP);
     let outcome = engine
         .search(&state_of(HOT_MIDGAME), Stop::Nodes(20_000), &mut |_| {})
         .expect("the search runs");
-    assert!(
-        outcome.info.solver_calls.root_nodes <= outcome.info.solver_nodes,
-        "the root's visits are part of the search's, not extra to them: {:?} of {}",
-        outcome.info.solver_calls,
+    let calls = outcome.info.solver_calls;
+    println!(
+        "the_roots_own_visits: {calls:?} of {}",
         outcome.info.solver_nodes
+    );
+    assert!(
+        calls.root_nodes <= outcome.info.solver_nodes,
+        "the root's visits are part of the search's, not extra to them: {calls:?} of {}",
+        outcome.info.solver_nodes
+    );
+    // AND THE ORDINARY PATH IS PINNED TOO, which the bound above cannot do:
+    // `root_nodes` stayed at zero would satisfy it, and a bench reading
+    // `solver_root_nodes 0` would conclude the root never fires — the exact
+    // question this counter was landed to answer (docs/decisions.md D-510).
+    //
+    // The value is EXACT rather than merely positive: this root is hot, so it
+    // fires; neither direction proves here, so both are asked; and a capped
+    // df-pn invocation stops at exactly its cap. Two caps, and if that ever
+    // stops being true this test says so rather than absorbing it.
+    assert_eq!(
+        calls.root_nodes,
+        2 * CAP,
+        "the root fires and both directions cap out on this fixture: {calls:?}"
     );
 }
 
@@ -163,25 +192,40 @@ fn the_roots_own_visits_are_a_share_of_the_searchs_own() {
             tools/search_oracle_check.sh runs it in release"]
 fn a_second_search_counts_only_its_own_calls() {
     // The counters are per-search and hold no state across one, which is what
-    // makes a per-search budget a quantity at all. A counter that accumulated
-    // would make the second search's figure the sum of both.
-    let state = state_of(HOT_MIDGAME);
+    // makes a per-search budget a quantity at all.
+    //
+    // THE SECOND POSITION IS QUIET, AND THAT IS THE WHOLE DESIGN OF THIS TEST.
+    // An earlier draft searched the SAME hot position twice and asserted the
+    // two firing counts equal — which nothing guarantees: the transposition
+    // table survives a search (`Table::new_generation` bumps a counter, it does
+    // not clear), a table cutoff returns before the firing gate, and every tree
+    // firing here lives in the budget-truncated iteration a warm table
+    // reorders. That assertion was red-on-correct-code waiting to happen
+    // (D-481's class). A quiet second position needs none of that: it fires
+    // zero times whatever the table holds, so the only way the assertion below
+    // fails is a counter that accumulated.
     let mut engine = searcher(true, 2048);
-    let first = engine
-        .search(&state, Stop::Nodes(20_000), &mut |_| {})
+    let hot = engine
+        .search(&state_of(HOT_MIDGAME), Stop::Nodes(20_000), &mut |_| {})
         .expect("the search runs");
-    let second = engine
-        .search(&state, Stop::Nodes(20_000), &mut |_| {})
+    assert!(
+        hot.info.solver_calls.firings > 0,
+        "the first search must fire, or the second proves nothing: {:?}",
+        hot.info.solver_calls
+    );
+    let quiet = engine
+        .search(&state_of(QUIET_OPENING), Stop::Nodes(20_000), &mut |_| {})
         .expect("the search runs");
-    assert!(first.info.solver_calls.firings > 0, "the fixture fires");
-    assert_eq!(
-        first.info.solver_calls.firings, second.info.solver_calls.firings,
-        "the same position under the same budget asks the same number of times"
+    println!(
+        "a_second_search: hot {:?} then quiet {:?}",
+        hot.info.solver_calls, quiet.info.solver_calls
     );
     assert_eq!(
-        first.info.solver_calls.invocations,
-        second.info.solver_calls.invocations
+        quiet.info.solver_calls,
+        pistol_search::SolverCallCounters::default(),
+        "a search that asks nothing reports nothing, whatever the search before it asked"
     );
+    assert_eq!(quiet.info.solver_nodes, 0);
 }
 
 #[test]
