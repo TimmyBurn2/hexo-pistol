@@ -159,13 +159,17 @@ than 500 paired openings resolve at `elo1 = 15.0`, not that nothing happened.
 regenerated or extended book and its own pre-registration. The D-95 root-turn
 package stays LICENSED, NOT SCHEDULED.
 
-**NEXT SCHEDULED STEP: the Stage-3 scoped detector** (D-471, and see D-493 for
-the `WP-1.9` designation collision that decides this): cheap VCDT/TSS detection
-gating solver calls, targeting the measured ~6x call-count cut the WP-1.8c
-bracket demands, with DBS decomposition only after the detector earns its own
-SPRT. ROADMAP's own **WP-1.9 — eval window-map storage** below is a DIFFERENT
-package from the one D-471's ordering sentence calls WP-1.9, and it remains
-licensed-not-scheduled behind WP-1.10.
+**STAGE 1 IS CLOSED WITH NAMED RESIDUE (D-503)** — a closure, never a
+completeness claim. Carried open and licensed, by name: **WP-1.4** (D-95, the
+HeXO forfeit risk), **WP-1.10** (`tools/` gate hardening, whose WP-1.9
+precedence D-496 displaced by name), **O-3** (WP-1.9's registered flip trigger)
+and **the module-split cost** D-502 measured.
+
+**NEXT SCHEDULED STEP: the Stage-3 scoped detector** (D-471 as amended by
+D-494): cheap VCDT/TSS detection gating solver calls, targeting the measured ~6x
+call-count cut the WP-1.8c bracket demands, with DBS decomposition only after
+the detector earns its own SPRT. The `WP-1.9` designation collision D-493 flagged
+is spent: D-473 settled the names and D-494 settled the order.
 
 **WP-1.6 — threat-only zone-bounded quiescence**, under D-111's invariant: the
 static eval answers at turn boundaries only, so quiescence stands pat and
@@ -288,14 +292,23 @@ whenever a measured nps jump lands — the bench re-runs first, new
 pre-registration, fresh slice, never a re-read.
 
 **WP-1.9 — eval window-map storage** (docs/decisions.md D-225, renumbered by
-D-249). Replace `pistol-eval`'s `BTreeMap<Window, Counts>` with the storage
-shape WP-1.5a's matrix selects. LICENSED, NOT SCHEDULED: it owes its own option
-matrix, its own pre-registration and its own `tools/bench_delta.sh` run, and it
-does not sit on the threat core's critical path. PRIORITY: after WP-1.5b and
-after WP-1.10 (D-289), because its recorded stake is a table-only reading that
-D-258 forbids quoting as a whole-engine bracket. Unlike WP-1.5a its bracket IS a
-whole-engine one, because `pistol-eval` is linked by the shipped binary and
-`pistol-solver` is not.
+D-249). Replace `pistol-eval`'s `BTreeMap<Window, Counts>` with a selected
+storage shape. Its WP-1.10 precedence was displaced BY NAME by D-496.
+
+**WP-1.9 — CLOSED, LANDED, BIT-IDENTICAL, BELOW ITS BRACKET (D-502).** The
+window map is a `HashMap<u64, Counts>` over an order-preserving packed key with
+a seedless in-crate hasher, selected by MATRIX WP-19-S after two failed
+DECISION-RED-TEAM rounds and an architect ruling (D-500, D-501). **Track E, not
+SPRT**: byte-identity of search output against the pre-implementation binary
+over 44 positions at both determinism budgets, 422 lines and 88 bestmoves
+identical, verified twice; identity is the stronger oracle and D-495 says a
+strength run adds nothing. The rule-5 bench, registered before the run, lands
+**below** its [1.60, 2.10] bracket at **1.508 / 1.579** — above the abort line,
+so a FINDING, and **the bracket does not move**. The cause was measured, not
+guessed, after two hypotheses failed: the module split costs 0.844 / 0.828, and
+inlining it back is a follow-up worth 1.18x-1.21x at the price of one rule 9
+justification entry. **O-3 — the hand-rolled probing table D-225 named — was
+never implemented and is a REGISTERED FLIP TRIGGER on the selection (D-501).**
 
 **WP-1.10 — `tools/` gate hardening** (docs/decisions.md D-251, D-252, and
 D-289 for each item's owner). What the `tools/`-scoped reviews that produced
