@@ -1,10 +1,16 @@
 # Stage-3 detector — OPTION MATRIX
 
-**Status: §1–§4 are written BEFORE the census run that fills §5.** §4 registers
-how each row's numbers are computed and what would kill each row, so the
-ranking cannot be an argument constructed after the numbers. Nothing is
-selected here: selection follows a fresh-context DECISION-RED-TEAM on this
-document, and the selection record quotes its rows (CLAUDE.md, Process).
+**REVISION 2**, after a fresh-context DECISION-RED-TEAM returned **FALLS** on
+revision 1 (`1bc2788`) — 5 BLOCKING, 9 MAJOR, 5 MINOR. It reproduced revision 1's
+§5.1 and §5.2 exactly, including an externally derived integrity check the
+document had not thought to make (`sum(row visits) == sum(solver_nodes)`, byte-
+exact on all three bands). What fell was §5.3's readings and §3's field, and the
+two headline findings are that **the REACHES-BUDGET test was in the wrong unit**
+and that **the field omitted the mechanisms the census ranks best**. §4's
+formulas are AMENDED here, which reopens this document's review (`docs/process.md`).
+
+**Nothing is selected.** Selection follows a fresh-context DECISION-RED-TEAM on
+THIS revision, and the selection record quotes its rows (CLAUDE.md, Process).
 
 **The field is the operator's** and is a FLOOR, not a closed set: the governing
 dispatch reads *"options ranked by precision economics, **at least**: (a)…(f)"*
@@ -177,170 +183,277 @@ it. D-471's roadmap clause is what it triggers.
 
 ---
 
-## 4. HOW THE ROWS ARE RANKED — registered before the census runs
+## 4. HOW THE ROWS ARE RANKED — AMENDED, and the amendment is the point
 
-**The instrument**: `crates/pistol-search/examples/trigger_census.rs`, at the
-revision this document is committed at. It prints one row per firing with the
-O(1) columns a per-node detector could read there (`turns`, `mover_hot`,
-`opp_hot`, `mover_w1`, `opp_w1`, `mover_l3`, `opp_l3`) and what the solver then
-answered (`att_visits`, `att_proved`, `def_asked`, `def_visits`, `def_proved`).
-A change to it reopens this section (`docs/process.md`).
+**The instruments**: `crates/pistol-search/examples/trigger_census.rs` records
+one row per firing with the O(1) columns a per-node detector could read there
+(`turns`, `mover_hot`, `opp_hot`, `mover_w1`, `opp_w1`, `mover_l3`, `opp_l3`)
+and what the solver then answered (`att_visits`, `att_proved`, `def_asked`,
+`def_visits`, `def_proved`). `tools/stage3_census_analyse.py` reports the
+census's own quantities; **`tools/stage3_census_rank.py` applies the test
+below**. A change to any of them reopens this section.
 
-**The workload**: both committed bench fixtures at `nodes 50000` — the corpus
-fixture and the trigger-rich one — at the ON seat's committed cap.
+**The workload**: both committed bench fixtures at `nodes 50000`, cap 2048,
+`quiet_radius 2` — the seats the bracket was registered against.
 
-**What each row's number is, stated as a formula over the census so that no row
-can be scored on a quantity chosen for it afterwards:**
+### 4.1 THE TEST IS IN VISITS, and revision 1's was not
 
-- **KEPT** = firings a row's predicate admits, ÷ all firings.
-- **PROOFS KEPT** = firings the row admits that returned a proof, ÷ all firings
-  that returned a proof. **This is the recall the gate is about.**
-- **PRECISION** = proofs kept ÷ firings kept. The dispatch's economics: *"the
-  expensive calls are the ones that return NoWin"*.
-- **REACHES BUDGET** = whether KEPT × 12.00 (band 15's measured firings per
-  search) is at or below the firing budget.
+- **KEPT** = firings a row's predicate admits ÷ all firings.
+- **PROOFS KEPT** = proving firings it admits ÷ all proving firings.
+- **PRECISION** = proofs kept ÷ firings kept.
+- **REACHES BUDGET** = `sum(att_visits + def_visits over KEPT firings) / searches`
+  ≤ the band's visit budget (2183.6 / 937.6 / 1799.4 at `T_off`).
 
-**Rows (a), (b) and (e) are scored by evaluating their predicate over the census
-columns.** Row (c) is scored differently and the difference is registered here:
-it is a modifier, so its number is the visit cost `12 × p` against the visit
-budget, not a KEPT fraction. Row (d) is scored as the composition it is: the
-KEPT of its cheap tier and the visit cost of its certifier. Row (f) has no
-number by construction.
+**REVISION 1 PRICED A ROW IN FIRINGS AT THE POPULATION MEAN, AND THAT IS THE
+WRONG UNIT.** §1 of this document says of the visit: *"what the BUDGET is
+denominated in, and the only unit the bracket fixes directly"*. Converting a
+visit budget into a firing budget divides by the mean cost of a firing, which is
+valid only if a row's kept firings cost the mean — and the census records what
+they actually cost. **The two tests disagree on exactly the predicate that
+reaches the bracket**: `opp_hot >= 3` keeps firings costing **1085 visits each**
+against a population mean of 2678, so the firing test rejects it (1.083 against a
+budget of 0.845) and the visit test accepts it (1175.8 against 2183.6). **The
+matrix's own registered instrument would have rejected the one row that works.**
+That is D-477's class committed by the document whose §1 is a D-477 compliance
+section, and it is the same substitution D-508 recorded one level up.
 
-**A row that cannot be scored from the census is recorded as UNSCORED and its
-reason given** — not scored on something else. An unscored row survives to the
-red team, which is where a field's completeness is judged.
+The firing figure is still reported. It is no longer the test.
 
-**THE ONE THING THE CENSUS CANNOT ANSWER, said before it is run.** It records
-what the CURRENT trigger's firings look like. A detector that gates firings
-changes the search, which changes which nodes exist, which changes the firing
-set — the fixed-point the premise memo's §3.6 named as a stated assumption. So
-KEPT is a fraction of TODAY's firings, and its use is to RANK rows against each
-other, never to predict the post-detector firing count. Any row's own bench is
-what measures that.
+### 4.2 What is scored, and what is UNSCORED
+
+Rows (a), (g), (j) are predicates over the census columns and are scored by the
+test above. Row (i) is scored by re-charging every invocation at `min(visits,
+cap)` and counting which proofs remain reachable. Row (h) is scored by
+collapsing repeated firing SIGNATURES, and its figure is an **upper bound** for
+a reason stated where it is printed. Row (f) has no number by construction.
+
+**Rows (b), (c), (d) and (k) are UNSCORED, and revision 1 scored two of them
+anyway.** §4 registered the disposition — *"A row that cannot be scored from the
+census is recorded as UNSCORED and its reason given — not scored on something
+else"* — and it is applied here rather than ignored:
+
+- **(b)** is an UNANSWERABILITY test over `blocking_covers`. **The census has no
+  cover column**, so revision 1 scored `opp_hot > 0 and mover_hot == 0` and
+  killed row (b) on a predicate that is not row (b). **Its KILLED verdict is
+  withdrawn.** Scoring it needs a cover column, which is one more census run.
+- **(c)** is a modifier on a probe cost the census does not contain.
+- **(d)** is a composition of rows, and §5.3 scores the compositions directly.
+- **(k)** needs parent-child identity, which the rows do not carry.
+
+### 4.3 THE ONE THING THE CENSUS CANNOT ANSWER, unchanged
+
+KEPT is a fraction of TODAY's firings. A detector that gates firings changes the
+search, which changes the firing set — the fixed point the premise memo's §3.6
+named. The ranking compares rows; it never predicts the post-detector count.
 
 ---
 
 ## 5. THE MEASURED RANKING
 
-Taken under §4's registered formulas, from
-`artifacts/stage3_census_analysis_v1.txt` — the census over both committed bench
-fixtures at `nodes 50000`, cap 2048, quiet_radius 2.
+`artifacts/stage3_census_rank_v1.txt` (the visit test) and
+`artifacts/stage3_census_analysis_v1.txt` (the census's own quantities).
 
-### 5.1 What the incumbent trigger actually looks like
+### 5.1 What the incumbent trigger looks like
 
 | | band 15 | band 35 | trigger-rich |
 |---|---|---|---|
 | firings per search | 18.33 | 11.75 | 9.05 |
+| **visits per search** | **49,100.5** | **39,917.1** | **31,237.1** |
+| **visit budget** | **2183.6** | **937.6** | **1799.4** |
+| **required cut** | **22.5x** | **42.6x** | **17.4x** |
 | invocations per firing | 2.000 | 1.993 | 1.939 |
-| **PRECISION at the incumbent** | **3.64 %** | **1.42 %** | **13.81 %** |
-| proving firings / all firings | 8 / 220 | 2 / 141 | 25 / 181 |
+| PRECISION | 3.64 % | 1.42 % | 13.81 % |
+| proving firings | 8 / 220 | 2 / 141 | 25 / 181 |
+| **distinct proving positions** | **5** | **1** | **13** |
 | root fires in | 3 / 12 searches | 5 / 12 | 12 / 20 |
 
-**THE STRUCTURAL FACT THAT SHAPES THE WHOLE FIELD, and it was not predicted by
-anything before the census: the trigger fires because the OPPONENT is hot, not
-because the mover is.** On band 15 the predicate *mover hot* keeps **0.000** of
-the firings and *opponent hot* keeps **1.000**; on band 35, 0.007 and 0.993; on
-trigger-rich, 0.011 and 1.000. The staged generator is threat-first, so the
-search spends its time at positions where the side to move is under threat, and
-the incumbent trigger is — in practice and not by intention — an
-opponent-is-hot detector.
+**THE STRUCTURAL FACT, and its mechanism corrected.** Revision 1 observed that
+`mover hot` keeps essentially nothing and attributed it to the staged
+generator's threat-first ordering. The red team showed the stronger reason: at a
+firing the mover is at `Phase::First` with two stones owed, and *hot* means a
+live window holding four or more own stones — **so `mover_hot > 0` at a firing
+means the mover completes six THIS TURN**, a theorem of game rules 2, 3 and 5
+rather than a property of the ordering. All three mover-hot rows in the entire
+census are one-visit root wins. **Four of revision 1's scored rows were empty by
+the RULES, not by measurement**, and a detector that changed the ordering would
+not change that.
 
-### 5.2 The rows, scored
+### 5.2 The rows, scored in visits
 
-**KEPT** = firings a predicate admits ÷ all firings. **PROOFS KEPT** = proving
-firings it admits ÷ all proving firings. **PRECISION** = proofs kept ÷ firings
-kept. A row REACHES BUDGET when `KEPT × firings-per-search` ≤ the firing budget,
-i.e. when `KEPT ≤ 0.046 / 0.024 / 0.066` on the three bands.
+Per band: KEPT / PROOFS KEPT / visits-per-search / cut / budget verdict.
 
-| candidate (row) | KEPT b15 | PROOFS b15 | KEPT b35 | PROOFS b35 | KEPT trig | PROOFS trig |
-|---|---|---|---|---|---|---|
-| incumbent | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
-| **(a)** both sides hot | 0.000 | 0.000 | 0.000 | 0.000 | 0.011 | 0.080 |
-| **(a)** mover hot | 0.000 | 0.000 | 0.007 | 0.500 | 0.011 | 0.080 |
-| **(a)** opponent hot | 1.000 | 1.000 | 0.993 | 0.500 | 1.000 | 1.000 |
-| **(a)** a win-in-one-ply, either side | 0.045 | **0.000** | 0.078 | **0.000** | 0.072 | **0.000** |
-| **(a)** mover has ≥ 2 hot windows | 0.000 | 0.000 | 0.000 | 0.000 | 0.011 | 0.080 |
-| **(a)** either side has ≥ 2 hot windows | 0.227 | **1.000** | 0.404 | 0.500 | 0.569 | 0.760 |
-| **(a)** mover hot and ≥ 2 live threes | 0.000 | 0.000 | 0.000 | 0.000 | 0.011 | 0.080 |
-| **(b)** must-block shape (opponent hot, mover not) | 1.000 | 1.000 | 0.993 | 0.500 | 0.989 | 0.920 |
-| **(e)** root only | 0.014 | 0.000 | 0.035 | 1.000 | 0.066 | 0.200 |
-| **(e)** turns ≤ 1 | 0.677 | 1.000 | 0.979 | 1.000 | 0.762 | 0.640 |
+| row | band 15 | band 35 | trigger-rich |
+|---|---|---|---|
+| incumbent | 1.000 / 1.000 / 49100 / 1.0x / out | 1.000 / 1.000 / 39917 / 1.0x / out | 1.000 / 1.000 / 31237 / 1.0x / out |
+| **(a/g) `opp_hot >= 2`** | 0.227 / **1.000** / 8546 / 5.8x / out | 0.404 / 0.500 / 15895 / 2.5x / out | 0.569 / 0.760 / 16451 / 1.9x / out |
+| **(a/g) `opp_hot >= 3`** | 0.059 / **1.000** / **1176** / **41.8x** / **IN** | 0.057 / 0.500 / 2185 / 18.3x / out | 0.204 / 0.560 / 5557 / 5.6x / out |
+| **(a/g) `opp_hot >= 4`** | 0.000 / 0.000 / 0 / — / IN (vacuous) | 0.007 / 0.500 / 126 / 317x / IN | 0.011 / 0.080 / 117 / 266x / IN |
+| (a) either side ≥ 2 hot | 0.227 / 1.000 / 8546 / 5.8x / out | 0.404 / 0.500 / 15895 / 2.5x / out | 0.569 / 0.760 / 16451 / 1.9x / out |
+| (a) a win-in-one-ply | 0.045 / **0.000** / 1803 / 27.2x / IN | 0.078 / 0.000 / 3053 / 13.1x / out | 0.072 / 0.000 / 2736 / 11.4x / out |
+| (a) mover hot | 0.000 / 0.000 / 0 / — / IN (theorem, §5.1) | 0.007 / 0.500 / 0.1 / — / IN | 0.011 / 0.080 / 0.1 / — / IN |
+| **(j) not the root** | 0.986 / 1.000 / 48655 / 1.0x / out | 0.965 / **0.000** / 38767 / 1.0x / out | 0.934 / 0.800 / 29620 / 1.1x / out |
+| **(j) the root only** | 0.014 / **0.000** / 446 / 110x / IN | 0.035 / **1.000** / 1150 / 34.7x / out | 0.066 / 0.200 / 1617 / 19.3x / IN |
 
-### 5.3 What the numbers do to each row
+**(i) THE CAP**, every invocation re-charged at `min(visits, cap)`, with the
+proofs still reachable:
 
-**(a) — the best single predicate cuts 4.4x and the target is 21.7x.** *Either
-side has ≥ 2 hot windows* is the only tightening that keeps every band-15 proof
-(PROOFS 1.000) while cutting firings, and it cuts them to 0.227 — a **4.4x**
-reduction against a required **21.7x**, and on band 35 it keeps 0.404 against a
-required 41.1x while dropping half the proofs. **Every predicate in the field
-that reaches the budget drops every proof with it**: *win-in-one-ply* keeps
-0.045 (band 15, inside budget) and **0.000 of the proofs**; *mover hot* keeps
-0.000. **No single-predicate narrowing over these columns both reaches the
-budget and keeps the proofs.** Row (a) alone is **KILLED by its registered kill
-condition** on band 15 and band 35.
+| cap | band 15 | band 35 | trigger-rich |
+|---|---|---|---|
+| 2048 (incumbent) | 49100 / 8 of 8 | 39917 / 2 of 2 | 31237 / 25 of 25 |
+| 1024 | 25828 / 7 of 8 | 20165 / 2 of 2 | 15949 / 23 of 25 |
+| 512 | 13451 / 5 of 8 | 10217 / 2 of 2 | 8290 / 21 of 25 |
+| 256 | 7165 / 1 of 8 | 5225 / 2 of 2 | 4291 / 8 of 25 |
 
-**(b) — measured a no-op.** The must-block shape keeps 0.989–1.000 of the
-firings, because §5.1's structural fact makes almost every firing that shape
-already. Row (b) buys **nothing** and would pay a non-O(1) per-node cost for it,
-which its kill condition names. **KILLED, and killed by measurement rather than
-by the cost argument that was expected to kill it.**
+Nothing reaches a budget on the cap alone. What the sweep says is that
+**60–82 % of every invocation's visits buy nothing**: every band-15 proof is
+found within 1039 visits against a cap of 2048.
 
-**(c) — the probe budget is spent before it starts.** A probe costing `p` visits
-at every firing spends `18.33 × p` on band 15 against a visit budget of 2183.6,
-so `p` must be under **119 visits** to leave anything for a real call — and a
-call is measured at `K` = 1339 visits. A probe under a tenth of a real call's
-cost is not a bounded VCDT probe, it is a guess. **KILLED on band 15 by its own
-registered kill condition** unless firings are cut first, which makes it what §3
-already said it is: a modifier, not a rival.
+**(h) THE VERDICT CACHE**, repeated firing signatures collapsed — **recall
+1.000 by construction**, and an UPPER bound because a signature is evidence of a
+repeated position, not proof of one:
 
-**(d) — inherits (a)'s or (b)'s kill.** Both cheap tiers available in the field
-are killed above, and (d) is their composition with (c). It survives only if a
-tier not yet in the field is added — which is what "at least" in the dispatch's
-own enumeration leaves open, and what a red team may do before selection.
+| | band 15 | band 35 | trigger-rich |
+|---|---|---|---|
+| distinct signatures | 94 of 220 | 68 of 141 | 102 of 181 |
+| firings per signature | 2.34 | 2.07 | 1.77 |
+| visits/search if a repeat is free | 19,977 | 20,061 | 16,014 |
+| cut | 2.46x | 1.99x | 1.95x |
 
-**(e) — the only row that can reach an arbitrary target, because it CAPS rather
-than FILTERS.** A predicate's KEPT is whatever the position mix gives it; an
-allocator's is whatever the budget says. The census bears on it in two ways and
-both are stated:
+### 5.3 THE COMPOSITIONS, which is where the field actually stands
 
-- **The columns carry real signal.** *Either side has ≥ 2 hot windows* lifts
-  precision from 3.64 % to **16.00 %** on band 15 (4.4x) and from 13.81 % to
-  18.45 % on trigger-rich, and *root only* lifts it to **41.67 %** on
-  trigger-rich and **40.00 %** on band 35. A score built from these columns
-  ranks better than chance, which is what an allocator needs.
-- **The signal is not enough on its own, and at a 21.7x cut it does not have
-  to be.** An allocator admitting the top 4.6 % of firings by score keeps, at
-  the incumbent's 3.64 % precision and a 4.4x-better ranking, an expected
-  **0.16 × 0.046 × 220 ≈ 1.6** of band 15's 8 proving firings. **That is a
-  recall of about 20 %, and it is the number the recall gate (D-512) will
-  adjudicate.**
+| composition | band 15 | band 35 | trigger-rich |
+|---|---|---|---|
+| **`opp_hot >= 3` + cache** | **923 / 53.2x / 5 of 5 / IN** | 1844 / 21.7x / 1 of 1 / out | 4008 / 7.8x / 13 of 13 / out |
+| cache + cap 512 | 5727 / 8.6x / 3 of 5 / out | 5113 / 7.8x / 2 of 2 / out | 4398 / 7.1x / 20 of 23 / out |
+| **`opp_hot >= 3` + cache + cap 512** | **439 / 111.9x / 3 of 5 / IN** | **481 / 83.0x / 1 of 1 / IN** | **1151 / 27.1x / 12 of 13 / IN** |
 
-**(f) — the null is not yet ruled out and the field is honest about that.** Rows
-(a) and (b) are killed by measurement; (c) and (d) depend on a row that survives;
-(e) is the only row that can reach the target and the census puts its expected
-recall near 20 %. **If the recall gate rejects that, (f) wins and D-471's
-roadmap clause fires.**
+**`opp_hot >= 3` + the cache preserves EVERY distinct proof on EVERY band and
+reaches the bracket on band 15 alone**, missing band 35 by 2.0x and trigger-rich
+by 2.2x. Adding cap 512 reaches all three and costs recall — 3 of 5 on band 15.
 
-### 5.4 What this section does NOT establish
+### 5.4 What §5.3 does and does not license
 
-- **KEPT is a fraction of TODAY's firings.** §4 registered this before the run:
-  a detector that gates firings changes the search, which changes the firing
-  set. The ranking is a comparison between rows, never a prediction of the
-  post-detector count.
-- **The recall estimate for (e) is an ESTIMATE**, marked so (D-291): it composes
-  a measured precision lift with a budget share, and no allocator has been
-  built to check it. The recall GATE is what measures it.
-- **The census is one workload at one budget and one cap.** Both committed bench
-  fixtures, `nodes 50000`, cap 2048 — the seats the bracket was registered
-  against, and no others.
+- **Revision 1's central sentence is WITHDRAWN.** It read *"no single-predicate
+  narrowing both reaches the budget and keeps the proofs"*; `opp_hot >= 3` does
+  exactly that on band 15, from one comparison, at 41.8x against a required
+  22.5x. Row (a)'s KILLED verdict is withdrawn with it: the mechanism §3(a)
+  offers — *"fire only above a count of hot windows"* — was tested at one value.
+- **Row (b)'s KILLED verdict is WITHDRAWN**; it was scored on a predicate that
+  is not its mechanism, and it is UNSCORED (§4.2).
+- **THE THRESHOLD 3 WAS CHOSEN AFTER SEEING THE PROOFS**, exactly as revision 1
+  chose 2. All eight band-15 proofs sit at `opp_hot == 3`, which is that band's
+  maximum; under a null of random placement, eight landing in a nominated 13-of-
+  220 subset has probability about 3e-10, so it is not chance — but it is
+  in-sample and the threshold may be reading *the busiest positions* rather than
+  a proof signal. **That is an argument for scoring the row, not for selecting
+  it.**
+- **THE DENOMINATORS ARE SMALL AND THE DOCUMENT SAYS SO.** Band 15 has 8 proving
+  firings over **5 distinct positions**; band 35 has **2 firings over 1
+  position**, both one-visit root proofs. A PROOFS-KEPT of 0.500 on band 35 is
+  one proof of two firings of one position. No verdict on that band's rows is a
+  measurement of anything, and revision 1 stated no sampling error at all.
+- **BAND 15's ENTIRE RECALL DENOMINATOR IS DEFENDER-DIRECTION PROOFS — PROVEN
+  LOSSES.** D-512's recall fixture pins WINS. The census's recall and the gate's
+  recall are therefore not the same quantity, and §5's ranking does not
+  discharge the gate.
+- **THE REGISTERED KILL CONDITIONS WERE NOT WHAT REVISION 1 APPLIED.** Rows (a)
+  and (e) are killed by §3 *"excluding a VALUE row of the recall fixture"*, which
+  is seven named anchor positions the census does not contain. **No row's
+  registered kill condition has fired.** What §5 establishes is a RANKING; the
+  kill conditions are the recall gate's and the bench's.
+
+---
+
+## 5.5 The rows the field was missing
+
+Added on the DECISION-RED-TEAM's finding that revision 1's field omitted the
+mechanisms the census ranks best (D-511's flip clause: a red team may add a row
+before selection, and the dispatch's field is a floor — *"at least"*).
+
+### (g) Count-threshold trigger, quantified over the OPPONENT
+
+**Mechanism.** The `SolverTrigger` variant §3(a) already offers, with the count
+as a parameter and quantified over `threats.hot_windows(opponent).len()`. One
+comparison at the two sites the incumbent is evaluated at. O(1) by inspection.
+
+**What it can rank out.** Positions where the opponent holds fewer than the
+threshold's hot windows.
+
+**Cost shape.** A comparison; `t` free by §3(a)'s own argument.
+
+**Kill condition.** No threshold reaches the budget on all three bands while
+keeping a VALUE row of D-512's fixture.
+
+### (h) Verdict cache
+
+**Mechanism.** A per-search map from the position key `visit` already probes the
+TT with, consulted at the top of `solver_verdict` before either invocation and
+written after. Per-search STATE, so the determinism seat and the `newgame` clear
+apply.
+
+**What it can rank out.** **Nothing** — a cache returns the answer the solver
+would have returned. The only row in or out of the field with recall 1.000 by
+construction.
+
+**Cost shape.** One lookup per firing, not per node; a map bounded by the
+distinct firing positions (94 / 68 / 102 measured).
+
+**Kill condition.** A run counting DISTINCT `state.key()` values at firings finds
+them close to the firing count — i.e. the signature collisions §5.2 counts are
+different positions. One counter and one run.
+
+### (i) The per-call cap as a lever
+
+**Mechanism.** No new predicate: `per_call_node_cap` is already config. D-516
+records the finding — *"the visit budget is fixed by the bracket and
+`count = visits/cap`"* — and revision 1 quoted D-516 for the budget and dropped
+this clause.
+
+**What it can rank out.** Proofs deeper than the cap.
+
+**Cost shape.** Zero code.
+
+**Kill condition.** The cap that reaches the budget on the worst band drops a
+VALUE row of D-512's fixture — which this row's bench can evaluate, because the
+fixture's five VALUE rows have cap-conditioned statuses in the premise memo §5.
+
+### (j) Gate the ROOT separately from the tree
+
+**Mechanism.** A second config token for the root's own firing, independent of
+the in-tree predicate; the two sites are already separate functions.
+
+**What it can rank out.** Whatever the root proves — measured sharply
+asymmetric: 0 of band 15's 8 proofs, **2 of band 35's 2**, 5 of trigger-rich's
+25, at 446 / **1150** / 1617 visits per search against budgets of 2184 / **938**
+/ 1799. On band 35 the root alone exceeds the whole budget while carrying every
+proof that band has.
+
+**Cost shape.** Zero per node; one config token.
+
+**Kill condition.** Neither setting is dominant on any band — i.e. the asymmetry
+does not survive a second workload.
+
+### (k) Subtree / per-turn quota suppression — **UNSCORED**
+
+**Mechanism.** After a firing returns NoWin, suppress firings in that node's
+subtree, or for the next N nodes at the same or greater `turns_from_root` — a
+decaying quota rather than a per-search cap.
+
+**Why UNSCORED.** The census records `turns_from_root` but not parent-child
+identity, so subtree containment is not derivable from these rows. §4.2's
+registered disposition applies; it survives to selection unscored.
 
 ---
 
 ## 6. RECOMMENDATION
 
 REGISTERED SLOT — written after a fresh-context DECISION-RED-TEAM has attacked
-§5, and quoting its rows. **Nothing is selected until then**, and the shape of
-§5.3 is why: four of the six rows are killed by measurements taken after this
-document's own §1–§4 were written, which is exactly the position in which a
-session most wants to select and least should.
+**this revision**, and quoting its rows. **Nothing is selected until then.**
+
+Revision 1 reached its §5.3 verdicts and a red team took four of them apart; the
+lesson is not that this revision's readings are better but that a session
+holding fresh numbers is exactly where selection is least safe. What this
+revision may say is what it measured: **a recall-preserving composition reaches
+the bracket on one band of three, and reaches all three at a cost in recall the
+gate has not adjudicated.** Whether that is a package worth designing is the
+next red team's to attack and the operator's to decide.

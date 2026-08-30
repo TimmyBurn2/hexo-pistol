@@ -22,10 +22,10 @@ continues it rather than replacing it.
 **`artifacts/overnight_export_receipt_v1.txt` — sha256**
 
 ```
-e995c63d92bf9d61b00555ad9c3b77726a7889c02440d3f18cdabce0b2dd6a0a
+8203da5c35a5ed9883f4867cfa562de3e539a2c67eb9f35a800e028a4b1c138a
 ```
 
-**Twenty-nine files listed**, the receipt itself excluded because a file cannot
+**Thirty-one files listed**, the receipt itself excluded because a file cannot
 carry its own digest. The two anchor seats are DIRECTORIES: their forty
 transcripts and eighty stderr files are sha-indexed in each seat's own
 `MANIFEST.sha256`, and it is the MANIFEST that this receipt lists — one
@@ -55,6 +55,8 @@ indirection, stated so nobody reads the shorter list as the whole export.
 | `overnight_worktree_receipt_v1.txt` | what each worktree's gitignored `artifacts/` and `sessions/` held before removal (D-469) — nothing needing export, checked rather than asserted |
 | `sealbot_anchor_v2_seat1/*` | **the governed anchor, seat 1** (gates off): 20 W / 20 L, 2 distinct games, 320 answers at median 500 ms |
 | `sealbot_anchor_v2_seat2/*` | **the governed anchor, seat 2** (solver gate on): 0 W / 40 L, 2 distinct games, 240 answers at median 1225 ms |
+| `stage3_census_rank_v1.txt` | the option field ranked IN VISITS, the unit the bracket fixes — with the cap sweep, the verdict-cache bound and the compositions |
+| `matrix_stage3_DECISION_REDTEAM.md` | the decision red team on the matrix at `1bc2788`: **FALLS**, 5 BLOCKING / 9 MAJOR / 5 MINOR, and five rows it would add |
 | `sealbot_anchor_v2_dryrun_*/report.json` | the four registered dry runs, including the two mode-pin runs that must forfeit at the handshake and do |
 
 ## The rule this file follows for the rest of the arc
