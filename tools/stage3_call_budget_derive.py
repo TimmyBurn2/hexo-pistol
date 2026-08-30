@@ -1,30 +1,59 @@
 #!/usr/bin/env python3
-"""Derive the per-search SOLVER CALL BUDGET the WP-1.8c bracket leaves, at HEAD.
+"""Derive the per-search SOLVER BUDGET the WP-1.8c bracket leaves, at HEAD.
 
-Ruling 1 of the overnight dispatch retires pass-rate targets and designs the
-resumed detector against a per-search call budget. That budget is a number the
-bracket already implies, and this script reads it off the same
-`tools/bench_block.sh` artifacts `tools/stage3_premise_derive.py` reads --
-by an INDEPENDENT code path, so agreement on the shared intermediate
-(`u_needed`, and the rate factor over it) is a cross-check of both.
+Ruling 1 of the overnight dispatch (docs/experiments/stage3_overnight_dispatch.md
+§0.2) retires pass-rate targets and designs the resumed detector against a
+per-search budget. That budget is a quantity the bracket already implies, and
+this script reads it off the same `tools/bench_block.sh` artifacts
+`tools/stage3_premise_derive.py` reads, by an independently written parser.
 
-The budget is stated in CAPPED-CALL EQUIVALENTS at the ON seat's committed
-`per_call_node_cap`: `calls = solver_nodes / cap`. That is a LOWER bound on the
-call count, because a call that returns before the cap spends fewer visits --
-`K`, the mean visits per fired call, has no counter at HEAD (D-465, D-508), so
-it is named here and never divided out silently.
+WHAT THE BRACKET ACTUALLY FIXES is a FRACTION: `V*/T`, the share of a search's
+node budget the solver may take. Everything else printed below is that fraction
+presented in a unit, and every unit needs something the bracket does not supply:
+
+  visits per search  = fraction x T          -- T is the BENCH's node budget
+  invocations        = visits / cap          -- cap is the BENCH SEAT's cap
+  firings            = invocations / 2       -- a firing makes up to two
+
+THE DIRECTION OF EVERY COUNT BELOW IS A LOWER BOUND, and the reason is one
+division: `count = visits / cap` uses the cap as the per-call spend, and a call
+that returns before the cap spends LESS -- so the same visit budget buys MORE
+calls, never fewer. `K`, the mean visits per invocation, has no counter in the
+artifacts this reads (D-465, D-508); at `K < cap` every count rises.
+
+A FIRING IS NOT AN INVOCATION and the distinction is structural, not statistical.
+One firing calls the attacker direction (`crates/pistol-search/src/pvs.rs:609`)
+and then, unless that proved a win, the defender one (`:630`); both are capped at
+the one `per_call_node_cap` read at `:592`, and both add their visits to the same
+counter (`:610`, `:631`). A detector gates the FIRING -- the predicate sits at
+`:265-272` -- so the firing row is the axis a design sets.
+
+`t = 0` THROUGHOUT, which is the FAVOURABLE assumption: the ON seat pays its
+trigger predicate at every search node and the OFF seat does not, so a real
+detector's own per-node cost shrinks `u*` and with it every figure below. The
+sensitivity block prints what that costs.
 
 Usage: stage3_call_budget_derive.py --cap N --off <artifact>... --on <artifact>...
 Exit:  0 read and derived
-       1 an input is malformed, or a band is missing a seat
+       1 an input is malformed, mis-flagged, or a band is missing a seat
        2 THE RUN IS VOID -- an input is unreadable
 """
 
+import hashlib
 import re
 import sys
 
 # The registered bounds of the WP-1.8c bracket, quoted at the band they bind.
 BOUNDS = {"15": 0.50, "35": 0.50, "trigger": 0.25}
+# The banding is WP-1.8c's registered convention, not a computation: the
+# trigger-rich fixture is one band, and a corpus entry is band 15 iff its own
+# `stones` annotation reads 15 -- every other corpus count is band 35, which is
+# how that bench banded these same 24 entries.
+TRIGGER_FIXTURE = "bench_solver_positions_v1.txt"
+# A firing makes at most this many invocations (pvs.rs:609, :630).
+INVOCATIONS_PER_FIRING = 2
+# What `t` costs, in microseconds per search node, printed as a sensitivity.
+T_SWEEP = (0.0, 0.03, 0.10, 0.50, 1.00)
 RECORD = re.compile(
     r"^bench_block: record entry (\d+) stones (\S+) rep (\d+) .*?"
     r"\bnodes (\d+)\b(?:.*?\bsearch_nodes (\d+)\b.*?\bsolver_nodes (\d+)\b)?"
@@ -42,33 +71,42 @@ def fail(msg):
     sys.exit(1)
 
 
-# The banding is WP-1.8c's registered convention, not a computation: the
-# trigger-rich fixture is one band, and a corpus entry is band 15 iff its own
-# `stones` annotation reads 15 -- every other corpus count is band 35, which is
-# how that bench banded these same 24 entries.
-TRIGGER_FIXTURE = "bench_solver_positions_v1.txt"
-
-
 def band_of(fixture, stones):
     if fixture == TRIGGER_FIXTURE:
         return "trigger"
     return "15" if stones == "15" else "35"
 
 
-def read(paths):
+def read(paths, want_seat):
+    """Sum one seat's artifacts per band, refusing a leg passed under the wrong flag.
+
+    The seat is read from the artifact's OWN `bench_block: config` line and
+    checked against the flag it arrived under, because a partial swap survives
+    every aggregate test downstream (the sibling instrument reads the config
+    line for the same reason).
+    """
     seats = {}
     for path in paths:
         try:
-            with open(path, encoding="utf-8") as handle:
-                text = handle.read()
+            with open(path, "rb") as handle:
+                raw = handle.read()
         except OSError as err:
             void(f"cannot read {path}: {err}")
+        text = raw.decode("utf-8", errors="replace")
+        print(f"input {want_seat} {path} sha256 {hashlib.sha256(raw).hexdigest()}")
         if "bench_block: done:" not in text:
             fail(f"{path} has no `bench_block: done:` line -- that sweep did not complete")
         fixture, seen = None, 0
         for line in text.splitlines():
             if line.startswith("bench_block: fixture "):
                 fixture = line.split()[2].rsplit("/", 1)[-1]
+            if line.startswith("bench_block: config "):
+                seat = "on" if line.split()[2].endswith("_on.toml") else "off"
+                if seat != want_seat:
+                    article = "an" if seat == "on" else "a"
+                    fail(
+                        f"{path} is {article} {seat}-seat sweep passed under --{want_seat}"
+                    )
             match = RECORD.match(line)
             if not match:
                 continue
@@ -88,16 +126,25 @@ def read(paths):
     return seats
 
 
-def main(argv):
+def u_star(a, c, bound, t):
+    """The solver-visits-per-search-node the bracket demands, at trigger cost `t`."""
+    denom = bound * c - a
+    numer = a * (1.0 - bound) - bound * t
+    if denom <= 0 or numer <= 0:
+        return None
+    return numer / denom
+
+
+def parse(argv):
     cap, off_paths, on_paths, sink = None, [], [], None
-    i = 0
-    while i < len(argv):
-        arg = argv[i]
+    index = 0
+    while index < len(argv):
+        arg = argv[index]
         if arg == "--cap":
-            i += 1
-            if i >= len(argv) or not argv[i].isdigit() or int(argv[i]) == 0:
+            index += 1
+            if index >= len(argv) or not argv[index].isdigit() or int(argv[index]) == 0:
                 fail("--cap wants a positive integer")
-            cap = int(argv[i])
+            cap = int(argv[index])
         elif arg == "--off":
             sink = off_paths
         elif arg == "--on":
@@ -108,15 +155,23 @@ def main(argv):
             if sink is None:
                 fail("a path before --off or --on")
             sink.append(arg)
-        i += 1
+        index += 1
     if cap is None:
-        fail("--cap is required: the budget is stated in capped-call equivalents")
+        fail("--cap is required: a call count without its cap is not a quantity")
     if not off_paths or not on_paths:
         fail("both --off and --on artifacts are required")
+    return cap, off_paths, on_paths
 
-    off, on = read(off_paths), read(on_paths)
+
+def main(argv):
+    cap, off_paths, on_paths = parse(argv)
+    print("=== the run, and what it read ===")
+    print(f"argv {' '.join(argv)}")
+    print(f"cap {cap} visits per INVOCATION (the ON seat's committed per_call_node_cap)")
+    off, on = read(off_paths, "off"), read(on_paths, "on")
+
+    print()
     print("=== per-band inputs, summed from the artifacts' own record lines ===")
-    print(f"cap = {cap} visits per call (the ON seat's committed per_call_node_cap)")
     rows = []
     for band in sorted(set(off) & set(on), key=lambda b: (b == "trigger", b)):
         o, n = off[band], on[band]
@@ -124,7 +179,6 @@ def main(argv):
             fail(f"band {band} has an empty seat; nothing to derive")
         if band not in BOUNDS:
             fail(f"band {band} has no registered bracket bound")
-        bound = BOUNDS[band]
         a = o["us"] / o["nodes"]
         u = n["solver"] / n["search"]
         c = (n["us"] - a * n["search"]) / n["solver"]
@@ -133,39 +187,72 @@ def main(argv):
             f"ON rows {n['rows']:4d} search {n['search']:8d} solver {n['solver']:9d}"
             f"  a {a:8.4f} us/node  c {c:9.4f} us/visit"
         )
-        rows.append((band, bound, a, c, u, n))
+        rows.append((band, BOUNDS[band], a, c, u, o, n))
 
     print()
-    print("=== the budget, per search, in capped-call equivalents ===")
-    print("T is the ON seat's own per-position total (search + solver); the bracket")
-    print("does not move it, it moves the SPLIT. At the bound, S* = T/(1+u*).")
-    for band, bound, a, c, u, n in rows:
-        denom = bound * c - a
-        if denom <= 0:
+    print("=== WHAT THE BRACKET FIXES: the solver's share of a search's nodes ===")
+    print("V*/T = u*/(1+u*). This is the only figure below that needs neither the")
+    print("bench's node budget nor any seat's cap, and it is the one to carry.")
+    for band, bound, a, c, u, _, _ in rows:
+        star = u_star(a, c, bound, 0.0)
+        if star is None:
             fail(f"band {band}: bound {bound} is unreachable by any detector at t=0")
-        u_needed = a * (1 - bound) / denom
-        total = (n["search"] + n["solver"]) / n["rows"]
-        s_star = total / (1 + u_needed)
-        v_star = total - s_star
-        calls_now = (n["solver"] / n["rows"]) / cap
-        calls_star = v_star / cap
         print(
-            f"band {band:>7}  bound {bound:.2f}  u_now {u:8.4f} -> u* {u_needed:.5f}"
-            f"  (rate factor {u / u_needed:8.1f}x)"
+            f"band {band:>7}  bound {bound:.2f}  u_now {u:8.4f} -> u* {star:.5f}"
+            f"  (rate factor {u / star:8.1f}x)   SHARE {100.0 * star / (1.0 + star):7.3f}%"
         )
-        print(
-            f"           T {total:9.1f}  now: search {n['search'] / n['rows']:8.1f}"
-            f" solver {n['solver'] / n['rows']:9.1f} = {calls_now:6.2f} capped calls"
-        )
-        print(
-            f"           at the bound: search {s_star:9.1f} solver {v_star:9.1f}"
-            f" = {calls_star:6.2f} capped calls   BUDGET"
-        )
+
     print()
-    print("K IS NOT DIVIDED OUT: `calls = solver_nodes / cap` assumes a call spends")
-    print("the cap. A call that returns earlier spends less, so every count above is")
-    print("a LOWER bound on the calls, and the BUDGET is a lower bound too --")
-    print("the detector may afford fewer whole calls than the figure names, never more.")
+    print("=== the same share as a per-search count, and what each unit borrows ===")
+    print("T_on is the ON seat's own per-position total; T_off is the OFF seat's.")
+    print("They differ because a solver call absorbs its whole node count at once,")
+    print("so the ON seat overshoots the budget by more. At the bound the detector")
+    print("has gated nearly every call, so T_off is the nearer end -- both printed,")
+    print("and the range is the honest statement.")
+    for band, bound, a, c, u, o, n in rows:
+        star = u_star(a, c, bound, 0.0)
+        share = star / (1.0 + star)
+        t_on = (n["search"] + n["solver"]) / n["rows"]
+        t_off = o["nodes"] / o["rows"]
+        now_solver = n["solver"] / n["rows"]
+        print(f"band {band:>7}  T_on {t_on:9.1f}  T_off {t_off:9.1f}")
+        print(
+            f"           NOW: solver {now_solver:9.1f} visits"
+            f" = {now_solver / cap:6.2f} invocations"
+            f" = {now_solver / (cap * INVOCATIONS_PER_FIRING):6.2f} firings (at 2 caps each)"
+        )
+        for label, total in (("T_off", t_off), ("T_on", t_on)):
+            visits = share * total
+            print(
+                f"           BUDGET at {label:5s}: {visits:8.1f} visits"
+                f" >= {visits / cap:6.2f} invocations"
+                f" >= {visits / (cap * INVOCATIONS_PER_FIRING):6.2f} firings"
+            )
+
+    print()
+    print("=== the FAVOURABLE assumption, priced ===")
+    print("t = us the ON seat pays per SEARCH node for its trigger predicate, which")
+    print("the OFF seat never evaluates. Every figure above is at t = 0. A detector")
+    print("adds its OWN per-node test on top, so this is the column that binds it.")
+    for band, bound, a, c, u, o, n in rows:
+        t_on = (n["search"] + n["solver"]) / n["rows"]
+        cells = []
+        for t in T_SWEEP:
+            star = u_star(a, c, bound, t)
+            if star is None:
+                cells.append(f"t {t:4.2f}: UNREACHABLE")
+                continue
+            visits = (star / (1.0 + star)) * t_on
+            cells.append(f"t {t:4.2f}: {visits / (cap * INVOCATIONS_PER_FIRING):5.2f}f")
+        print(f"band {band:>7}  firings at T_on   " + "  ".join(cells))
+
+    print()
+    print("K IS NOT DIVIDED OUT, AND THE DIRECTION IS ONE WAY. `invocations =")
+    print("visits / cap` prices an invocation at the cap. One that returns earlier")
+    print("costs less, so the same visit budget affords MORE invocations and more")
+    print("firings, never fewer -- every count above is a LOWER BOUND. What is NOT")
+    print("a lower bound is the visit budget itself, which is exact given the share")
+    print("and the total it is taken of.")
     print("CALL_BUDGET_DONE")
     return 0
 

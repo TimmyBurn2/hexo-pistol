@@ -185,15 +185,18 @@ D-494): cheap VCDT/TSS detection gating solver calls, with DBS decomposition onl
 after the detector earns its own SPRT. The `WP-1.9` designation collision D-493
 flagged is spent: D-473 settled the names and D-494 settled the order.
 
-**THE PACKAGE STOPPED AT ITS PREMISE GATE AND ITS TARGET IS UNDER CORRECTION
-(D-508).** The "~6x call-count cut" this section and D-471 both carried is the
-nps-ratio shortfall read as a call-count factor, and it is not one: search and
-solver draw from ONE node budget, so a gated call funds the search rather than
-shrinking it. **The corrected figure is stated ONCE, in the section that owns it**
-— `docs/experiments/stage3_detector_premise_memo.md` §3.3 and §3.5 — and is not
-restated here or in D-471, which is D-423 applied to a number three documents
-were inheriting from each other. Seven rulings are owed before the package
-resumes; they are that memo's §8 and each is one ADR line.
+**THE PACKAGE STOPPED AT ITS PREMISE GATE AND ITS TARGET WAS CORRECTED TWICE
+(D-508, then D-516).** The "~6x call-count cut" this section and D-471 both
+carried is the nps-ratio shortfall read as a call-count factor, and it is not
+one: search and solver draw from ONE node budget, so a gated call funds the
+search rather than shrinking it. **THE SEVEN RULINGS ARE NOW MADE — D-509
+through D-516 — and the target is stated ONCE, in the section that owns it:**
+`docs/experiments/stage3_rulings.md`. Nothing here or in D-471 restates it,
+which is D-423 applied to a number three documents were inheriting from each
+other. The premise memo's §3.3 and §3.5 keep the RATE FACTORS they measured
+(379.3x / 507.7x / 88.3x, unchanged and reproduced); what moved to the rulings
+document is the BUDGET the resumed package is designed against, which is a
+different quantity in a different unit.
 
 **Its §0 carries two obligations already scheduled into it, and they are listed
 here so the package does not re-derive them:**
