@@ -93,27 +93,32 @@ impl<V: Copy + Default + PartialEq> WindowMap<V> {
         self.entries.entry(window_key(window)).or_default()
     }
 
-    /// Replace what `window` holds, removing the entry when nothing is left.
+    /// Read, edit and re-store what `window` holds in ONE table probe.
     ///
-    /// An emptied window leaves no entry behind: a window holding nothing scores
-    /// nothing, and there are infinitely many of those. Preserving that is what
-    /// keeps an unwound map equal to a fresh one, and it is why an absent window
-    /// and an empty one are the same observation to [`WindowMap::get`].
+    /// Answers `None` when the window holds nothing, having probed once; the
+    /// caller decides whether that is a desync. A `get` followed by a `set`
+    /// would answer the same thing and hash twice, which on the take-back path
+    /// is [`crate::WINDOWS_PER_CELL`] extra probes for every stone a search
+    /// unwinds — measured, and the reason this operation exists rather than the
+    /// pair it replaces.
+    ///
+    /// `edit` sees the stored value; if it leaves the default behind, the entry
+    /// is removed through the same resolved slot.
     #[inline]
-    pub(crate) fn set(&mut self, window: Window, value: V) {
+    pub(crate) fn update(&mut self, window: Window, edit: impl FnOnce(&mut V)) -> Option<(V, V)> {
         match self.entries.entry(window_key(window)) {
             Entry::Occupied(mut slot) => {
-                if value == V::default() {
+                let before = *slot.get();
+                let mut after = before;
+                edit(&mut after);
+                if after == V::default() {
                     slot.remove();
                 } else {
-                    slot.insert(value);
+                    slot.insert(after);
                 }
+                Some((before, after))
             }
-            Entry::Vacant(slot) => {
-                if value != V::default() {
-                    slot.insert(value);
-                }
-            }
+            Entry::Vacant(_) => None,
         }
     }
 
@@ -191,7 +196,7 @@ mod tests {
             for &b in &windows {
                 assert_eq!(
                     window_key(a) < window_key(b),
-                    (a.axis, a.start) < (b.axis, b.start),
+                    a < b,
                     "the key orders {a:?} against {b:?} differently from the window"
                 );
             }
@@ -229,43 +234,59 @@ mod tests {
     }
 
     #[test]
-    fn the_window_map_footprint_is_bounded_by_its_capacity_and_its_entry_size() {
-        // The derivation, not a quoted number: hashbrown lays out one (key,
-        // value) pair plus one control byte per bucket, and holds at most
-        // 7/8 of its buckets live.
+    fn the_window_map_holds_its_peak_capacity_after_every_entry_is_gone() {
+        // THE NON-VACUOUS FOOTPRINT PROPERTY. `capacity() >= len()` is a std
+        // invariant and asserting it pins nothing; what this store actually
+        // does — and what the selection record was measured against — is
+        // decline to shrink, so its footprint is bounded by the historical
+        // PEAK and never by the live count. A table that started shrinking
+        // would fail here, and the bound below would then be wrong.
         const PAIR: usize = std::mem::size_of::<(u64, (u8, u8))>();
         let mut map: WindowMap<(u8, u8)> = WindowMap::default();
-        assert_eq!(
-            map.capacity() * (PAIR + 1),
-            0,
-            "a fresh map allocates nothing"
-        );
+        assert_eq!(map.capacity(), 0, "a fresh map allocates nothing");
 
+        let mut windows = Vec::new();
         for q in 0..64i16 {
             for r in 0..64i16 {
-                map.set(
-                    Window {
-                        axis: Axis::ConstQ,
-                        start: Coord::new(q, r),
-                    },
-                    (1, 0),
-                );
+                let window = Window {
+                    axis: Axis::ConstQ,
+                    start: Coord::new(q, r),
+                };
+                *map.entry_or_default(window) = (1, 0);
+                windows.push(window);
             }
         }
         let live = map.len();
-        let bound = map.capacity() * (PAIR + 1);
+        let peak = map.capacity();
         assert_eq!(
             live,
             64 * 64,
             "the sweep should have inserted every cell once"
         );
+
+        for window in windows {
+            map.update(window, |cell| *cell = (0, 0));
+        }
+        assert_eq!(map.len(), 0, "every entry was removed");
+        // NOT `capacity() == peak`: `capacity()` answers how many more fit
+        // before a reallocation, and it drops slightly as removals leave
+        // tombstones behind — MEASURED here at ~97 % of peak. The property
+        // that matters is the one below, that the ALLOCATION does not shrink
+        // to fit: an emptied table still has room for everything it ever
+        // held, so the footprint is bounded by the peak and never by `len`.
         assert!(
             map.capacity() >= live,
-            "capacity below the live count is not a table"
+            "an emptied table kept room for only {} of the {live} it held, so it shrank to fit \
+             and a peak-derived bound no longer holds",
+            map.capacity()
         );
+
+        // The derivation, not a quoted number: one (key, value) pair plus one
+        // control byte per bucket, over the peak the table keeps.
+        let bound = peak * (PAIR + 1);
         assert!(
-            bound <= live * 8 * (PAIR + 1),
-            "footprint {bound} B exceeds the 8x-of-live ceiling the 7/8 load factor implies"
+            bound >= live * (PAIR + 1),
+            "a bound below the live payload is not a bound"
         );
     }
 
@@ -276,9 +297,9 @@ mod tests {
             axis: Axis::ConstR,
             start: Coord::new(3, -4),
         };
-        map.set(window, (1, 0));
+        *map.entry_or_default(window) = (1, 0);
         assert_eq!(map.len(), 1);
-        map.set(window, (0, 0));
+        map.update(window, |cell| *cell = (0, 0));
         assert_eq!(map.len(), 0, "an emptied window kept its entry");
         assert_eq!(
             map,

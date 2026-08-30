@@ -25,9 +25,11 @@ const _: () = assert!(
 /// A window: [`WINDOW_LEN`] cells from `start`, stepping along `axis`.
 ///
 /// The ordering is `(axis, start)` with `start` lexicographic by `(q, r)` —
-/// derived, and deterministic, which is what lets the bookkeeping live in an
-/// ordered map with no hasher anywhere near a value the engine plays on
-/// (CLAUDE.md rule 4, docs/decisions.md D-32).
+/// derived, and deterministic. A consumer keying a store on this gets an order
+/// it can rely on; what keeps a hashed store clear of the determinism law is a
+/// different argument, made where that store lives — a seedless hasher, and
+/// nothing iterating it on a path that reaches a value (CLAUDE.md rule 4,
+/// docs/decisions.md D-32, D-498).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Window {
     /// The axis the window runs along.

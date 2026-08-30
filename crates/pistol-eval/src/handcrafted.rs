@@ -50,11 +50,6 @@ impl Counts {
         self.p1 + self.p2
     }
 
-    /// Whether it holds none at all, and so is not worth an entry.
-    fn is_empty(self) -> bool {
-        self.total() == 0
-    }
-
     /// Add one stone of `player`.
     fn add(&mut self, player: Player) {
         match player {
@@ -147,26 +142,25 @@ impl Eval for HandcraftedV0 {
 
     fn undo(&mut self, at: Coord, player: Player) {
         for window in windows_through(at) {
-            let (before, after) = {
-                let before = self.windows.get(window);
-                if before.is_empty() {
-                    desync(format_args!(
-                        "{player} stone taken off {at}, but the window at {} along {:?} holds \
-                         nothing",
-                        window.start, window.axis
-                    ));
-                }
-                if before.of(player) == 0 {
+            // ONE probe, not two: `update` resolves the slot once and edits
+            // through it, where a `get` then a `set` would hash every window
+            // twice on a path a search walks for every stone it unwinds.
+            let edited = self.windows.update(window, |counts| {
+                if counts.of(player) == 0 {
                     desync(format_args!(
                         "{player} stone taken off {at}, but the window at {} along {:?} holds no \
                          {player} stone",
                         window.start, window.axis
                     ));
                 }
-                let mut after = before;
-                after.remove(player);
-                self.windows.set(window, after);
-                (before, after)
+                counts.remove(player);
+            });
+            let Some((before, after)) = edited else {
+                desync(format_args!(
+                    "{player} stone taken off {at}, but the window at {} along {:?} holds \
+                     nothing",
+                    window.start, window.axis
+                ));
             };
             self.p1_score += self.contribution(after) - self.contribution(before);
         }
