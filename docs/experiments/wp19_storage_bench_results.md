@@ -51,3 +51,66 @@ matrix variant's lookup count without giving up the module split or the newtype.
 That fix and its re-measurement are RUN 2. **This run and its numbers stay
 recorded whatever run 2 says**: a registered bracket that a session quietly
 re-runs until it passes is not a bracket.
+
+---
+
+# RUN 2, and the cause named by measurement
+
+## Run 2 — the one-probe `undo`, at `16c6b70`
+
+`tools/bench_delta.sh rev:723758b rev:16c6b70 5`, artifact
+`artifacts/wp19_bench_shipped_v2.txt`, exit 0, node identity holding.
+
+| band | nps ratio | time-to-depth-2 | bracket |
+|---|---|---|---|
+| early | **1.508** | 1.549 (dev 0.041) | still BELOW [1.60, 2.10] |
+| late | **1.579** | 1.593 (dev 0.015) | still BELOW [1.60, 2.10] |
+
+**Run 1's diagnosis is FALSIFIED.** Removing the extra probe moved the ratio by
+0.003 early and 0.024 late. The double probe was real — REVIEW-impl found it
+independently and it is fixed — but it was never the cause.
+
+## RUN 3 — the cause, measured head to head
+
+Two hypotheses had now failed, so the third was measured instead of guessed:
+`tools/bench_delta.sh rev:9a986c6 rev:16c6b70 5` puts the INLINE storage shape
+(the matrix's `wp19/mx-O2`) on the baseline side and the SHIPPED module on the
+candidate side. Artifact `artifacts/wp19_bench_inline_vs_module_v1.txt`, exit 0,
+node identity holding per position under both budgets in every rep.
+
+| band | inline nps | module nps | **ratio** |
+|---|---|---|---|
+| early | 438218.3 (IQR 3180.1) | 369847.7 (IQR 2515.9) | **0.844** |
+| late | 385494.6 (IQR 2361.4) | 319080.7 (IQR 1831.4) | **0.828** |
+
+**THE MODULE SPLIT IS THE COST, AND THE PREREG'S REGISTERED HYPOTHESIS IS
+FALSIFIED.** It registered that the split was free. It is not: it costs
+15.6 % early and 17.2 % late of whole-engine nps.
+
+**The three runs compose, which is the check that they are measuring one thing:**
+1.783 x 0.844 = **1.505** against run 1's measured 1.505, and
+1.909 x 0.828 = **1.581** against run 2's measured 1.579. Independent runs, and
+the arithmetic closes to within 0.002.
+
+`bench_delta.sh` prints `VERDICT ABORT` for run 3 against its own 1.15 threshold.
+**That wording does not apply here** — run 3 is a diagnostic comparison between
+two candidates, not a change proposed against a baseline, and nothing is being
+reverted on it. It is reproduced because the instrument's own output is what
+gets cited.
+
+## What ships, and the debt that leaves with it
+
+**The module version ships.** It is the version REVIEW-impl reviewed, the version
+every mutant was re-run against, and the version Track E proved bit-identical
+twice. Restructuring at the end of the round would ship code no reviewer has
+seen, which is the one thing this process exists to prevent.
+
+**The cost is recorded, not explained away**, and the remedy is named and cheap:
+rule 9's ~300-line cap is a SOFT cap whose own remedy is a why-justification
+entry in `docs/rule9_justifications.md`. Inlining the storage back into
+`handcrafted.rs` costs 15 lines over that cap and one justification entry, and
+buys back 1.18x-1.21x. That is a follow-up package with its own REVIEW-impl and
+its own bench, not an unreviewed edit here.
+
+**The bracket is not moved (D-374).** WP-1.9 closes BELOW its registered bracket
+at 1.508 / 1.579, above its abort line, with the cause measured.
