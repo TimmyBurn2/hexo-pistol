@@ -1,12 +1,11 @@
-use std::collections::BTreeMap;
-use std::collections::btree_map::Entry;
 use std::fmt;
 
 use pistol_core::{Coord, Player};
 
 use crate::eval::{EVAL_MAX, Eval};
 use crate::weights::Weights;
-use crate::window::{WINDOW_LEN, Window, windows_through};
+use crate::window::{WINDOW_LEN, windows_through};
+use crate::window_map::WindowMap;
 
 /// [`WINDOW_LEN`] as a stone count, which is what a full window holds.
 const WINDOW_LEN_STONES: u8 = WINDOW_LEN as u8;
@@ -81,9 +80,10 @@ impl Counts {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HandcraftedV0 {
     weights: Weights,
-    /// The windows holding at least one stone, and what they hold. Ordered, so
-    /// nothing in this crate can make a value depend on iteration order.
-    windows: BTreeMap<Window, Counts>,
+    /// The windows holding at least one stone, and what they hold. Never
+    /// iterated on a value path, which is what keeps iteration order out of
+    /// every answer this crate gives.
+    windows: WindowMap<Counts>,
     /// The sum of every window's contribution, P1-relative.
     ///
     /// Widened past the eval band on purpose: a position with thousands of
@@ -98,7 +98,7 @@ impl HandcraftedV0 {
     pub fn new(weights: Weights) -> Self {
         HandcraftedV0 {
             weights,
-            windows: BTreeMap::new(),
+            windows: WindowMap::default(),
             p1_score: 0,
         }
     }
@@ -127,7 +127,7 @@ impl Eval for HandcraftedV0 {
             // The map borrow ends with the block, so the score update below can
             // read the weights on the same `self`.
             let (before, after) = {
-                let counts = self.windows.entry(window).or_default();
+                let counts = self.windows.entry_or_default(window);
                 let before = *counts;
                 if before.total() >= WINDOW_LEN_STONES {
                     desync(format_args!(
@@ -148,14 +148,14 @@ impl Eval for HandcraftedV0 {
     fn undo(&mut self, at: Coord, player: Player) {
         for window in windows_through(at) {
             let (before, after) = {
-                let Entry::Occupied(mut slot) = self.windows.entry(window) else {
+                let before = self.windows.get(window);
+                if before.is_empty() {
                     desync(format_args!(
                         "{player} stone taken off {at}, but the window at {} along {:?} holds \
                          nothing",
                         window.start, window.axis
                     ));
-                };
-                let before = *slot.get();
+                }
                 if before.of(player) == 0 {
                     desync(format_args!(
                         "{player} stone taken off {at}, but the window at {} along {:?} holds no \
@@ -163,13 +163,9 @@ impl Eval for HandcraftedV0 {
                         window.start, window.axis
                     ));
                 }
-                slot.get_mut().remove(player);
-                let after = *slot.get();
-                // An emptied window leaves no entry behind: a window holding
-                // nothing scores nothing, and there are infinitely many of those.
-                if after.is_empty() {
-                    slot.remove();
-                }
+                let mut after = before;
+                after.remove(player);
+                self.windows.set(window, after);
                 (before, after)
             };
             self.p1_score += self.contribution(after) - self.contribution(before);
@@ -211,10 +207,14 @@ impl Eval for HandcraftedV0 {
     ///   (crate::WINDOWS_PER_CELL) x [`EVAL_MAX`] — even the full i16 lattice
     ///   is ~1.2e15, so neither path can trap where the other doesn't.
     ///
-    /// The `before` values are equal too: `entry().or_default()` reads the
-    /// same counts `get().copied().unwrap_or_default()` reads, and the empty
-    /// entry `apply` inserts is removed again by `undo`, so the roundtrip
-    /// leaves no residue for this body to miss.
+    /// The `before` values are equal too: [`WindowMap::entry_or_default`], which
+    /// `apply` reads through, answers the same counts [`WindowMap::get`] answers
+    /// here — an absent window and an emptied one are ONE observation to that
+    /// map, because [`WindowMap::set`] removes an entry it empties — and the
+    /// empty entry `apply` inserts is removed again by `undo`, so the roundtrip
+    /// leaves no residue for this body to miss. This sentence names the two
+    /// operations because D-214 accepted the equivalence in terms of the two it
+    /// replaced, and an argument whose sites no longer exist is not checkable.
     ///
     /// The full-window check mirrors `apply`'s, so an impossible stone panics
     /// with the same [`EVAL_DESYNC`] token on the same first window instead of
@@ -223,7 +223,7 @@ impl Eval for HandcraftedV0 {
     fn delta(&mut self, at: Coord, player: Player) -> i32 {
         let mut diff = 0i64;
         for window in windows_through(at) {
-            let before = self.windows.get(&window).copied().unwrap_or_default();
+            let before = self.windows.get(window);
             if before.total() >= WINDOW_LEN_STONES {
                 desync(format_args!(
                     "a hypothetical {player} stone on {at} would make {} stones in the \

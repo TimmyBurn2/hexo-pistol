@@ -25,10 +25,12 @@
 //!
 //! # Determinism
 //!
-//! Integer arithmetic throughout, no interior mutability, no hasher: the window
-//! bookkeeping is a `BTreeMap`, so no iteration order in this crate can differ
-//! between two runs of the same position (CLAUDE.md rule 4, D-7, D-32). Nothing
-//! here reads a clock, a thread count, or an environment variable.
+//! Integer arithmetic throughout and no interior mutability. The window
+//! bookkeeping is a hash map, and it is clear of the determinism law two ways:
+//! its hasher is SEEDLESS BY CONSTRUCTION, and nothing in this crate iterates
+//! the map on a path that reaches a value, so no iteration order can differ
+//! between two runs of the same position (CLAUDE.md rule 4, D-7, D-32, D-498).
+//! Nothing here reads a clock, a thread count, or an environment variable.
 //!
 //! # Failure
 //!
@@ -43,6 +45,7 @@ pub mod eval;
 pub mod handcrafted;
 pub mod weights;
 pub mod window;
+mod window_map;
 
 pub use error::EvalError;
 pub use eval::{EVAL_MAX, Eval};
