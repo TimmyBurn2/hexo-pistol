@@ -157,6 +157,18 @@ is the run that adjudicates it.
 **One CI run in this session is VOID and is not a failure** —
 `artifacts/stage3_ci_VOID_targetdir_v1.txt`. See §8 hazard 1.
 
+**Observed and recorded rather than fixed: `tools/stage3_premise_derive.py` is
+over rule 9's soft cap and carries no registry entry.** Gate 17 mechanizes the
+rule for tracked `.rs` and `.sh` files only, and `docs/rule9_justifications.md`
+says so in its own header, so the gate neither asks for an entry nor would
+accept one for a path outside its file set. Two `tools/*.py` files were already
+in that position before this package — `wp15b_attribution_check.py` and
+`wp16_warm_attribution_check.py`, both larger — so this follows the established
+shape rather than setting a new one. **The rule's text is broader than its gate**,
+and whether `.py` joins the mechanized set is `tools/` hardening's business
+(WP-1.10), not this package's; it is named here so nobody later reads the silence
+as an oversight.
+
 ---
 
 ## 7. What is owed — seven rulings, each one ADR line

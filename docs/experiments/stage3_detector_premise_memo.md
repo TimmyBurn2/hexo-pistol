@@ -624,8 +624,9 @@ the committed bytes were clobbered in the working tree.
 
 `tools/ci.sh` at `21e05f8`, run in a detached worktree (`git worktree add
 --detach`, its own `target/`, the live tree untouched while it ran — WP-1.9b §8
-hazard 1). Log: `/home/tom/wt-stage3-ci/ci_base_v1.txt`, exported with this
-package's artifacts.
+hazard 1). The worktree is removed at closure, so the log is cited at the path
+it was EXPORTED to and not the one it was written at (D-469):
+`artifacts/stage3_ci_base_v1.txt`.
 
 Read the way the repo requires — from the gate log's own lines, never a
 wrapper's exit status:
@@ -644,7 +645,7 @@ dep-info — the hazard CLAUDE.md's Environment section states in those words.
 Eight of its nineteen tests failed at gate 3/19 and no gate after it adjudicated
 anything. Re-launched without the export in the same worktree, where
 `$ROOT/target` is already isolated by the worktree itself. The void log is kept
-as `/home/tom/wt-stage3-ci/ci_VOID_targetdir_v1.txt` and exported with the rest.
+and exported as `artifacts/stage3_ci_VOID_targetdir_v1.txt`.
 
 ---
 
