@@ -150,9 +150,22 @@ gates passed`**, `/usr/bin/grep -cE "^ci: FAIL|^ci: RUN VOID|test result: FAILED
 returns **0**, and gate 9 closes `determinism: ok — 5 seat(s), no difference
 outside nps/time in any of them`.
 
-The closure revision adds only documents, `tools/stage3_premise_derive.py` (a
-new file, not on any gate path) and one ADR line; `artifacts/stage3_ci_closure_v1.txt`
-is the run that adjudicates it.
+**Two closure runs, and which one adjudicates what.** The package adds only
+documents, `tools/stage3_premise_derive.py` (a new file on no gate path) and one
+ADR line. `artifacts/stage3_ci_closure_v1.txt` is 19/19 at `f8a51b0`, the
+substantive commit. `artifacts/stage3_ci_closure_v2.txt` is 19/19 at `b2e2471`,
+which adds the two documentation-only commits on top — **and it is the run that
+adjudicates the closure, because a gate claim names the tree it read** (WP-1.9b
+§6's precedent, applied ahead of the mistake rather than after it). Both read the
+same way: nineteen `=== gate N/19:` lines, `ci: all gates passed`, the
+FAIL/VOID/FAILED count 0, and `determinism: ok — 5 seat(s)`.
+
+**The one commit after `b2e2471` changes two files and neither is on a gate
+path**: this document's §10 anchor line and its §6 citation above, plus the
+receipt they name. It is documentation about the run rather than input to it,
+which is the only reason it is not itself re-adjudicated — stated because the
+alternative is an infinite regress and the honest move is to say where it was
+cut.
 
 **One CI run in this session is VOID and is not a failure** —
 `artifacts/stage3_ci_VOID_targetdir_v1.txt`. See §8 hazard 1.
@@ -240,9 +253,9 @@ anchor D-469 asks for.
 ## 10. Export receipt anchor
 
 `artifacts/stage3_export_receipt_v1.txt` — sha256
-**`30abdff445d4ae5dd1243c6c3f2f309fd71da4ca98260e19dfe6b458b500d3d6`**
+**`ec57ba2d3aa625a74f4860402dbfb3bc123a60dbef8aaf1eeeb62402b4fce974`**
 
-Twelve files listed, the receipt itself excluded because a file cannot carry
+Fourteen files listed, the receipt itself excluded because a file cannot carry
 its own digest. That sha256, in this committed document, is the anchor D-469
 asks for: `artifacts/` is gitignored, so a digest list living only there anchors
 nothing — the lesson `ec48aea` recorded for WP-1.9b, applied ahead of the
