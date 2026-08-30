@@ -181,10 +181,19 @@ inline in `handcrafted.rs` at a measured 1.171 / 1.205 inside its registered
 The residue that remains open is **WP-1.4** and **WP-1.10**.
 
 **NEXT SCHEDULED STEP: the Stage-3 scoped detector** (D-471 as amended by
-D-494): cheap VCDT/TSS detection gating solver calls, targeting the measured ~6x
-call-count cut the WP-1.8c bracket demands, with DBS decomposition only after
-the detector earns its own SPRT. The `WP-1.9` designation collision D-493 flagged
-is spent: D-473 settled the names and D-494 settled the order.
+D-494): cheap VCDT/TSS detection gating solver calls, with DBS decomposition only
+after the detector earns its own SPRT. The `WP-1.9` designation collision D-493
+flagged is spent: D-473 settled the names and D-494 settled the order.
+
+**THE PACKAGE STOPPED AT ITS PREMISE GATE AND ITS TARGET IS UNDER CORRECTION
+(D-508).** The "~6x call-count cut" this section and D-471 both carried is the
+nps-ratio shortfall read as a call-count factor, and it is not one: search and
+solver draw from ONE node budget, so a gated call funds the search rather than
+shrinking it. **The corrected figure is stated ONCE, in the section that owns it**
+— `docs/experiments/stage3_detector_premise_memo.md` §3.3 and §3.5 — and is not
+restated here or in D-471, which is D-423 applied to a number three documents
+were inheriting from each other. Seven rulings are owed before the package
+resumes; they are that memo's §8 and each is one ADR line.
 
 **Its §0 carries two obligations already scheduled into it, and they are listed
 here so the package does not re-derive them:**
