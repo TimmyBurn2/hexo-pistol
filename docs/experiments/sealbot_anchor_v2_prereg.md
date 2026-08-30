@@ -151,26 +151,45 @@ handshake** — that is the criterion, not a failure of it.
   v1 had one budget kind.
 - **E. The stub suite passes**, including all three tampered-record negative
   controls. *Defect class: an instrument that cannot say no.*
-- **F. THE `go` LINE IN THE SEAT'S OWN STDERR SAYS `movetime`, AND THE NODE
-  SEAT'S SAYS `nodes`.** *Defect class: a `movetime` seat that is really still
-  node-budgeted — a config that names one budget while the client sends the
-  other, which every other criterion here survives.* **A first revision
-  registered "the overshoot column is not zero and not constant" for this defect
-  class and a REVIEW-impl struck it: `wall_ms` is `started.elapsed()`, so a seat
-  that IS still node-budgeted produces a non-zero, non-constant column exactly
-  like one that is not — the criterion is preserved by the defect it named,
-  which `docs/process.md` says is not a criterion at all.** What is not
-  preserved is the budget verb the client actually sent, which only the engine
-  sees; the stub suite reads it out of the seat's stderr and this criterion does
-  the same on the real binary.
+- **F. THE PER-ANSWER NODE COUNTS VARY, AND NONE OF THEM IS A NODE BUDGET.**
+  *Defect class: a `movetime` seat that is really still node-budgeted — a config
+  that names one budget while the client sends the other, which every other
+  criterion here survives.* Under a wall-clock budget the nodes an answer spends
+  are whatever the position and the clock allow and they vary by orders of
+  magnitude; under `go nodes N` every answer lands at about `N`, which is the
+  observable the defect cannot fake. **A first revision registered "the
+  overshoot column is not zero and not constant" for this defect class and a
+  REVIEW-impl struck it: `wall_ms` is `started.elapsed()`, so a seat that IS
+  still node-budgeted produces a non-zero, non-constant column exactly like one
+  that is not — the criterion is preserved by the defect it named, which
+  `docs/process.md` says is not a criterion at all.** A second revision
+  registered the seat's own stderr `go` line, which the STUB prints and the
+  shipped binary does not; that is struck too, and this is what replaces both.
 - **G. THE OVERSHOOT COLUMN IS POPULATED AND ITS MAXIMUM EXCEEDS THE BUDGET.**
   *Defect class: a wall column copied from the budget rather than measured, or
   absent.* This is what F used to be, kept for the defect class F does not
   reach, and stated as the weaker criterion it is.
 
-**The record** — REGISTERED SLOT, filled from the dry run's own bytes before this
-document's review passes, together with the binary and config digests of the
-instance that produced it.
+**THE RECORD**, from the four runs' own bytes. Engine `target/release/pistol`
+sha256 `bca86067db0d685d7fdf7f5028ff5f2108a27ce986fcfe727b0235323562d881`;
+artifacts under `artifacts/sealbot_anchor_v2_dryrun_{seat1,seat2,modepin_a,modepin_b}/`.
+
+| criterion | observed | verdict |
+|---|---|---|
+| A — both games of both seats, zero forfeits | seat 1: win p1 t17, win p1 t13 (pistol 1 W / 1 L); seat 2: win p2 t14, win p1 t15 (pistol 0 W / 2 L); **0 forfeits on either** | **MET** |
+| B — `replay_check` exits 0 on every transcript | `replay-check: 2 transcript(s) replayed to their recorded outcomes` on all four runs | **MET** |
+| C — `nodes_total` equals the transcript sum | seat 1: **502,769 == 502,769**; seat 2: **244,114 == 244,114** | **MET** |
+| D — the mode pin fires from BOTH sides, on the REAL binary | a `movetime` seat at an instrument config: *"engine mode is instrument, not play: this seat's budget seats play mode"*; a `nodes` seat at a play config: *"engine mode is play, not instrument: this seat's budget seats instrument mode"* — each a forfeit at the handshake, which IS the criterion | **MET** |
+| E — the stub suite passes, negative controls included | `sealbot-tests: PASS (all scripted matches matched their hand-derived outcomes)` | **MET** |
+| F — per-answer node counts vary and none is a node budget | seat 1's fourteen answers span **3 … 66,645 nodes, all distinct**; a `go nodes N` seat would land every answer at about `N` | **MET** |
+| G — the overshoot column is populated and its max exceeds the budget | seat 1: 14 answers, median **100 ms**, max **107 ms** at a 100 ms budget; seat 2: 13 answers, median **397 ms**, max **2262 ms** | **MET** |
+
+**Two readings the dry run hands to the governed run, neither of which is a
+verdict.** Seat 1's overshoot is **7 ms** at a 100 ms budget — the WP-1.4
+movetime ceiling holding well inside its 50 ms epsilon. Seat 2's median answer
+is **four times its budget** and its maximum **twenty-two times**, which is the
+uninterruptible solver call measured at the deployment budget and is the one
+thing this anchor can say that a node-budgeted one cannot.
 
 ## 6. The governed run's agreement criterion, and its consequence
 
@@ -219,6 +238,18 @@ its calls do not exist), and **a TIMING PROBE runs before game one**:
 
 > `dryrun_seat2` at the governed cap and budget, **2 games**, turn cap 20.
 > Record the per-answer wall median and maximum, and the wall for the match.
+
+**THE PROBE'S RESULT**: `artifacts/sealbot_anchor_v2_dryrun_seat2/`, 2 games,
+13 answers, **median 397 ms / max 2262 ms** at a 100 ms budget, **0 forfeits**,
+match wall **10.3 s**.
+
+**THE PROJECTION, taken as a BOUND rather than an estimate.** Per answer at the
+governed budget: at most `500 ms + the probe's maximum overshoot of 2162 ms` =
+**2.662 s**. Answers per game: at most `turn_cap / 2` = **30**. Sealbot: 30
+answers at 0.3 s = 9 s. So **at most 89 s per game and 59 minutes for 40
+games** — a bound from the probe's own maximum and the registered caps, not a
+mean scaled by a guess. **59 minutes is inside the 4-hour abort bound, so SEAT 2
+RUNS.**
 
 **The registered branch, decided before the probe:**
 
