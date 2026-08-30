@@ -5,7 +5,8 @@ use std::process::ExitCode;
 use pistol_core::{Coord, GameState, NEIGHBOUR_DIRECTIONS, PlyOutcome, Turn, legal_placements};
 use pistol_engine::config::EngineMode;
 use pistol_engine::{
-    Budget, Engine, EngineError, PositionSpec, Provenance, SearchInfo, SearchOutcome, StageCounters,
+    Budget, Engine, EngineError, PositionSpec, Provenance, SearchInfo, SearchOutcome,
+    SolverCallCounters, StageCounters,
 };
 
 /// What this instrument does wrong.
@@ -121,6 +122,7 @@ impl Engine for FirstLegal {
             search_nodes: u64::from(best.stone_count()).max(1),
             solver_nodes: 0,
             solver_refusals: 0,
+            solver_calls: SolverCallCounters::default(),
             nps: 1,
             time_ms: 0,
             pv: vec![best],

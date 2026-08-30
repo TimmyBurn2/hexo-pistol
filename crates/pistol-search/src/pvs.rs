@@ -66,6 +66,10 @@ pub struct Run<'a> {
     /// invariant (`NoWinUnderZone`) — loud, never swallowed (design
     /// wp18b §8).
     pub solver_refusals: u32,
+    /// What the solver was ASKED (docs/decisions.md D-465, D-508). Seeded
+    /// with the root's own firing by [`crate::search`], for the same reason
+    /// `solver_nodes` is: the root's calls are inside the same budget.
+    pub solver_calls: crate::info::SolverCallCounters,
     /// The solver on the search path and its wiring (design wp18b §2),
     /// bundled so the OFF gate is ONE `None` — no solver, no wiring, no
     /// dead values. Borrowed from the [`crate::search::Searcher`].
@@ -124,6 +128,7 @@ impl<'a> Run<'a> {
             search_nodes: 0,
             solver_nodes: 0,
             solver_refusals: 0,
+            solver_calls: crate::info::SolverCallCounters::default(),
             solver: None,
             root_restrict: None,
             seldepth_turns: 0,
@@ -599,6 +604,12 @@ impl<'a> Run<'a> {
         if !mover_hot && !opponent_hot {
             return None;
         }
+        // Counted HERE and not at the call sites below, because a firing is
+        // one decision and the two directions are how that decision is
+        // carried out: counting at the calls would make a firing whose
+        // attacker direction proved a win indistinguishable from half a
+        // firing.
+        self.solver_calls.firings += 1;
         // One clone serves both calls (the solver never mutates its input).
         let state_view = state.clone();
         // The attacker direction: does the MOVER force a policy-game win?
@@ -608,8 +619,10 @@ impl<'a> Run<'a> {
             let solver = &mut self.solver.as_mut()?.0;
             let result = solver.solve(&state_view, cap);
             self.solver_nodes = self.solver_nodes.saturating_add(result.nodes);
+            self.solver_calls.invocations += 1;
             match result.outcome {
                 pistol_solver::SolveOutcome::Win(tree) => {
+                    self.solver_calls.proofs += 1;
                     // The mover's d-th turn from this node sits at root
                     // offset from_root + 2d - 1 (design §4; the t-relative
                     // parity invariant is pinned by test).
@@ -629,8 +642,10 @@ impl<'a> Run<'a> {
             let solver = &mut self.solver.as_mut()?.0;
             let result = solver.solve_defender(&state_view, cap);
             self.solver_nodes = self.solver_nodes.saturating_add(result.nodes);
+            self.solver_calls.invocations += 1;
             match result.outcome {
                 pistol_solver::SolveOutcome::Win(tree) => {
+                    self.solver_calls.proofs += 1;
                     // The OPPONENT's d-th turn from this node sits at root
                     // offset from_root + 2d — the OverloadReturn shape's own
                     // d=1 instance (design §4).

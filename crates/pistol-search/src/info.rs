@@ -173,6 +173,44 @@ pub struct SearchInfo {
     /// How many solver calls returned `NoWinUnderZone` (design wp18b §8:
     /// loud, never swallowed — a counter, not a silent drop).
     pub solver_refusals: u32,
+    /// What the solver was ASKED, as opposed to what it SPENT
+    /// (docs/decisions.md D-465, D-508). All zero whenever the gate is off.
+    pub solver_calls: SolverCallCounters,
+}
+
+/// The solver's call counters: what was asked, and how much of it proved.
+///
+/// A bundle rather than four more flat fields, on `StageCounters`' precedent,
+/// and separate from `search_nodes`/`solver_nodes` for a reason that is not
+/// tidiness: those two are the BUDGET's own independent writers, whose derived
+/// sum is `nodes` and whose agreement a sum test pins. These count CALLS, which
+/// no budget reads.
+///
+/// Why they exist: D-465 named a `solver_calls` counter *"the first thing the
+/// next package should do"* and D-508 measured what its absence costs — the
+/// visits-per-call factor `K` cannot be divided out of a call count that nobody
+/// counts, so it had to be carried as a named assumption instead.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct SolverCallCounters {
+    /// Trigger points at which the solver was consulted, the root's own
+    /// consultation included. A FIRING, not an invocation: one firing asks the
+    /// attacker direction and then, unless that proved a win, the defender one.
+    pub firings: u32,
+    /// `Solver::solve` and `Solver::solve_defender` calls made — up to two per
+    /// firing. This is the denominator of `K = solver_nodes / invocations`, the
+    /// quantity D-508 could only assume.
+    pub invocations: u32,
+    /// Invocations that returned a proof (`SolveOutcome::Win`). The numerator
+    /// of the precision a ranked budget allocator exists to raise: the
+    /// expensive calls are the ones that return `NoWin`.
+    pub proofs: u32,
+    /// Solver visits spent by the ROOT's own calls, which are made before the
+    /// first deepening iteration and are seeded into the tree's counter
+    /// (`crate::search`). A node figure among call counters because the
+    /// question it answers is about a CALL — whether the root fired at all,
+    /// and what that one firing costs against a per-search budget — and not
+    /// about the budget's total.
+    pub root_nodes: u64,
 }
 
 /// What a search returns: the move, and the report that goes with it.

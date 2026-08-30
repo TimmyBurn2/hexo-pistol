@@ -247,6 +247,7 @@ impl Searcher {
         let mut root_restrict: Option<Vec<Coord>> = None;
         let mut root_solver_nodes = 0u64;
         let mut root_refusals = 0u32;
+        let mut root_calls = crate::info::SolverCallCounters::default();
         if let Some(wiring) = self.params.solver
             && self.solver.is_some()
             && state.stones_owed() == 2
@@ -263,14 +264,19 @@ impl Searcher {
             let Some(solver) = self.solver.as_mut() else {
                 unreachable!("the wiring exists only when the solver does")
             };
+            root_calls.firings += 1;
             let attacker = solver.solve(state, cap);
             root_solver_nodes += attacker.nodes;
+            root_calls.invocations += 1;
             if let pistol_solver::SolveOutcome::Win(tree) = attacker.outcome {
+                root_calls.proofs += 1;
+                root_calls.root_nodes = root_solver_nodes;
                 return Ok(solver_proof_outcome(
                     state,
                     &tree,
                     root_solver_nodes,
                     root_refusals,
+                    root_calls,
                     started,
                 ));
             }
@@ -282,7 +288,9 @@ impl Searcher {
             }
             let defender = solver.solve_defender(state, cap);
             root_solver_nodes += defender.nodes;
+            root_calls.invocations += 1;
             if let pistol_solver::SolveOutcome::Win(tree) = defender.outcome {
+                root_calls.proofs += 1;
                 // The proof's Z2 zone, sorted for the binary search at
                 // ply 0: the opponent's plan cells are where the forced
                 // defense lives, and the restriction fails open there.
@@ -314,6 +322,8 @@ impl Searcher {
         run.root_restrict = root_restrict;
         run.solver_nodes = root_solver_nodes;
         run.solver_refusals = root_refusals;
+        root_calls.root_nodes = root_solver_nodes;
+        run.solver_calls = root_calls;
 
         let mut outcome = None;
         for depth_turns in 1..=max_depth {
@@ -340,6 +350,7 @@ impl Searcher {
                 search_nodes: run.search_nodes,
                 solver_nodes: run.solver_nodes,
                 solver_refusals: run.solver_refusals,
+                solver_calls: run.solver_calls,
                 nps: per_second(run.total_nodes(), elapsed),
                 time_ms: elapsed.as_millis() as u64,
                 pv,
@@ -389,6 +400,7 @@ impl Searcher {
                     search_nodes: 0,
                     solver_nodes: 0,
                     solver_refusals: 0,
+                    solver_calls: crate::info::SolverCallCounters::default(),
                     nps: 0,
                     time_ms: 0,
                     pv,
@@ -424,6 +436,7 @@ impl Searcher {
                     search_nodes: 0,
                     solver_nodes: 0,
                     solver_refusals: 0,
+                    solver_calls: crate::info::SolverCallCounters::default(),
                     nps: 0,
                     time_ms: 0,
                     pv: vec![answer.turn()],
@@ -450,6 +463,7 @@ impl Searcher {
         // anything before the abort.
         outcome.info.solver_nodes = run.solver_nodes;
         outcome.info.solver_refusals = run.solver_refusals;
+        outcome.info.solver_calls = run.solver_calls;
         outcome.info.nps = per_second(run.total_nodes(), elapsed);
         outcome.info.time_ms = elapsed.as_millis() as u64;
         outcome.info.seldepth_turns = run.seldepth_turns;
@@ -644,6 +658,7 @@ fn solver_proof_outcome(
     tree: &pistol_solver::ProofTree,
     solver_nodes: u64,
     refusals: u32,
+    calls: crate::info::SolverCallCounters,
     started: Instant,
 ) -> SearchOutcome {
     let depth = tree.win_depth_turns();
@@ -660,6 +675,7 @@ fn solver_proof_outcome(
             search_nodes: 0,
             solver_nodes,
             solver_refusals: refusals,
+            solver_calls: calls,
             nps: per_second(solver_nodes, elapsed),
             time_ms: elapsed.as_millis() as u64,
             pv,

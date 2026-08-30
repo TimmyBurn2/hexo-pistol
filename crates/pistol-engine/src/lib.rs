@@ -48,4 +48,6 @@ pub use position_token::ParsePositionError;
 // A caller of this seam should not have to depend on pistol-search to read what
 // the seam returns (CLAUDE.md rule 11).
 pub use pistol_search::score::{MATE, ScoreKind, classify};
-pub use pistol_search::{MAX_DEPTH_TURNS, Provenance, SearchInfo, SearchOutcome, StageCounters};
+pub use pistol_search::{
+    MAX_DEPTH_TURNS, Provenance, SearchInfo, SearchOutcome, SolverCallCounters, StageCounters,
+};

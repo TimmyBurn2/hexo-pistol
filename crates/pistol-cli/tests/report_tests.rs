@@ -2,7 +2,7 @@ use pistol_cli::report::{
     TOTALS_MARKER, bestmove_line, error_line, id_line, info_line, score_token, totals_line,
 };
 use pistol_core::{Coord, Turn};
-use pistol_engine::{EngineError, MATE, SearchInfo, StageCounters};
+use pistol_engine::{EngineError, MATE, SearchInfo, SolverCallCounters, StageCounters};
 
 /// A report with every field set to something recognisable.
 fn info() -> SearchInfo {
@@ -13,6 +13,7 @@ fn info() -> SearchInfo {
         search_nodes: 0,
         solver_nodes: 0,
         solver_refusals: 0,
+        solver_calls: SolverCallCounters::default(),
         nps: 5678,
         time_ms: 90,
         pv: vec![
@@ -133,5 +134,57 @@ fn solver_nodes_prints_after_nodes_and_only_when_nonzero() {
     assert!(
         !without.contains("solver_nodes"),
         "a gate-off line carries no solver field: {without}"
+    );
+}
+
+/// The call counters ride with the node pair and never without it: a gate-off
+/// line carries none of the six fields, so its bytes are the pre-wiring
+/// engine's (docs/decisions.md D-88's pinned order), and an ON seat's line
+/// carries all six in a fixed order a field-name parser can read.
+#[test]
+fn the_solver_call_counters_print_with_the_node_pair_and_only_then() {
+    let mut with_solver = info();
+    with_solver.search_nodes = 934;
+    with_solver.solver_nodes = 300;
+    with_solver.solver_calls = SolverCallCounters {
+        firings: 7,
+        invocations: 13,
+        proofs: 2,
+        root_nodes: 41,
+    };
+    let line = totals_line(&with_solver);
+    let mut at = line
+        .find("solver_nodes 300")
+        .expect("the node pair prints first");
+    for expected in [
+        "solver_firings 7",
+        "solver_invocations 13",
+        "solver_proofs 2",
+        "solver_root_nodes 41",
+    ] {
+        let next = line
+            .find(expected)
+            .unwrap_or_else(|| panic!("`{expected}` prints: {line}"));
+        assert!(
+            at < next,
+            "`{expected}` prints after the field before it: {line}"
+        );
+        at = next;
+    }
+
+    // The gate-off shape: nonzero counters with a zero `solver_nodes` cannot
+    // happen (a firing that spends nothing still spends the call's own visit),
+    // and the line must not invent a field for them if it ever did.
+    let mut counters_only = info();
+    counters_only.solver_calls = SolverCallCounters {
+        firings: 7,
+        invocations: 13,
+        proofs: 2,
+        root_nodes: 0,
+    };
+    let without = totals_line(&counters_only);
+    assert!(
+        !without.contains("solver_firings"),
+        "the counters ride with the node pair, never alone: {without}"
     );
 }

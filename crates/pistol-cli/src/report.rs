@@ -60,9 +60,21 @@ fn render_info(info: &SearchInfo, totals: bool) -> String {
     // for the one substring parser in the tree (`tools/sealbot`),
     // word-boundary-fixed at this WP — a report test pins both.
     let solver_field = if info.solver_nodes > 0 {
+        // The call counters ride INSIDE this conditional and STRICTLY AFTER
+        // `solver_nodes` for the same two reasons the node pair is here at
+        // all: a gate-off line prints none of them and so stays byte-identical
+        // to the pre-wiring engine's, and the one substring parser in the tree
+        // reads fields by name from a fixed order.
+        let calls = info.solver_calls;
         format!(
-            " search_nodes {} solver_nodes {}",
-            info.search_nodes, info.solver_nodes
+            " search_nodes {} solver_nodes {} solver_firings {} solver_invocations {} \
+             solver_proofs {} solver_root_nodes {}",
+            info.search_nodes,
+            info.solver_nodes,
+            calls.firings,
+            calls.invocations,
+            calls.proofs,
+            calls.root_nodes
         )
     } else {
         String::new()

@@ -76,3 +76,13 @@ echo "search_oracle_check: the gated seat spends the budget it is given"
 cargo test --release --locked --package pistol-search --test wp18b_solver_path_tests -- \
 	--include-ignored --nocapture ||
 	fail "the solver-on-the-search-path wiring's own tests failed"
+
+# The solver's CALL counters (docs/decisions.md D-510). Release-only and
+# --include-ignored for the same reason: every case here has to run a gated
+# search far enough that the trigger actually fires, and a debug solver visit
+# pays the blanket agreement asserts. A counter nobody watched fire is not a
+# counter.
+echo "search_oracle_check: the solver call counters count what was asked"
+cargo test --release --locked --package pistol-search --test solver_call_counter_tests -- \
+	--include-ignored --nocapture ||
+	fail "the solver call counters' own tests failed"
