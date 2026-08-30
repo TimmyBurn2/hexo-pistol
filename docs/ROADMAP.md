@@ -137,6 +137,36 @@ axis D-310 removed, and this is the only package where that delta can be
 recovered — D-310 flips if this WP is never scheduled. PRIORITY: after WP-1.5b,
 and it does not block WP-1.6.
 
+**WP-1.5d — the stage-Q safety-net candidate cap. CLOSED,
+`inconclusive_at_game_cap`, THE GATE STAYS OFF (D-491, D-492).** The cap
+(`safety_net_top_k`) truncates the delta-ranked quiet ball on a BATCHED row where
+Tier F and Tier T are both empty, at every node except the ROOT TURN's — the
+exemption spelled in TURNS, because rule 3 gives turn 1 one stone and every later
+turn two, so no ply threshold names the played turn (D-484). The mechanism is
+LANDED, gated off in all twelve committed configs, ten mutants dead at named
+cases. The governed SPRT at K = 16 over `random_openings_v1` openings
+`1500..1999` at 50 000 nodes IS a measurement under Criterion 1'' (**0
+unattributable** of 500 pairs, both attribution instruments PASS at exit 0) and
+returns `verdict inconclusive_at_game_cap` at the full 1000-game cap:
+`llr_pair 1.167` of a required `±2.944`, `nelo_pair +16.9 ci95 21.5`. **NOT
+ACCEPTED AND NOT REFUTED** — the point estimate favours the capped seat and the
+interval spans zero. **The cap is not inert**: its own registered sensitivity
+receipt puts the class on ~20 % of governed-shape searches and a CHANGED PLAYED
+TURN on 4.9–5.8 % of all searches, so the finding is that the effect is smaller
+than 500 paired openings resolve at `elo1 = 15.0`, not that nothing happened.
+`safety_net_top_k` stays `0`. **THE BOOK IS NOW SPENT** — every slice of
+`random_openings_v1.txt` is consumed — so a confirmatory run at larger n needs a
+regenerated or extended book and its own pre-registration. The D-95 root-turn
+package stays LICENSED, NOT SCHEDULED.
+
+**NEXT SCHEDULED STEP: the Stage-3 scoped detector** (D-471, and see D-493 for
+the `WP-1.9` designation collision that decides this): cheap VCDT/TSS detection
+gating solver calls, targeting the measured ~6x call-count cut the WP-1.8c
+bracket demands, with DBS decomposition only after the detector earns its own
+SPRT. ROADMAP's own **WP-1.9 — eval window-map storage** below is a DIFFERENT
+package from the one D-471's ordering sentence calls WP-1.9, and it remains
+licensed-not-scheduled behind WP-1.10.
+
 **WP-1.6 — threat-only zone-bounded quiescence**, under D-111's invariant: the
 static eval answers at turn boundaries only, so quiescence stands pat and
 extends in TURNS, never in plies.
