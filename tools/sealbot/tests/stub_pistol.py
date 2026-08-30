@@ -45,7 +45,12 @@ def main() -> int:
             print("id name stub-pistol")
             print("id version 1")
             print(f"id mode {mode}")
-            print("id budgets depth_turns nodes movetime")
+            # PER MODE, because the real binary is: instrument mode refuses a
+            # wall-clock budget by name (docs/decisions.md D-22), so a stub that
+            # advertised `movetime` in both modes would make the client's
+            # budget-word check untestable — swapping its arms would pass.
+            budgets = "depth_turns nodes movetime" if mode == "play" else "depth_turns nodes"
+            print(f"id budgets {budgets}")
             print("pistolok", flush=True)
         elif line == "newgame":
             pass
@@ -62,12 +67,23 @@ def main() -> int:
                 return 1
             token = moves[go_count]
             go_count += 1
+            # THE FULL ON-SEAT FIELD SET, and it is here as a fixture rather
+            # than as decoration: the client reads `nodes ` out of this line by
+            # a WORD-BOUNDED find, and the fields that could fool a plain
+            # substring search — `search_nodes`, `solver_nodes`,
+            # `solver_root_nodes` — only exist on a line like this one. A stub
+            # printing the short line could not tell a correct parser from one
+            # that reads the first `nodes ` it happens to see.
+            fields = (
+                "nodes 7 search_nodes 3 solver_nodes 4 solver_firings 1 "
+                "solver_invocations 2 solver_proofs 0 solver_root_nodes 4"
+            )
             print(
-                f"info depth_turns 1 seldepth 1 nodes 7 nps 7 time 1 "
+                f"info depth_turns 1 seldepth 1 {fields} nps 7 time 1 "
                 f"hashfull 0 score cp 0 pv {token}"
             )
             print(
-                f"info totals depth_turns 1 seldepth 1 nodes 7 nps 7 time 1 "
+                f"info totals depth_turns 1 seldepth 1 {fields} nps 7 time 1 "
                 f"hashfull 0 score cp 0 pv {token}"
             )
             print(f"bestmove {token}", flush=True)

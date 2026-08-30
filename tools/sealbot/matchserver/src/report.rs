@@ -80,7 +80,34 @@ pub struct MatchReport {
     pub interval: Option<(f64, f64)>,
     pub decided: u64,
     pub a_wins_decided: u64,
+    /// How many DISTINCT stone sequences the games are.
+    ///
+    /// The anchor's honest denominator. D-438 measured forty games that were
+    /// TWO sequences — both engines were deterministic from the fixed opening,
+    /// so the interval's nominal N was repetition and not diversity, and that
+    /// fact had to be recovered by hand afterwards. A seat under a wall-clock
+    /// budget is not reproducible by construction (docs/decisions.md D-22), so
+    /// this is the number that says whether that bought any diversity.
+    pub distinct_games: u64,
+    /// Engine A's per-answer wall times, ascending — the overshoot column.
+    ///
+    /// Under a `movetime` budget the gap between these and the budget is the
+    /// D-95 / WP-1.4 class measured at the deployment budget, which is the one
+    /// thing a `movetime` anchor can say that a node-budgeted one cannot.
+    pub a_answer_wall_ms: Vec<u64>,
     pub summaries: Vec<GameSummary>,
+}
+
+/// The median of an ascending slice, or `None` when it is empty.
+///
+/// The lower of the two middles on an even count, and stated because a report
+/// that says "median" has to mean one thing: no interpolation, so the number
+/// printed is a number that was measured.
+fn median(ascending: &[u64]) -> Option<u64> {
+    if ascending.is_empty() {
+        return None;
+    }
+    Some(ascending[(ascending.len() - 1) / 2])
 }
 
 impl MatchReport {
@@ -101,7 +128,26 @@ impl MatchReport {
         let mut b_wall_ms_total = 0u64;
         let mut decided = 0u64;
         let mut a_wins_decided = 0u64;
+        let mut sequences: std::collections::BTreeSet<Vec<(i16, i16)>> =
+            std::collections::BTreeSet::new();
+        let mut a_answer_wall_ms: Vec<u64> = Vec::new();
         for summary in &summaries {
+            // The stones of the game in submitted order, which is what makes
+            // two games the SAME game: the same stones in the same order.
+            sequences.insert(
+                summary
+                    .turns
+                    .iter()
+                    .flat_map(|turn| turn.stones.iter().map(|stone| (stone.q, stone.r)))
+                    .collect(),
+            );
+            a_answer_wall_ms.extend(
+                summary
+                    .turns
+                    .iter()
+                    .filter(|turn| (turn.mover == Player::P1) == summary.a_is_p1)
+                    .map(|turn| turn.wall_ms),
+            );
             (if summary.a_is_p1 {
                 &mut a_as_p1
             } else {
@@ -142,6 +188,11 @@ impl MatchReport {
             interval: wilson_95(a_wins_decided, decided),
             decided,
             a_wins_decided,
+            distinct_games: sequences.len() as u64,
+            a_answer_wall_ms: {
+                a_answer_wall_ms.sort_unstable();
+                a_answer_wall_ms
+            },
             summaries,
         }
     }
@@ -169,6 +220,7 @@ impl MatchReport {
         serde_json::json!({
             "anchor": true,
             "games": self.games,
+            "distinct_games": self.distinct_games,
             "turn_cap": self.turn_cap,
             "engines": { "a": self.a_label, "b": self.b_label },
             "a_as_p1": seat(&self.a_as_p1),
@@ -180,6 +232,9 @@ impl MatchReport {
                 "a": {
                     "nodes_total": self.a_nodes_total,
                     "wall_ms_total": self.a_wall_ms_total,
+                    "answers": self.a_answer_wall_ms.len(),
+                    "answer_wall_ms_median": median(&self.a_answer_wall_ms),
+                    "answer_wall_ms_max": self.a_answer_wall_ms.last(),
                 },
                 "b": { "wall_ms_total": self.b_wall_ms_total },
             },
@@ -234,6 +289,21 @@ impl MatchReport {
                 self.a_wins_decided, self.decided, low, high
             )),
         }
+        text.push_str(&format!(
+            "\nDistinct games: {} of {} played.\n",
+            self.distinct_games, self.games
+        ));
+        text.push_str(&format!(
+            "A per-answer wall: {} answers, median {} ms, max {} ms.\n",
+            self.a_answer_wall_ms.len(),
+            median(&self.a_answer_wall_ms)
+                .map(|ms| ms.to_string())
+                .unwrap_or_else(|| "n/a".into()),
+            self.a_answer_wall_ms
+                .last()
+                .map(|ms| ms.to_string())
+                .unwrap_or_else(|| "n/a".into()),
+        ));
         text.push_str(&format!(
             "\nCompute: A {} nodes, {:.1}s wall; B {:.1}s wall.\n",
             self.a_nodes_total.map(|n| n.to_string()).unwrap_or_else(|| "n/a".into()),

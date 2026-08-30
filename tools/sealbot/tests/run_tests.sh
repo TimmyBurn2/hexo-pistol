@@ -159,7 +159,10 @@ for CASE in m_both:both m_neither:neither; do
   SCHEMA_OUTPUT="$(tools/sealbot/run_match.sh "$SCRATCH/$DOC.toml" 2>&1)"
   SCHEMA_RC=$?
   set -e
-  [ "$SCHEMA_RC" -ne 0 ] || fail "$DOC ran; a pistol seat naming $WHY budget must be refused"
+  # Item 12: a REFUSAL is exit 2 and nothing else. `-ne 0` would also accept a
+  # build failure, which run_match.sh also spells 2 but for another reason —
+  # the message check below is what separates them.
+  [ "$SCHEMA_RC" -eq 2 ] || fail "$DOC exited $SCHEMA_RC; a pistol seat naming $WHY budget must be refused with 2"
   case "$SCHEMA_OUTPUT" in
     *movetime_ms*) : ;;
     *) fail "$DOC was refused without naming movetime_ms: $SCHEMA_OUTPUT" ;;
@@ -255,7 +258,16 @@ check("turn 7" in game["detail"], "m1's win is at turn 7")
 check("first-stone win" in game["detail"], "m1's win is a first-stone win (rule 4)")
 check(report["a_as_p1"]["win"] == 1, "engine_a as p1: one win")
 check(report["b_as_p2"]["loss"] == 1, "engine_b as p2: one loss")
-check(report["compute"]["a"]["nodes_total"] == 21, "engine_a accounted 21 nodes (3 answers x 7)")
+check(report["compute"]["a"]["nodes_total"] == 21,
+      "engine_a accounted 21 nodes (3 answers x 7) — the WORD-BOUNDARY test: the "
+      "stub's totals line also carries search_nodes 3, solver_nodes 4 and "
+      "solver_root_nodes 4, and a parser matching the first `nodes ` substring "
+      "would answer 9, 12 or 12 here")
+check(report["distinct_games"] == 1, "m1's one game is one distinct stone sequence")
+check(report["compute"]["a"]["answers"] == 3, "engine_a answered three times")
+check(report["compute"]["a"]["answer_wall_ms_median"] is not None
+      and report["compute"]["a"]["answer_wall_ms_max"] is not None,
+      "the per-answer wall column is populated, not absent")
 low, high = report["interval"]["wilson_95_low"], report["interval"]["wilson_95_high"]
 # Wilson at 1 win of 1 decided, z=1.96, by hand: centre 0.6033, half 0.3967.
 check(report["interval"]["decided"] == 1 and abs(low - 0.2066) < 0.001 and high == 1.0,

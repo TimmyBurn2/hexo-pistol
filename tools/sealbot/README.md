@@ -101,10 +101,24 @@ tests use the same driver code the real engines use.
 
 ## Determinism
 
-The pistol side runs instrument mode (`go nodes <registered>`, single thread,
-stable tie-break) — the same instrument the arena's strength claims use. The
-transcript records every stone and every engine reply, so a game is replayable
-from its own transcript. sealbot is time-budgeted and therefore not
+The pistol side runs under ONE of two budgets, and the seat's config picks it:
+
+- `nodes` — instrument mode (`go nodes <registered>`, single thread, stable
+  tie-break), the same instrument the arena's strength claims use. Reproducible:
+  the same position under the same budget answers the same move.
+- `movetime_ms` — PLAY mode (`go movetime <registered>`), the deployment budget
+  CLAUDE.md's design point names. **Not reproducible, by construction**
+  (docs/decisions.md D-22), so an anchor taken here reports its DISTINCT-game
+  count as the honest denominator behind its nominal N.
+
+**The mode is pinned to the budget in both directions** and the client checks
+the handshake before the first move request: a nodes seat requires
+`id mode instrument`, a movetime seat requires `id mode play`, and each requires
+its own budget word in `id budgets`. A seat that accepted either mode would let
+a config silently measure the other engine.
+
+The transcript records every stone and every engine reply, so a game is
+replayable from its own transcript. sealbot is time-budgeted and therefore not
 run-to-run deterministic; it is the UNVERIFIED side of an anchor, and the
 report says so.
 

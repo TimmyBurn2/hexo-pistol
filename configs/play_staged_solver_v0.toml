@@ -65,9 +65,13 @@ tie_break = "lexicographic"
 movetime_epsilon_ms = 50
 
 [solver]
-# WP-1.8b (design docs/experiments/wp18b_design.md §5): the solver on the
-# search path, gate OFF in every committed config until an SPRT says
-# otherwise. The knobs mirror configs/solver_v0.toml's committed values.
+# WP-1.8b (design docs/experiments/wp18b_design.md §5): the solver on the search
+# path. The knobs mirror configs/solver_v0.toml's committed values.
+#
+# THE GATE IS ON HERE, and the sentence its sibling carries — "gate OFF in every
+# committed config until an SPRT says otherwise" (D-441) — binds what pistol
+# SHIPS. It is not copied down, because a comment saying OFF three lines above a
+# `true` is a comment that will be believed.
 on_search_path = true
 per_call_node_cap = 16384
 trigger = "any_open_four"

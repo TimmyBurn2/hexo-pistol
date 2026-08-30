@@ -27,7 +27,7 @@ change is a NEW anchor, not a re-reading"*). D-438's numbers do not move (D-374)
 | Games per seat | **N = 40** (seats alternate: pistol is p1 in odd games, p2 in even — 20 per colour) |
 | Opening policy | **The platform's standard setup, every game**: the server auto-plays p1's turn-1 stone at the origin, exactly as the HeXO server's htttx `setup` packet delivers; engines are first asked at turn 2 |
 | pistol budget | **`go movetime 500`** — 500 ms, the deployment budget CLAUDE.md's design point states (*"a strong move consistently within 0.5 s"*) and `configs/play_v0.toml`'s own header restates (*"CLAUDE.md's design point is a 0.5 s move, which is a `movetime` budget"*) |
-| pistol wall cap | **120 s** per answer — a hang bound, deliberately far above the budget so an OVERSHOOT is RECORDED rather than converted into a forfeit |
+| pistol wall cap | **120 s** per answer on seat 1; **600 s** on seat 2. A hang bound, and on seat 2 it is set from a MEASUREMENT rather than an estimate — D-441 measured a single call at cap 16384 between 9 s and 240 s, so two capped root calls can exceed 120 s and a seat that exceeds its cap forfeits. §7.1 registers the branch |
 | sealbot budget | **`time_limit = 0.3` s** per turn — its standing value (D-438 §1, `local/sealbot.example.toml`); wall cap 5 s per answer |
 | Turn cap | **60** — the evaluation horizon (game rule 6); a game with no decision is `capped`, never a win |
 | Seat 1 config | `configs/play_staged_v0.toml` **as committed** — play mode, staged policy, every gate off (`killers`/`history`/`countermove` false, `safety_net_top_k = 0`, `on_search_path = false`) |
@@ -50,7 +50,9 @@ every committed config"* binds the DEPLOYMENT configs, which seat 2 is not.
 **A consequence of that cap, registered before the run so it cannot be read as a
 surprise afterwards**: a solver call absorbs its whole node count at once, and
 the root's two calls are made BEFORE the first deepening iteration
-(`crates/pistol-search/src/search.rs:266`, `:283`) where nothing is abortable.
+(`crates/pistol-search/src/search.rs`'s `solver.solve(state, cap)` and
+`solver.solve_defender(state, cap)`, before the deepening loop) where nothing is
+abortable.
 Seat 2 is therefore EXPECTED to overshoot 500 ms, possibly by seconds. **That
 overshoot is a recorded observation of this anchor, not a failure of it** — it
 is the D-95 / WP-1.4 forfeit-risk class measured under the deployment budget,
@@ -67,8 +69,20 @@ needs:
   deterministic from the fixed opening; a `movetime` seat is not reproducible by
   construction (D-22), so distinct-game diversity is EXPECTED here and is
   reported as the honest denominator behind the interval's nominal N.
-- **Overshoot**: per pistol answer, the wall time the transcript records against
-  the 500 ms budget. Reported per seat as median and maximum. Not a verdict.
+- **Overshoot**: per pistol answer, the wall time the record carries against the
+  500 ms budget. Reported per seat as median and maximum. Not a verdict.
+
+**BOTH ARE PRODUCED BY A NAMED INSTRUMENT AND NEITHER IS COMPUTED BY HAND.** A
+first revision of this document registered them as outputs while the harness
+produced neither, which a fresh-context REVIEW-impl found and which
+`docs/process.md` forbids — a registered output names the artefact that produces
+it, with its revision. `tools/sealbot/matchserver/src/report.rs` now computes
+both: `distinct_games` folds each game's stones in submitted order into a set,
+and `a_answer_wall_ms` collects engine A's per-answer wall times, from which the
+report prints `answers`, `answer_wall_ms_median` and `answer_wall_ms_max` in
+both its JSON and its text. The median is the lower middle on an even count, so
+the number printed is a number that was measured. The stub suite asserts all
+four fields are populated on a scripted match.
 
 ## 3. The instruments, at their revisions
 
@@ -102,9 +116,20 @@ Digests are printed by `run_match.sh` itself over the bytes each seat wrote.
 
 ## 5. The dry run — input of the same kind, and never the registered workload
 
-**Input**: two reduced-budget configs of the same kind — the same two real
-engines, the same seats rule, at `movetime 100`, sealbot `0.05` s, turn cap 20,
-**2 games** — one per seat, so BOTH seats' plumbing is exercised.
+**Input**: **FOUR** reduced-budget configs of the same kind — the same two real
+engines, the same seats rule, at `movetime 100` (seats 1 and 2) or
+`nodes 5000`, sealbot `0.05` s, turn cap 20, **2 games** each:
+
+| config | budget | pistol config | what it exercises |
+|---|---|---|---|
+| `dryrun_seat1` | `movetime 100` | `configs/play_staged_v0.toml` | seat 1's plumbing end to end |
+| `dryrun_seat2` | `movetime 100` | `configs/play_staged_solver_v0.toml` | seat 2's, and its overshoot |
+| `dryrun_modepin_a` | `movetime 100` | `configs/instrument_staged_v0.toml` | criterion D, one way |
+| `dryrun_modepin_b` | `nodes 5000` | `configs/play_staged_v0.toml` | criterion D, the other way |
+
+A first revision named two configs and a criterion (D) needing four, which a
+REVIEW-impl found. The two mode-pin configs are **expected to forfeit at the
+handshake** — that is the criterion, not a failure of it.
 
 **Criteria, each with the defect class it excludes:**
 
@@ -126,10 +151,22 @@ engines, the same seats rule, at `movetime 100`, sealbot `0.05` s, turn cap 20,
   v1 had one budget kind.
 - **E. The stub suite passes**, including all three tampered-record negative
   controls. *Defect class: an instrument that cannot say no.*
-- **F. THE OVERSHOOT COLUMN IS NOT ZERO AND NOT CONSTANT.** *Defect class: a
-  `movetime` seat that is really still node-budgeted, or a wall column copied
-  from the budget rather than measured — either makes §2's overshoot report a
-  transcription of the input.*
+- **F. THE `go` LINE IN THE SEAT'S OWN STDERR SAYS `movetime`, AND THE NODE
+  SEAT'S SAYS `nodes`.** *Defect class: a `movetime` seat that is really still
+  node-budgeted — a config that names one budget while the client sends the
+  other, which every other criterion here survives.* **A first revision
+  registered "the overshoot column is not zero and not constant" for this defect
+  class and a REVIEW-impl struck it: `wall_ms` is `started.elapsed()`, so a seat
+  that IS still node-budgeted produces a non-zero, non-constant column exactly
+  like one that is not — the criterion is preserved by the defect it named,
+  which `docs/process.md` says is not a criterion at all.** What is not
+  preserved is the budget verb the client actually sent, which only the engine
+  sees; the stub suite reads it out of the seat's stderr and this criterion does
+  the same on the real binary.
+- **G. THE OVERSHOOT COLUMN IS POPULATED AND ITS MAXIMUM EXCEEDS THE BUDGET.**
+  *Defect class: a wall column copied from the budget rather than measured, or
+  absent.* This is what F used to be, kept for the defect class F does not
+  reach, and stated as the weaker criterion it is.
 
 **The record** — REGISTERED SLOT, filled from the dry run's own bytes before this
 document's review passes, together with the binary and config digests of the
@@ -167,6 +204,35 @@ not defended.
 recorded as stopped — a cost anomaly, never a verdict, and never a partial
 reading of the games that did finish. Operator attention: one read of each
 seat's report against §2.
+
+### 7.1 SEAT 2 MAY NOT BE RUNNABLE, and the branch is registered before it runs
+
+A first revision registered the 120 s wall cap as *"deliberately far above the
+budget"* on an unmarked ESTIMATE. **D-441 contradicts it with a measurement**: a
+single solver call at cap 16384 was measured between 9 s and 240 s. Two capped
+calls at the root alone can therefore exceed the 120 s wall cap, and a seat that
+exceeds it **forfeits** — which would make seat 2 a measurement of its own wall
+cap and of nothing else.
+
+**The wall cap is therefore raised to 600 s for seat 2** (seat 1 keeps 120 s;
+its calls do not exist), and **a TIMING PROBE runs before game one**:
+
+> `dryrun_seat2` at the governed cap and budget, **2 games**, turn cap 20.
+> Record the per-answer wall median and maximum, and the wall for the match.
+
+**The registered branch, decided before the probe:**
+
+- If the probe's projection — its per-game wall × 40 — is **under 4 hours**,
+  seat 2 runs as registered.
+- If it is **over**, **seat 2 is DROPPED with an ADR line**, which is the
+  dispatch's own provision (*"otherwise seat 2 is dropped with a D-line, not
+  improvised"*). It is **not** re-scoped by lowering N, lowering the cap, or
+  raising the abort bound: each of those invents a number this document does not
+  hold, and a seat that is not the registered seat is not the registered seat.
+- If a probe game forfeits on the wall cap even at 600 s, seat 2 is dropped on
+  the same ground and the forfeit is recorded as the reason.
+
+**Seat 1 does not depend on this branch** and runs either way.
 
 ## 8. What flips or reopens this
 
