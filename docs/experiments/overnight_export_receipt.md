@@ -22,11 +22,14 @@ continues it rather than replacing it.
 **`artifacts/overnight_export_receipt_v1.txt` — sha256**
 
 ```
-3672f0c6ecd7fc34aca9a8e9758962812231ab04d7cb3a843c0bbb2253e528d9
+e995c63d92bf9d61b00555ad9c3b77726a7889c02440d3f18cdabce0b2dd6a0a
 ```
 
-Fifteen files listed, the receipt itself excluded because a file cannot carry
-its own digest.
+**Twenty-nine files listed**, the receipt itself excluded because a file cannot
+carry its own digest. The two anchor seats are DIRECTORIES: their forty
+transcripts and eighty stderr files are sha-indexed in each seat's own
+`MANIFEST.sha256`, and it is the MANIFEST that this receipt lists — one
+indirection, stated so nobody reads the shorter list as the whole export.
 
 ## What is in it, and what each artifact is
 
@@ -46,6 +49,13 @@ its own digest.
 | `overnight_ci_premerge_21e05f8_v1.txt` | `tools/ci.sh` at `21e05f8` — 19/19, the pre-merge gate run |
 | `overnight_ci_postmerge_2f8f836_v1.txt` | the same at `2f8f836` — 19/19, post-merge |
 | `overnight_ci_7240e37_v1.txt` | the same at `7240e37` — 19/19, the three landed units |
+| `book_v2_power_refusals_v1.txt` | the power instrument's seven refusal legs and its determinism check — criteria C and D of `book_v2`'s registration |
+| `book_v2_loadability_v1.txt` | **every entry of `book_v2` through the guarded bench block** (D-475): `4500 entries x 1 reps = 4500 totals lines, 0 refused` |
+| `overnight_mutation_receipts_v1.txt` | five mutants, all dying: the `book_v2` output name, and each of the four solver-counter increment sites |
+| `overnight_worktree_receipt_v1.txt` | what each worktree's gitignored `artifacts/` and `sessions/` held before removal (D-469) — nothing needing export, checked rather than asserted |
+| `sealbot_anchor_v2_seat1/*` | **the governed anchor, seat 1** (gates off): 20 W / 20 L, 2 distinct games, 320 answers at median 500 ms |
+| `sealbot_anchor_v2_seat2/*` | **the governed anchor, seat 2** (solver gate on): 0 W / 40 L, 2 distinct games, 240 answers at median 1225 ms |
+| `sealbot_anchor_v2_dryrun_*/report.json` | the four registered dry runs, including the two mode-pin runs that must forfeit at the handshake and do |
 
 ## The rule this file follows for the rest of the arc
 
