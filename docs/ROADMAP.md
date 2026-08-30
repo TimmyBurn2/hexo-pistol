@@ -171,11 +171,14 @@ pre-registration, never a re-read.
 **STAGE 1 IS CLOSED WITH NAMED RESIDUE (D-503)** — a closure, never a
 completeness claim. Carried open and licensed, by name: **WP-1.4** (D-95, the
 HeXO forfeit risk), **WP-1.10** (`tools/` gate hardening, whose WP-1.9
-precedence D-496 displaced by name), **O-3** (WP-1.9's registered flip trigger)
-and **the module-split cost** D-502 measured, which D-504 names **WP-1.9b** —
-inlining the storage back into `handcrafted.rs` for a measured 1.18x-1.21x, at
-the price of ~15 lines over rule 9's soft cap and one justification entry, with
-its own REVIEW-impl and its own bench.
+precedence D-496 displaced by name). **TWO OF THAT LIST ARE NOW CLOSED BY
+WP-1.9b (D-506, D-507)**: **O-3** was implemented, reviewed and measured at
+1.518 / 1.594 against the 1.783 / 1.909 comparand — below it in both bands, so
+NO FLIP, and D-501's trigger is discharged by measurement rather than left to
+silence; and **the module-split cost** is recovered, the storage now living
+inline in `handcrafted.rs` at a measured 1.171 / 1.205 inside its registered
+[1.10, 1.30] bracket, output byte-identical to the same digest WP-1.9 recorded.
+The residue that remains open is **WP-1.4** and **WP-1.10**.
 
 **NEXT SCHEDULED STEP: the Stage-3 scoped detector** (D-471 as amended by
 D-494): cheap VCDT/TSS detection gating solver calls, targeting the measured ~6x
@@ -192,7 +195,7 @@ here so the package does not re-derive them:**
    governed use, so the detector's own SPRT cannot draw from it.
 2. **The WP-1.8 nps re-test, discharged into this package** (D-504) — the
    detector's registered bench re-measures the SOLVER SEAT under post-WP-1.9
-   (and post-WP-1.9b, if that lands first) nps as part of its own bracket. **The
+   (and post-WP-1.9b, which HAS landed — D-507) nps as part of its own bracket. **The
    prereg must state which limb of the WP-1.8 clause it answers** — the nps-jump
    limb is discharged here, the Stage-2-exit limb is not.
 
@@ -340,8 +343,10 @@ strength run adds nothing. The rule-5 bench, registered before the run, lands
 so a FINDING, and **the bracket does not move**. The cause was measured, not
 guessed, after two hypotheses failed: the module split costs 0.844 / 0.828, and
 inlining it back is a follow-up worth 1.18x-1.21x at the price of one rule 9
-justification entry. **O-3 — the hand-rolled probing table D-225 named — was
-never implemented and is a REGISTERED FLIP TRIGGER on the selection (D-501).**
+justification entry. **BOTH OF THOSE ARE NOW SPENT BY WP-1.9b**: the inline
+landing measured 1.171 / 1.205 against the shipped module (D-507), and **O-3 —
+the hand-rolled probing table D-225 named — was implemented and MEASURED AT
+1.518 / 1.594, which does not flip the selection in either band (D-506).**
 
 **WP-1.10 — `tools/` gate hardening** (docs/decisions.md D-251, D-252, and
 D-289 for each item's owner). What the `tools/`-scoped reviews that produced

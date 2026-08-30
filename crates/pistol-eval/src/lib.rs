@@ -37,7 +37,7 @@
 //! A malformed weights document is a named [`EvalError`] carrying the key an
 //! operator must edit. Being told about a stone that contradicts what an eval
 //! already holds is not operator input — it means a caller's board and its eval
-//! have drifted — so it panics with [`EVAL_DESYNC`](handcrafted::EVAL_DESYNC)
+//! have drifted — so it panics with [`EVAL_DESYNC`]
 //! rather than returning an error nobody could handle (CLAUDE.md rule 3).
 
 pub mod error;
@@ -45,7 +45,6 @@ pub mod eval;
 pub mod handcrafted;
 pub mod weights;
 pub mod window;
-mod window_map;
 
 pub use error::EvalError;
 pub use eval::{EVAL_MAX, Eval};
