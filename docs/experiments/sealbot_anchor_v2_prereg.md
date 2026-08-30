@@ -275,3 +275,91 @@ RUNS.**
   sealbot below strong humans (D-197) — exactly where it is. The comparison to
   D-438 that this package's ADR line is permitted to make is **one sentence, of
   DIRECTION only**, because the budget differs and the two are not commensurable.
+
+
+---
+
+## 10. THE RESULT — both seats, taken under this registration
+
+**Run revision `411c122`**, engine `target/release/pistol` sha256
+`bca86067db0d685d7fdf7f5028ff5f2108a27ce986fcfe727b0235323562d881`, configs
+`local/sealbot_anchor_v2_seat{1,2}.toml` sha256 `8ba4389b…` / `b5d59cea…`,
+sealbot `current/` at 0.3 s. Nothing else ran on the machine
+(`ps -eo cmd | /usr/bin/grep -c '[c]argo'` read 0 before each seat).
+
+**THE AGREEMENT CRITERION HOLDS ON BOTH SEATS**: `replay-check: 40
+transcript(s) replayed to their recorded outcomes`, exit 0 each. §6's registered
+consequence is not reached.
+
+| | **seat 1** (gates off) | **seat 2** (solver gate ON, cap 16384) |
+|---|---|---|
+| W / L | **20 / 20** | **0 / 40** |
+| as p1 | **20–0** | **0–20** |
+| as p2 | **0–20** | **0–20** |
+| capped | 0 | 0 |
+| forfeited | 0 | 0 |
+| Wilson 95 % over decided | [0.352, 0.648] | [0.000, 0.088] |
+| **DISTINCT GAMES** | **2 of 40** | **2 of 40** |
+| pistol answers | 320 | 240 |
+| pistol nodes | 47,085,009 | 19,958,155 |
+| pistol wall | 109.5 s | 243.9 s |
+| sealbot wall | 57.8 s | 56.8 s |
+| **per-answer wall, median** | **500 ms** | **1225 ms** |
+| **per-answer wall, max** | **508 ms** | **1866 ms** |
+| match wall | 2 m 49 s | 5 m 03 s |
+
+### 10.1 The reading, and what it is not
+
+**THE INTERVAL'S NOMINAL N IS 40 AND ITS REAL ONE IS 2.** Both seats played
+exactly TWO distinct stone sequences, each replayed twenty times — the same
+shape D-438 measured and had to have recovered by hand afterwards. A
+`movetime` budget did not buy diversity: the movetime ceiling lands answers at
+the budget and the search's completed-depth answer is stable, so the seat is
+effectively deterministic from the fixed opening even under a clock. **The
+distinct-game count is why that is on the report's face rather than in a
+successor's re-analysis.**
+
+**What seat 1's 2-of-2 fact actually says: from the standard opening, at these
+budgets, THE FIRST PLAYER WINS.** pistol converts its p1 seat every time at turn
+19; sealbot converts its p1 seat every time at turn 15. The 20–20 split is the
+seat alternation and is not a measure of either engine.
+
+**Seat 2 loses both seats, and the direction is the one the bracket predicted.**
+Turning the solver on at the deployment budget cost pistol its p1 conversion:
+0–40, and the compute says why — **2.4x FEWER search nodes in 2.2x MORE wall**
+(19.96 M in 243.9 s against 47.09 M in 109.5 s). The WP-1.8c bracket measured
+the gate-on seat at an nps ratio near 0.04 and aborted on it; this is that abort
+seen from the other end, at the deployment budget rather than the instrument
+one, and it is consistent with it rather than a second measurement of it.
+
+**AND THE D-95 / WP-1.4 FORFEIT RISK IS MEASURED AT THE DEPLOYMENT BUDGET,
+which is the one thing this anchor can say that D-438's could not.** Seat 1's
+overshoot is **8 ms over 320 answers at a 500 ms budget** — the WP-1.4 movetime
+ceiling holding well inside its 50 ms epsilon. Seat 2's is **725 ms at the
+median and 1366 ms at the maximum**, because a solver call absorbs its whole
+node count at once and the root's two calls are made before anything is
+abortable. **On HeXO the server owns the clock and hard-clamps the call
+(D-478, D-503's residue item 1): a seat answering at 1866 ms against a 500 ms
+budget is a forfeit there.** This anchor's local server does not clamp — its
+wall cap is 600 s, raised for exactly this reason — so it recorded the overshoot
+instead of converting it into a forfeit.
+
+### 10.2 What this is NOT
+
+Not an SPRT, not paired, not an Elo claim, not a strength claim of any kind
+beyond *this is what happened in these games*. **Sealbot is UNVERIFIED** (D-197)
+and the standing judgment — pistol below sealbot below strong humans — is not
+moved by anything here. **The comparison to D-438 is DIRECTION ONLY and one
+sentence**: where that node-budgeted anchor had sealbot converting both seats
+40–0, this deployment-budget anchor has each side converting its own p1 seat —
+a move in pistol's favour, on a different budget, and not commensurable with it.
+
+### 10.3 Artifacts
+
+`artifacts/sealbot_anchor_v2_seat{1,2}/`, each with `report.json`, `report.txt`,
+40 transcripts and 80 stderr files, sha-indexed in its own `MANIFEST.sha256`:
+
+| seat | `report.json` | `MANIFEST.sha256` |
+|---|---|---|
+| 1 | `1d41a36a9c8d7d25e16d79f78a5a36ef153181de0b17149a7aa863d49d884153` | `0d7ff2c469b6ae1c576c3cc2fbbfb16b854e89c9814186c1feca56872c151a8b` |
+| 2 | `b9a606eaedc1e457e3d13697c227a5af5f529e4772615310409b658650212114` | `d1097cc72fdf5db4c3107b31caed3ad53759f8121332d041605315623f2b3707` |
