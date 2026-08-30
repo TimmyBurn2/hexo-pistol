@@ -237,6 +237,7 @@ in the same shape. Neither is gated.
 | `docs/experiments/wp19b_o3_impl_REVIEW.md` | REVIEW-impl of O-3 |
 | `docs/experiments/wp19b_landing_impl_REVIEW.md` | REVIEW-impl of the landing |
 | `artifacts/wp19b_*` | the receipts, digest-indexed in `wp19b_export_receipt_v1.txt` |
+| `sessions/WP-1.9b/` | a POINTER to this file only — `/sessions/` is gitignored, so a closure written there is one a successor cannot resolve (`6812ddc`'s lesson, applied ahead of the mistake) |
 
 ADR lines: **D-506** (O-3 measured and rejected, the trigger discharged) and
 **D-507** (the landing, its bracket, and the superseded selection condition).
