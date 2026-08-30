@@ -45,8 +45,14 @@ pub struct EngineSpec {
     pub command: Vec<String>,
     /// The working directory for the process (repository-root-relative).
     pub cwd: String,
-    /// pistol only: the node budget sent as `go nodes <n>`.
+    /// pistol only: the node budget sent as `go nodes <n>`. Instrument mode.
     pub nodes: Option<u64>,
+    /// pistol only: the wall budget sent as `go movetime <ms>`. Play mode.
+    ///
+    /// Exactly one of this and [`EngineSpec::nodes`] is present: the budget a
+    /// seat runs under is the seat's, and a document that names two of them
+    /// names none.
+    pub movetime_ms: Option<u64>,
     /// sealbot only: the per-turn time budget handed to the shim.
     pub time_limit_seconds: Option<f64>,
     /// The per-turn wall cap: no answer by this many seconds is a forfeit.
@@ -103,12 +109,31 @@ fn check_engine(engine: &EngineSpec, name: &str) -> Result<(), String> {
     }
     match engine.kind {
         EngineKind::Pistol => {
-            if engine.nodes.is_none() {
-                return Err(format!("{name} of kind pistol requires nodes"));
+            // Two refusals and not one: naming neither budget and naming both
+            // are different mistakes, and a single message about "the budget"
+            // would tell an operator which file to open and not what to do in
+            // it.
+            match (engine.nodes, engine.movetime_ms) {
+                (None, None) => {
+                    return Err(format!(
+                        "{name} of kind pistol requires nodes or movetime_ms"
+                    ));
+                }
+                (Some(_), Some(_)) => {
+                    return Err(format!(
+                        "{name} of kind pistol names both nodes and movetime_ms: a seat \
+                         runs under one budget"
+                    ));
+                }
+                _ => {}
+            }
+            if engine.movetime_ms == Some(0) {
+                return Err(format!("{name}.movetime_ms must be positive"));
             }
             if engine.time_limit_seconds.is_some() {
                 return Err(format!(
-                    "{name} of kind pistol refuses time_limit_seconds: its budget is nodes"
+                    "{name} of kind pistol refuses time_limit_seconds: its budget is \
+                     nodes or movetime_ms"
                 ));
             }
         }
@@ -119,6 +144,11 @@ fn check_engine(engine: &EngineSpec, name: &str) -> Result<(), String> {
             if engine.nodes.is_some() {
                 return Err(format!(
                     "{name} of kind sealbot refuses nodes: its budget is time"
+                ));
+            }
+            if engine.movetime_ms.is_some() {
+                return Err(format!(
+                    "{name} of kind sealbot refuses movetime_ms: its budget is time"
                 ));
             }
         }

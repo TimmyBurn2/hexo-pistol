@@ -24,8 +24,15 @@ label = "pistol-e2280ca-instrument"
 command = ["target/release/pistol", "--config", "configs/instrument_staged_v0.toml"]
 # pistol resolves its config's internal paths against this directory.
 cwd = "."
-# The instrument budget: `go nodes <n>`. Registered in the pre-registration.
+# THE SEAT'S BUDGET: exactly one of these two, and the one you pick decides
+# which MODE the seat's config must be in — the client checks the handshake and
+# refuses the other.
+#   nodes       -> `go nodes <n>`,      mode = "instrument"  (reproducible)
+#   movetime_ms -> `go movetime <ms>`,  mode = "play"        (the deployment
+#                                        budget; not reproducible, D-22)
+# Registered in the pre-registration either way.
 nodes = 50000
+# movetime_ms = 500
 # Wall cap per pistol answer; the node budget bounds it, this bounds a hang.
 turn_timeout_seconds = 120.0
 

@@ -12,7 +12,15 @@
 #       per-turn transcript, and the node accounting (3 answers x 7 nodes).
 #   m2  a scripted forfeit: p2's first stone is far outside the radius-8
 #       region, so the referee forfeits it and a wins without answering once.
-# Plus the overwrite refusal: re-running m1's config must exit 2 by name.
+#   m7  m1 again on a MOVETIME seat: the same scripted win, driven by
+#       `go movetime` against a play-mode stub, so the deployment-budget seat
+#       is exercised end to end and its go line is read back from the record.
+#   m8  a movetime seat pointed at an INSTRUMENT-mode stub: the mode pin must
+#       refuse it by name, and a refusal that never fires is not a pin.
+#   m9  a nodes seat pointed at a PLAY-mode stub: the same pin, other way.
+# Plus the overwrite refusal: re-running m1's config must exit 2 by name, and
+# the two config-schema refusals (a pistol seat naming both budgets, and one
+# naming neither).
 #
 # Item 11: the only deletion is the sweep of $SCRATCH, a fixed test-owned
 # prefix under artifacts/ no other producer writes.
@@ -79,7 +87,7 @@ scratch.joinpath("m6_sealbot.json").write_text(json.dumps([
 ]))
 scratch.joinpath("m6_pistol.json").write_text(json.dumps([]))
 
-def config(name, sealbot_script):
+def config(name, sealbot_script, budget='nodes = 100', stub_mode="instrument"):
     return f'''schema_version = 1
 games = 1
 turn_cap = 20
@@ -88,9 +96,9 @@ output_dir = "artifacts/pistol-testscratch-matchserver/{name}"
 [engine_a]
 kind = "pistol"
 label = "stub-pistol"
-command = ["python3", "tools/sealbot/tests/stub_pistol.py", "{scratch}/{name}_pistol.json"]
+command = ["python3", "tools/sealbot/tests/stub_pistol.py", "{scratch}/{name}_pistol.json", "{stub_mode}"]
 cwd = "."
-nodes = 100
+{budget}
 turn_timeout_seconds = 10.0
 
 [engine_b]
@@ -108,15 +116,54 @@ scratch.joinpath("m3.toml").write_text(config("m3", "m3_sealbot.json"))
 scratch.joinpath("m4.toml").write_text(config("m4", "m4_sealbot.json"))
 scratch.joinpath("m5.toml").write_text(config("m5", "m5_sealbot.json"))
 scratch.joinpath("m6.toml").write_text(config("m6", "m6_sealbot.json"))
+
+# m7/m8/m9 replay m1's scripts: the same scripted win, so any difference in
+# outcome is the SEAT and not the game.
+for name in ("m7", "m8", "m9"):
+    scratch.joinpath(f"{name}_pistol.json").write_text(
+        scratch.joinpath("m1_pistol.json").read_text())
+    scratch.joinpath(f"{name}_sealbot.json").write_text(
+        scratch.joinpath("m1_sealbot.json").read_text())
+scratch.joinpath("m7.toml").write_text(
+    config("m7", "m7_sealbot.json", budget="movetime_ms = 100", stub_mode="play"))
+# m8: a movetime seat that finds instrument mode. m9: a nodes seat that finds
+# play mode. Each is the mode pin fired from one side.
+scratch.joinpath("m8.toml").write_text(
+    config("m8", "m8_sealbot.json", budget="movetime_ms = 100", stub_mode="instrument"))
+scratch.joinpath("m9.toml").write_text(
+    config("m9", "m9_sealbot.json", budget="nodes = 100", stub_mode="play"))
+# The two schema refusals: a pistol seat naming both budgets, and one naming
+# neither. These never reach a match; run_match.sh must refuse them.
+scratch.joinpath("m_both.toml").write_text(
+    config("m_both", "m1_sealbot.json", budget="nodes = 100\nmovetime_ms = 100"))
+scratch.joinpath("m_neither.toml").write_text(
+    config("m_neither", "m1_sealbot.json", budget="# no budget at all"))
 PY
 [ -s "$SCRATCH/m1.toml" ] || refuse "the config generator wrote nothing"
 
 # --- run the shipped script four times ---------------------------------------
 # timeout is the wedge guard: a referee that re-asks a silent engine forever
 # (the F1 class) surfaces as exit 124 with a named refusal, not a hung suite.
-for MATCH in m1 m2 m3 m4 m5 m6; do
+for MATCH in m1 m2 m3 m4 m5 m6 m7 m8 m9; do
   timeout 90 tools/sealbot/run_match.sh "$SCRATCH/$MATCH.toml" \
     || fail "run_match.sh refused, failed, or wedged on $MATCH"
+done
+
+# --- the schema refusals: a seat's budget is exactly one of two -------------
+# Item 12: a refusal is exit 2 and names its reason. Without these the
+# `deny both / deny neither` arms are unreached code.
+for CASE in m_both:both m_neither:neither; do
+  DOC="${CASE%%:*}"
+  WHY="${CASE##*:}"
+  set +e
+  SCHEMA_OUTPUT="$(tools/sealbot/run_match.sh "$SCRATCH/$DOC.toml" 2>&1)"
+  SCHEMA_RC=$?
+  set -e
+  [ "$SCHEMA_RC" -ne 0 ] || fail "$DOC ran; a pistol seat naming $WHY budget must be refused"
+  case "$SCHEMA_OUTPUT" in
+    *movetime_ms*) : ;;
+    *) fail "$DOC was refused without naming movetime_ms: $SCHEMA_OUTPUT" ;;
+  esac
 done
 
 # --- the overwrite refusal (item 12: a refusal is exit 2, by name) -----------
@@ -132,7 +179,7 @@ esac
 
 # --- the replay checker: the second instrument, with negative controls ------
 REPLAY="$MS_DIR/target/release/replay_check"
-for MATCH in m1 m2 m3 m4 m5 m6; do
+for MATCH in m1 m2 m3 m4 m5 m6 m7 m8 m9; do
   "$REPLAY" "$SCRATCH/$MATCH" || fail "replay_check refused $MATCH's record"
 done
 # The control runs: a tampered record must FAIL, each naming a class the
@@ -283,5 +330,35 @@ for name, illegal, why in (("m5", [0, 0], "already holds a stone"),
           and turns[0]["outcome"]["stone"] == illegal
           and turns[0]["turn"] == 2,
           f"{name}'s illegal stone is the first REFUSED one, at the asked turn")
+# Match 7: the MOVETIME seat plays m1's game to m1's outcome, and the go line
+# in its own stderr says which budget verb the client actually sent — the one
+# fact no report field carries, and the whole point of the seat.
+report = load(scratch / "m7" / "report.json")
+game = report["games_detail"][0]
+check(game["kind"] == "win", "m7 ended in a win")
+check("winner p1" in game["detail"] and "turn 7" in game["detail"],
+      "m7's movetime seat reached m1's own outcome: p1 at turn 7")
+check(report["compute"]["a"]["nodes_total"] == 21,
+      "m7 accounted the same 21 nodes as m1 (the seat changed, the game did not)")
+go_lines = [line for line in (scratch / "m7" / "g001_engine_a.stderr").read_text().splitlines()
+            if "saw go" in line]
+check(len(go_lines) == 3 and all(line.endswith("go movetime 100") for line in go_lines),
+      "m7's seat sent `go movetime 100` on each of its three answers")
+go_lines = [line for line in (scratch / "m1" / "g001_engine_a.stderr").read_text().splitlines()
+            if "saw go" in line]
+check(len(go_lines) == 3 and all(line.endswith("go nodes 100") for line in go_lines),
+      "m1's seat sent `go nodes 100` — the control that makes m7's assertion mean something")
+
+# Matches 8 and 9: the mode pin, fired from each side. A handshake refusal is
+# an engine failure at the site, so the seat forfeits and the detail names it.
+for name, found, wanted in (("m8", "instrument", "play"), ("m9", "play", "instrument")):
+    report = load(scratch / name / "report.json")
+    game = report["games_detail"][0]
+    check(game["kind"] == "forfeit", f"{name} ended in a forfeit (the mode pin refused)")
+    check("p1 forfeited" in game["detail"],
+          f"{name}'s forfeiter is p1, the seat whose handshake was refused")
+    check(f"engine mode is {found}, not {wanted}" in game["detail"],
+          f"{name}'s refusal names the mode it found and the mode the budget seats")
+
 print("sealbot-tests: PASS (all scripted matches matched their hand-derived outcomes)")
 PY

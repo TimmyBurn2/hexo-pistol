@@ -1,0 +1,79 @@
+# pistol — anchor MEASUREMENT seat: play mode, staged policy, SOLVER GATE ON.
+#
+# Byte-identical to configs/play_staged_v0.toml but for `[solver]
+# on_search_path`, which is `true` here. That single key is the whole
+# difference and it is the reason this file exists: an anchor whose two seats
+# differ in more than one thing measures the difference between two things.
+#
+# THIS IS NOT A DEPLOYMENT CONFIG. D-441's "gate OFF in every committed config
+# until an SPRT says otherwise" binds what pistol SHIPS; the measurement seats
+# configs/gate_staged_solver_v0.toml and configs/bench_wp18c_solver_on.toml are
+# committed with the gate on for the same reason this one is, and none of the
+# three moves a deployment config.
+#
+# THE CAP IS THE COMMITTED PLAY CAP AND IS NOT THE BENCH SEAT'S. 16384 is what
+# configs/play_staged_v0.toml holds; the bench pair's 2048 was derived for a
+# different document, and taking a number from one config into another because
+# it looks apter is exactly the substitution an anchor's registration forbids
+# (docs/experiments/sealbot_anchor_v2_prereg.md §1).
+#
+# Governed by docs/experiments/sealbot_anchor_v2_prereg.md. Every strength claim
+# in this project still comes from instrument mode; nothing measured here is a
+# number anyone may quote as strength (CLAUDE.md rule 6).
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 3
+
+[engine]
+mode = "play"
+
+[search]
+tt_bytes = 268435456
+
+[search.candidate_policy]
+kind = "staged"
+# Matches configs/play_v0.toml's radius 3, so the fallback ball and the
+# safety net (docs/decisions.md D-353) reach the same cells the deployment
+# radius policy does in the one place they still agree by construction.
+quiet_radius = 3
+quiet_top_k = 16
+widen_schedule = [32]
+# The safety-net cap (docs/decisions.md D-478, D-482): cells of the quiet ball a
+# safety-net row may emit, at every node but the root turn's. 0 disables it, and
+# 0 is the committed value everywhere until an SPRT says otherwise.
+safety_net_top_k = 0
+tier_t_own_count = 2
+tier_t_opponent_count = 3
+q_depth_turns = 0
+q_triggers = "defensive_only"
+# WP-1.7 ordering-heuristic gates (docs/experiments/wp17_design.md §6):
+# default OFF in every committed config until an SPRT says otherwise.
+killers = false
+history = false
+countermove = false
+
+[eval]
+backend = "handcrafted_v0"
+weights_file = "configs/eval_v0_weights.toml"
+
+[instrument]
+threads = 1
+tie_break = "lexicographic"
+
+[play]
+movetime_epsilon_ms = 50
+
+[solver]
+# WP-1.8b (design docs/experiments/wp18b_design.md §5): the solver on the
+# search path, gate OFF in every committed config until an SPRT says
+# otherwise. The knobs mirror configs/solver_v0.toml's committed values.
+on_search_path = true
+per_call_node_cap = 16384
+trigger = "any_open_four"
+epsilon_num = 1
+epsilon_den = 4
+zone_orders = 3
+free_stone_radius = 8
+tt_entries = 1048576
+attacker_policy = "one_free_stone"

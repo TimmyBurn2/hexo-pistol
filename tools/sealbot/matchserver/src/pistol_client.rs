@@ -1,9 +1,13 @@
 //! The pistol seat: drive the shipped binary over its own line protocol.
 //!
-//! Instrument mode or nothing: the handshake's `id mode` line is CHECKED to
-//! say `instrument` before the first move request, because the determinism
-//! law (CLAUDE.md rule 4) is what makes an anchor reproducible, and a play
-//! mode seat would quietly break it. The budget is always `go nodes <n>`.
+//! THE MODE IS PINNED TO THE BUDGET, in both directions: the handshake's
+//! `id mode` line is CHECKED before the first move request, and which mode it
+//! must say is decided by the budget the seat carries. A node budget seats
+//! `instrument`, because the determinism law (CLAUDE.md rule 4) is what makes
+//! that anchor reproducible; a `movetime` budget seats `play`, because
+//! instrument mode refuses a wall-clock budget by name (docs/decisions.md
+//! D-22). A seat that accepted either mode would let a config silently measure
+//! the other engine.
 //!
 //! # Why the pair order is recovered by replay
 //!
@@ -21,6 +25,7 @@ use std::time::Instant;
 
 use pistol_core::{Coord, GameState, Player, Turn};
 
+use crate::budget::PistolBudget;
 use crate::client::{EngineClient, EngineFailure, EngineReply, LineProcess};
 use crate::deadline;
 
@@ -34,15 +39,12 @@ const ERROR_PREFIX: &str = "error";
 const BESTMOVE_PREFIX: &str = "bestmove ";
 /// The marker that distinguishes the closing report from a per-depth one.
 const TOTALS_MARKER: &str = " totals ";
-/// The only mode an anchor may seat.
-const REQUIRED_MODE: &str = "instrument";
-
 /// One configured pistol seat.
 pub struct PistolClient {
     label: String,
     command: Vec<String>,
     cwd: std::path::PathBuf,
-    nodes: u64,
+    budget: PistolBudget,
     timeout_seconds: f64,
     out_dir: std::path::PathBuf,
     prefix: String,
@@ -58,7 +60,7 @@ impl PistolClient {
         label: String,
         command: Vec<String>,
         cwd: &str,
-        nodes: u64,
+        budget: PistolBudget,
         timeout_seconds: f64,
         out_dir: &Path,
         prefix: &str,
@@ -67,7 +69,7 @@ impl PistolClient {
             label,
             command,
             cwd: Path::new(cwd).to_path_buf(),
-            nodes,
+            budget,
             timeout_seconds,
             out_dir: out_dir.to_path_buf(),
             prefix: prefix.to_string(),
@@ -94,8 +96,10 @@ impl PistolClient {
         let process = self.process.as_mut().expect("spawned");
         let deadline = deadline(self.timeout_seconds);
         process.send("pistol")?;
+        let required_mode = self.budget.required_mode();
+        let required_budget = self.budget.required_budget_word();
         let mut saw_mode = false;
-        let mut saw_nodes_budget = false;
+        let mut saw_budget = false;
         loop {
             let line = process.read_line(deadline)?;
             if line == HANDSHAKE_OK {
@@ -108,27 +112,32 @@ impl PistolClient {
             }
             if let Some(rest) = line.strip_prefix(ID_PREFIX) {
                 if let Some(mode) = rest.strip_prefix("mode ") {
-                    if mode != REQUIRED_MODE {
+                    if mode != required_mode {
                         return Err(EngineFailure::Protocol {
                             why: format!(
-                                "engine mode is {mode}, not {REQUIRED_MODE}: an anchor seats \
-                                 instrument mode"
+                                "engine mode is {mode}, not {required_mode}: this seat's \
+                                 budget seats {required_mode} mode"
                             ),
                         });
                     }
                     saw_mode = true;
                 }
                 if let Some(budgets) = rest.strip_prefix("budgets ") {
-                    if !budgets.split_whitespace().any(|word| word == "nodes") {
+                    if !budgets
+                        .split_whitespace()
+                        .any(|word| word == required_budget)
+                    {
                         return Err(EngineFailure::Protocol {
-                            why: format!("engine budgets do not include nodes: {budgets}"),
+                            why: format!(
+                                "engine budgets do not include {required_budget}: {budgets}"
+                            ),
                         });
                     }
-                    saw_nodes_budget = true;
+                    saw_budget = true;
                 }
             }
         }
-        if !saw_mode || !saw_nodes_budget {
+        if !saw_mode || !saw_budget {
             return Err(EngineFailure::Protocol {
                 why: "handshake lacked the mode or budgets identity line".to_string(),
             });
@@ -220,7 +229,7 @@ impl EngineClient for PistolClient {
             why: format!("building the position line: {why}"),
         })?;
         process.send(&position)?;
-        process.send(&format!("go nodes {}", self.nodes))?;
+        process.send(&self.budget.go_line())?;
         let mut nodes = None;
         let mut engine_time_ms = None;
         let token = loop {

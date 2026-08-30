@@ -8,6 +8,7 @@
 //! Usage: `pistol-matchserver <config.toml>`
 //! Exit: 0 the match ran and was written; 2 anything was refused.
 
+mod budget;
 mod client;
 mod config;
 mod pistol_client;
@@ -19,6 +20,7 @@ mod transcript;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
+use budget::PistolBudget;
 use client::EngineClient;
 use config::{EngineKind, EngineSpec};
 use pistol_client::PistolClient;
@@ -118,6 +120,20 @@ fn run(config_path: &str) -> Result<(), String> {
 fn label_of(engine: &EngineSpec) -> String {
     engine.label.clone()
 }
+/// The budget a validated pistol seat carries.
+///
+/// `config::load` has already refused a seat that names neither budget or
+/// both, so the arms below are the two documents that get this far; the last
+/// one is not a fallback but the impossible case said out loud (CLAUDE.md
+/// rule 3).
+fn pistol_budget(engine: &EngineSpec) -> Result<PistolBudget, String> {
+    match (engine.nodes, engine.movetime_ms) {
+        (Some(nodes), None) => Ok(PistolBudget::Nodes(nodes)),
+        (None, Some(ms)) => Ok(PistolBudget::MovetimeMs(ms)),
+        _ => Err("pistol seat reached the client with no single budget".to_string()),
+    }
+}
+
 /// Build the client a config's kind names. The extension seam: a new engine
 /// is a new arm here and a new module, nothing else moves.
 fn build_client(
@@ -130,7 +146,7 @@ fn build_client(
             engine.label.clone(),
             engine.command.clone(),
             &engine.cwd,
-            engine.nodes.ok_or("pistol seat without nodes")?,
+            pistol_budget(engine)?,
             engine.turn_timeout_seconds,
             out_dir,
             prefix,
