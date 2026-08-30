@@ -22,6 +22,7 @@
 //! reported depth, the mate distance, and the principal variation.
 
 pub mod candidates;
+pub mod census;
 pub mod error;
 pub mod fallback;
 pub mod info;
@@ -48,12 +49,10 @@ pub(crate) mod pvs;
 pub(crate) mod quiescence;
 
 pub use candidates::candidate_cells;
+pub use census::{TriggerAnswer, TriggerObservation};
 pub use error::SearchError;
 pub use fallback::{FallbackAnswer, fallback_turn};
-pub use info::{
-    Provenance, SearchInfo, SearchOutcome, SolverCallCounters, StageCounters, TriggerAnswer,
-    TriggerObservation,
-};
+pub use info::{Provenance, SearchInfo, SearchOutcome, SolverCallCounters, StageCounters};
 pub use params::{
     CandidatePolicy, OrderingHeuristics, QTriggers, SearchParams, SolverTrigger, SolverWiring,
     StagedParams,

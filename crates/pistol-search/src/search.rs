@@ -77,7 +77,7 @@ pub struct Searcher {
     /// firing happens before a run exists, and a census missing the one firing
     /// that can cost two whole caps would rank an option field on the wrong
     /// rows (docs/decisions.md D-516).
-    census: Option<Vec<crate::info::TriggerObservation>>,
+    census: Option<Vec<crate::census::TriggerObservation>>,
 }
 
 impl Searcher {
@@ -213,7 +213,7 @@ impl Searcher {
     /// If no census was asked for. A caller that reads a census it never
     /// started has a bug in ITS ordering, and an empty vector would be that
     /// bug wearing a plausible answer (CLAUDE.md rule 3).
-    pub fn take_trigger_census(&mut self) -> Vec<crate::info::TriggerObservation> {
+    pub fn take_trigger_census(&mut self) -> Vec<crate::census::TriggerObservation> {
         let rows = self
             .census
             .as_mut()
@@ -308,7 +308,7 @@ impl Searcher {
             let attacker = solver.solve(state, cap);
             root_solver_nodes += attacker.nodes;
             root_calls.invocations += 1;
-            let attacker_answer = crate::info::TriggerAnswer {
+            let attacker_answer = crate::census::TriggerAnswer {
                 visits: attacker.nodes,
                 proved: matches!(attacker.outcome, pistol_solver::SolveOutcome::Win(_)),
             };
@@ -338,7 +338,7 @@ impl Searcher {
                 &mut self.census,
                 root_columns,
                 attacker_answer,
-                Some(crate::info::TriggerAnswer {
+                Some(crate::census::TriggerAnswer {
                     visits: defender.nodes,
                     proved: matches!(defender.outcome, pistol_solver::SolveOutcome::Win(_)),
                 }),
@@ -744,15 +744,15 @@ fn root_census_columns(position: &mut Position) -> (u32, u32, u32, u32, u32, u32
 
 /// Push the ROOT's census row, if a census was asked for.
 fn push_root_census(
-    census: &mut Option<Vec<crate::info::TriggerObservation>>,
+    census: &mut Option<Vec<crate::census::TriggerObservation>>,
     columns: Option<(u32, u32, u32, u32, u32, u32, u32)>,
-    attacker: crate::info::TriggerAnswer,
-    defender: Option<crate::info::TriggerAnswer>,
+    attacker: crate::census::TriggerAnswer,
+    defender: Option<crate::census::TriggerAnswer>,
 ) {
     let (Some(columns), Some(rows)) = (columns, census.as_mut()) else {
         return;
     };
-    rows.push(crate::info::TriggerObservation {
+    rows.push(crate::census::TriggerObservation {
         turns_from_root: columns.0,
         mover_hot: columns.1,
         opponent_hot: columns.2,

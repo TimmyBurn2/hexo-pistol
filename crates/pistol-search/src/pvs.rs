@@ -73,7 +73,7 @@ pub struct Run<'a> {
     /// The trigger census, when one was asked for. `None` in every shipped
     /// path, and nothing ever reads a row back, so a search that collects them
     /// takes the same moves as one that does not (CLAUDE.md rule 4).
-    pub census: Option<Vec<crate::info::TriggerObservation>>,
+    pub census: Option<Vec<crate::census::TriggerObservation>>,
     /// The solver on the search path and its wiring (design wp18b §2),
     /// bundled so the OFF gate is ONE `None` — no solver, no wiring, no
     /// dead values. Borrowed from the [`crate::search::Searcher`].
@@ -656,7 +656,7 @@ impl<'a> Run<'a> {
             let result = solver.solve(&state_view, cap);
             self.solver_nodes = self.solver_nodes.saturating_add(result.nodes);
             self.solver_calls.invocations += 1;
-            attacker = crate::info::TriggerAnswer {
+            attacker = crate::census::TriggerAnswer {
                 visits: result.nodes,
                 proved: matches!(result.outcome, pistol_solver::SolveOutcome::Win(_)),
             };
@@ -687,7 +687,7 @@ impl<'a> Run<'a> {
             let result = solver.solve_defender(&state_view, cap);
             self.solver_nodes = self.solver_nodes.saturating_add(result.nodes);
             self.solver_calls.invocations += 1;
-            defender = Some(crate::info::TriggerAnswer {
+            defender = Some(crate::census::TriggerAnswer {
                 visits: result.nodes,
                 proved: matches!(result.outcome, pistol_solver::SolveOutcome::Win(_)),
             });
@@ -719,8 +719,8 @@ impl<'a> Run<'a> {
     fn observe(
         &mut self,
         observed: Option<(u32, u32, u32, u32, u32, u32, u32)>,
-        attacker: crate::info::TriggerAnswer,
-        defender: Option<crate::info::TriggerAnswer>,
+        attacker: crate::census::TriggerAnswer,
+        defender: Option<crate::census::TriggerAnswer>,
     ) {
         let (Some(columns), Some(census)) = (observed, self.census.as_mut()) else {
             return;
@@ -734,7 +734,7 @@ impl<'a> Run<'a> {
             mover_live_three,
             opponent_live_three,
         ) = columns;
-        census.push(crate::info::TriggerObservation {
+        census.push(crate::census::TriggerObservation {
             turns_from_root,
             mover_hot,
             opponent_hot,
