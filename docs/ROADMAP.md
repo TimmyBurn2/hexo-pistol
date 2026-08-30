@@ -159,17 +159,42 @@ than 500 paired openings resolve at `elo1 = 15.0`, not that nothing happened.
 regenerated or extended book and its own pre-registration. The D-95 root-turn
 package stays LICENSED, NOT SCHEDULED.
 
+**`book_v2` is scheduled into the Stage-3 detector's §0 (D-505):** seeded and
+re-executable with the command and seed committed, fresh ranges by construction,
+and a size registered with grounds covering the SPRT's worst-case n. The
+2000-opening `random_openings_v1.txt` is **RETIRED FOR GOVERNED USE** — still
+readable as the artifact that governed the closed runs, but no new
+pre-registration may draw a slice from it. **The ±21.5 resolution run stays
+licensed-not-scheduled** and, when it runs, runs on `book_v2` under a new
+pre-registration, never a re-read.
+
 **STAGE 1 IS CLOSED WITH NAMED RESIDUE (D-503)** — a closure, never a
 completeness claim. Carried open and licensed, by name: **WP-1.4** (D-95, the
 HeXO forfeit risk), **WP-1.10** (`tools/` gate hardening, whose WP-1.9
 precedence D-496 displaced by name), **O-3** (WP-1.9's registered flip trigger)
-and **the module-split cost** D-502 measured.
+and **the module-split cost** D-502 measured, which D-504 names **WP-1.9b** —
+inlining the storage back into `handcrafted.rs` for a measured 1.18x-1.21x, at
+the price of ~15 lines over rule 9's soft cap and one justification entry, with
+its own REVIEW-impl and its own bench.
 
 **NEXT SCHEDULED STEP: the Stage-3 scoped detector** (D-471 as amended by
 D-494): cheap VCDT/TSS detection gating solver calls, targeting the measured ~6x
 call-count cut the WP-1.8c bracket demands, with DBS decomposition only after
 the detector earns its own SPRT. The `WP-1.9` designation collision D-493 flagged
 is spent: D-473 settled the names and D-494 settled the order.
+
+**Its §0 carries two obligations already scheduled into it, and they are listed
+here so the package does not re-derive them:**
+
+1. **`book_v2`** (D-505) — seeded and re-executable with the command and seed
+   committed, fresh ranges by construction, size registered with grounds covering
+   the SPRT's worst-case n. `random_openings_v1.txt` is spent and retired for
+   governed use, so the detector's own SPRT cannot draw from it.
+2. **The WP-1.8 nps re-test, discharged into this package** (D-504) — the
+   detector's registered bench re-measures the SOLVER SEAT under post-WP-1.9
+   (and post-WP-1.9b, if that lands first) nps as part of its own bracket. **The
+   prereg must state which limb of the WP-1.8 clause it answers** — the nps-jump
+   limb is discharged here, the Stage-2-exit limb is not.
 
 **WP-1.6 — threat-only zone-bounded quiescence**, under D-111's invariant: the
 static eval answers at turn boundaries only, so quiescence stands pat and
@@ -290,6 +315,14 @@ solver stays implemented, oracle-gated and determinism-seated. **RE-TEST
 SCHEDULED** alongside WP-1.6's quiescence re-test at the Stage-2 exit, and
 whenever a measured nps jump lands — the bench re-runs first, new
 pre-registration, fresh slice, never a re-read.
+
+**The nps-jump limb of that clause is DISCHARGED into the Stage-3 detector
+(D-504).** WP-1.9 landed the jump (1.508 / 1.579, D-502), and the detector's own
+registered bench re-measures the solver seat under post-WP-1.9 nps as part of its
+bracket — honoured by measurement inside the detector, not skipped, because the
+measured path to the 1.8c bracket is call-count reduction, the cap knob is
+measured dead, and per-visit cost already took its 30x (D-461). **The Stage-2-exit
+limb is untouched**, and so is WP-1.6's own quiescence re-test.
 
 **WP-1.9 — eval window-map storage** (docs/decisions.md D-225, renumbered by
 D-249). Replace `pistol-eval`'s `BTreeMap<Window, Counts>` with a selected
