@@ -1,6 +1,7 @@
 mod common;
 
 use common::repo;
+use pistol_cli::random_openings::BookVersion;
 use pistol_cli::random_openings::config::{
     GenerateSection, MAX_RADIUS_CEILING, N_OPENINGS_CEILING, RANDOM_OPENINGS_SCHEMA_VERSION,
     RandomOpeningsConfig,
@@ -12,6 +13,7 @@ fn document(k_stones: usize, n_openings: usize, max_radius: u32, seed: u64) -> S
     format!(
         "schema_version = {RANDOM_OPENINGS_SCHEMA_VERSION}\n\
          [generate]\n\
+         book = \"v1\"\n\
          k_stones = {k_stones}\n\
          n_openings = {n_openings}\n\
          max_radius = {max_radius}\n\
@@ -192,6 +194,7 @@ fn generate_revalidates_a_config_it_was_handed() {
     let unvalidated = RandomOpeningsConfig {
         schema_version: 999,
         generate: GenerateSection {
+            book: BookVersion::V1,
             k_stones: 7,
             n_openings: 3,
             max_radius: 5,
@@ -208,6 +211,7 @@ fn generate_revalidates_a_config_it_was_handed() {
     let bad_k = RandomOpeningsConfig {
         schema_version: RANDOM_OPENINGS_SCHEMA_VERSION,
         generate: GenerateSection {
+            book: BookVersion::V1,
             k_stones: 7,
             ..unvalidated.generate
         },

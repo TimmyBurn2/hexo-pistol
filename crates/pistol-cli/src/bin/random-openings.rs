@@ -4,7 +4,7 @@ use std::process::ExitCode;
 use pistol_cli::flags;
 use pistol_cli::random_openings::config::RandomOpeningsConfig;
 use pistol_cli::random_openings::error::RandomOpeningsError;
-use pistol_cli::random_openings::{FILE_NAME, document, generate};
+use pistol_cli::random_openings::{document, generate};
 
 /// What this program does, and what it refuses to guess.
 const USAGE: &str = "\
@@ -17,8 +17,11 @@ usage:
               book is in it; there is no flag that overrides one, because a
               fixture whose shape depended on an operator's typing would not be
               reproducible from its own header.
-  --out-dir   where random_openings_v1.txt is written. The name is this tool's,
-              not the operator's. An existing file is overwritten.
+  --out-dir   where the book named by the document's `[generate] book` key is
+              written. The NAME is this tool's and not the operator's; which of
+              the tool's names is used is the document's. An existing file of
+              that name is overwritten — so a v2 document never touches v1's
+              bytes, and a v1 document never touches v2's.
 
 exit: 0 written, 2 a document or a run this build refuses.
 ";
@@ -58,8 +61,9 @@ fn run(words: &[&str]) -> Result<ExitCode, String> {
     // rename and not the pre-flight its two-file sibling needs.
     std::fs::create_dir_all(&out_dir)
         .map_err(|error| format!("cannot create {}: {error}", out_dir.display()))?;
-    let staged = out_dir.join(format!("{FILE_NAME}.staged"));
-    let final_path = out_dir.join(FILE_NAME);
+    let file_name = config.generate.book.file_name();
+    let staged = out_dir.join(format!("{file_name}.staged"));
+    let final_path = out_dir.join(file_name);
     write(&staged, &rendered).map_err(|error| error.to_string())?;
     if let Err(error) = std::fs::rename(&staged, &final_path) {
         let _ = std::fs::remove_file(&staged);
@@ -69,6 +73,7 @@ fn run(words: &[&str]) -> Result<ExitCode, String> {
         ));
     }
 
+    println!("book                     {}", config.generate.book.label());
     println!("openings                 {}", book.openings.len());
     println!("k_stones                 {}", config.generate.k_stones);
     println!(

@@ -1,0 +1,63 @@
+# pistol — the parameters `random_openings_v2.txt` was generated with.
+#
+# This is the ONLY home of those five values. The book they produced is a
+# committed fixture, and a test regenerates it from this document and compares
+# the bytes, so editing anything here without regenerating the book is a red
+# test (docs/decisions.md D-177, D-513).
+#
+# Regenerate with:
+#   cargo run -p pistol-cli --bin random-openings -- \
+#     --config configs/random_openings_v2.toml \
+#     --out-dir crates/pistol-cli/tests/fixtures
+#
+# THIS DOCUMENT CANNOT TOUCH v1'S BYTES. The generator's output name is a closed
+# set keyed by `[generate] book` below, so a v2 document writes v2's file and no
+# other. That is the repair for the hazard the Stage-3 premise closure recorded:
+# before it, the name was a compile-time constant and this command would have
+# OVERWRITTEN `random_openings_v1.txt`, the artifact every closed SPRT verdict
+# was taken over.
+#
+# Validate this file with tools/config_check.sh.
+
+# Schema version this document is written against. This is the RANDOM-OPENINGS
+# schema and is unrelated to the engine's, the eval weights' and the arena's:
+# they version different documents that change for different reasons.
+schema_version = 2
+
+[generate]
+# WHICH BOOK. v2 is the successor to the spent v1 book: every slice of
+# `random_openings_v1.txt` is consumed (docs/decisions.md D-491, D-492), so v1
+# is RETIRED FOR GOVERNED USE and no new pre-registration may draw from it.
+book = "v2"
+
+# Stones per opening. A TURN-BOUNDARY count: five is the position after turn 3
+# — P1's opening stone, P2's two, P1's two. UNCHANGED FROM v1, deliberately:
+# the two books must be drawn from the same population or a slice of one is not
+# comparable with a slice of the other, and D-175's no-balance-filter argument
+# is arithmetic about `k <= 5` that holds only at this value.
+k_stones = 5
+
+# How many openings the book holds. MEASURED, not chosen: the rule was
+# registered before the measurement in docs/experiments/book_v2_registration.md
+# §4, and it is `ceil_to_500(P + 500)` where P is the smallest pair cap in the
+# registered grid at which the WP-1.5d configuration reaches power >= 0.90.
+#
+# The sweep answered P = 4000 (power 0.9222; 3000 gives 0.8731, below the
+# threshold), so this is ceil_to_500(4500) = 4500. The `+ 500` is the Stage-3
+# detector's own standing slice, which must not compete with the resolution run
+# for the same openings; the rounding is because every slice this project has
+# drawn is a multiple of 500 and a tail nobody can use is not size.
+n_openings = 4500
+
+# How far from the ORIGIN a sampled stone may land, in hex distance. A
+# GENERATION knob and NOT game rule 5's LEGAL_RADIUS, which is a pinned constant
+# in pistol-core. UNCHANGED FROM v1 for the same reason `k_stones` is.
+max_radius = 5
+
+# The PRNG seed, and its only job is to be DIFFERENT from v1's 20260818: a
+# different stream draws different openings, which is what makes v2's ranges
+# fresh by construction and unable to collide with a slice v1 already spent.
+# The value is the date this package was authored, by the convention v1 used,
+# and is recorded rather than chosen for any property of the book it makes.
+# `the_two_books_share_no_opening` checks the freshness rather than asserting it.
+seed = 20260830

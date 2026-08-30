@@ -3,13 +3,19 @@ mod common;
 use common::repo;
 use pistol_cli::corpus::emit::{BODY_DIGEST, body_of, claimed_body_digest};
 use pistol_cli::random_openings::config::RandomOpeningsConfig;
-use pistol_cli::random_openings::{self, FILE_NAME, document};
+use pistol_cli::random_openings::{self, BookVersion, FILE_NAME, document};
 use pistol_cli::sha256::sha256_hex;
+use pistol_core::{Coord, Player, canonical_form};
+use pistol_engine::PositionSpec;
 use std::path::PathBuf;
 
 /// The SHA-256 of the committed `fixtures/random_openings_v1.txt`.
 const RANDOM_OPENINGS_V1_SHA256: &str =
     "895a05edb53a0a8d89c262bb058e3bc3dd24d446405d375458aaf067e2f076e7";
+
+/// The SHA-256 of the committed `fixtures/random_openings_v2.txt`.
+const RANDOM_OPENINGS_V2_SHA256: &str =
+    "829361a9ae61d0d4369b5291bfc893133fa8160867f11cc638b11f432b6cc29a";
 
 fn book_path() -> PathBuf {
     repo("crates/pistol-cli/tests/fixtures").join(FILE_NAME)
@@ -21,10 +27,21 @@ fn committed_text() -> String {
 
 /// The book this build produces from the committed config.
 fn produced() -> String {
-    let config = RandomOpeningsConfig::load(&repo("configs/random_openings_v1.toml"))
-        .expect("the committed config loads");
-    let book = random_openings::generate(&config).expect("the committed config generates");
+    produced_from("configs/random_openings_v1.toml")
+}
+
+fn produced_from(config_path: &str) -> String {
+    let config = RandomOpeningsConfig::load(&repo(config_path)).expect("the config loads");
+    let book = random_openings::generate(&config).expect("the config generates");
     document::render(&config, &book)
+}
+
+fn v2_path() -> PathBuf {
+    repo("crates/pistol-cli/tests/fixtures").join(BookVersion::V2.file_name())
+}
+
+fn v2_committed_text() -> String {
+    std::fs::read_to_string(v2_path()).expect("the v2 book is committed")
 }
 
 #[test]
@@ -122,4 +139,125 @@ fn random_openings_v1_ends_with_exactly_one_newline() {
     let text = committed_text();
     assert!(text.ends_with('\n'), "the file ends with a newline");
     assert!(!text.ends_with("\n\n"), "and with only one");
+}
+
+// --- v2, the successor book -------------------------------------------------
+//
+// The v1 tests above go on reading `FILE_NAME` and go on pinning v1: that book
+// is retired for governed use but is the artifact every closed SPRT verdict was
+// taken over, and a test that stopped watching it would be the first step to
+// losing it (docs/decisions.md D-505).
+
+#[test]
+fn random_openings_v2_is_what_this_build_produces() {
+    assert_eq!(
+        produced_from("configs/random_openings_v2.toml"),
+        v2_committed_text(),
+        "regenerate with `cargo run -p pistol-cli --bin random-openings -- \
+         --config configs/random_openings_v2.toml \
+         --out-dir crates/pistol-cli/tests/fixtures`"
+    );
+}
+
+#[test]
+fn random_openings_v2_matches_its_pinned_digest() {
+    assert_eq!(
+        sha256_hex(v2_committed_text().as_bytes()),
+        RANDOM_OPENINGS_V2_SHA256,
+        "the book's bytes are pinned in this file (RANDOM_OPENINGS_V2_SHA256)"
+    );
+}
+
+#[test]
+fn random_openings_v2_body_digest_describes_its_own_body() {
+    let text = v2_committed_text();
+    let body = body_of(&text).expect("a rendered fixture has a body");
+    assert_eq!(
+        claimed_body_digest(&text).expect("the header claims a body digest"),
+        sha256_hex(body.as_bytes()),
+        "the header's body digest is the digest of the body under it"
+    );
+}
+
+#[test]
+fn random_openings_v2_holds_the_number_of_openings_it_was_asked_for() {
+    let config = RandomOpeningsConfig::load(&repo("configs/random_openings_v2.toml"))
+        .expect("the committed config loads");
+    let lines = body_of(&v2_committed_text())
+        .expect("a body")
+        .lines()
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .count();
+    assert_eq!(
+        lines, config.generate.n_openings,
+        "one payload line per opening, and no cap"
+    );
+}
+
+#[test]
+fn the_two_books_overlap_only_as_far_as_independent_drawing_makes_them() {
+    // FRESHNESS IS ABOUT SLICES, AND AT THAT LEVEL IT IS ABSOLUTE (D-505): the
+    // two books are different files drawn from different seeds, so no range of
+    // v2 is a range of v1 and no governed run can re-read a consumed sample.
+    //
+    // At the level of an individual POSITION it is not absolute and cannot be,
+    // because both books draw independently from one finite pool. The pool is
+    // countable: the origin is fixed, P2 takes an unordered pair of the
+    // remaining ninety cells and P1 an unordered pair of the eighty-eight left,
+    // so there are C(90,2) x C(88,2) = 15,331,140 distinct assignments — about
+    // 1.28 million once the twelve lattice symmetries are folded, which is what
+    // each book dedupes by. Drawing 2000 and 4500 from those gives an EXPECTED
+    // overlap near 0.6 exact lines and near 7 canonical forms.
+    //
+    // Both counts are pinned exactly rather than bounded, because a pin fails on
+    // any change and a bound quietly absorbs one. If either moves, a seed or a
+    // size moved with it and this test is the place that says so.
+    let v1_text = committed_text();
+    let v2_text = v2_committed_text();
+    assert_eq!(
+        body_of_lines(&v1_text)
+            .intersection(&body_of_lines(&v2_text))
+            .count(),
+        1,
+        "exact shared lines"
+    );
+    assert_eq!(
+        canonical_forms(&v1_text)
+            .intersection(&canonical_forms(&v2_text))
+            .count(),
+        10,
+        "shared positions up to the twelve lattice symmetries"
+    );
+}
+
+/// The payload lines of a rendered fixture, as a set.
+fn body_of_lines(text: &str) -> std::collections::BTreeSet<&str> {
+    body_of(text)
+        .expect("a body")
+        .lines()
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .collect()
+}
+
+/// The same lines as POSITIONS, folded by the lattice symmetries the books
+/// dedupe by — which is the set a "has this been played before" question is
+/// really asked over.
+fn canonical_forms(text: &str) -> std::collections::BTreeSet<Vec<(Coord, Player)>> {
+    body_of_lines(text)
+        .into_iter()
+        .map(|line| {
+            let spec: PositionSpec = line.parse().expect("a payload line is a position");
+            let state = spec.replay().expect("and it replays");
+            canonical_form(&state.played().collect::<Vec<_>>())
+        })
+        .collect()
+}
+
+#[test]
+fn the_two_books_are_written_to_different_files() {
+    // The compile-time constant that made a naive regeneration overwrite v1
+    // (the hazard the Stage-3 premise closure recorded) is now a closed set,
+    // and this is the test that says the set has two distinct members.
+    assert_ne!(BookVersion::V1.file_name(), BookVersion::V2.file_name());
+    assert_eq!(BookVersion::V1.file_name(), FILE_NAME);
 }

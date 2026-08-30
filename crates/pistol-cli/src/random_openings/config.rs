@@ -5,7 +5,12 @@ use serde::Deserialize;
 use super::error::RandomOpeningsError;
 
 /// The schema version this build understands.
-pub const RANDOM_OPENINGS_SCHEMA_VERSION: u32 = 1;
+///
+/// 2 since `[generate] book`. The key is required and there is no code-side
+/// default for it (CLAUDE.md rule 1), so a version-1 document cannot be read
+/// by this build — which is the loud refusal the bump exists to give, rather
+/// than a silent guess that it meant v1.
+pub const RANDOM_OPENINGS_SCHEMA_VERSION: u32 = 2;
 
 /// The stone counts this generator is specified at.
 ///
@@ -49,6 +54,9 @@ pub struct RandomOpeningsConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GenerateSection {
+    /// Which book this document generates, and so which file name and which
+    /// header the run writes.
+    pub book: super::BookVersion,
     /// Stones in each opening. A TURN-BOUNDARY count; see
     /// [`SUPPORTED_STONE_COUNTS`].
     pub k_stones: usize,
@@ -113,6 +121,7 @@ impl RandomOpeningsConfig {
             });
         }
         let GenerateSection {
+            book: _,
             k_stones,
             n_openings,
             max_radius,

@@ -15,7 +15,8 @@ fn committed_config() -> RandomOpeningsConfig {
 /// A document with the committed shape and these three fields changed.
 fn config(k_stones: usize, n_openings: usize, max_radius: u32, seed: u64) -> RandomOpeningsConfig {
     RandomOpeningsConfig::parse(&format!(
-        "schema_version = 1\n[generate]\nk_stones = {k_stones}\nn_openings = {n_openings}\n\
+        "schema_version = 2\n[generate]\nbook = \"v1\"\nk_stones = {k_stones}\n\
+         n_openings = {n_openings}\n\
          max_radius = {max_radius}\nseed = {seed}\n"
     ))
     .expect("a well-formed document")

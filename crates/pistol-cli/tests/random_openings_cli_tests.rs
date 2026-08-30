@@ -38,12 +38,16 @@ fn code(output: &Output) -> i32 {
 }
 
 /// A config document with one field changed from the committed one.
+///
+/// `book` is v1's throughout, so the file these cases write is the one
+/// `FILE_NAME` names and the assertions below can go on reading it. What they
+/// are about is the binary's REFUSALS, not which of the two books it writes.
 fn config_with(name: &str, k_stones: usize, n_openings: usize, max_radius: u32) -> PathBuf {
     let path = scratch(name).join("random_openings_v1.toml");
     std::fs::write(
         &path,
         format!(
-            "schema_version = 1\n[generate]\nk_stones = {k_stones}\n\
+            "schema_version = 2\n[generate]\nbook = \"v1\"\nk_stones = {k_stones}\n\
              n_openings = {n_openings}\nmax_radius = {max_radius}\nseed = 7\n"
         ),
     )

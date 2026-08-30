@@ -7,11 +7,15 @@ use pistol_cli::random_openings::{self, FILE_NAME};
 use pistol_core::{Coord, GameState, Player, canonical_form};
 use pistol_engine::PositionSpec;
 
-/// A document with the committed shape and these three fields changed.
+/// A document with the committed shape and these four fields changed.
+///
+/// `book` is v1's throughout: these cases are about the GENERATOR, and every
+/// one of them builds a book in a scratch tree rather than at a fixture path,
+/// so which name the document would write under is not what they vary.
 fn config(k_stones: usize, n_openings: usize, max_radius: u32, seed: u64) -> RandomOpeningsConfig {
     RandomOpeningsConfig::parse(&format!(
-        "schema_version = 1\n[generate]\nk_stones = {k_stones}\nn_openings = {n_openings}\n\
-         max_radius = {max_radius}\nseed = {seed}\n"
+        "schema_version = 2\n[generate]\nbook = \"v1\"\nk_stones = {k_stones}\n\
+         n_openings = {n_openings}\nmax_radius = {max_radius}\nseed = {seed}\n"
     ))
     .expect("a well-formed document")
 }
