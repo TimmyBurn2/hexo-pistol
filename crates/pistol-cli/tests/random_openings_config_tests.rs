@@ -84,9 +84,13 @@ fn random_openings_refuse_a_document_with_an_unknown_key() {
 
 #[test]
 fn random_openings_refuse_a_document_missing_a_key() {
-    // Complete, or refused. There is no code-side default for any of the four
-    // (CLAUDE.md rule 1): the one place a value lives is the document.
-    for missing in ["k_stones", "n_openings", "max_radius", "seed"] {
+    // Complete, or refused. There is no code-side default for any of the five
+    // (CLAUDE.md rule 1): the one place a value lives is the document. `book`
+    // is in this list and not merely in the struct, because a `serde(default)`
+    // on it would compile, would pick a book, and would be exactly the
+    // code-side default rule 1 forbids — on the one key that decides which
+    // file a run writes.
+    for missing in ["book", "k_stones", "n_openings", "max_radius", "seed"] {
         let text: String = document(5, 10, 5, 1)
             .lines()
             .filter(|line| !line.starts_with(missing))

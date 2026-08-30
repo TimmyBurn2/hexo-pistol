@@ -1,7 +1,7 @@
 mod common;
 
 use common::{repo, scratch};
-use pistol_cli::random_openings::FILE_NAME;
+use pistol_cli::random_openings::{BookVersion, FILE_NAME};
 use pistol_cli::sha256::sha256_hex;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
@@ -240,5 +240,61 @@ fn a_failed_rename_removes_the_file_it_staged() {
     assert!(
         !staged.exists(),
         "the staged file outlived the run that could not put it in place"
+    );
+}
+
+/// The committed v2 document.
+fn committed_v2_config() -> PathBuf {
+    repo("configs/random_openings_v2.toml")
+}
+
+#[test]
+fn a_v2_document_writes_v2_and_leaves_v1_alone() {
+    // THE HAZARD, PINNED AT THE PLACE IT LIVED. Before the output name became a
+    // closed set keyed by the document's own `[generate] book`, this exact
+    // command with a `_v2` config OVERWROTE `random_openings_v1.txt` — the
+    // artifact every closed SPRT verdict was taken over
+    // (docs/experiments/stage3_detector_CLOSURE.md §5, docs/decisions.md D-513).
+    //
+    // Nothing else in the suite runs the BINARY with a v2 document, so nothing
+    // else fails when `bin/random-openings.rs` goes back to writing `FILE_NAME`
+    // unconditionally. This does: reverting that line makes both assertions
+    // below fail, the second of them by writing v1's name.
+    let out = scratch("cli-v2-writes-v2");
+    let output = generate_into(&committed_v2_config(), &out);
+    assert_eq!(code(&output), 0, "the committed v2 document generates");
+    assert!(
+        out.join(BookVersion::V2.file_name()).exists(),
+        "a v2 document writes v2's name"
+    );
+    assert!(
+        !out.join(FILE_NAME).exists(),
+        "and writes NOTHING under v1's name — the whole reason the name is the \
+         document's and not the tool's"
+    );
+    assert_eq!(
+        std::fs::read_dir(&out)
+            .expect("the directory exists")
+            .count(),
+        1,
+        "one book, and no `.staged` left behind"
+    );
+}
+
+#[test]
+fn a_v2_run_reproduces_the_committed_v2_book_byte_for_byte() {
+    // The regeneration instruction in `configs/random_openings_v2.toml` and in
+    // the book's own header, executed. Its sibling for v1 is
+    // `random_openings_binary_writes_the_committed_book_byte_for_byte`.
+    let out = scratch("cli-v2-regenerate");
+    assert_eq!(code(&generate_into(&committed_v2_config(), &out)), 0);
+    let written = std::fs::read(out.join(BookVersion::V2.file_name())).expect("the run wrote it");
+    let committed =
+        std::fs::read(repo("crates/pistol-cli/tests/fixtures").join(BookVersion::V2.file_name()))
+            .expect("the v2 book is committed");
+    assert_eq!(
+        sha256_hex(&written),
+        sha256_hex(&committed),
+        "the committed v2 bytes are the bytes this build writes"
     );
 }
