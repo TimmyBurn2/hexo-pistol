@@ -1,9 +1,26 @@
 # WP-2.0-S — DESIGN: the record schema, and what a label MEANS
 
-**REVISION 5**, under **D-548**'s grant, after revision 4 (`4a12b46`) took a
-scoped re-review and returned **FAIL** — 0 BLOCKING, 5 MAJOR, 12 MINOR
-(`docs/experiments/wp20s_design_REVIEW_rev4.md`). **The BLOCKING is closed and
-stayed closed**; the round failed on its own change table.
+**REVISION 6**, and it is the LAST round D-548's grant allows this document —
+a fifth failure returns the package to the architect. After revision 5
+(`ea01fea`) took a scoped re-review and returned **FAIL** — 0 BLOCKING, 2 MAJOR,
+9 MINOR (`docs/experiments/wp20s_design_REVIEW_rev5.md`), down from 5 and 12.
+
+**BOTH MAJORS WERE ONE SENTENCE EACH, AND BOTH WERE THE SAME SHAPE.** §5's header
+enumeration still said the corpus carries **three** keyed meaning params where
+four other sites said four — the first site revision 5's own finding named, left
+unchanged while its three siblings moved. And §6 still described INVARIANT 5's
+mutant as the hash-ordering one, eight hundred lines from §11 saying in terms
+that it is not. **A rule stated twice and differently, twice.**
+
+**THE GUARD TABLE FAILED IN A NEW WAY AND IS TIGHTENED AGAIN.** Revision 5's
+hunk column certified that a FINDING produced changes; it could not certify that
+**each site a row names** was one of them, which is exactly how the header
+enumeration slipped. Every row of §0.1a now quotes **the phrase that stands in
+the document**, and every phrase was confirmed by `/usr/bin/grep -c`.
+
+Revision 5 was authored after revision 4 (`4a12b46`) returned **FAIL** — 0
+BLOCKING, 5 MAJOR, 12 MINOR — whose own finding was that five of that round's
+table rows recorded work never done.
 
 **THE FINDING THAT MATTERS IS ABOUT THIS DOCUMENT'S GUARD, NOT ITS CONTENT.**
 §0.1a had the right shape — one row per finding — and **seven of its
@@ -85,42 +102,46 @@ rather than restates (D-423).
 
 **No engine diff.** Only `pistol-arena` changes, and nothing new reaches the wire.
 
-### 0.1a What REVISION 5 changed, checked against the DIFF and not against the fix list
+### 0.1a What REVISION 6 changed — each row anchored to a PHRASE, not a section
 
-**REVISION 4's TABLE HAD THE RIGHT SHAPE AND SEVEN FALSE ROWS**, and five of them
-were false the same way: they recorded remedies that **were never applied at all**
-— an edit batch aborted, and the table was written from the review's FIX list
-rather than from `git diff`. That is the instrument reporting work instead of
-checking it, which is worse than not having it: a false row in a guard table buys
-a reviewer's trust with nothing behind it.
+**REVISION 5's TABLE ADDED A HUNK COLUMN AND STILL CARRIED A FALSE ROW**, and the
+reason is worth stating because it is the instrument's own limit: a hunk column
+certifies that a FINDING produced changes somewhere, not that **each SITE the row
+names** was one of them. R-M1 named four sites; three changed; the fourth —
+§5's header enumeration, the first site the finding named — did not, and the row
+still read ✓.
 
-**SO THIS TABLE'S OWN RULE IS NOW MECHANICAL.** Every row below was checked
-against `git diff 4a12b46 -- docs/experiments/wp20s_design.md`, which carries
-**twenty-one hunks**; a row claiming a change with no hunk behind it is a defect,
-and five such rows are what failed revision 4.
+**SO THE RULE IS TIGHTER AGAIN.** Every NOW cell below quotes **the phrase that
+now stands in the document**, and every one was confirmed with
+`/usr/bin/grep -c` over the file at this revision. A row whose phrase does not
+grep is a defect, and it is checkable by a reader in one command rather than by
+trusting a tick.
 
-| finding | change | in the diff? | pinned BEFORE | pins NOW |
-|---|---|---|---|---|
-| **R-M1** | `depth_meaning` is the fourth keyed param at every site — the enumeration, the loader, the test name and the mutant | ✓ ×4 | rev 4: a header three sections said had three params and two said had four; a writer built from the enumeration emitted a corpus the loader refuses | §5's enumeration, `a_corpus_missing_one_of_its_four_meaning_params_is_refused_by_name`, and its two mutants |
-| **R-M2** | the five never-applied remedies are applied: N-m8, N-m15, N-m16, N-m17, N-m19 | ✓ ×5 | rev 4: rows asserting five changes the file did not contain | the five edits, each with a hunk |
-| **R-M3** | INVARIANT 6 names all three key-column shapes | ✓ | rev 4: an invariant that enumerated five properties and no key shape | INVARIANT 6 |
-| **R-M4** | the colour test's fixture states both its conditions | ✓ | rev 4: a test that is RED on correct code for a symmetry-related pair | §11's new fixture-condition paragraph |
-| **R-M5** | the numeral self-claim is replaced by one that is true | ✓ | — (a claim about the document, wrong in four revisions) | the narrower true claim: the level and the power are the only numbers this document FIXES |
-| **R-m1** | the duplicated `key_seq` test row is removed | ✓ | — | — |
-| **R-m2** | §5's params paragraph parses again, its three values reattached to their sentence | ✓ | — (no reading was lost, the grammar was) | — |
-| **R-m3** | the turn-boundary fact is attributed to WP-2.0-M's INVARIANT 1, not 2 | ✓ | — | WP-2.0-M's INVARIANT 1, which is the one that states it |
-| **R-m4** | §8's last two "frame"s become "band" | ✓ | — | — |
-| **R-m5** | the bias paragraph names the band's bound, not "the lower end" | ✓ | — (the number does not move) | item 4's pairing, stated once |
-| **R-m6** | §12.1 stops claiming its two-table paragraph is its "only" claim about the file | ✓ | — | — |
-| **R-m7** | §9's enumeration claim is scoped to the READ side, §5 owning the write side | ✓ | — | two enumerations, two sides |
-| **R-m8** | `key_seq`'s loader check gains a test, and both key checks gain mutants | ✓ | rev 4: a loader check with nothing behind half of it | `a_key_seq_field_that_is_not_turn_tokens_is_refused_by_name` and two mutants |
-| **R-m9** | the write-side TAB test maps to INVARIANT 7, not 6 | ✓ | — | INVARIANT 7, which is the refusal invariant |
-| **R-m10** | §2.7's two-column decision becomes INVARIANT 13 | ✓ | rev 1-4: a test mapped to an invariant that did not state its rule | INVARIANT 13 |
-| **R-m11** | folded into R-M1 — every "three unit params" site now says four | ✓ | — | — |
-| **R-m13** | the ordering mutant points at the order test, not the re-run test | ✓ | rev 2-4: a mutant whose death turned on hash-map key draws, which no text can argue | `every_capture_record_produces_one_corpus_record_in_order` |
+`git diff ea01fea -- docs/experiments/wp20s_design.md` carries **9 hunks** with
+default context and **10** with `-U0`; both figures are given because revision 5
+gave a third that matched neither.
 
-**Two hunks carry no finding and are recorded rather than hidden**: the revision
-header, and §2.4's `search_nodes` sentence, which N-m15's remedy reached.
+| finding | change | the phrase that now stands |
+|---|---|---|
+| **R2-M1** | §5's header enumeration says four | *"the four keyed meaning params below"* |
+| **R2-M2** | INVARIANT 5's mutant is a clock read, and the ordering mutant is disowned in §6 as it already was in §11 | *"Its mutant is a clock or an environment read entering a written field"*, and *"It is NOT the ordering mutant"* |
+| **R2-m1** | the hunk figure is replaced by both counts and the command that yields each | *"carries **9 hunks** with default context and **10** with `-U0`"* (this section) |
+| **R2-m2** | the unrowed-hunk claim is dropped; the table no longer counts hunks it does not row | — (the sentence is gone) |
+| **R2-m3** | §12.3 stops saying WP-2.0-M's material is *"passed by no reviewer"* | *"They are no longer unadjudicated"* |
+| **R2-m4** | §11 stops claiming one test runs a binary | *"It is not the only test here that runs a binary"* |
+| **R2-m5** | INVARIANT 6 enumerates the empty-field and mate-value refusals its tests pin | *"empty field, out-of-range mate value or key-column shape"* |
+| **R2-m6** | §8 item 1 states the measured-recalls point once | — (the second statement is deleted) |
+| **R2-m7** | the book-sizing inference is replaced by what the passage says | *"The passage's own sequel is that the book in question ran out"* |
+| **R2-m8** | the mutant's name matches the params' name | *"the loader's keyed-meaning-param check removed"* |
+| **R2-m9** | recorded, no change: §2.10's sentinel is the register's one section-anchored row and the document says so | — |
+| **the sibling's finding** | §11's solver universal is restated as AMBIGUOUS, matching WP-2.0-M §14.1 | *"the universal is AMBIGUOUS rather than false"* |
+
+**THE LAST ROW IS NOT FROM THIS DOCUMENT'S REVIEW.** WP-2.0-M's own regression
+check found that this document still carried a claim that document had already
+corrected — *"the universal is false: three committed configs arm it"*. **That is
+the reversal-applied-to-some-sites class crossing a document boundary**, which no
+single document's sweep can see, and it is recorded here because the arc has now
+produced it within a document, within a change table, and between two documents.
 
 ---
 
@@ -756,8 +777,8 @@ IT CANNOT PREDICT.**
   confused with any other field's content.
 
 **THE HEADER CARRIES**, as `param`: the corpus schema version; the source
-report's `experiment_sha256` and `source_sha256`; the label `go` line; the three
-unit params below; and **`opening_turns`, so a consumer can compute the
+report's `experiment_sha256` and `source_sha256`; the label `go` line; **the four
+keyed meaning params below**; and **`opening_turns`, so a consumer can compute the
 ask-boundary reading of `book` as well as the provenance one** (§2.9). As
 `derived`: the counts of games and records, **and the capture's `capture_sha256`,
 because this transform RE-DERIVES it rather than copying it** — `Fixture::derived`
@@ -846,9 +867,12 @@ seed can change an output; inventing a sampling rule to host a mutant would be
 adding a knob for a test's sake. **What replaces it is the determinism the
 pipeline does have**: the transform is a pure function of two files, so
 **INVARIANT 5** is that a re-run over one capture and one report is
-byte-identical, and its mutant is any ordering that depends on hash iteration
-rather than on the capture's own record order — which is hard rule 4's own
-concern and is the property a seed mutant would have been guarding.
+byte-identical — which is hard rule 4's own concern and is the property a seed
+mutant would have been guarding. **Its mutant is a clock or an environment read
+entering a written field**, which two runs disagree about and which the
+byte-identity comparison therefore kills. **It is NOT the ordering mutant**: a
+reordering that is DETERMINISTIC is invisible to a comparison of two runs, and
+that mutant belongs to INVARIANT 1's order test (§11).
 
 ---
 
@@ -914,20 +938,21 @@ are not sheltered by D-483, because neither is a measured number. So:
    choice a successor cannot say was tuned to this corpus.** The ground is NOT
    that those rates are delivered: `configs/random_openings_v1.toml:47-52`
    records the same nominal pair falling well short at the smaller of two sample
-   sizes and MEETING them at the larger — which is why that book was sized as it
-   was — so **a nominal pair is a registration and not a guarantee, and the gap
-   closes with n**. This rule makes no claim about its own realised operating
+   sizes and MEETING them at the larger — so **a nominal pair is a registration
+   and not a guarantee, and the gap closes with n**. (The passage's own sequel is
+   that the book in question ran out before either figure could be reached, which
+   is why it is retired for governed use, D-518; the sizing of its successor
+   followed a different registered rule and is not this citation's subject.) This rule makes no claim about its own realised operating
    characteristics. **They are here deliberately, and this document makes no
    claim about how many numerals it carries** — it has made one wrongly in four
    revisions running, including the replacement. What is true and worth saying is
    narrower: **the level and the power are the only numbers this document FIXES,
    and they are conventions adopted from a committed config rather than
-   measurements.** The two recalls §8's rule consumes are measured, are owned by
-   the closed arc, and are cited there rather than restated here: D-483 forbids a MEASURED number,
-   and an error rate adopted from a committed config is a convention rather than
-   a measurement — while deferring it is the exact deferral that killed the
-   previous §8. The two recalls it is applied to ARE measured, and neither is
-   restated here.
+   measurements**, while the two recalls the rule CONSUMES are measured, owned by
+   the closed arc, and cited there rather than restated here. D-483 forbids a
+   MEASURED number, and an error rate adopted from a committed config is a
+   convention rather than a measurement — while deferring it is the exact
+   deferral that killed the previous §8.
 2. **THE NULL IS THE INCUMBENT RECALL**, the fraction of win-direction proofs the
    best written ordering keeps, registered in the closed detector arc and cited
    there rather than restated here (D-423, D-531).
@@ -1068,8 +1093,9 @@ criterion over a sample nobody registered"*
 5. **A re-run of the transform over one capture and one report produces a
    byte-identical corpus file.**
 6. **A corpus file round-trips through its own loader FIELD BY FIELD**, and one
-   whose schema version, body digest, record arity, header params, token set **or
-   key-column shape** is wrong is refused by name — `key_pos`'s thirty-two hex
+   whose schema version, body digest, record arity, header params, token set,
+   **empty field, out-of-range mate value or key-column shape** is wrong is
+   refused by name — `key_pos`'s thirty-two hex
    digits, `key_seq`'s turn tokens and `key_full`'s `q,r:p1` / `q,r:p2` pairs
    (§5).
 7. **Any failure refuses the whole run**; no record is silently skipped, and no
@@ -1176,7 +1202,7 @@ clock read that changed an output.
 | the loader's empty-field check removed | `a_corpus_record_with_an_empty_field_is_refused_by_name` |
 | the loader's schema-version check removed | `a_corpus_whose_schema_version_is_unknown_is_refused_by_name` |
 | the four keyed meaning params dropped **on write** | `a_corpus_file_round_trips_through_its_own_loader_field_by_field` — the loader test still passes, because the loader's check is intact; the round trip is what dies |
-| the loader's unit-param check removed | `a_corpus_missing_one_of_its_four_meaning_params_is_refused_by_name` |
+| the loader's keyed-meaning-param check removed | `a_corpus_missing_one_of_its_four_meaning_params_is_refused_by_name` |
 | `key_full` rendered as bare cells, dropping the colour | `two_positions_differing_only_in_colour_do_not_share_a_key_full` |
 | the loader's `key_full` shape check removed | `a_key_full_field_that_is_not_cell_colour_pairs_is_refused_by_name` |
 | the loader's `key_seq` shape check removed | `a_key_seq_field_that_is_not_turn_tokens_is_refused_by_name` |
@@ -1199,6 +1225,7 @@ clock read that changed an output.
 | the `book` column dropped | `a_book_position_is_a_record_flagged_book` |
 | records deduplicated by `key_full` on write | `two_transposed_positions_are_two_records_sharing_a_key_full` |
 | the turn-zero sentinel written as an empty field | `the_turn_zero_record_writes_a_dash_for_its_three_empty_columns` |
+| a clock or environment value written into any field | `a_rerun_over_one_capture_and_report_is_byte_identical` |
 | records emitted in any order but the capture's | `every_capture_record_produces_one_corpus_record_in_order` — **not** the re-run test, which a DETERMINISTIC reordering satisfies: both runs would produce the same reordered file. Revision 2 pointed this mutant at the re-run test, whose death would have turned on whether two `HashMap`s in one process draw different keys, which is not a thing this document can argue |
 
 **TWO MUTANTS REVISION 1 REGISTERED ARE REMOVED BECAUSE THEY CANNOT DIE.**
@@ -1215,15 +1242,23 @@ transform reads FILES, so a fixture capture and a fixture report exercise every
 path — **including the solver spelling, which a synthetic totals line produces
 for free and which needs no engine at all.** Revision 2 grounded that on a
 universal — *"every committed config has the solver off the search path"* — and
-**the universal is false**: three committed configs arm it
-(`configs/bench_wp18c_solver_on.toml:45`,
-`configs/gate_staged_solver_v0.toml:47`,
-`configs/play_staged_solver_v0.toml:75`), against the many that do not
-(`configs/gate_v0.toml:94`). The conclusion never needed it and stands without
-it; the universal is deleted rather than narrowed, because a sound conclusion
-resting on manufactured authority is the shape this arc keeps paying for. **The
-solver-proof record class §2.5 reconciles is real precisely because those three
-configs exist.**
+**the universal is AMBIGUOUS rather than false, which earlier revisions of this
+paragraph got wrong.** Under D-441's sense — what pistol SHIPS — it holds, and
+the three files under `configs/` that arm the solver each say they are not that:
+*"never a committed engine config"* (`configs/bench_wp18c_solver_on.toml:15`),
+*"never the committed config"* (`configs/gate_staged_solver_v0.toml:8`), *"THIS IS
+NOT A DEPLOYMENT CONFIG"* (`configs/play_staged_solver_v0.toml:8`). Under the
+reading *"a file committed in this repository"* it does not, and those same three
+are the counterexamples. **The clause is deleted because the argument never
+rested on it** — a synthetic totals line needs no engine and no config — and
+because a clause whose two readings license the same conclusion constrains
+nothing (D-424). **The solver-proof record class §2.5 reconciles is real either
+way**, because those three seats exist and a pilot could name one.
+
+**WP-2.0-M's §14.1 CARRIED THE SAME CLAUSE AND WAS CORRECTED FIRST**; this
+paragraph kept the superseded wording for one round, which is the
+reversal-applied-to-some-sites class crossing a document boundary — the place a
+single document's own sweep cannot look.
 
 **AND ONE TEST WHOSE FIXTURE CARRIES A CONDITION, WITHOUT WHICH IT IS RED ON
 CORRECT CODE.** `two_positions_differing_only_in_colour_do_not_share_a_key_full`
@@ -1243,8 +1278,12 @@ agree with itself. **Its reports are produced by the arena** — the real `arena
 against the stub engine into a scratch directory, the shape
 `crates/pistol-arena/tests/replay_chain_tests.rs:12-31` already uses — so the
 `result` it checks against is the arena's own and no match log is committed (hard
-rule 8). **That is the one test in this package that runs a binary**; the rest
-read files. §2.7 states what the check is and is not.
+rule 8). It is not the only test here that runs a binary —
+`the_sprt_reports_per_game_node_counts_survive_the_totals_of_split` drives the
+SPRT path, whose `compute.add` sits inside `exchange::ask` behind a spawned
+`Channel` (`crates/pistol-arena/src/exchange.rs:76-79`,
+`crates/pistol-arena/src/channel.rs:46-52`) — but it is the one whose FIXTURE must
+be a real arena run rather than a file the test writes. §2.7 states what the check is and is not.
 
 ---
 
@@ -1321,16 +1360,18 @@ identity column and the census logging flag (WP-2.0b, D-539); any train/test
 split, which is a training decision over a corpus and not a property of one; and
 whether a trainer uses book positions, which §2.9 flags rather than decides.
 
-**AND ONE STRUCTURAL RISK THIS DOCUMENT CARRIES AND DID NOT NAME.** §0 lists what
-this package inherits from WP-2.0-M without saying that **most of it is under
-adjudication**: the record's TAB grammar, the capture identity's three inputs,
-the corpus manifest file and the throughput shape are all NEW in WP-2.0-M's
-revisions 3-5, unfrozen, and passed by no reviewer. Several of this document's leans are on that
-material, and the four named above are the ones this section can support from its
-own text. **If WP-2.0-M's own review forces a change there,
-this document changes with it** — §3's premise that the normalisation removes
-`time` rests on a passed paragraph and is low risk, but §5's re-derivation, §9's
-rows 2-3 and §12.1 rest on material that could still move.
+**AND ONE STRUCTURAL DEPENDENCY THIS DOCUMENT NAMES RATHER THAN LEAVES IMPLICIT.**
+§0 lists what this package inherits from WP-2.0-M: the record's TAB grammar, the
+capture identity's three inputs, the corpus manifest file and the throughput
+shape are all NEW in that document's revisions 3-5. **They are no longer
+unadjudicated** — WP-2.0-M revision 5 PASSED its scoped re-review, so under D-547
+they are frozen and a later revision may edit them only with grounds on its own
+face. Earlier revisions of this section said *"passed by no reviewer"*, which was
+already false when it was written. **What survives is a narrower and still real
+dependency**: §5's re-derivation, §9's rows 2-3 and §12.1 rest on WP-2.0-M's §4.2,
+§5 and §13(a), so a listed edit to any of those is a section of this document to
+re-read. §3's premise that the normalisation removes `time` rests on a paragraph
+passed twice and is the lowest risk of them.
 
 **AND ONE LEAN IS NOT A RISK BUT AN INCONSISTENCY ALREADY STANDING.**
 WP-2.0-M's §8 still describes this package as one that *"adds fields to one
