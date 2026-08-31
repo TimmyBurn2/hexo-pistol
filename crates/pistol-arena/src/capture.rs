@@ -145,6 +145,38 @@ pub fn one_engine(transcript: &Transcript) -> Result<(), ArenaError> {
     )))
 }
 
+/// What a line the engine wrote means to the capture pass.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Step {
+    /// The closing report: keep it, keep reading.
+    Totals,
+    /// A per-depth report: not the answer and not an error.
+    Ignore,
+    /// Nothing this pass can proceed from, with the reason.
+    Refuse(String),
+}
+
+/// Classify one line the engine wrote, `bestmove` excepted.
+///
+/// A pure function so the refusals INVARIANT 9 promises can be pinned without an
+/// engine that plays a whole report honestly and then misbehaves — a shape no
+/// static stub behaviour has, because the capture verifies its engine against
+/// the identity the report attests.
+pub fn classify(line: &str) -> Step {
+    if line.starts_with(&format!("{} ", pistol_cli::report::ERROR_PREFIX)) {
+        return Step::Refuse(format!("the engine refused: `{line}`"));
+    }
+    if exchange::totals_of(line).is_some() {
+        return Step::Totals;
+    }
+    if line.starts_with(&format!("{} ", pistol_cli::report::INFO_PREFIX)) {
+        return Step::Ignore;
+    }
+    Step::Refuse(format!(
+        "the engine wrote `{line}`, which is not a line this protocol has"
+    ))
+}
+
 /// Ask one position and return the engine's own two lines.
 fn ask(
     channel: &mut Channel,
@@ -189,23 +221,14 @@ fn ask(
                     })?;
                     return Ok((totals, line));
                 }
-                if line.starts_with(&format!("{} ", pistol_cli::report::ERROR_PREFIX)) {
-                    return Err(refuse(format!(
-                        "{}: the engine refused: `{line}`",
-                        where_()
-                    )));
+                match classify(&line) {
+                    Step::Totals => {
+                        totals = Some(line);
+                        continue;
+                    }
+                    Step::Ignore => continue,
+                    Step::Refuse(why) => return Err(refuse(format!("{}: {why}", where_()))),
                 }
-                if exchange::totals_of(&line).is_some() {
-                    totals = Some(line);
-                    continue;
-                }
-                if line.starts_with(&format!("{} ", pistol_cli::report::INFO_PREFIX)) {
-                    continue;
-                }
-                return Err(refuse(format!(
-                    "{}: the engine wrote `{line}`, which is not a line this protocol has",
-                    where_()
-                )));
             }
         }
     }
@@ -254,7 +277,12 @@ pub fn run(transcript: &Transcript, label_nodes: u64) -> Result<Vec<CaptureRecor
 
 /// A field carrying a TAB would destroy the record's arity, and the record is
 /// built from bytes an engine chose.
-fn no_tab(record: &CaptureRecord) -> Result<(), ArenaError> {
+///
+/// # Errors
+/// Naming the field and the position it was captured at. No engine in this tree
+/// can emit a TAB, so this is checked rather than assumed: §3 requires the two
+/// seats to attest ONE engine, not to be `pistol`.
+pub fn no_tab(record: &CaptureRecord) -> Result<(), ArenaError> {
     for (name, field) in [
         ("position", &record.position),
         ("totals", &record.totals),

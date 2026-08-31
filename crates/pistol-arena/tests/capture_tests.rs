@@ -477,3 +477,311 @@ fn a_capture_prints_a_manifest_row_naming_its_digests() {
         "no manifest row naming the digests was printed: {stdout}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// INVARIANT 9 — every failure refuses the WHOLE run, and none is a skip.
+// ---------------------------------------------------------------------------
+
+/// The stderr of a capture that must refuse, with the output asserted absent.
+fn refused(scratch: &Scratch, report: &Path, tag: &str) -> String {
+    let (output, out) = capture(scratch, report, tag);
+    assert!(
+        !out.exists(),
+        "a run that must refuse wrote a capture for `{tag}`"
+    );
+    String::from_utf8_lossy(&output.stderr).to_string()
+}
+
+#[test]
+fn an_error_answer_refuses_the_run_and_names_the_game_and_turn() {
+    // Over the classification seam: a capture verifies its engine against the
+    // identity the report attests, so no static stub behaviour can play a report
+    // honestly and then refuse a label ask.
+    let step = pistol_arena::capture::classify("error IllegalPosition: a won position is terminal");
+    match step {
+        pistol_arena::capture::Step::Refuse(why) => {
+            assert!(
+                why.contains("refused"),
+                "the reason did not name the refusal: {why}"
+            );
+        }
+        other => panic!("an `error` line was not a refusal: {other:?}"),
+    }
+}
+
+#[test]
+fn an_unrecognised_totals_line_refuses_the_run_and_names_the_game_and_turn() {
+    // `info` without the totals marker is a per-depth line and is ignored; a
+    // line that is neither is nothing this pass can proceed from.
+    assert_eq!(
+        pistol_arena::capture::classify("info depth_turns 1 nodes 4"),
+        pistol_arena::capture::Step::Ignore
+    );
+    assert_eq!(
+        pistol_arena::capture::classify(
+            "info totals depth_turns 1 seldepth 1 nodes 4 nps 1 time 0 hashfull 0 score cp 0 pv 0,0"
+        ),
+        pistol_arena::capture::Step::Totals
+    );
+    match pistol_arena::capture::classify("pistolok") {
+        pistol_arena::capture::Step::Refuse(why) => {
+            assert!(why.contains("not a line this protocol has"), "{why}");
+        }
+        other => panic!("an off-protocol line was not a refusal: {other:?}"),
+    }
+}
+
+#[test]
+fn a_report_pass_two_cannot_read_is_refused_by_name() {
+    let scratch = Scratch::new("capture-unreadable");
+    let junk = scratch.write("not-a-report.txt", "this is not an arena report\n");
+    let stderr = refused(&scratch, &junk, "junk");
+    assert!(
+        stderr.contains("first token"),
+        "the refusal did not name what it read: {stderr}"
+    );
+}
+
+#[test]
+fn a_report_whose_engines_have_changed_is_refused_by_name() {
+    let scratch = Scratch::new("capture-drift");
+    let ran = self_play(&scratch, "honest", "drift");
+    let report = report_at(&scratch, &ran, "drift");
+    // The engine config the report attests, edited after the fact: the capture
+    // verifies every spawn against the run's own capture (docs/decisions.md
+    // D-199, D-252).
+    let config = scratch.path("engine-drift.toml");
+    let body = std::fs::read_to_string(&config).expect("the engine config reads");
+    std::fs::write(&config, format!("{body}# edited after the run\n")).expect("rewrite");
+    let stderr = refused(&scratch, &report, "drift");
+    assert!(
+        stderr.contains("IdentityDrift"),
+        "an engine edited after the run was accepted: {stderr}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// INVARIANT 1, 2 and 5 — the asked set, and what pass 2 sends.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn every_captured_position_is_a_prefix_of_the_reports_own_move_list() {
+    let scratch = Scratch::new("capture-prefix");
+    let ran = self_play(&scratch, "honest", "prefix");
+    let report = report_at(&scratch, &ran, "prefix");
+    let (_, out) = capture(&scratch, &report, "prefix");
+    let text = std::fs::read_to_string(&out).expect("the capture is readable");
+    let transcript = pistol_arena::transcript::read(
+        ran.report(),
+        pistol_cli::sha256::sha256_hex(ran.report().as_bytes()),
+    )
+    .expect("the report reads back");
+    for row in records(&text) {
+        let game: usize = row[0].parse().expect("a game index");
+        let k: usize = row[1].parse().expect("a turn count");
+        let recorded = &transcript.games[game].moves[..k];
+        let expected = if recorded.is_empty() {
+            String::from("position start")
+        } else {
+            pistol_arena::exchange::position_line(recorded)
+        };
+        assert_eq!(
+            row[2], expected,
+            "game {game} turn {k} was sent a position that is not the recorded prefix"
+        );
+    }
+}
+
+#[test]
+fn a_decided_terminal_position_is_never_asked() {
+    // A game whose last recorded turn WINS. Built here rather than drawn from a
+    // stub run, because whether a stub self-match happens to end in a win is a
+    // property of the fixture and not of the rule under test — and a test that
+    // silently proves nothing when the fixture changes is the vacuity this arc
+    // has paid for four times.
+    let moves: Vec<pistol_core::Turn> = [
+        "0,0", "0,5/2,5", "1,0/2,0", "4,5/6,5", "3,0/4,0", "-2,5/8,5", "5,0",
+    ]
+    .iter()
+    .map(|token| token.parse().expect("a turn token"))
+    .collect();
+    let mut state = pistol_core::GameState::new_game();
+    let mut last = pistol_core::Outcome::Ongoing;
+    for turn in &moves {
+        last = state.make_turn(*turn).expect("a legal turn");
+    }
+    assert!(
+        matches!(last, pistol_core::Outcome::Win { .. }),
+        "the fixture game does not end in a win, so it cannot pin the exclusion"
+    );
+
+    let game = pistol_arena::transcript::RecordedGame {
+        index: 0,
+        opening: 0,
+        a_is_p1: true,
+        forfeit: false,
+        moves: moves.clone(),
+        nodes: [0, 0],
+    };
+    let asked = pistol_arena::capture::asked_prefixes(&game).expect("a legal game");
+    assert_eq!(
+        asked,
+        (0..moves.len()).collect::<Vec<usize>>(),
+        "the asked set is not every prefix but the decided one"
+    );
+    assert!(
+        !asked.contains(&moves.len()),
+        "the terminal position of a won game is in the asked set"
+    );
+}
+
+#[test]
+fn an_undecided_games_final_position_is_asked() {
+    // The other side of the same boundary: a game that ends at the turn cap has
+    // no decided position, so every prefix INCLUDING the last is asked.
+    let moves: Vec<pistol_core::Turn> = ["0,0", "0,5/2,5", "1,0/2,0"]
+        .iter()
+        .map(|token| token.parse().expect("a turn token"))
+        .collect();
+    let game = pistol_arena::transcript::RecordedGame {
+        index: 0,
+        opening: 0,
+        a_is_p1: true,
+        forfeit: false,
+        moves: moves.clone(),
+        nodes: [0, 0],
+    };
+    let asked = pistol_arena::capture::asked_prefixes(&game).expect("a legal game");
+    assert_eq!(asked, (0..=moves.len()).collect::<Vec<usize>>());
+}
+
+#[test]
+fn a_book_turns_position_is_captured_like_any_other() {
+    let scratch = Scratch::new("capture-book");
+    let ran = self_play(&scratch, "honest", "book");
+    let report = report_at(&scratch, &ran, "book");
+    let (_, out) = capture(&scratch, &report, "book");
+    let text = std::fs::read_to_string(&out).expect("the capture is readable");
+    let transcript = pistol_arena::transcript::read(
+        ran.report(),
+        pistol_cli::sha256::sha256_hex(ran.report().as_bytes()),
+    )
+    .expect("the report reads back");
+    let opening_turns = transcript.opening_turns as usize;
+    assert!(
+        opening_turns > 0,
+        "this fixture has no book turns to capture"
+    );
+    let book_records = records(&text)
+        .into_iter()
+        .filter(|row| row[1].parse::<usize>().expect("a turn count") < opening_turns)
+        .count();
+    assert!(
+        book_records > 0,
+        "no position inside the book was captured, so book turns were excluded"
+    );
+}
+
+#[test]
+fn a_forfeited_games_positions_are_captured_like_any_other() {
+    // The exclusion under test is by FORFEIT, so the two games differ in that
+    // flag and in nothing else. Driving it end to end would need an engine that
+    // forfeits while PLAYING and answers properly while being RE-ASKED, and no
+    // static stub behaviour is both — the capture verifies its engine against
+    // the identity the report attests, so the two cannot be different engines.
+    let moves: Vec<pistol_core::Turn> = ["0,0", "0,5/2,5", "1,0/2,0"]
+        .iter()
+        .map(|token| token.parse().expect("a turn token"))
+        .collect();
+    let clean = pistol_arena::transcript::RecordedGame {
+        index: 0,
+        opening: 0,
+        a_is_p1: true,
+        forfeit: false,
+        moves: moves.clone(),
+        nodes: [0, 0],
+    };
+    let forfeited = pistol_arena::transcript::RecordedGame {
+        forfeit: true,
+        ..clean.clone()
+    };
+    assert_eq!(
+        pistol_arena::capture::asked_prefixes(&forfeited).expect("legal"),
+        pistol_arena::capture::asked_prefixes(&clean).expect("legal"),
+        "a forfeited game was asked a different set of positions"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// INVARIANT 6 and 12 — the record's own bytes, and what identifies the run.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_captured_field_containing_a_tab_refuses_the_run_by_name() {
+    let record = pistol_arena::capture::CaptureRecord {
+        game: 3,
+        turns_played: 7,
+        position: String::from("position start"),
+        totals: String::from("info totals depth_turns 1\tseldepth 1"),
+        bestmove: String::from("bestmove 0,0"),
+    };
+    let error = pistol_arena::capture::no_tab(&record).expect_err("a TAB is refused");
+    let message = error.to_string();
+    assert!(
+        message.contains("totals") && message.contains("TAB") && message.contains("game 3"),
+        "the refusal did not name the field and the position: {message}"
+    );
+}
+
+#[test]
+fn the_written_capture_identity_is_the_one_its_own_inputs_produce() {
+    let scratch = Scratch::new("capture-identity-call");
+    let ran = self_play(&scratch, "honest", "idcall");
+    let report = report_at(&scratch, &ran, "idcall");
+    let (_, out) = capture(&scratch, &report, "idcall");
+    let text = std::fs::read_to_string(&out).expect("the capture is readable");
+    let read = pistol_arena::capture::read(&text).expect("its own loader reads it");
+    let expected = pistol_arena::capture::capture_sha256(
+        &read.experiment_sha256,
+        &read.label_go,
+        pistol_arena::capture::CAPTURE_FORMAT_VERSION,
+    );
+    assert_eq!(
+        read.capture_sha256, expected,
+        "the header's identity is not the one its own three inputs produce"
+    );
+    let from_source = pistol_arena::capture::capture_sha256(
+        &read.source_sha256,
+        &read.label_go,
+        pistol_arena::capture::CAPTURE_FORMAT_VERSION,
+    );
+    assert_ne!(
+        read.capture_sha256, from_source,
+        "the identity was built from `source_sha256`, which digests the timing block too"
+    );
+}
+
+#[test]
+fn a_captured_bestmove_line_keeps_the_engines_own_spacing() {
+    // The mutation this guards is a `bestmove` field re-rendered from a parsed
+    // `Turn` rather than carried as the engine's bytes. No engine in this tree
+    // writes two spaces, so the case is synthetic — and it is exactly the case a
+    // re-render normalises away.
+    let record = pistol_arena::capture::CaptureRecord {
+        game: 0,
+        turns_played: 0,
+        position: String::from("position start"),
+        totals: String::from("info totals depth_turns 1"),
+        bestmove: String::from("bestmove  0,0"),
+    };
+    let rendered = pistol_arena::capture_file::render_records(std::slice::from_ref(&record));
+    let round_tripped = rendered
+        .split('\t')
+        .nth(4)
+        .expect("five fields")
+        .trim_end_matches('\n');
+    assert_eq!(
+        round_tripped, record.bestmove,
+        "the record writer normalised the engine's own bestmove line"
+    );
+}

@@ -1,3 +1,5 @@
+use std::fmt::Write as _;
+
 use pistol_cli::corpus::emit::{self, Fixture};
 
 use crate::error::ArenaError;
@@ -70,38 +72,61 @@ pub fn render(transcript: &Transcript, label_go: &str, records: &[CaptureRecord]
     fixture.derived("capture_sha256", &identity);
     fixture.derived("games", transcript.games.len());
     fixture.derived("records", records.len());
-    for record in records {
-        fixture.line(&format!(
-            "{}\t{}\t{}\t{}\t{}",
-            record.game, record.turns_played, record.position, record.totals, record.bestmove
-        ));
+    for line in render_records(records).lines() {
+        fixture.line(line);
     }
     fixture.render()
+}
+
+/// The body lines a set of records renders to, without the header.
+///
+/// Exposed so a test can assert that a field the engine wrote reaches the file
+/// as the engine wrote it, on an input no engine in this tree produces.
+pub fn render_records(records: &[CaptureRecord]) -> String {
+    let mut out = String::new();
+    for record in records {
+        let _ = writeln!(
+            out,
+            "{}\t{}\t{}\t{}\t{}",
+            record.game, record.turns_played, record.position, record.totals, record.bestmove
+        );
+    }
+    out
 }
 
 /// The manifest row a run prints for a human to commit.
 ///
 /// PRINTED and never written: `pistol-arena` writes nothing inside the
 /// repository (CLAUDE.md rule 8), and a row a human retypes drifts from its run.
+///
+/// # Errors
+/// If the rendered capture carries no body digest, which would make the row a
+/// claim about bytes nothing binds. A default there would be a silent fallback
+/// in a committed record (CLAUDE.md rule 3).
 pub fn manifest_row(
     transcript: &Transcript,
     label_go: &str,
     rendered: &str,
     out_path: &std::path::Path,
-) -> String {
+) -> Result<String, ArenaError> {
     let identity = crate::capture::capture_sha256(
         &transcript.experiment_sha256,
         label_go,
         CAPTURE_FORMAT_VERSION,
     );
-    let body = emit::claimed_body_digest(rendered).unwrap_or("<none>");
-    format!(
+    let body = emit::claimed_body_digest(rendered).ok_or_else(|| {
+        refuse(
+            "the rendered capture carries no body digest, so a manifest row would name bytes \
+                nothing binds",
+        )
+    })?;
+    Ok(format!(
         "capture_manifest capture_sha256 {identity} body_sha256 {body} experiment_sha256 {} \
          source_sha256 {} label_go {label_go} path {}",
         transcript.experiment_sha256,
         transcript.source_sha256,
         out_path.display()
-    )
+    ))
 }
 
 /// One header value, or a refusal naming the key.

@@ -12,7 +12,6 @@ usage:
   arena --config <path> --out <path>
   arena --replay <report path> --out <path> --workers <n>
   arena --capture <report path> --out <path> --label-nodes <n>
-  arena --labels <capture path> --report <report path> --out <path>
 
   --config  an arena config. Always explicit: there is no default path and no
             built-in configuration (CLAUDE.md rule 1). It states the openings,
@@ -53,14 +52,6 @@ usage:
             program will echo it back. It is the only budget this mode takes:
             there is no wall-clock spelling to refuse, because a wall-clock
             label would be a fact about the machine.
-
-  --labels  a capture THIS program wrote, turned into the training corpus. Reads
-            no engine and spawns nothing: it is a pure function of the capture
-            and the report that capture came from, so a schema disagreement
-            costs a re-run of this mode rather than a re-run of the engine.
-  --report  the report the capture was taken from. Its digest must be the one
-            the capture's header names, or the run is refused before a record
-            is read.
 
   Only instrument budgets are accepted. A `movetime` budget is refused by name:
   wall-clock is not reproducible, and it is not even a ceiling — the first

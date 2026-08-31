@@ -168,7 +168,7 @@ fn capture_pass(
     );
     println!(
         "{}",
-        capture_file::manifest_row(&transcript, &go_line, &rendered, out_path)
+        capture_file::manifest_row(&transcript, &go_line, &rendered, out_path)?
     );
     println!("arena: capture written to {}", out_path.display());
     Ok(ExitCode::SUCCESS)

@@ -62,6 +62,13 @@ enum Behave {
     /// deliberate deviation from a real engine at one finer granularity
     /// (docs/decisions.md D-413).
     DemandsNewGamePerAsk,
+    /// Answers every `go` with an `error` line and stays alive (docs/decisions.md
+    /// D-5).
+    ///
+    /// The only behaviour that produces the protocol's own refusal on the ANSWER
+    /// path: `demands_newgame` produces one only for a position sent before a
+    /// `newgame`, which a driver that sends one per ask never does.
+    RefusesGo,
 }
 
 impl Behave {
@@ -79,6 +86,7 @@ impl Behave {
             "edit_own_config" => Behave::EditOwnConfig,
             "demands_newgame" => Behave::DemandsNewGame,
             "demands_newgame_per_ask" => Behave::DemandsNewGamePerAsk,
+            "refuses_go" => Behave::RefusesGo,
             _ => return None,
         })
     }
@@ -86,7 +94,7 @@ impl Behave {
     /// Every spelling, for a refusal that has to list them.
     const ALL: &'static str = "honest, honest_last, illegal, garbage, bad_bestmove, hang, \
                                exit, bad_protocol, play_mode, edit_own_config, demands_newgame, \
-                               demands_newgame_per_ask";
+                               demands_newgame_per_ask, refuses_go";
 }
 
 /// The exit code the `exit` behaviour uses. Distinct from this program's own
@@ -306,6 +314,17 @@ fn serve(
                 out.flush().map_err(io_error)?;
                 continue;
             }
+        }
+        if behave == Behave::RefusesGo && line.trim_start().starts_with(pistol_cli::protocol::GO) {
+            writeln!(
+                out,
+                "{} Refused: this instrument refuses every `{}`",
+                pistol_cli::report::ERROR_PREFIX,
+                pistol_cli::protocol::GO
+            )
+            .map_err(io_error)?;
+            out.flush().map_err(io_error)?;
+            continue;
         }
         let asking_to_move = line.trim_start().starts_with(pistol_cli::protocol::GO);
         if asking_to_move && behave == Behave::EditOwnConfig && !config_edited {

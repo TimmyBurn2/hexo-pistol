@@ -20,20 +20,6 @@ impl GameResult {
             GameResult::Capped => "capped",
         }
     }
-
-    /// The result a report's word names, or `None` for a word this build does
-    /// not write.
-    ///
-    /// The inverse of [`GameResult::token`], so a reader cannot come to accept a
-    /// spelling the writer never produces.
-    pub fn from_token(word: &str) -> Option<GameResult> {
-        match word {
-            "p1_win" => Some(GameResult::P1Win),
-            "p2_win" => Some(GameResult::P2Win),
-            "capped" => Some(GameResult::Capped),
-            _ => None,
-        }
-    }
 }
 
 /// How the game ended.
