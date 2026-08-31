@@ -59,6 +59,36 @@ indirection, stated so nobody reads the shorter list as the whole export.
 | `matrix_stage3_DECISION_REDTEAM.md` | the decision red team on the matrix at `1bc2788`: **FALLS**, 5 BLOCKING / 9 MAJOR / 5 MINOR, and five rows it would add |
 | `sealbot_anchor_v2_dryrun_*/report.json` | the four registered dry runs, including the two mode-pin runs that must forfeit at the handshake and do |
 
+---
+
+## The detector round-two anchor
+
+**`artifacts/stage3_round2_export_receipt_v1.txt` — sha256**
+
+```
+0d709ed38294867cc0d148f4a0eb89390e2ffe52968dd1038f584ee42a3c7a0f
+```
+
+**Twenty-six files listed**, the receipt itself excluded because a file cannot
+carry its own digest. It continues the two receipts above rather than replacing
+them; each is complete for the run it covers.
+
+| artifact | what it is |
+|---|---|
+| `stage3c_census_{corpus_r0,corpus_r1,trigger}_v1.txt` and their `_OFF_` companions | **the censuses the matrix's revision 4 is ranked from**, on a seat that clears between fixture entries |
+| `stage3c_census_value_fixture_v1.txt` | a full governed search from each of D-512's seven fixture positions — the run that measured two of them firing never |
+| `stage3c_census_rank_v2.txt` | **the ranking every §5.2 and §5.3 cell is rendered from by machine** |
+| `stage3c_allocator_bound_v1.txt` | row (e) in both budget frames, and the bound over the census columns |
+| `stage3c_ci_6e7e0734_v1.txt` | `tools/ci.sh` 19/19 at the revision-4 landing |
+| `stage3b_*` (nine files) | **SUPERSEDED** — the contaminated warm-table seat. Kept because the round-2 red-team report quotes their figures, and a superseded artifact that vanishes makes a report unreadable |
+| `stage3b_ci_base_f62c676_v1.txt` | `tools/ci.sh` 19/19 at the arc's starting revision |
+| `stage3b_oos_positions_round{0,1}_v1.txt` | the out-of-sample draw, and the round-0 reproduction that licenses reading it |
+| `stage3b_value_fixture_v1.txt` | the fixture at five caps, position by position |
+| `stage3b_mutations_v1.txt` | four mutants, all dying: the cover column's side, its class, its hit budget, and the solver's AND-root assert |
+| `matrix_stage3_DECISION_REDTEAM_round2.md` | the decision red team at `1bc2788`'s successor `b6962ac`: **FALLS**, 3 / 7 / 5 |
+| `matrix_stage3_REREVIEW_round3.md` | the scoped re-review at `6e7e0734`: **PASS WITH FINDINGS**, 260 combinations swept |
+| `stage3_round2_worktree_receipt_v1.txt` | what each worktree's gitignored `artifacts/` and `sessions/` held before removal (D-469) — nothing needing export, checked rather than asserted |
+
 ## The rule this file follows for the rest of the arc
 
 **The receipt is re-taken and this anchor re-stated whenever the arc produces a

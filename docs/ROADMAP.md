@@ -180,10 +180,35 @@ inline in `handcrafted.rs` at a measured 1.171 / 1.205 inside its registered
 [1.10, 1.30] bracket, output byte-identical to the same digest WP-1.9 recorded.
 The residue that remains open is **WP-1.4** and **WP-1.10**.
 
-**NEXT SCHEDULED STEP: the Stage-3 scoped detector** (D-471 as amended by
-D-494): cheap VCDT/TSS detection gating solver calls, with DBS decomposition only
-after the detector earns its own SPRT. The `WP-1.9` designation collision D-493
-flagged is spent: D-473 settled the names and D-494 settled the order.
+**THE STAGE-3 DETECTOR IS CLOSED AT ITS OPTION MATRIX AND THE ORDER HAS FLIPPED:
+NEXT IS STAGE 2 (D-533, firing D-471's clause).** The detector reached its
+registered kill point — no row and no composition in the field is selectable out
+of sample, confirmed by two independent adversarial sweeps — and the dispatch's
+standing delegation had the session record the flip rather than wait. **NOTHING
+OF STAGE 2 IS OPENED BY THAT LINE**; what it does is move the order, and Stage-2
+prep that touches no engine code was already licensed in parallel throughout.
+
+**WHAT THE FLIP DOES NOT MEAN, because the closure measured the difference.** It
+is not a finding that a detector cannot reach the bracket: an allocator reaches
+it by construction, the budget affords every proof at 17–25 % of itself, and a
+score over the census columns could keep 0.857–1.000 of the wins where the best
+ordering written in the arc keeps 0.571. **The measured obstacle is that the
+evidence to fit and validate such a score does not exist** — 14 win-proving
+firings over 4 positions on the one fixture that cannot be sampled again. **THREE
+RULINGS COULD REVERSE THE FLIP AND EACH IS THE OPERATOR'S**
+(`docs/experiments/matrix_stage3_detector.md` §7): the census gate's direction,
+the recall fixture's two never-firing VALUE rows, and a work package to widen the
+trigger-rich position set. DBS decomposition stays where D-471 put it, behind a
+detector that has not earned an SPRT.
+
+**A STANDING PRECONDITION THE FLIP DOES NOT TOUCH (D-534):** before any committed
+PLAY config sets `[solver] on_search_path = true`, the movetime overshoot D-520
+measured at the deployment budget — median 1225 ms, max 1866 ms against 500 ms —
+must be fixed and re-measured. It is a D-95-class abort-responsiveness defect,
+and no SPRT on any detector discharges it.
+
+The `WP-1.9` designation collision D-493 flagged is spent: D-473 settled the
+names and D-494 settled the order.
 
 **THE PACKAGE STOPPED AT ITS PREMISE GATE AND ITS TARGET WAS CORRECTED TWICE
 (D-508, then D-516).** The "~6x call-count cut" this section and D-471 both

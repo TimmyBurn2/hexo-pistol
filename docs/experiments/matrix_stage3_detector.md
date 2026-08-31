@@ -59,9 +59,11 @@ Stated once, in `docs/experiments/stage3_rulings.md` §1, and not restated here
   figure and its direction are exactly what the rulings' round-3 revision
   settles from the measured `K`, so this document reads it from there rather
   than carrying its own copy;
-- the incumbent spends **18.33 / 11.75 / 9.05** firings per search and the
-  budget is **0.815–0.845 / 0.276–0.286 / 0.579–0.599**, so the required
-  reduction is **21.7x / 41.1x / 15.1x** (MEASURED, D-517). **Those are FIRING
+- the incumbent spends **18.42 / 11.75 / 9.05** firings per search and the
+  budget is **0.818–0.848 / 0.276–0.286 / 0.592–0.612**, so the required
+  reduction is **21.7x / 41.1x / 14.8x** — D-517 registers 18.33, 0.579–0.599
+  and 15.1x from the WARM census (§5.1), and these are the same quantities on
+  the corrected seat. **Those are FIRING
   figures**; §5's test is in VISITS and its cuts are **22.50x / 42.51x /
   15.29x** in sample and **24.27x / 43.20x** out of it. The two are the same
   constraint in two units and neither replaces the other;
@@ -273,9 +275,9 @@ under each.
 
 | band | WIN-direction proving firings | over distinct POSITIONS | LOSS-direction | over positions |
 |---|---|---|---|---|
-| CORPUS band 15 | **0** | — | 8 | 4 |
+| CORPUS band 15 | **0** | — | 8 | **1** |
 | CORPUS band 35 | **1** | 1 | 1 | 1 |
-| TRIGGER-RICH | **14** | 4 | 14 | 3 |
+| TRIGGER-RICH | **14** | 4 | 14 | **6** |
 | **OOS band 15** | **3** | 1 | 0 | — |
 | **OOS band 35** | **1** | 1 | 1 | 1 |
 
@@ -361,14 +363,24 @@ round-2 red-team report quotes them.**
 | **visit budget** | **2183.7** | **937.7** | **1799.4** | **2024.5** | **850.0** |
 | **required cut** | **22.50x** | **42.51x** | **15.29x** | **24.27x** | **43.20x** |
 | **WIN-direction proofs** (positions) | **0** (—) | **1** (1) | **14** (4) | **3** (1) | **1** (1) |
-| LOSS-direction proofs (positions) | 8 (4) | 1 (1) | 14 (3) | 0 (—) | 1 (1) |
+| LOSS-direction proofs (positions) | 8 (**1**) | 1 (1) | 14 (**6**) | 0 (—) | 1 (1) |
 
-**NO REGISTERED NUMBER HAS MOVED.** The trigger-rich budget is 1799.4 — D-516's
-own — and the trigger-rich incumbent is 27,504.7 — D-516's own. Revision 3
-reported 1737.3 and 28,113.4 and justified the move with a denominator claim the
-red team falsified; the true cause was the warm seat, and with the seat fixed
-the registered figures come back. The trigger-rich WIN denominator moved 11 → 14
-for the same reason: the warm table was suppressing three proofs.
+**THE TWO REGISTERED FIGURES THIS DOCUMENT'S TEST CONSUMES COME BACK EXACTLY**
+— the trigger-rich visit budget **1799.4** and the incumbent **27,504.7 visits
+per search**, both D-516's own. Revision 3 reported 1737.3 and 28,113.4 and
+justified the move with a denominator claim the round-2 red team falsified; the
+true cause was the warm seat, and with the seat fixed they return.
+
+**BUT "NO REGISTERED NUMBER HAS MOVED" WOULD BE FALSE, AND A FIRST DRAFT OF THIS
+REVISION WROTE IT.** §5.0 says the standing censuses were warm, and a warm
+census moved figures D-517 registers: band 15's firings per search **18.33 →
+18.42**, `K` on all three bands (**1339.1/1704.6/1601.9 → 1334.0/1702.5/
+1580.7**), invocations per firing on trigger-rich (1.939 → **1.923**), and with
+them **the trigger-rich FIRING factor 15.1x → 14.8x** — so D-527's claim that
+D-517's factor is untouched holds for bands 15 and 35 and **not** for
+trigger-rich. What does not move is what §5's test reads, because the visit
+budget and the visit incumbent are the two figures it consumes. The trigger-rich
+WIN denominator moved **11 → 14**: the warm table was suppressing three proofs.
 
 **THE STRUCTURAL FACT** of revision 2's §5.1 — that `mover_hot > 0` at a firing
 means the mover completes six THIS TURN, a theorem of rules 2, 3 and 5 — stands
@@ -384,46 +396,48 @@ band with no win denominator, where no recall is measured and none is claimed.
 | row | band 15 | band 35 | trigger-rich |
 |---|---|---|---|
 | incumbent | 1.000 / — / 49137 / 1.00x / out | 1.000 / 1.000 / 39867 / 1.00x / out | 1.000 / 1.000 / 27505 / 1.00x / out |
-| (a/g) `opp_hot >= 2` | 0.226 / — / 8546 / 5.75x / out | 0.404 / 0.000 / 15895 / 2.51x / out | 0.586 / **0.429** / 15168 / 1.81x / out |
-| **(a/g) `opp_hot >= 3`** | 0.059 / — / **1175** / **41.80x** / IN | 0.057 / 0.000 / 2185 / 18.24x / out | 0.204 / **0.000** / 5001 / 5.50x / out |
-| (a/g) `opp_hot >= 4` | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / 0.000 / 126 / 317x / IN | 0.011 / 0.000 / 106 / 260x / IN |
-| (a) a win-in-one-ply | 0.045 / — / 1803 / 27.25x / IN | 0.078 / 0.000 / 3053 / 13.06x / out | 0.072 / 0.000 / 2463 / 11.17x / out |
-| (a) mover hot | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / 1.000 / 0.1 / — / IN | 0.011 / 0.143 / 0.1 / — / IN |
-| (j) the root only | 0.014 / — / 446 / 110.21x / IN | 0.035 / 1.000 / 1150 / 34.66x / out | 0.066 / 0.143 / 1456 / 18.90x / IN |
-| **(b) cover impossible** | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / 0.000 / 126 / 317x / IN | 0.011 / 0.000 / 106 / 260x / IN |
-| (b′) exactly one cover | **0.045 / — / 1803 / 27.25x / IN** | 0.071 / 0.000 / 2712 / 14.70x / out | 0.066 / 0.000 / 2358 / 11.66x / out |
-| (m) mover hot or `mover_l3 >= 9` | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / 1.000 / 0.1 / — / IN | 0.271 / **1.000** / 8014 / 3.43x / out |
+| (a/g) `opp_hot >= 2` | 0.226 / — / 8546 / 5.75x / out | 0.404 / 0.000 / 15844 / 2.52x / out | 0.586 / 0.429 / 15168 / 1.81x / out |
+| **(a/g) `opp_hot >= 3`** | 0.059 / — / 1175 / 41.80x / IN | 0.057 / 0.000 / 2185 / 18.24x / out | 0.204 / 0.000 / 5001 / 5.50x / out |
+| (a/g) `opp_hot >= 4` | 0.000 / — / 0.0 / — / IN (vacuous) | 0.007 / 0.000 / 126 / 316.61x / IN | 0.011 / 0.000 / 106 / 260.21x / IN |
+| (a) a win-in-one-ply | 0.045 / — / 1803 / 27.25x / IN | 0.078 / 0.000 / 3053 / 13.06x / out | 0.072 / 0.000 / 2462 / 11.17x / out |
+| (a) mover hot | 0.000 / — / 0.0 / — / IN (vacuous) | 0.007 / 1.000 / 0.1 / 478405.00x / IN | 0.011 / 0.143 / 0.1 / 275046.50x / IN |
+| (j) the root only | 0.014 / — / 446 / 110.21x / IN | 0.035 / 1.000 / 1150 / 34.67x / out | 0.066 / 0.143 / 1456 / 18.90x / IN |
+| **(b) cover impossible** | 0.000 / — / 0.0 / — / IN (vacuous) | 0.007 / 0.000 / 126 / 316.61x / IN | 0.011 / 0.000 / 106 / 260.21x / IN |
+| (b′) exactly one cover | 0.045 / — / 1803 / 27.25x / IN | 0.071 / 0.000 / 2712 / 14.70x / out | 0.066 / 0.000 / 2358 / 11.67x / out |
+| (m) mover hot or `mover_l3 >= 9` | 0.000 / — / 0.0 / — / IN (vacuous) | 0.007 / 1.000 / 0.1 / 478405.00x / IN | 0.260 / 1.000 / 7069 / 3.89x / out |
 
 The band-15 `(b′)` cell is transcribed from the artifact; revision 3 printed
-`0.086 / 3399 / 14.4x / out`, a figure no artifact contains (M-3).
+`0.086 / 3399 / 14.4x / out`, a figure no artifact contains (round-2 M-3).
 
 **OUT-OF-SAMPLE** (round 1; no trigger-rich twin exists):
 
 | row | OOS band 15 | OOS band 35 |
 |---|---|---|
 | incumbent | 1.000 / 1.000 / 49135 / 1.00x / out | 1.000 / 1.000 / 36721 / 1.00x / out |
-| (a/g) `opp_hot >= 2` | 0.343 / **0.000** / 17217 / 2.85x / out | 0.416 / 1.000 / 16406 / 2.24x / out |
-| **(a/g) `opp_hot >= 3`** | 0.153 / **0.000** / 7578 / **6.48x** / **out** | 0.117 / 1.000 / 4599 / **7.99x** / **out** |
-| (a/g) `opp_hot >= 4` | 0.042 / 0.000 / 1729 / 28.41x / IN | 0.026 / 0.000 / 863 / 42.55x / out |
-| (a) mover hot | 0.000 / 0.000 / 0 / — / IN (vacuous) | 0.006 / 1.000 / 0.1 / — / IN |
-| (j) the root only | 0.019 / 0.000 / 788 / 62.37x / IN | 0.032 / 1.000 / 996 / 36.87x / out |
-| **(b) cover impossible** | 0.000 / 0.000 / 0 / — / IN (vacuous) | 0.006 / 0.000 / 171 / 215x / IN |
-| (m) mover hot or `mover_l3 >= 9` | 0.000 / 0.000 / 0 / — / IN (vacuous) | 0.006 / 1.000 / 0.1 / — / IN |
+| (a/g) `opp_hot >= 2` | 0.343 / 0.000 / 17216 / 2.85x / out | 0.416 / 1.000 / 16376 / 2.24x / out |
+| **(a/g) `opp_hot >= 3`** | 0.153 / 0.000 / 7578 / 6.48x / out | 0.117 / 1.000 / 4599 / 7.99x / out |
+| (a/g) `opp_hot >= 4` | 0.042 / 0.000 / 1729 / 28.41x / IN | 0.026 / 0.000 / 863 / 42.57x / out |
+| (a) a win-in-one-ply | 0.102 / 0.000 / 5123 / 9.59x / out | 0.110 / 0.000 / 4309 / 8.52x / out |
+| (a) mover hot | 0.000 / 0.000 / 0.0 / — / IN (vacuous) | 0.006 / 1.000 / 0.1 / 440649.00x / IN |
+| (j) the root only | 0.019 / 0.000 / 788 / 62.37x / IN | 0.032 / 1.000 / 996 / 36.86x / out |
+| **(b) cover impossible** | 0.000 / 0.000 / 0.0 / — / IN (vacuous) | 0.006 / 0.000 / 171 / 215.06x / IN |
+| (b′) exactly one cover | 0.088 / 0.000 / 4597 / 10.69x / out | 0.097 / 0.000 / 3963 / 9.27x / out |
+| (m) mover hot or `mover_l3 >= 9` | 0.000 / 0.000 / 0.0 / — / IN (vacuous) | 0.006 / 1.000 / 0.1 / 440649.00x / IN |
 
 **`opp_hot >= 3` FALLS OUT OF SAMPLE BY A FACTOR OF SIX AND A HALF.** In sample
 it cuts band 15 by 41.80x against a required 22.50x; out of sample by **6.48x
 against 24.27x**. On band 35 it answers 7.99x against 43.20x. **The fall is in
-the NUMERATOR — 1175 visits/search becomes 7578 — and not in the budget**, so
+the NUMERATOR — 1,175 visits/search becomes 7,578 — and not in the budget**, so
 the round-1 draw's small conditioning effect (§5.5.1) does not explain it.
 
 **(i) THE CAP**, with each direction's recall separate:
 
 | cap | band 15 (0 wins) | band 35 | trigger-rich | OOS b15 |
 |---|---|---|---|---|
-| 2048 | 49137 / — / 8 of 8 losses | 39867 / 1 of 1 | 27505 / **14 of 14** | 49135 / 3 of 3 |
-| 1024 | 25917 / — / 7 of 8 | 20140 / 1 of 1 | 14059 / **14 of 14** | 25548 / 0 of 3 |
-| 512 | 13497 / — / 5 of 8 | 10204 / 1 of 1 | 7301 / **10 of 14** | 13125 / 0 of 3 |
-| 256 | 7190 / — / 1 of 8 | 5219 / 1 of 1 | 3789 / 2 of 14 | 6793 / 0 of 3 |
+| 2048 | 49137 / 8 of 8 losses | 39867 / 1 of 1 | 27505 / 14 of 14 | 49135 / 3 of 3 |
+| 1024 | 25917 / 7 of 8 losses | 20165 / 1 of 1 | 14118 / 14 of 14 | 25562 / 0 of 3 |
+| 512 | 13497 / 5 of 8 losses | 10217 / 1 of 1 | 7374 / 10 of 14 | 13134 / 0 of 3 |
+| 256 | 7190 / 1 of 8 losses | 5225 / 1 of 1 | 3825 / 2 of 14 | 6798 / 0 of 3 |
 
 **Cap 512 costs four of fourteen trigger-rich wins and all three out-of-sample
 band-15 wins.** No cap reaches a budget alone.
@@ -432,49 +446,56 @@ band-15 wins.** No cap reaches a budget alone.
 
 | | band 15 | band 35 | trigger-rich | OOS b15 | OOS b35 |
 |---|---|---|---|---|---|
-| distinct signatures | 96/221 | 68/141 | 103/181 | 120/216 | 69/154 |
-| visits/search if a repeat is free | 20,188 | 20,068 | 15,350 | 25,847 | 16,802 |
-| cut | 2.43x | 1.99x | 1.79x | 1.90x | 2.19x |
+| distinct signatures | 96/221 | 68/141 | 109/181 | 122/216 | 71/154 |
+| visits/search if a repeat is free | 20,188 | 20,018 | 15,350 | 26,249 | 17,278 |
+| cut | 2.43x | 1.99x | 1.79x | 1.87x | 2.13x |
 
 **(n) GATE THE DIRECTION — the largest single lever in the arc**, and free in
 win recall by construction because `att_proved` is decided before
 `solve_defender` is reached:
 
-| band | attacker-only visits/search | cut | defender's share of visits | losses given up |
+| band | attacker-only visits/search | cut | defender's share | losses given up |
 |---|---|---|---|---|
 | band 15 | 16,135 | 3.05x | **67.2 %** | 8 |
-| band 35 | 16,401 | 2.43x | 58.9 % | 1 |
-| trigger-rich | 11,690 | 2.35x | 57.5 % | 14 |
-| OOS band 15 | 16,378 | 3.00x | 66.7 % | 0 |
-| OOS band 35 | 11,962 | 3.07x | 67.4 % | 1 |
+| band 35 | 16,401 | 2.43x | **58.9 %** | 1 |
+| trigger-rich | 11,690 | 2.35x | **57.5 %** | 14 |
+| OOS b15 | 16,378 | 3.00x | **66.7 %** | 0 |
+| OOS b35 | 11,962 | 3.07x | **67.4 %** | 1 |
 
 ### 5.3 THE COMPOSITIONS
 
-Per cell: visits/search / cut / distinct WINS kept / verdict.
+Per cell: visits/search / cut / distinct WINS kept / verdict. `—` marks a band
+with no win denominator.
 
-| composition | band 15 | band 35 | trigger-rich | **OOS b15** | **OOS b35** |
+| composition | band 15 | band 35 | trigger-rich | OOS b15 | OOS b35 |
 |---|---|---|---|---|---|
-| `opp_hot>=3` + cache | 923 / 53.23x / — / IN | 1845 / 21.61x / 1 of 1 / out | 3607 / 7.62x / **0 of 12** / out | 4670 / 10.52x / **0 of 3** / out | 3550 / 10.34x / 1 of 1 / out |
-| cache + cap 512 | 5740 / 8.56x / — / out | 5119 / 7.79x / 1 of 1 / out | 4242 / 6.48x / 8 of 12 / out | 7108 / 6.91x / 0 of 3 / out | 4396 / 8.35x / 1 of 1 / out |
-| **`opp_hot>=3` + cache + cap 512** | 439 / 111.9x / — / IN | 481 / 82.9x / 1 of 1 / IN | 1036 / 26.55x / **0 of 12** / IN | 1249 / 39.34x / **0 of 3** / IN | **905 / 40.6x / 1 of 1 / OUT** |
-| cache + cap 4096 | 20,188 / 2.43x / — / out | 20,068 / 1.99x / 1 of 1 / out | 15,350 / 1.79x / 12 of 12 / out | 25,847 / 1.90x / 3 of 3 / out | 16,802 / 2.19x / 1 of 1 / out |
-| (m) + cache | 0 / — / vacuous / IN | 0.1 / — / 1 of 1 / IN | 2308 / 11.92x / **12 of 12** / out | 0 / — / **0 of 3** / IN (vacuous) | 0.1 / — / 1 of 1 / IN |
-| **(n) att-only + cache** | 7342 / 6.69x / — / out | 8908 / 4.48x / 1 of 1 / out | 6685 / 4.11x / **12 of 12** / out | 9252 / 5.31x / **3 of 3** / out | 6242 / 5.88x / 1 of 1 / out |
-| (n) att-only + cache + cap 512 | 2070 / 23.74x / — / IN | 2297 / 17.36x / 1 of 1 / out | 1941 / 14.17x / 8 of 12 / out | 2503 / 19.63x / 0 of 3 / out | 1696 / 21.65x / 1 of 1 / out |
-| **(m) + (n) att-only + cache** | 0 / — / vacuous / IN | 0.1 / — / 1 of 1 / IN | **1284 / 21.42x / 12 of 12 / IN** | 0 / — / **0 of 3** / IN (vacuous) | 0.1 / — / 1 of 1 / IN |
+| `opp_hot>=3` + cache | 923 / 53.23x / — / IN | 1,844 / 21.62x / 0/1 / out | 3,607 / 7.62x / 0/12 / out | 4,821 / 10.19x / 0/3 / out | 3,566 / 10.30x / 1/1 / out |
+| cache + cap 512 | 5,819 / 8.44x / — / out | 5,113 / 7.80x / 1/1 / out | 4,242 / 6.48x / 8/12 / out | 7,282 / 6.75x / 0/3 / out | 4,554 / 8.06x / 1/1 / out |
+| **`opp_hot>=3` + cache + cap 512** | 439 / 111.99x / — / IN | 481 / 82.91x / 0/1 / IN | 1,036 / 26.55x / 0/12 / IN | 1,302 / 37.74x / 0/3 / IN | 910 / 40.36x / 1/1 / out |
+| cache + cap 4096 | 20,188 / 2.43x / — / out | 20,018 / 1.99x / 1/1 / out | 15,350 / 1.79x / 12/12 / out | 26,249 / 1.87x / 3/3 / out | 17,278 / 2.13x / 1/1 / out |
+| (m) + cache | 0.0 / — / vacuous / IN | 0.1 / 478405.00x / 1/1 / IN | 2,308 / 11.92x / 12/12 / out | 0.0 / — / 0/3 / IN | 0.1 / 440649.00x / 1/1 / IN |
+| **(n) att-only + cache** | 7,342 / 6.69x / — / out | 8,908 / 4.48x / 1/1 / out | 6,685 / 4.11x / 12/12 / out | 9,252 / 5.31x / 3/3 / out | 6,242 / 5.88x / 1/1 / out |
+| (n) att-only + cache + cap 512 | 2,070 / 23.74x / — / IN | 2,296 / 17.36x / 1/1 / out | 1,941 / 14.17x / 8/12 / out | 2,503 / 19.63x / 0/3 / out | 1,696 / 21.65x / 1/1 / out |
+| **(m) + (n) att-only + cache** | 0.0 / — / vacuous / IN | 0.1 / 478405.00x / 1/1 / IN | 1,284 / 21.42x / 12/12 / IN | 0.0 / — / 0/3 / IN | 0.1 / 440649.00x / 1/1 / IN |
 
 **REVISION 3's SENTENCE IS WITHDRAWN.** It read *"the only composition that keeps
 every win … reaches 12.47x against a required 16.18x … and still short"*.
 **`(m) + (n) att-only + cache` reaches 21.42x against a required 15.29x on
 trigger-rich while keeping 12 of 12 distinct wins** — the first composition in
-this arc to reach a bracket with full win recall. The red team found it, in the
-unit §1 declares and the field had no row on.
+this arc to reach a bracket with full win recall. The round-2 red team found it,
+in the unit §1 declares and the field had no row on.
 
 **AND IT IS STILL NOT SELECTABLE.** `(m)` is `mover_hot > 0 or mover_l3 >= 9`,
 and band 15 holds no firing with `mover_l3 >= 9` in either draw — its maximum is
 6 — so the composition **keeps nothing at all** on both band-15 draws, taking
 0 of the 3 out-of-sample wins. It reaches every budget by admitting nothing,
 which is selection conjunct 4's exact case: row (f) wearing a mechanism.
+
+**EVERY CELL OF §5.2 AND §5.3 IS RENDERED FROM
+`artifacts/stage3c_census_rank_v2.txt` BY MACHINE.** Revision 4's first draft
+hand-copied them and a scoped re-review found twenty-six wrong, nine of them
+figures no artifact contained. A table a human retypes is a table that drifts
+from its artifact, so this one is generated.
 
 ### 5.4 What §5.2 and §5.3 license
 
@@ -485,7 +506,10 @@ which is selection conjunct 4's exact case: row (f) wearing a mechanism.
   Its *"DEAD ON BOTH TESTS INDEPENDENTLY"* is **WITHDRAWN**: under D-512's own
   registered census instrument (D-510's `proofs`, both directions) the row keeps
   **1.000 of band 15's 8 in-sample proofs at 41.80x, INSIDE the budget**. Which
-  instrument the census gate uses is ruling §7.1.
+  instrument the census gate uses is ruling §7.1. **Those eight proofs are ONE
+  POSITION** — entry 9 of the band — so the surviving half of that row's case is
+  one position's worth of evidence, and this document says so where it is
+  quoted rather than only in §4.2's table.
 - **ROW (b) IS SCORED ON ITS MECHANISM AND IS DEAD.** `Cover::Impossible` fires
   0 / 1 / 2 times in 542 in-sample firings and 0 / 1 in 370 out-of-sample, and
   keeps 0.000 wins wherever a win exists. It never reaches its registered
@@ -541,8 +565,8 @@ each, `nodes 50000`, cap 2048).
 
 **REVISION 3'S CLAIM WAS TOO STRONG AND IS NARROWED.** It said four of seven are
 not trigger points; that is true **at the position** and false as a claim about
-the gate, because three of those four fire in-tree and find a proof there. The
-measured finding is smaller and sharper:
+the gate, because **two** of those four — `g002-t12-p2` and `g002-t10-p2` — fire
+in-tree and find a proof there. The measured finding is smaller and sharper:
 
 - **TWO of the five VALUE rows — `g001-t44-p2` and `g002-t39-p1` — produce ZERO
   firings in an entire 50,000-node governed search.** The trigger never fires
@@ -592,27 +616,36 @@ earlier revision scored it.
 
 - **PER-SEARCH** is the form the dispatch names. It is strictly harder because
   the wins are not spread evenly: one trigger-rich search holds six proofs
-  costing 3,108 visits against its own 1,799 budget, and one out-of-sample
-  band-15 search holds three costing 6,014 against 2,024. **No score beats those
+  costing more than its own 1,799-visit budget, and one out-of-sample band-15
+  search holds three costing 6,014 against 2,024. **No score beats those
   ceilings**, because the constraint is arithmetic and not informational.
 - **AGGREGATE** is what the bracket itself fixes — an nps ratio over a whole
-  bench. There the oracle keeps every win on every band, spending 4,635 of
-  34,745 on trigger-rich and 6,014 of 24,294 out of sample. **The budget affords
-  the proofs comfortably.**
+  bench. There the oracle keeps every win on every band, spending **6,218 of
+  35,988** on trigger-rich and **6,014 of 24,295** out of sample. **The budget
+  affords the proofs comfortably** — 17 % and 25 % of it.
 - **THE BOUND over the census columns** is what a score fitted with full
-  knowledge of which column-classes hold wins could reach: **0.857 and 1.000**.
-  It is an upper bound and it is IN-SAMPLE by construction.
+  knowledge of which column-classes hold wins could reach: **0.857** on
+  trigger-rich (12 of 14) and **1.000** out of sample. It is an upper bound, it
+  is IN-SAMPLE by construction, and its arithmetic is exact — a scoped
+  re-review re-solved the knapsack unscaled and agreed on every band.
 
 **WHAT THIS SETTLES, AND IT IS THE MOST IMPORTANT THING IN §5.** The obstacle is
-**not** that the columns cannot separate proofs from non-proofs — they can, to
-0.857 and 1.000. Measured orderings over those columns reach only 0.455 and
-0.333, so there is a large gap between what a fitted score could do and what any
-score this arc could WRITE does. **Closing it means fitting a score and
-validating it out of sample, and the evidence to do that does not exist**: the
-win denominators are 0, 1, 14 and 3, over 0, 1, 4 and 1 distinct positions, and
-the only one worth fitting on has no second draw. **The measured barrier is
-sample size, not information** — which is a different finding from "no detector
-can work", and points at a different remedy.
+**not** that the columns cannot separate proofs from non-proofs. Measured
+orderings over those columns reach **0.571** on trigger-rich and **0.333** out
+of sample, against a bound of 0.857 and 1.000 — so a real gap exists between
+what a fitted score could do and what any ordering this arc could WRITE does.
+**Closing it means fitting a score and validating it out of sample, and the
+evidence to do that does not exist**: the win denominators are 0, 1, 14 and 3,
+over 0, 1, 4 and 1 distinct positions, and the only one worth fitting on has no
+second draw.
+
+**AND THE CLAIM IS FRAME-DEPENDENT, WHICH A FIRST DRAFT OF THIS SECTION DID NOT
+SAY.** *"The barrier is sample size, not information"* is a statement in the
+AGGREGATE frame. In the PER-SEARCH frame — the one the dispatch's own ruling 1
+names — the ceiling on trigger-rich is 0.571 and the best measured ordering
+already reaches 0.571, so **there the gap is ZERO and the barrier is arithmetic,
+not sample size at all.** Both frames are stated because the two answers differ
+and a design has to pick a frame before it can know which obstacle it faces.
 
 ## 5.9 The rows the field was missing (added at revision 2, extended at revision 4)
 
@@ -770,10 +803,13 @@ this table and that clause, and none of them is this session's to weigh:
    are killed by *"excluding a VALUE row of the recall fixture"*, and §5.6 shows
    the fixture cannot discriminate. What fired is the rule this session
    registered, which is a stricter and newer instrument.
-3. **The measured barrier is sample size, not information** (§5.8): a score over
-   the census columns could reach 0.857 / 1.000, and the reason none was built
+3. **In the AGGREGATE frame the barrier is sample size, not information**
+   (§5.8): a score over the census columns could reach 0.857 / 1.000 against
+   the 0.571 / 0.333 any ordering here achieves, and the reason none was fitted
    is that the win denominators are 0, 1, 14 and 3 over 0, 1, 4 and 1 distinct
-   positions.
+   positions. **In the PER-SEARCH frame the dispatch names, the gap is zero on
+   trigger-rich and the barrier is arithmetic instead.** Which frame a design
+   works in is not settled here.
 
 ## 7. WHAT IS OWED — three rulings, and the first one can change the verdict
 
@@ -802,11 +838,17 @@ fitted score reaches 0.857 on trigger-rich and 1.000 out of sample — so the
 honest closing statement of this matrix is not *"no detector can reach the
 bracket"*. It is:
 
-> **The budget affords the proofs. The columns can find them. What this arc does
-> not have is enough proofs to fit a score on and a second draw to check it
-> against** — 14 win-proving firings over 4 positions on the one fixture that
-> cannot be drawn twice, and 3 over 1 position on the one that can.
+> **The budget affords the proofs — 17 % and 25 % of it buys every win. Under an
+> AGGREGATE budget the columns can find them, to 0.857 and 1.000, and no
+> ordering this arc wrote gets past 0.571. What is missing is enough proofs to
+> fit a score on and a second draw to check it against** — 14 win-proving
+> firings over 4 positions on the one fixture that cannot be drawn twice, and 3
+> over 1 position on the one that can. **Under the PER-SEARCH budget the
+> dispatch names, that is not the obstacle: there the ceiling is 0.571, a
+> written ordering already reaches it, and the limit is how the proofs are
+> distributed across searches rather than how few of them there are.**
 
-That is a finding about the EVIDENCE, and the remedy it points at is a position
-corpus, not an abandoned package. Whether D-471's clause reads it as *"cannot
-reach the bracket"* is ruling 1's neighbour and is the operator's.
+That is a finding about the EVIDENCE and about the FRAME, and the remedies it
+points at are a position corpus and a ruling on the frame — not an abandoned
+package. Whether D-471's clause reads any of it as *"cannot reach the bracket"*
+is ruling 1's neighbour and is the operator's.
