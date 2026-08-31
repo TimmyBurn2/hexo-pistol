@@ -1,4 +1,4 @@
-# The WP-2.0 and WP-2.0b dispatches — transcribed to a tracked path
+# The WP-2.0 dispatches — transcribed to a tracked path
 
 **Why this file exists.** These are the operator's governing texts for the
 Stage-2 opener: they set the scope, the requirements, the obligations and the
@@ -9,7 +9,15 @@ nowhere"*, D-469's class in its exact shape — and repaired it by transcription
 (`docs/experiments/stage3_overnight_dispatch.md`). A round-2 red team found this
 arc had made the same mistake again; this file is the repair.
 
-**Provenance.** Transcribed by the session that received them, from its own
+**THERE ARE THREE, AND THE THIRD'S MUTANT LIST DIFFERS FROM THE FIRST'S.** The
+WP-2.0 dispatch and the WP-2.0b dispatch arrived together; the third — the
+M-design-by-quotation round — arrived later and is transcribed at the same
+standard. **A document quoting "the dispatch" must say which**, because the third
+qualifies the seed mutant with *"where the pipeline samples"* and the first does
+not: a design quoted the qualified form and attributed it to the first, which is
+the defect this file exists to make impossible.
+
+**Provenance.** Transcribed by the session that received each, from its own
 prompt. **Verbatim** apart from this preamble and the fenced-block wrapping. A
 reader who doubts the transcription has no second copy to check it against —
 that is the cost of the defect this file repairs, and stating it is better than
@@ -227,6 +235,161 @@ fix round; failure outside the diff; any cap exhausted. On STOP: tree
 clean or WIP on `wp20b-stopped`, never dev; no detached processes,
 receipt; exports complete; summary naming the decision owed, plain
 language first.
+```
+
+---
+
+## WP-2.0 finish — the M-design-by-quotation round
+
+*Received by the session of 2026-08-31 that authored WP-2.0-M revision 3 and
+WP-2.0-S. Transcribed here for the same reason the two above are: it is quoted by
+the documents of that round and would otherwise be locatable nowhere. **Its
+mutant list differs from the WP-2.0 dispatch's above** — it qualifies the seed
+mutant with "where the pipeline samples" — and a document that quotes one must
+say which.*
+
+```
+# [GROUNDWORK] WP-2.0 finish (fresh session): M-design by quotation -> impl -> pilot -> closure
+
+Fresh session; it authored nothing it will now review or cite. Full
+remaining arc in one session where the gates allow: §0 state -> §1
+WP-2.0-M design -> §2 capture-half state -> §3 impl (row (g), branch B)
+-> §4 pilot -> §5 closure. Overnight capable, delegation granted
+in-dispatch (D-382). Long jobs detached, polled, liveness via ps.
+D-401 never read. Standing hazards binding (no concurrent cargo, /home
+not /tmp, /usr/bin/grep for records, CARGO_TARGET_DIR never exported
+around ci.sh).
+
+Read first: CLAUDE.md, docs/process.md, D-521..D-545 and D-53n, the
+session summary (docs/experiments/session_2026-08-31_summary.md), the
+shape matrix rev 2 + its red-team report + the selection (row (g),
+branch B, strongest surviving attack), BOTH WP-2.0-M design revisions
+and all review reports (revision 1 contains the true sentence), the
+WP-2.0 dispatcher + amendments, tools/design_citation_check.py and
+D-543.
+
+## §0 First actions
+
+1. Append the paste block D-lines at the next free numbers.
+2. Confirm dev green at 22fba16 or a descendant, cited from gate lines.
+
+## §1 WP-2.0-M design, by quotation (the granted round)
+
+Discipline, all four mandatory:
+- LIFT, don't rewrite: every mechanism that has survived a review enters
+  this design as a QUOTATION of the surviving text (revision 1's true
+  sentence by name, the matrix row (g) text, the memo's verified
+  findings), cited to its source revision SHA. New prose is only
+  connective tissue and NEW claims, each citing code at file:line or an
+  artifact by digest (D-543).
+- `tools/design_citation_check.py` runs green BEFORE the review is
+  dispatched; a review finding the checker could have caught is recorded
+  as author debt in the summary.
+- PASSED-SECTION FREEZE (new law, paste block): any section a reviewer
+  has passed in any prior revision is frozen; if this design must edit
+  one, the edit is listed in the document header with grounds. An
+  unlisted edit to a frozen section is a finding by itself.
+- The design states mechanisms, invariants and tests only (D-483); the
+  cold-label agreement criterion (D-53n) appears as an obligation with
+  its registered check named, not re-argued.
+
+REVIEW-design: fresh subagent, strongest model. Outcome rules fixed:
+PASS -> §2. One FAIL -> one fix round under the same discipline ->
+scoped re-check. A second FAIL -> STOP, the package returns to the
+architect; no further rounds exist in this session.
+
+## §2 Capture-half state
+
+Verify, from the tracked record, whether the capture half's design has
+a surviving PASS. If yes: quote it and proceed. If it is pending: author
+it under §1's identical discipline and gates (its own granted round,
+same outcome rules). If it FAILED twice previously and no grant covers
+it: STOP, back to the architect — do not infer a grant.
+
+## §3 Implementation (row (g), branch B)
+
+- Per the selected row's own text: a labelling mode over a written
+  report, zero engine seams, replay.rs's walk as the re-ask loop,
+  pistol-core as referee. No engine diff of any kind (D-53n's license);
+  if any step appears to need one, that is a premise failure: STOP.
+- Obligations from the standing WP-2.0 dispatcher unchanged: schema
+  with loader tests, ledgers append-only, determinism re-run receipt,
+  mutants (schema field dropped, seed ignored where the pipeline
+  samples, ledger overwrite, and — new for (g) — a re-ask served warm
+  must die at the cold-label test).
+- REVIEW-impl: fresh, strongest, one fix round, standing caps.
+
+## §4 Pilot (registered before it runs)
+
+Small registered book_v2 range (ledger updated). Criteria registered
+first, including: the D-53n cold-label agreement check (sampled
+positions re-labelled in fresh processes, byte-equal or STOP);
+throughput MEASURED (games/hour, labels/hour); replay_check green over
+pilot games; zero forfeits; the determinism re-run receipt on a
+sub-range. The pilot carries no census and is not corpus (D-53n).
+
+## §5 Closure
+
+- Corpus-size plan for training stated as ESTIMATED with the arithmetic
+  shown from the pilot's measured throughput.
+- ROADMAP: production label runs unblocked pending WP-2.0b; next
+  package is WP-2.0b (census identity), then production corpus, then
+  the Stage-2 eval design package consuming the corpus plan and the
+  Research-A findings.
+- D-534 restated in one line: the 725 ms movetime overshoot blocks any
+  play-config arming of the solver; no SPRT discharges it.
+- ADR lines; artifacts + manifests exported with digests (D-469);
+  CI all gates at closure HEAD cited from gate lines; tree clean; no
+  worktrees; no processes; summary in the standing format, ONE LINE FOR
+  THE MORNING first, plain language before technical.
+
+## Laws (pointers)
+
+Receipts; mutant-dies; CLAIM-HOME; D-424; D-374; D-477; D-479; D-483;
+D-469; D-543 + citation checker; passed-section freeze; SPRT the only
+strength voice (none is made here); standing caps everywhere — the
+overnight loop grant is long expired.
+
+## STOP protocol
+
+STOP on: §1/§2 second design failure; a premise failure in §3; cold-
+label mismatch; determinism failure; CI red after one fix round;
+failure outside the diff; any cap exhausted. On STOP: tree clean or WIP
+on `wp20-finish-stopped`, never dev; no detached processes, receipt;
+exports complete; summary naming the decision owed, plain language
+first, written for the operator's first read.
+
+## Paste block (append at next free D-numbers)
+
+D-54x: Architect grant per the D-489 precedent: WP-2.0-M's design
+receives ONE fresh-session round despite its spent cap, on the recorded
+ground that all five design failures were authorship-class (claims the
+code doesn't make, or true claims destroyed by rewrites) and none were
+judgement-class; the round runs under quotation-lift and the citation
+checker; outcome rules fixed in the dispatch; a second failure returns
+the package to the architect.
+
+D-54y: Standing law, passed-section freeze: a section a reviewer has
+passed is frozen across subsequent revisions; any edit to a frozen
+section must be listed in the revision header with grounds, and an
+unlisted edit to a frozen section is a review finding by itself.
+Motivating instance: WP-2.0-M revision 2 deleting revision 1's true
+sentence and building on its negation. Complements D-543: the citation
+checker guards claims entering a document; the freeze guards claims
+already verified in it.
+
+## DONE
+
+- §1 design PASSED under the discipline (or a clean STOP), checker
+  green before review, freeze header honoured.
+- §2 capture half verified or designed under the same gates.
+- §3 pipeline landed on row (g)/branch B with zero engine seams,
+  mutants dead as listed.
+- §4 pilot receipts: cold-label agreement green, throughput MEASURED,
+  replay_check green, zero forfeits, determinism receipt.
+- §5 closure complete: corpus plan ESTIMATED with arithmetic, ROADMAP
+  updated, D-534 restated, CI green at HEAD, tree clean, summary on
+  disk.
 ```
 
 ---
