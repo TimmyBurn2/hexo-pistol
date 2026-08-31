@@ -373,15 +373,57 @@ fn a_capture_whose_source_digest_is_not_the_reports_is_refused_by_name() {
 
 #[test]
 fn a_report_whose_result_contradicts_its_moves_refuses_the_run_by_name() {
+    // The capture is taken from the FLIPPED report, so the digest binding and
+    // the identity check both pass and the outcome cross-check is the thing
+    // under test. Flipping the report AFTER capturing it would be refused two
+    // checks earlier, and an assertion that accepted either refusal would pin
+    // nothing.
     let scratch = Scratch::new("labels-outcome-check");
-    let staged = staged(&scratch, "check");
-    let flipped = staged.text.replace("result capped", "result p1_win");
-    assert_ne!(flipped, staged.text, "this fixture recorded no capped game");
+    let openings = scratch.write("openings-check.txt", &openings_prefix(OPENINGS));
+    let config = scratch.stub_config("engine-check.toml", "honest");
+    let spec = ConfigSpec {
+        openings: &openings,
+        take: OPENINGS,
+        skip: 0,
+        turn_cap: TURN_CAP,
+        workers: 1,
+        hang_ms: 30_000,
+        elo1: 4.0,
+        budget_kind: "nodes",
+        budget_value: 5_000,
+        binary_a: STUB,
+        config_a: &config,
+        binary_b: STUB,
+        config_b: &config,
+    };
+    let ran = run(&scratch, &spec, "check");
+    let flipped = ran.report().replace("result capped", "result p1_win");
+    assert_ne!(
+        flipped,
+        ran.report(),
+        "this fixture recorded no capped game"
+    );
     let report = scratch.write("report-flipped.txt", &flipped);
+    let capture = scratch.path("capture-flipped.txt");
+    let captured = Command::new(ARENA)
+        .arg("--capture")
+        .arg(&report)
+        .arg("--out")
+        .arg(&capture)
+        .arg("--label-nodes")
+        .arg("5000")
+        .output()
+        .expect("the arena binary runs");
+    assert!(
+        capture.exists(),
+        "the capture stage refused the flipped report, so this test cannot reach the outcome \
+         check: {}",
+        String::from_utf8_lossy(&captured.stderr)
+    );
     let out = scratch.path("corpus-flipped.txt");
     let output = Command::new(ARENA)
         .arg("--labels")
-        .arg(&staged.capture)
+        .arg(&capture)
         .arg("--report")
         .arg(&report)
         .arg("--out")
@@ -391,9 +433,57 @@ fn a_report_whose_result_contradicts_its_moves_refuses_the_run_by_name() {
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
     assert!(!out.exists(), "a contradicted report produced a corpus");
     assert!(
-        stderr.contains("its moves reach") || stderr.contains("digesting"),
-        "the refusal named neither the outcome nor the binding: {stderr}"
+        stderr.contains("its moves reach"),
+        "the refusal did not name the outcome disagreement: {stderr}"
     );
+}
+
+#[test]
+fn a_corpus_column_that_is_empty_or_carries_a_tab_refuses_the_run_by_name() {
+    // `best` is the tail of a line an ENGINE wrote, so an empty column is
+    // reachable rather than hypothetical — and the loader refuses one, so a
+    // transform without this guard writes a corpus it cannot read back.
+    let mut record = pistol_arena::labels_file::CorpusRecord {
+        game: 2,
+        turns_played: 4,
+        moves: String::from("0,0"),
+        key_seq: String::from("0,0"),
+        key_pos: "0".repeat(32),
+        key_full: String::from("0,0:p1"),
+        to_move: String::from("p2"),
+        score_kind: String::from("eval"),
+        score_value: 0,
+        best: String::new(),
+        depth_turns: 1,
+        search_nodes: 1,
+        solver_nodes: 0,
+        book: false,
+        result: String::from("capped"),
+        end: String::from("normal"),
+    };
+    let error = pistol_arena::labels::writable(&record).expect_err("an empty column is refused");
+    assert!(
+        error.to_string().contains("`best` column is empty")
+            && error.to_string().contains("game 2"),
+        "the refusal did not name the column and the record: {error}"
+    );
+    record.best = String::from("0,0\tbestmove");
+    let error = pistol_arena::labels::writable(&record).expect_err("a TAB is refused");
+    assert!(error.to_string().contains("TAB"), "{error}");
+}
+
+#[test]
+fn a_corpus_missing_its_opening_turns_param_is_refused_by_name() {
+    let scratch = Scratch::new("labels-openingturns");
+    let (corpus, _) = corpus_of(&scratch, "openingturns");
+    let stripped: String = corpus
+        .lines()
+        .filter(|line| !line.starts_with("# param opening_turns "))
+        .map(|line| format!("{line}\n"))
+        .collect();
+    let error = pistol_arena::labels_file::read(&stripped)
+        .expect_err("a corpus missing `opening_turns` must be refused");
+    assert!(error.to_string().contains("opening_turns"), "{error}");
 }
 
 #[test]
@@ -445,6 +535,29 @@ fn two_transposed_positions_are_two_records_sharing_a_key_full() {
     let (pos_two, full_two) = key(&two);
     assert_eq!(pos_one, pos_two, "two orders of one turn are one position");
     assert_eq!(full_one, full_two, "`key_full` folds transposition");
+
+    // And the corpus itself deduplicates nothing: every capture record becomes a
+    // record, so two positions sharing a key are two rows.
+    let scratch = Scratch::new("labels-dedupe");
+    let (corpus, _) = corpus_of(&scratch, "dedupe");
+    let read = pistol_arena::labels_file::read(&corpus).expect("the corpus reads");
+    let mut keys: Vec<&str> = read
+        .records
+        .iter()
+        .map(|record| record.key_full.as_str())
+        .collect();
+    let total = keys.len();
+    keys.sort_unstable();
+    keys.dedup();
+    assert!(
+        total >= keys.len(),
+        "the corpus holds fewer records than distinct keys, which is impossible"
+    );
+    assert_eq!(
+        total,
+        read.records.len(),
+        "the corpus deduplicated records on write"
+    );
 }
 
 /// Rewrite every body record through `edit`, re-digesting honestly so the only

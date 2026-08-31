@@ -181,7 +181,16 @@ pub fn read(text: &str) -> Result<Corpus, ArenaError> {
              {CORPUS_SCHEMA_VERSION}"
         )));
     }
-    for key in ["score_units", "score_sign", "mate_counts", "depth_meaning"] {
+    for key in [
+        "experiment_sha256",
+        "source_sha256",
+        "label_go",
+        "opening_turns",
+        "score_units",
+        "score_sign",
+        "mate_counts",
+        "depth_meaning",
+    ] {
         header(text, "param", key)?;
     }
     let claimed = emit::claimed_body_digest(text)

@@ -203,3 +203,72 @@ pub(crate) fn value_of<'a>(words: &[&'a str], key: &str) -> Option<&'a str> {
         .and_then(|at| words.get(at + 1))
         .copied()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{fields_of, totals_of, value_of};
+
+    /// A totals line the engine could have written, with the solver block.
+    const SOLVER: &str = "info totals depth_turns 3 seldepth 3 nodes 90 search_nodes 60 \
+                          solver_nodes 30 solver_firings 2 solver_invocations 2 solver_proofs 1 \
+                          solver_root_nodes 4 nps 900 time 100 hashfull 12 score cp 7 pv 0,0";
+    /// The same without it, which is every gate-off line.
+    const PLAIN: &str =
+        "info totals depth_turns 1 seldepth 1 nodes 4 nps 1 time 0 hashfull 0 score mate 3 pv 0,0";
+
+    #[test]
+    fn fields_of_gives_the_word_after_score_and_the_word_after_that() {
+        let words = fields_of(PLAIN).expect("a totals line");
+        let at = words
+            .iter()
+            .position(|w| *w == "score")
+            .expect("a score key");
+        assert_eq!(words[at + 1], "mate");
+        assert_eq!(words[at + 2], "3");
+    }
+
+    #[test]
+    fn fields_of_reads_a_captured_line_that_has_no_time_field() {
+        // What the capture writes: the two wall-clock fields removed.
+        let captured = "info totals depth_turns 1 seldepth 1 nodes 4 hashfull 0 score cp 0 pv 0,0";
+        let words = fields_of(captured).expect("a captured totals line is still a totals line");
+        assert_eq!(value_of(&words, "nodes"), Some("4"));
+        assert_eq!(value_of(&words, TIME_MISSING), None);
+    }
+
+    /// The field a captured line no longer carries.
+    const TIME_MISSING: &str = "time";
+
+    #[test]
+    fn fields_of_refuses_a_line_without_the_totals_marker() {
+        assert!(fields_of("info depth_turns 1 nodes 4").is_none());
+        assert!(fields_of("bestmove 0,0").is_none());
+    }
+
+    #[test]
+    fn value_of_matches_a_whole_word_so_nodes_is_not_search_nodes() {
+        let words = fields_of(SOLVER).expect("a totals line");
+        assert_eq!(value_of(&words, "nodes"), Some("90"));
+        assert_eq!(value_of(&words, "search_nodes"), Some("60"));
+        assert_eq!(value_of(&words, "solver_nodes"), Some("30"));
+    }
+
+    #[test]
+    fn totals_of_still_refuses_a_line_missing_nodes_time_or_depth() {
+        // All three lookups are load-bearing: this is what a fourth one, made
+        // load-bearing, would break for the SPRT path.
+        assert!(totals_of(PLAIN).is_some());
+        for key in ["depth_turns 1 ", "nodes 4 ", "time 0 "] {
+            let broken = PLAIN.replacen(key, "", 1);
+            assert!(
+                totals_of(&broken).is_none(),
+                "a totals line missing `{key}` was billed anyway"
+            );
+        }
+    }
+
+    #[test]
+    fn totals_of_reads_the_three_the_sprt_path_bills_from() {
+        assert_eq!(totals_of(SOLVER), Some((90, 100, 3)));
+    }
+}

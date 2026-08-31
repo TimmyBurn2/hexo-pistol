@@ -214,6 +214,45 @@ fn one(
     })
 }
 
+/// No field of a written record may be empty or carry a TAB.
+///
+/// The `best` column is the tail of a line an ENGINE wrote, so both are
+/// reachable rather than hypothetical: `bestmove ` with a trailing space yields
+/// an empty field, and the loader refuses one. Checked on the WRITE side so the
+/// transform cannot produce a corpus its own reader rejects.
+///
+/// # Errors
+/// Naming the column and the record it was derived for.
+pub fn writable(record: &CorpusRecord) -> Result<(), ArenaError> {
+    for (name, field) in [
+        ("moves", &record.moves),
+        ("key_seq", &record.key_seq),
+        ("key_pos", &record.key_pos),
+        ("key_full", &record.key_full),
+        ("to_move", &record.to_move),
+        ("score_kind", &record.score_kind),
+        ("best", &record.best),
+        ("result", &record.result),
+        ("end", &record.end),
+    ] {
+        if field.is_empty() {
+            return Err(refuse(format!(
+                "game {} turn {}: the `{name}` column is empty, and no column of this record can \
+                 be",
+                record.game, record.turns_played
+            )));
+        }
+        if field.contains('\t') {
+            return Err(refuse(format!(
+                "game {} turn {}: the `{name}` column carries a TAB, which this record's arity \
+                 cannot survive",
+                record.game, record.turns_played
+            )));
+        }
+    }
+    Ok(())
+}
+
 /// The outcome pistol-core derives, checked against the one the report recorded.
 ///
 /// The referent is the arena's RECORDED VERDICT, and the defect class this
@@ -284,8 +323,12 @@ pub fn run(
     let records: Vec<CorpusRecord> = capture
         .records
         .iter()
-        .map(|record| one(record, transcript, opening_turns))
-        .collect::<Result<_, _>>()?;
+        .map(|record| {
+            let built = one(record, transcript, opening_turns)?;
+            writable(&built)?;
+            Ok(built)
+        })
+        .collect::<Result<_, ArenaError>>()?;
     for game in &transcript.games {
         if !records.iter().any(|record| record.game == game.index) {
             return Err(refuse(format!(
