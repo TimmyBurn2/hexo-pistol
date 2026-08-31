@@ -1,7 +1,22 @@
 # WP-2.0 — OPTION MATRIX: where the label pipeline LIVES
 
-**REVISION 2**, after a fresh-context DECISION-RED-TEAM returned **FALLS** on
-revision 1 (`28e1afd`) — 3 BLOCKING, 9 MAJOR, 4 MINOR. **Two of the three
+**REVISION 3**, after a second fresh-context DECISION-RED-TEAM returned **STANDS
+WITH CORRECTIONS** on revision 2 (`cb87c21`) — 1 BLOCKING, 12 MAJOR, 6 MINOR —
+having failed to kill row (g) on any of its four load-bearing claims. **The one
+BLOCKING is a field question, ruled in §0 below.** Revision 2 followed a first
+red team that returned **FALLS** on revision 1 (`28e1afd`) — 3 BLOCKING, 9 MAJOR,
+4 MINOR.
+
+**THE MEASURED BLOCK WAS WRONG A THIRD TIME AND THAT IS RECORDED HERE, NOT
+BURIED.** Revision 1 reported `pistol-arena` as **19 `src/*.rs` files**; it is
+**24** (26 including subdirectories). The error came from a `tail -20` on a
+sorted `wc -l`, which silently dropped the head of the list — and **revision 2
+re-asserted the figure under the label `REPRODUCED` without re-running it**,
+which is worse than the original slip. Revision 2 also listed `replay`'s `walk`
+as *"Public and reusable"*; `fn walk` carries no `pub` and the file contains zero
+`pub(crate)`. Both are corrected below. Three errors in three revisions, all in
+the block headed *"MEASURED, so no row is ranked on a guess"*, is a finding about
+this document's method and not only about its numbers. **Two of the three
 BLOCKING findings are measurement errors in the block revision 1 headed
 *"MEASURED, so no row is ranked on a guess"***, which is the sharpest place to
 be wrong and is why this revision leads with them.
@@ -49,7 +64,21 @@ the work** — so the axis is a filter, not a ranking, and this revision says so
    `totals_of` parses `nodes`, `time`, `depth_turns` and **no score, no pv**.
    Every row says how the label gets out. **No row gets it from `ask` as it
    stands, and no row gets it from `totals_of` without new parsing.**
-4. **COLDNESS, REBUILT ON THE MECHANISM (D-540).** The label must not be
+4. **COLDNESS, REBUILT ON THE MECHANISM — AND D-540 HAS TWO CLAUSES, NOT ONE.**
+   Revision 2 used the first and dropped the second. D-540 verbatim: *"labels
+   must be cold by construction **with a registered fresh-process agreement
+   criterion in the pilot**"*, and *"the criterion is what PROVES the
+   construction holds, by agreement between a pipeline-produced label and the
+   same position re-scored in a FRESH PROCESS"*. **That criterion is owed under
+   every row**, and `docs/process.md`'s rule bites on how it is written: *"a
+   criterion that is a property the named defect class PRESERVES … passes
+   vacuously and is not a criterion"* — which is D-527's own defect, the
+   precedent D-540 cites. A row whose label pass already spawns per label
+   satisfies it **vacuously**, and that is a reason to prefer a `newgame` row,
+   not an argument against one. The pilot's pre-registration owes the criterion
+   with the defect class it excludes named.
+
+   **THE MECHANISM (D-540, first clause).** The label must not be
    produced by a `go` on a table another `go` warmed. **The mechanism is
    `newgame`, not a fresh process**: `crates/pistol-search/src/tt/mod.rs`'s
    `Table::clear` fills every bucket with `EMPTY` and zeroes `generation` and
@@ -57,19 +86,26 @@ the work** — so the axis is a filter, not a ranking, and this revision says so
    `crates/pistol-engine/tests/engine_tests.rs`'s
    `new_game_forgets_the_position_and_everything_learned` pins that an engine
    which *"has played a different game and been told `newgame`, must agree node
-   for node (D-7)"*. **So coldness costs one line, not a process spawn** — and
-   the criterion is no longer "how expensive is coldness" but **"where can a
-   `newgame` land without disturbing a game in progress"**, which is a real
-   difference between a one-pass and a two-pass row.
+   for node (D-7)"*. **So coldness costs one `newgame` rather than a process spawn** — but *"one
+   line"* is a claim about the SOURCE and not about the COST: `Table::clear`
+   fills every bucket, and every committed instrument seat sets
+   `tt_bytes = 268435456`, so a `newgame` per label is a **256 MiB memset per
+   label**. That is cheaper than a process spawn plus the same allocation, and
+   it is not free; **the pilot measures it and this matrix does not guess it**
+   (D-500). What the criterion now discriminates is **where a `newgame` may land
+   without disturbing a game in progress**, which is a real difference between a
+   one-pass and a two-pass row.
 5. **WHAT THE PINNING TEST BECOMES.** Updated deliberately, never deleted.
 
 **MEASURED, and this block is the one revision 1 got wrong** (D-291):
 
-- `pistol-arena` is **4,240 lines over 19 `src/*.rs` files**, largest
-  `transcript.rs` at 379. Its `pistol-*` dependencies are exactly `pistol-cli`,
-  `pistol-core`, `pistol-engine`. **REPRODUCED.**
-- `pistol-cli` ships **five binaries**, so a sibling binary is an established
-  shape there. **REPRODUCED** — and irrelevant, because (c) dies on the cycle.
+- `pistol-arena` is **24 `src/*.rs` files** (26 including subdirectories). Its
+  `pistol-*` dependencies are exactly `pistol-cli`, `pistol-core`,
+  `pistol-engine`. **CORRECTED — revisions 1 and 2 both said 19.**
+- `pistol-cli` ships **five binaries** from `src/bin/` while declaring **zero
+  `[[bin]]` sections** — cargo autodiscovery is live. **So row (h) needs no
+  manifest edit either, and revision 2's claim that (g) is *"the only row of
+  which that is true in every sense"* is FALSE.** Corrected in §3(h).
 - **`crates/pistol-arena/src/lib.rs` declares 22 `pub mod`.** Revision 1 said the
   reusable surface was five items and priced row (b) on that. **CORRECTED.**
   Public and reusable: `channel::Channel` (with `unsolicited`, D-172's own
@@ -209,9 +245,10 @@ answer the field can express.
 *Added by the round-1 DECISION-RED-TEAM under D-511's precedent.*
 
 **Mechanism.** A third arm in `bin/arena.rs`'s mode match, beside `--config` and
-`--replay`: read a report the arena wrote (`transcript::read`), walk each game's
-recorded moves through `replay.rs`'s shape, but send `newgame` before each ask
-and ask at the **label** `go_line`. The games are produced by the **unmodified**
+`--replay`: read a report the arena wrote (`transcript::read`) and walk each
+game's recorded moves **in the shape `replay.rs` uses** — re-implemented, because
+`walk` is module-private — sending `newgame` before each ask and asking at the
+**label** `go_line`. The games are produced by the **unmodified**
 SPRT path in a separate, earlier run.
 
 **Seam cost.** **ZERO — and it is the only row of which that is true in every
@@ -220,9 +257,25 @@ no dependency-name change; all four tests in `workspace_shape_tests.rs`
 untouched. `bin/arena.rs` already dispatches modes, and `arena-stub-engine`
 shows a second `[[bin]]` is an established shape in this crate.
 
-**Label seam.** Either (e)'s non-fatal widening, shared by both clients, or a
-label-only reader in the new mode reusing the public `Channel`. **The row does
-not need to pick, and this matrix does not pick for it.**
+**Label seam — THE FORK IS NAMED AND PRICED, and revision 2 left it open.** A
+matrix may leave a design choice open; it may not leave open a choice whose two
+branches it has already priced as fatal to two other rows.
+
+- **Branch A — its own totals reader.** A second reader of the `info totals`
+  line inside one crate, so D-80's totals-marker discipline lives in two places.
+  **That is verbatim row (b)'s registered kill condition**, charged to (b) and
+  free to (g) in revision 2.
+- **Branch B — widen `exchange::totals_of`** (and raise it to `pub(crate)`).
+  Then (g) carries (e)'s arena change: the `?`-chain that would suppress
+  `compute.add` and zero the SPRT report's node counts if a new lookup were made
+  load-bearing, and the `arena-stub-engine` blast radius.
+
+**(g) IS TAKEN ON BRANCH B**, and the round-1 red team's own failed attack is
+why it is safe: keep the three existing lookups load-bearing and make `score`
+and `pv` **non-fatal `Option`s**, and the widening is output-neutral for the
+SPRT path. One parser, inside the crate, serving both clients. Branch A trades
+that for a second parser and inherits (b)'s kill condition; there is no version
+of this row on which the fork is free.
 
 **Coldness.** `newgame` before each label `go`. **And the two-pass decomposition
 is what makes that safe**: because the labelling pass runs over a WRITTEN REPORT,
@@ -252,8 +305,10 @@ does; no run has confirmed it, and the design owes that dry run.
 **Mechanism.** `crates/pistol-arena/src/bin/label.rs`, a third target beside
 `arena` and `arena-stub-engine`, consuming the crate's `pub` modules.
 
-**Seam cost.** ZERO new spellings, zero dependency changes — the manifest already
-declares two `[[bin]]`s.
+**Seam cost.** ZERO new spellings, zero dependency changes. Revision 2 implied
+this cost more than (g); it does not. `pistol-cli` ships five binaries from
+`src/bin/` with **zero** `[[bin]]` sections declared, so cargo autodiscovery
+means a new binary needs no manifest edit in either crate.
 
 **Label seam / coldness.** As (g).
 
@@ -263,10 +318,14 @@ the crate's command surface, not about the pipeline.
 
 ---
 
-## 4. RECOMMENDATION
+## 4. SELECTION — row (g), on branch B
 
-**REGISTERED SLOT — written only after a fresh-context DECISION-RED-TEAM has
-attacked THIS revision.** Nothing is selected until then.
+**The slot is filled.** Two DECISION-RED-TEAM rounds have attacked this field;
+the second was pointed at row (g) by name, with the operator's leaning stated to
+it verbatim so it could attack the leaning rather than infer it, and it returned
+**"Row (g) survives. I could not kill it."** The selection record is
+`docs/experiments/matrix_wp20_shape_selection.md`; the strongest surviving attack
+is recorded there, as the Process requires.
 
 What revision 2 may say is what it measured, and the field has changed shape
 since revision 1 said it:
