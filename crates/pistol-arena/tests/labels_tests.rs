@@ -473,6 +473,60 @@ fn a_corpus_column_that_is_empty_or_carries_a_tab_refuses_the_run_by_name() {
 }
 
 #[test]
+fn a_capture_whose_bestmove_carries_no_turn_refuses_the_run_by_name() {
+    // Drives the CALL, not the guard: a test that only calls `writable` pins the
+    // function and leaves "the guard not called" alive — which is the defect
+    // this arc's design round was failed for and which a mutation run caught
+    // here too.
+    //
+    // `bestmove ` with a trailing space is what an engine can write and what the
+    // capture carries verbatim; the transform strips the prefix and is left with
+    // an empty `best` column, which its own loader refuses.
+    let scratch = Scratch::new("labels-empty-best");
+    let staged = staged(&scratch, "emptybest");
+    let capture_text = std::fs::read_to_string(&staged.capture).expect("readable");
+    let header: String = capture_text
+        .lines()
+        .take_while(|line| !line.starts_with("# body_sha256 "))
+        .map(|line| format!("{line}\n"))
+        .collect();
+    let body: String = pistol_cli::corpus::emit::body_of(&capture_text)
+        .expect("a body")
+        .split('\n')
+        .filter(|line| !line.is_empty())
+        .enumerate()
+        .map(|(at, line)| {
+            let mut fields: Vec<&str> = line.split('\t').collect();
+            if at == 0 {
+                fields[4] = "bestmove ";
+            }
+            format!("{}\n", fields.join("\t"))
+        })
+        .collect();
+    let rewritten = format!(
+        "{header}# body_sha256 {}\n{body}",
+        pistol_cli::sha256::sha256_hex(body.as_bytes())
+    );
+    let capture = scratch.write("capture-emptybest.txt", &rewritten);
+    let out = scratch.path("corpus-emptybest.txt");
+    let output = Command::new(ARENA)
+        .arg("--labels")
+        .arg(&capture)
+        .arg("--report")
+        .arg(&staged.report)
+        .arg("--out")
+        .arg(&out)
+        .output()
+        .expect("the arena binary runs");
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(!out.exists(), "an empty `best` column produced a corpus");
+    assert!(
+        stderr.contains("`best` column is empty"),
+        "the refusal did not name the empty column: {stderr}"
+    );
+}
+
+#[test]
 fn a_corpus_missing_its_opening_turns_param_is_refused_by_name() {
     let scratch = Scratch::new("labels-openingturns");
     let (corpus, _) = corpus_of(&scratch, "openingturns");
