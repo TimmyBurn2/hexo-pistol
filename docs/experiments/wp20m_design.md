@@ -1,7 +1,22 @@
 # WP-2.0-M — DESIGN: the labelling pass
 
-**REVISION 5**, under **D-548**'s grant of up to four further rounds, after
-revision 4 (`a9a4a3a`) took a scoped re-review and returned **FAIL** — 0
+**REVISION 6**, a correction round after revision 5 (`41a52f0`) took a scoped
+re-review and **PASSED** — 0 BLOCKING, 0 MAJOR, 9 MINOR. **The design is
+therefore under D-547's freeze in full**, and every edit below is listed in
+§0.2c with its ground. Nothing here changes a mechanism, an invariant or a
+decision: the round deletes two false clauses, replaces two mutants that cannot
+die, names three test drivers, and corrects three counts.
+
+**ONE OF THE CORRECTIONS IS NOT THE REVIEWER'S AND IS RECORDED AS THIS SESSION'S
+OWN.** §14.1 carried the universal *"every committed engine config has the solver
+off the search path"*. **It is false** — `configs/bench_wp18c_solver_on.toml:45`,
+`configs/gate_staged_solver_v0.toml:47` and `configs/play_staged_solver_v0.toml:75`
+all arm it — and it was found by the concurrent WP-2.0-S review, not by this
+document's own. It is deleted rather than narrowed; the conclusion it was
+propping up never needed it.
+
+Revision 5 was authored under **D-548**'s grant of up to four further rounds,
+after revision 4 (`a9a4a3a`) took a scoped re-review and returned **FAIL** — 0
 BLOCKING, 2 MAJOR, 6 MINOR. **D-546's STOP had already fired**: revisions 3 and 4
 are two failures, and the operator lifted the cap rather than taking the package
 back. D-548 records the ground — the failure CLASS changed even though the
@@ -85,7 +100,7 @@ ground; an unlisted edit is a finding by itself.
 | revision 2 §3 second paragraph, **engine verification** | rev-2 review MAJOR 3 APPLIED | **LIFTED VERBATIM** | — |
 | revision 2 §4 **THE ONE NORMALISATION** | rev-2 review's *"strongest attack that did not land"*, four routes closed | **LIFTED VERBATIM** | — |
 | revision 2 §4 **THE SOURCE IS NAMED ON THE FACE OF THE FILE** | rev-2 review MAJOR 10 APPLIED | **LIFTED VERBATIM** | — |
-| revision 2 §6 **the failure table** | rev-2 review MAJOR 1 APPLIED | **EDITED**: three rows added, **and row 1 is reworded** | MINOR H — hard rule 3 prefers a refusal named per reason, and the channel has two outcomes the table did not name. Row 1's rewording (*"its two engine sections differ"* → *"its two seats attest different engines"*) is **required by §3's BLOCKING A remedy** and was unlisted in revision 3 (rev-3 review **m2**). The third row is the malformed totals line (**m9**) |
+| revision 2 §6 **the failure table** | rev-2 review MAJOR 1 APPLIED | **EDITED**: **four rows added**, and row 1 is reworded | MINOR H — hard rule 3 prefers a refusal named per reason, and the channel has two outcomes the table did not name. Row 1's rewording (*"its two engine sections differ"* → *"its two seats attest different engines"*) is **required by §3's BLOCKING A remedy** and was unlisted in revision 3 (rev-3 review **m2**). The third row is the malformed totals line (**m9**) and the fourth is the write-side TAB refusal (rev-4 review **N7**). Revision 5 said three, which is the count defect N3 named one round earlier in this same block |
 | revision 2 §7 **the budget's kind** | rev-2 review MAJOR 8, substance taken | **EDITED**: the builder is named, and the grammar is fixed so no other kind is spellable | MAJOR 8's unapplied half |
 | revision 2 §8 **the removed mutant** | rev-2 review MAJOR 6 APPLIED | **KEPT removed**, and replaced by a mutation this package's shipped code can actually take | MAJOR 6's own reasoning, carried one step further |
 | revision 2 §4 **THE FILE'S SHAPE** | rev-2 review MAJOR 4, applied half | **LIFTED VERBATIM** | — (rowed for consistency: rev-3 review noted three verbatim lifts were rowed and this one was not) |
@@ -134,13 +149,33 @@ finding**.
 |---|---|---|---|
 | **N1** | the normalisation's integration limb is restored beside the unit tests | rev 3: one stub-driven integration assertion, killing both the function and the CALL | rev 5: the unit tests kill the function in both spellings, **and** `a_captured_record_carries_the_normalised_totals_line` kills the call, with its own mutant row |
 | **N2** | `arena_version` leaves the header as it left the digest | nothing — it was a `param` no reader reads | nothing is owed: §5's argument covers both, and the provenance it was offering is the pilot's governing revision |
-| **N4** | INVARIANT 10's evidence names SPRT-path BEHAVIOUR, not files | rev 4: a sentence naming one file where this package edits two | rev 5: the diff, INVARIANT 7's test, and gate 15 — unchanged; only the sentence is true now |
-| **N5** | §3.1 separates detection from the refusal message | rev 4: one rule stated twice and differently | rev 5: `==` detects, a field walk reports, and the mutant names the walk |
+| **N4** | INVARIANT 10's evidence names SPRT-path BEHAVIOUR, not files | rev 4: a sentence naming one file where this package edits two | rev 5: the diff and gate 15 — unchanged; only the sentence is true now. (Revision 5's own row named INVARIANT 7's test as a third leg, which §9 withdraws by name; the row over-stated its own coverage and is corrected here) |
+| **N5** | §3.1 separates detection from the refusal message | rev 4: one rule stated twice and differently | rev 5 fixed the prose only; **revision 6 fixes the registry**, so the mutant and the driver column name the refusal message's field walk rather than "the identity comparison", which the derived `PartialEq` has no limbs to drop from |
 | **N6** | `experiment_sha256` gains a test and a mutant | nothing — three digest tests all passed with it dropped | `two_captures_of_different_experiments_do_not_share_an_identity` |
 | **N7** | §6 gains the TAB row it owns | §4.2 and INVARIANT 6 only | §6's table, which owns failure modes, pointing at §4.2 for the grammar |
 | **N8** | §14.4 prices the declined route against gate 9 rather than the pilot | — | — (a pricing sentence, no test moves) |
 | carried | the no-score rule gains a test | nothing, across three revisions | `a_totals_line_with_no_score_at_all_is_captured_as_written` |
 | m8 residual | the round-trip fixture's first two fields must differ | — | the clause in §10 that makes the swap mutant able to die |
+
+---
+
+### 0.2c What REVISION 6 changed — a correction round on a PASSED document
+
+Revision 5 PASSED, so **D-547 freezes it in full** and every edit is listed here.
+**Nothing below changes a mechanism, an invariant or a decision.** The
+before/after columns are §0.2b's discipline applied to this round.
+
+| finding | change | what pinned it BEFORE | what pins it NOW |
+|---|---|---|---|
+| **M-1** | §0.2b's N4 row drops the withdrawn leg | — (a coverage claim, no test) | the diff and gate 15, which is what §9 actually names |
+| **M-2** | the mutant and driver name the refusal message's field walk | rev 5: a mutant naming a comparison with no separable limbs | the same test, now against a mutation the code can take |
+| **M-3** | §0.2's §6 row says four rows, not three | — | — (a count on the freeze block's own face) |
+| **M-4** | the `bestmove` mutant becomes one the code can take | rev 5: a mutation that is the identity function on any `bestmove` line | the same test, which already killed every real bestmove mutation |
+| **M-5, M-6** | two test drivers named as the totals-line recogniser | rev 5: a blank driver and a "unit, synthetic" that named no unit | the named unit, which is the one site that can refuse |
+| **M-7** | `Received::Overlong` gains a test and a mutant | nothing — it was §6's ninth row and §9's undeclared third unpinned thing | `an_overlong_non_line_refuses_the_run_by_name` |
+| **M-8** | five quotations name the WP-2.0 dispatch | — | — (the rule at `docs/experiments/wp20_dispatches.md:15` now governs this document) |
+| **M-9** | this table has a row for every change, N3's included | — | — |
+| **this session's own** | §14.1's false universal about committed configs deleted | rev 5: an argument resting on it | the stub's own `solver_nodes: 0`, which was always the real ground |
 
 ---
 
@@ -513,7 +548,7 @@ can legitimately be empty — the first two are decimals, the third is at minimu
 is always an error, and a fixed arity makes it distinguishable from a missing one
 (a record short of a field carries too few TABs; a record with an empty field
 carries the right number). This is the *"documented, versioned schema with a loader test"*
-the standing dispatch's requirement 2 asks for, for the capture record;
+the WP-2.0 dispatch's requirement 2 asks for, for the capture record;
 **INVARIANT 11** pins it.
 
 ### 4.4 The source, lifted verbatim from revision 2 (rev-2 review MAJOR 10, APPLIED)
@@ -817,7 +852,7 @@ cannot produce the thing it is testing.
 | `a_decided_terminal_position_is_never_asked` | 2 | |
 | `a_report_whose_seats_attest_different_engines_is_refused_by_name` | 3 | |
 | `a_self_play_report_whose_seats_carry_distinct_labels_is_accepted` | 3 | |
-| `two_identities_differing_only_in_an_id_line_are_refused_naming_that_line` | 3 | **unit, over the identity comparison** — the stub emits no `config` id line, so §3's precondition is unreachable through an engine |
+| `two_identities_differing_only_in_an_id_line_are_refused_naming_that_line` | 3 | **unit, over the refusal message's field walk** — the stub emits no `config` id line, so §3's precondition is unreachable through an engine |
 | `a_respawned_engine_that_does_not_match_the_report_is_refused` | 3 | |
 | `every_label_go_is_preceded_by_a_newgame` | 4 | **the stub's new `demands_newgame_per_ask` behaviour** (below) |
 | `the_label_go_line_is_the_one_budget_section_spells` | 4 | |
@@ -825,7 +860,7 @@ cannot produce the thing it is testing.
 | `a_captured_totals_line_keeps_every_field_but_nps_and_time` | 6 | **unit, synthetic totals line** |
 | `the_normalisation_removes_only_nps_and_time_from_a_solver_bearing_line` | 6 | **unit, synthetic** — no engine in this package can emit the solver spelling (§14.1) |
 | `a_captured_record_carries_the_normalised_totals_line` | 6 | stub, end to end — **the only test that dies when the CALL is deleted** (§14.1) |
-| `a_totals_line_with_no_score_at_all_is_captured_as_written` | 6 | **unit, synthetic** — §6's last row, unpinned across three revisions |
+| `a_totals_line_with_no_score_at_all_is_captured_as_written` | 6 | **unit, over the totals-line recogniser, synthetic** — §6's last row, unpinned across three revisions. Not over the normalisation, which is a `fn(&str) -> String` and cannot refuse anything |
 | `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` | 6 | |
 | `a_captured_field_containing_a_tab_refuses_the_run_by_name` | 6 | **unit, over the record writer** — no engine in this tree can emit a TAB |
 | `the_sprt_reports_per_game_node_counts_are_billed_from_the_totals_line` | 7 | |
@@ -835,7 +870,8 @@ cannot produce the thing it is testing.
 | `a_report_pass_two_cannot_read_is_refused_by_name` | 9 | |
 | `an_engine_that_stops_answering_refuses_the_run_at_the_watchdog` | 9 | |
 | `an_engine_that_closes_its_pipe_refuses_the_run_by_name` | 9 | |
-| `an_unrecognised_totals_line_refuses_the_run_and_names_the_game_and_turn` | 9 | |
+| `an_overlong_non_line_refuses_the_run_by_name` | 9 | **unit, over the failure mapping** — no stub behaviour writes past `MAX_LINE_BYTES` without a newline |
+| `an_unrecognised_totals_line_refuses_the_run_and_names_the_game_and_turn` | 9 | **unit, over the totals-line recogniser, synthetic** — no stub behaviour can emit a malformed totals line, because every stub answer goes through `pistol_cli::Session` |
 | `a_capture_file_round_trips_through_its_own_loader_field_by_field` | 11 | |
 | `a_capture_whose_body_digest_is_wrong_is_refused_by_name` | 11 | |
 | `a_capture_record_with_the_wrong_field_count_is_refused_by_name` | 11 | |
@@ -874,15 +910,16 @@ headline coldness mechanism is registered against a mutant that survives.**
 | a score-less totals line refused instead of captured | `a_totals_line_with_no_score_at_all_is_captured_as_written` |
 | the normalisation widened to strip another NON-solver field | `a_captured_totals_line_keeps_every_field_but_nps_and_time` |
 | the normalisation widened to strip a SOLVER field | `the_normalisation_removes_only_nps_and_time_from_a_solver_bearing_line` |
-| the `bestmove` line normalised too | `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` |
+| the `bestmove` field written from the parsed turn rather than from the engine's own line | `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` |
 | the decided-position guard removed | `a_decided_terminal_position_is_never_asked` |
 | `position start moves` used for the empty case | `the_initial_position_is_asked_without_a_moves_keyword` |
 | the seat check made a LABEL comparison (revision 2's own defect) | `a_self_play_report_whose_seats_carry_distinct_labels_is_accepted` |
 | the seat identity check removed | `a_report_whose_seats_attest_different_engines_is_refused_by_name` |
-| `id_lines` dropped from the identity comparison | `two_identities_differing_only_in_an_id_line_are_refused_naming_that_line` |
+| `id_lines` dropped from the refusal message's field walk | `two_identities_differing_only_in_an_id_line_are_refused_naming_that_line` |
 | `replay::verify_engines` not called | `a_respawned_engine_that_does_not_match_the_report_is_refused` |
 | an `error` answer skipped instead of refusing | `an_error_answer_refuses_the_run_and_names_the_game_and_turn` |
 | a watchdog timeout skipped instead of refusing | `an_engine_that_stops_answering_refuses_the_run_at_the_watchdog` |
+| an overlong non-line mapped to the `Closed` refusal rather than its own | `an_overlong_non_line_refuses_the_run_by_name` |
 | an unrecognised totals line treated as an ordinary `info` line and the run completed | `an_unrecognised_totals_line_refuses_the_run_and_names_the_game_and_turn` |
 | forfeited or book positions skipped | their two tests |
 | a capture record's first two fields swapped on write | `a_capture_file_round_trips_through_its_own_loader_field_by_field`, **whose fixture must give the game index and the prefix length DIFFERENT values** — equal ones make the swap invisible |
@@ -925,7 +962,7 @@ the node counts and the provenance mean, which positions a trainer should use,
 transposition dedup, and the census-minimum rule. Those are WP-2.0-S's.
 
 **AND THE DISPATCH'S THROUGHPUT OBLIGATION IS THE PILOT'S, NAMED HERE BECAUSE
-REVISION 3 LEFT IT IN NO PACKAGE AT ALL.** The standing dispatch asks for
+REVISION 3 LEFT IT IN NO PACKAGE AT ALL.** The WP-2.0 dispatch asks for
 *"throughput expectation stated as a shape, measured in the pilot, never guessed
 (D-500's class)"*. The shape is: one label `go` at the label budget per asked
 position, plus one `newgame` per asked position, whose memset cost §12 names and
@@ -1088,18 +1125,27 @@ a loop is the likelier mutation than breaking a tested function.
 normalisation is right in both spellings, the integration test says pass 2
 performs it. Revision 4 had only the first and its mutant table claimed both.
 
-**WHY THIS IS THE ONLY WAY THE SOLVER SPELLING CAN BE REACHED, and revision 3's
-bound on its own vacuity was wrong.** Revision 3 wrote that *"the vacuity is
-confined to one test"*. It is not: `render_info` emits the solver block only
-`if info.solver_nodes > 0` (`crates/pistol-cli/src/report.rs:62-81`), the arena's
-stub sets `solver_nodes: 0` (`crates/pistol-arena/src/bin/stub_engine.rs:120-131`),
-and **every committed engine config has the solver off the search path** —
-`configs/gate_v0.toml:94` is `on_search_path = false`, and §1 requires pass 1's
-engine sections to name a committed config. So a normalisation widened to strip
-`solver_root_nodes` would have died nowhere. **Against a synthetic line it dies
-immediately**, and §4.1's whole argument — that the expression matches in both
-spellings because the solver block is interpolated between `nodes` and `nps` — is
-executable for the first time.
+**WHY A SYNTHETIC LINE IS THE ROUTE, and revision 3's bound on its own vacuity
+was wrong.** Revision 3 wrote that *"the vacuity is confined to one test"*. It is
+not: `render_info` emits the solver block only `if info.solver_nodes > 0`
+(`crates/pistol-cli/src/report.rs:62-81`) and **the arena's stub sets
+`solver_nodes: 0`** (`crates/pistol-arena/src/bin/stub_engine.rs:120-131`), so no
+stub-driven test in this crate can produce the spelling and a normalisation
+widened to strip `solver_root_nodes` would have died nowhere. **Against a
+synthetic line it dies immediately**, and §4.1's whole argument — that the
+expression matches in both spellings because the solver block is interpolated
+between `nodes` and `nps` — is executable for the first time.
+
+**REVISION 5 ALSO GROUNDED THIS ON A FALSE UNIVERSAL, AND THE UNIVERSAL IS
+DELETED RATHER THAN NARROWED.** It said *"every committed engine config has the
+solver off the search path"*, citing `configs/gate_v0.toml:94`. The cited line is
+real and the universal is not: `configs/bench_wp18c_solver_on.toml:45`,
+`configs/gate_staged_solver_v0.toml:47` and
+`configs/play_staged_solver_v0.toml:75` arm it. **The argument never needed it** —
+the stub's own `solver_nodes: 0` is the whole reason no test in this crate can
+reach the spelling — and the universal's falsity cuts the other way anyway: the
+solver-bearing totals line is a real class a pilot config could produce, which is
+a reason for the synthetic test and not against it.
 
 ### 14.2 The end-to-end re-run receipt on the real binaries is the PILOT's
 
