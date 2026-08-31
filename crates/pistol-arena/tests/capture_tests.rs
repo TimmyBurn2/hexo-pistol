@@ -620,6 +620,7 @@ fn a_decided_terminal_position_is_never_asked() {
         opening: 0,
         a_is_p1: true,
         forfeit: false,
+        result: pistol_arena::record::GameResult::Capped,
         moves: moves.clone(),
         nodes: [0, 0],
     };
@@ -648,6 +649,7 @@ fn an_undecided_games_final_position_is_asked() {
         opening: 0,
         a_is_p1: true,
         forfeit: false,
+        result: pistol_arena::record::GameResult::Capped,
         moves: moves.clone(),
         nodes: [0, 0],
     };
@@ -698,6 +700,7 @@ fn a_forfeited_games_positions_are_captured_like_any_other() {
         opening: 0,
         a_is_p1: true,
         forfeit: false,
+        result: pistol_arena::record::GameResult::Capped,
         moves: moves.clone(),
         nodes: [0, 0],
     };

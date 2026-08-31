@@ -169,23 +169,37 @@ pub fn position_line(moves: &[Turn]) -> String {
 /// pass recognises the closing line through this one reader rather than growing
 /// a second (docs/experiments/wp20m_design.md §8).
 pub(crate) fn totals_of(line: &str) -> Option<(u64, u64, u32)> {
+    let words = fields_of(line)?;
+    Some((
+        value_of(&words, "nodes")?.parse().ok()?,
+        value_of(&words, pistol_cli::report::TIME_FIELD)?
+            .parse()
+            .ok()?,
+        value_of(&words, "depth_turns")?.parse().ok()?,
+    ))
+}
+
+/// The words after the `totals` marker, in order, or `None` if this is not the
+/// closing report.
+///
+/// A WORD LIST rather than a key-value map, because the score is TWO words after
+/// its key — `cp <n>`, `mate <t>` or `-mate <t>` — and a map keyed by field name
+/// yields the tag and loses the number
+/// (`docs/experiments/wp20s_design.md` §3).
+pub(crate) fn fields_of(line: &str) -> Option<Vec<&str>> {
     let prefix = format!(
         "{} {} ",
         pistol_cli::report::INFO_PREFIX,
         pistol_cli::report::TOTALS_MARKER
     );
-    let rest = line.strip_prefix(&prefix)?;
-    let words: Vec<&str> = rest.split_whitespace().collect();
-    let value = |key: &str| -> Option<&str> {
-        words
-            .iter()
-            .position(|word| *word == key)
-            .and_then(|at| words.get(at + 1))
-            .copied()
-    };
-    Some((
-        value("nodes")?.parse().ok()?,
-        value(pistol_cli::report::TIME_FIELD)?.parse().ok()?,
-        value("depth_turns")?.parse().ok()?,
-    ))
+    Some(line.strip_prefix(&prefix)?.split_whitespace().collect())
+}
+
+/// The word after `key`, matched whole so `nodes` cannot match `search_nodes`.
+pub(crate) fn value_of<'a>(words: &[&'a str], key: &str) -> Option<&'a str> {
+    words
+        .iter()
+        .position(|word| *word == key)
+        .and_then(|at| words.get(at + 1))
+        .copied()
 }

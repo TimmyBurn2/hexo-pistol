@@ -9,8 +9,7 @@ use pistol_arena::error::ArenaError;
 use pistol_arena::report::Written;
 use pistol_arena::usage::USAGE;
 use pistol_arena::{
-    capture, capture_file, identity, openings, outpath, replay, replay_report, report, schedule,
-    score, summary, transcript,
+    identity, openings, outpath, passes, replay, replay_report, report, schedule, score, summary,
 };
 
 /// A run that produced a report but is not a measurement.
@@ -35,6 +34,7 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
         Play(PathBuf),
         Replay(PathBuf, usize),
         Capture(PathBuf, u64),
+        Labels(PathBuf, PathBuf),
     }
     let (mode, out_path) = match words {
         ["--help" | "-h"] => {
@@ -52,10 +52,15 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
             Mode::Capture(PathBuf::from(source), count_of(nodes, "label node count")?),
             PathBuf::from(out),
         ),
+        ["--labels", capture, "--report", report, "--out", out] => (
+            Mode::Labels(PathBuf::from(capture), PathBuf::from(report)),
+            PathBuf::from(out),
+        ),
         _ => {
             return Err(format!(
                 "--config and --out are both required, or --replay, --out and --workers, or \
-                 --capture, --out and --label-nodes, each in that order\n\n{USAGE}"
+                 --capture, --out and --label-nodes, or --labels, --report and --out, each in \
+                 that order\n\n{USAGE}"
             ));
         }
     };
@@ -65,7 +70,8 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
     let outcome = match &mode {
         Mode::Play(config) => run(config, &out_path, claimed),
         Mode::Replay(source, workers) => replay_pass(source, &out_path, claimed, *workers),
-        Mode::Capture(source, nodes) => capture_pass(source, &out_path, claimed, *nodes),
+        Mode::Capture(source, nodes) => passes::capture(source, &out_path, claimed, *nodes),
+        Mode::Labels(capture, report) => passes::labels(capture, report, &out_path, claimed),
     };
     match outcome {
         Ok(code) => Ok(code),
@@ -119,61 +125,6 @@ fn count_of(word: &str, what: &str) -> Result<u64, String> {
     Ok(parsed)
 }
 
-/// One report, read back as the run it describes.
-///
-/// A REGULAR FILE, CHECKED BEFORE IT IS READ. `fs::read` on a FIFO blocks until
-/// a writer appears, with no channel yet in existence and so no watchdog to end
-/// it — a hang where a refusal belongs (docs/decisions.md D-252's sibling case
-/// in `identity::digest_of`).
-fn read_report(source: &Path) -> Result<transcript::Transcript, ArenaError> {
-    let meta = std::fs::metadata(source)
-        .map_err(|io| ArenaError::io(format!("reading {}", source.display()), io))?;
-    if !meta.is_file() {
-        return Err(ArenaError::config(
-            "replay report",
-            format!("{} is not a regular file", source.display()),
-        ));
-    }
-    let bytes = std::fs::read(source)
-        .map_err(|io| ArenaError::io(format!("reading {}", source.display()), io))?;
-    let source_sha256 = pistol_cli::sha256::sha256_hex(&bytes);
-    let text = std::str::from_utf8(&bytes).map_err(|why| {
-        ArenaError::config(
-            "replay report",
-            format!("{} is not UTF-8: {why}", source.display()),
-        )
-    })?;
-    transcript::read(text, source_sha256)
-}
-
-/// Walk one report position by position, asking each at the label budget.
-fn capture_pass(
-    source: &Path,
-    out_path: &Path,
-    mut claimed: std::fs::File,
-    label_nodes: u64,
-) -> Result<ExitCode, ArenaError> {
-    let transcript = read_report(source)?;
-    let go_line = capture::label_go_line(label_nodes);
-    let records = capture::run(&transcript, label_nodes)?;
-    let rendered = capture_file::render(&transcript, &go_line, &records);
-    claimed
-        .write_all(rendered.as_bytes())
-        .and_then(|()| claimed.flush())
-        .map_err(|io| ArenaError::io(format!("writing {}", out_path.display()), io))?;
-    println!(
-        "arena: captured {} position(s) from {} game(s) at {go_line}",
-        records.len(),
-        transcript.games.len()
-    );
-    println!(
-        "{}",
-        capture_file::manifest_row(&transcript, &go_line, &rendered, out_path)?
-    );
-    println!("arena: capture written to {}", out_path.display());
-    Ok(ExitCode::SUCCESS)
-}
-
 /// Re-drive one report's games through the engines that report attests.
 fn replay_pass(
     source: &Path,
@@ -181,7 +132,7 @@ fn replay_pass(
     mut claimed: std::fs::File,
     workers: usize,
 ) -> Result<ExitCode, ArenaError> {
-    let transcript = read_report(source)?;
+    let transcript = passes::read_report(source)?;
     replay::verify_engines(&transcript)?;
 
     let (outcome, played) = replay::run(&transcript, workers);
