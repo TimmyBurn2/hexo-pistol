@@ -1,26 +1,34 @@
 # WP-2.0-S — DESIGN: the record schema, and what a label MEANS
 
-**REVISION 2**, the ONE fix round the split's granted design round allows, after
-revision 1 (`1157dae`) took a fresh-context REVIEW-design and returned **FAIL** —
-6 BLOCKING, 11 MAJOR, 12 MINOR (`docs/experiments/wp20s_design_REVIEW.md`).
-**A second FAIL stops this package and returns it to the architect.**
+**REVISION 3**, under **D-548**'s grant of up to four further rounds, after
+revision 2 (`f96593b`) took a scoped re-review and returned **FAIL** — 2
+BLOCKING, 10 MAJOR, 18 MINOR, **every one of them NEW and introduced by the fix
+round itself** (`docs/experiments/wp20s_design_REVIEW_rev2.md`). The prior
+round's twenty-nine findings were applied well and verified applied; the round
+broke five new things while applying them.
 
-**THE SIX BLOCKING FINDINGS, ON THE FACE, because a fix round that hides what it
-is fixing is how this arc's earlier rounds failed (D-545).** (1) §3's field map
-could not carry the score, which is TWO tokens on the wire — the second limb of
-the very finding that killed WP-2.0's revision 1. (2) `pistol_core::canonical_form`
-folds transpositions AND symmetries and is exported on the line this document
-cited for its neighbour, so §7 and §12 told a successor to look for something
-already there. (3) §2.7's cross-check went through `a_is_p1`, which is about
-which ENGINE holds a seat and not about which SEAT won, so as written the
-transform refused about half its valid inputs. (4) Book-turn treatment — this
-package's charge by D-544's own words, handed here by name by WP-2.0-M — was
-never decided. (5) The dispatch's throughput obligation was in no package. (6)
-The corpus itself had no manifest.
+**THAT IS THE CLASS D-548 NAMES AS UNGUARDED, AND THIS DOCUMENT LACKED THE GUARD
+ITS SIBLING HAD.** WP-2.0-M's revision 5 added a table listing, for every test it
+moves or retires, **what pinned the rule before and what pins it now** — because
+neither the citation checker (D-543, nothing false enters) nor the passed-section
+freeze (D-547, nothing passed is edited) catches a remedy that trades away what
+it was standing on. Revision 2 of THIS document had no such table, and it lost
+three things exactly that way: `key_seq`'s test, `to_move`'s test, and a mutant
+replaced by one that also cannot die. **§0.1a is that guard, applied here.**
 
-**Each is taken below, and three of them changed a decision rather than a
-sentence**: the parser's return type (§3), a third key and the disjointness
-denominator it settles (§2.1, §7, §8), and a `book` column (§2.9).
+**REVISION 2's TWO BLOCKING FINDINGS, ON THE FACE, because a fix round that hides
+what it is fixing is how this arc's earlier rounds failed (D-545).** (1) The
+`key_full` column revision 2 added was SPELLED as bare `q,r` cells, and
+`canonical_form` returns `Vec<(Coord, Player)>` — so the rendering dropped the
+colour, and the column D-537's non-loosenable denominator counts over could not
+identify a position. (2) The `book` column's boundary contradicted the column's
+own definition by one record per game, **and the reading the definition requires
+was registered as the MUTANT that must die.**
+
+**Both are decisions, not sentences, and both are taken below** (§2.1 and §5 for
+the spelling; §2.9 for the boundary, which keeps the DEFINITION and moves the
+rule, and carries `opening_turns` in the header so a consumer can compute either
+reading).
 
 ---
 
@@ -31,7 +39,7 @@ board key, capped-versus-forfeited, and the census-minimum rule."* No prior
 revision of this document exists and no reviewer has passed any section of it, so
 **D-547's freeze binds nothing here yet**; it binds every revision after this one.
 
-**AUTHORED UNDER THE SAME DISCIPLINE AS WP-2.0-M REVISION 3** (D-546's
+**AUTHORED UNDER THE SAME DISCIPLINE AS WP-2.0-M's CURRENT REVISION** (D-546's
 conditions, applied here by choice rather than by grant): every claim about the
 tree carries a `path:line` citation, `tools/design_citation_check.py` is green
 over this document before its review is dispatched, and text that survived a
@@ -43,6 +51,28 @@ numbers; the citation line numbers are pointers, not measurements, on the ground
 rather than restates (D-423).
 
 **No engine diff.** Only `pistol-arena` changes, and nothing new reaches the wire.
+
+### 0.1a What REVISION 3 changed, and what each remedy PINNED BEFORE and PINS NOW
+
+**A fix round is where this arc loses true things** — not by writing something
+false, which the checker catches, and not by editing a passed section, which the
+freeze catches, but by trading away what a remedy was standing on. Revision 2 did
+it three times. **An empty right-hand column below is the finding.**
+
+| finding | change | what pinned it BEFORE | what pins it NOW |
+|---|---|---|---|
+| **NEW-B1** | `key_full` is spelled as `(Coord, Player)` pairs | nothing — the cell rendering was non-injective and the loader checked nothing about it | §5's spelling rule, the loader's shape check, and `two_positions_differing_only_in_colour_do_not_share_a_key_full` |
+| **NEW-B2** | the `book` boundary becomes `k <= opening_turns`; `opening_turns` joins the header | rev 2: a test and a mutant pinning the reading the column's own definition contradicts | `the_position_reached_by_the_whole_book_and_nothing_else_is_flagged_book`, with the old mutant inverted |
+| **NEW-M1** | the `-` sentinel reaches the schema table and §9 | §2.10, §5, the loader and one test — but not the record's own face | the same, plus rows 3, 4 and 6 of the schema table and §9 row 4 |
+| **NEW-M2** | §12.2 points at WP-2.0-M §11 instead of restating it | — | WP-2.0-M §11 alone; this document adds only what is its own |
+| **NEW-M3** | §3 restates what INVARIANT 4 pins | rev 1: byte-identity, in both places | per-game node counts, in both places |
+| **NEW-M4** | the `to_move` mutant is dropped and a value test added | rev 1: a test that could not fail against a mutant that was a no-op; rev 2: nothing at all | `to_move_is_the_side_pistol_core_puts_to_move_at_that_prefix` |
+| **NEW-M5** | `key_seq` regains a test and a mutant | rev 1: `two_positions_alike_up_to_a_symmetry_are_two_records_sharing_a_key_sym`; rev 2: nothing | `two_symmetric_prefixes_share_a_key_seq_and_two_transpositions_do_not` |
+| **NEW-M6/M7** | §8's bias direction corrected; the frame named; the test named as one-sample | — (both were wrong or absent, nothing was spent) | the frame, the fixed `p0`, and the floor rule stated the right way round |
+| **NEW-M8** | *"and only on them"* deleted; the property grounded on ONGOING | — | `GameState::key`'s own doc, which hedges to an ongoing game and not to a boundary |
+| **NEW-M9** | the false universal about committed configs deleted | — | the conclusion never needed it; a synthetic line needs no engine |
+| **NEW-M10** | the manifest row gains an invariant, a test in the table, a mutant, and its own place in the file | — | INVARIANT 11 and `a_labels_run_prints_a_corpus_manifest_row_naming_its_digests` |
+| **NEW-m14** | `forfeit_by` leaves the widening | — | nothing is owed: nothing read it, and §4 now widens with `result` alone |
 
 ---
 
@@ -142,11 +172,11 @@ take** — revision 1 claimed that completeness and §2.8 did not deliver it.
 | # | column | what it is |
 |---|---|---|
 | 1 | `game` | the source report's game index |
-| 2 | `turn` | the prefix length that was asked |
-| 3 | `moves` | the move list (D-6), the turn tokens alone; **empty at `turn` zero** (§2.10) |
-| 4 | `key_seq` | `pistol_core::canonical_sequence` over that prefix |
+| 2 | `turns_played` | how many turns the prefix holds — **not `GameState::turn()`, which is one more** (§2.10) |
+| 3 | `moves` | the move list (D-6), the turn tokens alone; **`-` when `turns_played` is zero** (§2.10) |
+| 4 | `key_seq` | `pistol_core::canonical_sequence` over that prefix; **`-` when it is empty** (§2.10) |
 | 5 | `key_pos` | `GameState::key`, the position's own 128-bit key, 32 hex digits |
-| 6 | `key_full` | `pistol_core::canonical_form` over the replayed prefix's stones |
+| 6 | `key_full` | `pistol_core::canonical_form` over the replayed prefix's stones, **colour spelled** (§5); **`-` when it is empty** (§2.10) |
 | 7 | `to_move` | which side places the next stone |
 | 8 | `score_kind` | `eval`, `mate_in` or `mated_in` |
 | 9 | `score_value` | the integer that goes with it (§2.3) |
@@ -154,7 +184,7 @@ take** — revision 1 claimed that completeness and §2.8 did not deliver it.
 | 11 | `depth_turns` | the depth the label was produced at (§2.5) |
 | 12 | `search_nodes` | search nodes the label cost |
 | 13 | `solver_nodes` | solver nodes the label cost |
-| 14 | `book` | whether neither engine chose this position (§2.9) |
+| 14 | `book` | whether neither engine chose this position — every turn leading to it was a book turn (§2.9) |
 | 15 | `result` | `p1_win`, `p2_win` or `capped` |
 | 16 | `end` | `normal` or `forfeit` |
 
@@ -189,14 +219,19 @@ package most needed:**
   stone set **is** transposition folding and the twelve-image minimum **is**
   symmetry folding, so **`key_full` folds both.**
 
-**AND `key_full` LOSES NOTHING ON AN ASKED POSITION, WHICH IS WHY IT IS THE ONE
-§8's DENOMINATOR USES.** `canonical_form` reads stones and not the mover, so in
-general it discards the side to move — but **every asked position is a turn
-boundary at the start of a turn** (WP-2.0-M's INVARIANT 1 and 2), and there the
-stone count fixes the rest: `GameState::key`'s own doc says *"for an ongoing game
-the stone count fixes the turn, the phase and the mover together"*
-(`crates/pistol-core/src/state.rs:128-133`). On this corpus's records, and only
-on them, `key_full` is a total position identity that folds both equivalences.
+**AND `key_full` LOSES NOTHING ON ANY ONGOING POSITION, WHICH IS WHY IT IS THE
+ONE §8's DENOMINATOR USES.** `canonical_form` reads stones and not the mover, so
+it appears to discard the side to move. It does not, **and the scope is the one
+pistol-core states rather than the narrower one revision 2 invented**:
+`GameState::key`'s own doc says *"for an **ongoing game** the stone count fixes
+the turn, the phase and the mover together"*
+(`crates/pistol-core/src/state.rs:128-133`) — an ongoing game, not a turn
+boundary. The stone count is an invariant of the canonical form because
+`transform` maps `(cell, player)` to `(symmetry.apply(cell), player)` and
+preserves the colour (`crates/pistol-core/src/symmetry.rs:143-155`). **So
+`key_full` is a total position identity on every ongoing position**, which every
+asked position is, and revision 2's *"and only on them"* was a hedge that would
+have told §8's consumer the key does not work at their sites.
 
 **NONE OF THE THREE IS INVENTED HERE**, which is the point: rule 2 puts game truth
 in pistol-core, and a fourth notion of "the same position" written in this crate
@@ -218,10 +253,20 @@ corrected for. The reason to replay is that pistol-core is the only judge of
 legality and of whose stone comes next (rule 2), and the transform replays the
 prefix anyway for §2.7, `key_pos` and `key_full`, so the column costs nothing.
 
-**WHAT REPLACES THE MUTANT IS ONE THAT CHANGES AN ANSWER**: deriving `to_move`
-from the record's `turn` column WITHOUT replaying, which diverges the moment a
-capture record's `turn` and `moves` disagree — a disagreement §9 now refuses by
-name, and which the mutation would silently absorb.
+**AND NOTHING REPLACES THE MUTANT, WHICH IS SAID PLAINLY RATHER THAN PAPERED
+OVER.** Revision 2 offered *"deriving `to_move` from the record's `turns_played`
+column without replaying"*. That cannot die either: §9 refuses a record whose
+`turns_played` and `moves` disagree before any column is written, so the one
+input on which the two derivations differ never reaches the writer, and the
+mutation changes no output — the same property that killed the parity mutant.
+**A column whose two possible implementations agree everywhere has no
+behavioural mutant, and registering one is registering a test that cannot fail.**
+
+**WHAT IS REGISTERED INSTEAD IS A VALUE TEST**, which revision 2 also lost:
+`to_move_is_the_side_pistol_core_puts_to_move_at_that_prefix`, over a fixture
+whose expected side is computed by replaying through pistol-core rather than
+written by hand. It dies if the column is written inverted, which the round-trip
+test cannot see because a round trip is self-consistent under a wrong value.
 
 ### 2.3 The score, and what it is CALLED — matrix decision 10
 
@@ -290,7 +335,9 @@ inside `if info.solver_nodes > 0` (`crates/pistol-cli/src/report.rs:62-81`). So:
 - totals line **carries neither** → `search_nodes` is the line's `nodes` and
   `solver_nodes` is zero. This is not an assumption: `SearchInfo::search_nodes`'s
   own doc is *"Zero difference from `nodes` whenever the gate is off"*
-  (`crates/pistol-search/src/info.rs:162-166`).
+  (`crates/pistol-search/src/info.rs:162-166`), and the site that ENFORCES it is
+  `crates/pistol-search/src/search.rs:513-514`, which overwrites both counters
+  from the run before the outcome returns.
 
 **THE SOLVER BLOCK IS ALL SIX FIELDS OR NONE, AND ANY OTHER SUBSET REFUSES THE
 RUN BY NAME.** `render_info` emits `search_nodes`, `solver_nodes`,
@@ -441,13 +488,30 @@ here.**
 **EVERY BOOK POSITION GETS A RECORD, AND EVERY RECORD SAYS WHETHER IT IS ONE.**
 The `book` column is `yes` or `no`.
 
-**THE BOUNDARY IS THE ARENA'S OWN AND IS NOT INVENTED HERE.** A report carries
-`opening_turns` (`crates/pistol-arena/src/transcript.rs:39-40`), and the arena
-asks an engine at turn index `at` only when `at >= opening_turns`
-(`crates/pistol-arena/src/replay.rs:137-138`). A capture record whose prefix
-length is `k` is the position BEFORE turn index `k`, so **the record is `book`
-exactly when `k < opening_turns`** — which is precisely "neither engine chose to
-be here".
+**THE BOUNDARY FOLLOWS THE COLUMN'S DEFINITION, AND REVISION 2 SHIPPED THE OTHER
+ONE.** A report carries `opening_turns`
+(`crates/pistol-arena/src/transcript.rs:39-40`), uniform across the book
+(`crates/pistol-arena/src/openings.rs:39`), and the arena asks an engine at turn
+index `at` only when `at >= opening_turns`
+(`crates/pistol-arena/src/replay.rs:137-138`) — so turn indices below
+`opening_turns` are the book's.
+
+**The position at `turns_played = k` is reached by turns `0 … k-1`. Every one of
+those is a book turn exactly when `k - 1 < opening_turns`, that is when
+`k <= opening_turns`.** Revision 2 wrote `k < opening_turns`, which is the
+*ask*-boundary — a claim about the NEXT move — while the column is defined as a
+claim about the moves that LED HERE. They differ at exactly one record per game:
+`k = opening_turns`, the position reached by playing the whole book and nothing
+else, which no engine chose and which revision 2 flagged `no`. Worse, revision 2
+registered `k <= opening_turns` as **the mutation that must die**, so the reading
+the definition requires was the thing the suite was built to reject.
+
+**BOTH READINGS ARE USEFUL, SO THE HEADER CARRIES THE DATUM AND NOT ONLY THE
+VERDICT.** `opening_turns` is a `param` of the corpus header, so a consumer with
+`turns_played` can compute the ask-boundary reading (*"was the move played from
+here chosen by an engine"*, `k >= opening_turns`) as easily as the provenance one
+the `book` column states. Nothing is lost to the choice, and the choice is on the
+document's face rather than in an off-by-one.
 
 **WHY LABELLED-AND-FLAGGED RATHER THAN EXCLUDED, and the ground is asymmetry of
 loss (§7's).** A book position is a legal position the teacher scored at the
@@ -468,15 +532,21 @@ are computed over an empty prefix: `moves` is the empty move list, `key_seq` is
 empty.
 
 **THEY ARE WRITTEN AS A SINGLE `-`, AND NO FIELD OF THIS RECORD IS EVER EMPTY.**
-A `-` cannot collide with any value these columns can hold: a turn token is one
-or two `q,r` cells (D-6), never the single character. The alternative — an empty
-field legal in exactly three columns and nowhere else — is a conditional the
-loader would have to carry and a reader would have to remember, and **a loader
-rule that reads "no field is ever empty" is one a mutation cannot slip past.**
-`key_pos` needs no sentinel: `GameState::key` on a new game is a key like any
-other.
+A `-` cannot collide with any value these three columns can hold: `moves` and
+`key_seq` render as turn tokens, each one or two `q,r` cells (D-6), and
+`key_full` as `q,r:1` / `q,r:2` pairs (§5) — none of them the single character.
+The alternative — an empty field legal in exactly three columns and nowhere else
+— is a conditional the loader would have to carry and a reader would have to
+remember, and **a loader rule that reads "no field is ever empty" is one a
+mutation cannot slip past.** `key_pos` needs no sentinel: `GameState::key` on a
+new game is a key like any other.
 
----
+**AND `turns_played` IS A PREFIX LENGTH, NOT A TURN NUMBER.** It counts the turns
+the prefix holds, so it is zero on this record. `GameState::turn()` at the same
+position is **one more** (`crates/pistol-core/src/state.rs:111-115`), and the
+corpus carries a real turn count three columns later in `depth_turns` — so the
+column was renamed from revision 2's `turn`, which invited a consumer to read the
+two as one unit.---
 
 ## 3. THE WIDENING THAT MAKES THIS PARSE — and why `totals_of` alone cannot
 
@@ -524,12 +594,15 @@ after that.
 branch B as `totals_of` *"widened so `score` and `pv` come out of the one parser
 … the two new ones non-fatal `Option`s"*, whose hazard the matrix priced as row
 (e)'s: a new lookup made load-bearing would suppress `compute.add` and zero the
-SPRT report's node counts (`crates/pistol-arena/src/exchange.rs:76-79`). **A
-field map adds no lookup to `totals_of` at all**, so that hazard has nothing to
-attach to: the SPRT path's three lookups are the same three expressions over the
-same words. **INVARIANT 4** pins that the SPRT report is byte-identical across the
-change, and the mutant that kills its test is a fourth load-bearing lookup added
-to `totals_of` — the same mutant WP-2.0-M registers, now with a consumer.
+SPRT report's node counts (`crates/pistol-arena/src/exchange.rs:76-79`). **A word
+list adds no lookup to `totals_of` at all**, so that hazard has nothing to attach
+to: the SPRT path's three lookups are the same three expressions over the
+same words. **INVARIANT 4** pins what a same-build test can show — that the SPRT path still
+bills each game's compute from the totals line — and **not** byte-identity of the
+report, which needs two builds and an engine. Revision 2 weakened the invariant
+and its test and left this sentence at the old strength. The mutant that kills
+the test is a fourth load-bearing lookup added to `totals_of`, the same mutant
+WP-2.0-M registers, now with a consumer.
 
 **HOW THE CORPUS TRANSFORM READS EACH FIELD, since revision 1 said only "out of
 the map".** `depth_turns`, `nodes` and, when the block is present, the six solver
@@ -565,8 +638,12 @@ all of which `conclusion.rs` writes
   the forfeit happened, so a replay says `Ongoing` and cannot say who was
   awarded the game. The matrix said as much and left it to this design.
 
-**SO `RecordedGame` GAINS `result` AND `forfeit_by`**, read with the same
-`value()` lookups the other fields use. **The fatal lookup is safe and the reason
+**SO `RecordedGame` GAINS `result`, AND ONLY `result`**, read with the same
+`value()` lookup the other fields use. Revision 2 widened it with `forfeit_by`
+too, and §2.8 then explained that nothing reads it — a second fatal lookup added
+for a field no column takes. It is dropped: `forfeit` already comes off the `end`
+field (`crates/pistol-arena/src/transcript.rs:307`), and which SEAT forfeited is
+not a fact about a position. **The fatal lookup is safe and the reason
 is checkable**: `crates/pistol-arena/src/conclusion.rs:37-52` writes both fields
 into every `game` record this build produces, and a report of any other schema is
 already refused before `read_games` runs
@@ -597,25 +674,47 @@ per line, and the in-band `body_sha256` that type appends
 
 **THE RECORD IS TAB-SEPARATED, FIXED ARITY, IN §2's COLUMN ORDER**, for the
 reason WP-2.0-M's §4.2 owns and which this document points at rather than
-restates (D-423). Two of these columns carry spaces — `moves`, and `key_seq`
-rendered from a turn list — which is enough to make a space-delimited record
-lose its arity. **A field carrying a TAB refuses the run by name**, and by §2.10
+restates (D-423). Three of these columns carry spaces — `moves`, `key_seq` and
+`key_full`, each rendered from a list — which is enough to make a
+space-delimited record lose its arity. **A field carrying a TAB refuses the run by name**, and by §2.10
 **no field is ever empty.**
 
-**TWO COLUMNS' SPELLINGS ARE FIXED HERE BECAUSE A LOADER CANNOT CHECK A TOKEN IT
-CANNOT PREDICT.** `key_pos` is `Key128`'s own `Display` — *"the 32 hex digits of
-the key, high half first"* (`crates/pistol-core/src/zobrist.rs:70-76`). `key_seq`
-and `key_full` are their values rendered as turn tokens and as `q,r` cells
-respectively, space-joined, in the order the canonicaliser returns them.
+**THREE COLUMNS' SPELLINGS ARE FIXED HERE BECAUSE A LOADER CANNOT CHECK A TOKEN
+IT CANNOT PREDICT.**
 
-**THE HEADER CARRIES**, as `param`: the corpus schema version; the capture's
-`capture_sha256`; the source report's `experiment_sha256` and `source_sha256`;
-and the label `go` line. As `derived`: the counts of games and records. **The
-arena version is NOT a header param**, for the reason WP-2.0-M's §5 gives once
-and this document points at: the workspace version has never moved, so it is a
-second hand-maintained number wearing a mechanism's clothes, and what binds an
-artifact to the code that made it is the **governing revision** the pilot's
-pre-registration names (`docs/process.md`).
+- **`key_pos`** is `Key128`'s own `Display` — *"the 32 hex digits of the key, high
+  half first"* (`crates/pistol-core/src/zobrist.rs:70-76`).
+- **`key_seq`** is its `Vec<Turn>` rendered as turn tokens, space-joined, in the
+  order `canonical_sequence` returns them. `Turn`'s own `Display` carries the
+  pairing (D-5), so nothing is lost.
+- **`key_full` IS RENDERED AS ITS `(Coord, Player)` PAIRS AND NOT AS BARE CELLS,
+  AND THIS IS REVISION 2's BLOCKING.** `canonical_form` returns
+  `Vec<(Coord, Player)>` (`crates/pistol-core/src/symmetry.rs:157-165`) and
+  `Coord`'s `Display` is *"the stone token of the line protocol"*
+  (`crates/pistol-core/src/coord.rs:136-141`) — **a cell carries no colour**, so
+  rendering the key as cells discards the `Player` half of every element and the
+  rendering is not injective on the key's own value space: two legal positions
+  over one set of cells with different colour partitions would render alike, and
+  §8's non-loosenable denominator would merge them. **Each element is written
+  `q,r:1` or `q,r:2`**, space-joined in canonical order. A colon appears in no
+  turn token, no cell token and no score spelling, so the pair token cannot be
+  confused with any other field's content.
+
+**THE HEADER CARRIES**, as `param`: the corpus schema version; the source
+report's `experiment_sha256` and `source_sha256`; the label `go` line; the three
+unit params below; and **`opening_turns`, so a consumer can compute the
+ask-boundary reading of `book` as well as the provenance one** (§2.9). As
+`derived`: the counts of games and records, **and the capture's `capture_sha256`,
+because this transform RE-DERIVES it rather than copying it** — `Fixture::derived`
+is *"a value the extraction computed. Never a `param`: a reader has to be able to
+tell a choice from a measurement"* (`crates/pistol-cli/src/corpus/emit.rs:40-44`),
+and revision 2 filed it as a choice. **The arena version is NOT a header param**, and the reason is this document's
+own rather than borrowed: the workspace version has never moved, so it is a
+hand-maintained number wearing a mechanism's clothes, and what binds an artifact
+to the code that made it is the **governing revision** the pilot's
+pre-registration names (`docs/process.md`). WP-2.0-M argues the same version out
+of its DIGEST; what its own header carries is that document's decision and not
+one this section inherits.
 
 **AND THE UNITS GO IN AS `param` LINES, NOT `note` LINES.** `Fixture::note`
 renders a bare `# <text>` indistinguishable from the title lines above it
@@ -741,12 +840,14 @@ are not sheltered by D-483, because neither is a measured number. So:
    repository carries `alpha = 0.05` and `beta = 0.05`
    (`configs/arena_smoke_v0.toml:66-67`), which is the pair CLAUDE.md's hard rule
    6 makes the judge of every search and eval change. **This rule takes the same
-   pair**: a level of 0.05 and a power of 0.95. The ground is that a detector
-   round is a decision of the same kind and at the same cost as the SPRT
-   decisions this project already registers at those error rates, and adopting a
-   convention already in force is the one choice a successor cannot say was
-   tuned to this corpus. **These are the only two numerals this document
-   carries, and they are here deliberately**: D-483 forbids a MEASURED number,
+   pair**: a level of 0.05 and a power of 0.95. **The ground is that it is the
+   convention already in force in this repository, and adopting one is the one
+   choice a successor cannot say was tuned to this corpus.** The ground is NOT
+   that those rates are delivered: `configs/random_openings_v1.toml:47-52`
+   records that at five hundred pairs the same nominal pair achieved a measured
+   level and power well short of them, and this rule makes no claim about its own
+   realised operating characteristics. **These are the only two numerals of the kind D-483
+   governs, and they are here deliberately**: D-483 forbids a MEASURED number,
    and an error rate adopted from a committed config is a convention rather than
    a measurement — while deferring it is the exact deferral that killed the
    previous §8. The two recalls it is applied to ARE measured, and neither is
@@ -760,6 +861,21 @@ are not sheltered by D-483, because neither is a measured number. So:
    registers an incumbent and a BOUND, not a target. This rule names the bound's
    lower end, because it is the only figure in the record that says what a score
    over the census columns could reach.
+4. **AND THE FRAME IS THE TRIGGER-RICH ONE, NAMED BECAUSE THE ARC REGISTERS
+   TWO.** `docs/experiments/matrix_stage3_detector.md` registers both a
+   trigger-rich frame and an out-of-sample band, each with its own incumbent and
+   its own bound, and revision 2 named neither — leaving a successor four legal
+   pairings and a minimum that moves by more than fivefold between them, which is
+   exactly the choice-after-the-fact D-537 forbids. **Both figures are read from
+   the trigger-rich frame**, which is the frame the arc's own gap argument is
+   about, and they are read as a PAIR: an incumbent from one frame against a
+   bound from the other is not a comparison.
+5. **THE TEST IS ONE-SAMPLE AND NOT TWO.** The incumbent enters as a fixed `p0`
+   taken from the closed arc, not as a second arm with its own `n` — revision 2
+   said *"two-proportion"*, which needs two arm sizes and, with the arc's own
+   fourteen firings as the second, is unsatisfiable at any power worth
+   registering. **The minimum is the smallest `n` at which a one-sample binomial
+   test of `p0` against the alternative reaches the registered level and power.**
 
 **The minimum is then the smallest number of win-proving firings on disjoint
 positions at which a two-proportion test at that level and power separates those
@@ -776,17 +892,26 @@ own discipline — the decision rule registered before the sweep, the sweep befo
 the size (D-518) — applied to a sample instead of a book, which is what D-537
 asks for in those words.
 
-**AND THE DIRECTION OF ITS BIAS IS NAMED, BECAUSE A RULE THAT HIDES ITS OWN
-ANTI-CONSERVATISM IS NOT A GUARD.** The bound's lower end is the LARGEST effect
-size the arc licenses, so it yields the SMALLEST minimum. **The number this rule
-produces is therefore a FLOOR**: a pre-registration opening round 3 may register a
-larger minimum with grounds and **may never register a smaller one.**
+**AND THE DIRECTION OF ITS BIAS IS NAMED, BECAUSE A RULE THAT MISREPORTS ITS OWN
+LEAN IS NOT A GUARD — AND REVISION 2 REPORTED IT BACKWARDS.** The bound's lower
+end is the **SMALLEST** effect the arc licenses, and a required sample size falls
+as the gap between null and alternative grows, **so the lower end yields the
+LARGEST minimum. The rule is conservative by construction.** Its number is
+nonetheless a **FLOOR** rather than a ceiling: a pre-registration opening round 3
+may register a larger minimum with grounds and **may never register a smaller
+one**, because the guard exists to stop a successor opening round 3 on thin
+evidence and never to stop one demanding more.
 
 **WHAT COUNTS AS DISJOINT IS `key_full`.** D-537's denominator is *"win-proving
 firings on DISJOINT POSITIONS"*, and this corpus defines three notions of
-sameness (§2.1). **The coarsest must rule**, or two firings on one position
-reached two ways would count as two: `key_full` folds transposition and symmetry
-together and loses nothing on an asked position (§2.1). **WP-2.0b's identity form
+sameness (§2.1). **The coarsest must rule, and BOTH folds have to be in it.**
+Two firings on one position reached by two move orders are one position, which
+`key_pos` folds; two firings on a position and its mirror image are also one
+position for a detector's purposes, because the search's answer at a position and
+at its image are the same answer up to the symmetry and counting them twice
+inflates the sample the rule exists to size — and that fold is `key_seq`'s alone.
+**`key_full` is the only key with both** (§2.1), and it loses nothing on an
+ongoing position. **WP-2.0b's identity form
 must be consistent with it** — that package chooses *"the full-turn 128-bit key
 per D-8, or the canonical move-list prefix"*
 (`docs/experiments/wp20_dispatches.md`), and neither of those is `key_full`, so
@@ -820,8 +945,8 @@ Every row refuses the WHOLE run, and the table is the one place they are stated
 | 1 | the capture's `source_sha256` is not the digest of the report given | before any record is read |
 | 2 | the capture's schema version is not the one WP-2.0-M writes | before any record is read |
 | 3 | the capture header's `capture_sha256` is not the one its own three inputs produce (§5) | before any record is read |
-| 4 | a capture record's field count is wrong, or a field carries a TAB, or a field is empty where §2.10 does not allow it | naming the record |
-| 5 | a capture record's `turn` disagrees with its `moves` prefix length | naming the record |
+| 4 | a capture record's field count is wrong, or a field carries a TAB, or **any field is empty** (§2.10 leaves none) | naming the record |
+| 5 | a capture record's `turns_played` disagrees with its `moves` prefix length | naming the record |
 | 6 | a capture record names a game the report does not hold | naming the record |
 | 7 | a report game holds NO capture record | naming the game |
 | 8 | the totals line's `score` tag is none of the three, or no number follows it | naming the record |
@@ -863,8 +988,13 @@ criterion over a sample nobody registered"*
    refused.
 9. **The corpus deduplicates nothing**, and carries the three keys that let a
    consumer fold.
-10. **Every record says whether its position is book**, by the arena's own
-    boundary.
+10. **Every record says whether its position is book**, by the boundary the
+    column's own definition gives: every turn leading to it was a book turn.
+11. **A run that writes a corpus prints its manifest row**, naming the corpus's
+    body digest, its schema version, the capture's identity and the report's two
+    digests.
+12. **The score is read as a `(tag, number)` PAIR** — the word after `score` and
+    the word after that — and never as one word.
 
 **INVARIANT 2 IS THE ONE NO TEST PINS, AND THIS DOCUMENT SAYS SO RATHER THAN
 REGISTERING A TEST THAT CANNOT FAIL.** Revision 1 registered
@@ -888,14 +1018,14 @@ clock read that changed an output.
 | `a_cp_score_becomes_an_eval_column_and_not_a_cp_one` | 3 |
 | `a_mate_score_becomes_mate_in` | 3 |
 | `a_negative_mate_score_becomes_mated_in` | 3 |
-| `a_score_tag_with_no_number_after_it_refuses_the_run_by_name` | 3, 7 |
+| `a_score_tag_with_no_number_after_it_refuses_the_run_by_name` | 12, 7 |
 | `a_totals_line_without_solver_fields_yields_all_nodes_as_search_nodes` | 3 |
 | `a_totals_line_with_solver_fields_yields_the_two_counters_it_carries` | 3 |
 | `a_partial_solver_block_refuses_the_run_by_name` | 3, 7 |
 | `the_sprt_reports_per_game_node_counts_survive_the_totals_of_split` | 4 |
 | `totals_of_still_refuses_a_line_missing_nodes_time_or_depth` | 4 |
 | `fields_of_reads_a_captured_line_that_has_no_time_field` | 4 |
-| `fields_of_gives_the_word_after_score_and_the_word_after_that` | 4 |
+| `fields_of_gives_the_word_after_score_and_the_word_after_that` | 12 |
 | `a_rerun_over_one_capture_and_report_is_byte_identical` | 5 |
 | `a_corpus_file_round_trips_through_its_own_loader_field_by_field` | 6 |
 | `a_corpus_whose_body_digest_is_wrong_is_refused_by_name` | 6 |
@@ -918,8 +1048,17 @@ clock read that changed an output.
 | `a_capped_game_and_a_forfeited_game_are_distinguishable_in_the_corpus` | 8 |
 | `two_transposed_positions_are_two_records_sharing_a_key_full` | 9 |
 | `two_positions_alike_up_to_a_symmetry_share_a_key_full_and_not_a_key_pos` | 9 |
+| `to_move_is_the_side_pistol_core_puts_to_move_at_that_prefix` | 3 |
+| `two_symmetric_prefixes_share_a_key_seq_and_two_transpositions_do_not` | 9 |
+| `two_positions_differing_only_in_colour_do_not_share_a_key_full` | 9 |
+| `a_key_full_field_that_is_not_cell_colour_pairs_is_refused_by_name` | 6 |
+| `a_capture_whose_schema_version_is_unknown_is_refused_by_name` | 7 |
+| `a_capture_record_with_a_tab_in_a_field_is_refused_by_name` | 7 |
+| `a_moves_prefix_that_is_not_a_legal_game_is_refused_by_name` | 7 |
+| `a_labels_run_prints_a_corpus_manifest_row_naming_its_digests` | 11 |
 | `a_book_position_is_a_record_flagged_book` | 10 |
-| `the_first_position_after_the_book_is_flagged_not_book` | 10 |
+| `the_position_reached_by_the_whole_book_and_nothing_else_is_flagged_book` | 10 |
+| `the_first_position_an_engine_chose_from_is_flagged_not_book` | 10 |
 | `the_turn_zero_record_writes_a_dash_for_its_three_empty_columns` | §2.10 |
 
 **MUTANTS:**
@@ -938,15 +1077,22 @@ clock read that changed an output.
 | the loader's body-digest check removed | `a_corpus_whose_body_digest_is_wrong_is_refused_by_name` |
 | the loader's empty-field check removed | `a_corpus_record_with_an_empty_field_is_refused_by_name` |
 | the loader's schema-version check removed | `a_corpus_whose_schema_version_is_unknown_is_refused_by_name` |
-| the three unit params dropped from the header | `a_corpus_missing_one_of_its_three_unit_params_is_refused_by_name` |
+| the three unit params dropped **on write** | `a_corpus_file_round_trips_through_its_own_loader_field_by_field` — the loader test still passes, because the loader's check is intact; the round trip is what dies |
+| the loader's unit-param check removed | `a_corpus_missing_one_of_its_three_unit_params_is_refused_by_name` |
+| `key_full` rendered as bare cells, dropping the colour | `two_positions_differing_only_in_colour_do_not_share_a_key_full` |
+| `key_seq` computed from `canonical_form` instead of `canonical_sequence` | `two_symmetric_prefixes_share_a_key_seq_and_two_transpositions_do_not` |
+| `to_move` written as the opposite side | `to_move_is_the_side_pistol_core_puts_to_move_at_that_prefix` |
+| the corpus manifest row not printed | `a_labels_run_prints_a_corpus_manifest_row_naming_its_digests` |
+| the capture schema-version check removed | `a_capture_whose_schema_version_is_unknown_is_refused_by_name` |
+| the write-side TAB check removed | `a_capture_record_with_a_tab_in_a_field_is_refused_by_name` |
+| the pistol-core legality replay skipped | `a_moves_prefix_that_is_not_a_legal_game_is_refused_by_name` |
 | the capture/report digest binding removed | `a_capture_whose_source_digest_is_not_the_reports_is_refused_by_name` |
 | the header's `capture_sha256` copied instead of re-derived | `a_capture_whose_header_identity_is_not_its_own_inputs_is_refused_by_name` |
 | a report game with no records passed over | `a_report_game_with_no_capture_record_refuses_the_run_by_name` |
 | **the outcome relation gated on `a_is_p1`** (revision 1's own defect) | `the_outcome_check_holds_when_engine_b_takes_seat_one` |
 | the pistol-core outcome cross-check removed | `a_report_whose_result_contradicts_its_moves_refuses_the_run_by_name` |
 | `result` and `end` collapsed into one column | `a_capped_game_and_a_forfeited_game_are_distinguishable_in_the_corpus` |
-| `to_move` taken from the record's `turn` column without replaying | `a_record_whose_turn_and_moves_disagree_is_refused_by_name` |
-| the book boundary read as `k <= opening_turns` | `the_first_position_after_the_book_is_flagged_not_book` |
+| the book boundary read as `k < opening_turns` — revision 2's own reading | `the_position_reached_by_the_whole_book_and_nothing_else_is_flagged_book` |
 | the `book` column dropped | `a_book_position_is_a_record_flagged_book` |
 | records deduplicated by `key_full` on write | `two_transposed_positions_are_two_records_sharing_a_key_full` |
 | the turn-zero sentinel written as an empty field | `the_turn_zero_record_writes_a_dash_for_its_three_empty_columns` |
@@ -963,9 +1109,18 @@ same defect from two ends**, and this arc has registered both before.
 for it four times (D-527, and WP-2.0-M's §14): **none of these tests needs a real
 engine, and that is a property of the subject rather than a shortcut.** The
 transform reads FILES, so a fixture capture and a fixture report exercise every
-path — including the solver spelling, which no engine in this workspace can
-produce because every committed config has the solver off the search path
-(`configs/gate_v0.toml:94`), and which a synthetic totals line produces for free.
+path — **including the solver spelling, which a synthetic totals line produces
+for free and which needs no engine at all.** Revision 2 grounded that on a
+universal — *"every committed config has the solver off the search path"* — and
+**the universal is false**: three committed configs arm it
+(`configs/bench_wp18c_solver_on.toml:45`,
+`configs/gate_staged_solver_v0.toml:47`,
+`configs/play_staged_solver_v0.toml:75`), against the many that do not
+(`configs/gate_v0.toml:94`). The conclusion never needed it and stands without
+it; the universal is deleted rather than narrowed, because a sound conclusion
+resting on manufactured authority is the shape this arc keeps paying for. **The
+solver-proof record class §2.5 reconciles is real precisely because those three
+configs exist.**
 
 **THE ONE TEST WHOSE FIXTURE MUST NOT BE HAND-WRITTEN** is
 `the_derived_outcome_agrees_with_the_reports_own_result_field`: if the fixture's
@@ -996,23 +1151,39 @@ digest boundary decision 12 asks for, stated: the row binds the corpus to the
 capture and the capture's own row binds that to the report, so a reader walks the
 chain from a committed file to every artifact in it.** The row is added to
 `docs/label_corpus_manifest.md` in the commit that records the run, and
-`a_labels_run_prints_a_corpus_manifest_row_naming_its_digests` pins its shape.
+**INVARIANT 11** with
+`a_labels_run_prints_a_corpus_manifest_row_naming_its_digests` pins its shape —
+revision 2 registered that test in prose alone, in no table, against no
+invariant and with no mutant.
+
+**AND THE FILE HOLDS TWO TABLES, UNDER TWO HEADINGS, BECAUSE TWO PACKAGES WRITE
+ROWS INTO IT.** WP-2.0-M's rows are one per CAPTURE and carry its six fields;
+this package's are one per CORPUS and carry the six above. A single table taking
+both would have two column orders, and a reader could not tell which row kind
+they were reading. **The corpus table sits under its own heading and each corpus
+row names the `capture_sha256` of the capture row above it**, so the chain from a
+committed file to every artifact is walkable in one direction and unambiguous in
+the other. `docs/label_corpus_manifest.md` does not exist yet; WP-2.0-M creates
+it with the capture table, and this package adds the second heading.
 
 ### 12.2 The throughput expectation, stated as a shape
 
 The dispatch asks for *"throughput expectation stated as a shape, measured in the
-pilot, never guessed (D-500's class)"*. **Revision 1 had it in no section and no
-deferral list, and WP-2.0-M did not have it either** — the "falls between" defect
-on a requirement the split's own governing text names.
+pilot, never guessed (D-500's class)"*.
 
-**THE SHAPE, for the pipeline end to end.** Pass 1 costs one game at the GAME
-budget per game. Pass 2 costs, per asked position, **one `newgame` plus one `go`
-at the LABEL budget** — and the `newgame` is a memset of the whole transposition
-table, whose size the committed seat sets, which is why WP-2.0-M refuses to guess
-it (D-500). The number of asked positions is the number of turn boundaries in the
-report, less one per won game. **This transform is a linear pass over the capture
-with one pistol-core replay per record and no process and no engine**, so its cost
-is dominated by pass 2's and is not the throughput anyone measures.
+**IT IS WP-2.0-M's, AND THIS SECTION POINTS RATHER THAN RESTATES.** Revision 2
+said WP-2.0-M *"did not have it either"*; **that was false at the revision this
+document was written against** — WP-2.0-M's §11 assigns the shape and gives the
+pipeline's per-position cost, and restating it here discharged one requirement
+twice, in two wordings, which is D-423's own defect on the very requirement whose
+falling-between was a BLOCKING finding. The pipeline's shape is
+`docs/experiments/wp20m_design.md` §11's and is not repeated.
+
+**WHAT IS THIS PACKAGE'S OWN, AND IS THEREFORE HERE**: this transform costs one
+pistol-core replay per corpus record and spawns nothing. Replaying a prefix of
+`k` turns costs `k` turns, so **the transform is quadratic in game length and
+linear in games** — revision 2 called it linear, which it is not — and it is
+negligible beside pass 2's per-position search either way.
 
 **THE MAGNITUDES ARE THE PILOT'S** — games per hour and labels per hour — and are
 measured there rather than stated here, which is where D-483 and D-500 between
@@ -1026,6 +1197,17 @@ coldness, the normalisation and the capture identity (WP-2.0-M); the census
 identity column and the census logging flag (WP-2.0b, D-539); any train/test
 split, which is a training decision over a corpus and not a property of one; and
 whether a trainer uses book positions, which §2.9 flags rather than decides.
+
+**AND ONE STRUCTURAL RISK THIS DOCUMENT CARRIES AND DID NOT NAME.** §0 lists what
+this package inherits from WP-2.0-M without saying that **most of it is under
+adjudication**: the record's TAB grammar, the capture identity's three inputs,
+the corpus manifest file and the throughput shape are all NEW in WP-2.0-M's
+revisions 3-5, unfrozen, and passed by no reviewer. Four of this document's ten
+leans are on that material. **If WP-2.0-M's own review forces a change there,
+this document changes with it** — §3's whole premise rests on the normalisation
+removing `time` (a passed paragraph, low risk), but §5's re-derivation, §9's rows
+2-3 and §12.1 rest on material that could still move. Naming it is not a hedge:
+it is what tells a successor which sections to re-read when WP-2.0-M lands.
 
 **RESIDUE, NAMED SO A SUCCESSOR FINDS IT RATHER THAN REDISCOVERS IT:**
 

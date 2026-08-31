@@ -14,8 +14,11 @@ WP-2.0 dispatch and the WP-2.0b dispatch arrived together; the third — the
 M-design-by-quotation round — arrived later and is transcribed at the same
 standard. **A document quoting "the dispatch" must say which**, because the third
 qualifies the seed mutant with *"where the pipeline samples"* and the first does
-not: a design quoted the qualified form and attributed it to the first, which is
-the defect this file exists to make impossible.
+not, **and the third also drops the first's *"census direction collapsed -> its
+test dies"* and adds a cold-label mutant of its own**. A design quoted the
+qualified form and attributed it to the first, which is the defect this file
+exists to make impossible — and a file that exists to let a successor tell the
+lists apart has to name every way they differ, not the one that caught somebody.
 
 **Provenance.** Transcribed by the session that received each, from its own
 prompt. **Verbatim** apart from this preamble and the fenced-block wrapping. A
