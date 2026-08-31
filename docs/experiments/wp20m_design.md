@@ -1,8 +1,25 @@
 # WP-2.0-M — DESIGN: the labelling pass
 
-**REVISION 3**, authored in a fresh session under **D-546**'s granted round after
-revisions 1 (`5064b05`) and 2 (`7af62e7`) both FAILED. This revision is not a
-rewrite. **D-545 named the defect as the authoring method** — five design reviews
+**REVISION 4**, the ONE fix round D-546 allows, after revision 3 (`406ace9`)
+took a fresh-context REVIEW-design and returned **FAIL** — 1 BLOCKING, 8 MAJOR,
+14 MINOR. Revision 3 was itself authored under D-546's granted round after
+revisions 1 (`5064b05`) and 2 (`7af62e7`) both FAILED. **A second FAIL on this
+revision STOPs the package and returns it to the architect**; there is no third
+round.
+
+**WHAT THE BLOCKING WAS, on this document's own face because a fix round that
+hides what it is fixing is how revision 2 failed.** Revision 3's §14 sent the
+real-binary re-run receipt to a capture pass over the report
+`tools/arena_smoke.sh` writes. **That report cannot be read.**
+`crates/pistol-arena/src/transcript.rs:164-170` refuses **every** source report
+whose budget kind is not `nodes` — not only a movetime one, which is how
+revision 3 described it — and `configs/arena_smoke_v0.toml` carries a
+`depth_turns` budget. §14 is replaced, not patched, and the mischaracterisation
+that made it writable is corrected wherever it appeared (§7). The replacement is
+cheaper than the thing it replaces, needs no `tools/` change at all, and closes
+MAJOR 4 in the same stroke.
+
+This revision is not a rewrite. **D-545 named the defect as the authoring method** — five design reviews
 in this arc, five failures, every one a claim about the code the code does not
 make or a true claim a rewrite destroyed — so the method is fixed before the
 content is.
@@ -19,7 +36,14 @@ survived in. New prose is connective tissue and NEW claims, and every new claim
 about the tree carries a `path:line` citation (D-543).
 
 `tools/design_citation_check.py` is run green over this document, with the files
-it proposes to create declared, **before** the review is dispatched. Its own
+it names and the tree does not hold declared, **before** the review is
+dispatched. There are four, and **which package creates each is part of the
+declaration**: `crates/pistol-arena/src/capture.rs` and
+`crates/pistol-arena/src/usage.rs` are this package's;
+`docs/label_corpus_manifest.md` is created by the commit that records this
+package's first capture (§13a); and `configs/arena_wp20_label_pilot.toml` is
+**named here and created by the pilot's pre-registration** (§13b), which is a
+file this design constrains and does not write. Its own
 output states what that is worth and this document does not oversell it: a green
 run means the citations are real, not that the document is right.
 
@@ -43,19 +67,42 @@ ground; an unlisted edit is a finding by itself.
 |---|---|---|---|
 | revision 1 §4 **COLDNESS** | `docs/experiments/wp20m_design_REVIEW.md` — its *"strongest attack that did not land"* re-derived the chain and closed *"INVARIANT 1 is sound and cheap"* | **RESTORED, as §12**, quoted, with a citation added at each site it names | Revision 2 deleted a passed section entire and took D-540's pilot obligation with it. That deletion is D-547's motivating instance; restoring it is the fix. The added citations are new material beside the quoted text, not edits to it |
 | revision 2 §1 **WHERE THE CODE LIVES** | `docs/experiments/wp20m_design_REVIEW_rev2.md` MAJOR 11 APPLIED | **EDITED**: the measured line count is replaced by the run that produces it; the flag grammar is completed | MINOR J — a measured count is what D-483 forbids and what this document's own header banned four paragraphs above it. MINOR I — the flag's argument shape was left to the implementer |
-| revision 2 §2 **WHICH POSITIONS ARE ASKED** | rev-2 review BLOCKING 2 APPLIED, all three limbs verified against the tree | **EDITED**: the prefix range is enumerated, and the legality precondition and the decidedness mechanism are restored | MINOR G, MINOR K, and loss L3 — revision 2 deleted the paragraph that made its own INVARIANT 2 decidable |
+| revision 2 §2 **WHICH POSITIONS ARE ASKED** | rev-2 review BLOCKING 2 APPLIED, all three limbs verified against the tree | **EDITED**: the prefix range is enumerated, and the legality precondition and the decidedness mechanism are restored. Revision 3 also dropped one sentence of the quoted block without listing it; **revision 4 restores that sentence** | MINOR G, MINOR K, and loss L3 — revision 2 deleted the paragraph that made its own INVARIANT 2 decidable. The dropped sentence is rev-3 review **m1**, an unlisted edit to a frozen section, which D-547 makes a finding by itself |
 | revision 2 §3 second paragraph, **engine verification** | rev-2 review MAJOR 3 APPLIED | **LIFTED VERBATIM** | — |
 | revision 2 §4 **THE ONE NORMALISATION** | rev-2 review's *"strongest attack that did not land"*, four routes closed | **LIFTED VERBATIM** | — |
 | revision 2 §4 **THE SOURCE IS NAMED ON THE FACE OF THE FILE** | rev-2 review MAJOR 10 APPLIED | **LIFTED VERBATIM** | — |
-| revision 2 §6 **the failure table** | rev-2 review MAJOR 1 APPLIED | **EDITED**: two rows added | MINOR H — hard rule 3 prefers a refusal named per reason, and the channel has two outcomes the table did not name |
+| revision 2 §6 **the failure table** | rev-2 review MAJOR 1 APPLIED | **EDITED**: three rows added, **and row 1 is reworded** | MINOR H — hard rule 3 prefers a refusal named per reason, and the channel has two outcomes the table did not name. Row 1's rewording (*"its two engine sections differ"* → *"its two seats attest different engines"*) is **required by §3's BLOCKING A remedy** and was unlisted in revision 3 (rev-3 review **m2**). The third row is the malformed totals line (**m9**) |
 | revision 2 §7 **the budget's kind** | rev-2 review MAJOR 8, substance taken | **EDITED**: the builder is named, and the grammar is fixed so no other kind is spellable | MAJOR 8's unapplied half |
 | revision 2 §8 **the removed mutant** | rev-2 review MAJOR 6 APPLIED | **KEPT removed**, and replaced by a mutation this package's shipped code can actually take | MAJOR 6's own reasoning, carried one step further |
-| revision 2's header table of **capture decisions** | rev-2 review BLOCKING 3 APPLIED | **LIFTED**, extended by one row | §3's title question was never answered in three revisions; which slot answers is a fifth capture decision and belongs on the face |
+| revision 2 §4 **THE FILE'S SHAPE** | rev-2 review MAJOR 4, applied half | **LIFTED VERBATIM** | — (rowed for consistency: rev-3 review noted three verbatim lifts were rowed and this one was not) |
+| revision 2's header table of **capture decisions** | rev-2 review BLOCKING 3 APPLIED | **LIFTED**, extended by **one row — *"WHAT is written, and in what grammar"***; the quoted lead-in drops revision 2's word *"four"*, which the added row makes false | The grammar was undecided across three revisions (rev-2 MAJOR E). **Revision 3's ground for this row named the slot instead, which is not the row it added** (rev-3 review **m3**); the slot is answered inside §3's existing row and the ground is corrected here |
 
 **NOT FROZEN, because no reviewer passed them**: §3's first paragraph (rev-2
 BLOCKING A), §5 (rev-2 MAJOR 5, NOT APPLIED), the invariant and test sets (rev-2
 MAJOR D), and revision 2's §11 requirement-5 claim (rev-2 MAJOR 9, applied but
-defective).
+defective). **Nothing in revision 3 is frozen**: its review returned FAIL.
+
+### 0.2a What REVISION 4 changed, and against which finding
+
+D-547 asks that an edit to a frozen section be listed with its ground. **Two of
+this round's edits land in sections frozen by an earlier review** and are the
+first two rows; the rest are listed with them so one table answers "what moved".
+
+| § | change | finding |
+|---|---|---|
+| **§1** (frozen: *where the code lives*) | the `USAGE` paragraph and the fallback refusal's mode list are named as content the arm must carry | **m14** — a binary whose help text omits a mode it has |
+| **§7** (frozen: *the budget's kind*) | the description of `transcript.rs:164-170` is corrected, and the constraint it forces on pass 1's config is recorded | **B1's root.** The quoted revision-2 block is untouched; the correction is in the prose beneath it |
+| §2 | one sentence of the quoted block restored | m1 |
+| §3.1 | the identity's config-path precondition, and a derive line number | M8, m5 |
+| §4.2 / §4.3 | the TAB refusal moved to the write side with its driver named; the loader refuses an empty field | m6, m11 |
+| §5 | `arena_version` **removed**; three inputs; the governing revision named where `docs/process.md` puts it | M1, M2, m7 |
+| §6 | a row for an unrecognised totals line | m9 |
+| §9 | INVARIANT 6, 7, 11 and 12 restated; a second declared-unpinned item | M7, m6, m10 |
+| §10 | drivers named per test; the stub gains `demands_newgame_per_ask`; the solver-spelling and normalisation unit tests added; three renames | **M3**, **M4**, m7, m8 |
+| §11 | the throughput obligation assigned | m12 |
+| §13 | the ledger-append mutant's absence named; the arena config moved to the pilot | M5, M6 |
+| §14 | **replaced entirely** | **B1**, M4, m4 |
+| §15 | new: the ADR act owed at landing | m13 |
 
 ### 0.3 What this package decides, and what it does not
 
@@ -159,6 +206,12 @@ fixes rather than leaves open:
   output claim by structure: `outpath::claim` is called at
   `crates/pistol-arena/src/bin/arena.rs:103`, **before** the mode match, so a
   third arm needs no O_EXCL construction of its own (D-200).
+- **Two pieces of text move with the arm and are named because they are content,
+  not formatting.** The `USAGE` constant gains a `--capture` paragraph in the
+  shape of the two beside it — the flags in order, and what each refuses — and
+  the fallback refusal at `crates/pistol-arena/src/bin/arena.rs:94-99`, which
+  today enumerates the two existing modes, gains the third. A binary whose help
+  text does not mention a mode it has is a binary whose help text is wrong.
 
 ---
 
@@ -185,7 +238,8 @@ tree and passed:
 >   and asking one would earn an `error` and no `bestmove`. **This is the
 >   protocol's own precondition, not an exclusion by outcome**: the terminal
 >   prefix of a won game is not a position any engine can be asked about, so it
->   is not in the set at all.
+>   is not in the set at all. Revision 1's INVARIANT 4 forbade "exclusion by
+>   outcome" and would have forced the hang.
 > - **Book turns and forfeited games are asked like any other**, because those
 >   ARE exclusions by meaning and they belong to WP-2.0-S.
 
@@ -248,14 +302,38 @@ make the labels differ and the third cannot be relaxed at all:
 (`crates/pistol-arena/src/identity.rs:11-22`) carries `id_lines`,
 `binary_sha256`, `config_sha256` and `weights_sha256` — **and no label** — and
 `Transcript` holds one per slot (`crates/pistol-arena/src/transcript.rs:32-34`).
-It derives `PartialEq` at `crates/pistol-arena/src/identity.rs:11`, so the check
+It derives `PartialEq` at `crates/pistol-arena/src/identity.rs:12`, so the check
 is `identities[0] == identities[1]` and needs no new predicate.
 
 **MECHANISM.** Pass 2 **refuses, by name, a report whose two seats do not attest
 the same engine** — the same `id_lines`, `binary_sha256`, `config_sha256` and
 `weights_sha256`. A self-play report has two labels and one identity, which is
 exactly what `configs/arena_smoke_v0.toml` writes today; an A-versus-B report has
-two identities and is refused. **What the refusal forecloses is a corpus whose
+two identities and is refused.
+
+**AND THE EQUALITY HAS A PRECONDITION, WHICH IS STATED HERE RATHER THAN
+DISCOVERED IN A PILOT.** `id_lines` is the handshake verbatim
+(`crates/pistol-arena/src/identity.rs:74-82` puts `spoken.lines` in), and the
+engine's first id line is the config path **as spelled on its command line** —
+`format!("config {}", path.display())`
+(`crates/pistol-cli/src/bin/pistol.rs:142-166`) — while `config_sha256` is the
+file's CONTENT (`crates/pistol-arena/src/identity.rs:84`). **So two seats naming
+one config file by two different path strings attest different identities and are
+refused.** The report's two engine sections must therefore spell `config`
+identically, which `configs/arena_smoke_v0.toml` already does
+(`configs/arena_smoke_v0.toml:82` and `:88`), and **the refusal names the field
+that differed**, because a refusal that only said "different engines" would be
+unreadable on two sections that name one file.
+
+**IT FAILS SAFE AND THAT IS WHY THE MECHANISM IS UNCHANGED BY IT.** Two DIFFERENT
+engines can never compare equal — `binary_sha256` and `config_sha256` are content
+(`crates/pistol-arena/src/identity.rs:56-87`) — so the refusal cannot admit a
+two-teacher corpus. The only reachable error is a false refusal, loud and by
+name, which is the direction hard rule 3 wants. **The in-crate tests cannot see
+this**, because the stub identifies with one weights line only
+(`crates/pistol-arena/src/bin/stub_engine.rs:262-266`) and emits no `config` id
+line; it is pinned instead by the pilot's own report, whose two sections this
+design requires to spell one path. **What the refusal forecloses is a corpus whose
 labels came from two different teachers without saying so**, while
 `capture_sha256` attested one experiment.
 
@@ -345,10 +423,22 @@ built by a `pistol-cli` formatter that joins with single spaces —
 (`crates/pistol-cli/src/report.rs:106-108`) — over turn tokens, decimal numbers
 and the three score spellings.
 
-**AND THE CAPTURE DOES NOT ASSUME IT.** A field carrying a TAB, or a record whose
-TAB count is not the four this format writes, **refuses the run by name** (hard
-rule 3). The assumption is cheap to hold and free to check, and a corpus is the
-wrong place to discover it was wrong.
+**AND THE CAPTURE DOES NOT ASSUME IT.** Field 4 and field 5 are **the engine's
+own bytes off the channel**, and §3's refusal requires the two seats to attest
+ONE engine rather than to be `pistol` — a third-party speaker satisfying the
+handshake could emit anything, and `Channel` does not sanitise (it does
+`from_utf8_lossy` then trims only a trailing run of newline and carriage return,
+`crates/pistol-arena/src/channel.rs:96-106`). **So the refusal is load-bearing,
+not belt-and-braces:** pass 2 refuses the run by name, naming the game and turn,
+when a field it is about to write carries a TAB (hard rule 3).
+
+**THIS IS A WRITE-SIDE REFUSAL AND IT IS PINNED AS ONE** — INVARIANT 6, not
+INVARIANT 11. On READ a TAB inside a field is indistinguishable from an extra
+field, so the loader's own guard is the arity check and nothing finer, and saying
+otherwise would register a loader behaviour no loader can have. **The test is a
+unit test over the record-writing function with a synthetic TAB-bearing field**,
+which needs no engine at all: no engine in this tree can emit one, so a test
+driven by an engine could never fail.
 
 ### 4.3 The file's shape, lifted from revision 2 (rev-2 review MAJOR 4, applied half)
 
@@ -373,7 +463,12 @@ refusals, and **the whole file refused rather than partially read**. It verifies
 the body against the digest the header claims, using the type's own
 `claimed_body_digest` and `body_of`
 (`crates/pistol-cli/src/corpus/emit.rs:102-118`), and refuses a record whose TAB
-count is wrong. This is the *"documented, versioned schema with a loader test"*
+count is wrong **or any of whose five fields is empty**. No field of this record
+can legitimately be empty — the first two are decimals, the third is at minimum
+`position start`, and the last two are non-empty engine lines — so an empty field
+is always an error, and a fixed arity makes it distinguishable from a missing one
+(a record short of a field carries too few TABs; a record with an empty field
+carries the right number). This is the *"documented, versioned schema with a loader test"*
 the standing dispatch's requirement 2 asks for, for the capture record;
 **INVARIANT 11** pins it.
 
@@ -389,24 +484,41 @@ the standing dispatch's requirement 2 asks for, for the capture record;
 
 ## 5. WHAT COUNTS AS THE SAME CAPTURE
 
-`capture_sha256` over the canonical concatenation of **exactly four inputs**, one
-per line:
+`capture_sha256` over the canonical concatenation of **exactly three inputs**,
+one per line:
 
 | input | why it is in |
 |---|---|
 | the capture format version | this package's own record grammar |
-| `arena_version` | the INSTRUMENT, and it was missing from revisions 1 and 2 |
 | the source report's `experiment_sha256` | what was played |
 | the label `go` line | what was asked |
 
-**THE INSTRUMENT IS IN, and this is rev-2 MAJOR 5's first limb.** `arena_version`
-is written into every report from `env!("CARGO_PKG_VERSION")`
-(`crates/pistol-arena/src/report.rs:130`) and is deliberately **not** inside
-`experiment_digest` (`crates/pistol-arena/src/report.rs:41-76`), which closes
-over the experiment and not over the program. Without it, a change in pass 2's
-own behaviour produces a colliding capture identity, and the only thing standing
-between them is a hand-maintained format version. `docs/process.md`'s *"Instrument
-governing revision"* is the rule that requires it.
+**AND THE INSTRUMENT IS NOT ONE OF THEM, WHICH REVERSES REVISION 3 AND SAYS WHY.**
+Revision 3 added `arena_version` as *"the INSTRUMENT"* and argued that without it
+*"the only thing standing between [two captures] is a hand-maintained format
+version"*. **That remedy was its own diagnosis.** `arena_version` is written from
+`env!("CARGO_PKG_VERSION")` (`crates/pistol-arena/src/report.rs:130`) over a
+workspace version that **has never moved**: `git log -p --follow -- Cargo.toml`
+shows one `version = "0.0.1"`, from the first commit. A second hand-maintained
+number buys no protection the first did not, and the version of a package is not
+a revision of anything. **Two hand-maintained numbers are worse than one**,
+because a reader takes the second for a mechanism.
+
+**WHAT DISCHARGES `docs/process.md`'s "Instrument governing revision" IS A
+REVISION, AND IT LIVES WHERE THAT RULE PUTS IT.** The rule asks that an artefact
+producing a registered number be *"named in the pre-registration WITH ITS
+REVISION"*. **So the pilot's pre-registration names pass 2's own commit SHA**,
+which is a revision, moves whenever pass 2's behaviour moves, and is checkable —
+none of which a package version is. Revision 3 cited that rule for something it
+does not say.
+
+**WHAT THE DIGEST THEREFORE DOES NOT PROTECT AGAINST, stated because a digest
+oversold is worse than none.** A change to pass 2's normalisation or record
+grammar, with the capture format version left unbumped by hand, produces a
+DIFFERENT capture under the SAME `capture_sha256`. The format version is the one
+hand-maintained guard, `a_capture_identity_moves_when_the_format_version_moves`
+pins that it is an input at all, and **the governing revision in the pilot's
+pre-registration is what actually binds a capture to the code that made it.**
 
 **THE ENGINE IDENTITY IS OUT, and this is rev-2 MAJOR 5's second limb.**
 Revision 2 added *"the engine identity pass 2 verified"* on top of
@@ -426,8 +538,9 @@ re-attacked and could not break:
 
 **Nothing about sampling is in it, because this package samples nothing and takes
 no seed.** WP-2.0-S extends the digest when it adds a sampling rule. **INVARIANT
-12** pins the four inputs, and the digest is computed by a function over them so
-that a test can vary each one in turn.
+12** pins the three inputs, and the digest is computed by a **pure function over
+them** so that a test can vary each one in turn — including the format version,
+which revision 3 left as the one input with neither test nor mutant.
 
 ---
 
@@ -444,6 +557,7 @@ the two channel outcomes the table did not name (MINOR H):
 | an ask returns nothing before the watchdog | **refuse the run**, by name |
 | **the engine closes its pipe** (`Received::Closed`) | **refuse the run**, by name, naming the game and turn |
 | **the engine writes an overlong non-line** (`Received::Overlong`) | **refuse the run**, by name, naming the game and turn |
+| **the closing totals line is not recognised as one** (§8) | **refuse the run**, by name, naming the game and turn |
 | the totals line carries no score at all | **capture it as written.** The score's presence is a meaning question and belongs to WP-2.0-S |
 
 > **Every failure is a refusal of the whole run and none is a skip**, because a
@@ -477,12 +591,28 @@ Lifted from revision 2 (rev-2 review MAJOR 8, substance taken):
 > the KIND is a mechanism and belongs here.
 
 The refusal it quotes is at `crates/pistol-arena/src/validate.rs:39-45`, and the
-crate refuses a movetime budget in three further places:
-`crates/pistol-arena/src/transcript.rs:164-170` (a movetime **source report** is
-refused by name), `crates/pistol-arena/src/config.rs:114-134`
-(`BudgetSection::go_line` returns `None` for `MovetimeMs`), and
-`crates/pistol-arena/src/bin/arena.rs:226-229`, whose `unreachable!` records that
-validation has already fired.
+crate refuses a movetime budget in two further places:
+`crates/pistol-arena/src/config.rs:114-134` (`BudgetSection::go_line` returns
+`None` for `MovetimeMs`) and `crates/pistol-arena/src/bin/arena.rs:226-229`,
+whose `unreachable!` records that validation has already fired.
+
+**AND THE READER OF A SOURCE REPORT IS STRICTER THAN "NOT MOVETIME", WHICH
+REVISION 3 GOT WRONG AND WHICH CHANGES A DESIGN DECISION.**
+`crates/pistol-arena/src/transcript.rs:164-170` tests `kind != "nodes"` and
+refuses **every** budget kind but `nodes` — `depth_turns` included — because
+*"only a `nodes` budget replays: the whole premise is that a re-driven engine
+answers what it answered"*. Revision 3 described that span as *"a movetime source
+report is refused by name"*, and §14 was written on that description; the section
+it produced could not execute, which is this revision's BLOCKING.
+
+**THE CONSEQUENCE IS A REQUIREMENT ON PASS 1 AND IT IS RECORDED AS ONE.**
+**Pass 1's arena experiment config must carry a `nodes` budget**, because pass 2
+reads its report through `transcript::read` and a report at any other kind is
+refused before a single position is asked. This is not a preference of this
+design: it is inherited, it agrees with the dispatch's own *"games at the
+standing"* node budget, and it means **no `depth_turns` report in this repository
+can be a capture input** — which is exactly what `configs/arena_smoke_v0.toml`
+is (`configs/arena_smoke_v0.toml:54-58`).
 
 **THE EDIT, and it is MAJOR 8's unapplied half.** Two things revision 2 left to
 the implementer:
@@ -496,10 +626,12 @@ the implementer:
   `a_movetime_label_budget_is_refused_by_name` has no site in this package and is
   **deliberately not registered**. What is registered in its place is the pair
   that can fail: `the_label_go_line_is_the_one_budget_section_spells`, and
-  `a_capture_over_a_movetime_report_is_refused_by_name`, which pins the refusal
-  pass 2 inherits from `transcript::read`. **This is a departure from a review's
-  own FIX and is named as one**, because a test that cannot fail is worse than an
-  absent one.
+  `a_capture_over_a_report_whose_budget_is_not_nodes_is_refused_by_name`, which
+  pins the refusal pass 2 inherits from `transcript::read` **and is named for what
+  that refusal actually is** — revision 3 named it for movetime, which is the
+  mischaracterisation above wearing a test name. **This is a departure from a
+  review's own FIX and is named as one**, because a test that cannot fail is worse
+  than an absent one.
 - The node count's **spelling** is validated and not merely its value, by the
   rule `workers_of` already states for the other command-line number
   (`crates/pistol-arena/src/bin/arena.rs:124-143`): a count this program will not
@@ -573,98 +705,148 @@ adds `score` and `pv` as non-fatal `Option`s (D-542).
    list the report recorded.
 6. **Every captured line is the engine's own bytes**, less ` nps <n> time <n>` on
    the totals line; no other field is reordered, renamed, dropped or combined,
-   and the `bestmove` line is untouched.
-7. **Raising `totals_of` to `pub(crate)` changes no output.**
+   the `bestmove` line is untouched, and **a field carrying a TAB refuses the run
+   before it is written** (§4.2).
+7. **No behaviour rides along with `totals_of`'s visibility change**: the SPRT
+   path still bills each game's compute from the totals line.
 8. **A re-run of pass 2 over one report at one label budget produces a
    byte-identical capture file**, wall-clock fields having been normalised out by
    gate 9's own rule.
 9. **Any failure refuses the whole run**; no position is silently skipped.
 10. **Pass 1 is unmodified.**
-11. **A capture file round-trips through its own loader**, and one whose body
-    digest is wrong, whose record arity is wrong, or whose fields carry a TAB is
-    refused by name.
-12. **The capture identity is a function of exactly four inputs**: the capture
-    format version, the arena version, the source report's `experiment_sha256`,
-    and the label `go` line.
+11. **A capture file round-trips through its own loader FIELD BY FIELD**, and one
+    whose body digest is wrong, whose record arity is wrong, or any of whose
+    fields is empty is refused by name.
+12. **The capture identity is a function of exactly three inputs**: the capture
+    format version, the source report's `experiment_sha256`, and the label `go`
+    line.
 
-**INVARIANT 10 IS THE ONE NO TEST PINS, AND THIS DOCUMENT SAYS SO RATHER THAN
-REGISTERING A TEST THAT CANNOT FAIL.** No unit test can compare the SPRT path's
+**TWO THINGS NO TEST PINS, BOTH DECLARED HERE RATHER THAN LEFT FOR A REVIEWER TO
+FIND.**
+
+**INVARIANT 10 (pass 1 is unmodified).** No unit test can compare the SPRT path's
 output against a build that no longer exists. Its evidence is the diff — the only
 file on the SPRT path this package touches is
 `crates/pistol-arena/src/exchange.rs`, and only its one visibility keyword — plus
-INVARIANT 7's test, which pins that keyword's neutrality, plus CI gate 15, which
-runs the SPRT path end to end and compares two runs' verdict blocks byte for byte
-(`tools/arena_smoke.sh`). Registering a further test here would be registering
-one that passes whatever the code does, which `docs/process.md` calls a criterion
-that is not one.
+CI gate 15, which runs the SPRT path end to end and compares two runs' verdict
+blocks byte for byte (`tools/arena_smoke.sh:22-27`). **Revision 3 also leaned on
+INVARIANT 7's test here and that leg is withdrawn**: read as a cross-build
+comparison it was the very thing this paragraph calls impossible, so INVARIANT 7
+is restated above as what a same-build test CAN falsify — that the compute is
+still billed — and §10 names what it asserts.
+
+**INVARIANT 3's limb "spawns slot zero".** No test pins it, **and the reason is
+the same reason the choice is safe**: once the two identities are attested equal
+the slots name one engine by content, so no observation can distinguish an ask on
+slot zero from one on slot one. It is written down so the implementer does not
+choose, not because a test could tell. Registering one would be registering a
+test that cannot fail.
 
 ---
 
 ## 10. TESTS AND MUTANTS
 
-Every test names the invariant it pins; every invariant but the tenth has at
-least one.
+Every test names the invariant or the section rule it pins. **Where a test is
+driven by something other than the arena's stub, the driver is named**, because
+the vacuity this arc has paid for four times comes from a test whose driver
+cannot produce the thing it is testing.
 
-| test | pins |
-|---|---|
-| `the_asked_set_is_every_legal_turn_boundary` | 1 |
-| `a_book_turns_position_is_captured_like_any_other` | 1 |
-| `a_forfeited_games_positions_are_captured_like_any_other` | 1 |
-| `the_initial_position_is_asked_without_a_moves_keyword` | 2 |
-| `a_decided_terminal_position_is_never_asked` | 2 |
-| `a_report_whose_seats_attest_different_engines_is_refused_by_name` | 3 |
-| `a_self_play_report_whose_seats_carry_distinct_labels_is_accepted` | 3 |
-| `a_respawned_engine_that_does_not_match_the_report_is_refused` | 3 |
-| `every_label_go_is_preceded_by_a_newgame` | 4 |
-| `the_label_go_line_is_the_one_budget_section_spells` | 4 |
-| `every_captured_position_is_a_prefix_of_the_reports_own_move_list` | 5 |
-| `a_captured_totals_line_keeps_every_field_but_nps_and_time` | 6 |
-| `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` | 6 |
-| `raising_totals_of_leaves_the_sprt_report_byte_identical` | 7 |
-| `a_rerun_over_one_report_is_byte_identical` | 8 |
-| `an_error_answer_refuses_the_run_and_names_the_game_and_turn` | 9 |
-| `a_report_pass_two_cannot_read_is_refused_by_name` | 9 |
-| `an_engine_that_stops_answering_refuses_the_run_at_the_watchdog` | 9 |
-| `an_engine_that_closes_its_pipe_refuses_the_run_by_name` | 9 |
-| `a_capture_file_round_trips_through_its_own_loader` | 11 |
-| `a_capture_whose_body_digest_is_wrong_is_refused_by_name` | 11 |
-| `a_capture_record_with_the_wrong_field_count_is_refused_by_name` | 11 |
-| `a_captured_field_containing_a_tab_refuses_the_run_by_name` | 11 |
-| `two_reports_of_one_experiment_share_a_capture_identity` | 12 |
-| `a_capture_identity_moves_when_the_arena_version_moves` | 12 |
-| `a_capture_identity_moves_when_the_label_budget_moves` | 12 |
-| `a_capture_over_a_movetime_report_is_refused_by_name` | §7 |
-| `a_label_node_count_spelled_a_way_this_program_will_not_echo_back_is_refused` | §7 |
-| `a_capture_prints_a_manifest_row_naming_its_digests` | §13 |
+| test | pins | driver, where it is not the stub |
+|---|---|---|
+| `the_asked_set_is_every_legal_turn_boundary` | 1 | |
+| `a_book_turns_position_is_captured_like_any_other` | 1 | |
+| `a_forfeited_games_positions_are_captured_like_any_other` | 1 | |
+| `the_initial_position_is_asked_without_a_moves_keyword` | 2 | |
+| `a_decided_terminal_position_is_never_asked` | 2 | |
+| `a_report_whose_seats_attest_different_engines_is_refused_by_name` | 3 | |
+| `a_self_play_report_whose_seats_carry_distinct_labels_is_accepted` | 3 | |
+| `two_identities_differing_only_in_an_id_line_are_refused_naming_that_line` | 3 | **unit, over the identity comparison** — the stub emits no `config` id line, so §3's precondition is unreachable through an engine |
+| `a_respawned_engine_that_does_not_match_the_report_is_refused` | 3 | |
+| `every_label_go_is_preceded_by_a_newgame` | 4 | **the stub's new `demands_newgame_per_ask` behaviour** (below) |
+| `the_label_go_line_is_the_one_budget_section_spells` | 4 | |
+| `every_captured_position_is_a_prefix_of_the_reports_own_move_list` | 5 | |
+| `a_captured_totals_line_keeps_every_field_but_nps_and_time` | 6 | **unit, synthetic totals line** |
+| `the_normalisation_removes_only_nps_and_time_from_a_solver_bearing_line` | 6 | **unit, synthetic** — no engine in this package can emit the solver spelling (§14.1) |
+| `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` | 6 | |
+| `a_captured_field_containing_a_tab_refuses_the_run_by_name` | 6 | **unit, over the record writer** — no engine in this tree can emit a TAB |
+| `the_sprt_reports_per_game_node_counts_are_billed_from_the_totals_line` | 7 | |
+| `two_totals_lines_differing_only_in_nps_and_time_normalise_equal` | 8 | **unit, synthetic, both spellings** |
+| `a_rerun_over_one_report_is_byte_identical` | 8 | stub; **a shape test, declared in §14.3** |
+| `an_error_answer_refuses_the_run_and_names_the_game_and_turn` | 9 | |
+| `a_report_pass_two_cannot_read_is_refused_by_name` | 9 | |
+| `an_engine_that_stops_answering_refuses_the_run_at_the_watchdog` | 9 | |
+| `an_engine_that_closes_its_pipe_refuses_the_run_by_name` | 9 | |
+| `an_unrecognised_totals_line_refuses_the_run_and_names_the_game_and_turn` | 9 | |
+| `a_capture_file_round_trips_through_its_own_loader_field_by_field` | 11 | |
+| `a_capture_whose_body_digest_is_wrong_is_refused_by_name` | 11 | |
+| `a_capture_record_with_the_wrong_field_count_is_refused_by_name` | 11 | |
+| `a_capture_record_with_an_empty_field_is_refused_by_name` | 11 | |
+| `two_reports_of_one_experiment_share_a_capture_identity` | 12 | |
+| `a_capture_identity_moves_when_the_format_version_moves` | 12 | |
+| `a_capture_identity_moves_when_the_label_budget_moves` | 12 | |
+| `a_capture_over_a_report_whose_budget_is_not_nodes_is_refused_by_name` | §7 | |
+| `a_label_node_count_spelled_a_way_this_program_will_not_echo_back_is_refused` | §7 | |
+| `a_capture_prints_a_manifest_row_naming_its_digests` | §13 | |
+
+**THE ONE INSTRUMENT CHANGE THIS PACKAGE MAKES, AND WHY IT IS NOT OPTIONAL.**
+`crates/pistol-arena/src/bin/stub_engine.rs` gains a behaviour
+`demands_newgame_per_ask`, beside the existing `demands_newgame`. **The existing
+one cannot witness INVARIANT 4**: its `told_new_game` flag is set on `newgame`
+and **never cleared** (`crates/pistol-arena/src/bin/stub_engine.rs:267-289`), so
+it observes a `newgame` per SPAWN and pass 2 sends one per ASK on one long-lived
+channel — delete every send after the first and the existing witness stays green.
+The new behaviour **clears the flag on `go`**, so a `position` arriving without an
+intervening `newgame` earns the same named `error` line. That is exactly the
+existing behaviour's own reasoning at one finer granularity, and its doc already
+records why the granularity matters: an honest engine cannot tell, and *"deleting
+the send left the whole workspace green"* (D-413,
+`crates/pistol-arena/src/bin/stub_engine.rs:43-53`). **Without it the package's
+headline coldness mechanism is registered against a mutant that survives.**
 
 **MUTANTS:**
 
 | mutation | the test that dies |
 |---|---|
-| the `newgame` removed from pass 2's loop | `every_label_go_is_preceded_by_a_newgame` |
+| the `newgame` removed from pass 2's loop | `every_label_go_is_preceded_by_a_newgame` (under `demands_newgame_per_ask`) |
 | the `go` line formatted by hand instead of through `BudgetSection::go_line` | `the_label_go_line_is_the_one_budget_section_spells` |
 | the normalisation removed | `a_captured_totals_line_keeps_every_field_but_nps_and_time` |
-| the normalisation widened to strip another field | `a_captured_totals_line_keeps_every_field_but_nps_and_time` |
+| the normalisation widened to strip another NON-solver field | `a_captured_totals_line_keeps_every_field_but_nps_and_time` |
+| the normalisation widened to strip a SOLVER field | `the_normalisation_removes_only_nps_and_time_from_a_solver_bearing_line` |
 | the `bestmove` line normalised too | `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` |
 | the decided-position guard removed | `a_decided_terminal_position_is_never_asked` |
 | `position start moves` used for the empty case | `the_initial_position_is_asked_without_a_moves_keyword` |
 | the seat check made a LABEL comparison (revision 2's own defect) | `a_self_play_report_whose_seats_carry_distinct_labels_is_accepted` |
 | the seat identity check removed | `a_report_whose_seats_attest_different_engines_is_refused_by_name` |
+| `id_lines` dropped from the identity comparison | `two_identities_differing_only_in_an_id_line_are_refused_naming_that_line` |
 | `replay::verify_engines` not called | `a_respawned_engine_that_does_not_match_the_report_is_refused` |
 | an `error` answer skipped instead of refusing | `an_error_answer_refuses_the_run_and_names_the_game_and_turn` |
 | a watchdog timeout skipped instead of refusing | `an_engine_that_stops_answering_refuses_the_run_at_the_watchdog` |
+| an unrecognised totals line treated as an ordinary `info` line and the run completed | `an_unrecognised_totals_line_refuses_the_run_and_names_the_game_and_turn` |
 | forfeited or book positions skipped | their two tests |
-| a capture record's fields reordered on write | `a_capture_file_round_trips_through_its_own_loader` |
+| a capture record's first two fields swapped on write | `a_capture_file_round_trips_through_its_own_loader_field_by_field` |
 | the loader's body-digest check removed | `a_capture_whose_body_digest_is_wrong_is_refused_by_name` |
-| the TAB check removed | `a_captured_field_containing_a_tab_refuses_the_run_by_name` |
+| the loader's empty-field check removed | `a_capture_record_with_an_empty_field_is_refused_by_name` |
+| the write-side TAB check removed | `a_captured_field_containing_a_tab_refuses_the_run_by_name` |
 | `source_sha256` used as the identity | `two_reports_of_one_experiment_share_a_capture_identity` |
-| `arena_version` dropped from the identity | `a_capture_identity_moves_when_the_arena_version_moves` |
+| the format version dropped from the identity | `a_capture_identity_moves_when_the_format_version_moves` |
 | the label `go` line dropped from the identity | `a_capture_identity_moves_when_the_label_budget_moves` |
 | the manifest row not printed | `a_capture_prints_a_manifest_row_naming_its_digests` |
-| a fourth load-bearing lookup added to `totals_of` | `raising_totals_of_leaves_the_sprt_report_byte_identical` |
+| a fourth load-bearing lookup added to `totals_of` | `the_sprt_reports_per_game_node_counts_are_billed_from_the_totals_line` |
+
+**WHY THE LAST MUTANT KILLS THAT TEST, since revision 3 named a test that could
+not have died.** A fourth `?` lookup — `value("solver_nodes")?`, say — returns
+`None` for every committed, solver-off config, so `totals_of` returns `None`,
+`compute.add` never fires (`crates/pistol-arena/src/exchange.rs:76-79`) and the
+report's per-game `nodes_a`/`nodes_b` are zero. **The test therefore asserts what
+a same-build run CAN show** — that a stub-driven arena report's per-game node
+counts are the counts the stub's own totals lines carry, and are not zero —
+rather than a cross-build byte comparison, which INVARIANT 10's paragraph says
+cannot be written. That is what revision 3's
+`raising_totals_of_leaves_the_sprt_report_byte_identical` was reaching for and
+did not say.
 
 **AND ONE TEST OBLIGATION THAT IS NOT A TEST NAME**, restated from revision 2 and
-given the site it lacked — §14 answers it in full:
+given the sites it lacked — §14 answers it in full:
 
 > The re-run test **must not be driven by the arena's stub engine alone**, whose
 > `nps` and `time` are hardcoded constants: against that engine the normalisation
@@ -678,6 +860,16 @@ The label budget's VALUE and the pilot's `book_v2` range (both numbers, both the
 pilot's pre-registration). And **every question of MEANING** — what the score,
 the node counts and the provenance mean, which positions a trainer should use,
 transposition dedup, and the census-minimum rule. Those are WP-2.0-S's.
+
+**AND THE DISPATCH'S THROUGHPUT OBLIGATION IS THE PILOT'S, NAMED HERE BECAUSE
+REVISION 3 LEFT IT IN NO PACKAGE AT ALL.** The standing dispatch asks for
+*"throughput expectation stated as a shape, measured in the pilot, never guessed
+(D-500's class)"*. The shape is: one label `go` at the label budget per asked
+position, plus one `newgame` per asked position, whose memset cost §12 names and
+does not guess. **The magnitudes — games per hour and labels per hour — are
+measured in the pilot and registered there**, which is where D-483 and D-500
+between them put them. §12's memset is the per-position COST and is not the
+throughput; revision 3 offered it as though it were.
 
 ---
 
@@ -751,15 +943,38 @@ having a human retype it is D-543's remedy applied to a ledger row**: a number a
 human retypes drifts from its run. `a_capture_prints_a_manifest_row_naming_its_digests`
 pins the row's shape.
 
-**(b) THE `book_v2` LEDGER ROW BELONGS TO PASS 1'S CONFIG, AND SO TO THIS
-PACKAGE.** Revision 2 said it was *"the arena's existing business"*; the arena
-writes no ledger and reads none. The ledger is `docs/book_v2_ledger.md`, and its
-rule is that a pre-registration *"adds its row here in the same commit that adds
-its arena config"* (`docs/book_v2_ledger.md:16`). Pass 1's arena experiment
-config is `configs/arena_wp20_label_pilot.toml`, added by this package and
-validated by CI gate 6 (`tools/config_check.sh`); its row is added in the same
-commit. **The RANGE is a number and is the pilot's pre-registration** (D-483),
-which is why this section names the config and the rule and no value.
+**AND THIS DECISION LEAVES ONE OF THE DISPATCH'S REGISTERED MUTANTS WITHOUT A
+SITE, WHICH IS NAMED HERE RATHER THAN LEFT TO BE FOUND.** The standing dispatch
+registers *"ledger overwrite → append test dies"*
+(`docs/experiments/wp20_dispatches.md`, Development round item 2). **No program
+in this package writes a ledger**, so there is nothing to make overwrite and the
+mutant has no site. **What the mutant guarded — that a row is never lost — is
+carried instead by the manifest being a committed document**: a row can only be
+removed by a commit that removes it, which is a diff under review, where an
+overwriting program's loss would have been silent. This is a departure from
+governing dispatch text rather than from a review's FIX, so it is named with more
+care and not less.
+
+**(b) THE `book_v2` LEDGER ROW TRAVELS WITH PASS 1'S CONFIG, AND BOTH BELONG TO
+THE PILOT'S PRE-REGISTRATION — NOT TO THIS PACKAGE.** Revision 2 said the row was
+*"the arena's existing business"*; the arena writes no ledger and reads none.
+Revision 3 then gave the config to this package while giving its range to the
+pilot, **which is a contradiction and this revision withdraws it**: every file
+under `configs/` is validated whole by CI gate 6 (`tools/config_check.sh`), and
+hard rule 1 forbids a partial document — so an arena experiment config cannot
+land before its `openings_skip`, `openings_take` and `budget.value` are chosen,
+and those are exactly the registered numbers D-483 puts in the pre-registration.
+**The ledger's own rule says the same thing**: a row is added *"in the same commit
+that adds its arena config"* (`docs/book_v2_ledger.md:16`), and the rule's subject
+is *"a new pre-registration"* — the ledger's table closes by recording that a
+claimant has no row *"because neither has a committed pre-registration drawing
+from this book"*.
+
+**SO: THIS PACKAGE LANDS NO ARENA EXPERIMENT CONFIG.** The pilot's
+pre-registration lands `configs/arena_wp20_label_pilot.toml` and its
+`docs/book_v2_ledger.md` row together, in one commit, with its numbers chosen
+there. What this package owes is the CONSTRAINT that config must satisfy, which
+is §7's: **its budget kind is `nodes`**, because pass 2 can read no other report.
 
 **(c) THE CENSUS CORPUS MANIFEST IS NOT THIS ARC'S.** D-539 moved census logging
 out of WP-2.0 entirely, so requirement 5's third limb is WP-2.0b's and is named
@@ -767,45 +982,90 @@ here only so a successor stops looking for it.
 
 ---
 
-## 14. WHERE THE REAL-BINARY RE-RUN RECEIPT IS TAKEN — rev-2 MAJOR C
+## 14. WHAT PINS THE NORMALISATION, AND WHERE THE RE-RUN RECEIPT IS TAKEN
 
-The obligation in §10 is right and its site is a design question, because the
-crate this package's code lives in **cannot reach the real engine**:
-`crates/pistol-arena/tests/common/mod.rs:8-11` offers exactly two binaries,
-`CARGO_BIN_EXE_arena` and `CARGO_BIN_EXE_arena-stub-engine`, and
-`CARGO_BIN_EXE_pistol` appears only under `crates/pistol-cli/tests/` — for
-instance `crates/pistol-cli/tests/determinism_tests.rs:99`. `pistol-cli` cannot
-reach the arena either: `pistol-arena` depends on `pistol-cli`, so the reverse
-edge is a cargo cycle. **Neither test crate can run both programs.**
+**Revision 3's answer to this question was the BLOCKING**, and it failed for a
+reason worth keeping on the page: it named ONE site — an extension to
+`tools/arena_smoke.sh` — and that site cannot execute, because the report that
+script writes carries a `depth_turns` budget and pass 2 refuses every non-`nodes`
+report (§7). **The replacement is three sites, each doing the part it can do,
+with what each cannot do stated beside it.**
 
-**WHAT IS OBSERVABLE IN-CRATE, AND IT IS MORE THAN REVISION 2 THOUGHT.** The
-stub's `nps` and `time` are hardcoded (`crates/pistol-arena/src/bin/stub_engine.rs:120-131`),
-so two stub runs agree with or without the normalisation — which makes
-`a_rerun_over_one_report_is_byte_identical` a SHAPE test against the stub and
-this document says so rather than letting an implementer discover it. But
-**`a_captured_totals_line_keeps_every_field_but_nps_and_time` is not vacuous
-against the stub**: the stub emits those two fields, the capture must not carry
-them, and every other field must survive — so both normalisation mutants die
-in-crate. The vacuity is confined to one test, and it is named.
+### 14.1 The normalisation is pinned by a UNIT TEST, and it needs no engine at all
 
-**THE RECEIPT ITSELF IS TAKEN WHERE THE REAL `pistol` MEETS THE REAL `arena`, AND
-THERE IS EXACTLY ONE SUCH PLACE**: `tools/arena_smoke.sh`, CI gate 15, which
-builds both binaries and runs a self-match end to end. It is extended by one
-step: a capture pass over the report it already writes, run twice, with the two
-capture files compared byte for byte — which is the shape the script already
-applies to the arena's own verdict blocks (`tools/arena_smoke.sh:22-27`).
+**This is the site revision 3 should have named first, and it closes rev-2
+MAJOR C's real complaint more completely than any engine-driven test can.** The
+normalisation is a pure function from one line to one line. Registered over
+SYNTHETIC totals lines:
 
-**THE COST IS STATED RATHER THAN HIDDEN.** A `tools/` change is reviewed against
-`tools/SHELL_CHECKLIST.md`, the reviewer answering its items by name, and the
-coverage rule requires that a script producing a recorded number carries at least
-one test driving the shipped script — which
-`crates/pistol-cli/tests/arena_smoke_gate_tests.rs` already is, and which the
-extension is added to. The gate pre-registers its own cost on its own face
-(`tools/arena_smoke.sh:29-33`), so the extension's cost is stated there in the
-same terms. **This is the one place this package leaves `pistol-arena`**, and it
-is a gate rather than a one-off receipt, which is why it is worth leaving for.
+- `a_captured_totals_line_keeps_every_field_but_nps_and_time` — the non-solver
+  spelling: every field of `render_info`'s output survives but those two.
+- `the_normalisation_removes_only_nps_and_time_from_a_solver_bearing_line` —
+  **the solver spelling**, which no engine-driven test in this package can
+  produce.
+- `two_totals_lines_differing_only_in_nps_and_time_normalise_equal`, in both
+  spellings — which is INVARIANT 8's actual content, tested directly.
 
-**AND THE PILOT TAKES ITS OWN**, on real games at the real budget: the standing
-dispatch's requirement 4 asks for a re-run receipt proving byte-identical output
-on a small range, and that receipt is the pilot's pre-registration's, not this
-document's.
+**WHY THIS IS THE ONLY WAY THE SOLVER SPELLING CAN BE REACHED, and revision 3's
+bound on its own vacuity was wrong.** Revision 3 wrote that *"the vacuity is
+confined to one test"*. It is not: `render_info` emits the solver block only
+`if info.solver_nodes > 0` (`crates/pistol-cli/src/report.rs:62-81`), the arena's
+stub sets `solver_nodes: 0` (`crates/pistol-arena/src/bin/stub_engine.rs:120-131`),
+and **every committed engine config has the solver off the search path** —
+`configs/gate_v0.toml:94` is `on_search_path = false`, and §1 requires pass 1's
+engine sections to name a committed config. So a normalisation widened to strip
+`solver_root_nodes` would have died nowhere. **Against a synthetic line it dies
+immediately**, and §4.1's whole argument — that the expression matches in both
+spellings because the solver block is interpolated between `nodes` and `nps` — is
+executable for the first time.
+
+### 14.2 The end-to-end re-run receipt on the real binaries is the PILOT's
+
+The standing dispatch's requirement 4 asks for *"a re-run receipt [that] proves
+byte-identical output on a small range"*, and the pilot runs the real `pistol`
+through the real `arena` over a `nodes`-budget report — the only kind pass 2 can
+read (§7). **That receipt is the pilot's pre-registration's and is not this
+document's**, and it is where INVARIANT 8 meets an engine whose `nps` and `time`
+actually move.
+
+### 14.3 The in-crate end-to-end test is a SHAPE test, and is declared one
+
+`a_rerun_over_one_report_is_byte_identical`, driven by the arena's stub, cannot
+observe the normalisation: the stub's `nps` and `time` are hardcoded
+(`crates/pistol-arena/src/bin/stub_engine.rs:120-131`), so two runs agree with or
+without it. **It is registered anyway, as the test that the pass is
+deterministic in everything else** — record order, header, digest — and this
+document says what it cannot see rather than letting an implementer discover it.
+
+### 14.4 Why no `tools/` change, stated as a decision rather than an omission
+
+Neither test crate can run both programs by a route that survives
+`cargo test -p pistol-arena`: `crates/pistol-arena/tests/common/mod.rs:8-11`
+offers only the arena and its stub, `CARGO_BIN_EXE_pistol` is defined only under
+`crates/pistol-cli/tests/` (for instance
+`crates/pistol-cli/tests/determinism_tests.rs:99`), and `pistol-cli` cannot
+depend on `pistol-arena` without a cargo cycle. A same-directory
+`current_exe()` route to a non-`[[bin]]` target exists in this crate
+(`crates/pistol-arena/tests/sprt_power_tests.rs:19-37`) and is **rejected**: it
+holds only under `cargo test --workspace`, and answering `cargo test -p
+pistol-arena` with a skip is what hard rule 3 forbids.
+
+**The remaining route is `tools/arena_smoke.sh`, and this design does not take
+it.** It would need a second committed arena config at a `nodes` budget and a
+second arena run inside CI gate 15 — a new document on gate 6's path and a new
+per-CI-run cost, against a gate whose cost is pre-registered on its own face
+(`tools/arena_smoke.sh:29-33`) — to buy what §14.1 buys for free and what §14.2
+buys anyway. **The decision keeps the matrix's own claim true**: only
+`pistol-arena` is touched (`docs/experiments/matrix_wp20_shape_selection.md`
+§2), which revision 3's answer would have falsified.
+
+---
+
+## 15. THE ADR ACT THIS PACKAGE OWES AT LANDING
+
+Hard rule 10 wants an amendment rather than silent drift, and one is owed:
+**D-544 records the verified artefact as the `label_sha256` and this design calls
+it `capture_sha256`.** `/usr/bin/grep -c "capture_sha256" docs/decisions.md`
+returns zero. The rename was raised as a MINOR against revision 1 and against
+revision 2 and applied in neither; **it is an ADR act, not a document edit**, and
+it lands with the code.
