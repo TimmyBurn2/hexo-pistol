@@ -1,158 +1,265 @@
-# WP-2.0-M — DESIGN: the labelling pass, capturing verbatim
+# WP-2.0-M — DESIGN: the labelling pass
 
-**What this package is.** The half of WP-2.0 that **two independent reviews
-verified and could not break** (D-544): the two-pass shape, coldness, branch B's
-widening, and a labelling run's identity. It carries no schema decision.
+**REVISION 2**, after a fresh-context REVIEW-design returned **FAIL** on revision
+1 (`5064b05`) — 3 BLOCKING, 11 MAJOR, 6 MINOR. **The verdict on revision 1's
+central claim was "NO", and it was right.**
 
-**THE ONE RULE THAT MAKES THIS PACKAGE POSSIBLE.** Every finding that killed
-WP-2.0's design was an INTERPRETATION question — what a column means. **So this
-package interprets nothing.** It writes the engine's answer **exactly as the
-engine wrote it**, beside the position it was asked about and the identity of the
-run that asked. **A capture that adds no meaning cannot be wrong about meaning**,
-and WP-2.0-S decides the columns afterwards from bytes this package did not
-reshape.
+**WHAT REVISION 1 CLAIMED AND WHY IT WAS FALSE.** It said the package
+*"interprets nothing"* and was *"deliberately unable to get them wrong"*. Two
+counter-examples, neither marginal:
+
+- **The verbatim capture cannot be reproducible.** The `info totals` line carries
+  `nps` and `time`, which are wall-clock. `tools/determinism.sh` — CI **gate
+  9**, this project's hard-rule-4 gate — normalises by stripping exactly
+  ` nps <n> time <n>`, with the comment *"`nps` and `time` are the only fields
+  two runs may disagree about"*. So revision 1's INVARIANT 3 (byte-identical
+  bytes) and INVARIANT 5 (byte-identical re-run) **contradicted each other**.
+  And the test registered for it would have **passed vacuously**: the arena's
+  stub engine hardcodes `nps: 1, time_ms: 0`, and it is the only engine the
+  arena test suite drives — D-527's own defect class, for the third time in this
+  arc.
+- **"Every to-move position" was undefined and broke at all three boundaries.**
+  Ply-versus-turn was never taken; `position start moves` with no turns after it
+  is **refused by name**; and a won game's terminal prefix is a decided position
+  which `set_position` refuses, so pass 2 would have received an `error`, never
+  a `bestmove`, and hung to its watchdog.
+
+**THE CLAIM IS REPLACED, NOT REPAIRED.** This package makes **no decision about
+what the score, the node counts or the provenance MEAN**. It **does** make four
+decisions about capture, and they are on the face of this document because a
+licence that is false suppresses the attack rather than answering it:
+
+| decision | §  |
+|---|---|
+| WHICH positions are asked | §2 |
+| WHICH engine answers | §3 |
+| WHAT counts as the same capture | §5 |
+| WHAT happens when an ask fails | §6 |
+
+**AND THE SPLIT'S OWN PREMISE IS CORRECTED (D-544).** That line says every prior
+failure was an interpretation question. **It is overstated**: five capture
+findings from the first review — which seat answers, the budget's kind, the
+failure modes, the CLI grammar, and ply-versus-turn — crossed the split line
+unfixed. They are taken here.
 
 **D-483 binds this document: mechanisms, invariants and tests only.** No numbers.
-
-**No engine diff.** Only `pistol-arena` changes.
+**No engine diff**; only `pistol-arena` changes.
 
 ---
 
 ## 1. THE MECHANISM
 
-A third arm in `bin/arena.rs`'s mode match, beside `--config` and `--replay`.
-
 **Pass 1 — PLAY, and it gets no new code.** `arena --config <experiment> --out
 <report>` on the unmodified SPRT path, both engine sections naming the same
-committed config. Self-play is expressible today: `validate_engines` refuses
-identical *labels*, not identical binaries or configs.
+committed config. Self-play is expressible today.
 
-**Pass 2 — CAPTURE.** Read the report pass 1 wrote. For each game, for each
-to-move position, on one channel: send `newgame`, send the position, send a `go`
-at the **label** budget, and read to `bestmove`. Write one line per position
-holding the position, the **verbatim `info totals` line**, the **verbatim
-`bestmove` line**, and the game and turn indices.
+**Pass 2 — CAPTURE.** `arena --capture <report> --out <capture> --go <go line>`.
+Read the report, and for each game, for each asked position (§2): send
+`newgame`, send the position, send the `go`, read to `bestmove`. Write one line
+per position.
 
-**WHY VERBATIM.** The totals line already carries every field a label needs and
-several whose meaning is contested — `nodes` is `search_nodes + solver_nodes`,
-the score has three spellings, and the solver fields appear only when the solver
-was consulted. **This package does not decide which of those means what.** It
-preserves the bytes; WP-2.0-S parses them. A consumer that disagrees with
-WP-2.0-S can re-parse the capture without re-running the engine, which is the
-property that makes an expensive corpus survive a schema mistake.
+**WHERE THE CODE LIVES, because the gate makes it a design question.**
+`crates/pistol-arena/src/bin/arena.rs` is **283 lines** against
+`tools/file_justification_check.sh`'s hard **300**, which is CI gate 17. A third
+mode arm plus its `USAGE` paragraph crosses that. **So pass 2 lives in a new
+module `crates/pistol-arena/src/capture.rs`**, and `bin/arena.rs` gains only a
+`Mode` variant, a dispatch pattern and a call. **If the `USAGE` text still
+carries it over, the `USAGE` constant moves to its own module** — a mechanical
+extraction that adds no behaviour and no rule-9 entry, which is preferable to a
+justification for a binary that is mostly help text.
 
-## 2. WHAT PASS 2 READS
+## 2. WHICH POSITIONS ARE ASKED — decision 11, TAKEN
 
-`Transcript` carries the engines, both identities, the run's `go_line`,
-`opening_turns`, `turn_cap`, `experiment_sha256`, `source_sha256`, and every
-game's full move list. **Every to-move position is a PREFIX of a recorded move
-list**, which is what `position_line` sends — so pass 2 truncates and does not
-reconstruct.
+**Per TURN, not per ply.** The grounds are three and they agree: game rule 3
+makes the turn the unit of play; `depth_turns` — the only depth on the wire — is
+in turns; and `PositionSpec::Start` **cannot express a mid-turn position at all**,
+so a per-ply capture would need `PositionSpec::Set` and a second position
+grammar. Revision 1 assumed this reading as a fact about the domain; it is a
+decision and it is taken here.
 
-**`transcript::read` legality-checks every game through `pistol-core` at read
-time**, refusing the whole report on an illegal turn or on moves after a win. So
-**every move list pass 2 walks is a guaranteed legal prefix before pass 2
-exists** — it cannot be handed something that panics. This is the property the
-scoped re-review confirmed as its own strongest failed attack.
+**THE SET.** Every turn boundary of every recorded game at which the engine can
+legally be asked:
 
-**Which positions are captured**: every to-move position of every game, book
-turns and forfeited games included. **This package excludes nothing**, because
-every exclusion rule in WP-2.0's design was a finding — and an exclusion is a
-meaning decision, which is WP-2.0-S's. A consumer filters; a capture does not.
+- **The initial position is asked as bare `position start`**, never
+  `position start moves` — which the engine refuses by name when no turns follow
+  it. `exchange::position_line` produces the refused form for an empty slice, so
+  **pass 2 does not use it for the empty case.**
+- **A DECIDED position is never asked.** `set_position` refuses a won position,
+  and asking one would earn an `error` and no `bestmove`. **This is the
+  protocol's own precondition, not an exclusion by outcome**: the terminal prefix
+  of a won game is not a position any engine can be asked about, so it is not in
+  the set at all. Revision 1's INVARIANT 4 forbade "exclusion by outcome" and
+  would have forced the hang.
+- **Book turns and forfeited games are asked like any other**, because those
+  ARE exclusions by meaning and they belong to WP-2.0-S.
 
-## 3. WHAT IDENTIFIES A CAPTURE RUN
+**INVARIANT 1** pins the set; **INVARIANT 2** pins that no asked position is
+decided.
 
-Pass 2 computes a `capture_sha256` over the canonical concatenation of: the
-source report's **`experiment_sha256`**, the label `go` line, both engine
-identities, and this package's format version.
+## 3. WHICH ENGINE ANSWERS — the first review's MAJOR, unfixed across the split
+
+A report names **two** engine sections. A label is an answer by a **named
+engine**, so pass 2 must say which, and must not silently pick one.
+
+**MECHANISM.** Pass 2 **refuses a report whose two engine sections are not
+identical**, by name. A self-play report — the only kind this pipeline produces
+— has identical sections, so the refusal costs nothing it is meant to accept and
+forecloses the case where a capture's labels came from two different engines
+without saying so.
+
+**AND IT VERIFIES WHAT IT SPAWNED.** The report carries an `EngineIdentity` per
+slot, captured by the original run. Pass 2 spawns its engine and verifies against
+that identity the way the arena's own replay does, so a capture cannot silently
+be taken from a rebuilt binary. **INVARIANT 3.**
+
+## 4. WHAT IS WRITTEN, AND THE ONE NORMALISATION
+
+**One line per asked position**, carrying: the position as sent; the `info
+totals` line **as the engine wrote it, less the wall-clock fields**; the
+`bestmove` line as the engine wrote it; and the game and turn indices.
+
+**THE NORMALISATION IS THE PROJECT'S OWN AND IS NOT A NEW DECISION.** ` nps <n>
+time <n>` is removed, by exactly the rule `tools/determinism.sh` states and gate
+9 enforces: *"`nps` and `time` are the only fields two runs may disagree about."*
+**This is what makes INVARIANT 6 achievable at all**, and it costs no label —
+`nps` and `time` are facts about the machine, not about the position.
+
+**Nothing else is touched.** No field is reordered, renamed, dropped or combined.
+`nodes` stays the sum the engine printed; the score keeps whichever of its three
+spellings it arrived in; the solver fields appear exactly when the engine printed
+them. **Those are the meanings WP-2.0-S decides, and this package still decides
+none of them.**
+
+**THE FILE'S SHAPE.** `pistol_cli::corpus::emit::Fixture`: a header of `param`
+and `derived` lines, a body of one record per line, and the in-band
+`body_sha256` that type appends. **INVARIANT 6 pins the file byte-for-byte, so
+the shape is specified rather than left to the implementer** — which revision 1
+did not do.
+
+**THE SOURCE IS NAMED ON THE FACE OF THE FILE.** The header carries the source
+report's `experiment_sha256` **and** its `source_sha256`, so WP-2.0-S can find
+the report that holds the game outcomes and the forfeit flags this capture does
+not carry. Without it the outcome would be unrecoverable from the capture alone,
+and requirement 2 would fall between the two packages.
+
+## 5. WHAT COUNTS AS THE SAME CAPTURE
+
+`capture_sha256` over the canonical concatenation of: the source report's
+**`experiment_sha256`**, the label `go` line, the engine identity pass 2
+verified, and this package's format version.
 
 **Not `source_sha256`**, which digests the whole report file including its timing
-block: two capture runs over reports of one experiment taken on different days
-would otherwise have different identities for a reason that changes no answer.
-`experiment_digest` is the arena's own answer to that question and this design
-takes it rather than inventing a second.
+block: two captures over reports of one experiment taken on different days would
+otherwise differ for a reason that changes no answer. `source_sha256` is still
+**recorded** (§4) — it is provenance, not identity.
 
-**Nothing about SAMPLING is in it, because this package samples nothing** and
-takes no seed. WP-2.0-S's sampling rule, when it exists, extends the digest.
+**Nothing about sampling is in it, because this package samples nothing and takes
+no seed.** WP-2.0-S extends the digest when it adds a sampling rule.
 
-## 4. COLDNESS
+## 6. WHAT HAPPENS WHEN AN ASK FAILS
 
-**MECHANISM.** `newgame` before every label `go`. Verified end to end by two
-reviewers: `Table::clear` is a true `fill(EMPTY)`, not the epoch bump beside it;
-`Solver::reset` rebuilds its table rather than bumping an epoch;
-`Position::reset_to` unwinds the eval and replaces the `ThreatState`; `params` is
-immutable; `census` is `None` in every shipped path; and the `PvTable` is
-per-`Run`, not a `Searcher` field. **Nothing that could carry across a position
-survives.**
+Named, because revision 1 left them undesigned while BLOCKING 2 put them on the
+main line.
 
-**COST, NOT CLAIMED FREE.** A `newgame` fills every bucket of a table whose size
-the committed seats set, so it is a memset per captured position. **The pilot
-measures it** (D-500).
+| condition | pass 2's answer |
+|---|---|
+| the report is unreadable, or its two engine sections differ | **refuse the run**, by name, before spawning anything |
+| the spawned engine's identity does not match the report's | **refuse the run**, by name |
+| an ask returns `error` | **refuse the run**, by name, naming the game and turn — it means §2's set is wrong, and a capture with a hole is worse than none |
+| an ask returns nothing before the watchdog | **refuse the run**, by name |
+| the totals line carries no score at all | **capture it as written.** The score's presence is a meaning question and belongs to WP-2.0-S |
 
-**WHAT THE PILOT'S PRE-REGISTRATION OWES**: D-540's second clause — a
-**fresh-process agreement criterion**, proving the construction holds by agreement
-between a pass-2 capture and the same position re-asked in a fresh process, and
-**naming the defect class it excludes**, because a criterion that is a property
-of the named defect passes vacuously (D-527).
+**Every failure is a refusal of the whole run and none is a skip**, because a
+capture that silently omits positions is a corpus whose gaps are invisible to
+its consumer.
 
-## 5. THE LABEL SEAM — branch B
+## 7. THE LABEL BUDGET'S KIND
 
-`exchange::totals_of` rises to `pub(crate)`. **Pass 2 does not use it.** It reads
-the totals line verbatim off the channel, because parsing is meaning and this
-package has none.
+**`nodes`, and never `movetime_ms`.** The arena already refuses a movetime budget
+in the one place it validates — *"the one refusal this crate exists to make
+loudly"* — and the reason applies with more force here: a wall-clock budget makes
+a label a fact about the machine, so INVARIANT 6 could never hold. **The VALUE is
+a number and belongs to the pilot's pre-registration** (D-483); the KIND is a
+mechanism and belongs here.
 
-**What the widening is for**: WP-2.0-S needs one parser rather than two, and
-raising visibility now — with no behaviour change — means that package adds
-fields to an existing function instead of writing a second reader and inheriting
-row (b)'s kill condition. **INVARIANT 6** pins that this visibility change alters
-no output.
+## 8. THE `totals_of` WIDENING
 
-## 6. INVARIANTS
+`exchange::totals_of` rises to `pub(crate)` and **gains nothing in this package.**
+Pass 2 does not call it: it captures the totals line without parsing it.
 
-1. **Every label `go` is preceded by a `newgame` on that channel**, and no label
+**The visibility change is for WP-2.0-S**, so that package adds fields to one
+parser instead of writing a second and inheriting row (b)'s kill condition.
+`clippy::redundant_pub_crate` is a nursery lint and gate 4 denies only
+`clippy::all`, so the change is not gate-rejected. **INVARIANT 7** pins that it
+alters no output.
+
+**Revision 1 registered a mutant for a mutation this package does not make** —
+"a `totals_of` lookup made load-bearing" — which cannot die because nothing here
+adds a lookup. It is removed.
+
+## 9. INVARIANTS
+
+1. **The asked set is every turn boundary of every recorded game at which the
+   engine can legally be asked**, book turns and forfeited games included.
+2. **No asked position is decided**, and the initial position is asked as bare
+   `position start`.
+3. **Pass 2 refuses a report whose engine sections differ, and verifies the
+   engine it spawns against the identity the report recorded.**
+4. **Every label `go` is preceded by a `newgame` on that channel**, and no label
    `go` follows another without one.
-2. **Pass 2 never plays a move.** It asks, records, and advances along the
-   recorded list, so it cannot produce a position pass 1 did not.
-3. **The captured totals and bestmove lines are byte-identical to what the engine
-   wrote**, less the trailing newline. No field is reordered, renamed, dropped or
-   combined.
-4. **Every to-move position of every game is captured**, with no exclusion by
-   book, forfeit, outcome or turn.
-5. **A re-run of pass 2 over one report at one label budget produces a
-   byte-identical capture file.**
-6. **Raising `totals_of` to `pub(crate)` changes no output**: the SPRT path's
-   report is byte-identical across the change.
-7. **Pass 1 is unmodified.** No file on the SPRT path changes behaviour.
+5. **Pass 2 never plays a move.** It asks, records and advances along the
+   recorded list.
+6. **A re-run of pass 2 over one report at one `go` line produces a
+   byte-identical capture file**, wall-clock fields having been normalised out by
+   gate 9's own rule.
+7. **Raising `totals_of` to `pub(crate)` changes no output.**
+8. **Any failure refuses the whole run**; no position is silently skipped.
+9. **Pass 1 is unmodified.**
 
-## 7. TESTS
+## 10. TESTS
 
+- `the_asked_set_is_every_legal_turn_boundary`
+- `the_initial_position_is_asked_without_a_moves_keyword`
+- `a_decided_terminal_position_is_never_asked`
+- `a_report_whose_engines_differ_is_refused_by_name`
+- `a_respawned_engine_that_does_not_match_the_report_is_refused`
 - `every_label_go_is_preceded_by_a_newgame`
-- `a_captured_totals_line_is_byte_identical_to_what_the_engine_wrote`
-- `a_capture_covers_every_to_move_position_of_every_game`
+- `a_captured_totals_line_keeps_every_field_but_nps_and_time`
+- `a_rerun_over_one_report_is_byte_identical`
+- `two_reports_of_one_experiment_share_a_capture_identity`
+- `an_error_answer_refuses_the_run_and_names_the_game_and_turn`
 - `a_forfeited_games_positions_are_captured_like_any_other`
 - `a_book_turns_position_is_captured_like_any_other`
-- `a_rerun_over_one_report_is_byte_identical`
-- `a_capture_run_is_identified_by_its_experiment_and_its_budget`
-- `two_reports_of_one_experiment_share_a_capture_identity`
 - `raising_totals_of_leaves_the_sprt_report_byte_identical`
-- `the_capture_refuses_a_report_it_cannot_read_by_name`
 
-**MUTANTS, each with the test that must die:**
+**AND ONE TEST OBLIGATION THAT IS NOT A TEST NAME.** The re-run test **must not
+be driven by the arena's stub engine alone**, whose `nps` and `time` are
+hardcoded constants: against that engine the normalisation is unobservable and
+the test passes whether or not it exists. **It is driven by the real `pistol`
+binary**, and the normalisation test above is what makes the vacuity visible.
+
+**MUTANTS:**
 
 | mutation | the test that dies |
 |---|---|
 | the `newgame` removed from pass 2's loop | `every_label_go_is_preceded_by_a_newgame` |
-| a totals field reordered or renamed on write | `a_captured_totals_line_is_byte_identical...` |
-| forfeited games skipped | `a_forfeited_games_positions_are_captured_like_any_other` |
-| book turns skipped | `a_book_turns_position_is_captured_like_any_other` |
-| `source_sha256` used in the identity | `two_reports_of_one_experiment_share_a_capture_identity` |
-| the label budget dropped from the identity | `a_capture_run_is_identified_by_its_experiment_and_its_budget` |
-| a `totals_of` lookup made load-bearing | `raising_totals_of_leaves_the_sprt_report_byte_identical` |
+| the normalisation removed | `a_rerun_over_one_report_is_byte_identical` (real binary) |
+| the normalisation widened to strip another field | `a_captured_totals_line_keeps_every_field_but_nps_and_time` |
+| the decided-position guard removed | `a_decided_terminal_position_is_never_asked` |
+| `position start moves` used for the empty case | `the_initial_position_is_asked_without_a_moves_keyword` |
+| the two-engine refusal removed | `a_report_whose_engines_differ_is_refused_by_name` |
+| an `error` answer skipped instead of refusing | `an_error_answer_refuses_the_run_and_names_the_game_and_turn` |
+| `source_sha256` used as the identity | `two_reports_of_one_experiment_share_a_capture_identity` |
+| forfeited or book positions skipped | their two tests |
 
-## 8. WHAT THIS PACKAGE DOES NOT DECIDE
+## 11. WHAT THIS PACKAGE DOES NOT DECIDE
 
-The label budget's VALUE; the pilot's `book_v2` range; and **every question of
-meaning** — provenance, the score's representation, how many node columns exist,
-which positions a trainer should use, transposition dedup, and the
-census-minimum rule. **All of them are WP-2.0-S's**, and this package is
-deliberately unable to get them wrong.
+The label budget's VALUE and the pilot's `book_v2` range (both numbers, both the
+pilot's pre-registration). And **every question of MEANING** — what the score,
+the node counts and the provenance mean, which positions a trainer should use,
+transposition dedup, and the census-minimum rule. Those are WP-2.0-S's.
+
+**Requirement 5's corpus manifest is THIS package's** and is delivered by §4's
+header plus the `body_sha256` the fixture type appends; the `book_v2` range
+ledger belongs to pass 1's config, which is the arena's existing business.
+Revision 1 left requirement 5 in neither package.
