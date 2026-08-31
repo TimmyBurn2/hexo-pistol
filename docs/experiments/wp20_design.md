@@ -1,5 +1,12 @@
 # WP-2.0 — DESIGN: the label pipeline as a second pass over an arena report
 
+**REVISION 2**, after a fresh-context REVIEW-design returned **FAIL** on
+revision 1 (`bb44d6f`) — 2 BLOCKING, 8 MAJOR, 11 MINOR. **The shape survived**:
+the reviewer re-traced the coldness chain itself and found nothing that carries
+across a position, and confirmed branch B is output-neutral because
+`totals_of`'s return value has exactly one consumer. **What failed was what the
+RECORD CONTAINS**, and both BLOCKING findings are in that half.
+
 **Governed by** `docs/experiments/wp20_dispatches.md` (WP-2.0), the selection
 `docs/experiments/matrix_wp20_shape_selection.md` (row (g), branch B), and
 D-539–D-543.
@@ -49,12 +56,19 @@ does not surface `result`, `forfeit_by`, or the `openings_*` counts that the
 dispatch's requirements 2 and 5 name.
 
 - **`result`** — recovered by replaying the move list through `pistol-core` and
-  reading `GameState::outcome`, which is the referee rule 2 requires anyway.
-  **INVARIANT 1** below pins that this is the only source of a game's outcome.
-- **A FORFEITED game cannot have its outcome recovered that way**, because the
-  forfeit is a fact about the protocol and not about the position. **Pass 2
-  therefore SKIPS forfeited games and records the skip**, rather than labelling
-  positions from a game whose end it cannot describe.
+  reading `GameState::outcome`. **`Outcome` has exactly TWO variants, `Ongoing`
+  and `Win`**, so a replay distinguishes a decided game from an undecided one and
+  **cannot tell a TURN-CAPPED game from a FORFEITED one**: both end `Ongoing`.
+  Revision 1's INVARIANT 1 said the replay is the only source of a game's
+  outcome, and for those two it is not enough. **The referee supplies the
+  outcome where the game was decided; where the replay says `Ongoing`, the
+  record's outcome is `undecided` and the design does not guess which kind.**
+- **A forfeited game's positions are not thrown away.** Revision 1 skipped the
+  whole game, which discards every position BEFORE the forfeit — and those are
+  ordinary positions whose labels are as good as any other. **Pass 2 labels every
+  position of every game and marks the game's outcome**; what a forfeit costs is
+  the outcome column's precision on that game, not the positions. The count of
+  undecided games is a `derived` header field so a consumer can filter on it.
 - **`openings_*`** — the ledger's business (§7), taken from the pass-1 config
   and the report's own `opening_turns`, never re-derived.
 
@@ -79,11 +93,42 @@ measurement.
 | label best move | the `bestmove` line's turn |
 | label depth | `depth_turns` from the totals line |
 | label nodes | `nodes` from the totals line |
+| label provenance | whether the answer came from the search or from a solver proof — see §4a |
 | game outcome | from INVARIANT 1's referee |
 | game index and turn index | so a record points back into the report it came from |
 
 **Schema version is a `param` in the header**, and the loader refuses a version
 it does not know rather than reading a field it does not have (rule 3).
+
+## 4a. LABEL PROVENANCE — the memo's decision 9, which revision 1 DROPPED
+
+Revision 1 neither took this decision nor listed it as deferred. It is taken
+here, because the reviewer showed the escape hatch the memo offered does not
+exist.
+
+**THE HAZARD.** When the solver gate is on, an answer can come from a solver
+PROOF rather than from the search, and then `depth_turns` is a **proof depth**
+and `nodes` are **solver nodes** — different quantities under the same two column
+names, with no discriminator in the record.
+
+**THE MEMO SAID THIS COULD BE EXCLUDED BY CONFIGURATION, AND THAT IS FALSE AT
+HEAD.** `LC_ALL=C /usr/bin/grep -rln "on_search_path = true" configs/` returns
+**three committed configs** — the WP-1.8c bench seat, the staged solver gate seat
+and the play solver seat. D-441's *"gate off in every committed config"* binds
+DEPLOYMENT configs, and D-520 says so explicitly; measurement seats exist and are
+committed. **So a gate-on pass 1 is a legal use of this design**, and a schema
+that assumes otherwise records two different quantities in one column.
+
+**THE MECHANISM, and it needs nothing new on the wire.** `crates/pistol-cli/src/report.rs`
+emits `search_nodes`, `solver_nodes` and the call counters **only inside a
+`if info.solver_nodes > 0` conditional** — a gate-off line prints none of them.
+So the discriminator is already there: pass 2 records the provenance it observes
+from whether the solver fields appeared, and records the solver node count
+alongside when they did.
+
+**INVARIANT 8** pins that a record whose totals line carried solver fields is
+marked, and **INVARIANT 9** pins that the two node quantities are never summed
+into one column.
 
 ## 4. THE SCORE FIELD'S NAME — the memo's decision 10, taken
 
@@ -97,11 +142,30 @@ facts the corpus would otherwise silently mis-record:
 3. `mate T` counts **both sides' turns**, so a mate score is a distance in the
    rules' own unit and not a ply count.
 
-**The schema names the field for what it is** — an engine score, side-to-move
-relative, with mate distances in turns — and **INVARIANT 4** pins the sign
-convention against a fixture whose expected sign is known by construction. The
-memo's warning is the reason: a wrong name here makes every label in the corpus
-wrong in a way no loader test catches, because the loader would still parse it.
+**THERE ARE THREE SPELLINGS AND REVISION 1 NAMED TWO.** `score_token` emits
+`cp <value>`, `mate <turns>` and **`-mate <turns>`** — and the third is the one
+where the TOKEN ITSELF carries the sign that INVARIANT 4 pins, so omitting it
+omitted the case the invariant is about.
+
+**AND THE VALUE IS TWO WORDS, WHICH THE EXISTING HELPER CANNOT EXPRESS.**
+`totals_of`'s `value()` returns the single word after a key; a score is a keyword
+plus a number, and `cp` is that keyword rather than the field's name. **Branch
+B's widening therefore parses the score as a PAIR**, and the schema's column is
+named for the quantity — an engine score, side-to-move relative, mate distances
+in turns — never `cp`.
+
+**THE NON-FATAL `Option` IS RIGHT FOR SPRT AND WRONG FOR THE LABEL PATH, AND
+REVISION 1 APPLIED IT TO BOTH.** INVARIANT 7 makes `score` and `pv` non-fatal so
+the SPRT path cannot change — correct, and it stays. But a *record* whose score
+is absent is a swallowed error, which rule 3 forbids: **pass 2 REFUSES a position
+whose totals line carried no parsable score**, loudly and by name, rather than
+writing a record with an empty column. One parser, two consumers, two different
+obligations — and **INVARIANT 10** pins the label side so that a build in which
+every score parsed as `None` fails a test instead of emitting a corpus of blanks.
+
+The memo's warning is why all of this is spelled out: a wrong name here makes
+every label in the corpus wrong in a way no loader test catches, because the
+loader would still parse it.
 
 ## 5. WHAT IDENTIFIES A LABELLING RUN — the memo's decision 4, resolved
 
@@ -115,10 +179,23 @@ sitting outside the digest that identifies it — which is the defect the arena'
 own boundary comment exists to prevent, arriving from the other side.
 
 **MECHANISM.** Pass 2 computes and records a `label_sha256` over the canonical
-concatenation of: the source report's `source_sha256`, the label `go` line, both
-engine identities, and the schema version. The label budget still arrives on the
-command line — there is no config document in this mode and rule 1 forbids a
-code-side default — but it is **inside the run's identity**, not outside it.
+concatenation of: the source report's **`experiment_sha256`**, the label `go`
+line, both engine identities, the schema version, **the seed, and the sampling
+rule** — the last two because the arena's own precedent puts WHICH-selection
+inside: `openings_skip` is in `experiment_digest`, one line from the `--workers`
+exclusion this design cites. **A seed and a fraction choose which positions get
+labelled, so two runs differing in them are different experiments.**
+
+**It hashes `experiment_sha256` and NOT `source_sha256`.** Revision 1 used the
+latter, which is a digest of the whole report FILE — timing block included — so
+two labelling runs over reports of one experiment taken on different days would
+have had different identities for a reason that changes no label. The
+experiment digest is the arena's own answer to that same question and this
+design takes it rather than inventing a second one.
+
+The label budget still arrives on the command line — there is no config document
+in this mode and rule 1 forbids a code-side default — but it is **inside the
+run's identity**, not outside it.
 
 ## 6. COLDNESS
 
@@ -161,6 +238,15 @@ is a trainer that may want either treatment and a pipeline that collapses them
 has destroyed the choice. **The count of distinct boards is a `derived` header
 field**, so the collapse is available without being imposed.
 
+**THE BOARD KEY IS COMPUTED BY A STATED, ORDER-INDEPENDENT RULE AND NEVER BY
+HASH-MAP ITERATION.** Hard rule 4 forbids unseeded hash iteration on any path
+that decides an output, and a board key assigned by "first one seen wins" over a
+`HashMap` is exactly that: the same corpus would key the same transposition
+differently between runs, and INVARIANT 11's byte-identity receipt would fail
+intermittently — the worst way for this to be found. **The key is derived from
+the board's own contents in a sorted, canonical order**, so it is a function of
+the position and of nothing else.
+
 **LEDGERS.** Three, all append-only: the `book_v2` consumed-ranges ledger (shared
 with the SPRT ledger, per its own rule that a row lands in the same commit as the
 config that consumes it); a corpus manifest with per-file digests; and the census
@@ -189,12 +275,27 @@ registered before the sweep, the sweep before the size):
 5. **Detector round 3 re-opens when the corpus holds at least N**, and not
    before.
 
-**WHAT LANDS HERE AND WHAT DOES NOT.** The FORM above is fixed by this design.
-The **grid, the floor and the confidence level are numbers** and land in a
-registration written before the corpus reaches any candidate size — never after,
-and never by the session that wants the answer. **D-483 is why they are not
-here**, and D-537's *"before any score is fitted"* is why they may not wait for
-the corpus.
+**WHAT LANDS HERE AND WHAT DOES NOT — AND REVISION 1 DEFERRED THE PART THAT DOES
+THE WORK.** The reviewer measured this against D-518, the model this section
+cites: D-518 registered `n_openings = ceil_to_500(P + 500)` **and** the nine-point
+grid **and** the power threshold 0.90 **before** the sweep — because *"moving it
+afterwards is the post-hoc threshold move"*. Revision 1 fixed only the five-step
+form and deferred grid, floor and confidence, which is the half that decides the
+answer.
+
+**So the split rule lands HERE, in full, because it is a MECHANISM and not a
+number**: the corpus is partitioned by POSITION, never by firing; the partition
+is a stated function of the position's own board key and of nothing about its
+outcome; and **the held-out part is never read while the score is being fitted**.
+A split chosen after seeing which positions prove is the defect this whole
+section exists to prevent, and it is not a number.
+
+**What genuinely remains numeric** — the grid, the floor, the confidence level —
+lands in a registration that this design **binds to a deadline it can enforce**:
+it is written **before the corpus is first counted against any candidate
+minimum**, and the pipeline records the count in its manifest, so a registration
+arriving later is visibly later. D-483 is why the numbers are not here; the
+deadline is why deferring them is not the post-hoc move D-518 warns about.
 
 ## 9. THROUGHPUT — a SHAPE, and the pilot measures it
 
@@ -206,12 +307,14 @@ extrapolate nps to a rate).
 
 ## 10. INVARIANTS
 
-1. **A game's outcome comes from replaying its move list through `pistol-core`
-   and from nothing else.** Rule 2 forbids a second win detector.
+1. **A DECIDED game's outcome comes from replaying its move list through
+   `pistol-core` and from nothing else** (rule 2 forbids a second win detector);
+   **an undecided replay is recorded as undecided**, never guessed into a cap or
+   a forfeit.
 2. **Every label `go` is preceded by a `newgame` on that channel**, and no label
    `go` follows another without one.
-3. **A forfeited game contributes no records**, and its skip is counted in the
-   header.
+3. **Every position of every game is a label candidate**, forfeited games
+   included; the outcome column carries what the referee could establish.
 4. **A record's score is side-to-move relative**, with mate distances in turns.
 5. **When the label policy labels every candidate, the seed changes no output
    byte.**
@@ -219,6 +322,15 @@ extrapolate nps to a rate).
    recorded list, so it cannot produce a position pass 1 did not.
 7. **The SPRT path's output is unchanged** by the `totals_of` widening: the three
    existing lookups stay load-bearing, `score` and `pv` are non-fatal `Option`s.
+8. **A record whose totals line carried the solver fields is marked as
+   solver-provenance**, and one whose line did not is marked as search.
+9. **Search nodes and solver nodes are never summed into one column.**
+10. **Pass 2 refuses a position whose totals line carried no parsable score**,
+    by name, and writes no record for it. A build in which every score parsed as
+    absent fails a test rather than emitting a corpus of blanks.
+11. **A re-run of pass 2 over one report, at one label budget and one seed,
+    produces a byte-identical corpus file.** This is requirement 4's receipt and
+    it is a test, not a claim.
 
 ## 11. TESTS, named for the behaviour they pin
 
@@ -233,6 +345,12 @@ extrapolate nps to a rate).
 - `the_ledger_appends_and_never_rewrites`
 - `widening_totals_of_leaves_the_sprt_report_byte_identical`
 - `a_score_is_recorded_from_the_movers_point_of_view`
+- `a_negative_mate_token_is_read_as_the_mover_being_mated`
+- `a_position_with_no_parsable_score_is_refused_by_name`
+- `a_solver_provenance_answer_is_marked_and_its_nodes_kept_separate`
+- `a_rerun_over_one_report_is_byte_identical`
+- `an_undecided_replay_is_recorded_undecided_and_not_guessed`
+- `a_board_key_does_not_depend_on_iteration_order`
 
 **MUTANTS, each with the test that must die:**
 
@@ -244,10 +362,23 @@ extrapolate nps to a rate).
 | the ledger opened for write instead of append | the append test |
 | a new `totals_of` lookup made load-bearing with `?` | the SPRT byte-identity test |
 | the score's sign flipped | `a_score_is_recorded_from_the_movers_point_of_view` |
+| the `-mate` spelling folded into `mate` | `a_negative_mate_token_is_read_as_the_mover_being_mated` |
+| an absent score written as an empty column | `a_position_with_no_parsable_score_is_refused_by_name` |
+| the provenance mark dropped | `a_solver_provenance_answer_is_marked_and_its_nodes_kept_separate` |
+| solver nodes summed into the node column | the same test |
+| the board key taken from map iteration order | `a_board_key_does_not_depend_on_iteration_order` |
+| the seed dropped from `label_sha256` | `a_labelling_run_is_identified_by_its_source_report_and_its_budget` |
 
 ## 12. WHAT THIS DESIGN DOES NOT DECIDE
 
 The label budget's VALUE; the pilot's `book_v2` range; the label policy's
 sampling fraction; the census minimum's grid, floor and confidence level; and
 D-540's fresh-process agreement criterion. **All five are numbers or registered
-criteria and all five belong to the pilot's pre-registration** (D-483).
+criteria and all five belong to a pre-registration** (D-483).
+
+**What is NOT on this list, because revision 1 left it off and a reviewer had to
+find it**: the label's PROVENANCE (§4a) and the score's third spelling (§4).
+Both were decisions, not deferrals, and neither was taken. A design's deferral
+list is only worth what its completeness is worth, so this one is now checked
+against the premise memo's twelve item by item, and the two that were missing
+are taken above rather than moved here.
