@@ -187,8 +187,22 @@ abandoned, and whether the roadmap flips.
 - **`6e7e0734`** (the revision-4 landing), log
   `artifacts/stage3c_ci_6e7e0734_v1.txt`: the same nineteen lines, the same
   final line, the same count of **0**, the same determinism line.
-- **The closure HEAD** — §8 names it and its log, and it is the run that
-  adjudicates this document, because a gate claim names the tree it read.
+- **`d0c1353`, THE CLOSURE COMMIT — and it is the run that adjudicates this
+  document**, because a gate claim names the tree it read. Log
+  `artifacts/stage3c_ci_closure_d0c1353_v1.txt`: nineteen `=== gate N/19:`
+  lines, `ci: all gates passed`, the FAIL/VOID/FAILED count **0**, and
+  `determinism: ok — 5 seat(s), no difference outside nps/time in any of them`.
+
+**The one commit after `d0c1353` changes this section, the receipt it names and
+nothing on a gate path.** It is documentation ABOUT the run rather than input to
+it, which is the only reason it is not itself re-adjudicated — stated because
+the alternative is an infinite regress and the honest move is to say where it
+was cut (the precedent this arc's own predecessor set).
+
+**No worktree survives and no process does.** `git worktree list` shows the main
+tree alone; `artifacts/stage3_round2_worktree_receipt_v1.txt` records what each
+removed worktree's gitignored `artifacts/` and `sessions/` held first — nothing
+needing export, checked rather than asserted (D-469).
 
 ## 7. Where everything is
 

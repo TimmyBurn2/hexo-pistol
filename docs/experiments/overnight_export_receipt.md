@@ -66,10 +66,10 @@ indirection, stated so nobody reads the shorter list as the whole export.
 **`artifacts/stage3_round2_export_receipt_v1.txt` — sha256**
 
 ```
-0d709ed38294867cc0d148f4a0eb89390e2ffe52968dd1038f584ee42a3c7a0f
+16666797f123e235f5d0d9c0d3564f4fad82fe4e77b1799b63da2d3b461e14f3
 ```
 
-**Twenty-six files listed**, the receipt itself excluded because a file cannot
+**27 files listed**, the receipt itself excluded because a file cannot
 carry its own digest. It continues the two receipts above rather than replacing
 them; each is complete for the run it covers.
 
@@ -88,6 +88,7 @@ them; each is complete for the run it covers.
 | `matrix_stage3_DECISION_REDTEAM_round2.md` | the decision red team at `1bc2788`'s successor `b6962ac`: **FALLS**, 3 / 7 / 5 |
 | `matrix_stage3_REREVIEW_round3.md` | the scoped re-review at `6e7e0734`: **PASS WITH FINDINGS**, 260 combinations swept |
 | `stage3_round2_worktree_receipt_v1.txt` | what each worktree's gitignored `artifacts/` and `sessions/` held before removal (D-469) — nothing needing export, checked rather than asserted |
+| `stage3c_ci_closure_d0c1353_v1.txt` | **the run that adjudicates the closure** — `tools/ci.sh` 19/19 at the closure commit |
 
 ## The rule this file follows for the rest of the arc
 
