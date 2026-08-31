@@ -160,30 +160,48 @@ pub fn position_line(moves: &[Turn]) -> String {
     line
 }
 
-/// `(nodes, time_ms, depth_turns)` from the closing report, or `None` if this
-/// is not one.
+/// The words after the `totals` marker, in order, or `None` if this is not the
+/// closing report.
 ///
 /// The `totals` marker is what tells the closing line from a per-depth one; a
 /// driver that billed compute to the wrong one would under-count every
-/// interrupted iteration (docs/decisions.md D-80).
-fn totals_of(line: &str) -> Option<(u64, u64, u32)> {
+/// interrupted iteration (docs/decisions.md D-80). This is the only place in
+/// this crate that makes that distinction.
+///
+/// A WORD LIST rather than a key-value map, because the score is TWO words
+/// after its key — `cp <n>`, `mate <t>` or `-mate <t>` — and a map keyed by
+/// field name loses the number (docs/experiments/wp20s_design.md §3).
+pub(crate) fn fields_of(line: &str) -> Option<Vec<&str>> {
     let prefix = format!(
         "{} {} ",
         pistol_cli::report::INFO_PREFIX,
         pistol_cli::report::TOTALS_MARKER
     );
-    let rest = line.strip_prefix(&prefix)?;
-    let words: Vec<&str> = rest.split_whitespace().collect();
-    let value = |key: &str| -> Option<&str> {
-        words
-            .iter()
-            .position(|word| *word == key)
-            .and_then(|at| words.get(at + 1))
-            .copied()
-    };
+    Some(line.strip_prefix(&prefix)?.split_whitespace().collect())
+}
+
+/// The word after `key`, whole-word matched so `nodes` cannot match
+/// `search_nodes`.
+pub(crate) fn value_of<'a>(words: &[&'a str], key: &str) -> Option<&'a str> {
+    words
+        .iter()
+        .position(|word| *word == key)
+        .and_then(|at| words.get(at + 1))
+        .copied()
+}
+
+/// `(nodes, time_ms, depth_turns)` from the closing report, or `None` if this
+/// is not one.
+///
+/// All three lookups are load-bearing: a totals line missing any of them is not
+/// one this driver will bill compute from.
+pub(crate) fn totals_of(line: &str) -> Option<(u64, u64, u32)> {
+    let words = fields_of(line)?;
     Some((
-        value("nodes")?.parse().ok()?,
-        value(pistol_cli::report::TIME_FIELD)?.parse().ok()?,
-        value("depth_turns")?.parse().ok()?,
+        value_of(&words, "nodes")?.parse().ok()?,
+        value_of(&words, pistol_cli::report::TIME_FIELD)?
+            .parse()
+            .ok()?,
+        value_of(&words, "depth_turns")?.parse().ok()?,
     ))
 }

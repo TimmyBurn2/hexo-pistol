@@ -44,6 +44,8 @@
 //! here writes inside the repository, and the report path is always given
 //! explicitly on the command line.
 
+pub mod capture;
+pub mod capture_file;
 pub mod channel;
 pub mod conclusion;
 pub mod config;
@@ -66,6 +68,7 @@ pub mod seats;
 pub mod sprt;
 pub mod summary;
 pub mod transcript;
+pub mod usage;
 mod validate;
 
 pub use config::ArenaConfig;

@@ -51,6 +51,17 @@ enum Behave {
     /// witness that closes it, and it is a deliberate deviation from a real
     /// engine rather than a claim about one.
     DemandsNewGame,
+    /// Plays honestly, but refuses any `position` it is given unless a
+    /// `newgame` has arrived since the last `go`.
+    ///
+    /// [`Behave::DemandsNewGame`] latches: it observes a `newgame` per SPAWN,
+    /// which `seats::with_seats` sends anyway, so it cannot witness a driver
+    /// that sends one per ASK. The capture pass does send one per ask, on one
+    /// long-lived channel — delete every send after the first and that witness
+    /// stays green. This one clears the latch on `go`, which is the same
+    /// deliberate deviation from a real engine at one finer granularity
+    /// (docs/decisions.md D-413).
+    DemandsNewGamePerAsk,
 }
 
 impl Behave {
@@ -67,13 +78,15 @@ impl Behave {
             "play_mode" => Behave::PlayMode,
             "edit_own_config" => Behave::EditOwnConfig,
             "demands_newgame" => Behave::DemandsNewGame,
+            "demands_newgame_per_ask" => Behave::DemandsNewGamePerAsk,
             _ => return None,
         })
     }
 
     /// Every spelling, for a refusal that has to list them.
     const ALL: &'static str = "honest, honest_last, illegal, garbage, bad_bestmove, hang, \
-                               exit, bad_protocol, play_mode, edit_own_config, demands_newgame";
+                               exit, bad_protocol, play_mode, edit_own_config, demands_newgame, \
+                               demands_newgame_per_ask";
 }
 
 /// The exit code the `exit` behaviour uses. Distinct from this program's own
@@ -268,10 +281,16 @@ fn serve(
     let mut told_new_game = false;
     for line in stdin.lock().lines() {
         let line = line.map_err(|io| format!("stdin: {io}"))?;
-        if behave == Behave::DemandsNewGame {
+        if behave == Behave::DemandsNewGame || behave == Behave::DemandsNewGamePerAsk {
             let asked = line.trim_start();
             if asked.starts_with(pistol_cli::protocol::NEW_GAME) {
                 told_new_game = true;
+            } else if behave == Behave::DemandsNewGamePerAsk
+                && asked.starts_with(pistol_cli::protocol::GO)
+            {
+                // Cleared on `go`, which is what makes this behaviour observe a
+                // `newgame` per ASK rather than per spawn.
+                told_new_game = false;
             } else if asked.starts_with(pistol_cli::protocol::POSITION) && !told_new_game {
                 // An `error` line is what the arena forfeits on, so a spawn that
                 // was never sent `newgame` shows up as a forfeit with a named

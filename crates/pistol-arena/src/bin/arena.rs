@@ -7,55 +7,11 @@ use std::io::Write as _;
 use pistol_arena::config::ArenaConfig;
 use pistol_arena::error::ArenaError;
 use pistol_arena::report::Written;
+use pistol_arena::usage::USAGE;
 use pistol_arena::{
-    identity, openings, outpath, replay, replay_report, report, schedule, score, summary,
-    transcript,
+    capture, capture_file, identity, openings, outpath, replay, replay_report, report, schedule,
+    score, summary, transcript,
 };
-
-/// What this program does, and what it refuses to guess.
-const USAGE: &str = "\
-arena — the paired-openings SPRT judge for pistol
-
-usage:
-  arena --config <path> --out <path>
-  arena --replay <report path> --out <path> --workers <n>
-
-  --config  an arena config. Always explicit: there is no default path and no
-            built-in configuration (CLAUDE.md rule 1). It states the openings,
-            the budget, the turn cap, the worker count and the SPRT bounds.
-  --out     where to write the report. CLAIMED exclusively at dispatch
-            (create_new/O_EXCL), so an existing file — a previous report, or
-            another run in flight — is refused by name before any game: a run
-            that silently overwrote a report would destroy the evidence for a
-            claim somebody has already made. A refusal before any game removes
-            the empty claim again. Match logs are artifacts and are never
-            written inside the repository (CLAUDE.md rule 8).
-
-  --replay  a report THIS program wrote. Its games are re-driven warm through
-            the engines it attests — every seat spawned, every recorded move
-            fed, every turn an engine searched asked again at the run's own
-            budget — and the first turn of each game where an answer disagrees
-            with the record is reported. Only a `nodes` budget replays, by name:
-            the premise is that a re-driven engine answers what it answered, and
-            wall-clock does not promise that (CLAUDE.md rule 4). Refuses a
-            report whose engines are no longer the ones it attests, before any
-            game. The flags are in this order; there is no other spelling.
-  --workers how many games are replayed at once, on the command line because
-            there is no config document here to state it and no code-side
-            default for a tunable (CLAUDE.md rule 1). The pass replays EVERY
-            game of the report with no early stop, so what it finds does not
-            depend on this number.
-
-  Only instrument budgets are accepted. A `movetime` budget is refused by name:
-  wall-clock is not reproducible, and it is not even a ceiling — the first
-  deepening iteration cannot be interrupted (docs/decisions.md D-74, D-95).
-
-  The verdict is read off the PAIR-level LLR. The game-level LLR is reported
-  beside it as a diagnostic and is not the verdict (docs/decisions.md D-154).
-
-exit: 0 completed cleanly, 1 abandoned or forfeited (report still written),
-      2 a document this build refuses (no report).
-";
 
 /// A run that produced a report but is not a measurement.
 const RUN_FAILED: u8 = 1;
@@ -78,6 +34,7 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
     enum Mode {
         Play(PathBuf),
         Replay(PathBuf, usize),
+        Capture(PathBuf, u64),
     }
     let (mode, out_path) = match words {
         ["--help" | "-h"] => {
@@ -91,10 +48,14 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
             Mode::Replay(PathBuf::from(source), workers_of(workers)?),
             PathBuf::from(out),
         ),
+        ["--capture", source, "--out", out, "--label-nodes", nodes] => (
+            Mode::Capture(PathBuf::from(source), count_of(nodes, "label node count")?),
+            PathBuf::from(out),
+        ),
         _ => {
             return Err(format!(
-                "--config and --out are both required, or --replay, --out and --workers in that \
-                 order\n\n{USAGE}"
+                "--config and --out are both required, or --replay, --out and --workers, or \
+                 --capture, --out and --label-nodes, each in that order\n\n{USAGE}"
             ));
         }
     };
@@ -104,6 +65,7 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
     let outcome = match &mode {
         Mode::Play(config) => run(config, &out_path, claimed),
         Mode::Replay(source, workers) => replay_pass(source, &out_path, claimed, *workers),
+        Mode::Capture(source, nodes) => capture_pass(source, &out_path, claimed, *nodes),
     };
     match outcome {
         Ok(code) => Ok(code),
@@ -127,32 +89,43 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
 /// block unnormalised, describing a run nobody can reproduce by copying the line
 /// back (tools/SHELL_CHECKLIST.md item 8).
 fn workers_of(word: &str) -> Result<usize, String> {
-    let parsed: usize = word
-        .parse()
-        .map_err(|_| format!("`{word}` is not a worker count\n\n{USAGE}"))?;
-    if parsed.to_string() != word {
-        return Err(format!(
-            "`{word}` is a worker count spelled a way this program will not echo back; write it \
-             as `{parsed}`\n\n{USAGE}"
-        ));
-    }
+    let parsed = usize::try_from(count_of(word, "worker count")?)
+        .map_err(|_| format!("`{word}` is more workers than this machine can address"))?;
     if parsed == 0 {
         return Err(String::from("--workers 0 would replay nothing at all"));
     }
     Ok(parsed)
 }
 
-/// Re-drive one report's games through the engines that report attests.
-fn replay_pass(
-    source: &Path,
-    out_path: &Path,
-    mut claimed: std::fs::File,
-    workers: usize,
-) -> Result<ExitCode, ArenaError> {
-    // A REGULAR FILE, CHECKED BEFORE IT IS READ. `fs::read` on a FIFO blocks
-    // until a writer appears, with no channel yet in existence and so no
-    // watchdog to end it — a hang where a refusal belongs (docs/decisions.md
-    // D-252's sibling case in `identity::digest_of`).
+/// A count off the command line, with its SPELLING validated and not merely its
+/// value.
+///
+/// `+4`, ` 4` and `04` all parse to four and would land in a document
+/// describing a run nobody can reproduce by copying the line back
+/// (tools/SHELL_CHECKLIST.md item 8).
+fn count_of(word: &str, what: &str) -> Result<u64, String> {
+    let parsed: u64 = word
+        .parse()
+        .map_err(|_| format!("`{word}` is not a {what}\n\n{USAGE}"))?;
+    if parsed.to_string() != word {
+        return Err(format!(
+            "`{word}` is a {what} spelled a way this program will not echo back; write it as \
+             `{parsed}`\n\n{USAGE}"
+        ));
+    }
+    if parsed == 0 {
+        return Err(format!("a {what} of zero asks for nothing at all"));
+    }
+    Ok(parsed)
+}
+
+/// One report, read back as the run it describes.
+///
+/// A REGULAR FILE, CHECKED BEFORE IT IS READ. `fs::read` on a FIFO blocks until
+/// a writer appears, with no channel yet in existence and so no watchdog to end
+/// it — a hang where a refusal belongs (docs/decisions.md D-252's sibling case
+/// in `identity::digest_of`).
+fn read_report(source: &Path) -> Result<transcript::Transcript, ArenaError> {
     let meta = std::fs::metadata(source)
         .map_err(|io| ArenaError::io(format!("reading {}", source.display()), io))?;
     if !meta.is_file() {
@@ -170,7 +143,45 @@ fn replay_pass(
             format!("{} is not UTF-8: {why}", source.display()),
         )
     })?;
-    let transcript = transcript::read(text, source_sha256)?;
+    transcript::read(text, source_sha256)
+}
+
+/// Walk one report position by position, asking each at the label budget.
+fn capture_pass(
+    source: &Path,
+    out_path: &Path,
+    mut claimed: std::fs::File,
+    label_nodes: u64,
+) -> Result<ExitCode, ArenaError> {
+    let transcript = read_report(source)?;
+    let go_line = capture::label_go_line(label_nodes);
+    let records = capture::run(&transcript, label_nodes)?;
+    let rendered = capture_file::render(&transcript, &go_line, &records);
+    claimed
+        .write_all(rendered.as_bytes())
+        .and_then(|()| claimed.flush())
+        .map_err(|io| ArenaError::io(format!("writing {}", out_path.display()), io))?;
+    println!(
+        "arena: captured {} position(s) from {} game(s) at {go_line}",
+        records.len(),
+        transcript.games.len()
+    );
+    println!(
+        "{}",
+        capture_file::manifest_row(&transcript, &go_line, &rendered, out_path)
+    );
+    println!("arena: capture written to {}", out_path.display());
+    Ok(ExitCode::SUCCESS)
+}
+
+/// Re-drive one report's games through the engines that report attests.
+fn replay_pass(
+    source: &Path,
+    out_path: &Path,
+    mut claimed: std::fs::File,
+    workers: usize,
+) -> Result<ExitCode, ArenaError> {
+    let transcript = read_report(source)?;
     replay::verify_engines(&transcript)?;
 
     let (outcome, played) = replay::run(&transcript, workers);

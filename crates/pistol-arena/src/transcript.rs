@@ -5,6 +5,7 @@ use pistol_core::{GameState, Outcome, Turn};
 use crate::config::EngineSection;
 use crate::error::ArenaError;
 use crate::identity::EngineIdentity;
+use crate::record::GameResult;
 use crate::report::{REPORT_KIND, REPORT_SCHEMA};
 
 /// One game as the report recorded it.
@@ -18,6 +19,13 @@ pub struct RecordedGame {
     pub a_is_p1: bool,
     /// Whether a forfeit ended it.
     pub forfeit: bool,
+    /// Which seat the report awarded it to, as the report recorded it.
+    ///
+    /// Read rather than re-derived because a FORFEITED game's result is not
+    /// recoverable from its move list: the list stops where the forfeit
+    /// happened, so a replay says `Ongoing` and cannot say who was awarded the
+    /// game (`docs/experiments/wp20s_design.md` §4).
+    pub result: GameResult,
     /// The whole game, opening included.
     pub moves: Vec<Turn>,
     /// What each engine spent on it, indexed `0` for A.
@@ -305,6 +313,15 @@ fn read_games(text: &str, label_a: &str, label_b: &str) -> Result<Vec<RecordedGa
             opening: number(value(&fields, "opening", record)?, "opening index")?,
             a_is_p1,
             forfeit: value(&fields, "end", record)? == "forfeit",
+            result: {
+                let word = value(&fields, "result", record)?;
+                GameResult::from_token(word).ok_or_else(|| {
+                    refuse(format!(
+                        "`game {index}` records `result {word}`, which is not a result this \
+                         build writes"
+                    ))
+                })?
+            },
             moves,
             nodes: [
                 number(value(&fields, "nodes_a", record)?, "node count")?,
