@@ -1,19 +1,32 @@
 # WP-2.0-M — DESIGN: the labelling pass
 
-**REVISION 6**, a correction round after revision 5 (`41a52f0`) took a scoped
-re-review and **PASSED** — 0 BLOCKING, 0 MAJOR, 9 MINOR. **The design is
+**REVISION 7**, a second correction round after revision 6 (`ff1c575`) took a
+narrow regression re-check whose binding question — *did revision 6 break
+anything revision 5 had?* — came back **NO**, with four corrections graded
+incomplete (F-1 … F-4). Revision 6 was itself a correction round after revision 5
+(`41a52f0`) **PASSED** — 0 BLOCKING, 0 MAJOR, 9 MINOR. **The design is
 therefore under D-547's freeze in full**, and every edit below is listed in
 §0.2c with its ground. Nothing here changes a mechanism, an invariant or a
 decision: the round deletes two false clauses, replaces two mutants that cannot
-die, names three test drivers, and corrects three counts.
+die, names three test drivers, and corrects two counts; revision 7 then completed
+three of those corrections and restated the fourth.
 
 **ONE OF THE CORRECTIONS IS NOT THE REVIEWER'S AND IS RECORDED AS THIS SESSION'S
-OWN.** §14.1 carried the universal *"every committed engine config has the solver
-off the search path"*. **It is false** — `configs/bench_wp18c_solver_on.toml:45`,
-`configs/gate_staged_solver_v0.toml:47` and `configs/play_staged_solver_v0.toml:75`
-all arm it — and it was found by the concurrent WP-2.0-S review, not by this
-document's own. It is deleted rather than narrowed; the conclusion it was
-propping up never needed it.
+OWN — AND REVISION 6 OVERSTATED IT.** §14.1 carried the universal *"every
+committed engine config has the solver off the search path"*. Revision 6 called
+it FALSE, citing three files under `configs/` that arm the solver. **That is too
+strong, and the three files say so themselves**: each declares it is not what the
+clause is about — *"NOT an SPRT arm and never a committed engine config"*
+(`configs/bench_wp18c_solver_on.toml:15`), *"never the committed config"*
+(`configs/gate_staged_solver_v0.toml:8`), *"THIS IS NOT A DEPLOYMENT CONFIG"*
+(`configs/play_staged_solver_v0.toml:8`) — and D-441's *"gate OFF in every
+committed config"* binds what pistol SHIPS, which D-520 restates as the same
+distinction. **The real defect is that the phrase is AMBIGUOUS between two senses
+this project uses**: true of deployment configs, false of files committed under
+`configs/`. **It is deleted for that reason and because the argument never rested
+on it** — the stub's own `solver_nodes: 0` is the whole ground — which is D-424's
+own test: a clause both readings of which license the same conclusion is not
+doing work.
 
 Revision 5 was authored under **D-548**'s grant of up to four further rounds,
 after revision 4 (`a9a4a3a`) took a scoped re-review and returned **FAIL** — 0
@@ -153,6 +166,7 @@ finding**.
 | **N5** | §3.1 separates detection from the refusal message | rev 4: one rule stated twice and differently | rev 5 fixed the prose only; **revision 6 fixes the registry**, so the mutant and the driver column name the refusal message's field walk rather than "the identity comparison", which the derived `PartialEq` has no limbs to drop from |
 | **N6** | `experiment_sha256` gains a test and a mutant | nothing — three digest tests all passed with it dropped | `two_captures_of_different_experiments_do_not_share_an_identity` |
 | **N7** | §6 gains the TAB row it owns | §4.2 and INVARIANT 6 only | §6's table, which owns failure modes, pointing at §4.2 for the grammar |
+| **N3** | §0.2a's frozen-edit count corrected from two to four | — | — (a count on the freeze block's own face; revision 5 applied the fix and left this row out) |
 | **N8** | §14.4 prices the declined route against gate 9 rather than the pilot | — | — (a pricing sentence, no test moves) |
 | carried | the no-score rule gains a test | nothing, across three revisions | `a_totals_line_with_no_score_at_all_is_captured_as_written` |
 | m8 residual | the round-trip fixture's first two fields must differ | — | the clause in §10 that makes the swap mutant able to die |
@@ -175,7 +189,16 @@ before/after columns are §0.2b's discipline applied to this round.
 | **M-7** | `Received::Overlong` gains a test and a mutant | nothing — it was §6's ninth row and §9's undeclared third unpinned thing | `an_overlong_non_line_refuses_the_run_by_name` |
 | **M-8** | five quotations name the WP-2.0 dispatch | — | — (the rule at `docs/experiments/wp20_dispatches.md:15` now governs this document) |
 | **M-9** | this table has a row for every change, N3's included | — | — |
-| **this session's own** | §14.1's false universal about committed configs deleted | rev 5: an argument resting on it | the stub's own `solver_nodes: 0`, which was always the real ground |
+| **this session's own** | §14.1's ambiguous universal about committed configs deleted | rev 5: an argument resting on it | the stub's own `solver_nodes: 0`, which was always the real ground |
+
+**And revision 7's own four**, from the regression re-check of revision 6:
+
+| finding | change | pinned BEFORE | pins NOW |
+|---|---|---|---|
+| **F-1** | the three remaining bare *"the dispatch"* references name the WP-2.0 one | — | — |
+| **F-2** | §0.2b gains the N3 row revision 6 claimed was there | — | — (the row itself) |
+| **F-3** | the `bestmove` mutant's test gets its named driver | rev 6: a replacement mutant that could not die under a blank driver (the stub) | the same test as a synthetic unit over the record writer |
+| **F-4** | the solver-config correction is restated as AMBIGUOUS rather than false, and §14.1 says *stub-driven* in both places | rev 6: a front-page claim three cited files contest | D-424's test — the clause licensed the same conclusion either way |
 
 ---
 
@@ -694,7 +717,7 @@ it produced could not execute, which is this revision's BLOCKING.
 **Pass 1's arena experiment config must carry a `nodes` budget**, because pass 2
 reads its report through `transcript::read` and a report at any other kind is
 refused before a single position is asked. This is not a preference of this
-design: it is inherited, it agrees with the dispatch's own *"games at the
+design: it is inherited, it agrees with the WP-2.0 dispatch's own *"games at the
 standing"* node budget, and it means **no `depth_turns` report in this repository
 can be a capture input** — which is exactly what `configs/arena_smoke_v0.toml`
 is (`configs/arena_smoke_v0.toml:54-58`).
@@ -861,7 +884,7 @@ cannot produce the thing it is testing.
 | `the_normalisation_removes_only_nps_and_time_from_a_solver_bearing_line` | 6 | **unit, synthetic** — no engine in this package can emit the solver spelling (§14.1) |
 | `a_captured_record_carries_the_normalised_totals_line` | 6 | stub, end to end — **the only test that dies when the CALL is deleted** (§14.1) |
 | `a_totals_line_with_no_score_at_all_is_captured_as_written` | 6 | **unit, over the totals-line recogniser, synthetic** — §6's last row, unpinned across three revisions. Not over the normalisation, which is a `fn(&str) -> String` and cannot refuse anything |
-| `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` | 6 | |
+| `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` | 6 | **unit, over the record writer, synthetic** — the stub's `bestmove` is always one canonical turn after one space, so a field re-rendered from the parsed `Turn` would write identical bytes and the mutation would be invisible |
 | `a_captured_field_containing_a_tab_refuses_the_run_by_name` | 6 | **unit, over the record writer** — no engine in this tree can emit a TAB |
 | `the_sprt_reports_per_game_node_counts_are_billed_from_the_totals_line` | 7 | |
 | `two_totals_lines_differing_only_in_nps_and_time_normalise_equal` | 8 | **unit, synthetic, both spellings** |
@@ -1044,7 +1067,7 @@ human retypes drifts from its run. `a_capture_prints_a_manifest_row_naming_its_d
 pins the row's shape.
 
 **AND THIS DECISION LEAVES ONE OF THE DISPATCH'S REGISTERED MUTANTS WITHOUT A
-SITE, WHICH IS NAMED HERE RATHER THAN LEFT TO BE FOUND.** The standing dispatch
+SITE, WHICH IS NAMED HERE RATHER THAN LEFT TO BE FOUND.** The WP-2.0 dispatch
 registers *"ledger overwrite → append test dies"*
 (`docs/experiments/wp20_dispatches.md`, Development round item 2). **No program
 in this package writes a ledger**, so there is nothing to make overwrite and the
@@ -1137,19 +1160,26 @@ expression matches in both spellings because the solver block is interpolated
 between `nodes` and `nps` — is executable for the first time.
 
 **REVISION 5 ALSO GROUNDED THIS ON A FALSE UNIVERSAL, AND THE UNIVERSAL IS
-DELETED RATHER THAN NARROWED.** It said *"every committed engine config has the
-solver off the search path"*, citing `configs/gate_v0.toml:94`. The cited line is
-real and the universal is not: `configs/bench_wp18c_solver_on.toml:45`,
-`configs/gate_staged_solver_v0.toml:47` and
-`configs/play_staged_solver_v0.toml:75` arm it. **The argument never needed it** —
-the stub's own `solver_nodes: 0` is the whole reason no test in this crate can
-reach the spelling — and the universal's falsity cuts the other way anyway: the
-solver-bearing totals line is a real class a pilot config could produce, which is
-a reason for the synthetic test and not against it.
+DELETED RATHER THAN NARROWED, AND NOT BECAUSE IT IS FALSE.** It said *"every
+committed engine config has the solver off the search path"*, citing
+`configs/gate_v0.toml:94`. **The phrase is ambiguous between two senses this
+project uses.** Under D-441's — what pistol SHIPS — it is true, and the three
+files under `configs/` that arm the solver each say they are not that
+(`configs/bench_wp18c_solver_on.toml:15`,
+`configs/gate_staged_solver_v0.toml:8`, `configs/play_staged_solver_v0.toml:8`).
+Under the reading "a file committed in this repository" it is false, and those
+same three files are the counterexamples. **The clause is deleted because the
+argument never rested on it**: the stub's own `solver_nodes: 0` is the whole
+reason **no stub-driven test in this crate** can reach the spelling, and a clause
+whose two readings license the same conclusion constrains nothing (D-424).
+**And the ambiguity cuts toward the synthetic test rather than against it**: a
+pilot naming a measurement seat would produce solver-bearing totals lines, so the
+class is real and wants a test that does not depend on which config a pilot
+names.
 
 ### 14.2 The end-to-end re-run receipt on the real binaries is the PILOT's
 
-The standing dispatch's requirement 4 asks for *"a re-run receipt [that] proves
+The WP-2.0 dispatch's requirement 4 asks for *"a re-run receipt [that] proves
 byte-identical output on a small range"*, and the pilot runs the real `pistol`
 through the real `arena` over a `nodes`-budget report — the only kind pass 2 can
 read (§7). **That receipt is the pilot's pre-registration's and is not this
