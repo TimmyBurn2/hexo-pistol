@@ -397,15 +397,39 @@ def main(argv):
     print("  bound and the row's kill condition is the counter that settles it.")
 
     print()
-    print("=== COMPOSED: the two recall-preserving levers together ===")
-    for label, predicate, candidate_cap in [
+    print("=== (n) GATE THE DIRECTION: ask the attacker only ===")
+    print("A row on the INVOCATION axis, not the firing axis. `att_proved` is")
+    print("decided before `solve_defender` is reached, so dropping the defender")
+    print("direction costs ZERO win recall BY CONSTRUCTION — and gives up every")
+    print("proven LOSS, which is the whole of its kill condition.")
+    attacker_only = sum(int(r["att_visits"]) for r in rows) / searches
+    print(f"  attacker only    {attacker_only:9.1f} visits/search"
+          f"  {total_visits / searches / attacker_only:6.2f}x"
+          f"  WINS {len(wins)}/{len(wins)} by construction"
+          f"  losses given up {len(losses)}"
+          f"  {'IN' if attacker_only <= budget else 'out'}")
+    print(f"  the defender direction is {1 - attacker_only * searches / total_visits:.1%}"
+          f" of this band's solver visits")
+
+    print()
+    print("=== COMPOSED: the recall-preserving levers together ===")
+    print("`att-only` marks a composition carrying row (n).")
+    for entry in [
         ("opp_hot >= 3 + cache", lambda r: int(r["opp_hot"]) >= 3, None),
         ("cache + cap 512", lambda r: True, 512),
         ("opp_hot >= 3 + cache + cap 512", lambda r: int(r["opp_hot"]) >= 3, 512),
         ("cache + cap 4096", lambda r: True, 4096),
         ("(m) mover-side + cache",
          lambda r: int(r["mover_hot"]) > 0 or int(r["mover_l3"]) >= 9, None),
+        ("(n) att-only + cache", lambda r: True, None, True),
+        ("(n) att-only + cache + cap 512", lambda r: True, 512, True),
+        ("(m) + (n) att-only + cache",
+         lambda r: int(r["mover_hot"]) > 0 or int(r["mover_l3"]) >= 9, None, True),
     ]:
+        label, predicate, candidate_cap = entry[:3]
+        # Row (n) is a lever on the INVOCATION axis, so it composes by changing
+        # what a kept firing COSTS rather than which firings are kept.
+        att_only = len(entry) > 3 and entry[3]
         # A CACHE PRESERVES RECALL BY CONSTRUCTION, so the proof count here is
         # over DISTINCT proving signatures and not over rows: a proof proved once
         # is still proved when its repeats are served from the cache, and
@@ -420,6 +444,8 @@ def main(argv):
                 continue
             seen.add(key)
             att, dfn = int(row["att_visits"]), int(row["def_visits"])
+            if att_only:
+                dfn = 0
             limit = candidate_cap or max(att, dfn)
             charged += min(att, limit) + min(dfn, limit)
             if won(row) and att <= limit:

@@ -185,6 +185,14 @@ fn main() -> ExitCode {
             Ok(state) => state,
             Err(why) => return fail(&format!("entry {entries}: {why}")),
         };
+        // EVERY ENTRY IS A DIFFERENT GAME, so every entry starts cold. Without
+        // this the transposition table carries across positions and a later
+        // entry's node count depends on an earlier entry's — the hazard
+        // `crate::tt` states in its own words (D-7) — and the counts stop being
+        // comparable with `tools/bench_block.sh`, which runs one `newgame` per
+        // entry in a fresh process and is the seat the bracket's SHARE was
+        // derived on.
+        engine.clear();
         let outcome = match engine.search(&state, Stop::Nodes(args.nodes), &mut |_| {}) {
             Ok(outcome) => outcome,
             Err(why) => return fail(&format!("entry {entries}: {why}")),

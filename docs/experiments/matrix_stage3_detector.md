@@ -1,33 +1,32 @@
 # Stage-3 detector — OPTION MATRIX
 
-**REVISION 3.** Revision 2 (`f62c676`) named three objections to its own §5 and
-selected on none of them, because the operator's dispatch put a second
-DECISION-RED-TEAM before selection. This revision discharges all three by
-measurement before that red team sees it, and **the measurements change the
-answer**: the row revision 2 headlines does not survive either of them.
+**REVISION 4.** Revision 3 (`b6962ac`) took a fresh-context DECISION-RED-TEAM
+and **FELL**: 3 BLOCKING, 7 MAJOR, 5 MINOR, twelve enumerated remedies. All
+twelve are applied here. **Two of the three BLOCKING findings were defects in
+the MEASUREMENT, not in the prose**, and fixing them moved every number in §5:
 
-| revision 2 said | revision 3 measured |
+| the red team found | what revision 4 did |
 |---|---|
-| `opp_hot >= 3` keeps **1.000 / 0.500 / 0.560** of the proofs | under the ONE recall definition D-512 pins — WINS, the attacker direction — it keeps **— / 0.000 / 0.000**. Band 15 has **no win-direction proof at all**, so its 1.000 was 1.000 *losses* |
-| `opp_hot >= 3` cuts band 15 by **41.8x** against a required 22.5x | **out of sample it cuts by 6.45x against a required 24.33x.** The threshold was fitted to the draw it was measured on |
-| `opp_hot >= 3 + cache + cap 512` reaches the bracket on all three bands | out of sample it reaches band 15 (39.17x) and **misses band 35** (40.47x against 47.25x), while keeping **0 of 3** band-15 wins |
-| the recall fixture is *"seven named anchor positions"* | **four of the seven are not trigger points**: the incumbent trigger does not fire there, so there is no trigger point to rank and D-512's ranking gate has nothing to evaluate |
+| **B-1.** The out-of-sample band-35 required cut of **47.25x** appears in no artifact; the instrument says 43.32x. 47.25 is a numerator over 11 firing searches against a denominator over 12 — the borrowed-denominator defect the instrument was *corrected for* and prints a `NOTE:` about | the figure is **gone from all seven sites**. On the corrected seat the cut is **43.20x** and it is transcribed from the artifact |
+| **B-2.** The `--gate off` seat carried ONE transposition table across every fixture entry (D-7's own named hazard), so `T_off` was measured **warm** while the SHARE was derived on a cold bench seat. Trigger-rich entries 7/8/17 read 239/186/180 against the bench's 7795/7742/6886 — and §4.2's licensing check passed only on the two bands where the defect **cannot** show | `trigger_census` now **clears between entries**, and the red team's predicted confirming values came back **exactly**. Every census was re-taken. **All three registered `T_off` values now reproduce — 50,176.0 / 41,826.2 / 31,590.7** — where the contaminated seat reproduced two and missed the third |
+| **B-3.** §5.1's justification for moving the registered trigger-rich budget 1799.4 → 1737.3 was false: the registered figure was already over 20 searches | **the move is withdrawn and no registered number has moved.** On the corrected seat the budget IS **1799.4** and the incumbent IS **27,504.7 visits/search** — D-516's own recorded figure, reproduced to the last digit |
+| **M-6.** §1 declares the INVOCATION a unit and no row touches it; the defender direction is 57–67 % of every band's visits and is free in win-recall by construction | row **(n)** is in the field, scored, and it is the largest single lever in the arc |
+| **M-2.** *"DEAD ON BOTH TESTS INDEPENDENTLY"* is false under D-512's registered census instrument | **withdrawn.** §4.2 now says which half of the kill is definition-dependent |
+| **M-7.** the four non-firing fixture rows were established at the ROOT only | **measured in-tree**, and the finding is now smaller and sharper (§5.6) |
 
-**Nothing is selected.** Selection follows a fresh-context DECISION-RED-TEAM on
-THIS revision, and the selection record quotes its rows (CLAUDE.md, Process).
+**Nothing is selected.** The red team's own verdict on the conclusion is quoted
+in §6 and is not paraphrased.
 
 **What governs the new numbers.**
-`docs/experiments/stage3_oos_registration.md`, written before either run, fixes
-the recall definition, the out-of-sample draw rule, the budget derivation, the
-value-fixture criteria and the selection rule. Its Criterion V (the draw
-instrument must reproduce `bench_positions_v1.txt` exactly at round 0) and
-Criterion R (the re-taken census must reproduce the standing one on every shared
-column) both PASS — receipts in §5.0.
+`docs/experiments/stage3_oos_registration.md`, written before either run. Its
+Criterion V (round 0 reproduces `bench_positions_v1.txt`) passes; the red team
+re-checked it byte for byte and by sha256. **Criterion R is now FAILED by name
+and that is a finding, not a fault** — see §5.0.
 
 **The field is the operator's** and is a FLOOR, not a closed set: the governing
 dispatch reads *"options ranked by precision economics, **at least**: (a)…(f)"*
-(`docs/experiments/stage3_overnight_dispatch.md` §3, D-511). A red team may add
-a row before selection.
+(`docs/experiments/stage3_overnight_dispatch.md` §3, D-511). Row (n) enters
+under that clause, added by the red team before selection.
 
 ---
 
@@ -63,9 +62,9 @@ Stated once, in `docs/experiments/stage3_rulings.md` §1, and not restated here
 - the incumbent spends **18.33 / 11.75 / 9.05** firings per search and the
   budget is **0.815–0.845 / 0.276–0.286 / 0.579–0.599**, so the required
   reduction is **21.7x / 41.1x / 15.1x** (MEASURED, D-517). **Those are FIRING
-  figures**; §5's test is in VISITS and its cuts are 22.49x / 42.57x / 16.18x
-  in sample and 24.33x / 47.25x out of it. The two are the same constraint in
-  two units and neither replaces the other;
+  figures**; §5's test is in VISITS and its cuts are **22.50x / 42.51x /
+  15.29x** in sample and **24.27x / 43.20x** out of it. The two are the same
+  constraint in two units and neither replaces the other;
 - **the ROOT's own firing is inside the budget** and can cost two whole caps.
 
 ## 3. THE ROWS
@@ -241,265 +240,381 @@ instrument measures it: `--gate off` on the in-sample draw reproduces
 records, to the last printed digit. That is the check that licenses reading the
 out-of-sample denominators the same way.
 
-### 4.2 THE RECALL DEFINITION — ONE, AND REVISION 2 USED TWO
+### 4.2 THE RECALL DEFINITION — one is USED, and it is CONTESTED
 
-**RECALL IS THE ATTACKER DIRECTION.** D-512's fixture is seven positions
-`wp18b_probe` returned `win` on, and that probe asks `Solver::solve` — *does the
-SIDE TO MOVE force a win*. A census row also records `solve_defender`, which
-answers *does the OPPONENT force a win against the mover* — **a proven LOSS**.
-`tools/stage3_census_rank.py` revision 1 scored `att_proved or def_proved` and
-called the sum PROOFS KEPT.
+**RECALL IS REPORTED IN BOTH DIRECTIONS AND THE VERDICT COLUMN READS WINS.**
 
-**Separated, the in-sample denominators are:**
+`wp18b_probe`, which produced D-512's fixture, asks `Solver::solve` — *does the
+SIDE TO MOVE force a win* — so the fixture's seven rows are attacker-direction
+WINS. A census row also records `solve_defender`: *does the OPPONENT force a win
+against the mover*, a proven LOSS. `tools/stage3_census_rank.py` revision 1
+scored `att_proved or def_proved` and called the sum PROOFS KEPT, so the row
+revision 2 headlined was chosen against a denominator that is not the fixture's.
 
-| band | WIN-direction proving firings | LOSS-direction |
-|---|---|---|
-| CORPUS band 15 | **0** | 8 |
-| CORPUS band 35 | **1** | 1 |
-| TRIGGER-RICH | **11** | 14 |
+**BUT NARROWING THE CENSUS GATE TO WINS IS THIS DOCUMENT'S READING AND NOT
+D-512's, AND REVISION 3 PRESENTED IT AS D-512's.** The red team is right and the
+correction is made here. D-512 registers **two** gates and names a different
+instrument for each: the per-position **ranking** gate, whose direction the
+fixture does fix; and *"the recall denominator measured over a governed search
+at the detector's own bench **using D-510's `proofs` counter**"* — and that
+counter increments in both directions (`crates/pistol-search/src/pvs.rs`, the
+attacker `Win` arm and the defender `Win` arm; the root's two in `search.rs`).
+D-512's own next sentence convicts the inference it warns against: a first draft
+*"claimed the first supplied the second"*. Revision 3 made that move in the
+opposite direction.
 
-**Band 15 — the band revision 2's headline row was selected on — has no
-win-direction proof at all.** Every recall cell on it is 0/0. And the mechanism
-of the conflation is not subtle: `opp_hot` counts the OPPONENT's hot windows, so
-it rises exactly where the DEFENDER direction proves. **A threshold fitted to
-`opp_hot` is fitted to losses.**
+**So both columns are printed, and neither is summed into the other.** The
+verdict column reads WINS because that is the direction the value fixture is
+stated in; **which direction the CENSUS gate should read is ruling §7.1 and is
+the operator's.** This document does not take it, and §5 states what changes
+under each.
 
-**THE TENSION THIS EXPOSES, NAMED RATHER THAN EXPLOITED.** A defender-direction
-proof is a real search result — the mover is lost, and the search scores it as a
-mate. D-512 pins the gate on wins because the value fixture is win-direction, so
-a row optimised for win-recall alone is optimised against a gate that prices
-**none of the majority of what the solver currently finds** (8 of 8 on band 15,
-14 of 25 on trigger-rich). This document does not resolve that; it is a ruling,
-and it is listed in §6 as owed.
+**The denominators, separated, on the corrected seat:**
+
+| band | WIN-direction proving firings | over distinct POSITIONS | LOSS-direction | over positions |
+|---|---|---|---|---|
+| CORPUS band 15 | **0** | — | 8 | 4 |
+| CORPUS band 35 | **1** | 1 | 1 | 1 |
+| TRIGGER-RICH | **14** | 4 | 14 | 3 |
+| **OOS band 15** | **3** | 1 | 0 | — |
+| **OOS band 35** | **1** | 1 | 1 | 1 |
+
+**NO BAND EXCEEDS FOUR DISTINCT POSITIONS, and three of the five are ONE.**
+Every recall figure in §5 rests on that; the firing counts are repeated visits
+to a handful of positions and are not independent evidence.
+
+**Band 15 in sample has no win-direction proof at all**, so no row's win recall
+is measurable there and a row reading 1.000 on that band is reading losses.
+
+**THE TENSION, NAMED RATHER THAN EXPLOITED.** A defender-direction proof is a
+real search result — the mover is lost, and the search scores it as a mate. The
+incumbent trigger's proofs are half or more of them losses on every band. A row
+optimised for win-recall alone is unmeasured on that half, and row (n) below is
+the reductio: it scores perfectly under a win-only gate precisely by discarding
+every loss. §7.1 is where this is owed.
 
 ### 4.3 WHAT IS SCORED, AND WHAT IS UNSCORED
 
-Rows (a), (g), (j) and — **for the first time** — **(b)** are predicates over the
-census columns and are scored by the test above. Row (b) needed a cover column;
-the census now has one, and `tools/stage3_census_rank.py` REFUSES a row (b)
-predicate against a census that lacks it rather than scoring a substitute.
-Row (i) is scored by re-charging every invocation at `min(visits, cap)`. Row (h)
-is scored by collapsing repeated firing SIGNATURES, and its figure is an UPPER
-bound. Rows (c), (d) and (k) stay UNSCORED for the reasons revision 2 gave.
+Rows (a), (g), (j) and — since revision 3's census gained a cover column —
+**(b)** are predicates over the census columns. Row (i) is scored by re-charging
+every invocation at `min(visits, cap)`; row (h) by collapsing repeated firing
+SIGNATURES (an UPPER bound); **row (n) by charging the attacker invocation
+only**; and **row (e) by `tools/stage3_allocator_bound.py`, separately, because
+an allocator is not a predicate** (§5.8). Rows (c), (d) and (k) stay UNSCORED
+for the reasons revision 2 gave.
 
-### 4.4 THE ONE THING THE CENSUS CANNOT ANSWER, unchanged
+### 4.4 THE TWO THINGS THE CENSUS CANNOT ANSWER
 
-KEPT is a fraction of TODAY's firings. A detector that gates firings changes the
-search, which changes the firing set — the fixed point the premise memo's §3.6
-named. The ranking compares rows; it never predicts the post-detector count.
+KEPT is a fraction of TODAY's firings, and a detector that gates firings changes
+the search, which changes the firing set — the fixed point the premise memo's
+§3.6 named. The ranking compares rows; it never predicts the post-detector
+count. **And the trigger-rich fixture has no out-of-sample twin** (§5.5), so the
+one band carrying a real win denominator cannot be validated at HEAD.
 
 ---
 
 ## 5. THE MEASURED RANKING
 
-### 5.0 The two criteria that license reading §5 at all
+Everything below is from `artifacts/stage3c_census_rank_v2.txt` and
+`artifacts/stage3c_allocator_bound_v1.txt`, on censuses that clear between
+entries. **The `stage3b_*` artifacts are superseded and are kept because the
+round-2 red-team report quotes them.**
 
-Both registered in `docs/experiments/stage3_oos_registration.md` before the runs.
+### 5.0 The criteria, and the one that now FAILS
 
 - **CRITERION V — the draw instrument reproduces the draw everything else was
   measured on.** `stage3_oos_positions --round 0` prints 24 body lines equal to
-  `bench_positions_v1.txt`'s 24, to the same sha256
-  `42d32bd13f9131b151a24f4b404417b37ac2406b6851cdbfc9b7f786f7e8d702`. **PASS.**
+  `bench_positions_v1.txt`'s, sha256
+  `42d32bd13f9131b151a24f4b404417b37ac2406b6851cdbfc9b7f786f7e8d702`. **PASS**,
+  independently re-checked by the red team. Round 1 shares no game hash and no
+  position with round 0.
 - **CRITERION R — the re-taken census reproduces the standing one on every
-  column they share.** 385 and 201 lines, `diff` empty once the two new columns
-  are removed. **PASS**, so the cover column changed no search.
-
-Round 1 shares **no game hash** with round 0 — 24 against 24, intersection 0.
+  shared column. FAILED, DELIBERATELY, AND THAT IS THE FINDING.** The registered
+  consequence of a Criterion R failure is that *"the column changed the search
+  and the run is VOID"*. It did not: what changed the search is the seat fix
+  B-2 forced. Measured, entry by entry: the corpus census differs on **3 of 24**
+  entries (361 → 362 firings), the trigger-rich on **8 of 20** (181 → 181
+  firings, 562,268 → 550,093 solver visits), the out-of-sample on **6 of 24**.
+  **So the standing censuses — and D-517's `K` with them — were taken on a warm
+  table**, and the correct reading is that revision 4 supersedes them rather
+  than that this run is void. **The check that replaces Criterion R is
+  stronger**: the corrected OFF seat reproduces all three registered `T_off`
+  values, 50,176.0 / 41,826.2 / **31,590.7**, and the corrected ON seat
+  reproduces D-516's own recorded trigger-rich figure of **27,504.7 solver
+  visits per search** — two independent cold-seat anchors the contaminated run
+  missed.
+- **THE LICENSING CHECK IS NO LONGER VACUOUS.** The red team showed revision 3's
+  version could not fail on bands 15 and 35 for a structural reason — their OFF
+  entries sit at the 50,176 node ceiling, which a warm table cannot lower — so
+  it passed on the two bands that could not test it and failed on the one that
+  could. It now passes on the band where it failed, which is the only version of
+  the check that is evidence.
 
 ### 5.1 What the incumbent trigger looks like
 
 | | band 15 | band 35 | trigger-rich | **OOS band 15** | **OOS band 35** |
 |---|---|---|---|---|---|
 | searches | 12 | 12 | 20 | 12 | 12 |
-| firings per search | 18.33 | 11.75 | 9.05 | 18.00 | 12.83 |
-| **visits per search** | **49,100.5** | **39,917.1** | **28,113.4** | **49,264.2** | **36,817.5** |
-| `T_off` measured | 50,176.0 | 41,826.2 | 30,499.8 | 46,519.9 | 37,911.5 |
-| **visit budget** | **2183.7** | **937.7** | **1737.3** | **2024.5** | **850.0** |
-| **required cut** | **22.49x** | **42.57x** | **16.18x** | **24.33x** | **47.25x** |
-| **WIN-direction proofs** | **0** | **1** | **11** | **3** | **1** |
-| LOSS-direction proofs | 8 | 1 | 14 | 0 | 1 |
+| firings per search | 18.42 | 11.75 | 9.05 | 18.00 | 12.83 |
+| **visits per search** | **49,137.1** | **39,867.1** | **27,504.7** | **49,135.2** | **36,720.8** |
+| `T_off`, measured cold | 50,176.0 | 41,826.2 | 31,590.7 | 46,519.9 | 37,911.5 |
+| **visit budget** | **2183.7** | **937.7** | **1799.4** | **2024.5** | **850.0** |
+| **required cut** | **22.50x** | **42.51x** | **15.29x** | **24.27x** | **43.20x** |
+| **WIN-direction proofs** (positions) | **0** (—) | **1** (1) | **14** (4) | **3** (1) | **1** (1) |
+| LOSS-direction proofs (positions) | 8 (4) | 1 (1) | 14 (3) | 0 (—) | 1 (1) |
 
-**Where a figure differs from a REGISTERED one, the registered one has not
-moved (D-374) — this is a new derivation on a corrected denominator, and both
-are on the record.** D-516/D-517 register the trigger-rich budget at 1799.4
-visits from the bench artifacts' 18 firing searches; this table derives 1737.3
-from the same share and the same seat over **20**, because two of the twenty
-searches fire nothing and a search that spends no solver visit is still a search
-the budget was taken over. The required cut moves 17.36x → 16.18x with it. Band
-15 and band 35 are unaffected: every search there fires. **THE
-STRUCTURAL FACT** of revision 2's §5.1 — that `mover_hot > 0` at a firing means
-the mover completes six THIS TURN, a theorem of rules 2, 3 and 5 — stands
-unchanged and is not re-argued (D-423). It is also, this revision adds, exactly
-why `solve_defender` is safe at a mover-hot firing: the race check answers before
-its AND-root assert can fire (§5.6).
+**NO REGISTERED NUMBER HAS MOVED.** The trigger-rich budget is 1799.4 — D-516's
+own — and the trigger-rich incumbent is 27,504.7 — D-516's own. Revision 3
+reported 1737.3 and 28,113.4 and justified the move with a denominator claim the
+red team falsified; the true cause was the warm seat, and with the seat fixed
+the registered figures come back. The trigger-rich WIN denominator moved 11 → 14
+for the same reason: the warm table was suppressing three proofs.
 
-### 5.2 The rows, scored in visits, under the WIN definition
+**THE STRUCTURAL FACT** of revision 2's §5.1 — that `mover_hot > 0` at a firing
+means the mover completes six THIS TURN, a theorem of rules 2, 3 and 5 — stands
+unchanged and is not re-argued (D-423).
 
-Per cell: KEPT / **WINS KEPT** / visits-per-search / cut / verdict. `—` is a
-band with no win denominator, where recall is not measured and none is claimed.
-Full artifact: `artifacts/stage3b_census_rank_v2.txt`.
+### 5.2 The rows, scored in visits
 
-**IN-SAMPLE** (the draw every threshold saw):
+Per cell: KEPT / **WINS KEPT** / visits-per-search / cut / verdict. `—` marks a
+band with no win denominator, where no recall is measured and none is claimed.
+
+**IN-SAMPLE:**
 
 | row | band 15 | band 35 | trigger-rich |
 |---|---|---|---|
-| incumbent | 1.000 / — / 49100 / 1.0x / out | 1.000 / 1.000 / 39917 / 1.0x / out | 1.000 / 1.000 / 28113 / 1.0x / out |
-| **(a/g) `opp_hot >= 2`** | 0.227 / — / 8546 / 5.75x / out | 0.404 / **0.000** / 15895 / 2.51x / out | 0.569 / **0.455** / 14806 / 1.90x / out |
-| **(a/g) `opp_hot >= 3`** | 0.059 / — / **1176** / **41.76x** / IN | 0.057 / **0.000** / 2185 / 18.27x / out | 0.204 / **0.000** / 5001 / 5.62x / out |
-| (a/g) `opp_hot >= 4` | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / 0.000 / 126 / 317x / IN | 0.011 / 0.000 / 106 / 266x / IN |
-| (a) a win-in-one-ply | 0.045 / — / 1803 / 27.23x / IN | 0.078 / 0.000 / 3053 / 13.08x / out | 0.072 / 0.000 / 2463 / 11.42x / out |
-| (a) mover hot | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / **1.000** / 0.1 / — / IN | 0.011 / **0.182** / 0.1 / — / IN |
-| (j) the root only | 0.014 / — / 446 / 110x / IN | 0.035 / 1.000 / 1150 / 34.71x / out | 0.066 / 0.182 / 1456 / 19.32x / IN |
-| **(b) cover impossible** | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / **0.000** / 126 / 317x / IN | 0.011 / **0.000** / 106 / 266x / IN |
-| (b′) exactly one cover | 0.086 / — / 3399 / 14.4x / out | 0.071 / 0.000 / 2712 / 14.72x / out | 0.066 / 0.000 / 2358 / 11.92x / out |
-| **(m) mover hot or `mover_l3 >= 9`** | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / **1.000** / 0.1 / — / IN | 0.271 / **1.000** / 8014 / 3.51x / out |
+| incumbent | 1.000 / — / 49137 / 1.00x / out | 1.000 / 1.000 / 39867 / 1.00x / out | 1.000 / 1.000 / 27505 / 1.00x / out |
+| (a/g) `opp_hot >= 2` | 0.226 / — / 8546 / 5.75x / out | 0.404 / 0.000 / 15895 / 2.51x / out | 0.586 / **0.429** / 15168 / 1.81x / out |
+| **(a/g) `opp_hot >= 3`** | 0.059 / — / **1175** / **41.80x** / IN | 0.057 / 0.000 / 2185 / 18.24x / out | 0.204 / **0.000** / 5001 / 5.50x / out |
+| (a/g) `opp_hot >= 4` | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / 0.000 / 126 / 317x / IN | 0.011 / 0.000 / 106 / 260x / IN |
+| (a) a win-in-one-ply | 0.045 / — / 1803 / 27.25x / IN | 0.078 / 0.000 / 3053 / 13.06x / out | 0.072 / 0.000 / 2463 / 11.17x / out |
+| (a) mover hot | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / 1.000 / 0.1 / — / IN | 0.011 / 0.143 / 0.1 / — / IN |
+| (j) the root only | 0.014 / — / 446 / 110.21x / IN | 0.035 / 1.000 / 1150 / 34.66x / out | 0.066 / 0.143 / 1456 / 18.90x / IN |
+| **(b) cover impossible** | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / 0.000 / 126 / 317x / IN | 0.011 / 0.000 / 106 / 260x / IN |
+| (b′) exactly one cover | **0.045 / — / 1803 / 27.25x / IN** | 0.071 / 0.000 / 2712 / 14.70x / out | 0.066 / 0.000 / 2358 / 11.66x / out |
+| (m) mover hot or `mover_l3 >= 9` | 0.000 / — / 0 / — / IN (vacuous) | 0.007 / 1.000 / 0.1 / — / IN | 0.271 / **1.000** / 8014 / 3.43x / out |
 
-**OUT-OF-SAMPLE** (round 1, disjoint by game; no trigger-rich twin exists):
+The band-15 `(b′)` cell is transcribed from the artifact; revision 3 printed
+`0.086 / 3399 / 14.4x / out`, a figure no artifact contains (M-3).
+
+**OUT-OF-SAMPLE** (round 1; no trigger-rich twin exists):
 
 | row | OOS band 15 | OOS band 35 |
 |---|---|---|
-| incumbent | 1.000 / 1.000 / 49264 / 1.00x / out | 1.000 / 1.000 / 36818 / 1.00x / out |
-| (a/g) `opp_hot >= 2` | 0.343 / **0.000** / 17274 / 2.85x / out | 0.416 / 1.000 / 16406 / 2.24x / out |
-| **(a/g) `opp_hot >= 3`** | 0.153 / **0.000** / 7636 / **6.45x** / **out** | 0.117 / 1.000 / 4599 / **8.01x** / **out** |
-| (a/g) `opp_hot >= 4` | 0.042 / 0.000 / 1746 / 28.21x / IN | 0.026 / 0.000 / 863 / 42.68x / out |
+| incumbent | 1.000 / 1.000 / 49135 / 1.00x / out | 1.000 / 1.000 / 36721 / 1.00x / out |
+| (a/g) `opp_hot >= 2` | 0.343 / **0.000** / 17217 / 2.85x / out | 0.416 / 1.000 / 16406 / 2.24x / out |
+| **(a/g) `opp_hot >= 3`** | 0.153 / **0.000** / 7578 / **6.48x** / **out** | 0.117 / 1.000 / 4599 / **7.99x** / **out** |
+| (a/g) `opp_hot >= 4` | 0.042 / 0.000 / 1729 / 28.41x / IN | 0.026 / 0.000 / 863 / 42.55x / out |
 | (a) mover hot | 0.000 / 0.000 / 0 / — / IN (vacuous) | 0.006 / 1.000 / 0.1 / — / IN |
-| (j) the root only | 0.019 / 0.000 / 788 / 62.54x / IN | 0.032 / 1.000 / 996 / 36.96x / out |
-| **(b) cover impossible** | 0.000 / 0.000 / 0 / — / IN (vacuous) | 0.006 / 0.000 / 171 / 216x / IN |
+| (j) the root only | 0.019 / 0.000 / 788 / 62.37x / IN | 0.032 / 1.000 / 996 / 36.87x / out |
+| **(b) cover impossible** | 0.000 / 0.000 / 0 / — / IN (vacuous) | 0.006 / 0.000 / 171 / 215x / IN |
 | (m) mover hot or `mover_l3 >= 9` | 0.000 / 0.000 / 0 / — / IN (vacuous) | 0.006 / 1.000 / 0.1 / — / IN |
 
-**`opp_hot >= 3` FALLS OUT OF SAMPLE BY A FACTOR OF SIX.** In sample it cuts
-band 15 by 41.76x against a required 22.49x — comfortably in. Out of sample it
-cuts by **6.45x against a required 24.33x**, and on band 35 by 8.01x against
-47.25x. It is not close on either. The threshold was chosen after seeing which
-firings proved, on the only draw that had been taken; §5.4 of revision 2 said so
-and called it *"an argument for scoring the row, not for selecting it"*. Scored,
-it does not survive.
+**`opp_hot >= 3` FALLS OUT OF SAMPLE BY A FACTOR OF SIX AND A HALF.** In sample
+it cuts band 15 by 41.80x against a required 22.50x; out of sample by **6.48x
+against 24.27x**. On band 35 it answers 7.99x against 43.20x. **The fall is in
+the NUMERATOR — 1175 visits/search becomes 7578 — and not in the budget**, so
+the round-1 draw's small conditioning effect (§5.5.1) does not explain it.
 
-**(i) THE CAP**, in-sample, with WIN recall as the test:
+**(i) THE CAP**, with each direction's recall separate:
 
-| cap | band 15 (0 wins) | band 35 | trigger-rich |
-|---|---|---|---|
-| 2048 (incumbent) | 49100 / — | 39917 / 1 of 1 | 28113 / **11 of 11** |
-| 1024 | 25828 / — | 20165 / 1 of 1 | 14369 / **11 of 11** |
-| 512 | 13451 / — | 10217 / 1 of 1 | 7451 / **9 of 11** |
-| 256 | 7165 / — | 5225 / 1 of 1 | 3863 / **2 of 11** |
+| cap | band 15 (0 wins) | band 35 | trigger-rich | OOS b15 |
+|---|---|---|---|---|
+| 2048 | 49137 / — / 8 of 8 losses | 39867 / 1 of 1 | 27505 / **14 of 14** | 49135 / 3 of 3 |
+| 1024 | 25917 / — / 7 of 8 | 20140 / 1 of 1 | 14059 / **14 of 14** | 25548 / 0 of 3 |
+| 512 | 13497 / — / 5 of 8 | 10204 / 1 of 1 | 7301 / **10 of 14** | 13125 / 0 of 3 |
+| 256 | 7190 / — / 1 of 8 | 5219 / 1 of 1 | 3789 / 2 of 14 | 6793 / 0 of 3 |
 
-**Cap 512 costs two of the eleven trigger-rich wins**, which revision 2's
-conflated column could not see; and no cap reaches a budget on its own.
+**Cap 512 costs four of fourteen trigger-rich wins and all three out-of-sample
+band-15 wins.** No cap reaches a budget alone.
 
 **(h) THE VERDICT CACHE**, recall 1.000 by construction, an UPPER bound:
 
 | | band 15 | band 35 | trigger-rich | OOS b15 | OOS b35 |
 |---|---|---|---|---|---|
-| distinct signatures | 94/220 | 68/141 | 103/181 | 120/216 | 69/154 |
-| visits/search if a repeat is free | 19,977 | 20,061 | 14,550 | 25,864 | 16,859 |
-| cut | 2.46x | 1.99x | 1.93x | 1.90x | 2.18x |
+| distinct signatures | 96/221 | 68/141 | 103/181 | 120/216 | 69/154 |
+| visits/search if a repeat is free | 20,188 | 20,068 | 15,350 | 25,847 | 16,802 |
+| cut | 2.43x | 1.99x | 1.79x | 1.90x | 2.19x |
+
+**(n) GATE THE DIRECTION — the largest single lever in the arc**, and free in
+win recall by construction because `att_proved` is decided before
+`solve_defender` is reached:
+
+| band | attacker-only visits/search | cut | defender's share of visits | losses given up |
+|---|---|---|---|---|
+| band 15 | 16,135 | 3.05x | **67.2 %** | 8 |
+| band 35 | 16,401 | 2.43x | 58.9 % | 1 |
+| trigger-rich | 11,690 | 2.35x | 57.5 % | 14 |
+| OOS band 15 | 16,378 | 3.00x | 66.7 % | 0 |
+| OOS band 35 | 11,962 | 3.07x | 67.4 % | 1 |
 
 ### 5.3 THE COMPOSITIONS
 
+Per cell: visits/search / cut / distinct WINS kept / verdict.
+
 | composition | band 15 | band 35 | trigger-rich | **OOS b15** | **OOS b35** |
 |---|---|---|---|---|---|
-| `opp_hot >= 3` + cache | 923 / 53.2x / — | 1844 / 21.7x | 3607 / 7.79x / **0 of 10 wins** | 4706 / 10.47x / **0 of 3** / out | 3566 / 10.32x / out |
-| cache + cap 512 | 5727 / 8.6x | 5113 / 7.8x | 3986 / 7.05x / 8 of 10 | 7153 / 6.89x / out | 4422 / 8.33x / out |
-| **`opp_hot >= 3` + cache + cap 512** | **439 / 111.9x / —** | **481 / 83.0x** | **1036 / 27.14x / 0 of 10 wins** | **1258 / 39.17x / 0 of 3 / IN** | **910 / 40.47x / OUT (47.25x needed)** |
-| cache + cap 4096 | — | — | 14,550 / 1.93x / **10 of 10** | 25,864 / 1.90x / out | 16,859 / 2.18x / out |
-| (m) mover-side + cache | 0 / — / vacuous | 0.1 / — | 2254 / 12.47x / **10 of 10** | 0 / vacuous | 0.1 / — |
+| `opp_hot>=3` + cache | 923 / 53.23x / — / IN | 1845 / 21.61x / 1 of 1 / out | 3607 / 7.62x / **0 of 12** / out | 4670 / 10.52x / **0 of 3** / out | 3550 / 10.34x / 1 of 1 / out |
+| cache + cap 512 | 5740 / 8.56x / — / out | 5119 / 7.79x / 1 of 1 / out | 4242 / 6.48x / 8 of 12 / out | 7108 / 6.91x / 0 of 3 / out | 4396 / 8.35x / 1 of 1 / out |
+| **`opp_hot>=3` + cache + cap 512** | 439 / 111.9x / — / IN | 481 / 82.9x / 1 of 1 / IN | 1036 / 26.55x / **0 of 12** / IN | 1249 / 39.34x / **0 of 3** / IN | **905 / 40.6x / 1 of 1 / OUT** |
+| cache + cap 4096 | 20,188 / 2.43x / — / out | 20,068 / 1.99x / 1 of 1 / out | 15,350 / 1.79x / 12 of 12 / out | 25,847 / 1.90x / 3 of 3 / out | 16,802 / 2.19x / 1 of 1 / out |
+| (m) + cache | 0 / — / vacuous / IN | 0.1 / — / 1 of 1 / IN | 2308 / 11.92x / **12 of 12** / out | 0 / — / **0 of 3** / IN (vacuous) | 0.1 / — / 1 of 1 / IN |
+| **(n) att-only + cache** | 7342 / 6.69x / — / out | 8908 / 4.48x / 1 of 1 / out | 6685 / 4.11x / **12 of 12** / out | 9252 / 5.31x / **3 of 3** / out | 6242 / 5.88x / 1 of 1 / out |
+| (n) att-only + cache + cap 512 | 2070 / 23.74x / — / IN | 2297 / 17.36x / 1 of 1 / out | 1941 / 14.17x / 8 of 12 / out | 2503 / 19.63x / 0 of 3 / out | 1696 / 21.65x / 1 of 1 / out |
+| **(m) + (n) att-only + cache** | 0 / — / vacuous / IN | 0.1 / — / 1 of 1 / IN | **1284 / 21.42x / 12 of 12 / IN** | 0 / — / **0 of 3** / IN (vacuous) | 0.1 / — / 1 of 1 / IN |
 
-**The composition revision 2 headlined reaches all three IN-SAMPLE bands and
-keeps ZERO WINS on every band that has a win to keep. Out of sample it also
-misses band 35's budget.** Both halves of its case fail, independently.
+**REVISION 3's SENTENCE IS WITHDRAWN.** It read *"the only composition that keeps
+every win … reaches 12.47x against a required 16.18x … and still short"*.
+**`(m) + (n) att-only + cache` reaches 21.42x against a required 15.29x on
+trigger-rich while keeping 12 of 12 distinct wins** — the first composition in
+this arc to reach a bracket with full win recall. The red team found it, in the
+unit §1 declares and the field had no row on.
 
-**The only composition that keeps every win is `(m) mover-side + cache`, and it
-reaches 12.47x against a required 16.18x** — the closest any row comes on the
-band where wins actually live, and still short. It is also **in-sample only**:
-`(m)` was read off the very firings it is scored against, and the trigger-rich
-fixture has no out-of-sample twin to test it on (§5.5.1).
+**AND IT IS STILL NOT SELECTABLE.** `(m)` is `mover_hot > 0 or mover_l3 >= 9`,
+and band 15 holds no firing with `mover_l3 >= 9` in either draw — its maximum is
+6 — so the composition **keeps nothing at all** on both band-15 draws, taking
+0 of the 3 out-of-sample wins. It reaches every budget by admitting nothing,
+which is selection conjunct 4's exact case: row (f) wearing a mechanism.
 
 ### 5.4 What §5.2 and §5.3 license
 
-- **`opp_hot >= 3` IS DEAD ON BOTH TESTS INDEPENDENTLY** — 6.45x out of sample
-  against 24.33x, and 0.000 win recall wherever a win denominator exists. Row
-  (a)'s and row (g)'s count-threshold mechanism is not rescued by another value:
-  `>= 2` is further out of budget and `>= 4` keeps no win anywhere.
-- **ROW (b) IS NOW SCORED, AND IT IS DEAD.** With its own cover column it keeps
-  **0.007 / 0.011 / 0.006** of firings and **0.000 wins on every band that has
-  one**, in sample and out. `Cover::Impossible` fires 1 / 1 / 2 times in 731
-  in-sample firings. Its KILLED verdict, withdrawn by revision 2 because
-  revision 1 scored a substitute, is **RE-ENTERED on the mechanism itself** —
-  and it never reached its registered per-node-cost kill condition, because it
-  fails the ranking first.
-- **THE DENOMINATORS ARE STILL SMALL AND THE OUT-OF-SAMPLE DRAW DID NOT FIX
-  THAT.** Out-of-sample band 35 has **ONE** win-direction proof. **Every claim
-  about band 35's win recall in this document rests on n = 1**, in sample and
-  out — one proof of one position, at one visit, found because the mover is hot,
-  which is the rules theorem. Band 15 has 0 in sample and 3 out of sample.
-  **The only band with a denominator worth the name is trigger-rich, at 11 —
-  and it is the one band with no out-of-sample twin.**
-- **NO ROW'S REGISTERED KILL CONDITION HAS FIRED ON COST.** Rows (a) and (e) are
-  killed by §3 *"excluding a VALUE row of the recall fixture"*; §5.6 shows why
-  that condition cannot fire as written.
+- **`opp_hot >= 3` IS DEAD OUT OF SAMPLE, AND THAT HALF OF THE KILL IS
+  DEFINITION-FREE**: 6.48x against 24.27x, 7.99x against 43.20x, under any
+  recall definition, with the fall in the numerator.
+- **THE OTHER HALF IS DEFINITION-DEPENDENT AND REVISION 3 CLAIMED OTHERWISE.**
+  Its *"DEAD ON BOTH TESTS INDEPENDENTLY"* is **WITHDRAWN**: under D-512's own
+  registered census instrument (D-510's `proofs`, both directions) the row keeps
+  **1.000 of band 15's 8 in-sample proofs at 41.80x, INSIDE the budget**. Which
+  instrument the census gate uses is ruling §7.1.
+- **ROW (b) IS SCORED ON ITS MECHANISM AND IS DEAD.** `Cover::Impossible` fires
+  0 / 1 / 2 times in 542 in-sample firings and 0 / 1 in 370 out-of-sample, and
+  keeps 0.000 wins wherever a win exists. It never reaches its registered
+  per-node-cost kill condition because it fails the ranking first, so this
+  document makes no claim about its cost.
+- **ROW (n) IS THE ARC'S LARGEST LEVER AND ITS KILL CONDITION IS A RULING.** It
+  is free in `t`, free in win recall by construction, and worth 57–67 % of every
+  band's solver visits. It gives up every proven loss — so **row (n) and §7.1
+  are the same decision**, which is why it belongs in the field.
+- **EVERY WIN DENOMINATOR IS 1 TO 4 DISTINCT POSITIONS.** Trigger-rich's 14
+  firings are 4 positions; both band-35 draws and out-of-sample band 15 are ONE
+  position each; in-sample band 15 is zero. No recall figure in this document is
+  evidence at n > 4.
+- **NO ROW'S REGISTERED KILL CONDITION HAS FIRED.** Rows (a) and (e) are killed
+  by §3 *"excluding a VALUE row of the recall fixture"*, and §5.6 shows the
+  fixture cannot discriminate.
 
 ### 5.5 THE SAMPLE THIS ARC CANNOT WIDEN
 
 `bench_solver_positions_v1.txt` is twenty late-game positions from the two
 distinct sealbot-anchor games. There is no third anchor game, so **the only band
-carrying a real win denominator cannot be drawn again**, and any row fitted on
-it — `(m)` included — is quotable in sample only. That is a property of the
-evidence available at HEAD and not a finding about any row; it is stated here
-because a selection resting on trigger-rich would be resting on a set that
-cannot be validated, which selection rule 1 of the registration forbids.
+carrying a win denominator above one position cannot be drawn again**, and any
+row fitted on it — `(m)` and `(m)+(n)+cache` included — is quotable in sample
+only.
 
-### 5.6 THE RECALL FIXTURE, RUN DIRECTLY — and FOUR OF SEVEN ROWS ARE NOT
-TRIGGER POINTS
+#### 5.5.1 The round-1 draw's own conditioning, acknowledged
 
-`artifacts/stage3b_value_fixture_v1.txt`, the seven rows of D-512 with the
-columns a detector would read at each and the solver's answer at five caps.
+The draw rule processes band 15 before band 35 with one carried used-set, so
+round-1 band 15 draws from a pool round-0 band 35 has already taken from: **3 of
+its 12 games are ones round-0 band 35 skipped**, i.e. games too short to reach
+31 stones, where 0 of round-0 band 15's are. That is a plausible partial cause of
+`T_off` falling 50,176.0 → 46,519.9 and of the required cut rising 22.50x →
+24.27x. The registration's §2 sentence — *"the only thing that differs is which
+twelve games each band got"* — is therefore not exactly true, and this is the
+acknowledgement it is owed. **It does not rescue `opp_hot >= 3`**, whose fall is
+in the numerator.
 
-| row | class | mover_hot | opp_hot | cover | trigger fires? | proof |
-|---|---|---|---|---|---|---|
-| `g001-t44-p2` | VALUE | 0 | 0 | none | **NO** | — |
-| `g001-t46-p2` | VALUE | 2 | 2 | minimal(2) | yes | `win` at **1 visit**, every cap |
-| `g002-t12-p2` | VALUE | 0 | 0 | none | **NO** | — |
-| `g002-t39-p1` | VALUE | 0 | 0 | none | **NO** | — |
-| `g002-t41-p1` | VALUE | 2 | 2 | minimal(2) | yes | `win` at **1 visit**, every cap |
-| `g001-t42-p2` | CALL-RECALL-ONLY | 0 | 1 | minimal(2) | yes | `win` at **10,726**, cap ≥ 16384 only |
-| `g002-t10-p2` | CALL-RECALL-ONLY | 0 | 0 | none | **NO** | — |
+### 5.6 THE RECALL FIXTURE, RUN DIRECTLY AND THEN CENSUSED
 
-**THE GATE D-512 REGISTERS CANNOT BE EVALUATED ON FOUR OF ITS SEVEN ROWS.** It
-asks that *"the proof-bearing trigger point RANK INSIDE the call budget"*, and at
-four of them the incumbent trigger does not fire at all: neither side holds a hot
-window, so there is no trigger point, and no detector — however tight or however
-loose — can change what happens there. Their proofs are real; they were taken by
-calling the solver DIRECTLY, which is what `wp18b_probe` does and what the search
-never does.
+`artifacts/stage3b_value_fixture_v1.txt` (the position itself, five caps) and
+`artifacts/stage3c_census_value_fixture_v1.txt` (a full governed search from
+each, `nodes 50000`, cap 2048).
 
-**AND THE TWO EVALUABLE VALUE ROWS DISCRIMINATE ALMOST NOTHING.** Both fire with
-the MOVER hot, and both prove in **one visit** — the one-visit root win that
-§5.1's theorem explains. Any predicate admitting `mover_hot > 0` passes them, at
-a cost of one visit. **CRITERION C (the cap) therefore passes for every cap down
-to 1**, and that is not a licence: it is a gate with no discriminating power,
-which is the premise memo's §5 finding 3 arriving in a stronger form than it was
-stated — the fixture is not seven hot positions, it is three.
+| row | class | at the position: mover_hot / opp_hot / cover | fires at the position? | firings in a governed search | proofs found there |
+|---|---|---|---|---|---|
+| `g001-t44-p2` | VALUE | 0 / 0 / none | no | **0** | **0** |
+| `g001-t46-p2` | VALUE | 2 / 2 / minimal(2) | yes | 1 | 1 — `win` at **1 visit** |
+| `g002-t12-p2` | VALUE | 0 / 0 / none | no | 13 | 1, in-tree |
+| `g002-t39-p1` | VALUE | 0 / 0 / none | no | **0** | **0** |
+| `g002-t41-p1` | VALUE | 2 / 2 / minimal(2) | yes | 1 | 1 — `win` at **1 visit** |
+| `g001-t42-p2` | CALL-RECALL-ONLY | 0 / 1 / minimal(2) | yes | 26 | 6, all defender-direction |
+| `g002-t10-p2` | CALL-RECALL-ONLY | 0 / 0 / none | no | 13 | 1, in-tree |
 
-**One row is a real cap constraint and it is CALL-RECALL-ONLY.**
-`g001-t42-p2` needs **cap ≥ 16384**; at 4096 both directions return `unknown`
-after spending 8,192 visits between them. D-512 gates that row on ranking and
-never on proving, precisely so a gate does not ship red on correct code — so the
-16384 does not bind. **But it does say what a cap-512 stack is buying**: at 512
-this position spends 1,024 visits and proves nothing.
+**REVISION 3'S CLAIM WAS TOO STRONG AND IS NARROWED.** It said four of seven are
+not trigger points; that is true **at the position** and false as a claim about
+the gate, because three of those four fire in-tree and find a proof there. The
+measured finding is smaller and sharper:
 
-**HOW THIS WAS FOUND, because the route matters.** Probing `g002-t12-p2` at cap
-512 PANICKED — `SOLVER_NO_PLAN` in `dfpn.rs`. That is not an engine defect and
-the engine cannot reach it: `Solver::solve_defender`'s root is an AND node, which
-requires the attacker — the opponent — to hold a hot window, and the search's
-trigger guarantees exactly that disjunction (a hot MOVER is answered by the race
-check first). The instrument was asking a question the engine never asks. **The
-precondition was undocumented and is now documented and pinned by a test**, with
-a five-stone reproducer and a mutant that dies when the assert is removed
-(`crates/pistol-solver/tests/defender_precondition_tests.rs`,
-`artifacts/stage3b_mutations_v1.txt`).
+- **TWO of the five VALUE rows — `g001-t44-p2` and `g002-t39-p1` — produce ZERO
+  firings in an entire 50,000-node governed search.** The trigger never fires
+  anywhere below them, so there is no trigger point to rank at any depth and no
+  detector changes anything about them. On those two the gate is unevaluable,
+  full stop.
+- **The two VALUE rows that do fire at the position prove in ONE VISIT**, both
+  because the mover is hot — the rules theorem — so any predicate admitting
+  `mover_hot > 0` passes them for one visit. **The cap criterion is therefore
+  satisfied at every cap the ladder measured, down to 512**; that it would hold
+  lower is arithmetic and not measurement (m-5).
+- **`g001-t42-p2`, the M4 flip, is the one row that constrains a cap: `win` at
+  10,726 visits, reached only at cap ≥ 16384.** At 4096 both directions return
+  `unknown` after spending 8,192 visits. D-512 gates it on ranking and never on
+  proving, so it does not bind — but a governed search from it at cap 2048 finds
+  **six proofs and every one is a proven LOSS**, which is §4.2's tension in one
+  position.
 
-## 5.7 The rows the field was missing (added at revision 2)
+**SO THE FIXTURE'S DISCRIMINATING POWER IS TWO ONE-VISIT ROWS.** The premise
+memo's §5 finding 3 objected that *"a gate over seven hot positions cannot tell
+whether the surviving fraction is the right fraction"*; measured, they are not
+seven hot positions, and the gate is thinner than the objection assumed.
+
+**HOW THE PRECONDITION FINDING AROSE.** Probing `g002-t12-p2` at cap 512
+panicked with `SOLVER_NO_PLAN`. Not an engine defect and unreachable by the
+engine: `solve_defender`'s root is an AND node needing the opponent hot, and the
+trigger guarantees exactly that disjunction. Now documented and pinned by test
+with a five-stone reproducer (D-525).
+
+### 5.8 ROW (e), THE ALLOCATOR — scored separately, because it is not a predicate
+
+`artifacts/stage3c_allocator_bound_v1.txt`. **An allocator carries a budget and
+stops when it is spent, so it REACHES THE BUDGET BY CONSTRUCTION on every band,
+in sample and out.** Its entire question is recall, and ranking it on the same
+table as the predicates would report a budget verdict meaning two different
+things. This is the form the dispatch's ruling 1 selected (D-516), and neither
+earlier revision scored it.
+
+**Two frames, and they are not the same number.**
+
+| band | wins | **per-search ceiling** | **aggregate oracle** | **bound over the columns** |
+|---|---|---|---|---|
+| band 35 | 1 | 1.000 | 1.000 | 1.000 |
+| trigger-rich | 14 | **0.571** (8 of 14) | 1.000 | **0.857** (12 of 14) |
+| OOS band 15 | 3 | **0.333** (1 of 3) | 1.000 | 1.000 |
+| OOS band 35 | 1 | 1.000 | 1.000 | 1.000 |
+
+- **PER-SEARCH** is the form the dispatch names. It is strictly harder because
+  the wins are not spread evenly: one trigger-rich search holds six proofs
+  costing 3,108 visits against its own 1,799 budget, and one out-of-sample
+  band-15 search holds three costing 6,014 against 2,024. **No score beats those
+  ceilings**, because the constraint is arithmetic and not informational.
+- **AGGREGATE** is what the bracket itself fixes — an nps ratio over a whole
+  bench. There the oracle keeps every win on every band, spending 4,635 of
+  34,745 on trigger-rich and 6,014 of 24,294 out of sample. **The budget affords
+  the proofs comfortably.**
+- **THE BOUND over the census columns** is what a score fitted with full
+  knowledge of which column-classes hold wins could reach: **0.857 and 1.000**.
+  It is an upper bound and it is IN-SAMPLE by construction.
+
+**WHAT THIS SETTLES, AND IT IS THE MOST IMPORTANT THING IN §5.** The obstacle is
+**not** that the columns cannot separate proofs from non-proofs — they can, to
+0.857 and 1.000. Measured orderings over those columns reach only 0.455 and
+0.333, so there is a large gap between what a fitted score could do and what any
+score this arc could WRITE does. **Closing it means fitting a score and
+validating it out of sample, and the evidence to do that does not exist**: the
+win denominators are 0, 1, 14 and 3, over 0, 1, 4 and 1 distinct positions, and
+the only one worth fitting on has no second draw. **The measured barrier is
+sample size, not information** — which is a different finding from "no detector
+can work", and points at a different remedy.
+
+## 5.9 The rows the field was missing (added at revision 2, extended at revision 4)
 
 Added on the DECISION-RED-TEAM's finding that revision 1's field omitted the
 mechanisms the census ranks best (D-511's flip clause: a red team may add a row
@@ -558,10 +673,10 @@ fixture's five VALUE rows have cap-conditioned statuses in the premise memo §5.
 the in-tree predicate; the two sites are already separate functions.
 
 **What it can rank out.** Whatever the root proves — measured sharply
-asymmetric: 0 of band 15's 8 proofs, **2 of band 35's 2**, 5 of trigger-rich's
-25, at 446 / **1150** / 1617 visits per search against budgets of 2184 / **938**
-/ 1799. On band 35 the root alone exceeds the whole budget while carrying every
-proof that band has.
+asymmetric on the corrected seat: **0 of band 15's 8 proofs, 2 of band 35's 2,
+4 of trigger-rich's 28**, at **446 / 1150 / 1456** visits per search against
+budgets of **2184 / 938 / 1799**. On band 35 the root alone exceeds the whole
+budget while carrying every proof that band has.
 
 **Cost shape.** Zero per node; one config token.
 
@@ -580,59 +695,118 @@ registered disposition applies; it survives to selection unscored.
 
 ---
 
+### (n) Gate the DIRECTION, not the firing — ask the attacker only
+
+Added at revision 4 by the round-2 DECISION-RED-TEAM under D-511's flip clause,
+in this section's own format. **§1 declares the INVOCATION a unit of this
+matrix's axis and no row (a)–(m) touches it**; this is that row.
+
+**Mechanism.** No new predicate and no per-node test. In
+`crates/pistol-search/src/pvs.rs`'s `solver_verdict`, the defender invocation
+becomes conditional on a new closed config token, with the matching root call in
+`search.rs`. The attacker invocation and its early return are untouched.
+
+**What it can rank out.** Every proven LOSS, and **not one WIN**: `att_proved`
+is decided before `solve_defender` is reached, so its win recall is 1.000 by
+construction on every band — the only row besides (h) of which that is true.
+
+**Cost shape.** Zero per node and zero per firing. It REMOVES work and adds one
+branch on a `Copy` config field. **The only row in the field whose `t` is
+negative.**
+
+**MEASURED**: the defender direction is **57.5 %–67.4 %** of every band's solver
+visits (§5.2). Alone it cuts 2.35x–3.07x, short of every budget. Composed as
+`(m) + (n) + cache` it reaches **21.42x on trigger-rich against a required
+15.29x with 12 of 12 distinct wins** — and keeps nothing at all on either
+band-15 draw, because `(m)` is vacuous there.
+
+**Kill condition.** The recall gate is widened to both directions (§7.1), at
+which point this row gives up 8 / 1 / 14 / 0 / 1 proofs and its loss-side recall
+is 0.000 by construction. **This row and §7.1's ruling are the same decision**,
+which is the reason it belongs in the field rather than outside it. Secondarily,
+a proven loss currently seeds `root_restrict` from the proof's zone, so the
+root's defender call is not purely a value lookup and a design must price what
+dropping that restriction does — no census column answers it.
+
+---
+
 ## 6. RECOMMENDATION
 
-REGISTERED SLOT — written after a fresh-context DECISION-RED-TEAM has attacked
-**this revision**, and quoting its rows. **Nothing is selected until then.**
+REGISTERED SLOT. **Nothing is selected**, and the reason is the same after
+revision 4's corrections as before them, which is the one thing about revision 3
+the round-2 red team reported it could not break:
 
-What this revision may say is what it measured, and it is a harder statement
-than revision 2's: **no row and no composition in the field satisfies the
-registered selection rule.** The rule's four conjuncts and where the field
-stands against them:
+> After applying all twelve [remedies], the field still contains no selectable
+> row, and D-471's kill point still fires. That is the one thing about
+> revision 3 I could not break.
+> — `artifacts/matrix_stage3_DECISION_REDTEAM_round2.md`
 
-1. **BUDGET, out of sample, both corpus bands.** The only composition that
-   reaches OOS band 15 is `opp_hot >= 3 + cache + cap 512` at 39.17x, and it
-   misses OOS band 35 at 40.47x against 47.25x. Nothing else is close.
-2. **RECALL, census.** That composition keeps **0 of 3** OOS band-15 wins and
-   **0 of 10** trigger-rich wins. The only rows keeping every win — `(m)` and
-   the cache alone — reach 12.47x and 1.93x against a required 16.18x.
-3. **RECALL, fixture.** Passes vacuously: four of seven rows are not trigger
-   points and the two evaluable VALUE rows prove in one visit.
-4. **NOT VACUOUS.** Every row that reaches a budget on OOS band 15 does so by
-   admitting nothing at all, except the one that fails conjunct 1.
+**The registered selection rule has two readings and the verdict is the same
+under both, so this document does not pick one.** The registration's rule 1
+hardcodes the in-sample thresholds (22.5x / 42.6x / 17.4x) in one sentence and
+says the out-of-sample table *"carries whatever it gives there"* in another. The
+corrected table is evaluated against both below; no cell changes side.
 
-**Conjuncts 1 and 2 fail together, out of sample, for every row in the field.**
-Whether that is the registered kill point is the red team's to attack and the
-operator's to confirm; §7 states what would have to be true for it not to be.
+| conjunct | where the field stands |
+|---|---|
+| **1. BUDGET, out of sample, both corpus bands** | The best composition reaching OOS band 15 is `opp_hot>=3 + cache + cap 512` at 39.34x; on OOS band 35 it answers **40.6x against 43.20x** (registered reading: against 42.6x — still out). Nothing else reaches both. |
+| **2. RECALL, census** | That composition keeps **0 of 3** OOS band-15 wins and **0 of 12** trigger-rich. `(m)+(n)+cache` keeps 12 of 12 on trigger-rich — and **0 of 3** out of sample, by keeping nothing at all. |
+| **3. RECALL, fixture** | Passes vacuously: two of five VALUE rows never fire in a governed search, and the two that fire prove in one visit (§5.6). |
+| **4. NOT VACUOUS** | Every row reaching a budget on either band-15 draw does so by admitting nothing, except the one that fails conjunct 1. |
 
-## 7. WHAT IS OWED, and what would have to be true for the field to survive
+**Conjuncts 1 and 2 fail together, out of sample, for every row and every
+composition in the field.** By the registration's own §5, that is the kill
+point.
 
-Three rulings this revision raises and does not take:
+**BUT THE KILL POINT AND D-471's CLAUSE ARE NOT THE SAME SENTENCE, AND §7 IS
+WHERE THAT MATTERS.** D-471 flips the roadmap when *"the detector cannot reach
+the bracket at its registered kill point"*. Three measured facts sit between
+this table and that clause, and none of them is this session's to weigh:
 
-1. **THE GATE'S DIRECTION.** §4.2: the recall gate prices wins, the incumbent
-   trigger's proofs are majority losses, and a row optimised for one is
-   unmeasured on the other. Either the gate widens to both directions — which
-   changes every recall cell in §5.2 and is a new measurement, not a re-reading
-   — or the arc records that it is selecting on the minority of what the solver
-   finds. **This is the one ruling that could change the verdict**, and it
-   cannot be taken by the session that would benefit from it.
-2. **THE FIXTURE'S FOUR NON-FIRING ROWS.** §5.6: D-512's ranking gate is
-   unevaluable on four of seven rows. Either the fixture is restated as the
-   three positions the trigger fires at — which makes it a three-row gate whose
-   two VALUE rows prove in one visit — or the gate is re-specified to ask
-   something a non-firing position can answer. D-512's flip clause covers a
-   VALUE row moving to CALL-RECALL-ONLY; it does not cover this.
-3. **THE TRIGGER-RICH SAMPLE.** §5.5: the only band with a win denominator
-   worth the name cannot be drawn again at HEAD. Either a third source of
+1. **An allocator reaches the bracket by construction** (§5.8). What no row
+   reaches is the RECALL bar, and the recall bar's own instrument is measured
+   thin (§5.6) and its direction is contested (§4.2).
+2. **No row's OPERATOR-registered kill condition has fired.** Rows (a) and (e)
+   are killed by *"excluding a VALUE row of the recall fixture"*, and §5.6 shows
+   the fixture cannot discriminate. What fired is the rule this session
+   registered, which is a stricter and newer instrument.
+3. **The measured barrier is sample size, not information** (§5.8): a score over
+   the census columns could reach 0.857 / 1.000, and the reason none was built
+   is that the win denominators are 0, 1, 14 and 3 over 0, 1, 4 and 1 distinct
+   positions.
+
+## 7. WHAT IS OWED — three rulings, and the first one can change the verdict
+
+1. **THE CENSUS GATE'S DIRECTION.** §4.2: the fixture is win-direction, but
+   D-512 names D-510's `proofs` counter for the census denominator and that
+   counter reads both directions. Under both directions `opp_hot >= 3` keeps
+   1.000 of band 15's in-sample proofs inside the budget, and row (n) — the
+   largest lever measured in this arc — goes from *free* to *forfeiting half of
+   what the solver finds*. **Row (n) and this ruling are the same decision.**
+   The session that would benefit from narrowing the gate may not take it.
+2. **THE FIXTURE.** §5.6: two of five VALUE rows produce zero firings in an
+   entire governed search, and the two that fire prove in one visit. Either the
+   fixture is restated as what it measurably is — a two-row, one-visit gate —
+   or it is re-specified to ask something a non-firing position can answer.
+   D-512's flip clause covers a VALUE row moving to CALL-RECALL-ONLY; it does
+   not cover a row that never fires.
+3. **THE TRIGGER-RICH SAMPLE.** §5.5: the only band with a win denominator above
+   one position cannot be drawn again at HEAD. Either a third source of
    trigger-rich positions is commissioned — its own work package — or no row
-   fitted there is selectable under the registered rule.
+   fitted there is selectable under any out-of-sample rule.
 
-**What would have to be true for the field to survive as it stands**: a row
-reaching **24.33x and 47.25x out of sample** while keeping every win, from a
-predicate over the columns the census records. §5.2 contains no such row, and
-§5.3 contains no such composition. The oracle bound says one could exist in
-principle — keeping exactly the trigger-rich win-proving firings costs 257.5
-visits per search against a 1737.3 budget, a 121x cut — so the obstacle measured
-here is not that proofs are unaffordable. **It is that nothing a detector can
-read at a node separates them**, and this revision looked at every column the
-census has, including the one it added.
+**WHAT WOULD HAVE TO BE TRUE FOR THE FIELD TO SURVIVE AS IT STANDS.** A row
+reaching **24.27x and 43.20x out of sample** while keeping every win. §5.3
+contains none. But §5.8 measures that the columns are not the obstacle — a
+fitted score reaches 0.857 on trigger-rich and 1.000 out of sample — so the
+honest closing statement of this matrix is not *"no detector can reach the
+bracket"*. It is:
+
+> **The budget affords the proofs. The columns can find them. What this arc does
+> not have is enough proofs to fit a score on and a second draw to check it
+> against** — 14 win-proving firings over 4 positions on the one fixture that
+> cannot be drawn twice, and 3 over 1 position on the one that can.
+
+That is a finding about the EVIDENCE, and the remedy it points at is a position
+corpus, not an abandoned package. Whether D-471's clause reads it as *"cannot
+reach the bracket"* is ruling 1's neighbour and is the operator's.
