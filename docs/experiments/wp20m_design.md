@@ -1,23 +1,37 @@
 # WP-2.0-M — DESIGN: the labelling pass
 
-**REVISION 4**, the ONE fix round D-546 allows, after revision 3 (`406ace9`)
-took a fresh-context REVIEW-design and returned **FAIL** — 1 BLOCKING, 8 MAJOR,
-14 MINOR. Revision 3 was itself authored under D-546's granted round after
-revisions 1 (`5064b05`) and 2 (`7af62e7`) both FAILED. **A second FAIL on this
-revision STOPs the package and returns it to the architect**; there is no third
-round.
+**REVISION 5**, under **D-548**'s grant of up to four further rounds, after
+revision 4 (`a9a4a3a`) took a scoped re-review and returned **FAIL** — 0
+BLOCKING, 2 MAJOR, 6 MINOR. **D-546's STOP had already fired**: revisions 3 and 4
+are two failures, and the operator lifted the cap rather than taking the package
+back. D-548 records the ground — the failure CLASS changed even though the
+verdict did not, with two consecutive rounds returning zero author debt.
 
-**WHAT THE BLOCKING WAS, on this document's own face because a fix round that
-hides what it is fixing is how revision 2 failed.** Revision 3's §14 sent the
-real-binary re-run receipt to a capture pass over the report
-`tools/arena_smoke.sh` writes. **That report cannot be read.**
-`crates/pistol-arena/src/transcript.rs:164-170` refuses **every** source report
-whose budget kind is not `nodes` — not only a movetime one, which is how
-revision 3 described it — and `configs/arena_smoke_v0.toml` carries a
-`depth_turns` budget. §14 is replaced, not patched, and the mischaracterisation
-that made it writable is corrected wherever it appeared (§7). The replacement is
-cheaper than the thing it replaces, needs no `tools/` change at all, and closes
-MAJOR 4 in the same stroke.
+**WHAT REVISION 4 GOT WRONG, ON THE FACE, BECAUSE IT IS THE CLASS THIS ROUND
+EXISTS TO CLOSE.** Revision 4's fix for revision 3's BLOCKING **spent a true
+thing while applying a finding**: it moved
+`a_captured_totals_line_keeps_every_field_but_nps_and_time` from a stub-driven
+INTEGRATION test onto synthetic lines, and the sentence it replaced — verified
+TRUE by the previous reviewer — was the only thing pinning that pass 2 **calls**
+the normalisation at all. Delete the call, leave the function, and all
+thirty-four registered tests stayed green. **That is D-544's recorded shape**, and
+neither the citation checker (D-543) nor the passed-section freeze (D-547) guards
+it: nothing false enters the document, and nothing a reviewer passed is edited.
+
+**SO THIS REVISION ADDS THE GUARD THE ARC LACKS, AS A DISCIPLINE RATHER THAN AS
+PROSE.** §0.2b lists, for every test this round moves, retires or re-drives, **what
+pinned it before and what pins it now** — and a remedy that leaves the second
+column empty is a remedy that spent something.
+
+**WHAT REVISION 4's BLOCKING WAS**, kept because a fix round that hides what it is
+fixing is how revision 2 failed. Revision 3's §14 sent the real-binary re-run
+receipt to a capture pass over the report `tools/arena_smoke.sh` writes. **That
+report cannot be read.** `crates/pistol-arena/src/transcript.rs:164-170` refuses
+**every** source report whose budget kind is not `nodes` — not only a movetime
+one, which is how revision 3 described it — and `configs/arena_smoke_v0.toml`
+carries a `depth_turns` budget. §14 was replaced, not patched, and the
+mischaracterisation that made it writable was corrected wherever it appeared
+(§7).
 
 This revision is not a rewrite. **D-545 named the defect as the authoring method** — five design reviews
 in this arc, five failures, every one a claim about the code the code does not
@@ -84,9 +98,12 @@ defective). **Nothing in revision 3 is frozen**: its review returned FAIL.
 
 ### 0.2a What REVISION 4 changed, and against which finding
 
-D-547 asks that an edit to a frozen section be listed with its ground. **Two of
-this round's edits land in sections frozen by an earlier review** and are the
-first two rows; the rest are listed with them so one table answers "what moved".
+D-547 asks that an edit to a frozen section be listed with its ground. **FOUR of
+revision 4's edits landed in sections frozen by an earlier review — §1, §2, §6
+and §7** — and revision 4's own header said two, which understated the block
+D-547 exists to make trustworthy. All four carried grounds; the count did not.
+The table below is revision 4's, with its count corrected; revision 5's own edits
+are in §0.2b.
 
 | § | change | finding |
 |---|---|---|
@@ -103,6 +120,29 @@ first two rows; the rest are listed with them so one table answers "what moved".
 | §13 | the ledger-append mutant's absence named; the arena config moved to the pilot | M5, M6 |
 | §14 | **replaced entirely** | **B1**, M4, m4 |
 | §15 | new: the ADR act owed at landing | m13 |
+
+### 0.2b What REVISION 5 changed, and what each remedy PINNED BEFORE and PINS NOW
+
+**This block is the guard D-548 names as missing.** A fix round is where this arc
+loses true things: not by writing something false, which the checker catches, and
+not by editing a passed section, which the freeze catches, but by **trading away
+what a remedy was standing on**. So every test this round moves, retires or
+re-drives is listed with both columns, and **an empty right-hand column is the
+finding**.
+
+| finding | change | what pinned it BEFORE | what pins it NOW |
+|---|---|---|---|
+| **N1** | the normalisation's integration limb is restored beside the unit tests | rev 3: one stub-driven integration assertion, killing both the function and the CALL | rev 5: the unit tests kill the function in both spellings, **and** `a_captured_record_carries_the_normalised_totals_line` kills the call, with its own mutant row |
+| **N2** | `arena_version` leaves the header as it left the digest | nothing — it was a `param` no reader reads | nothing is owed: §5's argument covers both, and the provenance it was offering is the pilot's governing revision |
+| **N4** | INVARIANT 10's evidence names SPRT-path BEHAVIOUR, not files | rev 4: a sentence naming one file where this package edits two | rev 5: the diff, INVARIANT 7's test, and gate 15 — unchanged; only the sentence is true now |
+| **N5** | §3.1 separates detection from the refusal message | rev 4: one rule stated twice and differently | rev 5: `==` detects, a field walk reports, and the mutant names the walk |
+| **N6** | `experiment_sha256` gains a test and a mutant | nothing — three digest tests all passed with it dropped | `two_captures_of_different_experiments_do_not_share_an_identity` |
+| **N7** | §6 gains the TAB row it owns | §4.2 and INVARIANT 6 only | §6's table, which owns failure modes, pointing at §4.2 for the grammar |
+| **N8** | §14.4 prices the declined route against gate 9 rather than the pilot | — | — (a pricing sentence, no test moves) |
+| carried | the no-score rule gains a test | nothing, across three revisions | `a_totals_line_with_no_score_at_all_is_captured_as_written` |
+| m8 residual | the round-trip fixture's first two fields must differ | — | the clause in §10 that makes the swap mutant able to die |
+
+---
 
 ### 0.3 What this package decides, and what it does not
 
@@ -302,8 +342,12 @@ make the labels differ and the third cannot be relaxed at all:
 (`crates/pistol-arena/src/identity.rs:11-22`) carries `id_lines`,
 `binary_sha256`, `config_sha256` and `weights_sha256` — **and no label** — and
 `Transcript` holds one per slot (`crates/pistol-arena/src/transcript.rs:32-34`).
-It derives `PartialEq` at `crates/pistol-arena/src/identity.rs:12`, so the check
-is `identities[0] == identities[1]` and needs no new predicate.
+It derives `PartialEq` at `crates/pistol-arena/src/identity.rs:12`, so
+**detection is `identities[0] == identities[1]` and needs no new predicate; the
+REFUSAL MESSAGE then walks the four fields to name the one that differed.** The
+two are separate and revision 4 stated them as one, which mattered because a
+derived `PartialEq` cannot name a field and the mutant table registers a
+comparison with separable limbs.
 
 **MECHANISM.** Pass 2 **refuses, by name, a report whose two seats do not attest
 the same engine** — the same `id_lines`, `binary_sha256`, `config_sha256` and
@@ -451,9 +495,9 @@ driven by an engine could never fail.
 The type is at `crates/pistol-cli/src/corpus/emit.rs:12-100`, reachable from
 `pistol-arena` without any manifest change (`crates/pistol-cli/src/lib.rs:36`,
 `crates/pistol-cli/src/corpus/mod.rs:6`). The header carries, as `param`, the
-capture format version, the arena version, the source report's
-`experiment_sha256` and `source_sha256`, and the label `go` line; and as
-`derived`, the `capture_sha256` of §5 and the counts of games and records —
+capture format version, the source report's `experiment_sha256` and
+`source_sha256`, and the label `go` line; and as `derived`, the `capture_sha256`
+of §5 and the counts of games and records —
 `param` and `derived` being the type's own distinction between a choice and a
 measurement (`crates/pistol-cli/src/corpus/emit.rs:36-44`).
 
@@ -493,7 +537,12 @@ one per line:
 | the source report's `experiment_sha256` | what was played |
 | the label `go` line | what was asked |
 
-**AND THE INSTRUMENT IS NOT ONE OF THEM, WHICH REVERSES REVISION 3 AND SAYS WHY.**
+**AND `arena_version` IS CARRIED NOWHERE — NOT IN THE DIGEST AND NOT IN THE
+HEADER.** Revision 4 removed it from the digest and left §4.3 writing it into the
+header as a `param`, so the document answered one question twice and differently.
+It is out of both, for the one argument below.
+
+**THE INSTRUMENT IS NOT A DIGEST INPUT, WHICH REVERSES REVISION 3 AND SAYS WHY.**
 Revision 3 added `arena_version` as *"the INSTRUMENT"* and argued that without it
 *"the only thing standing between [two captures] is a hand-maintained format
 version"*. **That remedy was its own diagnosis.** `arena_version` is written from
@@ -558,6 +607,7 @@ the two channel outcomes the table did not name (MINOR H):
 | **the engine closes its pipe** (`Received::Closed`) | **refuse the run**, by name, naming the game and turn |
 | **the engine writes an overlong non-line** (`Received::Overlong`) | **refuse the run**, by name, naming the game and turn |
 | **the closing totals line is not recognised as one** (§8) | **refuse the run**, by name, naming the game and turn |
+| **a field about to be written carries a TAB** (§4.2 owns the grammar) | **refuse the run**, by name, naming the game and turn |
 | the totals line carries no score at all | **capture it as written.** The score's presence is a meaning question and belongs to WP-2.0-S |
 
 > **Every failure is a refusal of the whole run and none is a skip**, because a
@@ -722,14 +772,21 @@ adds `score` and `pv` as non-fatal `Option`s (D-542).
     line.
 
 **TWO THINGS NO TEST PINS, BOTH DECLARED HERE RATHER THAN LEFT FOR A REVIEWER TO
-FIND.**
+FIND — and revision 4 had a third it did not declare, which §0.2b's N1 row
+closes.**
 
 **INVARIANT 10 (pass 1 is unmodified).** No unit test can compare the SPRT path's
-output against a build that no longer exists. Its evidence is the diff — the only
-file on the SPRT path this package touches is
-`crates/pistol-arena/src/exchange.rs`, and only its one visibility keyword — plus
-CI gate 15, which runs the SPRT path end to end and compares two runs' verdict
-blocks byte for byte (`tools/arena_smoke.sh:22-27`). **Revision 3 also leaned on
+output against a build that no longer exists. Its evidence is the diff: **the only
+file whose SPRT-path BEHAVIOUR this package changes is
+`crates/pistol-arena/src/exchange.rs`, and only its one visibility keyword.**
+`crates/pistol-arena/src/bin/arena.rs` is edited too — a `Mode` variant, a
+dispatch arm, a call, the `USAGE` extraction and the fallback refusal's mode list
+(§1) — and it is the binary that runs the SPRT, which is why the sentence says
+BEHAVIOUR and not files: §1 shows the two existing arms and `outpath::claim`
+untouched, so a third arm beside them changes no path pass 1 takes. Revision 4
+said "the only file", which was false as written and which m14's own remedy
+widened. Plus CI gate 15, which runs the SPRT path end to end and compares two
+runs' verdict blocks byte for byte (`tools/arena_smoke.sh:22-27`). **Revision 3 also leaned on
 INVARIANT 7's test here and that leg is withdrawn**: read as a cross-build
 comparison it was the very thing this paragraph calls impossible, so INVARIANT 7
 is restated above as what a same-build test CAN falsify — that the compute is
@@ -767,6 +824,8 @@ cannot produce the thing it is testing.
 | `every_captured_position_is_a_prefix_of_the_reports_own_move_list` | 5 | |
 | `a_captured_totals_line_keeps_every_field_but_nps_and_time` | 6 | **unit, synthetic totals line** |
 | `the_normalisation_removes_only_nps_and_time_from_a_solver_bearing_line` | 6 | **unit, synthetic** — no engine in this package can emit the solver spelling (§14.1) |
+| `a_captured_record_carries_the_normalised_totals_line` | 6 | stub, end to end — **the only test that dies when the CALL is deleted** (§14.1) |
+| `a_totals_line_with_no_score_at_all_is_captured_as_written` | 6 | **unit, synthetic** — §6's last row, unpinned across three revisions |
 | `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` | 6 | |
 | `a_captured_field_containing_a_tab_refuses_the_run_by_name` | 6 | **unit, over the record writer** — no engine in this tree can emit a TAB |
 | `the_sprt_reports_per_game_node_counts_are_billed_from_the_totals_line` | 7 | |
@@ -782,6 +841,7 @@ cannot produce the thing it is testing.
 | `a_capture_record_with_the_wrong_field_count_is_refused_by_name` | 11 | |
 | `a_capture_record_with_an_empty_field_is_refused_by_name` | 11 | |
 | `two_reports_of_one_experiment_share_a_capture_identity` | 12 | |
+| `two_captures_of_different_experiments_do_not_share_an_identity` | 12 | |
 | `a_capture_identity_moves_when_the_format_version_moves` | 12 | |
 | `a_capture_identity_moves_when_the_label_budget_moves` | 12 | |
 | `a_capture_over_a_report_whose_budget_is_not_nodes_is_refused_by_name` | §7 | |
@@ -809,7 +869,9 @@ headline coldness mechanism is registered against a mutant that survives.**
 |---|---|
 | the `newgame` removed from pass 2's loop | `every_label_go_is_preceded_by_a_newgame` (under `demands_newgame_per_ask`) |
 | the `go` line formatted by hand instead of through `BudgetSection::go_line` | `the_label_go_line_is_the_one_budget_section_spells` |
-| the normalisation removed | `a_captured_totals_line_keeps_every_field_but_nps_and_time` |
+| the normalisation's FUNCTION broken | `a_captured_totals_line_keeps_every_field_but_nps_and_time` |
+| **the normalisation not APPLIED on the write path** — the call deleted, the function left intact | `a_captured_record_carries_the_normalised_totals_line` |
+| a score-less totals line refused instead of captured | `a_totals_line_with_no_score_at_all_is_captured_as_written` |
 | the normalisation widened to strip another NON-solver field | `a_captured_totals_line_keeps_every_field_but_nps_and_time` |
 | the normalisation widened to strip a SOLVER field | `the_normalisation_removes_only_nps_and_time_from_a_solver_bearing_line` |
 | the `bestmove` line normalised too | `a_captured_bestmove_line_is_byte_identical_to_what_the_engine_wrote` |
@@ -823,12 +885,13 @@ headline coldness mechanism is registered against a mutant that survives.**
 | a watchdog timeout skipped instead of refusing | `an_engine_that_stops_answering_refuses_the_run_at_the_watchdog` |
 | an unrecognised totals line treated as an ordinary `info` line and the run completed | `an_unrecognised_totals_line_refuses_the_run_and_names_the_game_and_turn` |
 | forfeited or book positions skipped | their two tests |
-| a capture record's first two fields swapped on write | `a_capture_file_round_trips_through_its_own_loader_field_by_field` |
+| a capture record's first two fields swapped on write | `a_capture_file_round_trips_through_its_own_loader_field_by_field`, **whose fixture must give the game index and the prefix length DIFFERENT values** — equal ones make the swap invisible |
 | the loader's body-digest check removed | `a_capture_whose_body_digest_is_wrong_is_refused_by_name` |
 | the loader's empty-field check removed | `a_capture_record_with_an_empty_field_is_refused_by_name` |
 | the write-side TAB check removed | `a_captured_field_containing_a_tab_refuses_the_run_by_name` |
 | `source_sha256` used as the identity | `two_reports_of_one_experiment_share_a_capture_identity` |
 | the format version dropped from the identity | `a_capture_identity_moves_when_the_format_version_moves` |
+| `experiment_sha256` dropped from the identity | `two_captures_of_different_experiments_do_not_share_an_identity` |
 | the label `go` line dropped from the identity | `a_capture_identity_moves_when_the_label_budget_moves` |
 | the manifest row not printed | `a_capture_prints_a_manifest_row_naming_its_digests` |
 | a fourth load-bearing lookup added to `totals_of` | `the_sprt_reports_per_game_node_counts_are_billed_from_the_totals_line` |
@@ -991,12 +1054,16 @@ script writes carries a `depth_turns` budget and pass 2 refuses every non-`nodes
 report (§7). **The replacement is three sites, each doing the part it can do,
 with what each cannot do stated beside it.**
 
-### 14.1 The normalisation is pinned by a UNIT TEST, and it needs no engine at all
+### 14.1 The normalisation is pinned by UNIT TESTS over the function AND one INTEGRATION test over the call
 
-**This is the site revision 3 should have named first, and it closes rev-2
-MAJOR C's real complaint more completely than any engine-driven test can.** The
-normalisation is a pure function from one line to one line. Registered over
-SYNTHETIC totals lines:
+**The unit half is the site revision 3 should have named first**, and it closes
+rev-2 MAJOR C's real complaint more completely than any engine-driven test can:
+the normalisation is a pure function from one line to one line, so its behaviour
+is checkable without an engine, in both spellings. **The integration half is what
+revision 4 spent and revision 5 restores** — a function that is right and never
+called is a corpus that is not reproducible.
+
+Registered over SYNTHETIC totals lines:
 
 - `a_captured_totals_line_keeps_every_field_but_nps_and_time` — the non-solver
   spelling: every field of `render_info`'s output survives but those two.
@@ -1005,6 +1072,21 @@ SYNTHETIC totals lines:
   produce.
 - `two_totals_lines_differing_only_in_nps_and_time_normalise_equal`, in both
   spellings — which is INVARIANT 8's actual content, tested directly.
+
+**AND ONE INTEGRATION TEST BESIDE THEM, BECAUSE THE UNIT TESTS PIN THE FUNCTION
+AND NOT THE CALL.** This is revision 4's own defect and it is the reason revision
+5 exists: three unit tests over a pure function are all satisfied by a pass 2
+that never calls it. **`a_captured_record_carries_the_normalised_totals_line`**
+drives the stub end to end and asserts that the totals field of a written capture
+record does **not** carry the stub's ` nps 1 time 0`
+(`crates/pistol-arena/src/bin/stub_engine.rs:120-131`) and **does** carry every
+other field the stub emitted. It cannot see the solver spelling — §14.3's limit —
+but it is the only test that dies when the call is deleted, and deleting a call in
+a loop is the likelier mutation than breaking a tested function.
+
+**THE TWO LIMBS TOGETHER ARE WHAT INVARIANT 6 NEEDS**: the unit tests say the
+normalisation is right in both spellings, the integration test says pass 2
+performs it. Revision 4 had only the first and its mutant table claimed both.
 
 **WHY THIS IS THE ONLY WAY THE SOLVER SPELLING CAN BE REACHED, and revision 3's
 bound on its own vacuity was wrong.** Revision 3 wrote that *"the vacuity is
@@ -1031,11 +1113,14 @@ actually move.
 ### 14.3 The in-crate end-to-end test is a SHAPE test, and is declared one
 
 `a_rerun_over_one_report_is_byte_identical`, driven by the arena's stub, cannot
-observe the normalisation: the stub's `nps` and `time` are hardcoded
-(`crates/pistol-arena/src/bin/stub_engine.rs:120-131`), so two runs agree with or
-without it. **It is registered anyway, as the test that the pass is
-deterministic in everything else** — record order, header, digest — and this
-document says what it cannot see rather than letting an implementer discover it.
+observe the normalisation as a DIFFERENCE BETWEEN TWO RUNS: the stub's `nps` and
+`time` are hardcoded (`crates/pistol-arena/src/bin/stub_engine.rs:120-131`), so
+two runs agree with or without it. **It is registered anyway, as the test that
+the pass is deterministic in everything else** — record order, header, digest —
+and this document says what it cannot see rather than letting an implementer
+discover it. **What it cannot see, §14.1's integration test can**: the stub's
+constants are useless for comparing two runs and perfectly good for asserting
+that ` nps 1 time 0` is absent from a record the pass wrote.
 
 ### 14.4 Why no `tools/` change, stated as a decision rather than an omission
 
@@ -1054,8 +1139,14 @@ pistol-arena` with a skip is what hard rule 3 forbids.
 it.** It would need a second committed arena config at a `nodes` budget and a
 second arena run inside CI gate 15 — a new document on gate 6's path and a new
 per-CI-run cost, against a gate whose cost is pre-registered on its own face
-(`tools/arena_smoke.sh:29-33`) — to buy what §14.1 buys for free and what §14.2
-buys anyway. **The decision keeps the matrix's own claim true**: only
+(`tools/arena_smoke.sh:29-33`). **What it would buy is already bought, and by a
+STANDING gate rather than by the pilot's one-off receipt**: the coupling this
+package depends on is that `nps` and `time` are the only fields two runs may
+disagree about, and **CI gate 9 asserts exactly that on every run**, over the same
+`newgame`/`position`/`go` loop shape, with the same `sed`
+(`tools/determinism.sh:153-154`). Revision 4 priced the declined route against
+§14.2, which is a receipt taken once; the honest comparison is against gate 9,
+which runs always. **The decision keeps the matrix's own claim true**: only
 `pistol-arena` is touched (`docs/experiments/matrix_wp20_shape_selection.md`
 §2), which revision 3's answer would have falsified.
 
