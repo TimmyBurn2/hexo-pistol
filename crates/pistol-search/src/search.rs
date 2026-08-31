@@ -715,7 +715,7 @@ pub fn proof_line(
 /// mutable borrow of the solver field, and the columns come from the position
 /// field: two disjoint borrows the compiler can see only if they are asked for
 /// separately.
-fn root_census_columns(position: &mut Position) -> (u32, u32, u32, u32, u32, u32, u32) {
+fn root_census_columns(position: &mut Position) -> crate::census::TriggerColumns {
     let (state, threats, _) = position.staged_context();
     let mover = state.to_move();
     let opponent = mover.opponent();
@@ -730,22 +730,34 @@ fn root_census_columns(position: &mut Position) -> (u32, u32, u32, u32, u32, u32
     };
     let (mover_hot, mover_w1, mover_l3) = counts(mover);
     let (opponent_hot, opponent_w1, opponent_l3) = counts(opponent);
-    // The root's own firing sits at turn 0 from itself.
-    (
-        0,
+    let left = pistol_solver::StonesLeft::from_state(state).unwrap_or_else(|| {
+        panic!(
+            "pistol-search invariant {}: the root trigger fired on a decided position",
+            crate::staged::OVERLOAD_ON_A_DECIDED_POSITION
+        )
+    });
+    let cover = match threats.blocking_covers(mover, pistol_solver::HitBudget::from(left)) {
+        pistol_solver::Cover::NothingToBlock => crate::census::CoverClass::NothingToBlock,
+        pistol_solver::Cover::Impossible => crate::census::CoverClass::Impossible,
+        pistol_solver::Cover::Minimal(covers) => crate::census::CoverClass::Minimal(covers.len()),
+    };
+    crate::census::TriggerColumns {
+        // The root's own firing sits at turn 0 from itself.
+        turns_from_root: 0,
         mover_hot,
         opponent_hot,
-        mover_w1,
-        opponent_w1,
-        mover_l3,
-        opponent_l3,
-    )
+        mover_win_in_one_ply: mover_w1,
+        opponent_win_in_one_ply: opponent_w1,
+        mover_live_three: mover_l3,
+        opponent_live_three: opponent_l3,
+        cover,
+    }
 }
 
 /// Push the ROOT's census row, if a census was asked for.
 fn push_root_census(
     census: &mut Option<Vec<crate::census::TriggerObservation>>,
-    columns: Option<(u32, u32, u32, u32, u32, u32, u32)>,
+    columns: Option<crate::census::TriggerColumns>,
     attacker: crate::census::TriggerAnswer,
     defender: Option<crate::census::TriggerAnswer>,
 ) {
@@ -753,13 +765,7 @@ fn push_root_census(
         return;
     };
     rows.push(crate::census::TriggerObservation {
-        turns_from_root: columns.0,
-        mover_hot: columns.1,
-        opponent_hot: columns.2,
-        mover_win_in_one_ply: columns.3,
-        opponent_win_in_one_ply: columns.4,
-        mover_live_three: columns.5,
-        opponent_live_three: columns.6,
+        columns,
         attacker,
         defender,
     });

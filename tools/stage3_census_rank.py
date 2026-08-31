@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
 """Rank a trigger census's candidate predicates IN VISITS, which is the unit the
-bracket fixes.
+bracket fixes, and under ONE recall definition, which is the direction the gate
+pins.
+
+THE RECALL DEFINITION, STATED ONCE. D-512's fixture is seven positions the
+solver proves a WIN on for the side to move -- the ATTACKER direction,
+`Solver::solve`. A census row also records the DEFENDER direction
+(`solve_defender`): whether the OPPONENT forces a win against the mover, which
+is a proven LOSS for the mover and a different quantity. Revision 1 of this
+instrument scored `att_proved or def_proved` and called the result PROOFS KEPT.
+On the corpus band-15 fixture that denominator is ENTIRELY defender-direction,
+so the row it selected was chosen on losses and quoted against a gate that pins
+wins. The two are separate columns here and are never summed: WINS is the gate's
+recall, LOSSES is reported beside it, and a row's verdict reads only WINS.
 
 `tools/stage3_census_analyse.py` reports the census's own quantities — K, the
 root's share, and each candidate's KEPT and PROOFS KEPT. It also applied a
@@ -24,8 +36,14 @@ It also prices the two levers the field forgot:
   * a VERDICT CACHE, by counting repeated firing signatures — an UPPER bound,
     because a signature is evidence of a repeated position and not proof of one.
 
-Usage: stage3_census_rank.py --census <path> --fixture <path> --budget <visits>
+Usage: stage3_census_rank.py --census <path> --fixture <path>
+                             (--budget <visits> | --off <off-census> --share <frac>)
                              [--band 15|35|trigger] [--searches N] [--cap N]
+
+`--off` + `--share` DERIVES the budget rather than taking it: the share is the
+bracket-intrinsic figure (4.352 / 2.242 / 5.696 percent) and the OFF census
+supplies that band's own `T_off`. A budget measured on one position set and
+carried onto another is a borrowed denominator, which is what D-477 forbids.
 Exit:  0 read and ranked
        1 an input is malformed
        2 THE RUN IS VOID -- an input is unreadable
@@ -71,6 +89,31 @@ def bands_of(fixture_path):
     return bands
 
 
+def totals_of(off_census_path, fixture_path):
+    """Each entry's OFF-seat node total, by band -- the `T_off` a budget is a
+    share of."""
+    bands = bands_of(fixture_path)
+    totals = {}
+    for line in read(off_census_path).splitlines():
+        if not line.startswith("trigger_census: entry "):
+            continue
+        fields = line.split()
+        index = int(fields[2])
+        spot = {}
+        at = 3
+        while at + 1 < len(fields):
+            spot[fields[at]] = fields[at + 1]
+            at += 2
+        if int(spot["solver_nodes"]) != 0:
+            fail(f"{off_census_path}: entry {index} spent solver nodes; that is not an OFF seat")
+        if index >= len(bands):
+            fail(f"{off_census_path}: entry {index} is past {fixture_path}'s end")
+        totals.setdefault(bands[index], []).append(int(spot["search_nodes"]))
+    if not totals:
+        fail(f"{off_census_path} holds no `trigger_census: entry` line")
+    return totals
+
+
 def load(census_path, fixture_path):
     bands = bands_of(fixture_path)
     rows = []
@@ -93,8 +136,29 @@ def load(census_path, fixture_path):
     return rows
 
 
+def won(row):
+    """The ATTACKER direction proved: the side to move forces a win.
+
+    This is the direction D-512's value fixture is stated in and the only one
+    the recall gate reads.
+    """
+    return row["att_proved"] == "true"
+
+
+def lost(row):
+    """The DEFENDER direction proved: the mover is lost against best play.
+
+    Recorded, reported, and never added to [`won`] -- summing them is the
+    conflation this instrument's header exists to refuse.
+    """
+    return row["def_proved"] == "true"
+
+
 def proved(row):
-    return row["att_proved"] == "true" or row["def_proved"] == "true"
+    """Either direction. Kept ONLY for the cache and signature figures, whose
+    question is "would this firing be re-answered from a cache" -- a question
+    about the firing and not about the direction its answer came from."""
+    return won(row) or lost(row)
 
 
 def visits(row):
@@ -108,13 +172,16 @@ def signature(row):
     share. It over-counts if two different positions agree on all of them, which
     makes every cache figure below an UPPER bound and is said so where printed.
     """
-    return tuple(
-        row[key]
-        for key in (
-            "index", "turns", "mover_hot", "opp_hot", "mover_w1",
-            "opp_w1", "mover_l3", "opp_l3", "att_visits", "def_visits",
-        )
+    keys = (
+        "index", "turns", "mover_hot", "opp_hot", "mover_w1",
+        "opp_w1", "mover_l3", "opp_l3", "cover", "covers",
+        "att_visits", "def_visits",
     )
+    # `cover`/`covers` are absent from a census taken before the column landed.
+    # Reading them as a constant there keeps the OLD artifacts parseable and
+    # keeps the signature of a NEW one strictly finer, which is the direction
+    # that cannot inflate a cache figure.
+    return tuple(row.get(key, "-") for key in keys)
 
 
 CANDIDATES = [
@@ -130,7 +197,32 @@ CANDIDATES = [
     ("(j) the root only", lambda r: int(r["turns"]) == 0),
     ("(g)+(j) opp_hot >= 3 and not the root",
      lambda r: int(r["opp_hot"]) >= 3 and int(r["turns"]) > 0),
+    # ROW (b) — the mechanism §3(b) describes and revision 1 scored a substitute
+    # for. It needs the `cover` column, which is why the census was re-run.
+    ("(b) unanswerable: cover impossible", lambda r: r["cover"] == "impossible"),
+    ("(b') answerable one way only", lambda r: r["cover"] == "minimal" and int(r["covers"]) == 1),
+    ("(b'') cover impossible or one cover",
+     lambda r: r["cover"] == "impossible"
+     or (r["cover"] == "minimal" and int(r["covers"]) == 1)),
+    # The WIN direction's own shape, read off the census: every attacker proof
+    # in the in-sample run is either a mover-hot root win or a position where
+    # the mover holds many live threes.
+    ("(m) mover hot or mover_l3 >= 9",
+     lambda r: int(r["mover_hot"]) > 0 or int(r["mover_l3"]) >= 9),
 ]
+
+
+def scored(rows, predicate):
+    """A candidate's rows, refusing a predicate this census cannot express.
+
+    A row (b) predicate over a census with no `cover` column is the defect the
+    matrix's §4.2 named: it scores a SUBSTITUTE and reads as though it scored the
+    mechanism. Refusing is the only answer that cannot be misread (rule 3).
+    """
+    try:
+        return [r for r in rows if predicate(r)]
+    except KeyError as missing:
+        return missing
 
 
 def main(argv):
@@ -139,6 +231,8 @@ def main(argv):
     searches = None
     band = None
     cap = 2048
+    off = None
+    share = None
     index = 0
     while index < len(argv):
         key = argv[index]
@@ -159,10 +253,35 @@ def main(argv):
             searches = int(value)
         elif key == "--cap":
             cap = int(value)
+        elif key == "--off":
+            off = value
+        elif key == "--share":
+            share = float(value)
         else:
             fail(f"unknown option {key}")
-    if census is None or fixture is None or budget is None:
-        fail("--census, --fixture and --budget are all required")
+    if census is None or fixture is None:
+        fail("--census and --fixture are both required")
+    derived_from = None
+    if budget is None:
+        if off is None or share is None:
+            fail("give --budget, or --off and --share so the budget is derived")
+        if band is None:
+            fail("--off and --share derive a BAND's budget; name the band")
+        totals = totals_of(off, fixture)
+        if band not in totals:
+            fail(f"--band {band} is not one of {sorted(totals)} in {off}")
+        mean_off = sum(totals[band]) / len(totals[band])
+        budget = share * mean_off
+        derived_from = (off, share, mean_off, len(totals[band]))
+        # A SEARCH THAT FIRES NOTHING IS STILL A SEARCH. Counting only the
+        # entries that produced a row divides the visits by a denominator the
+        # budget was not taken over -- the same borrowed-denominator defect one
+        # level down, and it bit on the out-of-sample band 35, where one of
+        # twelve entries never fires.
+        if searches is None:
+            searches = len(totals[band])
+    elif off is not None or share is not None:
+        fail("--budget and --off/--share are two answers to one question")
 
     rows = load(census, fixture)
     if band is not None:
@@ -174,54 +293,85 @@ def main(argv):
         searches = len({row["index"] for row in rows})
     if searches == 0:
         fail("no searches; nothing to rank")
+    firing_searches = len({row["index"] for row in rows})
+    if firing_searches != searches:
+        print(f"NOTE: {searches - firing_searches} of {searches} searches in this band"
+              f" fire the trigger never. They are IN the denominator: a search that"
+              f" spends no solver visit is a search the budget was taken over.")
 
     print(f"=== {census} against {fixture} ===")
     print(f"argv {' '.join(argv)}")
     print(f"band {band or 'all'}  searches {searches}  firings {len(rows)}"
           f"  visit budget {budget:.1f}/search  cap {cap}")
+    if derived_from:
+        off_path, share_used, mean_off, entries = derived_from
+        print(f"BUDGET DERIVED: share {share_used * 100:.3f}% x T_off {mean_off:.1f}"
+              f"  (mean over {entries} entries of {off_path})")
+    else:
+        print("BUDGET GIVEN on the command line.")
+    wins = [r for r in rows if won(r)]
+    losses = [r for r in rows if lost(r)]
     proving = [r for r in rows if proved(r)]
     total_visits = sum(visits(r) for r in rows)
-    print(f"incumbent: {total_visits / searches:9.1f} visits/search"
-          f"  proving firings {len(proving)}")
+    incumbent_per_search = total_visits / searches
+    print(f"incumbent: {incumbent_per_search:9.1f} visits/search"
+          f"  firings {len(rows)}"
+          f"  REQUIRED CUT {incumbent_per_search / budget:.2f}x")
+    print(f"RECALL DENOMINATORS, SEPARATE: WINS (attacker direction, the gate's)"
+          f" {len(wins)}   LOSSES (defender direction) {len(losses)}"
+          f"   either {len(proving)}")
+    if not wins:
+        print("  *** THIS BAND HAS NO WIN-DIRECTION PROOF AT ALL. Every WINS cell")
+        print("  *** below is 0/0 and is printed as `-`: no row's recall is")
+        print("  *** MEASURED here, and a row that looks perfect is vacuous.")
     print()
     print("THE TEST IS IN VISITS. A firing count priced at the population mean is")
     print("not the bracket's unit and the two disagree; the firing column is")
     print("reported and is not the test.")
+    print("THE VERDICT READS `WINS`. `LOSSES` is beside it and is never added in.")
     print()
-    print(f"{'candidate':<38} {'KEPT':>6} {'PROOFS':>7} {'PREC':>7} "
+    print(f"{'candidate':<38} {'KEPT':>6} {'WINS':>7} {'LOSSES':>7} {'PREC':>7} "
           f"{'visits/search':>14} {'cut':>8} {'firings':>8}  budget")
     for name, predicate in CANDIDATES:
-        kept = [r for r in rows if predicate(r)]
-        kept_proofs = [r for r in kept if proved(r)]
+        kept = scored(rows, predicate)
+        if isinstance(kept, KeyError):
+            print(f"{name:<38} UNSCORABLE: this census has no {kept} column")
+            continue
+        kept_wins = [r for r in kept if won(r)]
+        kept_losses = [r for r in kept if lost(r)]
         kept_visits = sum(visits(r) for r in kept) / searches
         share = len(kept) / len(rows)
-        proof_share = len(kept_proofs) / len(proving) if proving else float("nan")
-        precision = len(kept_proofs) / len(kept) if kept else float("nan")
+        win_share = f"{len(kept_wins) / len(wins):7.3f}" if wins else "      -"
+        loss_share = f"{len(kept_losses) / len(losses):7.3f}" if losses else "      -"
+        precision = len(kept_wins) / len(kept) if kept else float("nan")
         cut = (total_visits / searches / kept_visits) if kept_visits else float("inf")
         verdict = "IN" if kept_visits <= budget else "out"
+        if not kept:
+            verdict = "IN (vacuous)"
         print(
-            f"{name:<38} {share:6.3f} {proof_share:7.3f} {precision:7.4f} "
+            f"{name:<38} {share:6.3f} {win_share} {loss_share} {precision:7.4f} "
             f"{kept_visits:14.1f} {cut:7.2f}x {len(kept) / searches:8.2f}  {verdict}"
         )
 
     print()
     print("=== (i) THE CAP AS A LEVER: every invocation re-charged at min(visits, cap) ===")
     print("A proof is still REACHED at cap c iff the invocation that found it spent <= c.")
-    for candidate_cap in (2048, 1024, 512, 256, 128):
+    for candidate_cap in (4096, 2048, 1024, 512, 256, 128):
         charged = 0
-        reached = 0
+        won_reached = 0
+        lost_reached = 0
         for row in rows:
             att, dfn = int(row["att_visits"]), int(row["def_visits"])
             charged += min(att, candidate_cap) + min(dfn, candidate_cap)
-            if row["att_proved"] == "true" and att <= candidate_cap:
-                reached += 1
-            elif row["def_proved"] == "true" and dfn <= candidate_cap:
-                reached += 1
+            if won(row) and att <= candidate_cap:
+                won_reached += 1
+            if lost(row) and dfn <= candidate_cap:
+                lost_reached += 1
         per_search = charged / searches
         print(
             f"  cap {candidate_cap:5d}  {per_search:9.1f} visits/search"
             f"  {total_visits / searches / per_search:6.2f}x"
-            f"  proofs reached {reached}/{len(proving)}"
+            f"  WINS {won_reached}/{len(wins)}  losses {lost_reached}/{len(losses)}"
             f"  {'IN' if per_search <= budget else 'out'}"
         )
 
@@ -239,7 +389,7 @@ def main(argv):
           f"  = {len(rows) / distinct:.2f} firings per signature")
     print(f"  {cached_visits:9.1f} visits/search if a repeat is free"
           f"  {total_visits / searches / cached_visits:6.2f}x"
-          f"  proofs reached {len(proving)}/{len(proving)} BY CONSTRUCTION"
+          f"  WINS {len(wins)}/{len(wins)} BY CONSTRUCTION"
           f"  {'IN' if cached_visits <= budget else 'out'}")
     print("  A SIGNATURE IS EVIDENCE OF A REPEATED POSITION AND NOT PROOF OF ONE:")
     print("  the census carries no position key, so this over-counts if two")
@@ -252,13 +402,17 @@ def main(argv):
         ("opp_hot >= 3 + cache", lambda r: int(r["opp_hot"]) >= 3, None),
         ("cache + cap 512", lambda r: True, 512),
         ("opp_hot >= 3 + cache + cap 512", lambda r: int(r["opp_hot"]) >= 3, 512),
+        ("cache + cap 4096", lambda r: True, 4096),
+        ("(m) mover-side + cache",
+         lambda r: int(r["mover_hot"]) > 0 or int(r["mover_l3"]) >= 9, None),
     ]:
         # A CACHE PRESERVES RECALL BY CONSTRUCTION, so the proof count here is
         # over DISTINCT proving signatures and not over rows: a proof proved once
         # is still proved when its repeats are served from the cache, and
         # counting rows would charge the cache for its own saving.
         kept = [r for r in rows if predicate(r)]
-        proving_signatures = {signature(r) for r in kept if proved(r)}
+        win_signatures = {signature(r) for r in kept if won(r)}
+        all_win_signatures = {signature(r) for r in rows if won(r)}
         seen, charged, reached_signatures = set(), 0, set()
         for row in kept:
             key = signature(row)
@@ -268,17 +422,21 @@ def main(argv):
             att, dfn = int(row["att_visits"]), int(row["def_visits"])
             limit = candidate_cap or max(att, dfn)
             charged += min(att, limit) + min(dfn, limit)
-            if row["att_proved"] == "true" and att <= limit:
-                reached_signatures.add(key)
-            elif row["def_proved"] == "true" and dfn <= limit:
+            if won(row) and att <= limit:
                 reached_signatures.add(key)
         reached = len(reached_signatures)
         per_search = charged / searches
+        cut = total_visits / searches / per_search if per_search else float("inf")
+        recall = (
+            f"{reached}/{len(all_win_signatures)} distinct WINS"
+            if all_win_signatures
+            else "no win denominator"
+        )
         print(
             f"  {label:<34} {per_search:9.1f} visits/search"
-            f"  {total_visits / searches / per_search:6.2f}x"
-            f"  proofs {reached}/{len(proving_signatures)} distinct"
-            f" (of {len(proving)} firings)"
+            f"  {cut:6.2f}x"
+            f"  {recall}"
+            f" (kept {len(win_signatures)} of them before the cap)"
             f"  {'IN' if per_search <= budget else 'out'}"
         )
     print("CENSUS_RANK_DONE")

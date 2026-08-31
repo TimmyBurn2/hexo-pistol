@@ -12,6 +12,13 @@
 //!
 //! Usage:
 //!   trigger_census --fixture <path> --nodes <n> --cap <n> [--quiet-radius <n>]
+//!                  [--gate on|off]
+//!
+//! `--gate off` runs the SAME seat with the solver unwired and prints only the
+//! per-entry line. It is here because a band's visit budget is a SHARE of the
+//! OFF seat's node total (`docs/experiments/stage3_rulings.md` §1.2), and a
+//! census over positions no OFF-seat bench has covered has no denominator
+//! otherwise.
 //! Exit:
 //!   0 read and censused
 //!   1 an argument or a fixture line this build refuses
@@ -65,6 +72,7 @@ struct Args {
     nodes: u64,
     cap: u64,
     quiet_radius: u32,
+    gate_on: bool,
 }
 
 fn parse(words: &[String]) -> Result<Args, String> {
@@ -72,6 +80,7 @@ fn parse(words: &[String]) -> Result<Args, String> {
     let mut nodes = None;
     let mut cap = None;
     let mut quiet_radius = 2;
+    let mut gate_on = true;
     let mut index = 0;
     while index < words.len() {
         let key = words[index].as_str();
@@ -87,6 +96,13 @@ fn parse(words: &[String]) -> Result<Args, String> {
                     .parse()
                     .map_err(|why| format!("--quiet-radius: {why}"))?;
             }
+            "--gate" => {
+                gate_on = match value.as_str() {
+                    "on" => true,
+                    "off" => false,
+                    other => return Err(format!("--gate is on or off, not {other}")),
+                };
+            }
             other => return Err(format!("unknown option {other}")),
         }
         index += 2;
@@ -96,6 +112,7 @@ fn parse(words: &[String]) -> Result<Args, String> {
         nodes: nodes.ok_or("--nodes is required: the budget is never guessed")?,
         cap: cap.ok_or("--cap is required: a call count without its cap is not a quantity")?,
         quiet_radius,
+        gate_on,
     })
 }
 
@@ -105,11 +122,11 @@ fn searcher(args: &Args) -> Result<Searcher, String> {
     let weights = Weights::load(&weights_path).map_err(|why| format!("weights: {why}"))?;
     let params = SearchParams {
         tt_bytes: 1 << 28,
-        solver: Some(SolverWiring {
+        solver: args.gate_on.then_some(SolverWiring {
             per_call_node_cap: args.cap,
             trigger: SolverTrigger::AnyOpenFour,
             inner: SolverParams {
-                epsilon: Epsilon::new(1, 4).ok_or("epsilon 1/4 is not valid")?,
+                epsilon: Epsilon::new(1, 4).expect("epsilon 1/4 is valid"),
                 tt_entries: 1 << 20,
                 attacker_policy: AttackerPolicy::OneFreeStone,
             },
@@ -146,12 +163,18 @@ fn main() -> ExitCode {
         Ok(engine) => engine,
         Err(why) => return fail(&why),
     };
-    engine.collect_trigger_census();
+    if args.gate_on {
+        engine.collect_trigger_census();
+    }
 
     println!("trigger_census: argv {}", words.join(" "));
     println!(
-        "trigger_census: fixture {} nodes {} cap {} quiet_radius {}",
-        args.fixture, args.nodes, args.cap, args.quiet_radius
+        "trigger_census: fixture {} nodes {} cap {} quiet_radius {} gate {}",
+        args.fixture,
+        args.nodes,
+        args.cap,
+        args.quiet_radius,
+        if args.gate_on { "on" } else { "off" }
     );
     let mut entries = 0u32;
     for line in text.lines() {
@@ -177,18 +200,26 @@ fn main() -> ExitCode {
             calls.proofs,
             calls.root_nodes
         );
+        if !args.gate_on {
+            entries += 1;
+            continue;
+        }
         for row in engine.take_trigger_census() {
+            let columns = row.columns;
             println!(
                 "trigger_census: row entry {entries} turns {} mover_hot {} opp_hot {} \
-                 mover_w1 {} opp_w1 {} mover_l3 {} opp_l3 {} att_visits {} att_proved {} \
+                 mover_w1 {} opp_w1 {} mover_l3 {} opp_l3 {} cover {} covers {} \
+                 att_visits {} att_proved {} \
                  def_asked {} def_visits {} def_proved {}",
-                row.turns_from_root,
-                row.mover_hot,
-                row.opponent_hot,
-                row.mover_win_in_one_ply,
-                row.opponent_win_in_one_ply,
-                row.mover_live_three,
-                row.opponent_live_three,
+                columns.turns_from_root,
+                columns.mover_hot,
+                columns.opponent_hot,
+                columns.mover_win_in_one_ply,
+                columns.opponent_win_in_one_ply,
+                columns.mover_live_three,
+                columns.opponent_live_three,
+                columns.cover.token(),
+                columns.cover.count(),
                 row.attacker.visits,
                 row.attacker.proved,
                 row.defender.is_some(),

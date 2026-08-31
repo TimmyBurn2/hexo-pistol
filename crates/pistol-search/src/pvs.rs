@@ -632,15 +632,33 @@ impl<'a> Run<'a> {
             };
             let (mover_hot_n, mover_w1, mover_l3) = counts(mover);
             let (opponent_hot_n, opponent_w1, opponent_l3) = counts(opponent);
-            (
-                from_root,
-                mover_hot_n,
-                opponent_hot_n,
-                mover_w1,
-                opponent_w1,
-                mover_l3,
-                opponent_l3,
-            )
+            // The one column that costs more than a slice length. It is paid
+            // ONLY under a census — a run that collects no census never
+            // reaches this closure — so the cost the matrix's row (b) owes a
+            // bench is not paid here and is not measured here either.
+            let left = pistol_solver::StonesLeft::from_state(state).unwrap_or_else(|| {
+                panic!(
+                    "pistol-search invariant {}: the trigger fired on a decided position",
+                    crate::staged::OVERLOAD_ON_A_DECIDED_POSITION
+                )
+            });
+            let cover = match threats.blocking_covers(mover, pistol_solver::HitBudget::from(left)) {
+                pistol_solver::Cover::NothingToBlock => crate::census::CoverClass::NothingToBlock,
+                pistol_solver::Cover::Impossible => crate::census::CoverClass::Impossible,
+                pistol_solver::Cover::Minimal(covers) => {
+                    crate::census::CoverClass::Minimal(covers.len())
+                }
+            };
+            crate::census::TriggerColumns {
+                turns_from_root: from_root,
+                mover_hot: mover_hot_n,
+                opponent_hot: opponent_hot_n,
+                mover_win_in_one_ply: mover_w1,
+                opponent_win_in_one_ply: opponent_w1,
+                mover_live_three: mover_l3,
+                opponent_live_three: opponent_l3,
+                cover,
+            }
         });
         // One clone serves both calls (the solver never mutates its input).
         let state_view = state.clone();
@@ -718,30 +736,15 @@ impl<'a> Run<'a> {
     /// so a firing's row exists whether or not the firing proved.
     fn observe(
         &mut self,
-        observed: Option<(u32, u32, u32, u32, u32, u32, u32)>,
+        observed: Option<crate::census::TriggerColumns>,
         attacker: crate::census::TriggerAnswer,
         defender: Option<crate::census::TriggerAnswer>,
     ) {
         let (Some(columns), Some(census)) = (observed, self.census.as_mut()) else {
             return;
         };
-        let (
-            turns_from_root,
-            mover_hot,
-            opponent_hot,
-            mover_win_in_one_ply,
-            opponent_win_in_one_ply,
-            mover_live_three,
-            opponent_live_three,
-        ) = columns;
         census.push(crate::census::TriggerObservation {
-            turns_from_root,
-            mover_hot,
-            opponent_hot,
-            mover_win_in_one_ply,
-            opponent_win_in_one_ply,
-            mover_live_three,
-            opponent_live_three,
+            columns,
             attacker,
             defender,
         });

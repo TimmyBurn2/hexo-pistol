@@ -219,6 +219,19 @@ impl Solver {
     /// wrapper — the attacker is the opponent, the SAME `solve_root`, and
     /// df-pn's own to-move dispatch lands it in the existing AND path
     /// from the first node. Zero df-pn changes.
+    ///
+    /// # Panics
+    ///
+    /// With [`WRONG_POSITION`] on the same positions [`Solver::solve`] refuses,
+    /// and — unlike `solve` — with `policy::NO_PLAN_ASSERT` when **neither side
+    /// holds a hot window**. The root here is an AND node, and an AND node
+    /// requires the attacker (the opponent) to have a plan; `solve`'s AND nodes
+    /// get that by construction from the OR step above them, and this one has
+    /// no OR step above it. The engine never reaches the case because
+    /// `pistol-search`'s trigger fires only when a side is hot, and a hot MOVER
+    /// is answered by the race check before the assert — so the assert's
+    /// precondition is exactly the trigger's disjunction. A caller that is not
+    /// the trigger must check it.
     pub fn solve_defender(&mut self, state: &GameState, node_cap: u64) -> SolveResult {
         self.solve_attacking(state, state.to_move().opponent(), node_cap)
     }
