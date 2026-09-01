@@ -9,10 +9,17 @@ nowhere"*, D-469's class in its exact shape — and repaired it by transcription
 (`docs/experiments/stage3_overnight_dispatch.md`). A round-2 red team found this
 arc had made the same mistake again; this file is the repair.
 
-**THERE ARE THREE, AND THE THIRD'S MUTANT LIST DIFFERS FROM THE FIRST'S.** The
-WP-2.0 dispatch and the WP-2.0b dispatch arrived together; the third — the
-M-design-by-quotation round — arrived later and is transcribed at the same
-standard. **A document quoting "the dispatch" must say which**, because the third
+**THERE ARE FOUR, THE THIRD'S MUTANT LIST DIFFERS FROM THE FIRST'S, AND THE
+FOURTH SUPERSEDES THE SECOND.** The WP-2.0 dispatch and the WP-2.0b dispatch
+arrived together; the third — the M-design-by-quotation round — arrived later
+and is transcribed at the same standard; the fourth is **WP-2.0b v2**, which
+arrived after WP-2.0's closure and says in its own first line that it
+*"supersedes the earlier WP-2.0b dispatch text"*. **The second is kept rather
+than replaced in place**, because `docs/experiments/wp20b_design.md` revision 1
+was written against it and a reader who cannot see the text a superseded
+revision was governed by cannot tell an amendment from a drift. **The fourth's
+obligations are a superset of the second's, and the difference is enumerated in
+its own section below** rather than left for a reader to diff. **A document quoting "the dispatch" must say which**, because the third
 qualifies the seed mutant with *"where the pipeline samples"* and the first does
 not, **and the third also drops the first's *"census direction collapsed -> its
 test dies"* and adds a cold-label mutant of its own**. A design quoted the
@@ -162,7 +169,12 @@ language first.
 
 ---
 
-## WP-2.0b — census position identity on the wire, gated
+## WP-2.0b — census position identity on the wire, gated (v1, SUPERSEDED)
+
+*Superseded by the v2 re-issue transcribed at the end of this file. It is kept
+because `docs/experiments/wp20b_design.md` revision 1 names it as its governing
+text, and a superseded governing text still has to be readable.*
+
 
 ```
 # [ROUTINE+] WP-2.0b: census position identity on the wire, gated
@@ -397,6 +409,143 @@ already verified in it.
 
 ---
 
+## WP-2.0b v2 — the re-issue that supersedes the second dispatch above
+
+*Received by the dispatching session of 2026-09-01, after WP-2.0's closure
+(`a56449b`) and after `docs/experiments/wp20b_design.md` revision 1 had been
+written against the v1 text. Transcribed from that session's own prompt.*
+
+**WHAT v2 ADDS TO v1, enumerated because the whole reason this file exists is
+that a successor must be able to tell two dispatch texts apart.** Six
+differences, and none of them is a scope cut:
+
+1. **Reading list.** v1 named *"D-535..D-538 and D-53n"*; v2 names *"decisions
+   tail (D-521 on, through the WP-2.0 closure lines)"* and adds **D-512** and
+   **D-537** individually. **CORRECTED in revision 3 of the design's review round**:
+   an earlier form of this limb claimed v2 *"adds 'the D-527 cold-seat discipline'
+   as a named read"*, and it does not — v1's own read-first list already carries the
+   identical phrase, D-527 named by number. The difference in this limb is the
+   range and the two added numbers, and nothing else.
+2. **Scope 1 gains a fixture.** v1 asked only that the disjointness be countable;
+   v2 requires *"a fixture pinning a known transposition pair to the ruled
+   count"* as part of the design's own statement, not only as a test.
+3. **Scope 2 gains two wire constraints.** *"Both directions preserved as
+   separate fields (D-512)"*, and *"the D-551 parser lesson applies: multi-word
+   values named as such in the schema, never assumed one-word."* Neither appears
+   in v1.
+4. **The mutant list is longer and is call-site-bound.** v1 listed three mutants
+   and no law; v2 requires them *"per D-55y run green BEFORE REVIEW-impl,
+   call-removed mutants included"* — that is D-553's law under the architect's
+   placeholder — lists **four**, and specifies where two of them must die: the
+   token-check mutant *"dies at the call site"*, and a *"transposition ruling
+   inverted"* mutant is added against the scope-1 fixture.
+5. **Closure names the ROADMAP successor differently.** v1: *"next is the Stage-2
+   eval design package"*. v2: *"next is the production corpus package (label runs
+   at the closure's planned size, census on from game one, D-537's clock
+   starts), then the Stage-2 eval design package."*
+6. **THE OPTION FIELD WAS EDITED AND BOTH OPTIONS WERE KEPT — this limb said
+   "unchanged" and was wrong.** v1 scope 1 reads *"(the full-turn 128-bit key per
+   D-8, or the canonical move-list prefix)"*; v2 reads *"(full-turn 128-bit key per
+   D-8, or canonical move-list prefix **per D-6**)"*. **A citation was added to the
+   second option and both options were left standing**, and scope 3 was rewritten
+   from *"Whatever dependency route gets census output through pistol-cli"* to
+   *"The dependency route through pistol-cli:"* — a compression of the clause the
+   design's F1 says dissolves, retaining the instruction F1 says needs no obeying.
+   **This is the strongest evidence in the record that the architect looked at the
+   option field**, and the earlier form of this limb — which called the premise
+   *"unchanged"* — buried it in the file that exists to surface differences. It is
+   corrected here rather than in place. **What follows from it is `wp20b_design.md`
+   §10.0's**, which no longer argues from silence: F2's constraint belongs to a
+   landed document that named WP-2.0b first, and adding *"per D-6"* moves the second
+   option FURTHER from `key_full`, not closer, since a bare play sequence folds
+   neither transpositions nor symmetries.
+
+```
+# [ROUTINE+] WP-2.0b: census position identity on the wire, gated (v2)
+
+Supersedes the earlier WP-2.0b dispatch text. One session, small diff
+touching pistol-search/cli/engine, carrying full engine-diff
+obligations: byte-identity when off, determinism, REVIEW-impl, and the
+call-site mutant law (D-55y). Runs after WP-2.0's pilot closure;
+production label runs wait on this package (D-53n).
+
+Read first: CLAUDE.md, docs/process.md, decisions tail (D-521 on,
+through the WP-2.0 closure lines), the WP-2.0 premise memo (P2's
+verified findings are this package's scope statement), census.rs and
+the D-527 cold-seat discipline, D-512 (both-directions counters), the
+workspace-shape test pinning pistol-cli's dependencies, D-537 (the
+disjoint-positions minimum rule the identity must serve). D-401 never
+read.
+
+## Game rules (verbatim, binding)
+
+[CLAUDE.md's own pinned six-rule section, quoted verbatim in the prompt]
+
+## Scope
+
+1. TriggerObservation gains position identity. Design chooses the form
+   (full-turn 128-bit key per D-8, or canonical move-list prefix per
+   D-6) against ONE criterion: D-537's "win-proving firings on DISJOINT
+   positions" must be countable mechanically, transposition-aware; the
+   design states which transpositions count as identical and why, with
+   a fixture pinning a known transposition pair to the ruled count.
+2. Census rows on the wire behind a token NO committed config sets.
+   Line-protocol addition documented in the protocol's one home; field
+   order pinned by a report test (D-88 precedent). Both directions
+   preserved as separate fields (D-512); the D-551 parser lesson
+   applies: multi-word values named as such in the schema, never
+   assumed one-word.
+3. The dependency route through pistol-cli: the workspace-shape test is
+   UPDATED deliberately, not deleted; the design quotes it and states
+   the new shape it pins.
+4. Cold-table discipline (D-527) intact; identity read at firing time
+   from state the search already holds — quoted site proving no extra
+   hashing on the non-census path.
+
+Out of scope: detector logic, ranking, label work, committed-config
+changes, strength claims.
+
+## Obligations
+
+- Gate off = byte-identical: two-binary diff over the standing position
+  set, output digest equal to pre-change.
+- Determinism all seats; census state newgame-cleared and seated if it
+  exists.
+- Tests: identity on every census row (schema test); disjointness
+  fixture counts exactly as ruled; token absent = zero census bytes,
+  pinned by a loud test.
+- Mutants, per D-55y run green BEFORE REVIEW-impl, call-removed mutants
+  included: identity column dropped -> schema test dies; token check
+  call removed -> zero-bytes test dies at the call site; warm-table
+  read introduced -> D-527 seat dies; transposition ruling inverted ->
+  fixture dies.
+- REVIEW-impl: fresh, strongest, one fix round; standing caps; a second
+  failure = STOP and split.
+- Bench guard: registered nps spot-check ON-token vs OFF at 50 000
+  nodes, direction per convention — a logging path that taxes the
+  engine contaminates every future measurement made with it.
+
+## Closure
+
+D-line recording the identity form and transposition ruling; protocol
+doc updated in its one home; artifacts exported with digests (D-469);
+CI all gates at closure HEAD; tree clean; summary in the standing
+format, ONE LINE FOR THE MORNING first. ROADMAP: production label runs
+UNBLOCKED — next is the production corpus package (label runs at the
+closure's planned size, census on from game one, D-537's clock starts),
+then the Stage-2 eval design package.
+
+## STOP protocol
+
+STOP on: byte-identity mismatch; determinism exit 3; CI red after one
+fix round; failure outside the diff; any cap exhausted. On STOP: tree
+clean or WIP on `wp20b-stopped`, never dev; no detached processes,
+receipt; exports complete; summary naming the decision owed, plain
+language first.
+```
+
+---
+
 ## The one question a reader will bring to these, answered here
 
 **Does WP-2.0 require games to be PLAYED and LABELLED in one pass?** Its scope
@@ -407,7 +556,11 @@ does not require one pass**, and this is recorded because the shape matrix's
 row (g) has that reading as its kill condition — so a successor can check the
 answer against the governing text rather than against a summary of it.
 
-**The `D-53a` and `D-53n` labels in these dispatches are not decision keys.** They
-are the architect's placeholders for paste blocks that were registered at the
-next free numbers: `D-53a` became **D-535 … D-538**, and `D-53n` became **D-539**
-and **D-540**.
+**The `D-53a`, `D-53n` and `D-55y` labels in these dispatches are not decision
+keys.** They are the architect's placeholders. `D-53a` and `D-53n` are for paste
+blocks that were registered at the next free numbers: `D-53a` became **D-535 …
+D-538**, and `D-53n` became **D-539** and **D-540**. `D-55y` is different in kind
+— it points BACKWARD at a law that already exists, and it resolves to **D-553**,
+the call-site mutant law, which is the only standing law matching v2's own gloss
+*"call-removed mutants included"* and *"mutation receipts run green BEFORE
+REVIEW-impl is dispatched"*.
