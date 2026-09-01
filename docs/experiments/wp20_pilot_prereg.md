@@ -44,20 +44,28 @@ is supplied.
 
 | what | which | revision |
 |---|---|---|
-| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | SLOT R1 |
-| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | SLOT R1 |
-| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | SLOT R1 |
-| the corpus loader | `crates/pistol-arena/src/bin/corpus-check.rs` | SLOT R1 |
-| the cold-label referent | `tools/cold_label_check.py` | SLOT R1 |
-| the engine | `target/release/pistol`, bound by content | SLOT R2 (`binary_sha256`) |
-| the engine config | `configs/instrument_v0.toml` | SLOT R1 |
-| the arena config | `configs/arena_wp20_label_pilot.toml` | SLOT R1 |
-| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | SLOT R1 |
-| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | SLOT R1 |
+| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | `1311454` |
+| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | `1311454` |
+| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | `1311454` |
+| the corpus loader | `crates/pistol-arena/src/bin/corpus-check.rs` | `1311454` |
+| the cold-label referent | `tools/cold_label_check.py` | `1311454` |
+| the engine | `target/release/pistol`, bound by content | `180b4c40…` (`binary_sha256`), §9 |
+| the engine config | `configs/instrument_v0.toml` | `1311454` |
+| the arena config | `configs/arena_wp20_label_pilot.toml` | `1311454` |
+| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | `1311454` |
+| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | `1311454` |
 
-**SLOT R1 is one value**: the commit this document lands in. Every artefact above
-except the engine binary is a tracked file, so naming the commit names all of
-them at once, and a change to any reopens this document.
+**SLOT R1 IS ONE VALUE AND IT IS FILLED: `1311454`**, the commit that landed this
+document, its two arena configs and the ledger row. Every artefact above except
+the engine binary is a tracked file, so naming the commit names all of them at
+once, and a change to any of them reopens this document
+(`docs/process.md`, "Instrument governing revision"). **The review of this
+pre-registration is dispatched against `1311454` plus the slot-pass commit that
+fills §9**, and a later revision does not inherit that review.
+
+**SLOT R2 IS FILLED AT THE SLOT PASS AND NOWHERE ELSE**: it is the digest of
+`target/release/pistol` as built for the run, and a path is not an identity
+(D-147).
 
 **WHY `configs/instrument_v0.toml` AND NOT ANOTHER SEAT.** It is the committed
 instrument seat every strength claim in this project is made at, and its
@@ -737,8 +745,30 @@ see what will be checked rather than take the check on trust.
 | command | `--stride` | §6 RULE-3 (SLOT S3) |
 | command | `--workers` on `--replay` | §4C — `4`; the pass replays every game with no early stop, so what it finds does not depend on this number |
 
-SLOT P — the table above with its values, as read at launch, and any correction
-the pass made.
+### 9.1 SLOT P — FILLED, read from `configs/arena_wp20_label_pilot.toml` at `1311454`
+
+| key | committed value | governed by | agrees? |
+|---|---|---|---|
+| `run.openings_file` | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | §1, §2 | yes |
+| `run.openings_take` | `13` | §6.3 RULE-1 | yes |
+| `run.openings_skip` | `0` | §2, and the ledger's first row | yes |
+| `run.turn_cap` | `40` | §7 | yes |
+| `run.n_workers` | `4` | §4D | yes |
+| `run.hang_timeout_ms` | `120000` | §9, **against the LABEL budget** | yes — the dry run's slowest label ask at `nodes 400000` was about **1.0 s** (§6.3), so the watchdog has three orders of magnitude of room |
+| `budget.kind` / `budget.value` | `nodes` / `50000` | §3 | yes |
+| `sprt.elo0` / `elo1` / `alpha` / `beta` | `0.0` / `15.0` / `0.05` / `0.05` | schema completeness only; a self-match crosses no bound (D-156) | yes |
+| `engine_a.label` / `engine_b.label` | `a` / `b` | §4C — they MUST differ | yes |
+| `engine_a.binary` / `engine_b.binary` | `target/release/pistol` both | §1 | yes |
+| `engine_a.config` / `engine_b.config` | `configs/instrument_v0.toml` both | §1 | yes |
+| `engine_a.binary_sha256` / `engine_b.binary_sha256` | `180b4c406b225fc81342bb8218b8546dda1ffac1a99f7eb91cdaf73d20253476` both | SLOT R2 | **re-read at the run's own launch, immediately before pass 1, and corrected there if the binary was rebuilt** |
+| command `--label-nodes` | `400000` | §6.3 RULE-2 | yes |
+| command `--stride` | `1` | §6.3 RULE-3 | yes |
+| command `--workers` (replay) | `4` | §4C | yes |
+
+**NO CORRECTION WAS NEEDED AT THIS PASS**, which is stated rather than left to
+silence: D-427's own instance was a slot pass that DID find a stale value, and a
+pass that reports nothing is indistinguishable from a pass nobody made. The one
+slot that cannot be discharged here is `binary_sha256`, and §1 says why.
 
 ---
 
