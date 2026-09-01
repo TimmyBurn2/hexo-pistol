@@ -586,6 +586,76 @@ fn a_corpus_carrying_an_injected_malformed_record_is_refused_loudly() {
 }
 
 #[test]
+fn a_corpus_summarises_the_columns_a_pre_registration_reads_a_number_off() {
+    // The summary line is what fixes the pre-registration's LABEL budget
+    // (docs/experiments/wp20_pilot_prereg.md RULE-2), so it is a recorded number
+    // and carries a test driving the shipped program
+    // (tools/SHELL_CHECKLIST.md item 10).
+    let scratch = Scratch::new("labels-summary");
+    let (corpus, _) = corpus_of(&scratch, "summary");
+    let path = scratch.write("corpus-summary-copy.txt", &corpus);
+    let (code, stdout, stderr) = checked(&[&path]);
+    assert_eq!(code, Some(0), "the control corpus did not load: {stderr}");
+
+    // The referent is the corpus's own column, read here and NOT from the
+    // program's output: a summary checked against itself is not checked.
+    let rows = rows(&corpus);
+    let mut depths: Vec<i64> = rows
+        .iter()
+        .map(|row| row[10].parse().expect("a depth column"))
+        .collect();
+    depths.sort_unstable();
+    let n = depths.len();
+    let expected = if n % 2 == 1 {
+        depths[n / 2] as f64
+    } else {
+        (depths[n / 2 - 1] + depths[n / 2]) as f64 / 2.0
+    };
+    assert!(
+        stdout.contains(&format!("depth_turns median {expected:.1} ")),
+        "the summary's median is not the one the corpus's own column holds          ({expected:.1}): {stdout}"
+    );
+    assert!(
+        stdout.contains(&format!("max {}", depths[n - 1])),
+        "the summary's maximum is not the column's: {stdout}"
+    );
+    // The closed-set columns' spread, which is what tells a reader whether a
+    // green load exercised one arm of a guard or both.
+    let ends: std::collections::BTreeSet<&String> = rows.iter().map(|row| &row[15]).collect();
+    assert!(
+        stdout.contains(&format!("end {} (", ends.len())),
+        "the summary did not say how many values `end` takes ({}): {stdout}",
+        ends.len()
+    );
+}
+
+#[test]
+fn a_corpus_whose_body_digest_is_wrong_is_refused_by_the_shipped_loader() {
+    // Drives the BINARY. Its sibling above pins the same refusal by calling
+    // `labels_file::read` directly, which pins the function and not the call
+    // (docs/decisions.md D-553) — and the pre-registration's own injection runs
+    // the program, so the program is what must be shown to refuse.
+    let scratch = Scratch::new("labels-digest-run");
+    let (corpus, _) = corpus_of(&scratch, "digestrun");
+    let tampered = format!(
+        "{corpus}0\t0\t-\t-\t{}\t-\tp1\teval\t0\t0,0\t1\t1\t0\tyes\tcapped\tnormal\n",
+        "0".repeat(32)
+    );
+    let path = scratch.write("corpus-digestrun.txt", &tampered);
+    let (code, stdout, stderr) = checked(&[&path]);
+    assert_eq!(
+        code,
+        Some(1),
+        "an appended record with a stale digest was not refused; 0 would have meant it \
+         loaded and 2 that no answer was taken.\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+    assert!(
+        stderr.contains("digests to"),
+        "the refusal did not name the digest disagreement: {stderr}"
+    );
+}
+
+#[test]
 fn a_corpus_path_that_is_not_a_file_is_a_void_and_not_a_refusal() {
     let scratch = Scratch::new("labels-load-void");
     let missing = scratch.path("no-such-corpus.txt");

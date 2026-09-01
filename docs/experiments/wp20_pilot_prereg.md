@@ -1,16 +1,34 @@
 # WP-2.0 — PILOT PRE-REGISTRATION: the label pipeline end to end, on a registered slice
 
-**REVISION 2.** Registered BEFORE the run, at the revision named in §1, under the
+**REVISION 3.** Registered BEFORE the run, at the revision named in §1, under the
 WP-2.0 dispatch's Development-round item 4 and the WP-2.0-finish dispatch's §4
 (`docs/experiments/wp20_dispatches.md`), and under the operator grant recorded at
-`docs/decisions.md` D-552.
+`docs/decisions.md` D-552. **This is the one fix round revision 2's FAIL buys**
+(`docs/experiments/wp20_pilot_prereg_REVIEW.md`: 1 BLOCKING, 7 MAJOR, 6 MINOR),
+and it is scoped to that review's enumerated remedies.
 
-## 0.1 REVISION HEADER — what moved from revision 1, and why
+## 0.1 REVISION HEADER
 
-**REVISION 1 TOOK NO REVIEW.** No section of this document has ever been passed by
-a reviewer, so D-547's passed-section freeze binds nothing here yet and this
-header records the change for the reader rather than to discharge the law. From
-revision 2 onward the freeze binds normally.
+**NO SECTION OF THIS DOCUMENT HAS BEEN PASSED BY A REVIEWER.** Revision 1 took no
+review; revision 2 took one and FAILED it. D-547's passed-section freeze therefore
+still binds nothing here, and these tables record the changes for the reader
+rather than to discharge the law.
+
+### What moved from revision 2 to revision 3 — one row per review finding
+
+| finding | what moved | where |
+|---|---|---|
+| **B1** — a pass-1 run FAILURE was registered as `V2 — PASS WITH A FINDING`, because `arena --config` returns `1` from two disjoint branches and §4C read the code as if it had one meaning | the criterion is read from TWO receipts — whether the `VERDICT` line printed, and the forfeit count off the summary block — never from the exit status; a died pass 1 becomes its own STOP row | §4C, §5 |
+| **M1** — RULE-2's depth table cited no artifact and named no instrument, while fixing 65 % of the pilot's wall | the depth distribution is now printed by `corpus-check` itself, from the corpus's own `depth_turns` column, with a test driving the shipped program; the sweep is re-run and cited by digest | §1, §6.3, §7.1 |
+| **M2** — the void class said "and nothing else" and omitted a pass failing part-way, which also exits `2` | the class is re-stated with the before-any-work qualifier, and a mid-walk failure becomes STOP row V7-B | §5 |
+| **M3** — RULE-1's floor (a) carried a ground the dry run's own output falsifies, and the section claimed both rules were total when RULE-1 is not | the false ground is withdrawn, the totality claim is retracted, and floor (b)'s sensitivity is tabulated | §6.1 |
+| **M4** — §7.2 exempted finding 1 from this pilot, but C-E is a pilot criterion that finding 1 narrows | the exemption is withdrawn for finding 1 and the narrowness is put on the run's own face by the summary line | §7.2 |
+| **M5** — §8 claimed both loader injections were pinned against the shipped binary; the digest one was pinned by a direct call | the claim is corrected AND the gap closed with a binary-driven test — this document's own instance of D-553 | §8 |
+| **M6** — the dry run ran against a working-tree edit, at a revision whose committed config carried a placeholder digest | the dry run is RE-RUN at a committed revision and re-cited | §1, §7.1 |
+| **M7** — `docs/book_v2_ledger.md` asserted RULE-1 "was registered before those costs existed", contradicting §6.1's disclosure | the ledger row now carries the amendment and points at §6.1 | the ledger |
+| minors | the replay and transform wall terms are measured rather than asserted; §7's extrapolation ground is restated as `p = turn_cap + 1`; C-B's whole-range deviation from both dispatches' "sub-range" is named as a deviation; the forfeit relaxation against the dispatch's DONE line is named; C-B is read from `cmp`'s exit code rather than from two digests compared by eye; `corpus-check` gains the item-9 path guard its sibling had | §3, §4B, §4C, §6.1, §7, §8 |
+
+### What moved from revision 1 to revision 2
 
 | § | what changed | why |
 |---|---|---|
@@ -44,24 +62,24 @@ is supplied.
 
 | what | which | revision |
 |---|---|---|
-| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | `1311454` |
-| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | `1311454` |
-| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | `1311454` |
-| the corpus loader | `crates/pistol-arena/src/bin/corpus-check.rs` | `1311454` |
-| the cold-label referent | `tools/cold_label_check.py` | `1311454` |
+| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | SLOT R1 |
+| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | SLOT R1 |
+| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | SLOT R1 |
+| the corpus loader, **and the instrument RULE-2's depth table is read from** | `crates/pistol-arena/src/bin/corpus-check.rs` | SLOT R1 |
+| the cold-label referent | `tools/cold_label_check.py` | SLOT R1 |
 | the engine | `target/release/pistol`, bound by content | `180b4c40…` (`binary_sha256`), §9 |
-| the engine config | `configs/instrument_v0.toml` | `1311454` |
-| the arena config | `configs/arena_wp20_label_pilot.toml` | `1311454` |
-| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | `1311454` |
-| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | `1311454` |
+| the engine config | `configs/instrument_v0.toml` | SLOT R1 |
+| the arena config | `configs/arena_wp20_label_pilot.toml` | SLOT R1 |
+| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | SLOT R1 |
+| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | SLOT R1 |
 
-**SLOT R1 IS ONE VALUE AND IT IS FILLED: `1311454`**, the commit that landed this
-document, its two arena configs and the ledger row. Every artefact above except
+**SLOT R1 IS ONE VALUE**, the commit that lands this revision together with its
+two arena configs, the ledger row and the instruments. Every artefact above except
 the engine binary is a tracked file, so naming the commit names all of them at
 once, and a change to any of them reopens this document
-(`docs/process.md`, "Instrument governing revision"). **The review of this
-pre-registration is dispatched against `1311454` plus the slot-pass commit that
-fills §9**, and a later revision does not inherit that review.
+(`docs/process.md`, "Instrument governing revision"). **The review of this pre-registration is
+dispatched against the revision that GOVERNS the run, and a review of a superseded
+revision does not transfer** (`CLAUDE.md`, Process).
 
 **SLOT R2 IS FILLED AT THE SLOT PASS AND NOWHERE ELSE**: it is the digest of
 `target/release/pistol` as built for the run, and a path is not an identity
@@ -184,8 +202,19 @@ rather than discovering it afterwards.
 
 **WHAT IT MUST SHOW.** For pass 2: two captures over one report at one label
 budget, byte-identical. For pass 3: two corpora over one capture and one report,
-byte-identical. Both are `sha256sum` equality on the whole rendered file, header
-included.
+byte-identical. Both comparisons are **`cmp -s`, read from its EXIT CODE** —
+`0` identical, `1` differing, `2` a file it could not read — and not from two
+`sha256sum` lines a reader compares by eye. §8's own rule is that a criterion is
+read from a code; a pair of printed digests is a criterion read by a human, which
+is the weaker instrument and the one this document was using. The digests are
+printed as well, because they are what a later reader cites.
+
+**THIS IS A DEVIATION FROM BOTH DISPATCHES AND IS NAMED AS ONE.** Each asks for
+*"the re-run determinism receipt on a sub-range"*; this document registers the
+WHOLE range instead, which is strictly stronger and costs a second full capture
+pass — 65 % of the pilot's wall (§6.3). The deviation is taken because the two
+passes have no subsetting flag and the only way to make a sub-range would be to
+edit a report, which changes its `source_sha256` and so changes the question.
 
 **WHY PASS 1 IS NOT IN THIS CRITERION, said so a reader does not read its absence
 as an oversight**: the arena's report carries its own wall time, so two runs of one
@@ -217,14 +246,35 @@ gate that answered about fewer games than it was given, and the mode's own stder
 says exactly that where it happens — *"a criterion over some of a report's games is
 not one anybody registered"*.
 
-**ZERO FORFEITS.** The pilot's own pass-1 exit code is the receipt: `--config`
-returns `0` only where `score::tally(&played.records).forfeits == 0`, and `1`
-otherwise with the report still written. **A nonzero forfeit count does not stop
-the arc** — pass 2 captures a forfeited game's positions like any other, which is
-D-544's own recorded decision and is safe because `transcript::read`
-legality-checks every game before pass 2 exists — but it is reported as a FINDING
-rather than a footnote, because a self-match of one deterministic engine against
-itself has no protocol reason to forfeit.
+**ZERO FORFEITS, AND WHY THE EXIT CODE ALONE CANNOT BE THE RECEIPT.**
+`crates/pistol-arena/src/bin/arena.rs` returns `1` from **two disjoint
+branches**, and its own usage block says so — *"1 abandoned **or** forfeited
+(report still written)"*. One branch is a completed match with a nonzero forfeit
+count; the other is a run that DIED, whose stderr calls the partial report *"a
+diagnostic, not as a sample"*. **A criterion that read `1` as "forfeits" would
+read an aborted pilot as a completed one with a finding**, and the two have
+opposite consequences.
+
+So the criterion is read from **two receipts, not one**:
+
+1. **Did pass 1 complete?** `summary::render`'s block is printed only on the
+   completing branch, so the run's stdout carrying the `VERDICT` line is what
+   says the match finished. **A pass 1 that died is verdict V7-A of §5 and STOPS
+   the arc**; its report is not captured, because a capture over a partial report
+   would be a corpus over a sample nobody registered.
+2. **How many forfeits?** Read from that same printed summary block, which
+   reports the tally, and never inferred from the exit status.
+
+**A NONZERO FORFEIT COUNT ON A COMPLETED PASS 1 DOES NOT STOP THE ARC** — pass 2
+captures a forfeited game's positions like any other, which is D-544's own
+recorded decision and is safe because `transcript::read` legality-checks every
+game before pass 2 exists — but it is reported as a FINDING rather than a
+footnote, because a self-match of one deterministic engine against itself has no
+protocol reason to forfeit. **This is a RELAXATION of the WP-2.0 dispatch's DONE
+line "zero forfeits", and it is named as one rather than left to be noticed**:
+the dispatch lists zero forfeits among the pilot's receipts, and this document
+registers a nonzero count as a reported finding instead of a stop, on the ground
+that D-544 already settled that forfeited games are capturable.
 
 **THE DEFECT CLASS.** A report whose recorded games are not the games its engines
 play, which would make every label a label of a position that never occurred.
@@ -306,24 +356,37 @@ of these rows is itself a finding about this document.
 | # | outcome | what makes it that | what follows |
 |---|---|---|---|
 | V1 | **PASS** | C-A, C-B, C-C and C-E all as registered; C-D measured | the closure's §3 runs: the corpus plan is derived from C-D |
-| V2 | **PASS WITH A FINDING** | as V1, except a nonzero forfeit count | as V1, and the forfeit count and its games are named in the closure |
+| V2 | **PASS WITH A FINDING** | as V1, except a nonzero forfeit count on a pass 1 that COMPLETED | as V1, and the forfeit count and its games are named in the closure |
 | V3 | **STOP — cold-label mismatch** | C-A exit 1 | the arc STOPS; artifacts preserved; the disagreeing records are the finding |
 | V4 | **STOP — determinism** | C-B: a digest differs | the arc STOPS; both outputs preserved |
 | V5 | **STOP — replay** | C-C: exit 1, or a nonzero divergence count, or `covered != total` | the arc STOPS; the replay document is the diagnostic |
 | V6 | **STOP — schema** | C-E: any of the three runs answers other than as registered | the arc STOPS; the corpus and the two injections preserved |
-| V7 | **VOID** | see below | ONE re-run, on a receipted environment fault; a SECOND void STOPS with artifacts preserved |
+| V7-A | **STOP — pass 1 died** | pass 1 exits `1` with **no `VERDICT` line on stdout**, so the report is a partial one the program itself calls a diagnostic | the arc STOPS. The partial report is preserved and is NOT captured: a capture over it would be a corpus over a sample nobody registered, and C-C would pass on it because `covered == total` over the games that are there |
+| V7-B | **STOP — a pass died after pass 1** | `--capture` or `--labels` exits `2` **after work had begun** — a channel failing mid-walk, an engine refusing an ask, a record refused on write | the arc STOPS. This is a refusal BY the pipeline about its own inputs and is not a void; §5's void class excludes it by name |
+| V8 | **VOID** | see below | ONE re-run, on a receipted environment fault; a SECOND void STOPS with artifacts preserved |
 
 **THE VOID CLASS, DEFINED.** A void is *no answer was taken*, never *the answer is
 no* (`tools/SHELL_CHECKLIST.md` item 12). It is exactly one of:
 
-- an instrument exiting `2` — `cold_label_check` or `corpus-check` refusing to
-  look, or `arena` refusing a document before any game;
+- `cold_label_check.py` or `corpus-check` exiting `2` — an instrument refusing to
+  LOOK: a path that is not a file, a stride spelled unusably, a capture whose body
+  does not digest to its header;
+- `arena` exiting `2` **before any work began** — a document refused on read: a
+  budget that is not `nodes`, two seats attesting different engines, an engine
+  whose digest has drifted, an `--out` path already claimed;
 - the machine taking the run away: a filesystem filling, a process killed, a
   reboot, or the session ending mid-pass. `/tmp` on this machine is a 24 GiB
   RAM-backed tmpfs and its exhaustion is the recorded instance (D-281, D-285);
-- **and nothing else.** A criterion answering "no" is V3-V6 and is NOT a void, and
-  a run that is slower than §6 estimated is not a void either — a wall estimate is
-  not a criterion and cannot be failed.
+- **and nothing else.**
+
+**THE TWO EXCLUSIONS THAT COST THIS DOCUMENT A REVIEW ROUND, named so they cannot
+be read back in.** (i) `arena` also exits `2` when a pass fails PART-WAY — the
+same code, a different meaning — because `dispatch` maps every `ArenaError` to
+one status (`crates/pistol-arena/src/bin/arena.rs`). That is the pipeline
+refusing its own input and it is **V7-B, a STOP**, not a void. The two are told
+apart by whether any output was produced before the refusal, which each pass
+prints. (ii) A criterion answering "no" is V3-V6, and a run slower than §6
+estimated is neither — a wall estimate is not a criterion and cannot be failed.
 
 **A void is receipted before it is re-run**: the receipt names the filesystem, the
 process or the signal, so that "I could not look" is distinguishable in the record
@@ -348,10 +411,13 @@ free choice.**
 
 **THE WALL BUDGET, stated as the constraint it is.** The pilot's total machine
 time is **at most four hours**, counting every pass this document registers —
-pass 1, BOTH capture passes, both corpus transforms and the cold-label check.
-This is an operator-attention and session-capacity constraint and is honestly
-labelled one: it is not derived from anything about the pipeline, and it is the
-only number in §6 that is not.
+pass 1, BOTH capture passes, both corpus transforms, the replay and the
+cold-label check. This is an operator-attention and session-capacity constraint
+and is honestly labelled one: it is not derived from anything about the pipeline.
+**Measured, it binds nothing** — RULE-1's own sensitivity table shows every
+candidate floor fitting inside it — so it is a ceiling that has not had to
+refuse anything, and the document says that rather than letting its presence
+imply a constraint it did not exert.
 
 **RULE-2 — the LABEL budget (SLOT S2), fixed by DEPTH and not by wall.** The
 candidates are `100000`, `200000` and `400000` nodes — two, four and eight times
@@ -381,24 +447,59 @@ package itself declares is not corpus. **I did not notice this until the numbers
 made it concrete, and that is the honest account.**
 
 *What it says now:* SLOT S1 is **the SMALLEST `openings_take` satisfying all
-three of** — (a) at least **4** openings, the floor at which the report's own
-pairing is exercised over more than one pair; (b) at least **1 000 asked
+three of** — (a) at least **4** openings; (b) at least **1 000 asked
 positions**, so that C-D's labels-per-hour is a rate over a thousand searches
-rather than a handful, and C-A at stride 1 is a total check over a sample of
-that size; (c) a derived wall at or under the four-hour ceiling. **If (a) and (b)
+rather than a handful, and C-A at stride 1 is a total check over a sample of that
+size; (c) a derived wall at or under the four-hour ceiling. **If (a) and (b)
 cannot both fit under (c) at SLOT S2, SLOT S2 drops to the next smaller candidate
 and RULE-1 is applied again**; if they do not fit at `100000` either, that is a
 STOP and the pilot returns to the architect.
 
-**THIS IS THE ONE THING IN THIS DOCUMENT MOST DESERVING OF ATTACK, and the
-reviewer is asked for it by name.** The amendment moves the answer from 56 to 13
-— it makes the pilot CHEAPER — so the reader must satisfy themselves it is a
-correction and not a convenience. Two things are offered and neither is
-conclusive on its own: the new rule is stated as a MINIMUM against fixed floors
-rather than a maximum against a clock, so it cannot be tuned by moving the
-ceiling; and **RULE-2, which was NOT amended, fired against my convenience** —
-it selected `400000`, the most expensive of its three candidates, and I left it
-there.
+**THE FIRST REVIEW ROUND FOUND TWO THINGS WRONG WITH THAT PARAGRAPH AND BOTH ARE
+CORRECTED HERE RATHER THAN DEFENDED.**
+
+**(i) FLOOR (a)'s STATED GROUND WAS FALSE.** It read *"the floor at which the
+report's own pairing is exercised over more than one pair"*, and the dry run's
+own line 5 falsifies it: at `openings_take = 2` the report prints `(2 pairs)`.
+Two openings already give two pairs. **The ground is withdrawn. Floor (a) is
+kept, at 4, as a floor with no derivation** — it is a judgement that a shakedown
+should span more than a couple of openings, and it binds nothing here because
+floor (b) dominates it at every candidate budget.
+
+**(ii) THE RULE IS NOT TOTAL, AND THE EARLIER CLAIM THAT IT WAS IS RETRACTED.**
+This section previously said *"Both rules are total: applied to §7's
+measurements they leave no free choice."* **That is true of RULE-2 and RULE-3 and
+FALSE of RULE-1**, because floor (b)'s value is a judgement and the answer moves
+with it. The sensitivity is put on the document's face instead of being implied
+away:
+
+| floor (b) | smallest `T` | asked positions | derived wall | inside the ceiling? |
+|---|---|---|---|---|
+| 500 positions | 7 | 574 | ~30 min | yes |
+| **1 000 positions** | **13** | **1 066** | **~55 min** | **yes** |
+| 2 000 positions | 25 | 2 050 | ~1 h 46 | yes |
+
+**So the four-hour ceiling constrains nothing at any of these floors, and floor
+(b) does all the work.** The document does not pretend otherwise. **1 000 is
+chosen and not derived**, on the stated ground that a throughput rate quoted to a
+corpus plan should rest on at least a thousand searches; a reader who thinks 500
+or 2 000 is the better number is disagreeing with a judgement, not catching an
+error, and the table is here so that disagreement is cheap to act on.
+
+**WHAT IS OFFERED AGAINST THE SUSPICION THAT THE AMENDMENT IS CONVENIENCE**, now
+that the weaker of the two original defences has been withdrawn: **RULE-2, which
+was NOT amended, fired against convenience** — it selected `400000`, the most
+expensive of its three candidates and 65 % of the pilot's wall, and it was left
+where it fired. That is evidence about this document's method and it is not
+proof about this rule.
+
+**AND THE ONE THING FLOOR (b) DOES NOT WEIGH, which §7.2's finding 1 raises**:
+game SHAPE. Every dry-run game reached the turn cap undecided, so a larger draw
+might buy a decided game and with it the only `result` value the corpus has never
+carried. **RULE-1 weights that at zero and the closure is told so** (§10), because
+a floor set on position COUNT cannot reach a property of the game DISTRIBUTION,
+and inventing a coverage floor after seeing which coverage was missing is the
+move this whole section exists to forbid.
 
 **RULE-3 — the cold-label stride (SLOT S3).** SLOT S3 is **1 — every record — if
 the derived wall including a stride-1 cold check fits the budget under RULE-1;
@@ -424,7 +525,7 @@ wall  =  2T*g                      pass 1, at 4 workers
       +  (2T*p / S3) * c           the cold-label check, serial
 ```
 
-### 6.3 SLOT W — FILLED, from `artifacts/wp20pilot_dryrun_f297eab_v1.txt`
+### 6.3 SLOT W — FILLED, from SLOT A (the dry-run artifact named in §7.1)
 
 **THE FOUR MEASURED COSTS**, every one from that artifact's own printed lines
 over 4 games and 164 asked positions:
@@ -532,8 +633,12 @@ carry the same encoding. **The one difference that is not identity is recorded
 rather than smoothed over**: v1's openings are FOUR turns and v2's are THREE
 (`configs/random_openings_v2.toml` fixes five stones, *"the position after turn
 3"*), so under one turn cap a dry-run game has one fewer engine-chosen turn than
-a pilot game. §6's arithmetic uses per-TURN and per-POSITION costs and never a
-per-game constant, which is what makes the extrapolation survive that difference.
+a pilot game. §6's arithmetic is stated per POSITION, and the positions a
+capped game contributes are `turn_cap + 1` — which is a function of the CAP and
+not of the opening's length, so it is 41 under both books. That, and not the
+absence of a per-game constant, is what makes the extrapolation survive the
+difference; §6.3 uses `p = 41` for exactly this reason and records that it is an
+upper bound because a DECIDED game contributes fewer.
 
 **IT CONSUMES NO `book_v2` RANGE**, so it is not a draw the ledger records, and it
 is not the pilot's first run.
@@ -566,7 +671,7 @@ revision this document lands in: `openings_v1.txt`, `openings_take = 2`,
 120000`, budget `nodes 50000`, both seats `target/release/pistol` with
 `configs/instrument_v0.toml`.
 
-**THE RECORDED OUTPUT** is `artifacts/wp20pilot_dryrun_f297eab_v1.txt`. Every
+**THE RECORDED OUTPUT** is SLOT A. Every
 command of §8 ran to its registered exit code:
 
 | command | exit | what it printed |
@@ -607,9 +712,15 @@ run that only confirmed what was expected would be worth less.
    corpus plan must carry, not a finding against the pipeline.
 3. **THE COLDNESS COST IS 2.4 %.** Recorded in §6.3 and repeated nowhere else.
 
-**FINDINGS 1 AND 2 ARE FOR THE CLOSURE AND NOT FOR THIS PILOT.** Neither is a
-criterion, neither can fail, and neither changes a value above; what they change
-is what a corpus plan may promise, which is §10's business.
+**FINDING 2 IS FOR THE CLOSURE. FINDING 1 IS FOR THE CLOSURE *AND* BINDS C-E
+HERE**, and the earlier revision's claim that both were the closure's alone is
+withdrawn. C-E's control run loads a corpus whose `result` and `end` columns hold
+ONE value each, so it exercises one arm of each of those two token-set guards and
+not both. **C-E is not thereby vacuous** — the two injections fail on columns the
+corpus does exercise, and `corpus-check` now prints each closed-set column's
+spread so the narrowness is on the run's own face rather than in this paragraph —
+but a reader must not take a green C-E for a claim that the loader was exercised
+across its whole grammar. Neither finding changes a value in §6.
 
 ---
 
@@ -653,6 +764,7 @@ echo "capture1 exit=$?"; echo "capture1 seconds=$((SECONDS - t))"
 t=$SECONDS
 "$A" --capture "$ART/report_v1.txt" --out "$ART/capture_v2.txt" --label-nodes <S2>
 echo "capture2 exit=$?"; echo "capture2 seconds=$((SECONDS - t))"
+cmp -s "$ART/capture_v1.txt" "$ART/capture_v2.txt"; echo "capture-determinism exit=$?"
 sha256sum "$ART/capture_v1.txt" "$ART/capture_v2.txt"
 
 # --- pass 3: the corpus, TWICE (criterion C-B) -------------------------------
@@ -660,6 +772,7 @@ sha256sum "$ART/capture_v1.txt" "$ART/capture_v2.txt"
 echo "labels1 exit=$?"
 "$A" --labels "$ART/capture_v1.txt" --report "$ART/report_v1.txt" --out "$ART/corpus_v2.txt"
 echo "labels2 exit=$?"
+cmp -s "$ART/corpus_v1.txt" "$ART/corpus_v2.txt"; echo "labels-determinism exit=$?"
 sha256sum "$ART/corpus_v1.txt" "$ART/corpus_v2.txt"
 
 # --- criterion C-A: the cold-label agreement check ---------------------------
@@ -702,15 +815,25 @@ target/release/corpus-check "$ART/corpus_digest.txt"; echo "inject-digest exit=$
 re-digests and therefore reaches the GRAMMAR; run 3 does not and is stopped by the
 DIGEST two checks earlier. Without run 3, run 2 would be indistinguishable from a
 loader that only ever checks digests — which is the vacuity `docs/process.md`
-names, in the shape it takes here. The same two injections are pinned as tests
-against the shipped binary at
-`crates/pistol-arena/tests/labels_tests.rs`; the runs above are a second instance
-over a corpus the pilot itself wrote, at the pilot's own scale.
+names, in the shape it takes here.
+
+**A CLAIM ABOUT THOSE TESTS WAS WRONG IN REVISION 2 AND IS CORRECTED, BECAUSE IT
+WAS THIS DOCUMENT'S OWN INSTANCE OF THE LAW IT CITES.** Revision 2 said *"the
+same two injections are pinned as tests against the shipped binary"*. Only the
+GRAMMAR one was: the digest refusal's test called `labels_file::read` DIRECTLY,
+which pins the function and leaves "the program never checked" alive — **D-553's
+class, in a document written three commits after D-553 was appended.** The gap is
+closed rather than the sentence softened:
+`a_corpus_whose_body_digest_is_wrong_is_refused_by_the_shipped_loader` in
+`crates/pistol-arena/tests/labels_tests.rs` now drives the binary, beside the
+direct test that pins the message. With that landed, both injections are pinned
+against the shipped program, and the runs above are a second instance over a
+corpus the pilot itself wrote, at the pilot's own scale.
 
 **SLOT C — FILLED.** `<S2>` is **`400000`** (§6.3, RULE-2) and `<S3>` is **`1`**
 (§6.3, RULE-3). The block as run, its exit codes and its elapsed seconds are
 recorded at the run in `artifacts/`, and the dry run's instance of the same block
-is `artifacts/wp20pilot_dryrun_f297eab_v1.txt` (§7.1), which differs only in the
+is SLOT A (§7.1), which differs only in the
 config it names and in carrying the four-budget RULE-2 sweep the pilot does not
 repeat.
 
@@ -745,7 +868,7 @@ see what will be checked rather than take the check on trust.
 | command | `--stride` | §6 RULE-3 (SLOT S3) |
 | command | `--workers` on `--replay` | §4C — `4`; the pass replays every game with no early stop, so what it finds does not depend on this number |
 
-### 9.1 SLOT P — FILLED, read from `configs/arena_wp20_label_pilot.toml` at `1311454`
+### 9.1 SLOT P — FILLED, read from `configs/arena_wp20_label_pilot.toml` at SLOT R1
 
 | key | committed value | governed by | agrees? |
 |---|---|---|---|

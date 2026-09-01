@@ -40,14 +40,19 @@ registered from a measurement rather than chosen — `docs/experiments/book_v2_r
 |---|---|---|---|---|
 | 0 | 13 | `0..12` | the WP-2.0 label-pipeline PILOT, `configs/arena_wp20_label_pilot.toml` | `docs/experiments/wp20_pilot_prereg.md` revision 2 |
 
-**THE FIRST ROW, and what it does and does not spend.** Thirteen openings is not
-a chosen number: the pre-registration's RULE-1 returns it from the per-unit costs
-its dry run measured, and the rule was registered before those costs existed
-(§6.1, §6.3). **The pilot is not corpus** (D-539), so this range buys a pipeline
-shakedown and no evidence about anything — which is exactly why the ledger records
-it: a range spent on a run that concludes nothing is still spent, and a successor
-that re-read `0..12` for a governed verdict would be reading a sample this session
-chose.
+**THE FIRST ROW, and what it does and does not spend.** Thirteen is what the
+pre-registration's RULE-1 returns from the per-unit costs its dry run measured
+(§6.3). **RULE-1 WAS AMENDED AFTER THOSE COSTS EXISTED, and this row says so
+because the ledger is the durable record a successor reads first**: the rule as
+first registered returned 56, was found to maximise against the clock rather than
+against what the pilot's criteria need, and was replaced by a minimum against
+stated floors — the whole disclosure, including the floor whose ground was
+withdrawn and the sensitivity of 13 to that floor, is §6.1. A reader who wants to
+know how firm `13` is should read that section and not this row. **The pilot is
+not corpus** (D-539), so this range buys a pipeline shakedown and no evidence
+about anything — which is exactly why the ledger records it: a range spent on a
+run that concludes nothing is still spent, and a successor that re-read `0..12`
+for a governed verdict would be reading a sample this session chose.
 
 ## Standing claims on the book, not yet consumed
 
