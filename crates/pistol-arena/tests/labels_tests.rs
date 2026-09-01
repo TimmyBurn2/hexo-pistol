@@ -673,6 +673,51 @@ fn a_corpus_path_that_is_not_a_file_is_a_void_and_not_a_refusal() {
 }
 
 #[test]
+fn a_corpus_path_carrying_a_control_character_is_a_void_before_it_is_printed() {
+    // The item-9 boundary guard, driven at its CALL. A newline is legal in a
+    // Linux filename, so this input is reachable rather than hypothetical, and a
+    // path interpolated into the receipt this program prints would INJECT LINES
+    // into a document somebody parses (tools/SHELL_CHECKLIST.md item 9). The
+    // guard landed in a round whose own document invokes D-553 by name and it
+    // landed with no test; this is that test.
+    let scratch = Scratch::new("labels-load-ctrl");
+    let (corpus, _) = corpus_of(&scratch, "loadctrl");
+    let path = scratch.write("corpus\nwith-a-newline.txt", &corpus);
+    let (code, stdout, stderr) = checked(&[&path]);
+    assert_eq!(
+        code,
+        Some(2),
+        "a path carrying a control character was not a VOID; 0 would have meant it was \
+         read and printed.\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+    assert!(
+        stderr.contains("control character") && stderr.contains("NOT a refusal"),
+        "the void did not name the boundary it guards: {stderr}"
+    );
+    assert!(
+        !stdout.contains("record(s)"),
+        "the guarded path reached the printed receipt anyway: {stdout}"
+    );
+}
+
+#[test]
+fn the_summary_reports_every_closed_set_column_the_loader_checks() {
+    // The usage block promises "each of the closed-set columns", and
+    // `labels_file`'s loader checks four: to_move, book, result, end.
+    let scratch = Scratch::new("labels-tokensets");
+    let (corpus, _) = corpus_of(&scratch, "tokensets");
+    let path = scratch.write("corpus-tokensets-copy.txt", &corpus);
+    let (code, stdout, stderr) = checked(&[&path]);
+    assert_eq!(code, Some(0), "the control corpus did not load: {stderr}");
+    for column in ["to_move", "book", "result", "end"] {
+        assert!(
+            stdout.contains(&format!("{column} ")),
+            "the summary omits the `{column}` token set: {stdout}"
+        );
+    }
+}
+
+#[test]
 fn naming_no_corpus_at_all_is_a_void() {
     let (code, stdout, stderr) = checked(&[]);
     assert_eq!(

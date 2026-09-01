@@ -72,15 +72,24 @@ fn summarise(corpus: &pistol_arena::labels_file::Corpus) -> String {
     let mut results: Vec<String> = corpus.records.iter().map(|r| r.result.clone()).collect();
     let mut ends: Vec<String> = corpus.records.iter().map(|r| r.end.clone()).collect();
     let mut moves: Vec<String> = corpus.records.iter().map(|r| r.to_move.clone()).collect();
+    // `book` is one of the loader's four token sets and is reported for that
+    // reason; `score_kind` is not one but is reported anyway, because a corpus
+    // reaching one score spelling is as narrow as one reaching one result.
+    let mut books: Vec<String> = corpus
+        .records
+        .iter()
+        .map(|r| if r.book { "yes" } else { "no" }.to_string())
+        .collect();
     format!(
         "depth_turns median {:.1} mean {:.4} min {} max {}; score_kind {}; to_move {}; \
-         result {}; end {}",
+         book {}; result {}; end {}",
         median(&depths),
         mean,
         depths.first().copied().unwrap_or(0),
         depths.last().copied().unwrap_or(0),
         spread(&mut kinds),
         spread(&mut moves),
+        spread(&mut books),
         spread(&mut results),
         spread(&mut ends),
     )

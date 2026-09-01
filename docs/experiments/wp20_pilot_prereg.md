@@ -1,11 +1,13 @@
 # WP-2.0 — PILOT PRE-REGISTRATION: the label pipeline end to end, on a registered slice
 
-**REVISION 3.** Registered BEFORE the run, at the revision named in §1, under the
+**REVISION 4.** Registered BEFORE the run, at the revision named in §1, under the
 WP-2.0 dispatch's Development-round item 4 and the WP-2.0-finish dispatch's §4
 (`docs/experiments/wp20_dispatches.md`), and under the operator grant recorded at
-`docs/decisions.md` D-552. **This is the one fix round revision 2's FAIL buys**
-(`docs/experiments/wp20_pilot_prereg_REVIEW.md`: 1 BLOCKING, 7 MAJOR, 6 MINOR),
-and it is scoped to that review's enumerated remedies.
+`docs/decisions.md` D-552, whose third and fourth rounds are **scoped to the prior
+review's enumerated remedies only**. This is round three, and it is so scoped:
+every change below answers a numbered finding of
+`docs/experiments/wp20_pilot_prereg_REVIEW_rev3.md` (0 BLOCKING, 5 MAJOR,
+10 MINOR) and nothing else is touched.
 
 ## 0.1 REVISION HEADER
 
@@ -13,6 +15,32 @@ and it is scoped to that review's enumerated remedies.
 review; revision 2 took one and FAILED it. D-547's passed-section freeze therefore
 still binds nothing here, and these tables record the changes for the reader
 rather than to discharge the law.
+
+### What moved from revision 3 to revision 4 — one row per finding of the scoped re-review
+
+**THE RE-REVIEW GRADED REVISION 3 AS 9 OF 14 APPLIED, 2 PARTIAL, 2 APPLIED-WITH-A-
+NEW-DEFECT AND 1 THAT INTRODUCED ITS OWN.** Three of its five MAJORs are one
+class — **a remedy that fixed a sentence and left its contradiction standing
+somewhere else in the same document** — and that is recorded here rather than
+spread across three rows, because it is the finding about method.
+
+| finding | what moved | where |
+|---|---|---|
+| **MAJ-1** — §5's V7-B discriminator ("whether any output was produced") does not exist: neither pass prints before success and the partial output is deleted | the discriminator becomes an EXHAUSTIVE ENUMERATION of the pre-work refusals; anything else at exit `2` is V7-B | §5 |
+| **MAJ-2** — the retracted totality claim was still standing verbatim, so §6.1 asserted a proposition and its negation | the claim is corrected AT ITS HEAD, where it was made, and paragraph (ii) records that revision 3's remedy wrote the denial and left the assertion | §6.1 |
+| **MAJ-3** — §2, which owns the slice, still stated the pre-amendment RULE-1, which returns 56 | §2 stops restating the rule and points at §6.1; a size stated twice is a size that can drift, and it did | §2 |
+| **MAJ-4** — the remedy that re-measured `c` SPENT a claim true in revision 2, leaving "the coldness cost is 2.4 %" standing as a finding of a superseded run | both readings are kept with the budget and artifact each belongs to, and the arithmetic showing they do not disagree is given | §7.2 |
+| **MAJ-5** — the item-9 guard landed with no test, in the round whose §8 invokes D-553 by name | `a_corpus_path_carrying_a_control_character_is_a_void_before_it_is_printed` drives the binary over a path holding a newline | the tests |
+| **MIN-1** — M4's remedy reached §7.2 and the instrument but not §4E, the criterion | §4E run 1 registers the summary line and states that C-E's reach is whatever it reports | §4E |
+| **MIN-2** — C-D named `date +%s.%N`, an instrument §8 rules out and the block does not contain | C-D names `SECONDS` | §4D |
+| **MIN-3** — "four measured costs" is six, and one of them read `0` | six, with the transform stated as an upper bound rather than a positive measurement | §6, §6.3, §7 |
+| **MIN-4** — §8's block had no timing brackets for replay or the transforms, so the pilot would inherit the stand-in's numbers | both brackets added to the registered block | §8 |
+| **MIN-5** — the deviation's cost was overstated 2x and both dispatch quotations were inexact | 32.5 %, and the two dispatches quoted separately because they are not the same sentence | §4B |
+| **MIN-6** — the ledger row cited a superseded revision | the row cites revision 4 | the ledger |
+| **MIN-7** — floor (b) is applied to a quantity `p = 41` only bounds from above | the 6 % slack is stated, and the closure reports the actual asked-position count beside the rate | §6.1 |
+| **MIN-8** — the summary omitted `book`, one of the loader's four token sets | `book` added, with a test that the four token sets are all reported | the instrument |
+| **MIN-9** — SLOT A was gitignored and sha-indexed nowhere committed | `docs/experiments/wp20_pilot_artifacts.md`, a committed manifest under rule 8 | a new file |
+| **MIN-10** — "zero forfeits" was read from an absence, which §8 forbids | a nonzero count off the CONDITIONAL clause; zero off the completed pass's exit code | §4C |
 
 ### What moved from revision 2 to revision 3 — one row per review finding
 
@@ -107,12 +135,14 @@ draw. **`openings_skip = 0`, `openings_take = 13`** (SLOT S1, fixed by §6.3's R
 which is a sample because the book is emitted in generator order with no
 provenance column to sort by.
 
-**THE SIZE IS DERIVED, NOT CHOSEN.** §6 fixes a wall budget for the whole pilot
-and §7's dry run measures the per-unit cost of each pass on this machine at these
-budgets; SLOT S1 is the largest take whose derived wall fits that budget, with
-the arithmetic shown in §6. Revision 1 chose eight and defended it with *"leaves
-the run inside a single sitting"*, which is a guess about wall time standing where
-a measurement belongs (D-500's class).
+**THE SIZE IS DERIVED FROM A RULE, AND THE RULE IS §6.1's RULE-1 — WHICH THIS
+SECTION DOES NOT RESTATE.** A slice size stated twice is a slice size that can
+drift, and it did: revision 3 amended RULE-1 in §6.1 and left this paragraph
+carrying the superseded form, which returns 56 rather than 13. **The rule lives in
+§6.1 and its answer in §6.3; this section owns the RANGE and points at them.**
+Revision 1 chose eight and defended it with *"leaves the run inside a single
+sitting"*, which is a guess about wall time standing where a measurement belongs
+(D-500's class), and that is what the rule replaced.
 
 **THE LEDGER ROW LANDS IN THE SAME COMMIT AS THIS DOCUMENT AND THE ARENA CONFIG**,
 which is `docs/book_v2_ledger.md`'s own rule: *"A new pre-registration takes the
@@ -212,10 +242,15 @@ read from a code; a pair of printed digests is a criterion read by a human, whic
 is the weaker instrument and the one this document was using. The digests are
 printed as well, because they are what a later reader cites.
 
-**THIS IS A DEVIATION FROM BOTH DISPATCHES AND IS NAMED AS ONE.** Each asks for
-*"the re-run determinism receipt on a sub-range"*; this document registers the
-WHOLE range instead, which is strictly stronger and costs a second full capture
-pass — 65 % of the pilot's wall (§6.3). The deviation is taken because the two
+**THIS IS A DEVIATION FROM BOTH DISPATCHES AND IS NAMED AS ONE.** The WP-2.0
+dispatch asks for *"the re-run determinism receipt on a sub-range"* and the
+WP-2.0-finish dispatch for *"the determinism re-run receipt on a sub-range"*
+(`docs/experiments/wp20_dispatches.md`, quoted separately because they are not
+the same sentence); this document registers the WHOLE range instead, which is
+strictly stronger and costs the SECOND capture pass — `82.5 T` of §6.3's
+`253.5 T`, or **32.5 % of the pilot's wall**. (The 65 % figure elsewhere in this
+document is the share of BOTH capture passes together, which is a different
+quantity.) The deviation is taken because the two
 passes have no subsetting flag and the only way to make a sub-range would be to
 edit a report, which changes its `source_sha256` and so changes the question.
 
@@ -265,8 +300,14 @@ So the criterion is read from **two receipts, not one**:
    says the match finished. **A pass 1 that died is verdict V7-A of §5 and STOPS
    the arc**; its report is not captured, because a capture over a partial report
    would be a corpus over a sample nobody registered.
-2. **How many forfeits?** Read from that same printed summary block, which
-   reports the tally, and never inferred from the exit status.
+2. **How many forfeits?** A NONZERO count is read off that same printed summary
+   block, whose `CONDITIONAL: <n> forfeited game(s) excluded` clause
+   (`crates/pistol-arena/src/summary.rs`) fires only when the count is nonzero.
+   **ZERO forfeits is read from the exit code of a pass 1 that completed**, which
+   is `0` if and only if the tally is zero — receipt 1 having already established
+   that the pass completed, which is what makes the code readable here. It is
+   stated this way because the block says NOTHING about forfeits at zero, and a
+   criterion read from an absence is the thing §8 forbids by name.
 
 **A NONZERO FORFEIT COUNT ON A COMPLETED PASS 1 DOES NOT STOP THE ARC** — pass 2
 captures a forfeited game's positions like any other, which is D-544's own
@@ -284,9 +325,10 @@ play, which would make every label a label of a position that never occurred.
 
 ### C-D — throughput, MEASURED
 
-**THE INSTRUMENT.** The `date +%s.%N` pair bracketing each pass in §8's command
-block, and the report's own `wall_ms` record for pass 1 as a second reading of the
-same quantity.
+**THE INSTRUMENT.** The `SECONDS` brackets around each pass in §8's command block
+— bash's own integer counter, which is what §8 registers and the only timer that
+block contains — and the report's own `wall_ms` record for pass 1 as a second
+reading of the same quantity.
 
 **WHAT IT MUST SHOW.** Games per hour and labels per hour, each derived from the
 run's own elapsed seconds and its own counts, both stated with the worker count
@@ -318,7 +360,13 @@ exit: 0 every document loads
 1. **THE CONTROL.** Over the pilot's own corpus: exit `0` and
    `corpus_check: <path> ok, <n> record(s), capture_sha256 <hex>`, with `<n>`
    equal to the record count `arena --labels` printed. *A loader that refused
-   everything would pass runs 2 and 3 and answer nothing.*
+   everything would pass runs 2 and 3 and answer nothing.* **AND THE RUN RECORDS
+   ITS OWN REACH**: the `corpus_check:   depth_turns … ; score_kind …; to_move …;
+   book …; result …; end …` line names how many values each closed-set column
+   actually took, and the closure quotes it. **C-E's reach is whatever that line
+   says and no more** — a column the pilot's games drove to one value has had one
+   arm of its guard exercised, and §7.2's finding 1 measured exactly that on the
+   stand-in, where `result` and `end` each held a single value.
 2. **A GRAMMAR INJECTION, RE-DIGESTED HONESTLY.** One record's `key_pos` replaced
    by `not-a-key` and the body digest brought back into agreement: exit `1`,
    naming `key_pos`. **The re-digest is what makes this reach the grammar**: an
@@ -384,12 +432,36 @@ no* (`tools/SHELL_CHECKLIST.md` item 12). It is exactly one of:
 
 **THE TWO EXCLUSIONS THAT COST THIS DOCUMENT A REVIEW ROUND, named so they cannot
 be read back in.** (i) `arena` also exits `2` when a pass fails PART-WAY — the
-same code, a different meaning — because `dispatch` maps every `ArenaError` to
-one status (`crates/pistol-arena/src/bin/arena.rs`). That is the pipeline
-refusing its own input and it is **V7-B, a STOP**, not a void. The two are told
-apart by whether any output was produced before the refusal, which each pass
-prints. (ii) A criterion answering "no" is V3-V6, and a run slower than §6
-estimated is neither — a wall estimate is not a criterion and cannot be failed.
+same code, a different meaning — because `dispatch` maps every `ArenaError` to one
+status (`crates/pistol-arena/src/bin/arena.rs`). That is the pipeline refusing its
+own input and it is **V7-B, a STOP**, not a void. (ii) A criterion answering "no"
+is V3-V6, and a run slower than §6 estimated is neither — a wall estimate is not a
+criterion and cannot be failed.
+
+**HOW V7-B IS TOLD FROM A VOID, and the first answer this document gave was
+wrong.** Revision 3 said the two are separated by *"whether any output was
+produced before the refusal"*. **They are not**: `crates/pistol-arena/src/capture.rs`
+and `crates/pistol-arena/src/labels.rs` contain no print statement at all — every
+line a pass prints is in `crates/pistol-arena/src/passes.rs` AFTER the walk has
+succeeded — and `outpath::abandon` removes the claimed output on any error, so a
+mid-walk failure and a pre-work refusal look identical in stdout and on disk.
+**The discriminator is the ENUMERATION, which is short enough to be exhaustive.**
+A capture or labels run exiting `2` is a VOID if and only if its refusal is one of:
+
+- the source is not a regular file, or is not UTF-8 (`passes.rs`);
+- the report is not one this build reads — a wrong schema, an aborted report, a
+  budget that is not `nodes` (`crates/pistol-arena/src/transcript.rs`);
+- the two seats do not attest one engine, or an engine's digest has drifted since
+  the report was written (`capture.rs`'s `one_engine`, `replay::verify_engines`);
+- the `--out` path is already claimed (`crates/pistol-arena/src/outpath.rs`);
+- for `--labels`, the capture's digest or identity does not bind to the report
+  (`labels.rs`'s two header checks, which run before any record is read).
+
+**Every one of those is decided before the first ask. Any other refusal is
+V7-B and STOPS the arc** — an engine that spoke out of turn, closed its pipe, wrote
+an unreadable line, answered with `error`, or produced a record the write side
+refused. The list is the criterion; a refusal a reader cannot place in it is
+itself a finding about this document.
 
 **A void is receipted before it is re-run**: the receipt names the filesystem, the
 process or the signal, so that "I could not look" is distinguishable in the record
@@ -400,7 +472,7 @@ from "the pipeline is wrong". A void with no receipt is a STOP.
 ## 6. THE WALL ESTIMATE, DERIVED — AND THE SLOTS IT FIXES
 
 **Derived from §7's dry run, which is a cited timing artifact and not a guess**
-(D-500's class). The dry run measures four per-unit costs on this machine at these
+(D-500's class). The dry run measures six per-unit costs on this machine at these
 budgets, and this section shows the arithmetic that turns them into SLOT S1
 (`openings_take`), SLOT S2 (the label budget) and SLOT S3 (the cold-label stride).
 
@@ -409,8 +481,10 @@ budgets, and this section shows the arithmetic that turns them into SLOT S1
 This is `book_v2`'s own discipline applied to a pilot instead of a book — D-518's
 *"the decision rule registered before the sweep, the sweep before the size"* — and
 it exists so that no number below can be chosen after seeing which number would
-be convenient. **Both rules are total: applied to §7's measurements they leave no
-free choice.**
+be convenient. **RULE-2 and RULE-3 are total: applied to §7's measurements they
+leave no free choice. RULE-1 is NOT, and §6.1's own paragraph (ii) says why and
+tabulates the sensitivity** — a document that claimed totality for all three
+would be claiming it for the one rule whose answer moves with a judgement.
 
 **THE WALL BUDGET, stated as the constraint it is.** The pilot's total machine
 time is **at most four hours**, counting every pass this document registers —
@@ -469,11 +543,14 @@ kept, at 4, as a floor with no derivation** — it is a judgement that a shakedo
 should span more than a couple of openings, and it binds nothing here because
 floor (b) dominates it at every candidate budget.
 
-**(ii) THE RULE IS NOT TOTAL, AND THE EARLIER CLAIM THAT IT WAS IS RETRACTED.**
-This section previously said *"Both rules are total: applied to §7's
-measurements they leave no free choice."* **That is true of RULE-2 and RULE-3 and
+**(ii) THE RULE IS NOT TOTAL.** Revision 2 said *"Both rules are total: applied
+to §7's measurements they leave no free choice"* — **true of RULE-2 and RULE-3,
 FALSE of RULE-1**, because floor (b)'s value is a judgement and the answer moves
-with it. The sensitivity is put on the document's face instead of being implied
+with it. The claim is corrected where it was made, at the head of §6.1, and not
+only denied down here: **revision 3's first attempt at this remedy wrote the
+denial and left the assertion standing, so the section asserted a proposition and
+its negation** — which is the defect the remedy was for, reproduced by the
+remedy. The sensitivity is put on the document's face instead of being implied
 away:
 
 | floor (b) | smallest `T` | asked positions | derived wall | inside the ceiling? |
@@ -483,7 +560,17 @@ away:
 | 2 000 positions | 25 | 2 050 | ~1 h 46 | yes |
 | (the ceiling itself) | 56 | 4 592 | ~3 h 57 | the only row it refuses is 57 |
 
-**So the four-hour ceiling constrains nothing at any of these floors, and floor
+**FLOOR (b) IS APPLIED TO AN UPPER BOUND, DELIBERATELY, AND THE SLACK IS 6 %.**
+`2T x 41` counts a CAPPED game's positions, and §6.3 records that `p = 41` bounds
+from above; at `T = 13` the floor is met with 1 066 against 1 000, so **three
+decided games would put the run under its own floor.** That is accepted rather
+than guarded, on the ground that floor (b) is not a criterion — it fixes a size
+BEFORE the run and cannot be re-read after it without becoming the after-the-
+numbers decision §6.1 exists to forbid. **The closure reports the pilot's ACTUAL
+asked-position count beside the rate**, so a reader can see whether the thousand
+was reached; a rate over 900 searches is not thereby wrong, it is a rate over 900.
+
+**And the four-hour ceiling constrains nothing at any of these floors, so floor
 (b) does all the work.** The document does not pretend otherwise. **1 000 is
 chosen and not derived**, on the stated ground that a throughput rate quoted to a
 corpus plan should rest on at least a thousand searches; a reader who thinks 500
@@ -531,7 +618,7 @@ wall  =  2T*g                      pass 1, at 4 workers
 
 ### 6.3 SLOT W — FILLED, from SLOT A (the dry-run artifact named in §7.1)
 
-**THE FOUR MEASURED COSTS**, every one from that artifact's own printed lines
+**THE SIX MEASURED COSTS**, every one from that artifact's own printed lines
 over 4 games and 164 asked positions:
 
 | symbol | measured | from |
@@ -541,7 +628,7 @@ over 4 games and 164 asked positions:
 | `l` at `400000` | **1.006 s** per label ask | `capture_400000 seconds=165` over 164 |
 | `c` at `400000` | **1.006 s** per cold ask | `cold seconds=165` over 164, **at the chosen budget** |
 | replay | **1.5 s** per game at `n_workers = 4` | `replay seconds=6` over 4 games |
-| a corpus transform | **under 1 s** | `labels-transform seconds=0` |
+| a corpus transform | **under 1 s**, charged as 1 s | `labels-transform seconds=0` — an UPPER bound, not a positive measurement: the transform finished inside this instrument's one-second resolution |
 
 **RULE-2, APPLIED AS WRITTEN, AND ITS INSTRUMENT IS NAMED.** The depth
 distribution is not computed by this document: each candidate's capture is turned
@@ -666,8 +753,10 @@ upper bound because a DECIDED game contributes fewer.
 is not the pilot's first run.
 
 **THE DRY RUN'S OWN CRITERION.** Every command in §8 runs to its registered exit
-code on the stand-in, and the four per-unit costs of §6 come back as finite
-positive numbers with the counts they are derived from.
+code on the stand-in, and the six per-unit costs of §6 come back with the counts
+they are derived from — five as finite positive numbers, and the corpus transform
+as an upper bound, because a pass that finishes inside a one-second timer's
+resolution reads `0` and `0` is not a measurement of a positive quantity.
 
 **THE DEFECT CLASS THE DRY RUN EXCLUDES.** A command in §8 that cannot run at all
 against a real artefact of this kind — a flag spelled wrong, a mode that refuses
@@ -721,8 +810,10 @@ Every command of §8 ran to its registered exit code:
 | corpus-check, digest injection (C-E 3) | `1` | `REFUSED: ... its body digests to ffc96a13... and its header claims 532a23fb...` |
 
 **THE DRY RUN'S CRITERION IS MET**: every command ran to its registered code, and
-§6's per-unit costs came back finite and positive with the counts they are derived
-from — including the two revision 2 asserted rather than timed.
+§6's six per-unit costs came back with the counts they are derived from —
+including the two revision 2 asserted rather than timed. **Five are positive
+measurements; the corpus transform read `0` and is carried as an upper bound of
+1 s**, which is stated rather than rounded into the positive column.
 
 ### 7.2 THREE MEASURED FINDINGS THE DRY RUN PRODUCED THAT THIS DOCUMENT DID NOT ASK FOR
 
@@ -736,7 +827,8 @@ run that only confirmed what was expected would be worth less.
    now PRINTS that — `result 1 (capped); end 1 (normal); to_move 2 (p1,p2);
    score_kind 3 (eval,mate_in,mated_in)` — so the narrowness is on the run's own
    face and no reader has to take this paragraph's word for it. C-E's control is
-   real and narrower than the schema, and §7.2's footer and §10 both say so.
+   real and narrower than the schema, and §4E's run 1 registers that its reach is
+   whatever the line reports.
 2. **A SELF-MATCH OF ONE DETERMINISTIC ENGINE PLAYS EACH OPENING TWICE AND GETS
    THE SAME GAME**: `distinct-n 2` of `n 4`. The capture walks every game in the
    report, so **a corpus built this way carries each position twice.** This is
@@ -744,7 +836,18 @@ run that only confirmed what was expected would be worth less.
    a report whose two seats do not attest one engine, so a self-match is the only
    shape a capture can be taken from at all. It is arithmetic the closure's
    corpus plan must carry, not a finding against the pipeline.
-3. **THE COLDNESS COST IS 2.4 %.** Recorded in §6.3 and repeated nowhere else.
+3. **THE COLDNESS COST DOES NOT REGISTER AT THE CHOSEN BUDGET, AND BOTH READINGS
+   ARE KEPT WITH THE BUDGET AND ARTIFACT EACH BELONGS TO.** At `nodes 200000`,
+   measured in the SUPERSEDED dry run, the cold ask cost 0.518 s against the
+   in-process ask's 0.506 s — **2.4 %**. At `nodes 400000`, the budget RULE-2
+   selected, measured in SLOT A, both are **1.006 s** and the difference is below
+   the instrument's one-second resolution. **The two do not disagree**: 2.4 % of
+   0.5 s is 12 ms, which at 164 asks is about 2 s and would not separate two
+   integer-second readings of 165. **Revision 3's first attempt at this section
+   left "THE COLDNESS COST IS 2.4 %" standing as a finding of a run this document
+   had just declared superseded** — a remedy that re-measured `c` correctly and
+   spent a true claim on the way, which is the class D-548 names and neither the
+   citation checker nor the passed-section freeze can see.
 
 **FINDING 2 IS FOR THE CLOSURE. FINDING 1 IS FOR THE CLOSURE *AND* BINDS C-E
 HERE**, and the earlier revision's claim that both were the closure's alone is
@@ -802,8 +905,9 @@ cmp -s "$ART/capture_v1.txt" "$ART/capture_v2.txt"; echo "capture-determinism ex
 sha256sum "$ART/capture_v1.txt" "$ART/capture_v2.txt"
 
 # --- pass 3: the corpus, TWICE (criterion C-B) -------------------------------
+t=$SECONDS
 "$A" --labels "$ART/capture_v1.txt" --report "$ART/report_v1.txt" --out "$ART/corpus_v1.txt"
-echo "labels1 exit=$?"
+echo "labels1 exit=$?"; echo "labels-transform seconds=$((SECONDS - t))"
 "$A" --labels "$ART/capture_v1.txt" --report "$ART/report_v1.txt" --out "$ART/corpus_v2.txt"
 echo "labels2 exit=$?"
 cmp -s "$ART/corpus_v1.txt" "$ART/corpus_v2.txt"; echo "labels-determinism exit=$?"
@@ -816,8 +920,9 @@ python3 tools/cold_label_check.py --capture "$ART/capture_v1.txt" \
 echo "cold exit=$?"; echo "cold seconds=$((SECONDS - t))"
 
 # --- criterion C-C: replay over every pilot game -----------------------------
+t=$SECONDS
 "$A" --replay "$ART/report_v1.txt" --out "$ART/replay_v1.txt" --workers 4
-echo "replay exit=$?"
+echo "replay exit=$?"; echo "replay seconds=$((SECONDS - t))"
 
 # --- criterion C-E, run 1: the control ---------------------------------------
 target/release/corpus-check "$ART/corpus_v1.txt"; echo "load exit=$?"
@@ -867,9 +972,11 @@ corpus the pilot itself wrote, at the pilot's own scale.
 **SLOT C — FILLED.** `<S2>` is **`400000`** (§6.3, RULE-2) and `<S3>` is **`1`**
 (§6.3, RULE-3). The block as run, its exit codes and its elapsed seconds are
 recorded at the run in `artifacts/`, and the dry run's instance of the same block
-is SLOT A (§7.1), which differs only in the
-config it names and in carrying the four-budget RULE-2 sweep the pilot does not
-repeat.
+is SLOT A (§7.1), which differs from it in
+two ways and no others: the config it names, and the four-budget RULE-2 sweep the
+pilot does not repeat. **Both blocks time every pass** — the replay and transform
+brackets are registered here as well as run there, so the pilot measures its own
+wall rather than inheriting the stand-in's.
 
 ---
 

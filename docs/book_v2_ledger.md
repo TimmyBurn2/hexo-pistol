@@ -38,7 +38,7 @@ registered from a measurement rather than chosen — `docs/experiments/book_v2_r
 
 | `openings_skip` | `openings_take` | range | consumed by | pre-registration |
 |---|---|---|---|---|
-| 0 | 13 | `0..12` | the WP-2.0 label-pipeline PILOT, `configs/arena_wp20_label_pilot.toml` | `docs/experiments/wp20_pilot_prereg.md` revision 2 |
+| 0 | 13 | `0..12` | the WP-2.0 label-pipeline PILOT, `configs/arena_wp20_label_pilot.toml` | `docs/experiments/wp20_pilot_prereg.md` revision 4 |
 
 **THE FIRST ROW, and what it does and does not spend.** Thirteen is what the
 pre-registration's RULE-1 returns from the per-unit costs its dry run measured
