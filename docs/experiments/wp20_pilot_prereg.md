@@ -31,7 +31,8 @@ sweep for every phrase a remedy could have contradicted (§0.2).
 | **MAJ-B** — the coldness reconciliation refuted itself: it computed ~2 s of predicted overhead and called that unresolvable by a one-second counter | the reconciliation is redone as QUANTISATION — a difference of two integer readings carries ±2 s — and the conclusion is stated as a BOUND of about 24 ms per ask rather than as an agreement | §7.2 |
 | **MAJ-C** — §5's new "if and only if" made a mid-pass filesystem exhaustion a STOP, contradicting the void class that calls it a VOID | exit `2` is classified ONCE into three disjoint limbs, and the environment limb is decided by WHAT failed rather than by WHEN | §5 |
 | **MAJ-D** — the enumeration was not exhaustive (the capture's own read, `outpath::claim`'s other failures, argument refusals) and §5 carried two lists of one closed class | the enumeration is completed and limb (b) is DEFINED as its complement, so there is one list | §5 |
-| **MAJ-E** — §8's registered block emits no revision or engine receipt, so the pilot's artifact would carry the very defect that superseded its predecessor | the block opens with `git rev-parse HEAD`, the dirty-file count and the engine digest, unconditionally | §8 |
+| **MAJ-E** — §8's registered block emits no revision or engine receipt, so the pilot's artifact would carry the very defect that superseded its predecessor | the block opens with a current `--release` build, then `git rev-parse HEAD`, the dirty-file count, and a digest of **every binary it runs** plus the cold checker — see the row below for why "every" | §8 |
+| **MAJ-E′** — found by running the remedy rather than by reading it: the first form of MAJ-E's receipt digested only the ENGINE, and the dry run it was added to passed that receipt while `target/release/corpus-check` was **eleven minutes stale** and silently omitted the `book` field §4E registers. `pistol` had not changed, so the engine digest matched and said nothing. **A clean tree at a named commit does not imply the built binaries are that commit's** | the receipt digests every binary the block runs and builds before reading them; the dry run is re-taken again | §8, §7.1 |
 | minors | the second transform is timed; §6.3 stops calling the transform term MEASURED; the manifest's *"the dry run is `tools/`-free"* is corrected (§8 runs `tools/cold_label_check.py`); §9's watchdog ground is restated as a mean and a bound rather than a "measured maximum"; the two C-E injection corpora are indexed; the "three decided games" arithmetic is corrected — a game decided at turn `k` contributes `k` positions, so the exposure is to WHEN games decide | §6.3, §7.1, §8, §9, the manifest |
 
 ### What moved from revision 3 to revision 4 — one row per finding of the scoped re-review
@@ -956,11 +957,24 @@ P=target/release/pistol
 CFG=configs/arena_wp20_label_pilot.toml
 
 # --- THE PROVENANCE RECEIPT, FIRST AND UNCONDITIONALLY ------------------------
-# Without these two lines the pilot's artifact would carry exactly the defect
-# that superseded its predecessor (§7.1): a transcript attributed to a revision
-# by its filename alone, with nothing in it to say which bytes ran.
+# Without this the pilot's artifact would carry exactly the defect that
+# superseded its predecessor (§7.1): a transcript attributed to a revision by its
+# filename alone, with nothing in it to say which bytes ran.
+#
+# EVERY BINARY THE BLOCK RUNS IS DIGESTED, not only the engine, and that is not
+# belt-and-braces — it is a defect this document has already had. A clean tree at
+# a named commit does NOT imply the built binaries are that commit's: a receipt
+# naming only the engine passed while `corpus-check` was eleven minutes stale and
+# silently omitted a field §4E registers. A source tree and a build are two
+# different things, and only the digests tell them apart.
+# The build is made current BEFORE the digests are read, so they describe this
+# revision rather than whatever was last built.
+cargo build --release --workspace --locked || { echo "build failed"; exit 2; }
 echo "revision $(git rev-parse HEAD)  tree $(git status --porcelain | wc -l) modified"
-echo "engine sha256 $(sha256sum "$P" | cut -d' ' -f1)"
+for bin in "$P" "$A" target/release/corpus-check; do
+    echo "binary $bin sha256 $(sha256sum "$bin" | cut -d' ' -f1)"
+done
+echo "tools/cold_label_check.py sha256 $(sha256sum tools/cold_label_check.py | cut -d' ' -f1)"
 
 # --- pass 1: the games -------------------------------------------------------
 t=$SECONDS
