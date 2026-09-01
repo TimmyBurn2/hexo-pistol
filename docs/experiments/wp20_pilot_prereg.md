@@ -62,19 +62,22 @@ is supplied.
 
 | what | which | revision |
 |---|---|---|
-| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | SLOT R1 |
-| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | SLOT R1 |
-| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | SLOT R1 |
-| the corpus loader, **and the instrument RULE-2's depth table is read from** | `crates/pistol-arena/src/bin/corpus-check.rs` | SLOT R1 |
-| the cold-label referent | `tools/cold_label_check.py` | SLOT R1 |
+| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | `85e6261` |
+| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | `85e6261` |
+| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | `85e6261` |
+| the corpus loader, **and the instrument RULE-2's depth table is read from** | `crates/pistol-arena/src/bin/corpus-check.rs` | `85e6261` |
+| the cold-label referent | `tools/cold_label_check.py` | `85e6261` |
 | the engine | `target/release/pistol`, bound by content | `180b4c40…` (`binary_sha256`), §9 |
-| the engine config | `configs/instrument_v0.toml` | SLOT R1 |
-| the arena config | `configs/arena_wp20_label_pilot.toml` | SLOT R1 |
-| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | SLOT R1 |
-| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | SLOT R1 |
+| the engine config | `configs/instrument_v0.toml` | `85e6261` |
+| the arena config | `configs/arena_wp20_label_pilot.toml` | `85e6261` |
+| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | `85e6261` |
+| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | `85e6261` |
 
-**SLOT R1 IS ONE VALUE**, the commit that lands this revision together with its
-two arena configs, the ledger row and the instruments. Every artefact above except
+**SLOT R1 IS ONE VALUE AND IT IS FILLED: `85e6261`**, the commit that lands this
+revision's instruments, its two arena configs and the ledger row. **The dry run of
+§7.1 ran AT that commit with a clean tree**, which its own first line records; the
+commit that transcribes its numbers into this section changes no instrument, so
+`85e6261` remains the revision that governs every artefact below. Every artefact above except
 the engine binary is a tracked file, so naming the commit names all of them at
 once, and a change to any of them reopens this document
 (`docs/process.md`, "Instrument governing revision"). **The review of this pre-registration is
@@ -100,7 +103,7 @@ different seat re-measures it rather than inheriting it.
 ## 2. THE SLICE, AND THE LEDGER ROW IT CONSUMES
 
 `docs/book_v2_ledger.md` records **no consumed range**: this is the book's first
-draw. **`openings_skip = 0`, `openings_take = ` SLOT S1** — a prefix from the top,
+draw. **`openings_skip = 0`, `openings_take = 13`** (SLOT S1, fixed by §6.3's RULE-1) — a prefix from the top,
 which is a sample because the book is emitted in generator order with no
 provenance column to sort by.
 
@@ -123,7 +126,7 @@ when its run finishes"* — so an abandoned pilot does not free it.
 | budget | value | why it is that |
 |---|---|---|
 | GAME | `nodes 50000` | the standing instrument budget every committed arena config in this repository uses, and the one D-520's and WP-1.5d's governed runs were taken at |
-| LABEL | `nodes ` SLOT S2 | the label is the re-scored answer the corpus exists to hold; a label at the game's own budget would be the game's own answer with a `newgame` in front of it. Its VALUE is fixed by §6's RULE-2, which is registered below and before the dry run measures anything |
+| LABEL | `nodes 400000` (SLOT S2, §6.3 RULE-2) | the label is the re-scored answer the corpus exists to hold; a label at the game's own budget would be the game's own answer with a `newgame` in front of it. Its VALUE is fixed by §6's RULE-2, which is registered below and before the dry run measures anything |
 
 **BOTH ARE VALUES AND THEREFORE LAND HERE RATHER THAN IN THE DESIGN** (D-483).
 **The label budget's KIND is not a choice**: `--label-nodes` takes a node count,
@@ -144,7 +147,7 @@ criterion.**
 
 ### C-A — the cold-label agreement check (D-540's second clause)
 
-**THE INSTRUMENT.** `tools/cold_label_check.py` at SLOT R1. Its own usage block
+**THE INSTRUMENT.** `tools/cold_label_check.py` at `85e6261`. Its own usage block
 fixes its answers, quoted here so a reader of this document does not have to trust
 a paraphrase:
 
@@ -155,15 +158,15 @@ Exit:  0 every sampled record agrees byte for byte — THE ANSWER IS YES
          12). A void is not a disagreement and must not be read as one.
 ```
 
-**THE REGISTERED SAMPLE.** `--stride ` SLOT S3, which the script prints back on
+**THE REGISTERED SAMPLE.** `--stride 1` (SLOT S3, §6.3 RULE-3), which the script prints back on
 its own first line as *"the sample is every record whose zero-based index is a
 multiple of `<n>`, which is `<k>` of them"*. **The alignment hazard is named
 because a stride is a systematic sample**: the capture's records are ordered
 game-major and turn-minor, so a stride equal to (or dividing) the number of
 records a game contributes would sample one turn index of every game and nothing
-else — the empty board over and over. SLOT S3 is fixed in §6 against the
-per-game record counts the dry run measures, and where the budget affords it the
-registered value is **1**, which is every record and has no alignment to have.
+else — the empty board over and over. SLOT S3 is fixed in §6.3 against the
+per-game record counts the dry run measured, and the budget affords the value it
+returns: **1**, which is every record and has no alignment to have.
 
 **WHAT ITS OUTPUT MUST SHOW.** Exit `0`, and the line
 `cold_label_check: <k> of <k> sampled record(s) agree byte for byte`.
@@ -191,7 +194,7 @@ carried between them. **Exit 2 is a VOID and not a disagreement** (§5).
 
 ### C-B — the determinism re-run receipt
 
-**THE INSTRUMENT.** The `arena` binary at SLOT R1, run twice per pass, compared by
+**THE INSTRUMENT.** The `arena` binary at `85e6261`, run twice per pass, compared by
 `sha256sum`. **THE REGISTERED RANGE IS THE WHOLE PILOT AND NOT A SUB-RANGE**, in
 both passes, and the reason is that neither pass has a subsetting flag: `--capture`
 walks the report it is given and `--labels` transforms the capture it is given, so
@@ -227,7 +230,7 @@ ARC**.
 
 ### C-C — `replay_check` over every pilot game, and zero forfeits
 
-**THE INSTRUMENT.** `arena --replay <report> --out <path> --workers <n>` at SLOT R1.
+**THE INSTRUMENT.** `arena --replay <report> --out <path> --workers <n>` at `85e6261`.
 Its answers, from `crates/pistol-arena/src/usage.rs` and
 `crates/pistol-arena/src/bin/arena.rs`:
 
@@ -300,7 +303,7 @@ has a cited source rather than an estimate.
 
 ### C-E — the schema and its loader
 
-**THE INSTRUMENT.** `crates/pistol-arena/src/bin/corpus-check.rs` at SLOT R1, which
+**THE INSTRUMENT.** `crates/pistol-arena/src/bin/corpus-check.rs` at `85e6261`, which
 reads a corpus back through the SAME loader the writer writes for. Its usage block:
 
 ```
@@ -478,6 +481,7 @@ away:
 | 500 positions | 7 | 574 | ~30 min | yes |
 | **1 000 positions** | **13** | **1 066** | **~55 min** | **yes** |
 | 2 000 positions | 25 | 2 050 | ~1 h 46 | yes |
+| (the ceiling itself) | 56 | 4 592 | ~3 h 57 | the only row it refuses is 57 |
 
 **So the four-hour ceiling constrains nothing at any of these floors, and floor
 (b) does all the work.** The document does not pretend otherwise. **1 000 is
@@ -535,17 +539,29 @@ over 4 games and 164 asked positions:
 | `g` | **1.5 s** per game at `n_workers = 4` | `pass1 seconds=6` over 4 games |
 | `p` | **41** positions per game | `captured 164 position(s) from 4 game(s)` |
 | `l` at `400000` | **1.006 s** per label ask | `capture_400000 seconds=165` over 164 |
-| `c` at `200000` | **0.518 s** per cold ask | `cold seconds=85` over 164 |
+| `c` at `400000` | **1.006 s** per cold ask | `cold seconds=165` over 164, **at the chosen budget** |
+| replay | **1.5 s** per game at `n_workers = 4` | `replay seconds=6` over 4 games |
+| a corpus transform | **under 1 s** | `labels-transform seconds=0` |
 
-**RULE-2, APPLIED AS WRITTEN.** Median completed `depth_turns` over the same 164
-asked positions, one capture pass per candidate:
+**RULE-2, APPLIED AS WRITTEN, AND ITS INSTRUMENT IS NAMED.** The depth
+distribution is not computed by this document: each candidate's capture is turned
+into a corpus and read back by `crates/pistol-arena/src/bin/corpus-check.rs`,
+which prints it from the corpus's own `depth_turns` column. Every row below is a
+`corpus_check:   depth_turns median … mean …` line in SLOT A, quoted:
 
 | label budget | median `depth_turns` | mean | satisfies "at least one turn above the game budget's 3.0"? |
 |---|---|---|---|
-| `50000` (the GAME budget) | **3.0** | 2.72 | — it is the referent |
-| `100000` | 3.0 | 3.04 | **no** |
-| `200000` | 3.0 | 3.30 | **no** |
-| `400000` | **4.0** | 3.63 | **yes** |
+| `50000` (the GAME budget) | **3.0** | 2.7195 | — it is the referent |
+| `100000` | 3.0 | 3.0366 | **no** |
+| `200000` | 3.0 | 3.3049 | **no** |
+| `400000` | **4.0** | 3.6341 | **yes** |
+
+**THAT LINE IS A RECORDED NUMBER AND SO CARRIES A TEST DRIVING THE SHIPPED
+PROGRAM** (`tools/SHELL_CHECKLIST.md` item 10):
+`a_corpus_summarises_the_columns_a_pre_registration_reads_a_number_off` in
+`crates/pistol-arena/tests/labels_tests.rs` re-derives the median from the
+corpus's own column and compares — the referent is the file, not the program's
+own earlier output.
 
 **SLOT S2 = `400000`.** The rule selects the smallest candidate that satisfies
 it, and that is the LARGEST of the three — the most expensive answer available,
@@ -554,32 +570,38 @@ rule worth doubting. The mean rises smoothly across all four budgets while the
 median steps only at `400000`; **RULE-2 named the median and the median is what
 was read.**
 
-**`c` AT THE CHOSEN BUDGET IS DERIVED AND LABELLED AS SUCH.** The cold check was
-measured at `200000`, where the in-process ask costs `83/164 = 0.506 s` and the
-cold ask costs `0.518 s` — **an overhead of 0.012 s, or 2.4 %, for a process
-spawn and a fresh 256 MiB transposition table.** That is a MEASURED answer to the
-cost `docs/experiments/wp20m_design.md` §12 declines to guess and D-542 recorded
-as *"a 256 MiB memset at every committed seat's `tt_bytes`"*: at this budget it is
-noise beside the search. `c` at `400000` is taken as `l + 0.012 = 1.018 s`.
+**`c` IS MEASURED AT THE CHOSEN BUDGET AND IS NO LONGER DERIVED.** Revision 2
+measured the cold check at `200000` and extrapolated; this revision runs it at
+`400000`, the budget RULE-2 selected, and the two costs are **1.006 s each** —
+`capture_400000 seconds=165` and `cold seconds=165`, over the same 164 positions.
+**The coldness overhead is therefore below this instrument's one-second
+resolution**, which is a MEASURED answer to the cost
+`docs/experiments/wp20m_design.md` §12 declines to guess and D-542 recorded as
+*"a 256 MiB memset at every committed seat's `tt_bytes`"*: beside a search of this
+size it does not register. (The earlier `200000` reading put it at 2.4 %; both are
+in SLOT A's predecessor and neither changes a value here.)
 
 **THE ARITHMETIC, at `T` openings** (`2T` games, `2T x 41` positions):
 
 ```
 pass 1                2T * 1.5                        =    3.0 T
 two capture passes    2 * (2T * 41 * 1.006)           =  165.0 T
-cold check, stride 1  (2T * 41) * 1.018               =   83.5 T
-replay (C-C)          re-drives every searched turn   =    3.0 T
-two corpus transforms  measured under a second each   =    2   s
+cold check, stride 1  (2T * 41) * 1.006               =   82.5 T
+replay (C-C)          2T * 1.5, MEASURED not assumed  =    3.0 T
+two corpus transforms MEASURED at under a second each =    2   s
                                                         ---------
-                                                         254.5 T + 2 s
+                                                         253.5 T + 2 s
 ```
+
+**Every term is measured.** Revision 2 asserted the replay and transform terms
+from their shape; SLOT A times both.
 
 **RULE-1, APPLIED AS AMENDED.** (b) needs `2T x 41 >= 1000`, so `T >= 12.2` and
 the smallest integer is **13**; (a) is satisfied at 13; (c) gives
-`254.5 x 13 + 2 = 3 310 s`, about **55 minutes**, well under the ceiling.
+`253.5 x 13 + 2 = 3 297 s`, about **55 minutes**, well under the ceiling.
 **SLOT S1 = 13** — 26 games, 1 066 asked positions. *(The rule as it stood before
 the amendment would have returned 56, the largest `T` with
-`254.5T + 2 <= 14 400`.)*
+`253.5T + 2 <= 14 400`.)*
 
 **RULE-3, APPLIED AS WRITTEN.** The stride-1 wall is inside the ceiling, so
 **SLOT S3 = 1** — every record. The alignment hazard RULE-3 guards therefore does
@@ -671,24 +693,36 @@ revision this document lands in: `openings_v1.txt`, `openings_take = 2`,
 120000`, budget `nodes 50000`, both seats `target/release/pistol` with
 `configs/instrument_v0.toml`.
 
-**THE RECORDED OUTPUT** is SLOT A. Every
-command of §8 ran to its registered exit code:
+**SLOT A = `artifacts/wp20pilot_dryrun_85e6261_v1.txt`.**
+
+**IT RAN AT A COMMITTED REVISION AGAINST COMMITTED BYTES, AND ITS FIRST TWO LINES
+ARE THE RECEIPT FOR THAT.** `revision 85e62613c358b105adfb5d068c5ca10084d24c38
+tree 0 modified`, and `engine sha256 180b4c40…`, which is the digest
+`configs/arena_wp20_label_pilot_dryrun.toml` carries at that same commit.
+**REVISION 2's DRY RUN DID NOT**: it ran at `f297eab`, whose committed dry-run
+config carried a placeholder digest `crates/pistol-arena/src/identity.rs` refuses,
+so it in fact ran against an uncommitted working-tree edit and its artifact's name
+attributed it to a revision that could not have produced it. That artifact is
+superseded, this one replaces it, and the defect is named because it is D-479's
+class — a measured number is bound to the run that produced it.
+
+Every command of §8 ran to its registered exit code:
 
 | command | exit | what it printed |
 |---|---|---|
-| pass 1 | `0` | `n 4  distinct-n 2  (2 duplicate games)`, `wall 5881 ms at 4 workers`, `VERDICT inconclusive_degenerate` |
-| capture x4 (the RULE-2 sweep) | `0`,`0`,`0`,`0` | `captured 164 position(s) from 4 game(s)` at each of `go nodes 50000/100000/200000/400000` |
-| capture re-run (C-B) | `0` | both files `bddac0fe0d5a53ea6115b5ba4096a152dab0bdb5887ccfc3ecd06cfd652016e2` — **byte-identical** |
-| labels x2 (C-B) | `0`,`0` | both files `4b1b0653d8c96edd7a75f883d403892d4addcc2682624c0c0da2460b51c0e533` — **byte-identical** |
-| cold check (C-A) | `0` | `164 of 164 sampled record(s) agree byte for byte` |
-| replay (C-C) | `0` | `replayed 4 of 4 game(s) ... 0 divergence(s)` |
-| corpus-check, control (C-E 1) | `0` | `ok, 164 record(s), capture_sha256 e73ad139...` |
+| pass 1 | `0` | `n 4  distinct-n 2  (2 duplicate games)`, `VERDICT inconclusive_degenerate`, `pass1 seconds=6` |
+| capture + labels + load, x4 (the RULE-2 sweep) | all `0` | `captured 164 position(s) from 4 game(s)` at each candidate, then the four `depth_turns median` lines §6.3 tabulates |
+| capture re-run (C-B) | `0`, and **`capture-determinism exit=0`** from `cmp -s` | both files `5fe1f1a36bef97d05679807c06df1efe85245ccd51362c6c670b5943ea95af20` |
+| labels re-run (C-B) | `0`, and **`labels-determinism exit=0`** | — |
+| cold check (C-A) | `0` | `164 of 164 sampled record(s) agree byte for byte`, at `go nodes 400000` |
+| replay (C-C) | `0` | `replayed 4 of 4 game(s) ... 0 divergence(s)`, `replay seconds=6` |
+| corpus-check, control (C-E 1) | `0` | `ok, 164 record(s)`, and the summary line naming `result 1 (capped); end 1 (normal)` |
 | corpus-check, grammar injection (C-E 2) | `1` | `REFUSED: ... record 1: `key_pos` is not thirty-two hex digits` |
-| corpus-check, digest injection (C-E 3) | `1` | `REFUSED: ... its body digests to 6a91932e... and its header claims c29b125b...` |
+| corpus-check, digest injection (C-E 3) | `1` | `REFUSED: ... its body digests to ffc96a13... and its header claims 532a23fb...` |
 
 **THE DRY RUN'S CRITERION IS MET**: every command ran to its registered code, and
-§6's four per-unit costs came back finite and positive with the counts they are
-derived from.
+§6's per-unit costs came back finite and positive with the counts they are derived
+from — including the two revision 2 asserted rather than timed.
 
 ### 7.2 THREE MEASURED FINDINGS THE DRY RUN PRODUCED THAT THIS DOCUMENT DID NOT ASK FOR
 
@@ -698,11 +732,11 @@ run that only confirmed what was expected would be worth less.
 1. **EVERY GAME WAS CAPPED AND NONE WAS DECIDED.** All four dry-run games reached
    `turn_cap = 40` undecided, so the corpus's `result` column is `capped` on all
    164 records and `end` is `normal` on all 164. **Two of the loader's four
-   token-set columns are therefore exercised at one value each** — C-E's control
-   is real but narrower than the schema, and the closure says so rather than
-   letting a green run imply otherwise. The other two are exercised at both
-   values (`book` 20 yes / 144 no, `to_move` 84 p1 / 80 p2) and all three score
-   kinds appear (`eval` 156, `mate_in` 4, `mated_in` 4).
+   token-set columns are therefore exercised at one value each**, and the loader
+   now PRINTS that — `result 1 (capped); end 1 (normal); to_move 2 (p1,p2);
+   score_kind 3 (eval,mate_in,mated_in)` — so the narrowness is on the run's own
+   face and no reader has to take this paragraph's word for it. C-E's control is
+   real and narrower than the schema, and §7.2's footer and §10 both say so.
 2. **A SELF-MATCH OF ONE DETERMINISTIC ENGINE PLAYS EACH OPENING TWICE AND GETS
    THE SAME GAME**: `distinct-n 2` of `n 4`. The capture walks every game in the
    report, so **a corpus built this way carries each position twice.** This is
@@ -868,7 +902,7 @@ see what will be checked rather than take the check on trust.
 | command | `--stride` | §6 RULE-3 (SLOT S3) |
 | command | `--workers` on `--replay` | §4C — `4`; the pass replays every game with no early stop, so what it finds does not depend on this number |
 
-### 9.1 SLOT P — FILLED, read from `configs/arena_wp20_label_pilot.toml` at SLOT R1
+### 9.1 SLOT P — FILLED, read from `configs/arena_wp20_label_pilot.toml` at `85e6261`
 
 | key | committed value | governed by | agrees? |
 |---|---|---|---|
