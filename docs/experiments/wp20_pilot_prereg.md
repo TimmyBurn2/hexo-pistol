@@ -109,19 +109,20 @@ is supplied.
 
 | what | which | revision |
 |---|---|---|
-| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | SLOT R1 |
-| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | SLOT R1 |
-| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | SLOT R1 |
-| the corpus loader, **and the instrument RULE-2's depth table is read from** | `crates/pistol-arena/src/bin/corpus-check.rs` | SLOT R1 |
-| the cold-label referent | `tools/cold_label_check.py` | SLOT R1 |
+| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | `31c1cc1` |
+| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | `31c1cc1` |
+| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | `31c1cc1` |
+| the corpus loader, **and the instrument RULE-2's depth table is read from** | `crates/pistol-arena/src/bin/corpus-check.rs` | `31c1cc1` |
+| the cold-label referent | `tools/cold_label_check.py` | `31c1cc1` |
 | the engine | `target/release/pistol`, bound by content | `180b4c40…` (`binary_sha256`), §9 |
-| the engine config | `configs/instrument_v0.toml` | SLOT R1 |
-| the arena config | `configs/arena_wp20_label_pilot.toml` | SLOT R1 |
-| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | SLOT R1 |
-| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | SLOT R1 |
+| the engine config | `configs/instrument_v0.toml` | `31c1cc1` |
+| the arena config | `configs/arena_wp20_label_pilot.toml` | `31c1cc1` |
+| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | `31c1cc1` |
+| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | `31c1cc1` |
 
-**SLOT R1 IS ONE VALUE: the commit that holds every artefact in the table above.**
-It is filled by the SLOT PASS, from the revision the run is actually taken at, and
+**SLOT R1 IS ONE VALUE AND IT IS FILLED: `31c1cc1`**, the commit that holds every
+artefact in the table above and the commit SLOT A's own receipt names. It is
+filled by the SLOT PASS, from the revision the run is actually taken at, and
 **this document has already got it wrong once in the way this rule exists to
 prevent**: revision 4 filled it with `85e6261` and then, in the very commit
 asserting that, changed `crates/pistol-arena/src/bin/corpus-check.rs` — an
@@ -205,7 +206,7 @@ criterion.**
 
 ### C-A — the cold-label agreement check (D-540's second clause)
 
-**THE INSTRUMENT.** `tools/cold_label_check.py` at SLOT R1. Its own usage block
+**THE INSTRUMENT.** `tools/cold_label_check.py` at `31c1cc1`. Its own usage block
 fixes its answers, quoted here so a reader of this document does not have to trust
 a paraphrase:
 
@@ -252,7 +253,7 @@ carried between them. **Exit 2 is a VOID and not a disagreement** (§5).
 
 ### C-B — the determinism re-run receipt
 
-**THE INSTRUMENT.** The `arena` binary at SLOT R1, run twice per pass, compared by
+**THE INSTRUMENT.** The `arena` binary at `31c1cc1`, run twice per pass, compared by
 `sha256sum`. **THE REGISTERED RANGE IS THE WHOLE PILOT AND NOT A SUB-RANGE**, in
 both passes, and the reason is that neither pass has a subsetting flag: `--capture`
 walks the report it is given and `--labels` transforms the capture it is given, so
@@ -293,7 +294,7 @@ ARC**.
 
 ### C-C — `replay_check` over every pilot game, and zero forfeits
 
-**THE INSTRUMENT.** `arena --replay <report> --out <path> --workers <n>` at SLOT R1.
+**THE INSTRUMENT.** `arena --replay <report> --out <path> --workers <n>` at `31c1cc1`.
 Its answers, from `crates/pistol-arena/src/usage.rs` and
 `crates/pistol-arena/src/bin/arena.rs`:
 
@@ -373,7 +374,7 @@ has a cited source rather than an estimate.
 
 ### C-E — the schema and its loader
 
-**THE INSTRUMENT.** `crates/pistol-arena/src/bin/corpus-check.rs` at SLOT R1, which
+**THE INSTRUMENT.** `crates/pistol-arena/src/bin/corpus-check.rs` at `31c1cc1`, which
 reads a corpus back through the SAME loader the writer writes for. Its usage block:
 
 ```
@@ -838,18 +839,28 @@ revision this document lands in: `openings_v1.txt`, `openings_take = 2`,
 120000`, budget `nodes 50000`, both seats `target/release/pistol` with
 `configs/instrument_v0.toml`.
 
-**SLOT A = `artifacts/wp20pilot_dryrun_85e6261_v1.txt`.**
+**SLOT A = `artifacts/wp20pilot_dryrun_31c1cc1_v1.txt`.**
 
-**IT RAN AT A COMMITTED REVISION AGAINST COMMITTED BYTES, AND ITS FIRST TWO LINES
-ARE THE RECEIPT FOR THAT.** `revision 85e62613c358b105adfb5d068c5ca10084d24c38
-tree 0 modified`, and `engine sha256 180b4c40…`, which is the digest
-`configs/arena_wp20_label_pilot_dryrun.toml` carries at that same commit.
-**REVISION 2's DRY RUN DID NOT**: it ran at `f297eab`, whose committed dry-run
-config carried a placeholder digest `crates/pistol-arena/src/identity.rs` refuses,
-so it in fact ran against an uncommitted working-tree edit and its artifact's name
-attributed it to a revision that could not have produced it. That artifact is
-superseded, this one replaces it, and the defect is named because it is D-479's
-class — a measured number is bound to the run that produced it.
+**IT RAN AT A COMMITTED REVISION AGAINST THE BINARIES THAT REVISION BUILDS, AND
+ITS OPENING LINES ARE THE RECEIPT FOR BOTH.** `revision
+31c1cc187deba0375aa701cee8a467c46af5a0a7  tree 0 modified`, then a digest for
+each of the four instruments the block runs — `target/release/pistol`
+`180b4c40…` (the digest `configs/arena_wp20_label_pilot_dryrun.toml` carries at
+that commit), `target/release/arena` `e0b08616…`, `target/release/corpus-check`
+`982500b2…`, and `tools/cold_label_check.py` `12093813…`.
+
+**TWO EARLIER DRY RUNS ARE SUPERSEDED AND BOTH FAILURES ARE NAMED, because each
+is D-479's class — a measured number is bound to the run that produced it.**
+(i) Revision 2's ran at `f297eab`, whose committed dry-run config carried a
+placeholder digest `crates/pistol-arena/src/identity.rs` refuses, so it ran
+against an uncommitted working-tree edit while its filename attributed it to a
+revision that could not have produced it. (ii) Revision 5's FIRST attempt ran at
+`071c65c` with a clean tree AND a passing revision receipt — and still ran a
+`target/release/corpus-check` built eleven minutes earlier, which omitted the
+`book` field §4E registers. **The receipt did not catch it because it digested
+only the ENGINE, and the engine had not changed.** A clean tree at a named commit
+is a fact about SOURCES; the digests above are the fact about the BUILD, and only
+the second is what a run is taken with.
 
 Every command of §8 ran to its registered exit code:
 
@@ -861,7 +872,7 @@ Every command of §8 ran to its registered exit code:
 | labels re-run (C-B) | `0`, and **`labels-determinism exit=0`** | — |
 | cold check (C-A) | `0` | `164 of 164 sampled record(s) agree byte for byte`, at `go nodes 400000` |
 | replay (C-C) | `0` | `replayed 4 of 4 game(s) ... 0 divergence(s)`, `replay seconds=6` |
-| corpus-check, control (C-E 1) | `0` | `ok, 164 record(s)`, and the summary line naming `result 1 (capped); end 1 (normal)` |
+| corpus-check, control (C-E 1) | `0` | `ok, 164 record(s)`, and the summary line naming `book 2 (no,yes); result 1 (capped); end 1 (normal)` |
 | corpus-check, grammar injection (C-E 2) | `1` | `REFUSED: ... record 1: `key_pos` is not thirty-two hex digits` |
 | corpus-check, digest injection (C-E 3) | `1` | `REFUSED: ... its body digests to ffc96a13... and its header claims 532a23fb...` |
 
@@ -1101,7 +1112,7 @@ see what will be checked rather than take the check on trust.
 | command | `--stride` | §6 RULE-3 (SLOT S3) |
 | command | `--workers` on `--replay` | §4C — `4`; the pass replays every game with no early stop, so what it finds does not depend on this number |
 
-### 9.1 SLOT P — FILLED, read from `configs/arena_wp20_label_pilot.toml` at SLOT R1
+### 9.1 SLOT P — FILLED, read from `configs/arena_wp20_label_pilot.toml` at `31c1cc1`
 
 | key | committed value | governed by | agrees? |
 |---|---|---|---|
