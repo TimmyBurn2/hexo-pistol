@@ -38,8 +38,16 @@ registered from a measurement rather than chosen — `docs/experiments/book_v2_r
 
 | `openings_skip` | `openings_take` | range | consumed by | pre-registration |
 |---|---|---|---|---|
+| 0 | 13 | `0..12` | the WP-2.0 label-pipeline PILOT, `configs/arena_wp20_label_pilot.toml` | `docs/experiments/wp20_pilot_prereg.md` revision 2 |
 
-*(empty: no range of `book_v2` has been consumed)*
+**THE FIRST ROW, and what it does and does not spend.** Thirteen openings is not
+a chosen number: the pre-registration's RULE-1 returns it from the per-unit costs
+its dry run measured, and the rule was registered before those costs existed
+(§6.1, §6.3). **The pilot is not corpus** (D-539), so this range buys a pipeline
+shakedown and no evidence about anything — which is exactly why the ledger records
+it: a range spent on a run that concludes nothing is still spent, and a successor
+that re-read `0..12` for a governed verdict would be reading a sample this session
+chose.
 
 ## Standing claims on the book, not yet consumed
 

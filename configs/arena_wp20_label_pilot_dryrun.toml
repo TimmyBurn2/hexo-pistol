@@ -59,11 +59,11 @@ beta = 0.05
 [engine_a]
 label = "a"
 binary = "target/release/pistol"
-binary_sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+binary_sha256 = "180b4c406b225fc81342bb8218b8546dda1ffac1a99f7eb91cdaf73d20253476"
 config = "configs/instrument_v0.toml"
 
 [engine_b]
 label = "b"
 binary = "target/release/pistol"
-binary_sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+binary_sha256 = "180b4c406b225fc81342bb8218b8546dda1ffac1a99f7eb91cdaf73d20253476"
 config = "configs/instrument_v0.toml"

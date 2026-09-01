@@ -357,15 +357,40 @@ this document is amended rather than the rule relaxed** — a label budget that
 buys no depth is a fact about the search worth knowing before a corpus is sized
 on it.
 
-**RULE-1 — the SLICE (SLOT S1), the free variable.** With SLOT S2 fixed, SLOT S1
-is **the largest `openings_take` whose derived wall — by §6.2's arithmetic, from
-§7's measured per-unit costs — is at or under the four-hour budget**, and it is
-**at least 4** (eight games), which is the floor at which the report's own
-pairing is exercised over more than one pair. **If the floor does not fit at SLOT
-S2, SLOT S2 drops to the next smaller candidate and RULE-1 is applied again**;
-if the floor does not fit at `100000` either, that is a STOP and the pilot returns
-to the architect, because a pilot below its own floor measures nothing the
-closure can use.
+**RULE-1 — the SLICE (SLOT S1). AMENDED AFTER THE DRY RUN, AND THE AMENDMENT IS
+DISCLOSED HERE RATHER THAN SMOOTHED OVER, BECAUSE A RULE CHANGED AFTER NUMBERS
+ARRIVE IS THE EXACT MOVE THIS SECTION'S DISCIPLINE EXISTS TO CATCH.**
+
+*What it said before the dry run:* **the LARGEST `openings_take` whose derived
+wall is at or under the four-hour budget**, floor 4 openings.
+
+*What happened:* pass 1 of the dry run returned, and applying that rule to its
+numbers gives **T = 56** — a four-hour pilot producing 4 592 labelled positions
+that D-539 says *"count toward no minimum"*. Reading that, the rule is wrong on
+its face: it maximises against the CLOCK when every criterion in §4 is satisfied
+by a far smaller draw, and it spends the session's remaining capacity on data the
+package itself declares is not corpus. **I did not notice this until the numbers
+made it concrete, and that is the honest account.**
+
+*What it says now:* SLOT S1 is **the SMALLEST `openings_take` satisfying all
+three of** — (a) at least **4** openings, the floor at which the report's own
+pairing is exercised over more than one pair; (b) at least **1 000 asked
+positions**, so that C-D's labels-per-hour is a rate over a thousand searches
+rather than a handful, and C-A at stride 1 is a total check over a sample of
+that size; (c) a derived wall at or under the four-hour ceiling. **If (a) and (b)
+cannot both fit under (c) at SLOT S2, SLOT S2 drops to the next smaller candidate
+and RULE-1 is applied again**; if they do not fit at `100000` either, that is a
+STOP and the pilot returns to the architect.
+
+**THIS IS THE ONE THING IN THIS DOCUMENT MOST DESERVING OF ATTACK, and the
+reviewer is asked for it by name.** The amendment moves the answer from 56 to 13
+— it makes the pilot CHEAPER — so the reader must satisfy themselves it is a
+correction and not a convenience. Two things are offered and neither is
+conclusive on its own: the new rule is stated as a MINIMUM against fixed floors
+rather than a maximum against a clock, so it cannot be tuned by moving the
+ceiling; and **RULE-2, which was NOT amended, fired against my convenience** —
+it selected `400000`, the most expensive of its three candidates, and I left it
+there.
 
 **RULE-3 — the cold-label stride (SLOT S3).** SLOT S3 is **1 — every record — if
 the derived wall including a stride-1 cold check fits the budget under RULE-1;
@@ -391,10 +416,76 @@ wall  =  2T*g                      pass 1, at 4 workers
       +  (2T*p / S3) * c           the cold-label check, serial
 ```
 
-SLOT W — the four measured costs `g`, `p`, `l`, `c`, the derived wall at the
-chosen `T`, and the values RULE-1, RULE-2 and RULE-3 return. **Filled at
-registration, from §7's artifact, before the review is dispatched and before any
-pilot pass runs.**
+### 6.3 SLOT W — FILLED, from `artifacts/wp20pilot_dryrun_f297eab_v1.txt`
+
+**THE FOUR MEASURED COSTS**, every one from that artifact's own printed lines
+over 4 games and 164 asked positions:
+
+| symbol | measured | from |
+|---|---|---|
+| `g` | **1.5 s** per game at `n_workers = 4` | `pass1 seconds=6` over 4 games |
+| `p` | **41** positions per game | `captured 164 position(s) from 4 game(s)` |
+| `l` at `400000` | **1.006 s** per label ask | `capture_400000 seconds=165` over 164 |
+| `c` at `200000` | **0.518 s** per cold ask | `cold seconds=85` over 164 |
+
+**RULE-2, APPLIED AS WRITTEN.** Median completed `depth_turns` over the same 164
+asked positions, one capture pass per candidate:
+
+| label budget | median `depth_turns` | mean | satisfies "at least one turn above the game budget's 3.0"? |
+|---|---|---|---|
+| `50000` (the GAME budget) | **3.0** | 2.72 | — it is the referent |
+| `100000` | 3.0 | 3.04 | **no** |
+| `200000` | 3.0 | 3.30 | **no** |
+| `400000` | **4.0** | 3.63 | **yes** |
+
+**SLOT S2 = `400000`.** The rule selects the smallest candidate that satisfies
+it, and that is the LARGEST of the three — the most expensive answer available,
+which is recorded because a rule that only ever returns the cheap option is a
+rule worth doubting. The mean rises smoothly across all four budgets while the
+median steps only at `400000`; **RULE-2 named the median and the median is what
+was read.**
+
+**`c` AT THE CHOSEN BUDGET IS DERIVED AND LABELLED AS SUCH.** The cold check was
+measured at `200000`, where the in-process ask costs `83/164 = 0.506 s` and the
+cold ask costs `0.518 s` — **an overhead of 0.012 s, or 2.4 %, for a process
+spawn and a fresh 256 MiB transposition table.** That is a MEASURED answer to the
+cost `docs/experiments/wp20m_design.md` §12 declines to guess and D-542 recorded
+as *"a 256 MiB memset at every committed seat's `tt_bytes`"*: at this budget it is
+noise beside the search. `c` at `400000` is taken as `l + 0.012 = 1.018 s`.
+
+**THE ARITHMETIC, at `T` openings** (`2T` games, `2T x 41` positions):
+
+```
+pass 1                2T * 1.5                        =    3.0 T
+two capture passes    2 * (2T * 41 * 1.006)           =  165.0 T
+cold check, stride 1  (2T * 41) * 1.018               =   83.5 T
+replay (C-C)          re-drives every searched turn   =    3.0 T
+two corpus transforms  measured under a second each   =    2   s
+                                                        ---------
+                                                         254.5 T + 2 s
+```
+
+**RULE-1, APPLIED AS AMENDED.** (b) needs `2T x 41 >= 1000`, so `T >= 12.2` and
+the smallest integer is **13**; (a) is satisfied at 13; (c) gives
+`254.5 x 13 + 2 = 3 310 s`, about **55 minutes**, well under the ceiling.
+**SLOT S1 = 13** — 26 games, 1 066 asked positions. *(The rule as it stood before
+the amendment would have returned 56, the largest `T` with
+`254.5T + 2 <= 14 400`.)*
+
+**RULE-3, APPLIED AS WRITTEN.** The stride-1 wall is inside the ceiling, so
+**SLOT S3 = 1** — every record. The alignment hazard RULE-3 guards therefore does
+not arise; it is recorded that it would not have arisen anyway, because every
+game of the dry run contributed exactly **41** records and a stride of 1 has no
+alignment to have.
+
+**THE ESTIMATE ERRS THE SAFE WAY, and the reason is named.** `p = 41` is an
+UPPER bound: it is the count for a game that reaches the turn cap, and all four
+dry-run games did. A game that ends in a win contributes FEWER asked positions
+(rule 4's terminal position is never asked), so the true wall is at or below the
+derived one. **Whether the pilot's own games are also all capped is not known
+from the dry run** — `random_openings_v2`'s openings are drawn at random where
+`openings_v1`'s come from human games — and §10 records what follows if they are
+not.
 
 **THE COST THIS DOCUMENT DECLARES** (`docs/process.md`, "Cost, replication, and the
 second instrument"): SLOT S1 openings is `2 x` SLOT S1 games at the game budget,
@@ -459,7 +550,58 @@ budget and why that is a finding rather than a footnote.
 pilot's first run, and its numbers are inputs to §6's arithmetic and never
 evidence about the pipeline's correctness.
 
-SLOT D — the dry run's recorded input, every command's exit code, and its output.
+### 7.1 SLOT D — FILLED
+
+**THE RECORDED INPUT.** `configs/arena_wp20_label_pilot_dryrun.toml` at the
+revision this document lands in: `openings_v1.txt`, `openings_take = 2`,
+`openings_skip = 0`, `turn_cap = 40`, `n_workers = 4`, `hang_timeout_ms =
+120000`, budget `nodes 50000`, both seats `target/release/pistol` with
+`configs/instrument_v0.toml`.
+
+**THE RECORDED OUTPUT** is `artifacts/wp20pilot_dryrun_f297eab_v1.txt`. Every
+command of §8 ran to its registered exit code:
+
+| command | exit | what it printed |
+|---|---|---|
+| pass 1 | `0` | `n 4  distinct-n 2  (2 duplicate games)`, `wall 5881 ms at 4 workers`, `VERDICT inconclusive_degenerate` |
+| capture x4 (the RULE-2 sweep) | `0`,`0`,`0`,`0` | `captured 164 position(s) from 4 game(s)` at each of `go nodes 50000/100000/200000/400000` |
+| capture re-run (C-B) | `0` | both files `bddac0fe0d5a53ea6115b5ba4096a152dab0bdb5887ccfc3ecd06cfd652016e2` — **byte-identical** |
+| labels x2 (C-B) | `0`,`0` | both files `4b1b0653d8c96edd7a75f883d403892d4addcc2682624c0c0da2460b51c0e533` — **byte-identical** |
+| cold check (C-A) | `0` | `164 of 164 sampled record(s) agree byte for byte` |
+| replay (C-C) | `0` | `replayed 4 of 4 game(s) ... 0 divergence(s)` |
+| corpus-check, control (C-E 1) | `0` | `ok, 164 record(s), capture_sha256 e73ad139...` |
+| corpus-check, grammar injection (C-E 2) | `1` | `REFUSED: ... record 1: `key_pos` is not thirty-two hex digits` |
+| corpus-check, digest injection (C-E 3) | `1` | `REFUSED: ... its body digests to 6a91932e... and its header claims c29b125b...` |
+
+**THE DRY RUN'S CRITERION IS MET**: every command ran to its registered code, and
+§6's four per-unit costs came back finite and positive with the counts they are
+derived from.
+
+### 7.2 THREE MEASURED FINDINGS THE DRY RUN PRODUCED THAT THIS DOCUMENT DID NOT ASK FOR
+
+Recorded here because they bound what the closure may conclude, and because a dry
+run that only confirmed what was expected would be worth less.
+
+1. **EVERY GAME WAS CAPPED AND NONE WAS DECIDED.** All four dry-run games reached
+   `turn_cap = 40` undecided, so the corpus's `result` column is `capped` on all
+   164 records and `end` is `normal` on all 164. **Two of the loader's four
+   token-set columns are therefore exercised at one value each** — C-E's control
+   is real but narrower than the schema, and the closure says so rather than
+   letting a green run imply otherwise. The other two are exercised at both
+   values (`book` 20 yes / 144 no, `to_move` 84 p1 / 80 p2) and all three score
+   kinds appear (`eval` 156, `mate_in` 4, `mated_in` 4).
+2. **A SELF-MATCH OF ONE DETERMINISTIC ENGINE PLAYS EACH OPENING TWICE AND GETS
+   THE SAME GAME**: `distinct-n 2` of `n 4`. The capture walks every game in the
+   report, so **a corpus built this way carries each position twice.** This is
+   not a defect and cannot be removed by configuration: `arena --capture` refuses
+   a report whose two seats do not attest one engine, so a self-match is the only
+   shape a capture can be taken from at all. It is arithmetic the closure's
+   corpus plan must carry, not a finding against the pipeline.
+3. **THE COLDNESS COST IS 2.4 %.** Recorded in §6.3 and repeated nowhere else.
+
+**FINDINGS 1 AND 2 ARE FOR THE CLOSURE AND NOT FOR THIS PILOT.** Neither is a
+criterion, neither can fail, and neither changes a value above; what they change
+is what a corpus plan may promise, which is §10's business.
 
 ---
 
@@ -557,8 +699,12 @@ against the shipped binary at
 `crates/pistol-arena/tests/labels_tests.rs`; the runs above are a second instance
 over a corpus the pilot itself wrote, at the pilot's own scale.
 
-SLOT C — this block as run, with `<S2>` and `<S3>` substituted and every printed
-exit code and elapsed second recorded.
+**SLOT C — FILLED.** `<S2>` is **`400000`** (§6.3, RULE-2) and `<S3>` is **`1`**
+(§6.3, RULE-3). The block as run, its exit codes and its elapsed seconds are
+recorded at the run in `artifacts/`, and the dry run's instance of the same block
+is `artifacts/wp20pilot_dryrun_f297eab_v1.txt` (§7.1), which differs only in the
+config it names and in carrying the four-budget RULE-2 sweep the pilot does not
+repeat.
 
 ---
 
@@ -603,3 +749,14 @@ arithmetic shown**, extrapolated from C-D's measured throughput and the standing
 label-budget values. **Nothing here registers a corpus size**: that is what the
 pilot exists to inform, and a size registered before the measurement would be the
 guess this document's whole method is against.
+
+**AND THREE THINGS §7.2 PUTS ON THE CLOSURE'S DESK, which this document raises
+and does not settle.** (i) A corpus from this pipeline carries **each position
+twice**, so a plan quoting positions-per-hour must say whether it means records or
+distinct records. (ii) If the pilot's own games are also all capped, the corpus
+has **no outcome signal at all** — every `result` is `capped` — and whether a
+value-training corpus can be built from score labels alone, or whether the turn
+cap must rise, is a Stage-2 eval design question that this package must hand over
+rather than answer. (iii) `p = 41` is an upper bound (§6.3); if the pilot's games
+decide, the measured throughput per POSITION still holds but positions per game
+falls, and the plan must be stated per position for that reason.

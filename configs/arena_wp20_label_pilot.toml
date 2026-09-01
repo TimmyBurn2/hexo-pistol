@@ -1,0 +1,76 @@
+# WP-2.0 pilot — THE GOVERNED arena config. Authored FROM the pre-registration
+# docs/experiments/wp20_pilot_prereg.md revision 2, whose sections 1, 2, 3 and 9
+# fix every value below except binary_sha256, which section 9 defers to the slot
+# pass because that is the only moment it can be true of (docs/decisions.md
+# D-147, D-427).
+#
+# THE PILOT IS NOT CORPUS AND CARRIES NO CENSUS (docs/decisions.md D-539). Its
+# games count toward no minimum and no score is fitted on them. No strength claim
+# is made: both seats are one engine, which is the only shape `arena --capture`
+# accepts.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[run]
+# The successor book. Every slice of v1 is consumed and v1 is retired for
+# governed use (docs/decisions.md D-491, D-492, D-505).
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v2.txt"
+
+# THE BOOK'S FIRST DRAW, recorded in docs/book_v2_ledger.md in this same commit.
+# Thirteen is DERIVED and not chosen: it is the smallest take satisfying the
+# pre-registration's RULE-1 — four openings or more, a thousand asked positions
+# or more, and a derived wall under the four-hour ceiling — applied to the
+# per-unit costs the dry run measured (the pre-registration's section 6.3).
+openings_take = 13
+openings_skip = 0
+
+# An evaluation horizon, never a game rule (game rule 6). The dry run's games all
+# reached it undecided, which the pre-registration's section 7.2 records as a
+# finding for the closure rather than a property to rely on.
+turn_cap = 40
+
+# The number the pilot's games-per-hour is reported AT. Pass 2 is serial whatever
+# this says: the capture spawns one seat on one channel.
+n_workers = 4
+
+# The liveness watchdog, and it is checked against the LABEL budget rather than
+# the game budget: pass 2 reads its watchdog out of the report this file writes,
+# and a label ask is the longest single search the pilot makes. The dry run's
+# slowest label ask at `nodes 400000` was about a second, so this leaves three
+# orders of magnitude of room. It can end a run and it can never produce a game
+# result (docs/decisions.md D-159).
+hang_timeout_ms = 120000
+
+[budget]
+# The GAME budget: the standing instrument budget. The LABEL budget is not here —
+# it is a command-line argument to `arena --capture`, and the pre-registration's
+# RULE-2 fixes it at `nodes 400000`.
+kind = "nodes"
+value = 50000
+
+[sprt]
+# Present because the schema requires them. A SELF-MATCH crosses no bound: every
+# pair scores alike, so no likelihood ratio is defined at all and the verdict says
+# so (docs/decisions.md D-156). No strength claim is made here.
+elo0 = 0.0
+elo1 = 15.0
+alpha = 0.05
+beta = 0.05
+
+# ONE ENGINE IN TWO SEATS. The two LABELS must differ — `validate` and
+# `transcript::read` both refuse identical labels — while the two IDENTITIES must
+# match, which is a comparison over `EngineIdentity` and carries no label. That is
+# why a self-play report is the only shape a capture can be taken from.
+[engine_a]
+label = "a"
+binary = "target/release/pistol"
+binary_sha256 = "180b4c406b225fc81342bb8218b8546dda1ffac1a99f7eb91cdaf73d20253476"
+config = "configs/instrument_v0.toml"
+
+[engine_b]
+label = "b"
+binary = "target/release/pistol"
+binary_sha256 = "180b4c406b225fc81342bb8218b8546dda1ffac1a99f7eb91cdaf73d20253476"
+config = "configs/instrument_v0.toml"
