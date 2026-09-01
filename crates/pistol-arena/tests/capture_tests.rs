@@ -531,6 +531,53 @@ fn an_unrecognised_totals_line_refuses_the_run_and_names_the_game_and_turn() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// THE SAME THREE REFUSALS, AT THE CALL SITE. The three cases above pin
+// `classify` and `ask`'s message and boundary cheaply and do not discharge the
+// obligation: a test that invokes a guard directly leaves "the call was never
+// made" alive (docs/decisions.md D-553). The driver is a stub that misbehaves
+// from its FIRST answer — such a run forfeits every game and still writes a
+// report, and pass 2 walks that report like any other, which is the reading the
+// unit cases' own premise ("no static stub behaviour can play a report honestly
+// and then misbehave") does not reach.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn an_engine_that_refuses_every_go_refuses_the_capture_at_the_position_it_reached() {
+    let scratch = Scratch::new("capture-refusesgo-run");
+    let ran = self_play(&scratch, "refuses_go", "refgorun");
+    let report = report_at(&scratch, &ran, "refgorun");
+    let stderr = refused(&scratch, &report, "refgorun");
+    assert!(
+        stderr.contains("the engine refused") && stderr.contains("game 0, turn 0"),
+        "the refusal did not name the engine's own answer and where it came: {stderr}"
+    );
+}
+
+#[test]
+fn an_engine_that_writes_an_off_protocol_line_refuses_the_capture_at_the_position_it_reached() {
+    let scratch = Scratch::new("capture-garbage-run");
+    let ran = self_play(&scratch, "garbage", "garbagerun");
+    let report = report_at(&scratch, &ran, "garbagerun");
+    let stderr = refused(&scratch, &report, "garbagerun");
+    assert!(
+        stderr.contains("not a line this protocol has") && stderr.contains("game 0, turn 0"),
+        "the refusal did not name the line and where it came: {stderr}"
+    );
+}
+
+#[test]
+fn an_engine_that_closes_its_search_with_no_totals_line_refuses_the_capture() {
+    let scratch = Scratch::new("capture-nototals-run");
+    let ran = self_play(&scratch, "bad_bestmove", "nototalsrun");
+    let report = report_at(&scratch, &ran, "nototalsrun");
+    let stderr = refused(&scratch, &report, "nototalsrun");
+    assert!(
+        stderr.contains("no totals line this driver recognised") && stderr.contains("game 0"),
+        "the refusal did not name the missing totals line: {stderr}"
+    );
+}
+
 #[test]
 fn a_report_pass_two_cannot_read_is_refused_by_name() {
     let scratch = Scratch::new("capture-unreadable");
@@ -733,6 +780,30 @@ fn a_captured_field_containing_a_tab_refuses_the_run_by_name() {
     assert!(
         message.contains("totals") && message.contains("TAB") && message.contains("game 3"),
         "the refusal did not name the field and the position: {message}"
+    );
+}
+
+#[test]
+fn a_capture_over_an_engine_that_writes_a_tab_refuses_the_run_by_name() {
+    // Drives the CALL, not the guard: a test that only calls `no_tab` pins the
+    // function and leaves "the guard was never called" alive (docs/decisions.md
+    // D-553). The input is reachable because a capture requires its two seats
+    // to attest ONE engine and not to be `pistol` — so the witness is a stub
+    // that writes a TAB where every reader in this tree sees whitespace, which
+    // is why pass 1 plays and reports normally and only the record's arity is
+    // at stake.
+    let scratch = Scratch::new("capture-tab-run");
+    let ran = self_play(&scratch, "tab_totals", "tabrun");
+    let report = report_at(&scratch, &ran, "tabrun");
+    let (output, out) = capture(&scratch, &report, "tabrun");
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(
+        !out.exists(),
+        "an engine that writes a TAB produced a capture: {stderr}"
+    );
+    assert!(
+        stderr.contains("TAB") && stderr.contains("`totals` field"),
+        "the refusal did not name the field that carried it: {stderr}"
     );
 }
 

@@ -112,6 +112,21 @@ fn a_report_this_mode_cannot_answer_about_is_refused_by_name() {
             "schema 3",
         ),
         (
+            "result",
+            Box::new(|text: &str| {
+                on_line(text, "game ", |line| {
+                    let mut words: Vec<String> = line.split(' ').map(str::to_string).collect();
+                    let at = words
+                        .iter()
+                        .position(|word| word == "result")
+                        .expect("a game record names its result");
+                    words[at + 1] = String::from("draw");
+                    words.join(" ")
+                })
+            }),
+            "not a result this build",
+        ),
+        (
             "movetime",
             Box::new(|text: &str| {
                 on_line(text, "budget ", |_| String::from("budget movetime_ms 500"))

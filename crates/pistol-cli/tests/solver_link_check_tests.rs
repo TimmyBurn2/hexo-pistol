@@ -697,13 +697,16 @@ fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary
     );
     let stdout = out(&ran);
     assert!(
-        stdout.contains("solver_link_check: 9 shipped binaries,"),
+        stdout.contains("solver_link_check: 10 shipped binaries,"),
         // The count is RE-DERIVED at every merge that adds a binary, never
         // carried from either side: six became seven twice over on two open
         // branches (this WP's `solver-cost`, the corpus work's own additions)
         // and a merge that kept either side's number would compile and assert
-        // a false one — which is what this gate exists to refuse.
-        "this workspace ships nine binaries, machine-invariant across a run: {stdout}"
+        // a false one — which is what this gate exists to refuse. Nine became
+        // TEN when the corpus loader landed (`corpus-check`, autodiscovered
+        // from `crates/pistol-arena/src/bin/`), and it reaches the solver by
+        // the same route every other binary does.
+        "this workspace ships ten binaries, machine-invariant across a run: {stdout}"
     );
 
     // The externally derived referent: the crate's own `src/` tree,

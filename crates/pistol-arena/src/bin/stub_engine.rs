@@ -69,6 +69,20 @@ enum Behave {
     /// path: `demands_newgame` produces one only for a position sent before a
     /// `newgame`, which a driver that sends one per ask never does.
     RefusesGo,
+    /// Plays honestly, but writes its closing report with a TAB inside it.
+    ///
+    /// `pistol` cannot write one, and the capture pass's arity guard is checked
+    /// rather than assumed precisely because a capture's two seats are required
+    /// to attest ONE engine and not to be `pistol`. Without an engine that can
+    /// produce one, the guard's CALL is unreachable from any test and a
+    /// call-removed mutant survives (docs/decisions.md D-553).
+    ///
+    /// The TAB replaces the space after the totals marker, where it is
+    /// whitespace to every reader in this tree — `fields_of` splits on
+    /// whitespace and `normalise` needs only the ` nps <n> time <n>` pair — so
+    /// pass 1 plays and reports exactly as the honest stub does, and the
+    /// deviation is observable only where a field's arity is at stake.
+    TabTotals,
 }
 
 impl Behave {
@@ -87,6 +101,7 @@ impl Behave {
             "demands_newgame" => Behave::DemandsNewGame,
             "demands_newgame_per_ask" => Behave::DemandsNewGamePerAsk,
             "refuses_go" => Behave::RefusesGo,
+            "tab_totals" => Behave::TabTotals,
             _ => return None,
         })
     }
@@ -94,7 +109,7 @@ impl Behave {
     /// Every spelling, for a refusal that has to list them.
     const ALL: &'static str = "honest, honest_last, illegal, garbage, bad_bestmove, hang, \
                                exit, bad_protocol, play_mode, edit_own_config, demands_newgame, \
-                               demands_newgame_per_ask, refuses_go";
+                               demands_newgame_per_ask, refuses_go, tab_totals";
 }
 
 /// The exit code the `exit` behaviour uses. Distinct from this program's own
@@ -395,9 +410,17 @@ fn deviate(answer: &str, behave: Behave) -> String {
         Behave::BadProtocol if answer.starts_with("id protocol ") => {
             String::from("id protocol v-not-this-one")
         }
+        Behave::TabTotals if answer.starts_with(TOTALS_PREFIX) => {
+            let (marker, fields) = answer.split_at(TOTALS_PREFIX.len());
+            format!("{marker}{}", fields.replacen(' ', "\t", 1))
+        }
         _ => answer.to_string(),
     }
 }
+
+/// What [`Behave::TabTotals`] writes its TAB after: everything the closing
+/// report's own readers strip before they split.
+const TOTALS_PREFIX: &str = "info totals ";
 
 fn io_error(error: io::Error) -> String {
     format!("stdout: {error}")

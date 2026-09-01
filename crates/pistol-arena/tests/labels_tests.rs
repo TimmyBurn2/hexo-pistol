@@ -526,6 +526,216 @@ fn a_capture_whose_bestmove_carries_no_turn_refuses_the_run_by_name() {
     );
 }
 
+/// The loader, driven as the program that ships it
+/// (tools/SHELL_CHECKLIST.md item 10).
+const CORPUS_CHECK: &str = env!("CARGO_BIN_EXE_corpus-check");
+
+/// The three codes spelled out, so a failure message says what the code the
+/// test did NOT get would have meant (tools/SHELL_CHECKLIST.md item 12).
+fn checked(paths: &[&std::path::Path]) -> (Option<i32>, String, String) {
+    let output = Command::new(CORPUS_CHECK)
+        .args(paths)
+        .output()
+        .expect("the corpus loader runs");
+    (
+        output.status.code(),
+        String::from_utf8_lossy(&output.stdout).to_string(),
+        String::from_utf8_lossy(&output.stderr).to_string(),
+    )
+}
+
+/// THE CONTROL. A loader that refused everything would pass every refusal case
+/// below and answer nothing.
+#[test]
+fn a_corpus_this_build_wrote_loads_through_the_reader_that_ships_with_the_writer() {
+    let scratch = Scratch::new("labels-load-ok");
+    let (corpus, _) = corpus_of(&scratch, "loadok");
+    let path = scratch.write("corpus-loadok-copy.txt", &corpus);
+    let (code, stdout, stderr) = checked(&[&path]);
+    assert_eq!(
+        code,
+        Some(0),
+        "a corpus this build wrote was not loadable by this build; 1 would have meant a          grammar refusal and 2 that no answer was taken.\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+    let rows = rows(&corpus).len();
+    assert!(
+        stdout.contains(&format!("ok, {rows} record(s)")),
+        "the loader did not say what it read ({rows} records): {stdout}"
+    );
+}
+
+#[test]
+fn a_corpus_carrying_an_injected_malformed_record_is_refused_loudly() {
+    let scratch = Scratch::new("labels-load-bad");
+    let (corpus, _) = corpus_of(&scratch, "loadbad");
+    // A `key_pos` that is not thirty-two hex digits: reachable only by editing
+    // the file, which is exactly the injection this check exists to refuse.
+    let broken = rebuild(&corpus, |row| row[4] = String::from("not-a-key"));
+    let path = scratch.write("corpus-loadbad.txt", &broken);
+    let (code, stdout, stderr) = checked(&[&path]);
+    assert_eq!(
+        code,
+        Some(1),
+        "an injected malformed record was not refused; 0 would have meant it loaded and 2 \
+         that no answer was taken.\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+    assert!(
+        stderr.contains("REFUSED") && stderr.contains("key_pos"),
+        "the refusal did not name the column: {stderr}"
+    );
+}
+
+#[test]
+fn a_corpus_path_that_is_not_a_file_is_a_void_and_not_a_refusal() {
+    let scratch = Scratch::new("labels-load-void");
+    let missing = scratch.path("no-such-corpus.txt");
+    let (code, stdout, stderr) = checked(&[&missing]);
+    assert_eq!(
+        code,
+        Some(2),
+        "an unreadable path was not a VOID; reading it as a grammar refusal is the defect \
+         item 12 exists for.\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+    assert!(
+        stderr.contains("RUN VOID") && stderr.contains("NOT a refusal"),
+        "the void did not say it was not a refusal: {stderr}"
+    );
+}
+
+#[test]
+fn naming_no_corpus_at_all_is_a_void() {
+    let (code, stdout, stderr) = checked(&[]);
+    assert_eq!(
+        code,
+        Some(2),
+        "naming nothing was not a VOID.\nstdout:\n{stdout}\nstderr:\n{stderr}"
+    );
+}
+
+/// A capture rewritten through `edit`, re-digested honestly, on disk.
+///
+/// The header sits OUTSIDE the body digest (`emit::body_of` starts the body at
+/// the `# body_sha256 ` line), so a header value a doctored capture claims
+/// survives every digest check and reaches the transform's own bindings. That is
+/// what makes those bindings testable rather than decorative.
+fn doctored_capture(
+    scratch: &Scratch,
+    staged: &Staged,
+    name: &str,
+    edit: impl Fn(&mut Vec<String>, &mut Vec<String>),
+) -> PathBuf {
+    let text = std::fs::read_to_string(&staged.capture).expect("the capture is readable");
+    let mut header: Vec<String> = text
+        .lines()
+        .take_while(|line| !line.starts_with("# body_sha256 "))
+        .map(str::to_string)
+        .collect();
+    let mut body: Vec<String> = pistol_cli::corpus::emit::body_of(&text)
+        .expect("a capture carries a body digest")
+        .split('\n')
+        .filter(|line| !line.is_empty())
+        .map(str::to_string)
+        .collect();
+    edit(&mut header, &mut body);
+    let rendered: String = body.iter().map(|line| format!("{line}\n")).collect();
+    let whole = format!(
+        "{}\n# body_sha256 {}\n{rendered}",
+        header.join("\n"),
+        pistol_cli::sha256::sha256_hex(rendered.as_bytes())
+    );
+    scratch.write(name, &whole)
+}
+
+/// Run `--labels` over an exact capture path and hand back `(stderr, wrote)`.
+fn labels_at(scratch: &Scratch, capture: &PathBuf, report: &PathBuf, tag: &str) -> (String, bool) {
+    let out = scratch.path(&format!("corpus-{tag}.txt"));
+    let output = Command::new(ARENA)
+        .arg("--labels")
+        .arg(capture)
+        .arg("--report")
+        .arg(report)
+        .arg("--out")
+        .arg(&out)
+        .output()
+        .expect("the arena binary runs");
+    (
+        String::from_utf8_lossy(&output.stderr).to_string(),
+        out.exists(),
+    )
+}
+
+#[test]
+fn a_capture_whose_header_identity_is_not_the_one_its_inputs_produce_is_refused_by_name() {
+    // The identity binding, driven at its CALL: the header is outside the body
+    // digest, so a claimed `capture_sha256` reaches the transform untouched and
+    // only this check stands between it and a corpus attributed to a run that
+    // never happened (docs/decisions.md D-553).
+    let scratch = Scratch::new("labels-identity");
+    let staged = staged(&scratch, "identity");
+    let capture = doctored_capture(&scratch, &staged, "capture-identity.txt", |header, _| {
+        for line in header.iter_mut() {
+            if line.starts_with("# derived capture_sha256 ") {
+                *line = format!("# derived capture_sha256 {}", "0".repeat(64));
+            }
+        }
+    });
+    let (stderr, wrote) = labels_at(&scratch, &capture, &staged.report, "identity");
+    assert!(
+        !wrote,
+        "a capture claiming a foreign identity produced a corpus"
+    );
+    assert!(
+        stderr.contains("its own inputs produce"),
+        "the refusal did not name the identity disagreement: {stderr}"
+    );
+}
+
+#[test]
+fn a_capture_that_holds_no_record_of_one_of_the_reports_games_is_refused_by_name() {
+    // A corpus over SOME of a report's games is a corpus over a sample nobody
+    // registered. Driven at the call: every earlier check passes, because the
+    // records that remain are the report's own.
+    let scratch = Scratch::new("labels-missing-game");
+    let staged = staged(&scratch, "missinggame");
+    let capture = doctored_capture(&scratch, &staged, "capture-missing.txt", |_, body| {
+        body.retain(|line| !line.starts_with("1\t"));
+    });
+    let (stderr, wrote) = labels_at(&scratch, &capture, &staged.report, "missinggame");
+    assert!(!wrote, "a capture missing a whole game produced a corpus");
+    assert!(
+        stderr.contains("has no record in the capture"),
+        "the refusal did not name the game the capture skipped: {stderr}"
+    );
+}
+
+#[test]
+fn a_captured_position_that_is_not_the_reports_own_prefix_is_refused_by_name() {
+    // The record-grain half of the capture-to-report binding: the digests still
+    // agree and the identity still holds, so this check is the only thing that
+    // can see a record whose position is not the one its own turn count names.
+    let scratch = Scratch::new("labels-prefix");
+    let staged = staged(&scratch, "prefix");
+    let capture = doctored_capture(&scratch, &staged, "capture-prefix.txt", |_, body| {
+        for line in body.iter_mut() {
+            let fields: Vec<&str> = line.split('\t').collect();
+            if fields[1] == "0" {
+                let mut fields: Vec<String> = fields.iter().map(|f| (*f).to_string()).collect();
+                fields[2] = String::from("position start moves 0,0/1,1");
+                *line = fields.join("\t");
+            }
+        }
+    });
+    let (stderr, wrote) = labels_at(&scratch, &capture, &staged.report, "prefix");
+    assert!(
+        !wrote,
+        "a record whose position is not its own prefix produced a corpus"
+    );
+    assert!(
+        stderr.contains("is not the report's own prefix"),
+        "the refusal did not name the position disagreement: {stderr}"
+    );
+}
+
 #[test]
 fn a_corpus_missing_its_opening_turns_param_is_refused_by_name() {
     let scratch = Scratch::new("labels-openingturns");

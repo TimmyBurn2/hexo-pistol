@@ -1,0 +1,69 @@
+# WP-2.0 pilot — THE DRY RUN'S arena config. Authored FROM the pre-registration
+# docs/experiments/wp20_pilot_prereg.md revision 2, section 7.
+#
+# NOT the pilot. This document exists so that the pre-registration's literal
+# commands are exercised on an input of the SAME KIND as the registered workload
+# before its review passes, and never on the workload itself (docs/process.md,
+# "Dry-run discipline"). It differs from configs/arena_wp20_label_pilot.toml in
+# identity and size alone.
+#
+# THE OPENINGS FIXTURE IS THE ONE DIFFERENCE THAT IS NOT SIZE, and it is the
+# reason this file exists rather than a smaller take of the pilot's own book: a
+# dry run may not draw from book_v2, because a range a document reads is a range
+# the ledger records (docs/book_v2_ledger.md). openings_v1.txt is the same KIND
+# of artefact — a sha-pinned opening corpus with an in-band body digest, read by
+# the same loader, in the same encoding — and its openings are four turns where
+# random_openings_v2's are three, which the pre-registration's section 7 records
+# rather than smooths over.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/openings_v1.txt"
+
+# Two openings, so four games. Enough to exercise the pairing and to give the
+# capture pass a walk of realistic shape; the pilot's own take is DERIVED from
+# what this run measures (the pre-registration's section 6) and is not this
+# number scaled by preference.
+openings_take = 2
+openings_skip = 0
+
+# The standing governed turn cap. An evaluation horizon, never a game rule
+# (game rule 6). It is the pilot's value too, because the per-position cost this
+# run measures is only the pilot's cost if the games have the pilot's shape.
+turn_cap = 40
+
+n_workers = 4
+hang_timeout_ms = 120000
+
+[budget]
+# The GAME budget, identical to the pilot's: the standing instrument budget.
+kind = "nodes"
+value = 50000
+
+[sprt]
+# Present because the schema requires them. A SELF-MATCH crosses no bound — every
+# pair scores alike, so no likelihood ratio is defined and the verdict says so
+# (docs/decisions.md D-156). No strength claim is made here or in the pilot.
+elo0 = 0.0
+elo1 = 15.0
+alpha = 0.05
+beta = 0.05
+
+# ONE ENGINE IN TWO SEATS, which is the only shape a capture can be taken from:
+# `arena --capture` refuses a report whose two seats do not attest the same
+# engine, and `validate` refuses two seats carrying the SAME label — so a
+# capturable report has one binary, one config, and two labels.
+[engine_a]
+label = "a"
+binary = "target/release/pistol"
+binary_sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+config = "configs/instrument_v0.toml"
+
+[engine_b]
+label = "b"
+binary = "target/release/pistol"
+binary_sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+config = "configs/instrument_v0.toml"
