@@ -452,7 +452,28 @@ instrument of this pilot is exactly one of three things**, and the three are
 disjoint and exhaust the code:
 
 **(a) THE PROGRAM DECLINED TO LOOK AT A DOCUMENT — a VOID.** Every refusal decided
-BEFORE the first ask, enumerated so that (b) can be defined as its complement:
+BEFORE the first ask, enumerated so that (b) can be defined as its complement.
+**THE GOVERNING RULE IS THE STANDING EXIT TAXONOMY AND IT IS STATED FIRST, so that
+a refusal this list has failed to name is still classified correctly: ANY PRE-GAME
+REFUSAL IS A VOID AND NOT A STOP.** The enumeration below is the list of them, and
+where the list and the rule disagree the RULE governs — a document's list can be
+short by an oversight, and this one was.
+
+**PASS 1's OWN PRE-GAME REFUSALS, which revision 5 omitted and which are the
+reachable ones** (`crates/pistol-arena/src/bin/arena.rs`, all before
+`schedule::run`):
+
+- the arena config is not one this build reads, or could not be digested
+  (`ArenaConfig::load`, `identity::digest_of`);
+- the openings file is absent, its in-band digest does not verify, or the
+  registered slice is not inside it (`crates/pistol-arena/src/openings.rs`);
+- **an engine's `binary_sha256` does not match the file at its `binary` path**, or
+  a seat could not be spawned and handshaked (`identity::capture`, for each seat).
+  **This is the one slot §9.1 records as impossible to discharge before launch**,
+  so it is the most reachable refusal in this whole list, and revision 5
+  classified it as a STOP of the arc.
+
+**AND THE REFUSALS COMMON TO EVERY MODE:**
 
 - the command line itself — a flag order, or a count spelled a way the program
   will not echo back (`crates/pistol-arena/src/bin/arena.rs`);
@@ -474,11 +495,14 @@ BEFORE the first ask, enumerated so that (b) can be defined as its complement:
   whose body does not digest to its header.
 
 **(b) THE PROGRAM REFUSED SOMETHING IT FOUND MID-WALK — a STOP, verdict V7-B.**
-The complement of (a) among the program's own refusals: an engine that spoke out
-of turn, closed its pipe, wrote an unreadable line or answered `error`; a totals
-line the normalisation cannot read; a record the write side refused. **This is
-defined as a complement and not as a second list, because §5 previously carried
-two lists of one closed class and they disagreed.**
+The complement of (a) among the program's own refusals, **taken against the RULE
+and not against the list**: a refusal is (b) only if it was decided AFTER work
+began. An engine that spoke out of turn, closed its pipe, wrote an unreadable line
+or answered `error`; a totals line the normalisation cannot read; a record the
+write side refused. **This is defined as a complement and not as a second list,
+because §5 previously carried two lists of one closed class and they disagreed** —
+and it is anchored to the rule rather than to the enumeration because §5 has now
+twice had an enumeration that was short.
 
 **(c) THE MACHINE TOOK THE RUN AWAY — a VOID, and it is NOT decided by the
 enumeration.** A filesystem filling, a process killed, a reboot, the session
@@ -715,12 +739,12 @@ was read.**
 measured the cold check at `200000` and extrapolated; this revision runs it at
 `400000`, the budget RULE-2 selected, and the two costs are **1.006 s each** —
 `capture_400000 seconds=165` and `cold seconds=165`, over the same 164 positions.
-**The coldness overhead is therefore below this instrument's one-second
-resolution**, which is a MEASURED answer to the cost
-`docs/experiments/wp20m_design.md` §12 declines to guess and D-542 recorded as
-*"a 256 MiB memset at every committed seat's `tt_bytes`"*: beside a search of this
-size it does not register. (The earlier `200000` reading put it at 2.4 %; both are
-in SLOT A's predecessor and neither changes a value here.)
+**The coldness overhead is therefore bounded at about 12 ms per ask**, which §7.2
+derives inline from these two readings and from no others — **the `nodes 200000`
+figures earlier revisions used are struck, because they exist only in the artifact
+§7.1 disqualifies.** Neither the bound nor the strike changes a value in this
+section: `c` is measured at the chosen budget and enters the arithmetic below as
+`1.006 s`.
 
 **THE ARITHMETIC, at `T` openings** (`2T` games, `2T x 41` positions):
 
@@ -903,29 +927,41 @@ run that only confirmed what was expected would be worth less.
    a report whose two seats do not attest one engine, so a self-match is the only
    shape a capture can be taken from at all. It is arithmetic the closure's
    corpus plan must carry, not a finding against the pipeline.
-3. **THE COLDNESS COST DOES NOT REGISTER AT THE CHOSEN BUDGET, AND BOTH READINGS
-   ARE KEPT WITH THE BUDGET AND ARTIFACT EACH BELONGS TO.** At `nodes 200000`,
-   measured in the SUPERSEDED dry run, the cold ask cost 0.518 s against the
-   in-process ask's 0.506 s — **2.4 %**. At `nodes 400000`, the budget RULE-2
-   selected, measured in SLOT A, both are **1.006 s** and the difference is below
-   the instrument's one-second resolution. **WHAT THE TWO READINGS TOGETHER
-   SUPPORT, and it is less than revision 4 claimed.** Revision 4 said they "do not
-   disagree" because 12 ms x 164 is about 2 s, "which would not separate two
-   integer-second readings" — **and 2 s is exactly what a one-second counter
-   does separate**, so that reconciliation refuted itself. The honest statement is
-   about QUANTISATION: each pass is timed to the second, so a DIFFERENCE of two
-   such readings carries plus or minus two seconds. At `200000` the difference is
-   `85 - 83 = 2 s`, which is `2 ± 2`; at `400000` it is `165 - 165 = 0 s`, which is
-   `0 ± 2`. **Both intervals contain everything from 0 to about 4 s over 164 asks,
-   so this instrument bounds the coldness overhead at roughly 24 ms per ask and
-   resolves it no further.** That bound is still the answer
-   `docs/experiments/wp20m_design.md` §12 declines to guess, and it is stated as a
-   bound rather than as an agreement between two readings that cannot in fact
-   agree to that precision. **Revision 3's first attempt at this section
-   left "THE COLDNESS COST IS 2.4 %" standing as a finding of a run this document
-   had just declared superseded** — a remedy that re-measured `c` correctly and
-   spent a true claim on the way, which is the class D-548 names and neither the
-   citation checker nor the passed-section freeze can see.
+3. **THE COLDNESS OVERHEAD IS AT MOST ABOUT 12 ms PER ASK, DERIVED FROM THE
+   QUALIFIED ARTIFACT ALONE.** **The `nodes 200000` readings are STRUCK**: they
+   exist only in the dry-run artifact §7.1 disqualifies, and a bound resting on an
+   artifact this document has declared superseded is a bound resting on nothing
+   the manifest indexes. Revisions 4 and 5 both computed from them, and revision
+   5's arithmetic was wrong besides — it claimed two intervals *"both contain
+   everything from 0 to about 4 s"*, which is false of `0 ± 2`.
+
+   **THE ARITHMETIC, INLINE, FROM SLOT A AND NOTHING ELSE.** Both passes cover the
+   same 164 asked positions at `nodes 400000`. The capture pass reads
+   `capture_400000 seconds=165`; the cold check, one fresh process per position,
+   reads `cold seconds=165`. Each is an integer-second reading, so their
+   difference carries at most two seconds of quantisation:
+
+   ```
+   |165 - 165| = 0 s observed, and at most 2 s admitted by quantisation
+   2 s / 164 asks = 0.0122 s  ->  about 12 ms per ask
+   ```
+
+   **So the process spawn and the fresh 256 MiB transposition table together cost
+   at most about 12 ms against a search of about 1 006 ms — under 1.3 %.** That is
+   the answer `docs/experiments/wp20m_design.md` §12 declines to guess and D-542
+   recorded as *"a 256 MiB memset at every committed seat's `tt_bytes`"*, and it is
+   stated as a BOUND because this instrument times passes and not asks.
+
+   **THE HISTORY OF THIS PARAGRAPH, kept because it is the clearest instance of
+   the class that ended this document's review rounds.** Revision 3 re-measured
+   `c` correctly and left the OLD figure standing beside it as a finding of a run
+   the same revision had just declared superseded; revision 4 tried to reconcile
+   the two and produced arithmetic that refuted itself; revision 5 left the
+   reconciliation resting on the disqualified artifact. **Every one of those was a
+   remedy that broke something adjacent** — D-548's class, which neither the
+   citation checker nor the passed-section freeze can see. The figures those
+   revisions carried are STRUCK by the arithmetic above and are not findings of
+   this document.
 
 **FINDING 2 IS FOR THE CLOSURE. FINDING 1 IS FOR THE CLOSURE *AND* BINDS C-E
 HERE**, and the earlier revision's claim that both were the closure's alone is
@@ -1157,3 +1193,56 @@ cap must rise, is a Stage-2 eval design question that this package must hand ove
 rather than answer. (iii) `p = 41` is an upper bound (§6.3); if the pilot's games
 decide, the measured throughput per POSITION still holds but positions per game
 falls, and the plan must be stated per position for that reason.
+
+---
+
+# ERRATA — APPEND-ONLY, and read before anything above is relied on
+
+**WHAT THIS BLOCK IS.** `docs/decisions.md` D-557 records the architect's
+conditional take of this document after its review grant was spent. Under it, the
+two findings that could have made a recorded conclusion WRONG were fixed by
+TRANSCRIPTION of architect-ruled text — §5's exit-`2` classification and §7.2's
+coldness bound — and **the findings below are ACKNOWLEDGED AND LEFT UNFIXED BY
+DESIGN.** They are here so that a reader meets them on this document's own face
+rather than in a review report it does not cite.
+
+**WHY LEAVING THEM IS THE CHEAPER ERROR, stated so it can be disagreed with.**
+Five review rounds measured this document's remedy-breakage at twelve of thirty
+findings, then six of eleven: **the most likely product of a further round is a
+sixth defect in a section that is currently correct.** Against that, the final
+reviewer reproduced every number this document registers using its own code and
+the raw artifacts, and located the gap outside the instrument. **Nothing below
+touches a registered value** — `SLOT S1` (13 openings), `SLOT S2` (`nodes
+400000`), `SLOT S3` (stride 1), `SLOT W`'s six costs and `SLOT R1` are all
+independently verified correct.
+
+**THIS BLOCK IS APPEND-ONLY.** An entry is never edited or deleted; a later
+revision that fixes one appends a line saying so, and the entry stays.
+
+## Standing, MAJOR
+
+| # | what is wrong | why it does not endanger a verdict |
+|---|---|---|
+| **E-1** | §6.3 says the coldness cost is *"below one-second resolution"*, which §7.2's transcribed text supersedes with the 12 ms bound; the phrase stands where it was written | the bound §7.2 derives is the operative one and §6.3 now points at it; the residual is a phrasing, not a second number |
+| **E-2** | §6.3 and §7.1 cite `captured 164 position(s)` as the source for `p = 41`, and that line is **not in SLOT A** — the dry-run script suppressed the arena's capture and labels stdout, an undeclared fourth difference between the registered block and the one that ran | `p = 41` is independently checkable and was independently checked: a capped game contributes `turn_cap + 1` asked positions by `crates/pistol-arena/src/capture.rs`'s `asked_prefixes`, and all four corpora in the manifest hold exactly 41 records per game |
+| **E-3** | §9's watchdog row is unsatisfiable as written: `hang_timeout_ms = 120000` is 120 s and does not exceed the 165 s whole-pass bound the same row names, yet §9.1 records *"yes"* and *"no correction needed"* | the quantity that matters is the longest single ASK, not the whole pass; SLOT A times passes and not asks, so **the document has no measurement of it either way**. The dry run completed 164 asks in 165 s with no watchdog firing at the same 120 000 ms, which is evidence the bound is loose and is not a measurement of the maximum |
+| **E-4** | §7.1's C-B row cites the digest `5fe1f1a3…`, which belongs to the superseded run; SLOT A and the manifest both carry `807d5656…` | the criterion is read from `cmp -s`'s exit code, which SLOT A records as `capture-determinism exit=0`; the digest is a citation beside it and not the receipt |
+
+## Standing, MINOR
+
+| # | what is wrong |
+|---|---|
+| **E-5** | §5's own enumeration and the rule above it are two statements of one class; the RULE governs, and a reader who finds a refusal the list omits has found an incomplete list rather than an unclassifiable refusal |
+| **E-6** | §8's *"differs in three ways"* undercounts: the dry-run block also suppresses the arena's stdout (E-2) |
+| **E-7** | the registered block times `labels1` and `labels2` separately but §6.3 charges one flat 2 s for both |
+| **E-8** | §6's "six per-unit costs" counts the corpus transform, which is a bound rather than a measurement, among them |
+| **E-9** | the manifest's opening claim that every number is read off an indexed file was true when written and is falsified by E-2's missing line |
+| **E-10** | §4B's deviation paragraph quotes the two dispatches separately and correctly, but the reader must go to `docs/experiments/wp20_dispatches.md` to see they differ |
+| **E-11** | §6.1's floor (b) is applied to `2T x 41`, an upper bound; §6.3 states the 6 % slack and the closure reports the actual asked-position count beside the rate |
+
+## What no entry above touches
+
+The registered values, the instruments, the dry run's exit codes, the manifest's
+seventeen digests, and criteria C-A through C-E as written. **A pilot run governed
+by this document reads its verdict from §5 as transcribed and its throughput from
+C-D, and no entry above reaches either.**

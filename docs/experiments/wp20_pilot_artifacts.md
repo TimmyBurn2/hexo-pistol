@@ -52,6 +52,12 @@ because a criterion's INPUTS are as much its evidence as its outputs: the first
 re-digests and so reaches the grammar, the second does not and is stopped by the
 digest two checks earlier, and that is what makes them different guards.
 
+## The call-site mutant receipts (D-553's corollary, the retro-check's closure)
+
+| sha256 | file | what it is |
+|---|---|---|
+| `74dc9fdca092a3a1544dcae288adf47e39bd0b8af06834ced326bd51c6d726c1` | `artifacts/wp20pilot_mutants_4375ad9.txt` | nine call-removed mutants at `4375ad9`, run in a detached worktree on `/home` and never the live tree. **All nine DIE, each at its own registered test**: `no_tab`'s call, `classify`'s two refusal arms, `GameResult::from_token`'s refusal, `labels.rs`'s capture-identity, every-game and prefix bindings, `corpus-check`'s `printable` call, and `book`'s presence in the summary line |
+
 ## CI at the STOP head
 
 **TWO RUNS ARE LISTED AND THE SECOND IS THE OPERATIVE ONE.** The first was taken
