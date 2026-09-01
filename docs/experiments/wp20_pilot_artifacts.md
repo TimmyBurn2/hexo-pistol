@@ -54,8 +54,15 @@ digest two checks earlier, and that is what makes them different guards.
 
 ## CI at the STOP head
 
+**TWO RUNS ARE LISTED AND THE SECOND IS THE OPERATIVE ONE.** The first was taken
+at `867a923`, before this manifest gained its own receipt row; adding that row
+moved the head, so the run was re-taken at `205b6a8`. The recursion is recorded
+rather than argued away, because "the later commit only touches a file no gate
+reads" is exactly the kind of implication this session has been wrong about twice.
+
 | sha256 | file | what it is |
 |---|---|---|
+| `09918bef9070ee3486360032c7e17dd074e806051b1ded5a2c2e32e9e3b1a602` | `artifacts/wp20pilot_ci_STOP_205b6a8_v1.txt` | **THE OPERATIVE RECEIPT.** `tools/ci.sh` at `205b6a8`, all 19 gates, `ci: all gates passed`, `EXIT=0` |
 | `030dfee8f315a847dea4ddff61764f1b2e4c463cd9a7b50f7ec59923ae117388` | `artifacts/wp20pilot_ci_STOP_867a923_v1.txt` | `tools/ci.sh` at `867a923`, **all 19 gates**, `ci: all gates passed`, `EXIT=0` — the receipt D-556's STOP is cited at |
 
 ## CI at the registration head
