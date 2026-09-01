@@ -52,6 +52,12 @@ because a criterion's INPUTS are as much its evidence as its outputs: the first
 re-digests and so reaches the grammar, the second does not and is stopped by the
 digest two checks earlier, and that is what makes them different guards.
 
+## CI at the STOP head
+
+| sha256 | file | what it is |
+|---|---|---|
+| `030dfee8f315a847dea4ddff61764f1b2e4c463cd9a7b50f7ec59923ae117388` | `artifacts/wp20pilot_ci_STOP_867a923_v1.txt` | `tools/ci.sh` at `867a923`, **all 19 gates**, `ci: all gates passed`, `EXIT=0` — the receipt D-556's STOP is cited at |
+
 ## CI at the registration head
 
 | sha256 | file | what it is |
