@@ -80,6 +80,12 @@ digests are here because they are what a later reader cites.
 |---|---|---|
 | `74dc9fdca092a3a1544dcae288adf47e39bd0b8af06834ced326bd51c6d726c1` | `artifacts/wp20pilot_mutants_4375ad9.txt` | nine call-removed mutants at `4375ad9`, run in a detached worktree on `/home` and never the live tree. **All nine DIE, each at its own registered test**: `no_tab`'s call, `classify`'s two refusal arms, `GameResult::from_token`'s refusal, `labels.rs`'s capture-identity, every-game and prefix bindings, `corpus-check`'s `printable` call, and `book`'s presence in the summary line |
 
+## CI at the CLOSURE head
+
+| sha256 | file | what it is |
+|---|---|---|
+| `c9a837c9ed76baaca92fbf507e9db25ab9213a7fae54f15a290d89cb72441966` | `artifacts/wp20_ci_CLOSURE_7af791a_v1.txt` | **THE CLOSURE RECEIPT.** `tools/ci.sh` at `7af791a`, all 19 gates, `ci: all gates passed`, `EXIT=0` — the head D-561 closes WP-2.0 at. Per the termination rule above, the commit recording this row changes documentation only |
+
 ## CI at the STOP head
 
 **TWO RUNS ARE LISTED AND THE SECOND IS THE OPERATIVE ONE.** The first was taken
