@@ -1,13 +1,12 @@
 # WP-2.0 — PILOT PRE-REGISTRATION: the label pipeline end to end, on a registered slice
 
-**REVISION 4.** Registered BEFORE the run, at the revision named in §1, under the
+**REVISION 5.** Registered BEFORE the run, at the revision named in §1, under the
 WP-2.0 dispatch's Development-round item 4 and the WP-2.0-finish dispatch's §4
 (`docs/experiments/wp20_dispatches.md`), and under the operator grant recorded at
-`docs/decisions.md` D-552, whose third and fourth rounds are **scoped to the prior
-review's enumerated remedies only**. This is round three, and it is so scoped:
-every change below answers a numbered finding of
-`docs/experiments/wp20_pilot_prereg_REVIEW_rev3.md` (0 BLOCKING, 5 MAJOR,
-10 MINOR) and nothing else is touched.
+`docs/decisions.md` D-552. **THIS IS THE FOURTH AND LAST ROUND THE GRANT ALLOWS**,
+it is scoped to the enumerated remedies of
+`docs/experiments/wp20_pilot_prereg_REVIEW_rev4.md` (0 BLOCKING, 5 MAJOR,
+6 MINOR), and a fifth failure returns the package to the architect.
 
 ## 0.1 REVISION HEADER
 
@@ -15,6 +14,25 @@ every change below answers a numbered finding of
 review; revision 2 took one and FAILED it. D-547's passed-section freeze therefore
 still binds nothing here, and these tables record the changes for the reader
 rather than to discharge the law.
+
+### What moved from revision 4 to revision 5 — one row per finding
+
+**THE RE-CHECK GRADED 11 OF 15 APPLIED AND FOUR AS APPLIED-BUT-INTRODUCED-A-NEW-
+DEFECT.** No remedy was skipped and none was partial; **every finding below is a
+defect a REMEDY created**, which is the third consecutive round in which that is
+the dominant class. It is recorded as the finding about method: in this document,
+the danger is no longer that a fix is not made but that making it breaks
+something adjacent, and the answer taken here is mechanical — after the edits, a
+sweep for every phrase a remedy could have contradicted (§0.2).
+
+| finding | what moved | where |
+|---|---|---|
+| **MAJ-A** — MIN-8's `book` fix changed a registered instrument in the very commit whose §1 said it changed none, so §1 named a revision whose `corpus-check` could not print a field §4E registers | SLOT R1 stops being a transcribed constant and becomes a slot the SLOT PASS fills, with `git diff --stat` over `crates/ tools/ configs/` as its own check; the dry run is re-taken at the revision that holds the instruments | §1, §7.1, §9 |
+| **MAJ-B** — the coldness reconciliation refuted itself: it computed ~2 s of predicted overhead and called that unresolvable by a one-second counter | the reconciliation is redone as QUANTISATION — a difference of two integer readings carries ±2 s — and the conclusion is stated as a BOUND of about 24 ms per ask rather than as an agreement | §7.2 |
+| **MAJ-C** — §5's new "if and only if" made a mid-pass filesystem exhaustion a STOP, contradicting the void class that calls it a VOID | exit `2` is classified ONCE into three disjoint limbs, and the environment limb is decided by WHAT failed rather than by WHEN | §5 |
+| **MAJ-D** — the enumeration was not exhaustive (the capture's own read, `outpath::claim`'s other failures, argument refusals) and §5 carried two lists of one closed class | the enumeration is completed and limb (b) is DEFINED as its complement, so there is one list | §5 |
+| **MAJ-E** — §8's registered block emits no revision or engine receipt, so the pilot's artifact would carry the very defect that superseded its predecessor | the block opens with `git rev-parse HEAD`, the dirty-file count and the engine digest, unconditionally | §8 |
+| minors | the second transform is timed; §6.3 stops calling the transform term MEASURED; the manifest's *"the dry run is `tools/`-free"* is corrected (§8 runs `tools/cold_label_check.py`); §9's watchdog ground is restated as a mean and a bound rather than a "measured maximum"; the two C-E injection corpora are indexed; the "three decided games" arithmetic is corrected — a game decided at turn `k` contributes `k` positions, so the exposure is to WHEN games decide | §6.3, §7.1, §8, §9, the manifest |
 
 ### What moved from revision 3 to revision 4 — one row per finding of the scoped re-review
 
@@ -90,22 +108,31 @@ is supplied.
 
 | what | which | revision |
 |---|---|---|
-| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | `85e6261` |
-| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | `85e6261` |
-| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | `85e6261` |
-| the corpus loader, **and the instrument RULE-2's depth table is read from** | `crates/pistol-arena/src/bin/corpus-check.rs` | `85e6261` |
-| the cold-label referent | `tools/cold_label_check.py` | `85e6261` |
+| pass 1 — the games | `arena --config`, from `crates/pistol-arena/src/bin/arena.rs` | SLOT R1 |
+| pass 2 — the capture | `arena --capture`, `crates/pistol-arena/src/capture.rs` | SLOT R1 |
+| pass 3 — the corpus | `arena --labels`, `crates/pistol-arena/src/labels.rs` | SLOT R1 |
+| the corpus loader, **and the instrument RULE-2's depth table is read from** | `crates/pistol-arena/src/bin/corpus-check.rs` | SLOT R1 |
+| the cold-label referent | `tools/cold_label_check.py` | SLOT R1 |
 | the engine | `target/release/pistol`, bound by content | `180b4c40…` (`binary_sha256`), §9 |
-| the engine config | `configs/instrument_v0.toml` | `85e6261` |
-| the arena config | `configs/arena_wp20_label_pilot.toml` | `85e6261` |
-| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | `85e6261` |
-| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | `85e6261` |
+| the engine config | `configs/instrument_v0.toml` | SLOT R1 |
+| the arena config | `configs/arena_wp20_label_pilot.toml` | SLOT R1 |
+| the dry-run arena config | `configs/arena_wp20_label_pilot_dryrun.toml` | SLOT R1 |
+| the book | `crates/pistol-cli/tests/fixtures/random_openings_v2.txt` | SLOT R1 |
 
-**SLOT R1 IS ONE VALUE AND IT IS FILLED: `85e6261`**, the commit that lands this
-revision's instruments, its two arena configs and the ledger row. **The dry run of
-§7.1 ran AT that commit with a clean tree**, which its own first line records; the
-commit that transcribes its numbers into this section changes no instrument, so
-`85e6261` remains the revision that governs every artefact below. Every artefact above except
+**SLOT R1 IS ONE VALUE: the commit that holds every artefact in the table above.**
+It is filled by the SLOT PASS, from the revision the run is actually taken at, and
+**this document has already got it wrong once in the way this rule exists to
+prevent**: revision 4 filled it with `85e6261` and then, in the very commit
+asserting that, changed `crates/pistol-arena/src/bin/corpus-check.rs` — an
+instrument in the table — so §1 named a revision whose `corpus-check` could not
+print a field §4E registers. **The rule fired on the document that wrote it.**
+
+**THE RULE, RESTATED SO IT BINDS THE SLOT PASS AND NOT ONLY A READER**: SLOT R1 is
+correct only if `git diff --stat <SLOT R1> <the run's own HEAD> -- crates/ tools/
+configs/` is EMPTY. The slot pass runs that command and records its output, and a
+non-empty result is not a note to add — it means SLOT R1 is the wrong commit and
+the dry run must be re-taken at the right one. A change to any artefact in the
+table reopens this document (`docs/process.md`, "Instrument governing revision"). Every artefact above except
 the engine binary is a tracked file, so naming the commit names all of them at
 once, and a change to any of them reopens this document
 (`docs/process.md`, "Instrument governing revision"). **The review of this pre-registration is
@@ -177,7 +204,7 @@ criterion.**
 
 ### C-A — the cold-label agreement check (D-540's second clause)
 
-**THE INSTRUMENT.** `tools/cold_label_check.py` at `85e6261`. Its own usage block
+**THE INSTRUMENT.** `tools/cold_label_check.py` at SLOT R1. Its own usage block
 fixes its answers, quoted here so a reader of this document does not have to trust
 a paraphrase:
 
@@ -224,7 +251,7 @@ carried between them. **Exit 2 is a VOID and not a disagreement** (§5).
 
 ### C-B — the determinism re-run receipt
 
-**THE INSTRUMENT.** The `arena` binary at `85e6261`, run twice per pass, compared by
+**THE INSTRUMENT.** The `arena` binary at SLOT R1, run twice per pass, compared by
 `sha256sum`. **THE REGISTERED RANGE IS THE WHOLE PILOT AND NOT A SUB-RANGE**, in
 both passes, and the reason is that neither pass has a subsetting flag: `--capture`
 walks the report it is given and `--labels` transforms the capture it is given, so
@@ -265,7 +292,7 @@ ARC**.
 
 ### C-C — `replay_check` over every pilot game, and zero forfeits
 
-**THE INSTRUMENT.** `arena --replay <report> --out <path> --workers <n>` at `85e6261`.
+**THE INSTRUMENT.** `arena --replay <report> --out <path> --workers <n>` at SLOT R1.
 Its answers, from `crates/pistol-arena/src/usage.rs` and
 `crates/pistol-arena/src/bin/arena.rs`:
 
@@ -345,7 +372,7 @@ has a cited source rather than an estimate.
 
 ### C-E — the schema and its loader
 
-**THE INSTRUMENT.** `crates/pistol-arena/src/bin/corpus-check.rs` at `85e6261`, which
+**THE INSTRUMENT.** `crates/pistol-arena/src/bin/corpus-check.rs` at SLOT R1, which
 reads a corpus back through the SAME loader the writer writes for. Its usage block:
 
 ```
@@ -416,19 +443,51 @@ of these rows is itself a finding about this document.
 | V7-B | **STOP — a pass died after pass 1** | `--capture` or `--labels` exits `2` **after work had begun** — a channel failing mid-walk, an engine refusing an ask, a record refused on write | the arc STOPS. This is a refusal BY the pipeline about its own inputs and is not a void; §5's void class excludes it by name |
 | V8 | **VOID** | see below | ONE re-run, on a receipted environment fault; a SECOND void STOPS with artifacts preserved |
 
-**THE VOID CLASS, DEFINED.** A void is *no answer was taken*, never *the answer is
-no* (`tools/SHELL_CHECKLIST.md` item 12). It is exactly one of:
+**THE VOID CLASS, DEFINED — AND EXIT `2` CLASSIFIED ONCE, HERE, WITH EVERY OTHER
+SECTION POINTING AT THIS LIST** (D-423). A void is *no answer was taken*, never
+*the answer is no* (`tools/SHELL_CHECKLIST.md` item 12). **An exit `2` from any
+instrument of this pilot is exactly one of three things**, and the three are
+disjoint and exhaust the code:
 
-- `cold_label_check.py` or `corpus-check` exiting `2` — an instrument refusing to
-  LOOK: a path that is not a file, a stride spelled unusably, a capture whose body
-  does not digest to its header;
-- `arena` exiting `2` **before any work began** — a document refused on read: a
-  budget that is not `nodes`, two seats attesting different engines, an engine
-  whose digest has drifted, an `--out` path already claimed;
-- the machine taking the run away: a filesystem filling, a process killed, a
-  reboot, or the session ending mid-pass. `/tmp` on this machine is a 24 GiB
-  RAM-backed tmpfs and its exhaustion is the recorded instance (D-281, D-285);
-- **and nothing else.**
+**(a) THE PROGRAM DECLINED TO LOOK AT A DOCUMENT — a VOID.** Every refusal decided
+BEFORE the first ask, enumerated so that (b) can be defined as its complement:
+
+- the command line itself — a flag order, or a count spelled a way the program
+  will not echo back (`crates/pistol-arena/src/bin/arena.rs`);
+- the `--out` path could not be claimed exclusively, for ANY reason and not only
+  "already claimed" (`crates/pistol-arena/src/outpath.rs`);
+- the source report could not be read as one: absent, not a regular file, not
+  UTF-8 (`crates/pistol-arena/src/passes.rs`);
+- the report is not one this build reads — wrong schema, aborted, a budget that is
+  not `nodes`, two seats carrying one label, a record it refuses
+  (`crates/pistol-arena/src/transcript.rs`);
+- the two seats do not attest one engine, or an engine's digest has drifted since
+  the report was written (`capture.rs`'s `one_engine`, `replay::verify_engines`);
+- **for `--labels` only** — the capture file could not be read, or its grammar was
+  refused, or its `source_sha256` or `capture_sha256` does not bind to the report
+  (`passes.rs`, `crates/pistol-arena/src/capture_file.rs`, `labels.rs`'s two
+  header checks). All four are decided before the first record is transformed;
+- `cold_label_check.py` or `corpus-check` refusing to look — a path that is not a
+  file, a path carrying a control character, a stride spelled unusably, a capture
+  whose body does not digest to its header.
+
+**(b) THE PROGRAM REFUSED SOMETHING IT FOUND MID-WALK — a STOP, verdict V7-B.**
+The complement of (a) among the program's own refusals: an engine that spoke out
+of turn, closed its pipe, wrote an unreadable line or answered `error`; a totals
+line the normalisation cannot read; a record the write side refused. **This is
+defined as a complement and not as a second list, because §5 previously carried
+two lists of one closed class and they disagreed.**
+
+**(c) THE MACHINE TOOK THE RUN AWAY — a VOID, and it is NOT decided by the
+enumeration.** A filesystem filling, a process killed, a reboot, the session
+ending mid-pass. `/tmp` on this machine is a 24 GiB RAM-backed tmpfs and its
+exhaustion is the recorded instance (D-281, D-285). **This limb is independent of
+where the failure lands**: an `ArenaError::Io` naming a failed read or write is
+the environment, not a refusal about a document, and it is a void whether it
+arrives before the first ask or during the walk. Revision 4 made (b) the
+complement of (a) alone, which classified a mid-pass ENOSPC as a STOP and
+contradicted this limb; the two are separated here by WHAT FAILED — an I/O error
+against the machine, a refusal against a document — and not by WHEN.
 
 **THE TWO EXCLUSIONS THAT COST THIS DOCUMENT A REVIEW ROUND, named so they cannot
 be read back in.** (i) `arena` also exits `2` when a pass fails PART-WAY — the
@@ -445,23 +504,11 @@ and `crates/pistol-arena/src/labels.rs` contain no print statement at all — ev
 line a pass prints is in `crates/pistol-arena/src/passes.rs` AFTER the walk has
 succeeded — and `outpath::abandon` removes the claimed output on any error, so a
 mid-walk failure and a pre-work refusal look identical in stdout and on disk.
-**The discriminator is the ENUMERATION, which is short enough to be exhaustive.**
-A capture or labels run exiting `2` is a VOID if and only if its refusal is one of:
-
-- the source is not a regular file, or is not UTF-8 (`passes.rs`);
-- the report is not one this build reads — a wrong schema, an aborted report, a
-  budget that is not `nodes` (`crates/pistol-arena/src/transcript.rs`);
-- the two seats do not attest one engine, or an engine's digest has drifted since
-  the report was written (`capture.rs`'s `one_engine`, `replay::verify_engines`);
-- the `--out` path is already claimed (`crates/pistol-arena/src/outpath.rs`);
-- for `--labels`, the capture's digest or identity does not bind to the report
-  (`labels.rs`'s two header checks, which run before any record is read).
-
-**Every one of those is decided before the first ask. Any other refusal is
-V7-B and STOPS the arc** — an engine that spoke out of turn, closed its pipe, wrote
-an unreadable line, answered with `error`, or produced a record the write side
-refused. The list is the criterion; a refusal a reader cannot place in it is
-itself a finding about this document.
+**The discriminator is the classification of exit `2` above**, whose limb (a) is
+an exhaustive enumeration of the refusals decided before the first ask, whose
+limb (b) is defined as its complement, and whose limb (c) is the environment and
+is decided by what failed rather than by when. **A refusal a reader cannot place
+in that classification is itself a finding about this document.**
 
 **A void is receipted before it is re-run**: the receipt names the filesystem, the
 process or the signal, so that "I could not look" is distinguishable in the record
@@ -562,8 +609,13 @@ away:
 
 **FLOOR (b) IS APPLIED TO AN UPPER BOUND, DELIBERATELY, AND THE SLACK IS 6 %.**
 `2T x 41` counts a CAPPED game's positions, and §6.3 records that `p = 41` bounds
-from above; at `T = 13` the floor is met with 1 066 against 1 000, so **three
-decided games would put the run under its own floor.** That is accepted rather
+from above; at `T = 13` the floor is met with 1 066 against 1 000, a slack of 66
+positions. **How many decided games it takes to spend that slack is NOT a fixed
+number**, and revision 4's "three" was wrong: `asked_prefixes` drops only the
+terminal position, so a game decided at turn `k` contributes `k` positions and not
+`41` — **one game decided at turn 20 costs 21 positions, and four such games spend
+the whole slack, while four games decided at turn 39 cost eight.** The exposure is
+to WHEN games decide and not to how many do. That is accepted rather
 than guarded, on the ground that floor (b) is not a criterion — it fixes a size
 BEFORE the run and cannot be re-read after it without becoming the after-the-
 numbers decision §6.1 exists to forbid. **The closure reports the pilot's ACTUAL
@@ -628,7 +680,7 @@ over 4 games and 164 asked positions:
 | `l` at `400000` | **1.006 s** per label ask | `capture_400000 seconds=165` over 164 |
 | `c` at `400000` | **1.006 s** per cold ask | `cold seconds=165` over 164, **at the chosen budget** |
 | replay | **1.5 s** per game at `n_workers = 4` | `replay seconds=6` over 4 games |
-| a corpus transform | **under 1 s**, charged as 1 s | `labels-transform seconds=0` — an UPPER bound, not a positive measurement: the transform finished inside this instrument's one-second resolution |
+| a corpus transform | **under 1 s**, charged as 1 s | `labels-transform seconds=0` — a BOUND, not a measurement: the transform finished inside this instrument's one-second resolution |
 
 **RULE-2, APPLIED AS WRITTEN, AND ITS INSTRUMENT IS NAMED.** The depth
 distribution is not computed by this document: each candidate's capture is turned
@@ -675,13 +727,16 @@ pass 1                2T * 1.5                        =    3.0 T
 two capture passes    2 * (2T * 41 * 1.006)           =  165.0 T
 cold check, stride 1  (2T * 41) * 1.006               =   82.5 T
 replay (C-C)          2T * 1.5, MEASURED not assumed  =    3.0 T
-two corpus transforms MEASURED at under a second each =    2   s
+two corpus transforms BOUNDED at under a second each  =    2   s
                                                         ---------
                                                          253.5 T + 2 s
 ```
 
-**Every term is measured.** Revision 2 asserted the replay and transform terms
-from their shape; SLOT A times both.
+**Every term is timed rather than asserted.** Revision 2 asserted the replay and
+transform terms from their shape; SLOT A times both. **Five of the six are
+positive measurements and the transform is a bound**, which §6.3's table and §7's
+criterion both say — a term that reads `0` on a one-second counter is not a
+measurement of a positive quantity.
 
 **RULE-1, APPLIED AS AMENDED.** (b) needs `2T x 41 >= 1000`, so `T >= 12.2` and
 the smallest integer is **13**; (a) is satisfied at 13; (c) gives
@@ -841,9 +896,20 @@ run that only confirmed what was expected would be worth less.
    measured in the SUPERSEDED dry run, the cold ask cost 0.518 s against the
    in-process ask's 0.506 s — **2.4 %**. At `nodes 400000`, the budget RULE-2
    selected, measured in SLOT A, both are **1.006 s** and the difference is below
-   the instrument's one-second resolution. **The two do not disagree**: 2.4 % of
-   0.5 s is 12 ms, which at 164 asks is about 2 s and would not separate two
-   integer-second readings of 165. **Revision 3's first attempt at this section
+   the instrument's one-second resolution. **WHAT THE TWO READINGS TOGETHER
+   SUPPORT, and it is less than revision 4 claimed.** Revision 4 said they "do not
+   disagree" because 12 ms x 164 is about 2 s, "which would not separate two
+   integer-second readings" — **and 2 s is exactly what a one-second counter
+   does separate**, so that reconciliation refuted itself. The honest statement is
+   about QUANTISATION: each pass is timed to the second, so a DIFFERENCE of two
+   such readings carries plus or minus two seconds. At `200000` the difference is
+   `85 - 83 = 2 s`, which is `2 ± 2`; at `400000` it is `165 - 165 = 0 s`, which is
+   `0 ± 2`. **Both intervals contain everything from 0 to about 4 s over 164 asks,
+   so this instrument bounds the coldness overhead at roughly 24 ms per ask and
+   resolves it no further.** That bound is still the answer
+   `docs/experiments/wp20m_design.md` §12 declines to guess, and it is stated as a
+   bound rather than as an agreement between two readings that cannot in fact
+   agree to that precision. **Revision 3's first attempt at this section
    left "THE COLDNESS COST IS 2.4 %" standing as a finding of a run this document
    had just declared superseded** — a remedy that re-measured `c` correctly and
    spent a true claim on the way, which is the class D-548 names and neither the
@@ -889,6 +955,13 @@ A=target/release/arena
 P=target/release/pistol
 CFG=configs/arena_wp20_label_pilot.toml
 
+# --- THE PROVENANCE RECEIPT, FIRST AND UNCONDITIONALLY ------------------------
+# Without these two lines the pilot's artifact would carry exactly the defect
+# that superseded its predecessor (§7.1): a transcript attributed to a revision
+# by its filename alone, with nothing in it to say which bytes ran.
+echo "revision $(git rev-parse HEAD)  tree $(git status --porcelain | wc -l) modified"
+echo "engine sha256 $(sha256sum "$P" | cut -d' ' -f1)"
+
 # --- pass 1: the games -------------------------------------------------------
 t=$SECONDS
 "$A" --config "$CFG" --out "$ART/report_v1.txt"; echo "pass1 exit=$?"
@@ -908,8 +981,9 @@ sha256sum "$ART/capture_v1.txt" "$ART/capture_v2.txt"
 t=$SECONDS
 "$A" --labels "$ART/capture_v1.txt" --report "$ART/report_v1.txt" --out "$ART/corpus_v1.txt"
 echo "labels1 exit=$?"; echo "labels-transform seconds=$((SECONDS - t))"
+t=$SECONDS
 "$A" --labels "$ART/capture_v1.txt" --report "$ART/report_v1.txt" --out "$ART/corpus_v2.txt"
-echo "labels2 exit=$?"
+echo "labels2 exit=$?"; echo "labels2-transform seconds=$((SECONDS - t))"
 cmp -s "$ART/corpus_v1.txt" "$ART/corpus_v2.txt"; echo "labels-determinism exit=$?"
 sha256sum "$ART/corpus_v1.txt" "$ART/corpus_v2.txt"
 
@@ -972,11 +1046,15 @@ corpus the pilot itself wrote, at the pilot's own scale.
 **SLOT C — FILLED.** `<S2>` is **`400000`** (§6.3, RULE-2) and `<S3>` is **`1`**
 (§6.3, RULE-3). The block as run, its exit codes and its elapsed seconds are
 recorded at the run in `artifacts/`, and the dry run's instance of the same block
-is SLOT A (§7.1), which differs from it in
-two ways and no others: the config it names, and the four-budget RULE-2 sweep the
-pilot does not repeat. **Both blocks time every pass** — the replay and transform
-brackets are registered here as well as run there, so the pilot measures its own
-wall rather than inheriting the stand-in's.
+is SLOT A (§7.1). The two blocks differ in
+three ways: the arena config they name, the four-budget RULE-2 sweep the pilot
+does not repeat, and the per-candidate `--labels` runs that sweep needs. **What
+they do NOT differ in is what a later reader needs**: both open with the same
+provenance receipt, and both time every pass, so the pilot measures its own wall
+and states its own revision rather than inheriting the stand-in's. The claim is
+stated as an enumeration of differences rather than as "and no others", because
+revision 4 wrote "and no others" over a block that in fact carried two timing
+lines the registered one did not.
 
 ---
 
@@ -999,7 +1077,7 @@ see what will be checked rather than take the check on trust.
 | config `[run]` | `openings_skip` | §2 — `0`, the book's first draw, against `docs/book_v2_ledger.md`'s own empty table |
 | config `[run]` | `turn_cap` | §7 — `40`, the standing governed cap, and the dry run's too so the measured shape is the pilot's |
 | config `[run]` | `n_workers` | §4D — the number C-D's games-per-hour is reported AT, so a value here that the document does not name would make the throughput unreadable |
-| config `[run]` | `hang_timeout_ms` | **checked against the LABEL budget and not the game budget**, because pass 2 reads its watchdog out of the report the game budget wrote (`crates/pistol-arena/src/capture.rs`) and a label ask is the longest single search this pilot makes. The slot pass confirms it exceeds the dry run's measured MAXIMUM label ask with room, and a value that does not is corrected before any game |
+| config `[run]` | `hang_timeout_ms` | **checked against the LABEL budget and not the game budget**, because pass 2 reads its watchdog out of the report the game budget wrote (`crates/pistol-arena/src/capture.rs`) and a label ask is the longest single search this pilot makes. The slot pass confirms it exceeds the dry run's whole capture pass — which bounds any single ask inside it — with room, and a value that does not is corrected before any game. It is stated as a BOUND because SLOT A times passes and not individual asks, so a "maximum label ask" is a quantity nothing here measured |
 | config `[budget]` | `kind`, `value` | §3 — `nodes 50000` |
 | config `[sprt]` | `elo0`, `elo1`, `alpha`, `beta` | schema completeness alone. **A self-match crosses no bound** — every pair scores alike, so no likelihood ratio is defined (D-156) — and no strength claim is made here (§0.2) |
 | config `[engine_a]`/`[engine_b]` | `label` | §4C — the two MUST differ, because `validate` and `transcript::read` both refuse identical labels; the two seats attesting one ENGINE is a different comparison, over `EngineIdentity`, which carries no label |
@@ -1009,7 +1087,7 @@ see what will be checked rather than take the check on trust.
 | command | `--stride` | §6 RULE-3 (SLOT S3) |
 | command | `--workers` on `--replay` | §4C — `4`; the pass replays every game with no early stop, so what it finds does not depend on this number |
 
-### 9.1 SLOT P — FILLED, read from `configs/arena_wp20_label_pilot.toml` at `85e6261`
+### 9.1 SLOT P — FILLED, read from `configs/arena_wp20_label_pilot.toml` at SLOT R1
 
 | key | committed value | governed by | agrees? |
 |---|---|---|---|
@@ -1018,7 +1096,7 @@ see what will be checked rather than take the check on trust.
 | `run.openings_skip` | `0` | §2, and the ledger's first row | yes |
 | `run.turn_cap` | `40` | §7 | yes |
 | `run.n_workers` | `4` | §4D | yes |
-| `run.hang_timeout_ms` | `120000` | §9, **against the LABEL budget** | yes — the dry run's slowest label ask at `nodes 400000` was about **1.0 s** (§6.3), so the watchdog has three orders of magnitude of room |
+| `run.hang_timeout_ms` | `120000` | §9, **against the LABEL budget** | yes, and the ground is a BOUND rather than a maximum: SLOT A times a whole capture pass and not individual asks, so the per-ask figure of about **1.0 s** is a MEAN (`165 s / 164`). A single ask cannot exceed the pass it sits in, so **165 s is the hard upper bound on the slowest one**, and the watchdog at 120 000 ms clears even that. The document says mean-and-bound rather than "maximum", which is a quantity nothing here measured |
 | `budget.kind` / `budget.value` | `nodes` / `50000` | §3 | yes |
 | `sprt.elo0` / `elo1` / `alpha` / `beta` | `0.0` / `15.0` / `0.05` / `0.05` | schema completeness only; a self-match crosses no bound (D-156) | yes |
 | `engine_a.label` / `engine_b.label` | `a` / `b` | §4C — they MUST differ | yes |

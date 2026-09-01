@@ -10,9 +10,11 @@ review finding that asked for this row).
 
 **Where they live.** The dry run's own output is under `artifacts/` (gitignored);
 the files it produced are under `/home/tom/pistol-runs/wp20pilot-dryrun2/`. A
-successor who has neither can reproduce them: the dry run is
-`tools/`-free and its literal commands are the pre-registration's §8 with
-`configs/arena_wp20_label_pilot_dryrun.toml`, at the revision §1 names.
+successor who has neither can reproduce them: the dry run's literal commands are
+the pre-registration's §8 with `configs/arena_wp20_label_pilot_dryrun.toml`, at
+the revision §1 names. **It is not `tools/`-free** — §8 runs
+`tools/cold_label_check.py` for criterion C-A — and saying so matters because that
+script is one of the instruments a re-run must be taken at the same revision as.
 
 ## The dry run, at `85e6261` with a clean tree
 
