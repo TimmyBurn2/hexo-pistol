@@ -52,6 +52,28 @@ because a criterion's INPUTS are as much its evidence as its outputs: the first
 re-digests and so reaches the grammar, the second does not and is stopped by the
 digest two checks earlier, and that is what makes them different guards.
 
+## THE PILOT ITSELF, at `2cd4f79`
+
+**These are the run the pre-registration governs.** Its transcript opens with the
+provenance receipt §8 registers: the revision, a clean tree, and a digest for each
+of the four instruments.
+
+| sha256 | file | what it is |
+|---|---|---|
+| `77c3d75a119953026cbd75418799fa934661ab871cb05ffafdf1c46415095c59` | `artifacts/wp20pilot_RUN_2cd4f79_v1.txt` | the pilot's whole transcript — every exit code, every elapsed second, and every criterion's own output |
+| `0378260b026709f7e89cc5ff326728f1d43c51d44b2c107a0f60f69c48712508` | `/home/tom/pistol-runs/wp20pilot-artifacts/report_v1.txt` | **THE PILOT'S REPORT** — 13 openings, 26 games, `VERDICT inconclusive_degenerate`, zero forfeits |
+| `4563f0500e957fef28b7b0aba82ba2dbceca0e8a3d74e892924fb034dcde1808` | `/home/tom/pistol-runs/wp20pilot-artifacts/capture_v1.txt` | the capture, 742 asked positions at `go nodes 400000` |
+| `4563f0500e957fef28b7b0aba82ba2dbceca0e8a3d74e892924fb034dcde1808` | `/home/tom/pistol-runs/wp20pilot-artifacts/capture_v2.txt` | the C-B re-run — byte-identical, `capture-determinism exit=0` |
+| `493f4fa8b6fb3e395555a578e480917eb3ae05e53727953aae6febe873af9c4f` | `/home/tom/pistol-runs/wp20pilot-artifacts/corpus_v1.txt` | **THE CORPUS** — 742 labelled records, 347 distinct by every key |
+| `493f4fa8b6fb3e395555a578e480917eb3ae05e53727953aae6febe873af9c4f` | `/home/tom/pistol-runs/wp20pilot-artifacts/corpus_v2.txt` | the C-B re-run — byte-identical, `labels-determinism exit=0` |
+| `e493652c9309067791365aa617238755ed04c13e72a34d814777e207113d610c` | `/home/tom/pistol-runs/wp20pilot-artifacts/corpus_grammar.txt` | C-E run 2's input — `key_pos` broken, body RE-DIGESTED, refused on the grammar |
+| `364a814c282d6c43bf2105301bb735b5961f9b77625d529587d882847cd77dd0` | `/home/tom/pistol-runs/wp20pilot-artifacts/corpus_digest.txt` | C-E run 3's input — record appended, digest NOT brought back, refused on the digest |
+| `1b1527d2e93efc5b4b67688a90f1d98538ee1a5b0e86ed2b5361f8bcff264f2d` | `/home/tom/pistol-runs/wp20pilot-artifacts/replay_v1.txt` | C-C's replay document — 26 of 26 games, 0 divergences |
+
+**The two byte-identical pairs are criterion C-B's receipt**, and they are read
+from `cmp -s`'s exit code rather than from these digests compared by eye; the
+digests are here because they are what a later reader cites.
+
 ## The call-site mutant receipts (D-553's corollary, the retro-check's closure)
 
 | sha256 | file | what it is |

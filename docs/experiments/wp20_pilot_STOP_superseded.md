@@ -1,3 +1,9 @@
+> **SUPERSEDED.** This document recorded a STOP that the architect's conditional
+> take (`docs/decisions.md` D-557) lifted. The pilot subsequently RAN and PASSED
+> — see `docs/experiments/wp20_CLOSURE.md` and D-559. It is kept, unedited below
+> this banner, because it is the record of what the decision looked like when it
+> was owed, and a STOP deleted once it is resolved teaches a successor nothing.
+
 # WP-2.0 pilot — STOP. The pre-registration spent its grant without passing.
 
 > **ONE LINE FOR THE MORNING.** The pilot did not run: its pre-registration failed

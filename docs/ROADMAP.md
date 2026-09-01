@@ -416,6 +416,37 @@ every landed change SPRT-positive.
 
 ## Stage 2 — Cheap learned eval
 
+**WP-2.0 — the label pipeline. CLOSED (D-561).** `arena --capture` walks a report
+position by position and asks the engine again at a LABEL budget, one `newgame`
+per ask; `arena --labels` turns that capture into a sixteen-column corpus, a pure
+file transform that spawns nothing. `corpus-check` reads a corpus back through the
+loader its writer writes for. **The pilot ran on `book_v2` openings `0..12` and
+PASSED at verdict V1** (D-559): 26 games, 742 labelled positions, **742 of 742
+cold-label agreements in fresh processes**, both passes byte-identical on re-run,
+26 of 26 games replayed with zero divergences, zero forfeits, and both malformed
+injections refused on different guards. No engine diff, no committed config moved,
+no strength claim. **The corpus-size plan is D-560**: 0.885 s per label serially,
+a measured 2.14x duplication factor, 26.7 distinct positions per opening — so
+`random_openings_v2.txt` affords about 119 800 distinct positions at about 63
+hours, and a larger corpus needs a new book rather than more machine time.
+
+**WP-2.0b — census position identity on the wire, gated. NEXT, AND IT BLOCKS
+PRODUCTION.** D-539 is explicit that the pilot carries no census and is not
+corpus, so **production label runs begin only after WP-2.0b lands**, and that
+package has two obligations and not one: the census behind a token no committed
+config sets, AND the position identity that makes D-537's *"win-proving firings on
+DISJOINT positions"* countable. Landing only the first ships a flag that cannot
+answer the question it exists to ask.
+
+**THEN the Stage-2 eval design package**, which consumes D-560's corpus plan and
+the Research-A findings. **Three inputs bind it before it is written** (D-558, as
+amended by D-559): the corpus DOES carry outcome signal — 56 % of the pilot's
+records — so the plan states how outcome is USED rather than how it is recovered;
+every position appears about 2.14 times and cannot be configured away, because
+`arena --capture` refuses a report whose two seats attest different engines, so
+the plan states its dedup or weighting rule; and the coldness overhead is a
+measured ~12 ms per ask, which enters the throughput arithmetic.
+
 Rapfi-style incremental pattern-codebook net: 3 directional maps, length-11
 axial windows, integer-quantized + SIMD, incremental under 2-stone moves,
 distilled from mantis self-play + human corpora. Acceptance bar
