@@ -831,3 +831,26 @@ is mechanical law"* (CLAUDE.md) is a law against a MOVING standard, so a green C
 receipt is a statement about a toolchain as much as about a tree. The run log's
 `rustc --version` line, registered this session in `wp21_prereg.md` §8, is the
 thing that makes an old receipt readable rather than merely old.
+
+### F-1.15 — GATE 17 READS THE INDEX, NOT THE DISK, AND AN UNSTAGED FIX READS AS NO FIX
+
+The `--partition` tests pushed `cold_label_check_tests.rs` past rule 9's 300-line
+soft cap, and gate 17 refused it: *"over the cap with no entry in
+`docs/rule9_justifications.md`"*. The entry was written — and the gate went on
+refusing.
+
+**BECAUSE THE GATE READS THE REGISTRY FROM THE GIT INDEX**:
+`tools/file_justification_check.sh:205` is `git cat-file blob ":$REGISTRY"`, and
+`:245` walks `git ls-files -s`. That is deliberate — the gate answers about the
+TRACKED set, which is what a reviewer and CI both care about — but it means **an
+unstaged remedy is invisible to the instrument checking it**, and the refusal
+message names the registry rather than the index, so it reads as *"you did not
+write the entry"* when what happened is *"you did not stage it."*
+
+`git add -A` and the gate turns: **359 tracked `.rs`/`.sh` files, 67 over the cap,
+all registered.**
+
+**IT IS THE SESSION'S THIRD ENVIRONMENT-SHAPED FAILURE IN A ROW** — a toolchain
+that moved (F-1.11), a lint that arrived with it (F-1.14), and a gate whose
+subject is the index while the author's subject is the disk. None is a defect in
+the code under test, and all three cost a CI round.
