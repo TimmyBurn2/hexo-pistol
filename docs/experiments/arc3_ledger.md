@@ -464,103 +464,80 @@ could not reach a gate.
 
 ---
 
-## §1b — THE RECURRING DEFECT, GOT TO THE BOTTOM OF, AND THE FIX THAT DOES NOT DEPEND ON ANYONE REMEMBERING
+## §1b — THE RECURRING DEFECT, AND THE FIX THAT WAS PROPOSED, ATTACKED AND WITHDRAWN
 
 **THE OPERATOR'S INSTRUCTION**: *"go into next revision and really try to get to
 the bottom of this and fix it sustainable."*
 
-### WHAT THE DEFECT IS, COUNTED RATHER THAN CHARACTERISED
+**WHAT WAS PROPOSED, AND IT IS WITHDRAWN.** A CI gate executing commands written
+inside Markdown documents (`derivation_gate_design.md` revision 1). Its
+fresh-context REVIEW-design returned **FAIL — 11 BLOCKING, 10 MAJOR, 3 minor**,
+verdict *"do not build this package"*, and **the verdict is accepted in full**.
+Revision 2 of that document is the withdrawal and carries the account.
 
-Across the three fresh-context reports this arc commissioned — 57 findings in
-all — **37 are one defect**: a document asserting something about the content of
-a tracked file that a read-only command over the tree would have refuted.
+**THE THREE FINDINGS THAT DECIDED IT, EACH RE-RUN HERE BEFORE BEING ACCEPTED.**
 
-| report | in the class | findings |
-|---|---|---|
-| sweep registration | 16 | 23 |
-| throughput study | 12 | 22 |
-| cache-key red team | 9 | 12 |
-| **total** | **37** | **57 — 65%** |
+1. **THE GATE CANNOT REACH THE DOMINANT SUB-CLASS.** Most instances are a command
+   run FAITHFULLY over the wrong scope — a `git grep` scoped to
+   `crates/pistol-core/src` that missed its answer in `tests`, a line count scoped
+   to `src` that counted `src/bin`. A block holding such a command is **green
+   forever and still wrong**: the gate certifies output-given-command and the
+   defect lives in the command.
+2. **THE PROPOSAL'S OWN EVIDENCE WAS FABRICATED.** Its "best evidence" was a
+   self-catch — a count it wrote as 84 where its block returned 88 — explained by
+   a wider pathspec reaching `docs/audit/`, `docs/research/` and `tools/`
+   subdirectories. **Those two directories contribute zero hits**
+   (`git grep -ohE "…" -- docs/audit docs/research | wc -l` -> `0`). A mechanism
+   was written for a discrepancy without checking the mechanism. **And the block
+   was already red when it landed**: 98 at that commit, 89 at the one before.
+3. **THE HEADLINE NUMBER DOES NOT REPRODUCE.** 37 of 57 (65%) was really **14 of
+   57 (25%)** strictly. The criterion was two criteria in one sentence, and under
+   its loose half the answer is 57 of 57 — **because all three reviewers were
+   forbidden `cargo`**, so every finding was necessarily established by read-only
+   means. A selection artefact, not a criterion. Its own population block asserted
+   12 where its printed command returns 7.
 
-The prior arc counted **five** of the same thing and wrote the remedy down twice:
-D-568's standing law and D-574's check — *print the command WITH ITS SCOPE beside
-the claim, and compare its hit count to the prose's before believing either.*
-**Four of that arc's five happened after the law was written.** This arc adds at
-least nine more, three of them inside the very document that restated the law.
+**SO THE ANALYSIS WAS WRONG IN THE SAME WAY THE DOCUMENTS IT DIAGNOSED WERE
+WRONG**, which is worth more than the gate would have been.
 
-### WHY THE RULE CANNOT WORK, WHICH IS THE PART THAT WAS MISSING
+### WHAT IS TRUE AFTER THAT
 
-D-574's check is addressed to the author at the moment of writing and asks them
-to doubt a claim. **The author does not experience these as claims.** *"gate 6"*,
-*"four seats"*, *"the dispatch says 3,500"* are reached for as LABELS for things
-already believed; they are by-products of saying something else. A rule that says
-*check before believing* cannot fire in someone who has not noticed they are
-believing anything. Three properties make the class invisible: **the claim is
-subordinate** to the sentence's real subject; **it was often true once** and
-rotted when the tree moved, which no writing-time rule can reach; and
-**restatement multiplies it**, with the un-re-derived copy being the wrong one.
+**THE DEFECT IS NOT "THE CLAIM WAS NOT CHECKED" — IT IS "THE CLAIM WAS CHECKED
+AGAINST THE WRONG POPULATION."** No mechanism that executes the author's own
+chosen command can detect that, because the population is the author's judgement.
+**What detects it is a second party choosing a different scope**, which is how
+every instance in this arc was in fact caught.
 
-### THE FIX: A CI GATE THAT EXECUTES THE DOCUMENT'S OWN COMMANDS
+**AND THE EVIDENCE CARRIES AN ASYMMETRY THAT SAYS WHERE THE RULE BELONGS.** D-568
+and D-574 addressed it to AUTHORS; the arc that wrote them broke them four more
+times and this arc broke them at least nine, three inside the document restating
+them. The same arc briefed three fresh contexts to re-derive and they returned
+**57 findings**. A rule addressed to the author of a claim does not fire; the same
+rule addressed to a fresh context does — not a difference in diligence, since both
+are the same kind of agent minutes apart, but in what each is doing.
 
-`docs/experiments/derivation_gate_design.md`. A document may state a tree-claim as
-a **derivation block** — a command and its expected output, fenced ` ```derive ` —
-and a gate runs every one of them from the repository root and diffs. That makes
-the claim the subject of its own sentence, re-evaluates it on every CI run rather
-than once at writing, and makes a restatement cost a block. **The scope stops
-being prose because the scope is the command's arguments.**
+### WHAT REPLACES IT — TWO SMALL CHANGES, NEITHER A NEW EXECUTION SURFACE
 
-**THE RESTRAINTS ARE WHAT MAKE IT LANDABLE**, and both were derived rather than
-assumed. It does **not** police free prose: this repository's documents are
-largely RECORDS, and
-
-```
-$ git grep -ohE "gate [0-9]+/19|gate [0-9]+ of 19|19 gates|all 19" -- docs tools | wc -l
-88
-```
-
-such strings exist, almost all of them true statements about runs that happened —
-a gate that went red on those would be demanding that records be falsified. And
-it does **not** check claims about RUNS: those live in gitignored artifacts, so
-**the boundary is exact — blocks for the TREE, receipts for RUNS**, receipts bound
-by sha256 in a committed manifest (D-469).
-
-### THE DESIGN CAUGHT ITS OWN AUTHOR BEFORE ANY REVIEWER DID
-
-That `88` was **84** in the design's first draft. The 84 came from a shell command
-run four paragraphs earlier under the pathspec `'docs/**/*.md' 'tools/*'`; the
-block's own pathspec is `-- docs tools`, which reaches `docs/audit/`,
-`docs/research/` and `tools/` subdirectories the first one missed. **The author of
-a gate against scope drift drifted the scope between two runs of the same claim,
-minutes apart, and did not notice until the block was executed.** It is left in
-the design as the best evidence it has: this is not a discipline problem.
-
-### AND ADDING THE GATE EXPOSES THE SAME DEFECT IN `tools/ci.sh` ITSELF
-
-The script asserts its own gate total **nineteen separate times** — D-423's *"a
-claim the document makes twice is a defect waiting"*, at nineteen. The package
-derives it instead: `gate_step` takes only a name, counts itself from the script,
-and numbers by order. The printed line shape `=== gate N/M: <name>` is unchanged;
-what changes is that `M` stops being a literal. **CLAUDE.md's own sentence — *"it
-prints `gate N/19: <name>`"* — becomes false on landing**, and correcting it is
-flagged to the operator rather than done silently, because CLAUDE.md is the
-operator's file.
-
-### WHAT THIS DOES NOT FIX, SAID PLAINLY
-
-The cache-key red team's FATAL is **not** in this class: *"MEASURED"* applied to
-the wrong population is a true measurement with a false quantifier, and no command
-refutes it. The mitigation is adjacent — a number that comes out of a block
-carries its population in the command — and it is a mitigation, not a fix.
+1. **GATE THE CITATION CHECKER THAT ALREADY EXISTS.**
+   `tools/design_citation_check.py` is committed, tested, carries a `--proposes`
+   discipline, and **is on no gate path** — `wp20m_DESIGN_STOP.md:111` recorded
+   that gap and nothing acted on it. **The withdrawn package proposed building a
+   tool that was already in the tree, because its author did not grep for one** —
+   the same defect at the level of a package. Run today over this arc's three
+   governing documents it catches one thing immediately: `wp21_prereg.md` names
+   `tools/wp21_assemble.py`, an instrument revision 4 registers and the tree does
+   not have.
+2. **MOVE THE RE-DERIVATION BRIEF INTO `docs/process.md`**, addressed to the
+   reviewer, with the clause that does the work: *a count the reviewer reproduces
+   only by running the document's own command is NOT reproduced.* Independence of
+   scope is the property that catches this class — and it is exactly the property
+   a gate executing the document's own command destroys.
 
 ### STATE
 
 | step | state |
 |---|---|
-| design | written, `docs/experiments/derivation_gate_design.md` revision 1 |
-| REVIEW-design, fresh context, attacking the premise | **DISPATCHED** |
-| IMPL, REVIEW-impl, **RED-TEAM on the execution path**, coverage test, mutation receipt | owed |
-
-**THE RED-TEAM IS THE ONE THAT MATTERS**: this would put a markdown block on CI's
-execution path, which is the most dangerous thing this repository has ever done in
-a gate. Its brief is in the design's §6 and a command that escapes the allowlist
-is a FATAL.
+| derivation gate | **WITHDRAWN** on its review's verdict; revision 2 is the account |
+| gate the existing citation checker | owed, its own package, its own review |
+| the `docs/process.md` reviewer clause | owed |
+| `tools/ci.sh` gate-total derivation | **dropped with the package** — a separate change that was riding in it |
