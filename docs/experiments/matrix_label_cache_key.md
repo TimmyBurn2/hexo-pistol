@@ -1,4 +1,14 @@
-# OPTION MATRIX — the label cache's key. Revision 1.
+# OPTION MATRIX — the label cache's key. Revision 2.
+
+**REVISION 2, AFTER A FRESH-CONTEXT DECISION-RED-TEAM.** Round 1 returned **the
+OPTION survives, the MATRIX does not** — 1 FATAL, 6 MAJOR, 5 minor
+(`matrix_label_cache_key_REDTEAM.md`, at `31315f8`). Every finding is disposed of
+below at the row or section that owns it, and **one is rejected with its attempted
+reproducer** (§5). The FATAL is the one that changes what this document may
+claim: **the decisive row was marked MEASURED for a population 10^5 times smaller
+than the one it decides**, and the fix is not a softer adjective — it is an
+a-priori argument for the part of the range that has one, an honest blank for the
+part that does not, and a flip clause the governed run can actually satisfy.
 
 **THE DECISION.** `arena --capture` asks the engine once per asked prefix. A
 label cache memoises `(totals, bestmove)` under some notion of *the same
@@ -7,12 +17,22 @@ so CLAUDE.md's Process section requires this matrix and a fresh-context
 DECISION-RED-TEAM **before selection**.
 
 **WHY IT EXISTS AT ALL, AND IT IS A FINDING AGAINST THIS ARC.** The key was
-chosen in `wp21_throughput_prereg.md` revision 2 and consumed as settled by
-`wp21_prereg.md` §1's seat table before any matrix was written. The review that
-caught it is `wp21_throughput_prereg_rev2_REVIEW.md` M11. **This matrix is
-therefore written AFTER a selection was recorded**, and the honest consequence is
-that the selection is re-opened here: the red-team attacks the matrix, and
-whatever survives is what the registrations then say.
+chosen in an UNCOMMITTED revision 2 of `wp21_throughput_prereg.md` and consumed as
+settled by an uncommitted revision 3 of `wp21_prereg.md`, before any matrix was
+written; the review that caught it is `wp21_throughput_prereg_rev2_REVIEW.md`
+M11. **This matrix is therefore written AFTER a selection was recorded**, and the
+selection is re-opened here: the red team attacks the matrix, and whatever
+survives is what the registrations then say.
+
+**REVISION 1 CITED THOSE REVISIONS AS IF THEY WERE IN THE TREE AND THEY WERE
+NOT** — at `31315f8` the committed `wp21_throughput_prereg.md` is **revision 1**,
+whose §2 still registers the stone-set key, and the committed `wp21_prereg.md`
+mentions no cache at all. **So the ADR (D-576) and the committed registrations
+CONTRADICT EACH OTHER at that revision**, which is a real defect and not a
+citation slip. **THE AMENDMENT OBLIGATION IS NAMED HERE**: revision 3 of the
+throughput study and revision 4 of the sweep registration land in the same commit
+as this matrix's revision 2, and until they do, the committed registrations are
+the operative text and D-576 is ahead of them.
 
 **EVERY NUMERIC CLAIM IS MARKED MEASURED OR ESTIMATED** (D-291). The MEASURED
 ones come from `artifacts/arc3_leverB_41_count_v3.txt`, taken by
@@ -48,25 +68,53 @@ alone**, and they differ only in how much they fold.
 | **distinct keys** | **347** MEASURED | **347** MEASURED | **347** MEASURED | 347 ESTIMATED | **347** MEASURED |
 | **hit rate** | **0.5323** MEASURED | 0.5323 MEASURED | 0.5323 MEASURED | 0.5323 ESTIMATED | 0.5323 MEASURED |
 | **what a wrong hit returns** | *impossible*: the same question | another play order's answer | a symmetry image's `bestmove` — **a move in the wrong frame** | a different position's answer entirely | another play order's answer |
-| **is a wrong hit possible in this tree?** | no | **YES** — `heuristics.rs:155` reads `last_stone` under `gates.countermove`; `:89` walks play order under `gates.killers` | YES, plus the frame error; D-137: the tie-break is not symmetry-invariant | YES, with probability rather than a mechanism | YES, same as K2 |
-| **what makes it safe** | hard rule 4, gate 9 of 19 | three config values being `false`, unnamed by the key | nothing: the frame error is unconditional | a probability argument | three config values being `false` |
+| **is a wrong hit possible in this tree?** | no | **YES, and by exactly ONE path** — `heuristics.rs:155` reads `last_stone(state)` under `gates.countermove`, so two transposed roots can order the root differently | YES, plus the frame error; D-137: the tie-break is not symmetry-invariant | YES, with probability rather than a mechanism | YES, same as K2 |
+| **what makes it safe** | hard rule 4, and the gate below | **one** config value being `false`, unnamed by the key | nothing: the frame error is unconditional | a probability argument | one config value being `false` |
 | **cost per lookup** | one string compare | replay + sort, ≤80 stones | replay + 12 images + sort | replay + 80 XORs | canonicalise the sequence |
-| **cost per lookup, ESTIMATED against a 885 ms search** | ~0 | ~0 | 22.99 µs MEASURED at the census (D-570) | ~0 | ~0 |
+| **cost per lookup, ESTIMATED against a 885 ms search** | ~0 | ~0 | ~0, and the one number anybody has MEASURED for this fold is **22.99 µs per firing for `CensusKeys::at` INSIDE THE ENGINE** (D-570) — a different operation in a different program from an arena lookup, and 0.0026% of an 885 ms search either way. **Revision 1 put it in this cell as if it were the lookup's cost** | ~0 | ~0 |
 | **lines of new code** | ~15 ESTIMATED | ~40 ESTIMATED | ~45 ESTIMATED | ~35 ESTIMATED | ~45 ESTIMATED |
-| **does the checker need it too?** | no — `tools/cold_label_check.py` partitions on the same string | yes, a second implementation | yes | yes | yes |
+| **does the checker need it too?** | **yes, trivially** — a first-occurrence scan over a string the record already carries | yes, a second implementation of the fold | yes | yes | yes |
 
-**THE ROW THAT DECIDES IT IS THE FIRST THREE READ TOGETHER.** Every option folds
-the same 395 hits on the only corpus anyone has measured, and four of the five
-buy that identical yield with a class of wrong answer. **A fold that has never
-merged a pair is not a trade.**
+**THE FIRST THREE ROWS ARE MEASURED AT THIRTEEN OPENINGS AND THE SWEEP IS 3 487.
+REVISION 1 MARKED THEM `MEASURED` AND WROTE A CLAIM ABOUT THE SWEEP, WHICH IS THE
+FATAL.** What was measured: on the pilot's capture every option folds the same 395
+hits. What was claimed: *"no amount of folding reaches a record the exact key
+misses"*. The gap, MEASURED by the red team and reproduced here:
 
-**AND THE MEASUREMENT SAYS WHY THE FOLDS ARE IDLE**, which matters more than the
-counts: the duplication is **345 prefixes asked exactly twice** — the two seats
-replaying one deterministic engine — plus **two prefixes asked 26 times**, which
-are `position start` and `position start moves 0,0`, byte-identical across all
-thirteen openings because game rule 3 forces turn 1 to the origin. **Neither
-mechanism is a transposition**, so no amount of folding reaches a record the
-exact key misses. MEASURED.
+| | pilot | one tranche (218) | the sweep (3 487) |
+|---|---|---|---|
+| cross-game `(pair, k)` transposition opportunities, `k >= 2` | **1 576 MEASURED** | ~627 714 ESTIMATED | **~161 296 550 ESTIMATED** |
+| factor against the pilot | 1x | 398x | **102 346x** |
+| transpositions observed | **0 MEASURED** | — | — |
+
+**A RULE-OF-THREE BOUND ON A ZERO OVER 1 576 TRIALS CONSTRAINS THE
+PER-OPPORTUNITY RATE ONLY TO <= 1.9e-3 AT 95%**, which at the sweep's scale admits
+**up to ~307 000 merges** the exact key would miss. And the mechanism makes the
+estimate worse rather than better: the corpus is deterministic self-play, so two
+games that ever transpose are **identical from that ply on** — the yield is
+heavy-tailed, zero in most small corpora and large when it fires, and **a zero at
+thirteen openings is the modal observation of such a process, not its mean.**
+
+**WHAT THE DUPLICATION ACTUALLY IS, MEASURED**: 345 prefixes asked exactly twice —
+the two seats replaying one deterministic engine — plus **two** prefixes asked 26
+times, which are `position start` and `position start moves 0,0`, byte-identical
+across all thirteen openings because game rule 3 forces turn 1 to the origin.
+**Neither is a transposition**, so nothing in the pilot's duplication is evidence
+about folding either way.
+
+### 2.1 THE PART OF THE RANGE THAT HAS AN A-PRIORI ANSWER, AND THE PART THAT DOES NOT
+
+**`k <= opening_turns` IS CLOSED BY CONSTRUCTION AND NEEDED NO MEASUREMENT.** The
+book's generator dedupes openings by `canonical_form`
+(`crates/pistol-cli/src/random_openings/mod.rs:174`) and the pilot's report header
+reads `opening_turns 3`. Distinct canonical forms imply distinct stone sets, so
+**no two openings can transpose or mirror onto each other at `k <= 3`** — a
+result, not an observation. It also says that 156 of the pilot's 1 576
+opportunities carried no evidence at all.
+
+**BEYOND `k = opening_turns` THIS DOCUMENT HAS NEITHER A MEASUREMENT THAT SCALES
+NOR AN ARGUMENT, AND SAYS SO.** That blank is what §4's flip clause is now built
+to fill.
 
 ---
 
@@ -75,10 +123,18 @@ exact key misses. MEASURED.
 - **K1 fails by MISSING.** A future corpus holding a genuine cross-game
   transposition loses that saving. It cannot answer wrongly, because the question
   it answers is the question it was asked.
-- **K2 and K5 fail by ANSWERING.** Both are sound only while `killers`, `history`
-  and `countermove` are all `false`. `configs/instrument_v0.toml:79-81` has them
-  false today; nothing binds a future seat to that, and the key does not say it
-  depends on it. **A cache whose soundness is a config value's shadow is a cache
+- **K2 and K5 fail by ANSWERING.** Both are sound only while **`countermove` is
+  `false`** — and revision 1 said all three ordering gates, which is **three times
+  wider than the code makes it**. Traced: `heuristics.rs:89`'s walk over
+  `state.played()` sits inside `record_cutoff`, whose call site is gated by
+  `params.ordering.any()` (`pvs.rs:491-498`, `params.rs:114-116`) rather than by
+  `killers`; its `last`/`second_last` feed **only** `pair_killers` — written at
+  `Phase::Second` nodes, where the stone is search-placed, and every capture root
+  is `Phase::First` — and `countermove`, which is READ only at `:155` under
+  `gates.countermove`. `history` never reads `played()` at all. **So the single
+  path from a root's play order to a search choice is the countermove table.**
+  `configs/instrument_v0.toml:81` has it `false` today; nothing binds a future
+  seat to that, and the key does not say it depends on it. **A cache whose soundness is a config value's shadow is a cache
   that breaks silently when the config changes** — and §4.3 of the registration
   says nothing downstream would notice.
 - **K3 fails by ANSWERING IN THE WRONG FRAME**, unconditionally: the `bestmove`
@@ -92,25 +148,108 @@ exact key misses. MEASURED.
 ## 4. RECOMMENDATION — **K1**, and the strongest attack it must survive
 
 **K1.** It is the only option whose soundness argument does not depend on
-anything outside the ask itself: two identical questions get one answer, which is
-hard rule 4 and is gated by `tools/determinism.sh` at **gate 9 of 19**
-(`tools/ci.sh:104-105`). It costs the least code, needs no second implementation
-in the cold-label checker, and folds every hit the coarser options fold on the
-only population that has been measured.
+anything outside the ask itself: two identical questions get one answer. It costs
+the least code, needs only the cheapest checker change of the five, and folds
+every hit the coarser options fold **on the only population that has been
+measured** — which §2 now says is thirteen openings and not the sweep.
 
-**THE STRONGEST ATTACK ON K1, STATED RATHER THAN ANSWERED.** *Gate 9 does not run
-the sweep's seat or the sweep's budget.* Its `SEATS` array is
-radius / staged / staged-with-heuristics / staged-with-solver, and its budgets
-are `depth_turns 4` and `nodes 200000` — not `configs/instrument_v0.toml` at
-`nodes 400000`. So *"already gated"* is true of the property and not of the
-configuration the sweep runs. **What closes it is not an argument but §4.4's own
-byte-identity run**, which compares an uncached and a cached capture **at the
-sweep's seat and the sweep's budget** — and that is the criterion the lever is
-abandoned on. The attack is recorded as the reason §4.4 may not be weakened.
+**THE ARGUMENT FOR K1 DOES NOT REST ON THAT ROW, AND REVISION 1 LET IT LOOK AS IF
+IT DID.** Even if a coarser fold merges 307 000 records at the sweep's scale, what
+K1 loses is a **saving**. What K2, K3, K4 and K5 buy that saving with is a class of
+**wrong answer** — and §4.3 of the governing registration says a wrong label is
+invisible downstream. **A missed saving is the only error direction a cache may
+have**, and that is the whole selection.
 
-**WHAT WOULD FLIP THE SELECTION.** A measured corpus in which the exact key's
-hit rate is materially below a coarser key's — which would mean genuine
-cross-game transpositions exist at scale — **and** a seat that pins the three
-ordering gates off as a rule rather than as a value. Both would have to be true;
-the first alone only makes the miss more expensive, and the second alone buys
-nothing.
+**THE STRONGEST ATTACK ON K1, STATED RATHER THAN ANSWERED — AND REVISION 1's WAS
+NOT THE STRONGEST.** Revision 1 recorded that gate 9 does not run the sweep's seat
+or budget. True, and weaker than this: **no limb of gate 9 ever asks the same
+position twice inside one process.** Its `A vs B` limb compares two processes over
+one script; its `C vs D` limb compares one-process-per-position against
+all-positions-in-one-session — and in the session limb each position is asked
+once. **A cache hit is exactly "the same position, asked again, in the same
+process", and that is the one shape the determinism gate never takes.** The seat
+and budget gap compounds it: five seats (`radius`, `staged`, `staged-heuristics`,
+`staged-solver`, `staged-safety-net-cap` — **revision 1 said four, transcribed
+from the script's own stale header comment in the paragraph that forbids
+transcription**), none of them `configs/instrument_v0.toml`, at `depth_turns 4`
+and `nodes 200000`, not `nodes 400000`.
+
+**WHAT CLOSES IT IS NOT AN ARGUMENT BUT A RUN**: `wp21_throughput_prereg.md`
+§4.4's byte-identity between an uncached and a cached capture, taken at the
+sweep's own seat and budget, over a report with 12 443 records of which ~6 624 are
+hits. That run asks the same position twice in one process ~6 624 times and
+compares every byte against a pass that never did. **It is the reason §4.4 may not
+be weakened, and the reason the whole verification burden falls there.**
+
+**AND UNDER K1 THE COLD-LABEL CHECK IS A CHECK OF THE MEMO, NOT OF THE KEY**,
+which is worth saying because the red team read it as vacuous (§5 rejects that
+reading with its reproducer). K1 has no equivalence relation to get wrong, so
+there is nothing about the KEY for T-A2 to falsify; what T-A2 still falsifies is
+an implementation that returns the wrong entry, mutates one after insertion, or
+emits records out of order.
+
+**WHAT WOULD FLIP THE SELECTION — AND REVISION 1's CLAUSE COULD NEVER BE
+OBSERVED.** It asked for *"a measured corpus in which the exact key's hit rate is
+materially below a coarser key's"*, and under this selection the sweep's captures
+are never counted under a coarser key, so **the governed run generated no evidence
+about its own flip condition**. That is prose, not a criterion (D-424).
+
+**THE FLIP CLAUSE THE RUN CAN SATISFY, REGISTERED HERE**: the cache counts, per
+tranche, **how many of its own MISSES share a `key_pos` or a `key_full` with an
+earlier miss**. Two counters, no extra search, one sort the arena already does,
+reported in the run log beside the hit rate. That number **is** the coarser keys'
+yield at the scale that matters. If it is materially above zero across the sweep,
+K2/K3 become live for a future capture — under a seat that pins `countermove`
+`false` as a rule rather than as a value — and this matrix is re-taken with the
+sweep's own measurement in its decisive row. **It also settles D-562(2)'s open
+three-key question in the same pass**, which no other instrument in this arc was
+going to do.
+
+---
+
+## 5. THE ONE RED-TEAM FINDING REJECTED, WITH THE REPRODUCER ATTEMPTED
+
+**MAJOR 2(b): *"under K1 the cold check cannot fail on a cache defect … K1 makes
+the external referent vacuous against the cache."*** REJECTED.
+
+The reasoning, followed to the record it is about. Let record R be a HIT: its
+`position` field is the line P, and its `(totals, bestmove)` came from the memo
+rather than from a search. `tools/cold_label_check.py` spawns a fresh process,
+asks P, and compares. **If the memo returned the entry belonging to some other
+position Q, R carries `answer(Q)` and the fresh ask returns `answer(P)`, and the
+two differ.** The check fails, which is what a check failing means.
+
+What IS vacuous under K1 is a check of the key's EQUIVALENCE — and K1 has no
+equivalence, which is the point of choosing it. The finding conflates *"the key
+cannot be wrong"* with *"the memo cannot be wrong"*, and only the first is true.
+The cell is corrected to *"yes, trivially"* and §4 no longer claims K1 *"needs no
+second implementation in the cold-label checker"*; the vacuity claim is not
+adopted.
+
+---
+
+## 6. WHAT IS COSTED HERE THAT REVISION 1 DID NOT COST
+
+**K0 — NO CACHE AT ALL, which revision 1's field omitted and which is the baseline
+every other option must beat.** Zero new code, zero new failure modes, and the
+sweep runs at §3's uncached wall — **7.74 h at N = 8**, against **6.11 h** with
+the cache from wave two. **The cache's applicable saving on this sweep is 1.63 h
+ESTIMATED against ~1.43 h of registered verification** (`wp21_prereg.md` §3,
+`wp21_throughput_prereg.md` §5), which is roughly a wash. **K0 is not selected
+because D-576 rules the cache APPROVED**, and this row records what that ruling
+costs and buys rather than leaving the baseline unstated.
+
+**THREE OPTIONS THE FIELD ALSO OMITTED, each costed and each dismissed on its own
+ground.** A **persistent on-disk cache**: it would be an artifact class with a
+format version, a digest and a manifest row (D-572) for a saving that lives inside
+one tranche. A key on **`(position, go)` as a pair**: correct but redundant, since
+`label_go_line` is computed once outside both loops (`capture.rs:333` against
+`:340`, `:341`) — and the registration now carries that as a named lifetime
+invariant instead, which is the cheaper way to buy the same guarantee. A
+**tranche-scoped key**: identical to K1 within one `capture::run`, which is the
+only scope the memo has.
+
+**AND EVERY ROW OF §2's TABLE DESCRIBES THE PILOT'S 742-RECORD CAPTURE**, thirteen
+openings, `nodes 400000`, `configs/instrument_v0.toml` — stated once here rather
+than left for a reader to infer, because §2's first three rows are the ones the
+FATAL was about.

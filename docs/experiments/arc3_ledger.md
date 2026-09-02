@@ -345,3 +345,119 @@ a `tools/` script can add failures and cannot remove them**, so the committed
 subset passed either way. That reading is recorded here rather than assumed, and
 **the operative green for §0 is the CI taken after every §0 commit lands, on a
 clean tree** — which the dispatch asks for anyway as §0.4.
+
+---
+
+## §0 — CLOSED. What landed, and in what order.
+
+| step | receipt |
+|---|---|
+| pre-merge CI at `2b94f04`, all 19 gates | `artifacts/arc3_ci_premerge_2b94f04.txt` — **`ci: all gates passed`, EXIT=0**, 19 gate lines. Read under F-1.7 |
+| `dev` fast-forwarded to `2b94f04`; tag `arc2/closure` | `git merge --ff-only`, `git tag -f arc2/closure 2b94f04` |
+| ancestry check before deleting the branch | `git merge-base --is-ancestor overnight2-stopped dev` -> **YES**; branch deleted |
+| the three audit files, digested BEFORE the commit | `artifacts/arc3_audit_digests.txt` — **ALL THREE MATCH** the dispatch's list |
+| **D-575** the audit lands; the "verbatim" D-line recorded as not existing | `de1a73e` |
+| **D-576..D-580** the architect's five rulings | `043f000` |
+| both worktrees removed, with an export receipt | `artifacts/arc3_worktree_export_receipt.txt` — every gitignored file identical to a main-tree copy, every tracked-path blob recoverable from `dev`'s object store |
+| ledger, both reviews, the cache-key matrix, the counter and its tests | `31315f8` |
+| gate 1 caught the counter's test suite unformatted | `artifacts/arc3_ci_dev_31315f8.txt` — **`ci: FAIL: formatting`, EXIT=1** — fixed at `0321cc1` |
+| **CI on clean `dev` at `0321cc1`** | `artifacts/arc3_ci_dev_HEAD.txt` — **`ci: all gates passed`, EXIT=0**, 19 gate lines. **§0 IS CLOSED.** |
+
+**THE GATE-1 FAILURE IS WORTH ITS OWN LINE, BECAUSE IT IS F-1.7's OTHER HALF.**
+The pre-merge run passed gate 1 before `label_cache_count_tests.rs` existed and
+then (probably) compiled it at gate 3, where it passed. The first run that saw
+the file at gate 1 said **no**. So the live-edit reading in F-1.7 was right in
+its direction — an added file can only add failures — and the added failure
+arrived one run later. `cargo fmt --all`, then the suite green at 5 of 5 and
+`cargo clippy -p pistol-arena --all-targets -- -D clippy::all` clean.
+
+### THE CACHE-KEY MATRIX'S DECISION-RED-TEAM — **the OPTION survives, the MATRIX does not**
+
+Round 1 at `31315f8`: **1 FATAL, 6 MAJOR, 5 minor**
+(`matrix_label_cache_key_REDTEAM.md`). Revision 2 answers every one, and rejects
+one with its attempted reproducer.
+
+**THE FATAL, AND IT IS THE ARC'S OWN DEFECT WEARING A NEW COAT.** Revision 1's
+decisive row — every key folding the same 395 hits — was **MEASURED at thirteen
+openings and written as a claim about 3 487**. The red team measured the gap:
+the pilot offers **1 576** cross-game transposition opportunities and the sweep
+**~161 000 000**, a factor of **102 346**; a rule-of-three bound on the pilot's
+zero constrains the rate only to `<= 1.9e-3`, which at the sweep's scale admits
+**up to ~307 000 merges**. And the mechanism makes it worse: deterministic
+self-play means two games that ever transpose are identical thereafter, so the
+fold's yield is **heavy-tailed — zero in most small corpora and large when it
+fires** — and a zero at thirteen openings is that process's modal observation,
+not its mean.
+
+**THE SELECTION SURVIVES BECAUSE IT NEVER NEEDED THAT ROW.** Even if a coarser
+fold merges 307 000 records, what the exact key loses is a **saving**; what every
+coarser key buys that saving with is a class of **wrong answer**, invisible
+downstream. A missed saving is the only error direction a cache may have.
+
+**THREE THINGS REVISION 2 ADDS, AND THE THIRD IS THE ONE THAT MATTERS.**
+
+1. **An a-priori argument for the part of the range that has one**: the book
+   dedupes openings by `canonical_form`
+   (`crates/pistol-cli/src/random_openings/mod.rs:174`), so **no two openings can
+   transpose or mirror onto each other at `k <= opening_turns`** — a result rather
+   than an observation, and available in a `git grep` the matrix never ran.
+2. **An honest blank beyond it**, rather than a softer adjective.
+3. **A FLIP CLAUSE THE GOVERNED RUN CAN SATISFY.** Revision 1's asked for *"a
+   measured corpus in which the exact key's hit rate is materially below a
+   coarser key's"* — and under this selection the sweep never counts its captures
+   under a coarser key, so **the run generated no evidence about its own flip
+   condition** (D-424: prose, not a criterion). Replaced: **the cache counts, per
+   tranche, how many of its own MISSES share a `key_pos` or a `key_full` with an
+   earlier miss.** Two counters, no extra search, in the run log beside the hit
+   rate. That IS the coarser keys' yield at the scale that matters — and it
+   settles D-562(2)'s open three-key question in the same pass.
+
+**THE STRONGEST SURVIVING ATTACK CHANGED, AND THE NEW ONE IS SHARPER THAN THE
+RECORDED ONE.** Revision 1 recorded that gate 9 does not run the sweep's seat or
+budget. True, and weaker than this: **no limb of gate 9 ever asks the same
+position twice inside one process.** `A vs B` runs one script in two processes;
+`C vs D` runs one-process-per-position against all-in-one-session, and the session
+limb asks each position once. *"The same position, asked again, in the same
+process"* is exactly a cache hit and exactly the shape the determinism gate never
+takes. **What closes it is §4.4's byte-identity run at the sweep's own seat and
+budget**, which takes that shape ~6 624 times per tranche.
+
+### F-1.8 — THE PLAY-ORDER CLAIM WAS THREE TIMES WIDER THAN THE CODE, AND D-576 CARRIES THE WIDE VERSION
+
+Both the matrix and D-576 said the search reads play order *"under
+`gates.countermove` … and `:89` walks the whole play order under `gates.killers`"*.
+**Traced rather than asserted**: `heuristics.rs:89` sits inside `record_cutoff`,
+whose call site is gated by `params.ordering.any()` (`pvs.rs:491-498`,
+`params.rs:114-116`) and not by `killers`; its `last`/`second_last` feed only
+`pair_killers` — written at `Phase::Second` nodes, where the stone is
+search-placed, and **every capture root is `Phase::First`** — and the countermove
+table, which is READ only at `:155` under `gates.countermove`. `history` never
+reads `played()` at all.
+
+**SO THE SINGLE PATH FROM A ROOT'S PLAY ORDER TO A SEARCH CHOICE IS
+`countermove`.** The stone-set key is unsound under one config value, not three.
+That narrows the failure mode and does not remove it, and it does not move the
+selection. **D-576 is committed and append-only**, so the correction is a new
+D-line naming it rather than an edit.
+
+### F-1.9 — ONE RED-TEAM FINDING REJECTED, WITH THE REPRODUCER ATTEMPTED
+
+MAJOR 2(b): *"under K1 the cold check cannot fail on a cache defect … K1 makes the
+external referent vacuous against the cache."* **REJECTED.** Followed to the
+record it is about: let record R be a HIT, its `position` field the line P, its
+`(totals, bestmove)` from the memo. `tools/cold_label_check.py` asks P in a fresh
+process and compares. **If the memo returned the entry belonging to some other
+position Q, R carries `answer(Q)` and the fresh ask returns `answer(P)`** — they
+differ and the check fails. What is vacuous under K1 is a check of the key's
+EQUIVALENCE, and K1 has none, which is why it was chosen. The finding conflates
+*"the key cannot be wrong"* with *"the memo cannot be wrong"*; only the first
+holds. **MAJOR 2(a) is accepted in full** — the shipped checker has no partition
+and the matrix's cell said it did.
+
+**DOCS WERE EDITED WHILE THAT RUN WAS IN FLIGHT, AND THE READING IS DERIVED RATHER
+THAN ASSUMED.** F-1.7's hazard again, so the scope was checked instead of hoped:
+gate 17 reads tracked `.rs` and `.sh` files, gate 18 reads `docs/decisions.md`
+(untouched during the run), and gate 19's `DOCS` list is six named files
+(`tools/label_consistency_check.sh:102-107`), none of them touched. **No gate in
+`tools/ci.sh` reads `docs/experiments/*.md` outside that list**, so the edits
+could not reach a gate.
