@@ -1,4 +1,16 @@
-# WP-2.1 lever B — the label cache. DESIGN, revision 3.
+# WP-2.1 lever B — the label cache. DESIGN, revision 4.
+
+**REVISION 4, AFTER ROUND 3 RETURNED FAIL** — 4 BLOCKING, 8 MAJOR, 4 minor
+(`wp21_label_cache_design_rev3_REVIEW.md`); round 3 of five under D-585. **TWO OF
+THE FOUR CHANGE THE PACKAGE RATHER THAN THE PROSE.** **X2 IS DELETED**: its
+condition is unreachable, so it was never a guard (§3). **X3 GAINS THE ENGINE ITS
+TEST NEEDS**: no stub behaviour in the tree can write an unsolicited line, so the
+guard this package ADDS had a registered mutant that survived the entire suite —
+the sharpest finding any of the three rounds produced (§1 row 9, §6 T4). The
+other two are this document contradicting itself in sections a fix did not
+reach: §9 still carried *"42 searches a tranche"* seventy lines below §1.1's
+correction of it, and the header still said the design was not on the citation
+gate's list after it had joined.
 
 **REVISION 3, AFTER ROUND 2 RETURNED FAIL** — 4 BLOCKING, 7 MAJOR, 4 minor
 (`wp21_label_cache_design_rev2_REVIEW.md`), with round 1's 22 findings dispositioned
@@ -28,10 +40,17 @@ still pays it** (§3, X3).
 
 **REVISION 1's ONE LINE SAID "CI gate 6", WHICH IS CONFIG VALIDATION**
 (`tools/ci.sh:97-98`) — the exact error the governing registration corrects by
-name, restated in the design that cites it. Gate 9 is `:109-110`; `:104-105` is
-the comment above it, which revision 1 also cited wrongly. **The design is not on
-`tools/governing_citation_check.sh`'s list**, and these three would have been
-caught if it were; adding it is §8's first obligation.
+name, restated in the design that cites it, and revision 2 fixed the ONE LINE
+while leaving §2's body byte-identical. Gate 9 is `tools/ci.sh:109-110`.
+
+**AND THE CLAIM THAT THE CITATION GATE WOULD HAVE CAUGHT THEM IS FALSE, WHICH
+D-584 RECORDS.** `tools/design_citation_check.py` refuses a path the tree does not
+hold and a line past end-of-file; `tools/ci.sh:104-105` is **in range** in a
+205-line file, so the gate returns exit 0 on it. **This document has been on
+`tools/governing_citation_check.sh`'s list since `fde1497`** and the wrong
+citation was green there for two revisions. What the gate buys is ROT — a path or
+line that moved — and nothing else; what catches a wrong-but-in-range citation is
+a reviewer re-deriving it, which is what happened three times.
 
 **GOVERNING REGISTRATION**: `docs/experiments/wp21_throughput_prereg.md`
 **revision 3** — §2 (the key and why), §2.0 (the memo's lifetime invariant),
@@ -53,12 +72,14 @@ revision 2 of the registration, which failed its own review and did not contain
 | 1a | `crates/pistol-arena/src/capture.rs`, in `run`'s prefix loop | **the LOOKUP**: before `ask`, `position` is looked up in the map; a hit takes the stored pair and makes no ask. **Revision 2 dropped this row and revision 1 had it**, while §5 went on mutating it as a site |
 | 1b | same loop, after a miss's `ask` | **the INSERT**: the POST-`normalise` pair is stored under `position` |
 | 2 | `crates/pistol-arena/src/capture.rs` | the stray-line guard hoisted out of `ask` so a hit pays it too (§3, X3) |
-| 3 | `crates/pistol-arena/src/capture.rs` | the two coarser-fold counters, and a `CaptureCounts` the pass returns beside its records |
-| 4 | `crates/pistol-arena/src/passes.rs` | `capture` threads the mode in and **prints the counts** — `:82-96` is where every line this pass writes is written, and revision 1 registered no print site at all |
-| 5 | `crates/pistol-arena/src/bin/arena.rs` | the `--label-cache` word, and X1's refusal arms |
-| 6 | `crates/pistol-arena/src/usage.rs` | the word, the default, and what it does |
-| 7 | `crates/pistol-arena/tests/capture_tests.rs` and a new `label_cache_tests.rs` | the tests §6 registers — **revision 1's change list had no test row, which is how a design comes to owe tests nobody enumerated** |
-| 8 | `tools/cold_label_check.py` | **already landed** at `f1acc57`. What is still owed there is `wp21_prereg.md` revision 4's **ten-sampled-record floor**, which neither the tree nor revision 1's list carries |
+| 3 | `crates/pistol-arena/src/capture.rs` | the two coarser-fold counters, computed on a MISS from the replayed prefix (§1.1) |
+| 4 | `crates/pistol-arena/src/capture.rs` | **`CaptureCounts { asks, records, hits, key_pos_collisions, key_full_collisions }`**, returned beside the records. `asks` is INCREMENTED AT THE CALL TO `ask` AND NOWHERE ELSE — **not derived from the records**, because deriving it the way `tools/label_cache_count.py:167,175,179-181` derives the same quantity would make it a function of the capture file, which is identical cached or not, and T2 would go green on a dead cache. Revision 3 made the whole suite hinge on this number and registered neither a field nor an increment site |
+| 5 | `crates/pistol-arena/src/passes.rs` | `capture` threads the mode in and **prints the counts** — `:82-96` is where every line this pass writes is written |
+| 6 | `crates/pistol-arena/src/bin/arena.rs` | the `--label-cache` word, and X1's refusal arms |
+| 7 | `crates/pistol-arena/src/usage.rs` | the word, the default, and what it does |
+| 8 | `crates/pistol-arena/tests/label_cache_tests.rs` | the tests §6 registers |
+| 9 | `crates/pistol-arena/src/bin/stub_engine.rs` | **a `Behave` variant that writes an UNSOLICITED line before it is asked** — the engine X3's test needs and the tree does not have. `git grep -n unsolicited -- crates` returns four hits and **none in any `tests/`**, and all eighteen existing variants write `bestmove` last, so **X3's mutant survives the whole suite today**. A test-only binary gains a test-only behaviour |
+| 10 | `tools/cold_label_check.py` | `--partition` **landed at `f1acc57`**; what is still owed is `wp21_prereg.md` revision 4's **ten-sampled-record floor** — a class with fewer than ten sampled records on a tranche that should have both is a VOID — with its own mutant and its own test |
 
 ### 1.1 THE TWO COUNTERS, AND WHY THEY ARE PART OF THE CACHE RATHER THAN A STUDY
 
@@ -214,7 +235,7 @@ against a search of ~885 ms.
 | # | refusal | the defect it excludes |
 |---|---|---|
 | **X1** | `--label-cache` together with `--census` is refused **before any game**, naming both words | a cache hit performs no search and so emits no census row: a cached census capture writes fewer rows than positions asked, and nothing downstream could tell that from a quiet search |
-| **X2** | a hit whose cached `bestmove` or `totals` is empty is refused naming the position | an insert of a value the ask never produced; a guard over the map's own invariant rather than over the engine |
+| ~~X2~~ | **DELETED at revision 4.** It refused a hit whose cached `bestmove` or `totals` was empty | **THE CONDITION IS UNREACHABLE.** `ask` returns `Ok((totals, line))` only where `line` starts with `bestmove ` (`capture.rs:266`, `:273`) and `totals` is a line `classify` matched through `exchange::totals_of` (`:276`) — so no engine, honest or hostile, can cause an empty insert. **A refusal that cannot fire is not a guard** (D-572's own words about `manifest_row`), and revisions 1 to 3 registered a mutant for it whose kill criterion named a test §6 never had |
 | **X3** | **the stray-line guard runs on every prefix, hit or miss** — `channel.unsolicited()` is HOISTED out of `ask` into `run`'s loop | a guard that silently stops running on 53% of prefixes. `capture.rs:241-246` refuses an engine that spoke before it was asked; skipping the ask skips the check, so a stray line would be attributed to a LATER prefix or missed at the end of a game. **The uncached and cached passes must refuse the same input at the same place**, which is a stronger requirement than byte-identity on well-behaved input |
 
 **X1 IS THE ONE THAT MATTERS AND IT IS A CONFIG-TIME REFUSAL**, not a runtime
@@ -291,11 +312,12 @@ What IMPL owes, one mutant per defect class per site:
 | 1b, the insert | REMOVED | T2 |
 | 1b, the insert | stores the RAW totals rather than the post-`normalise` pair | T1: ` nps <n> time <n>` in a hit's record |
 | 1, the mode | threaded but never consulted — `On` behaves as `Off` | T2 |
-| 4, the count | reports `records` rather than the asks actually made | T2 in its uncached arm, where the two are equal, **and** a second fixture where they are not |
+| 4, the count | reports `records` rather than the asks actually made | **T2's CACHED arm.** Revision 3 named the UNCACHED arm, where `asks == records` is what an honest count also reports, so the mutant survived exactly where its criterion pointed |
+| 4, the count | derived from the record list rather than incremented at the ask | T2's cached arm, for the same reason: a count that is a function of the capture file cannot differ between the two runs |
 | X1 | the arm REMOVED | **the refusal must NAME BOTH WORDS**: deleting the arm drops the combination through `bin/arena.rs:79-85`'s catch-all, which still refuses and still exits 2, so a test asserting only "refused" cannot tell them apart |
-| X2 | the emptiness condition negated | X2's own test |
-| X3 | the hoisted guard REMOVED | T4: a stray line refused at the same prefix in both runs |
+| X3 | the hoisted guard REMOVED | **T4, and only with row 9's stub behaviour**: the stray must arrive at a prefix the cached run treats as a HIT, because that is the only prefix where the two passes differ. Without such an engine the mutant survives the whole suite, which is what round 3 found |
 | the counters | REMOVED, and INVERTED | T5 |
+| 10, the cold check's ten-record floor | the threshold removed, and set to zero | its own test: a capture whose HIT class holds nine records is a VOID and not a pass |
 
 ## 6. THE TESTS, ENUMERATED HERE BECAUSE REVISION 1's CHANGE LIST HAD NO TEST ROW
 
@@ -306,8 +328,9 @@ What IMPL owes, one mutant per defect class per site:
 | T1 | a cached capture of a report is **byte-identical** to an uncached one — §4.4's criterion in miniature, at a toy budget, so the package carries its own shakedown |
 | T2 | the cached run makes **fewer engine asks** than the uncached one, **read off the count `arena --capture` prints** (§1 row 4), and the uncached run's asks equal its record count. **REVISION 2 SAID "measured from the stub's own count" AND `stub_engine.rs` HAS NO COUNTER** — a test specified against an instrument that does not exist |
 | T3 | `--label-cache` with `--census` is **refused naming both words**, before any file is claimed |
-| T4 | a stray engine line is refused **at the same prefix** in both runs — X3's guard, which is the one a hit would otherwise skip |
+| T4 | a stray engine line **arriving at a prefix the cached run treats as a HIT** is refused at the same prefix in both runs — X3's guard, which is the one a hit would otherwise skip. **It needs §1 row 9's stub behaviour**: no engine in the tree writes an unsolicited line, so without it this row cannot be written and X3's mutant survives everything |
 | T5 | the counters report zero on a report whose prefixes hold no transposition and no mirror, and non-zero on a fixture built to hold one of each |
+| T7 | `--label-cache` given twice is refused, and `--label-cache` in any position but last is refused — the parser is a positional literal match, so every accepted spelling is an arm somebody wrote |
 | T6 | the record order and every field is unchanged — the same assertion T1 makes, taken over a report with a forfeit and a rule-4 win, so the truncated-turn path is covered |
 
 **T2 IS THE ONLY ROW A DEAD CACHE FAILS, AND THAT IS WHY ROUND 2 CALLED IT
@@ -353,7 +376,7 @@ reviewer to re-derive it.
 
 | obligation | discharged by |
 |---|---|
-| **this document joins `tools/governing_citation_check.sh`'s list** | the IMPL commit — revision 1 carried three wrong citations that the gate would have refused |
+| ~~this document joins the citation gate's list~~ | **DISCHARGED at `fde1497`** — and the reason given for it was wrong: the gate would NOT have refused revision 1's citations, because `tools/ci.sh:104-105` is in range (D-584). The document was on the list for two revisions with the wrong citation green |
 | REVIEW-design | **round 1 FAIL** (6B/12M/4m); this revision answers it and owes its own |
 | IMPL | the change list of §1 |
 | REVIEW-impl, fresh context, not the implementer | a subagent, against this document |
@@ -367,8 +390,11 @@ reviewer to re-derive it.
 1. **It does not persist across processes.** A per-run map, dropped at exit — now
    structurally, since §2.0 gives the map no way out of `run`.
 2. **It does not fold transpositions or symmetries.** Both cost a class of wrong
-   answer (D-576), and what the folds are worth is MEASURED at 42 searches a
-   tranche, 0.72% of its misses (D-583).
+   answer (D-576), and what the folds are worth is MEASURED per tranche at
+   **42 to 60 searches, 792 over the sweep** — under one percent of a tranche's
+   misses. **D-583 gave 42 as the per-tranche figure and 42 is TRANCHE ONE'S**;
+   **D-584 corrects it**, and §1.1 carries the sixteen. Revision 3 corrected §1.1
+   and left this sentence, seventy lines below, saying the superseded number.
 3. **It changes no criterion of `wp21_prereg.md` §4.** T-A1 and T-A2 are that
    document's, and this package supplies the derivation and the instrument they
    need — the instrument's `--partition` half landed at `f1acc57`; its

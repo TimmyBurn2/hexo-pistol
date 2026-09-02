@@ -877,3 +877,43 @@ round on a document that cannot pass yet.
 | `wp21_throughput_prereg.md` | 2 (rev 2 FAIL, rev 3 FAIL) | 3 |
 | `wp21_label_cache_design.md` | 2 (rev 1 FAIL, rev 2 FAIL) | 3 |
 | `derivation_gate_design.md` | 1 (FAIL, **WITHDRAWN** — the grant is not spent on a package nobody is building) | — |
+
+### THE CACHE DESIGN, ROUND 3 — FAIL, AND THE SHARPEST FINDING IS ABOUT THE GUARD THE PACKAGE ADDS
+
+Round 3 at `f87cbbe`: **4 BLOCKING, 8 MAJOR, 4 minor**
+(`wp21_label_cache_design_rev3_REVIEW.md`). Round 3 of five under D-585, so not a
+stop. **The reviewer re-derived all sixteen fold numbers by transcribing
+`symmetry.rs` into Python rather than running this arc's instrument, and got the
+table value for value — 42 51 48 55 47 48 50 44 53 48 51 60 45 56 48 46, sum 792.**
+
+**TWO FINDINGS CHANGED THE PACKAGE.**
+
+1. **X2 WAS A GUARD THAT CANNOT FIRE, AND IT IS DELETED.** It refused a hit whose
+   cached `bestmove` or `totals` was empty. **`ask` cannot produce one**: it
+   returns only where the line starts with `bestmove ` (`capture.rs:266,273`) and
+   the totals line matched `exchange::totals_of` (`:276`). *"A refusal that cannot
+   fire is not a guard"* is D-572's own sentence about `manifest_row`, and three
+   revisions carried a mutant for it whose kill criterion named a test §6 never
+   had.
+2. **X3 — THE GUARD THIS PACKAGE ADDS — HAD A REGISTERED MUTANT THAT SURVIVED THE
+   ENTIRE SUITE**, because **no stub behaviour in the tree writes an unsolicited
+   line**: `git grep -n unsolicited -- crates` returns four hits, none in any
+   `tests/`, and all eighteen `Behave` variants write `bestmove` last. The design
+   now registers the stub variant as its own change row, and T4 must place the
+   stray **at a prefix the cached run treats as a HIT** — the only prefix where
+   the two passes differ.
+
+**AND TWO WERE THE DOCUMENT CONTRADICTING ITSELF WHERE A FIX DID NOT REACH.** §9
+still said *"42 searches a tranche (D-583)"* seventy lines below §1.1's correction
+of exactly that, and cited D-583 three times and D-584 — landed in the same commit
+as the revision — zero times. The header still claimed the design was not on the
+citation gate's list, after it joined at `fde1497`, **and that the gate would have
+caught its three wrong citations, which D-584 says it would not.**
+
+**THE MAJOR THAT MATTERS MOST**: the ask count the whole suite now hinges on had
+no field and no increment site, and deriving it the way `label_cache_count.py`
+derives the same quantity would make it **a function of the capture file — which
+is identical cached or not — so T2 would go green on a dead cache**, reinstating
+round 2's central finding. Revision 4 registers the field, fixes the increment at
+the call to `ask`, and moves the kill criterion to T2's **cached** arm, where
+revision 3 had named the uncached one — the arm where that mutant survives.
