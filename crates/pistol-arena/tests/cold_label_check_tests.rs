@@ -60,6 +60,18 @@ fn staged(scratch: &Scratch, tag: &str) -> Staged {
 /// Drive the SHIPPED script, never a copy of it
 /// (tools/SHELL_CHECKLIST.md item 10).
 fn check(capture: &Path, engine_config: &Path, stride: &str) -> Output {
+    partitioned_check(capture, engine_config, stride, "all")
+}
+
+/// The same script with the cache class named. `--partition` is REQUIRED and has
+/// no default: a default would answer about `all` while a criterion said `hits`
+/// (docs/experiments/wp21_prereg.md revision 4, T-A1 and T-A2).
+fn partitioned_check(
+    capture: &Path,
+    engine_config: &Path,
+    stride: &str,
+    partition: &str,
+) -> Output {
     Command::new("python3")
         .arg(repo().join("tools/cold_label_check.py"))
         .arg("--capture")
@@ -70,6 +82,8 @@ fn check(capture: &Path, engine_config: &Path, stride: &str) -> Output {
         .arg(engine_config)
         .arg("--stride")
         .arg(stride)
+        .arg("--partition")
+        .arg(partition)
         .output()
         .expect("the cold-label checker runs")
 }
@@ -107,6 +121,30 @@ fn rebuild(capture: &Path, edit: impl Fn(usize, &mut Vec<String>)) -> String {
             format!("{}\n", fields.join("\t"))
         })
         .collect();
+    format!(
+        "{header}# body_sha256 {}\n{body}",
+        pistol_cli::sha256::sha256_hex(body.as_bytes())
+    )
+}
+
+/// A capture holding only its first record, with the header's digest brought
+/// back into agreement.
+///
+/// The first ask at a `position` is always a MISS, so such a file has an empty
+/// HIT class — the degenerate case a criterion must not answer vacuously.
+fn first_record_only(capture: &Path) -> String {
+    let text = std::fs::read_to_string(capture).expect("the capture is readable");
+    let header: String = text
+        .lines()
+        .take_while(|line| !line.starts_with("# body_sha256 "))
+        .map(|line| format!("{line}\n"))
+        .collect();
+    let body = pistol_cli::corpus::emit::body_of(&text)
+        .expect("a capture carries a body digest")
+        .split('\n')
+        .find(|line| !line.is_empty())
+        .map(|line| format!("{line}\n"))
+        .expect("the capture holds at least one record");
     format!(
         "{header}# body_sha256 {}\n{body}",
         pistol_cli::sha256::sha256_hex(body.as_bytes())
@@ -284,5 +322,62 @@ fn the_sample_is_every_stride_th_record_and_the_run_says_which() {
     assert!(
         stdout.contains(&format!("multiple of 3, which is {expected} of them")),
         "the run did not state the sample it took ({expected} of {total}): {stdout}"
+    );
+}
+
+#[test]
+fn the_class_a_sample_was_drawn_from_is_on_the_line_it_is_reported_on() {
+    let scratch = Scratch::new("cold-partition-named");
+    let staged = staged(&scratch, "named");
+    for partition in ["hits", "misses", "all"] {
+        let output = partitioned_check(&staged.capture, &staged.engine_config, "1", partition);
+        let said = String::from_utf8_lossy(&output.stdout).to_string();
+        // Two invocations of one shape cannot be told apart in a run log unless
+        // the class is on the line, which is the whole point of the amendment.
+        assert!(
+            said.contains(&partition.to_uppercase()),
+            "the {partition} run did not name its class. {said}"
+        );
+    }
+}
+
+#[test]
+fn the_two_classes_partition_the_records_and_neither_is_the_whole() {
+    let scratch = Scratch::new("cold-partition-splits");
+    let staged = staged(&scratch, "splits");
+    let counted = |partition: &str| -> usize {
+        let output = partitioned_check(&staged.capture, &staged.engine_config, "1", partition);
+        let said = String::from_utf8_lossy(&output.stdout).to_string();
+        let marker = format!("are {}", partition.to_uppercase());
+        let at = said
+            .find(&marker)
+            .unwrap_or_else(|| panic!("no `{marker}` in {said}"));
+        said[..at]
+            .rsplit(|c: char| !c.is_ascii_digit())
+            .find(|word| !word.is_empty())
+            .and_then(|word| word.parse().ok())
+            .unwrap_or_else(|| panic!("no count before `{marker}` in {said}"))
+    };
+    let (hits, misses, all) = (counted("hits"), counted("misses"), counted("all"));
+    assert_eq!(
+        hits + misses,
+        all,
+        "the two classes must partition the records"
+    );
+    assert!(misses > 0, "a self-match capture always asks a first time");
+}
+
+#[test]
+fn a_partition_the_capture_cannot_fill_is_a_void_and_not_a_pass() {
+    let scratch = Scratch::new("cold-partition-empty");
+    let staged = staged(&scratch, "empty");
+    // One record cannot be a hit: the first ask at a position is always a miss.
+    let capture = scratch.write("one-record.txt", &first_record_only(&staged.capture));
+    let output = partitioned_check(&capture, &staged.engine_config, "1", "hits");
+    assert_eq!(
+        output.status.code(),
+        Some(2),
+        "an empty class is a VOID (exit 2) and not a vacuous `0 of 0 agree`. {}",
+        meaning(&output)
     );
 }

@@ -23,6 +23,27 @@ fn generate(scratch: &Scratch, tranche: &str, name: &str, sha: &str) -> (Output,
     (output, out)
 }
 
+/// The shipped script's WINDOW form, which T-F's sub-range config comes from
+/// (docs/experiments/wp21_prereg.md revision 4 §4.1). Hand-writing that config
+/// is the defect the generator exists to prevent, so it is an argument rather
+/// than a second document.
+fn generate_window(scratch: &Scratch, skip: &str, take: &str, name: &str) -> (Output, PathBuf) {
+    let out = scratch.path(name);
+    let output = Command::new("python3")
+        .arg(repo().join("tools/wp21_tranche_config.py"))
+        .arg("--skip")
+        .arg(skip)
+        .arg("--take")
+        .arg(take)
+        .arg("--out")
+        .arg(&out)
+        .arg("--binary-sha256")
+        .arg(SHA)
+        .output()
+        .expect("python3 runs the generator");
+    (output, out)
+}
+
 const SHA: &str = "180b4c406b225fc81342bb8218b8546dda1ffac1a99f7eb91cdaf73d20253476";
 const TRANCHES: u32 = 16;
 /// The generator's own exit codes, and a REFUSAL is not a VOID.
@@ -300,4 +321,80 @@ fn an_unwritable_out_directory_is_a_void_and_not_a_refusal() {
         "a voided run wrote a config anyway: {}",
         out.display()
     );
+}
+
+#[test]
+fn the_window_form_writes_the_range_it_was_given() {
+    let scratch = Scratch::new("wp21-window");
+    let (output, out) = generate_window(&scratch, "13", "20", "tf.toml");
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let text = std::fs::read_to_string(&out).expect("the window config is readable");
+    assert_eq!(value(&text, "openings_skip"), "13", "{text}");
+    assert_eq!(value(&text, "openings_take"), "20", "{text}");
+    // A window is not a tranche and must not claim to be one.
+    assert!(
+        text.lines().next().unwrap_or_default().contains("WINDOW"),
+        "a window config's first line must not spell itself a tranche: {text}"
+    );
+}
+
+#[test]
+fn a_window_that_reaches_the_reserved_holdout_is_refused() {
+    let scratch = Scratch::new("wp21-window-holdout");
+    let (output, out) = generate_window(&scratch, "3490", "20", "over.toml");
+    refused(&output, "a window crossing 3500");
+    assert!(
+        !out.exists(),
+        "a refused window must leave no document behind"
+    );
+}
+
+#[test]
+fn a_window_inside_the_pilots_consumed_range_is_refused() {
+    let scratch = Scratch::new("wp21-window-pilot");
+    let (output, out) = generate_window(&scratch, "0", "5", "pilot.toml");
+    refused(&output, "a window reaching the pilot's consumed openings");
+    assert!(!out.exists());
+}
+
+#[test]
+fn naming_the_range_two_ways_is_refused_rather_than_resolved() {
+    let scratch = Scratch::new("wp21-both-forms");
+    let out = scratch.path("both.toml");
+    let output = Command::new("python3")
+        .arg(repo().join("tools/wp21_tranche_config.py"))
+        .arg("--tranche")
+        .arg("1")
+        .arg("--skip")
+        .arg("13")
+        .arg("--take")
+        .arg("20")
+        .arg("--out")
+        .arg(&out)
+        .arg("--binary-sha256")
+        .arg(SHA)
+        .output()
+        .expect("python3 runs the generator");
+    refused(&output, "--tranche together with --skip/--take");
+    assert!(!out.exists());
+}
+
+#[test]
+fn naming_no_range_at_all_is_refused_rather_than_defaulted() {
+    let scratch = Scratch::new("wp21-no-form");
+    let out = scratch.path("none.toml");
+    let output = Command::new("python3")
+        .arg(repo().join("tools/wp21_tranche_config.py"))
+        .arg("--out")
+        .arg(&out)
+        .arg("--binary-sha256")
+        .arg(SHA)
+        .output()
+        .expect("python3 runs the generator");
+    refused(&output, "neither form given");
+    assert!(!out.exists());
 }

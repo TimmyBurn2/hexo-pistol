@@ -27,10 +27,26 @@
 # prints. There is no destructive site in this file (tools/SHELL_CHECKLIST.md
 # item 11 answered by enumeration: none).
 #
+# THE HIT/MISS PARTITION, AND WHY IT IS DERIVED HERE RATHER THAN RECORDED.
+# Under the label cache (docs/decisions.md D-576) a capture's records split into
+# MISSES — the first ask at a `position` line, which cost a search — and HITS,
+# which the memo answered. The two exclude different defects: a stride over an
+# undifferentiated list can sample two hundred misses and no hit, and a cold
+# check that never exercises a hit says nothing about the cache
+# (docs/experiments/wp21_prereg.md revision 4, T-A1 and T-A2). The split is a
+# property the capture file already determines — walk the records in order, a
+# `position` not seen before is a MISS and every later record carrying it is a
+# HIT — so the grammar gains no column, which would be a format version bump
+# (docs/decisions.md D-572) for a fact the file already holds.
+#
+# `--partition` IS REQUIRED AND HAS NO DEFAULT. A default here would answer
+# about `all` while a criterion said `hits`, which is the one failure this
+# argument exists to prevent.
+#
 # Usage:
 #   tools/cold_label_check.py --capture <path> --binary <path>
 #                             --engine-config <path> --stride <n>
-#                             [--timeout-s <n>]
+#                             --partition hits|misses|all [--timeout-s <n>]
 #
 # Exit:  0 every sampled record agrees byte for byte — THE ANSWER IS YES
 #        1 a sampled record disagrees — THE ANSWER IS NO
@@ -51,6 +67,8 @@ WALL_CLOCK = re.compile(r" nps \d+ time \d+")
 
 BODY_MARKER = "# body_sha256 "
 FIELDS = 5
+POSITION = 2
+PARTITIONS = ("hits", "misses", "all")
 
 VOID = 2
 DISAGREES = 1
@@ -151,6 +169,29 @@ def records_of(body, source):
     return out
 
 
+def partitioned(rows, want, source):
+    """The records of one cache class, with their original indices.
+
+    The records are in the order they were asked (`capture_file.rs`), and the
+    capture pass is serial by construction, so first-occurrence-is-a-miss is
+    exact rather than probable.
+    """
+    seen = set()
+    out = []
+    for at, row in enumerate(rows):
+        position = row[POSITION]
+        miss = position not in seen
+        seen.add(position)
+        if want == "all" or (want == "misses") == miss:
+            out.append((at, row))
+    if not out:
+        raise Void(
+            f"{source} holds no {want} record(s), so this class cannot be sampled; "
+            f"a class that should exist and does not is a VOID and not a pass"
+        )
+    return out
+
+
 def ask_cold(binary, config, position, go, timeout_s, where):
     """One fresh process, one position, the engine's own two lines.
 
@@ -209,6 +250,7 @@ def main():
     parser.add_argument("--binary", required=True)
     parser.add_argument("--engine-config", required=True)
     parser.add_argument("--stride", required=True)
+    parser.add_argument("--partition", required=True, choices=PARTITIONS)
     parser.add_argument("--timeout-s", default="600")
     args = parser.parse_args()
 
@@ -224,10 +266,14 @@ def main():
     body = body_of(text, source)
     rows = records_of(body, source)
 
-    sampled = [(at, row) for at, row in enumerate(rows) if at % stride == 0]
+    want = args.partition
+    classed = partitioned(rows, want, source)
+    sampled = [pair for n, pair in enumerate(classed) if n % stride == 0]
     say(
-        f"{len(rows)} record(s) in {source}; the sample is every record whose "
-        f"zero-based index is a multiple of {stride}, which is {len(sampled)} of them"
+        f"{len(rows)} record(s) in {source}, of which {len(classed)} are "
+        f"{want.upper()}; the sample is every {want.upper()} record whose "
+        f"zero-based position within that class is a multiple of {stride}, "
+        f"which is {len(sampled)} of them"
     )
     say(f"the label ask is `{go}`, one fresh process per sampled position")
 
@@ -243,12 +289,18 @@ def main():
             disagreements.append(f"{where}: bestmove\n  capture: {best}\n  cold:    {cold_best}")
 
     if disagreements:
-        say(f"{len(disagreements)} DISAGREEMENT(S) over {len(sampled)} sampled record(s):")
+        say(
+            f"{len(disagreements)} DISAGREEMENT(S) over {len(sampled)} sampled "
+            f"{want.upper()} record(s):"
+        )
         for one in disagreements:
             print(one)
         say("a cold re-ask did not reproduce the capture's own bytes")
         return DISAGREES
-    say(f"{len(sampled)} of {len(sampled)} sampled record(s) agree byte for byte")
+    say(
+        f"{len(sampled)} of {len(sampled)} sampled {want.upper()} record(s) agree "
+        f"byte for byte"
+    )
     return 0
 
 
