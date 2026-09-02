@@ -9,7 +9,10 @@ use pistol_cli::sha256::sha256_hex;
 /// rule).
 fn count(scratch: &Scratch, name: &str, body: &str) -> Output {
     let digest = sha256_hex(body.as_bytes());
-    let capture = scratch.write(name, &format!("# param capture_format_version 1\n# body_sha256 {digest}\n{body}"));
+    let capture = scratch.write(
+        name,
+        &format!("# param capture_format_version 1\n# body_sha256 {digest}\n{body}"),
+    );
     Command::new("python3")
         .arg(repo().join("tools/label_cache_count.py"))
         .arg("--capture")
@@ -38,12 +41,28 @@ fn one_position_asked_twice_is_one_miss_and_one_hit() {
         record(1, 1, "position start moves 0,0")
     );
     let output = count(&scratch, "capture.txt", &body);
-    assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let said = said(&output);
-    assert!(said.contains("asked prefixes                          2"), "{said}");
-    assert!(said.contains("distinct `position` lines (cache key)   1"), "{said}");
-    assert!(said.contains("cache hits                              1"), "{said}");
-    assert!(said.contains("cache misses                            1"), "{said}");
+    assert!(
+        said.contains("asked prefixes                          2"),
+        "{said}"
+    );
+    assert!(
+        said.contains("distinct `position` lines (cache key)   1"),
+        "{said}"
+    );
+    assert!(
+        said.contains("cache hits                              1"),
+        "{said}"
+    );
+    assert!(
+        said.contains("cache misses                            1"),
+        "{said}"
+    );
 }
 
 #[test]
@@ -56,14 +75,32 @@ fn two_transposed_prefixes_are_two_cache_keys_and_one_stone_set() {
     // choice of key rests on, pinned rather than argued.
     let body = format!(
         "{}\n{}\n",
-        record(0, 5, "position start moves 0,0 1,0/2,0 3,0/4,0 5,0/6,0 7,0/8,0"),
-        record(1, 5, "position start moves 0,0 1,0/2,0 7,0/8,0 5,0/6,0 3,0/4,0")
+        record(
+            0,
+            5,
+            "position start moves 0,0 1,0/2,0 3,0/4,0 5,0/6,0 7,0/8,0"
+        ),
+        record(
+            1,
+            5,
+            "position start moves 0,0 1,0/2,0 7,0/8,0 5,0/6,0 3,0/4,0"
+        )
     );
     let output = count(&scratch, "capture.txt", &body);
-    assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let said = said(&output);
-    assert!(said.contains("distinct `position` lines (cache key)   2"), "{said}");
-    assert!(said.contains("distinct sorted (cell, player) lists    1"), "{said}");
+    assert!(
+        said.contains("distinct `position` lines (cache key)   2"),
+        "{said}"
+    );
+    assert!(
+        said.contains("distinct sorted (cell, player) lists    1"),
+        "{said}"
+    );
 }
 
 #[test]
@@ -77,10 +114,20 @@ fn a_mirrored_position_folds_only_under_the_symmetry_column() {
         record(1, 2, "position start moves 0,0 0,1/0,2")
     );
     let output = count(&scratch, "capture.txt", &body);
-    assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
+    assert!(
+        output.status.success(),
+        "stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
     let said = said(&output);
-    assert!(said.contains("distinct sorted (cell, player) lists    2"), "{said}");
-    assert!(said.contains("distinct symmetry-folded stone lists    1"), "{said}");
+    assert!(
+        said.contains("distinct sorted (cell, player) lists    2"),
+        "{said}"
+    );
+    assert!(
+        said.contains("distinct symmetry-folded stone lists    1"),
+        "{said}"
+    );
 }
 
 #[test]
