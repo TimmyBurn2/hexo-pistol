@@ -1,4 +1,14 @@
-# WP-2.1 lever B — the label cache. DESIGN, revision 2.
+# WP-2.1 lever B — the label cache. DESIGN, revision 3.
+
+**REVISION 3, AFTER ROUND 2 RETURNED FAIL** — 4 BLOCKING, 7 MAJOR, 4 minor
+(`wp21_label_cache_design_rev2_REVIEW.md`), with round 1's 22 findings dispositioned
+**7 CLOSED, 6 PARTIAL, 9 OPEN**. Revision 2's header claimed every finding was
+disposed of at the section that owns it; `git diff 239f21f fde1497` shows **§4 and
+§5 have no hunks at all**, which is that claim refuted by the diff. Four things
+move here and three of them are the ones the round-2 review found were never
+touched: **the gate citation in §2's body** (revision 2 fixed the ONE LINE and left
+the body byte-identical), **§6's T2**, **§1's change list**, and **§5's mutation
+set**.
 
 **REVISION 2, AFTER A FRESH-CONTEXT REVIEW-design THAT RETURNED FAIL** — 6
 BLOCKING, 12 MAJOR, 4 minor (`wp21_label_cache_design_REVIEW.md`). Every finding
@@ -40,6 +50,8 @@ revision 2 of the registration, which failed its own review and did not contain
 | # | site | change |
 |---|---|---|
 | 1 | `crates/pistol-arena/src/capture.rs` | `run` takes a `LabelCache` **MODE** — a two-state enum, not a map — and **builds the map itself**, beside `label_go_line` at `:333` |
+| 1a | `crates/pistol-arena/src/capture.rs`, in `run`'s prefix loop | **the LOOKUP**: before `ask`, `position` is looked up in the map; a hit takes the stored pair and makes no ask. **Revision 2 dropped this row and revision 1 had it**, while §5 went on mutating it as a site |
+| 1b | same loop, after a miss's `ask` | **the INSERT**: the POST-`normalise` pair is stored under `position` |
 | 2 | `crates/pistol-arena/src/capture.rs` | the stray-line guard hoisted out of `ask` so a hit pays it too (§3, X3) |
 | 3 | `crates/pistol-arena/src/capture.rs` | the two coarser-fold counters, and a `CaptureCounts` the pass returns beside its records |
 | 4 | `crates/pistol-arena/src/passes.rs` | `capture` threads the mode in and **prints the counts** — `:82-96` is where every line this pass writes is written, and revision 1 registered no print site at all |
@@ -76,11 +88,21 @@ and the number goes in the run log.
 
 **AND THE `key_full` COUNTER'S ANSWER IS ALREADY PARTLY KNOWN, WHICH THE CLOSURE
 MUST NOT READ AS A DISCOVERY.** `artifacts/arc3_opening_prefix_fold.txt` MEASURES
-the book's own shape: within tranche one's 218 openings the symmetry fold takes
-213 `k = 2` classes to 171, so **at least 42 `key_full` collisions per tranche are
-the OPENING BOOK's structure and not a search-space transposition**. The counter
-reports its total and the run log records that floor beside it; a closure that
-reported 42 as a finding would be reporting the book.
+the book's own shape at `k = 2`, **per tranche and not once**:
+
+```
+tranche  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16   sum
+merges  42 51 48 55 47 48 50 44 53 48 51 60 45 56 48 46   792
+```
+
+**EACH TRANCHE HAS ITS OWN FLOOR AND THE RUN LOG CARRIES THAT TRANCHE'S**, from
+the same instrument, taken before the sweep. A closure reading a tranche's count
+against 42 would read fourteen tranches as a discovery of between 2 and 18
+collisions that are the book.
+
+**REVISIONS 1 AND 2 SAID "at least 42 per tranche" AND 42 IS TRANCHE ONE'S** —
+the minimum across the sixteen, not the value at any other. D-583 carries the
+same error and is corrected by its own successor line.
 
 **AND D-581's FLIP CLAUSE HAS TWO CONJUNCTS, NOT ONE.** The selection flips only
 if the count is materially above that floor **AND** a seat pins `countermove`
@@ -159,7 +181,9 @@ digest.**
 
 **SO THE SOUNDNESS OBLIGATION IS DISCHARGED BY A GATE THAT ALREADY RUNS.** Hard
 rule 4: in instrument mode nothing nondeterministic may influence move choice.
-`tools/determinism.sh` is **CI gate 9 of 19** (`tools/ci.sh:104-105`) and
+`tools/determinism.sh` is **CI gate 9 of 20** (`tools/ci.sh:109-110`; the total
+is `:21`'s `readonly GATE_TOTAL=20`, and `:104-105` is the comment above the gate,
+which revisions 1 and 2 both cited as if it were the gate) and
 compares two processes on the move, the node count, the score, the depth and the
 whole PV — every field but `nps` and `time`, which is the same normalisation
 `capture::normalise` applies, across **five** seats.
@@ -250,23 +274,28 @@ A filter over an already-read list would otherwise print `0 of 0 … agree` and 
 
 ## 5. THE MUTATION SET — SPECIFIED AGAINST CALL SITES ENUMERATED BY A `git grep` RECEIPT
 
-D-568's standing law: a mutation set is specified against call sites enumerated
-by a `git grep` receipt recorded in the mutation document, never against prose.
+D-568's standing law: a mutation set is specified against call sites enumerated by
+a `git grep` receipt recorded in the mutation document, never against prose.
 **THE SITES DO NOT EXIST YET, so the receipt is owed AT IMPL and this section is
-not it.** What IMPL owes, per defect class per site:
+not it.** **REVISION 2 LEFT THIS SECTION UNTOUCHED WHILE ADDING A GUARD (X3) AND
+A SEAM (the mode) THAT IT DOES NOT COVER**, which is D-553's own class: a guard
+with no registered mutant is a guard whose failure nothing would notice.
 
-- the lookup: removed (every ask made) — dies at the hit-count test;
-- the lookup: inverted (a miss treated as a hit) — dies at the first record;
-- the insert: removed — dies at the hit-count test;
-- the insert: keyed on something other than the asked `position` — dies at a
-  two-seat fixture holding a transposition, where a coarser key returns the
-  other order's answer;
-- X1: the refusal's condition negated — dies at its own test;
-- each counter: removed, and inverted — dies at a fixture built to hold exactly
-  one transposing pair and exactly one mirrored pair, where the expected counts
-  are 1 and 1 rather than 0 and 0.
+What IMPL owes, one mutant per defect class per site:
 
----
+| site (§1 row) | mutant | dies at |
+|---|---|---|
+| 1a, the lookup | REMOVED — every ask made | T2: `asks == records` on a cached run |
+| 1a, the lookup | INVERTED — a miss treated as a hit | T1: the first record's bytes |
+| 1a, the lookup | keyed on something other than the asked `position` | T1 on a report holding a transposition |
+| 1b, the insert | REMOVED | T2 |
+| 1b, the insert | stores the RAW totals rather than the post-`normalise` pair | T1: ` nps <n> time <n>` in a hit's record |
+| 1, the mode | threaded but never consulted — `On` behaves as `Off` | T2 |
+| 4, the count | reports `records` rather than the asks actually made | T2 in its uncached arm, where the two are equal, **and** a second fixture where they are not |
+| X1 | the arm REMOVED | **the refusal must NAME BOTH WORDS**: deleting the arm drops the combination through `bin/arena.rs:79-85`'s catch-all, which still refuses and still exits 2, so a test asserting only "refused" cannot tell them apart |
+| X2 | the emptiness condition negated | X2's own test |
+| X3 | the hoisted guard REMOVED | T4: a stray line refused at the same prefix in both runs |
+| the counters | REMOVED, and INVERTED | T5 |
 
 ## 6. THE TESTS, ENUMERATED HERE BECAUSE REVISION 1's CHANGE LIST HAD NO TEST ROW
 
@@ -275,11 +304,26 @@ not it.** What IMPL owes, per defect class per site:
 | # | what it pins |
 |---|---|
 | T1 | a cached capture of a report is **byte-identical** to an uncached one — §4.4's criterion in miniature, at a toy budget, so the package carries its own shakedown |
-| T2 | the cached run makes **fewer engine asks** than the uncached one, measured from the stub's own count, so the cache is exercised rather than merely present |
+| T2 | the cached run makes **fewer engine asks** than the uncached one, **read off the count `arena --capture` prints** (§1 row 4), and the uncached run's asks equal its record count. **REVISION 2 SAID "measured from the stub's own count" AND `stub_engine.rs` HAS NO COUNTER** — a test specified against an instrument that does not exist |
 | T3 | `--label-cache` with `--census` is **refused naming both words**, before any file is claimed |
 | T4 | a stray engine line is refused **at the same prefix** in both runs — X3's guard, which is the one a hit would otherwise skip |
 | T5 | the counters report zero on a report whose prefixes hold no transposition and no mirror, and non-zero on a fixture built to hold one of each |
-| T6 | the record order and every field but nothing else is unchanged — the same assertion T1 makes, taken over a report with a forfeit and a rule-4 win, so the truncated-turn path is covered |
+| T6 | the record order and every field is unchanged — the same assertion T1 makes, taken over a report with a forfeit and a rule-4 win, so the truncated-turn path is covered |
+
+**T2 IS THE ONLY ROW A DEAD CACHE FAILS, AND THAT IS WHY ROUND 2 CALLED IT
+BLOCKING.** A cache that is parsed and then dropped yields the uncached bytes, so
+**T1 and T6 pass**; T3 is a CLI arm; T4's guard is unconditional; T5's counters
+are unconditional. **The registration's own fallback cannot fail either**:
+`tools/label_cache_count.py` reads the capture file and returns the same number
+whether the run was cached or not, because the file is identical by construction —
+which is the criterion's whole point and makes it useless as an existence check.
+
+**SO THE ASK COUNT IS A REGISTERED OUTPUT AND NOT A DIAGNOSTIC.** `arena --capture`
+prints `asks <n> records <n>` with the hit rate; T2 asserts `asks < records`
+cached and `asks == records` uncached. A cache that is dropped really does ask
+every time, so it reports `asks == records` and fails. **The only way to pass T2
+without a working cache is to lie about the count**, which is a different defect
+with its own registered mutant (§5).
 
 ## 7. THE ONE REVIEW FINDING REJECTED, WITH THE REPRODUCER ATTEMPTED
 

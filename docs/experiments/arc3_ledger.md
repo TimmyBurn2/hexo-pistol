@@ -741,3 +741,59 @@ help: please recompile that crate using this compiler (rustc 1.98.0 (88d9e12ae 2
    `binary_sha256` slot (`wp21_prereg.md` §8) must be filled AFTER the toolchain
    settles, and the run log must name the `rustc --version` beside it. That is an
    amendment the registration owes and did not have.
+
+### THE CACHE DESIGN, ROUND 2 — FAIL, AND ONE FINDING IS A CORRECTION TO WHAT THIS SESSION TOLD THE OPERATOR
+
+Round 2 at `fde1497`: **4 BLOCKING, 7 MAJOR, 4 minor**, with round 1's 22
+findings dispositioned **7 CLOSED, 6 PARTIAL, 9 OPEN**
+(`wp21_label_cache_design_rev2_REVIEW.md`).
+
+**REVISION 2's HEADER CLAIMED EVERY FINDING WAS DISPOSED OF AT THE SECTION THAT
+OWNS IT, AND `git diff 239f21f fde1497` REFUTES IT**: §4 and §5 have **no hunks at
+all**. The claim was about the document and the diff was one command away.
+
+**THE FOUR BLOCKING, and three are things revision 2 never touched.**
+
+1. **§2's body still said "CI gate 9 of 19 (`tools/ci.sh:104-105`)"** —
+   byte-identical to revision 1. Revision 2 fixed the ONE LINE and printed the
+   correction in its own header, four sections above the uncorrected sentence.
+2. **§6's T2 named an instrument that does not exist** — *"measured from the
+   stub's own count"*, and `stub_engine.rs` has no counter. **T2 is the only row a
+   dead cache fails**: T1 and T6 pass because a cache that is parsed and dropped
+   yields the uncached bytes, T3 is a CLI arm, T4's guard is unconditional, T5's
+   counters are unconditional — and the registration's fallback,
+   `tools/label_cache_count.py`, reads the capture file and returns the same
+   number cached or uncached **because the file is identical by construction**.
+   Revision 3 makes the ask count a registered OUTPUT: `asks < records` cached,
+   `asks == records` uncached.
+3. **§1's change list had dropped the lookup and the insert** while §5 went on
+   mutating them as sites.
+4. **§5 was unchanged**, so the guard revision 2 ADDED (X3) and the seam it added
+   (the mode) had no registered mutants — D-553's own class.
+
+### F-1.12 — "42 PER TRANCHE" IS TRANCHE ONE'S NUMBER, AND D-583 CARRIES THE ERROR
+
+The reviewer re-implemented `canonical_form` in Python rather than running this
+arc's instrument, confirmed tranche one's 213 -> 171, and then **ran it over all
+sixteen**: `42, 51, 48, 55, 47, 48, 50, 44, 53, 48, 51, 60, 45, 56, 48, 46`, sum
+**792**. Re-derived here with the committed instrument and identical. **42 is the
+MINIMUM across the sixteen and the value at exactly one of them.** A closure
+reading a tranche's `key_full` counter against 42 would read fourteen tranches as
+discovering between 2 and 18 collisions that are the opening book. Corrected in
+the receipt's addendum, in the design, and by **D-584**.
+
+### F-1.13 — THE CLAIM THAT GATE 20 WOULD HAVE CAUGHT THE CITATION ERRORS IS FALSE, AND THIS SESSION TOLD THE OPERATOR IT
+
+`tools/design_citation_check.py` refuses a path the tree does not hold and a line
+number past end-of-file. **`tools/ci.sh:104-105` is in range in a 205-line file**,
+so the gate returns **exit 0** on the very citation the design got wrong. The
+withdrawn design's own §4 had said so — *"It would not have caught
+`outpath.rs:9-24` (in range, wrong function)"* — so the claim contradicted a
+limitation this arc had already written down, in the sentence arguing for the
+gate's value.
+
+**WHAT THE GATE ACTUALLY BUYS IS ROT AND NOTHING ELSE**: a path or line that
+MOVED. It caught one real thing on landing and will catch more as the tree moves;
+it catches no wrong-but-in-range citation, ever. **D-582's reviewer clause is the
+only thing that does**, which is the whole reason the clause and not the gate is
+the answer to the class.
