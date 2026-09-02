@@ -461,3 +461,106 @@ gate 17 reads tracked `.rs` and `.sh` files, gate 18 reads `docs/decisions.md`
 (`tools/label_consistency_check.sh:102-107`), none of them touched. **No gate in
 `tools/ci.sh` reads `docs/experiments/*.md` outside that list**, so the edits
 could not reach a gate.
+
+---
+
+## §1b — THE RECURRING DEFECT, GOT TO THE BOTTOM OF, AND THE FIX THAT DOES NOT DEPEND ON ANYONE REMEMBERING
+
+**THE OPERATOR'S INSTRUCTION**: *"go into next revision and really try to get to
+the bottom of this and fix it sustainable."*
+
+### WHAT THE DEFECT IS, COUNTED RATHER THAN CHARACTERISED
+
+Across the three fresh-context reports this arc commissioned — 57 findings in
+all — **37 are one defect**: a document asserting something about the content of
+a tracked file that a read-only command over the tree would have refuted.
+
+| report | in the class | findings |
+|---|---|---|
+| sweep registration | 16 | 23 |
+| throughput study | 12 | 22 |
+| cache-key red team | 9 | 12 |
+| **total** | **37** | **57 — 65%** |
+
+The prior arc counted **five** of the same thing and wrote the remedy down twice:
+D-568's standing law and D-574's check — *print the command WITH ITS SCOPE beside
+the claim, and compare its hit count to the prose's before believing either.*
+**Four of that arc's five happened after the law was written.** This arc adds at
+least nine more, three of them inside the very document that restated the law.
+
+### WHY THE RULE CANNOT WORK, WHICH IS THE PART THAT WAS MISSING
+
+D-574's check is addressed to the author at the moment of writing and asks them
+to doubt a claim. **The author does not experience these as claims.** *"gate 6"*,
+*"four seats"*, *"the dispatch says 3,500"* are reached for as LABELS for things
+already believed; they are by-products of saying something else. A rule that says
+*check before believing* cannot fire in someone who has not noticed they are
+believing anything. Three properties make the class invisible: **the claim is
+subordinate** to the sentence's real subject; **it was often true once** and
+rotted when the tree moved, which no writing-time rule can reach; and
+**restatement multiplies it**, with the un-re-derived copy being the wrong one.
+
+### THE FIX: A CI GATE THAT EXECUTES THE DOCUMENT'S OWN COMMANDS
+
+`docs/experiments/derivation_gate_design.md`. A document may state a tree-claim as
+a **derivation block** — a command and its expected output, fenced ` ```derive ` —
+and a gate runs every one of them from the repository root and diffs. That makes
+the claim the subject of its own sentence, re-evaluates it on every CI run rather
+than once at writing, and makes a restatement cost a block. **The scope stops
+being prose because the scope is the command's arguments.**
+
+**THE RESTRAINTS ARE WHAT MAKE IT LANDABLE**, and both were derived rather than
+assumed. It does **not** police free prose: this repository's documents are
+largely RECORDS, and
+
+```
+$ git grep -ohE "gate [0-9]+/19|gate [0-9]+ of 19|19 gates|all 19" -- docs tools | wc -l
+88
+```
+
+such strings exist, almost all of them true statements about runs that happened —
+a gate that went red on those would be demanding that records be falsified. And
+it does **not** check claims about RUNS: those live in gitignored artifacts, so
+**the boundary is exact — blocks for the TREE, receipts for RUNS**, receipts bound
+by sha256 in a committed manifest (D-469).
+
+### THE DESIGN CAUGHT ITS OWN AUTHOR BEFORE ANY REVIEWER DID
+
+That `88` was **84** in the design's first draft. The 84 came from a shell command
+run four paragraphs earlier under the pathspec `'docs/**/*.md' 'tools/*'`; the
+block's own pathspec is `-- docs tools`, which reaches `docs/audit/`,
+`docs/research/` and `tools/` subdirectories the first one missed. **The author of
+a gate against scope drift drifted the scope between two runs of the same claim,
+minutes apart, and did not notice until the block was executed.** It is left in
+the design as the best evidence it has: this is not a discipline problem.
+
+### AND ADDING THE GATE EXPOSES THE SAME DEFECT IN `tools/ci.sh` ITSELF
+
+The script asserts its own gate total **nineteen separate times** — D-423's *"a
+claim the document makes twice is a defect waiting"*, at nineteen. The package
+derives it instead: `gate_step` takes only a name, counts itself from the script,
+and numbers by order. The printed line shape `=== gate N/M: <name>` is unchanged;
+what changes is that `M` stops being a literal. **CLAUDE.md's own sentence — *"it
+prints `gate N/19: <name>`"* — becomes false on landing**, and correcting it is
+flagged to the operator rather than done silently, because CLAUDE.md is the
+operator's file.
+
+### WHAT THIS DOES NOT FIX, SAID PLAINLY
+
+The cache-key red team's FATAL is **not** in this class: *"MEASURED"* applied to
+the wrong population is a true measurement with a false quantifier, and no command
+refutes it. The mitigation is adjacent — a number that comes out of a block
+carries its population in the command — and it is a mitigation, not a fix.
+
+### STATE
+
+| step | state |
+|---|---|
+| design | written, `docs/experiments/derivation_gate_design.md` revision 1 |
+| REVIEW-design, fresh context, attacking the premise | **DISPATCHED** |
+| IMPL, REVIEW-impl, **RED-TEAM on the execution path**, coverage test, mutation receipt | owed |
+
+**THE RED-TEAM IS THE ONE THAT MATTERS**: this would put a markdown block on CI's
+execution path, which is the most dangerous thing this repository has ever done in
+a gate. Its brief is in the design's §6 and a command that escapes the allowlist
+is a FATAL.
