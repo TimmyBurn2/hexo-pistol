@@ -1,4 +1,17 @@
-# OPTION MATRIX — the label cache's key. Revision 2.
+# OPTION MATRIX — the label cache's key. Revision 3.
+
+**REVISION 3, AND IT REPLACES AN A-PRIORI ARGUMENT WITH A MEASUREMENT THAT
+REFUTES IT.** Revision 2's §2.1 argued that a book deduped by `canonical_form`
+cannot hold two openings that transpose or mirror at `k <= opening_turns`.
+**THE ARGUMENT IS FALSE AT `k = 2`** — deduping the WHOLE opening says nothing
+about its PREFIXES — and it was caught by
+`wp21_throughput_prereg_rev3_REVIEW.md`'s BLOCKING 2 with a two-second
+computation the matrix never ran. §2.1 is replaced by the measurement, taken with
+a committed instrument (`tools/opening_prefix_fold.py`,
+receipt `artifacts/arc3_opening_prefix_fold.txt`). **THE SELECTION DOES NOT MOVE,
+and the measurement strengthens it rather than weakening it**: the fold's entire
+measured yield sits at the one depth where a symmetry key would answer with a
+mirrored position's `bestmove`.
 
 **REVISION 2, AFTER A FRESH-CONTEXT DECISION-RED-TEAM.** Round 1 returned **the
 OPTION survives, the MATRIX does not** — 1 FATAL, 6 MAJOR, 5 minor
@@ -102,19 +115,58 @@ across all thirteen openings because game rule 3 forces turn 1 to the origin.
 **Neither is a transposition**, so nothing in the pilot's duplication is evidence
 about folding either way.
 
-### 2.1 THE PART OF THE RANGE THAT HAS AN A-PRIORI ANSWER, AND THE PART THAT DOES NOT
+### 2.1 WHAT THE OPENINGS ACTUALLY FOLD, MEASURED — AND REVISION 2's A-PRIORI ARGUMENT WAS FALSE
 
-**`k <= opening_turns` IS CLOSED BY CONSTRUCTION AND NEEDED NO MEASUREMENT.** The
-book's generator dedupes openings by `canonical_form`
-(`crates/pistol-cli/src/random_openings/mod.rs:174`) and the pilot's report header
-reads `opening_turns 3`. Distinct canonical forms imply distinct stone sets, so
-**no two openings can transpose or mirror onto each other at `k <= 3`** — a
-result, not an observation. It also says that 156 of the pilot's 1 576
-opportunities carried no evidence at all.
+Revision 2 claimed: *"no two openings can transpose or mirror onto each other at
+`k <= 3` — a result, not an observation."* **It is not a result.** The book's
+generator dedupes by `canonical_form` over the WHOLE opening; that constrains the
+openings and says nothing about their prefixes, and two openings distinct at five
+stones can share a mirrored three-stone prefix. `tools/opening_prefix_fold.py`
+over the sweep's own window:
 
-**BEYOND `k = opening_turns` THIS DOCUMENT HAS NEITHER A MEASUREMENT THAT SCALES
-NOR AN ARGUMENT, AND SAYS SO.** That blank is what §4's flip clause is now built
-to fill.
+| `k` | exact-key classes | stone-set classes | symmetry classes |
+|---|---|---|---|
+| 1 | 1 | 1 | 1 |
+| 2 | **2 327** | **2 327** | **368** |
+| 3 | 3 487 | 3 487 | 3 487 |
+
+and over tranche one's 218 openings, which is the scope the cache actually has —
+the memo is built inside `capture::run` and dropped with it:
+
+| `k` | exact-key classes | stone-set classes | symmetry classes |
+|---|---|---|---|
+| 1 | 1 | 1 | 1 |
+| 2 | **213** | **213** | **171** |
+| 3 | 218 | 218 | 218 |
+
+**THREE READINGS, and each changes something revision 2 said.**
+
+- **`k = 1` folds completely under every key** — the one forced origin stone.
+- **`k = 2` IS WHERE THE ARGUMENT FAILED.** The symmetry fold merges 213 classes
+  into 171. The STONE-SET key merges nothing extra there (213 = 213), because a
+  pair token is canonically spelled, so the difference is symmetry alone.
+- **`k = 3` folds nothing under any key**, which is `canonical_form`'s dedupe —
+  the only depth at which revision 2's claim held, stated now as the measurement
+  it always was.
+
+**AND WHAT IT IS WORTH IS SMALL IN THE UNIT THAT DECIDES ANYTHING.** A symmetry
+key would save **213 - 171 = 42 searches per tranche**: **0.72% of the tranche's
+ESTIMATED 5 819 misses**, 0.34% of its records. Revision 2's *"the fold merges
+nothing"* was wrong; *"the fold merges a great deal and it is worth under one
+percent"* is right, and only the second is a fact about the run.
+
+**AND THE 42 ARE EXACTLY THE RECORDS WHERE THE FOLD WOULD BE WRONG.** Each is a
+prefix whose symmetry partner is a DIFFERENT position; answering it from the
+partner returns a `bestmove` in the wrong frame, and node counts that D-137 says
+are not symmetry-invariant. **The fold's entire measured yield sits in the region
+where it is most wrong**, which is a better argument for K1 than the one revision 2
+made up.
+
+### 2.2 BEYOND THE OPENING, NOTHING IS MEASURED AND THE RUN MEASURES IT
+
+The table above covers `k <= opening_turns`. Deeper prefixes are the sweep's own
+business and §4's flip clause is the instrument: the cache counts, per tranche,
+how many of its MISSES share a `key_pos` or a `key_full` with an earlier miss.
 
 ---
 

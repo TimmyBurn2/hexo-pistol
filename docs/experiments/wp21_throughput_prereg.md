@@ -159,10 +159,20 @@ position left in the table.
 
 **AND THE GATE DOES NOT RUN THIS SWEEP'S SEAT OR THIS SWEEP'S BUDGET, WHICH IS
 STATED HERE RATHER THAN LEFT FOR A READER TO FIND.** Its `SEATS` array is
-radius / staged / staged-with-heuristics / staged-with-solver and its budgets are
-`depth_turns 4` and `nodes 200000` — not `configs/instrument_v0.toml` at
-`nodes 400000`. So *"already gated"* is true of the PROPERTY and not of the
-CONFIGURATION the sweep runs. **What covers the configuration is §4.4's own
+**five** seats, not the four an earlier revision transcribed from the script's own
+stale header comment — `radius`, `staged`, `staged-heuristics`, `staged-solver`
+and `staged-safety-net-cap` (`tools/determinism.sh:67-80`, read off the `SEATS`
+array rather than off the prose above it) — and its budgets are `depth_turns 4`
+and `nodes 200000`, not `configs/instrument_v0.toml` at `nodes 400000`. So
+*"already gated"* is true of the PROPERTY and not of the CONFIGURATION the sweep
+runs.
+
+**AND THE SHARPER FACT IS THAT NO LIMB OF THAT GATE EVER ASKS THE SAME POSITION
+TWICE INSIDE ONE PROCESS**: `A vs B` runs one script in two processes; `C vs D`
+runs one-process-per-position against all-positions-in-one-session, and the
+session limb asks each position once. **A cache hit is exactly "the same position,
+asked again, in the same process", and that is the one shape the determinism gate
+never takes** (D-581). **What covers the configuration is §4.4's own
 byte-identity run**, taken at the sweep's seat and the sweep's budget, and that
 is the reason §4.4 may not be weakened. No claim about what the search reads from
 the state is needed, and none is made.
@@ -189,10 +199,17 @@ symmetry fold are **347, 347, 347**
 three. **THAT DOES NOT TRANSFER, AND `matrix_label_cache_key.md` §2 says by how
 much**: the pilot offers 1 576 cross-game transposition opportunities and the
 sweep ~161 million, a factor of **102 346**, and a rule-of-three bound on the
-pilot's zero admits **up to ~307 000 merges** at the sweep's scale. What IS
-a-priori: the book dedupes openings by `canonical_form`
-(`crates/pistol-cli/src/random_openings/mod.rs:174`), so no two openings can
-transpose or mirror onto each other at `k <= opening_turns`.
+pilot's zero admits **up to ~307 000 merges** at the sweep's scale. **AND THE A-PRIORI ARGUMENT AN EARLIER REVISION OFFERED IN ITS PLACE IS FALSE**:
+it said the book's `canonical_form` dedupe forbids two openings transposing or
+mirroring at `k <= opening_turns`. Deduping the WHOLE opening constrains nothing
+about its PREFIXES. Measured over the sweep's own window with
+`tools/opening_prefix_fold.py` (receipt
+`artifacts/arc3_opening_prefix_fold.txt`), at `k = 2` the symmetry fold takes
+tranche one's **213** exact-key classes down to **171**, and the dedupe's zero
+appears only at `k = 3`. **WHAT THAT IS WORTH IS 42 SEARCHES A TRANCHE — 0.72% of
+its ESTIMATED 5 819 misses** — and every one of the 42 is a prefix whose symmetry
+partner is a different position, so it is exactly where a symmetry key would
+return a `bestmove` in the wrong frame.
 
 **THE SELECTION DOES NOT REST ON THAT ROW.** Where a corpus does hold a
 transposition this cache MISSES it — **a lost saving, never a wrong answer**,
