@@ -1,6 +1,7 @@
 use std::fmt::Write as _;
 
 use pistol_core::{GameState, Outcome, Turn};
+use pistol_engine::CensusRequest;
 
 use crate::channel::{Channel, Received};
 use crate::error::ArenaError;
@@ -109,10 +110,25 @@ pub fn capture_sha256(experiment_sha256: &str, go_line: &str, format_version: u3
 }
 
 /// The `go` line a label ask is made at.
-pub fn label_go_line(nodes: u64) -> String {
-    crate::config::BudgetSection::Nodes { value: nodes }
+///
+/// THE CENSUS TOKEN IS APPENDED HERE and not in
+/// [`crate::config::BudgetSection::go_line`], which spells a budget for every
+/// pass this crate has: the token is a property of the CAPTURE ask, and a
+/// budget section that carried it would put it on pass 1's `go` lines too.
+///
+/// A census-on capture therefore has a different `capture_sha256` from the
+/// otherwise identical census-off one, because the digest covers this line
+/// ([`capture_sha256`]). That is correct — it is a different instrument — and
+/// it is said out loud because a tranche registered against one digest is not
+/// a tranche run under the other.
+pub fn label_go_line(nodes: u64, census: CensusRequest) -> String {
+    let budget = crate::config::BudgetSection::Nodes { value: nodes }
         .go_line()
-        .unwrap_or_else(|| unreachable!("a nodes budget always spells a go line"))
+        .unwrap_or_else(|| unreachable!("a nodes budget always spells a go line"));
+    match census {
+        CensusRequest::Off => budget,
+        CensusRequest::On => format!("{budget} {}", pistol_cli::budget_token::CENSUS_TOKEN),
+    }
 }
 
 /// Refuse a report whose two seats do not attest the same engine.
@@ -150,6 +166,11 @@ pub fn one_engine(transcript: &Transcript) -> Result<(), ArenaError> {
 pub enum Step {
     /// The closing report: keep it, keep reading.
     Totals,
+    /// A trigger-census row, carried whole. KEPT, and that is the whole point:
+    /// it begins `info `, so the catch-all below would throw it away and a
+    /// census-on capture would write zero census bytes at exit 0
+    /// (docs/experiments/wp20b_design.md §3.1).
+    Census(String),
     /// A per-depth report: not the answer and not an error.
     Ignore,
     /// Nothing this pass can proceed from, with the reason.
@@ -169,6 +190,10 @@ pub fn classify(line: &str) -> Step {
     if exchange::totals_of(line).is_some() {
         return Step::Totals;
     }
+    // BEFORE the `info` catch-all, which a census row would otherwise match.
+    if line.starts_with(&census_prefix()) {
+        return Step::Census(line.to_string());
+    }
     if line.starts_with(&format!("{} ", pistol_cli::report::INFO_PREFIX)) {
         return Step::Ignore;
     }
@@ -177,7 +202,32 @@ pub fn classify(line: &str) -> Step {
     ))
 }
 
+/// Where a capture's census rows go, and whether it asked for any.
+///
+/// The two travel together because they are one decision: a row arriving when
+/// `request` is `Off` is a protocol deviation rather than something to file,
+/// and a sink that carried only the vector could not tell the difference.
+pub struct CensusSink<'a> {
+    /// What the `go` line asked for.
+    pub request: CensusRequest,
+    /// The rows, in the order the engine wrote them.
+    pub rows: &'a mut Vec<String>,
+}
+
+/// The prefix every census row on the wire carries.
+fn census_prefix() -> String {
+    format!(
+        "{} {} ",
+        pistol_cli::report::INFO_PREFIX,
+        pistol_cli::report::CENSUS_MARKER
+    )
+}
+
 /// Ask one position and return the engine's own two lines.
+///
+/// `census` is a SINK rather than a changed return type, so this function's
+/// `Result<(String, String), _>` contract and every existing caller stay as
+/// they are. Rows are appended in the order the engine wrote them.
 fn ask(
     channel: &mut Channel,
     position: &str,
@@ -185,6 +235,7 @@ fn ask(
     timeout_ms: u64,
     game: usize,
     k: usize,
+    census: &mut CensusSink,
 ) -> Result<(String, String), ArenaError> {
     let where_ = || format!("game {game}, turn {k}");
     if let Some(stray) = channel.unsolicited() {
@@ -226,6 +277,39 @@ fn ask(
                         totals = Some(line);
                         continue;
                     }
+                    Step::Census(row) => {
+                        // OFF THE TOKEN THE BLOCK DOES NOT EXIST — the design's
+                        // §4 says so in those words, and it is what makes the
+                        // gate-off byte-identity obligation satisfiable. A
+                        // census row on an ask that did not request one is a
+                        // protocol deviation by the engine, refused by name
+                        // rather than collected into a vector this pass then
+                        // drops (CLAUDE.md rule 3).
+                        if census.request == CensusRequest::Off {
+                            return Err(refuse(format!(
+                                "{}: the engine wrote a census row for a `{}` that did not ask \
+                                 for one: `{row}`",
+                                where_(),
+                                pistol_cli::budget_token::CENSUS_TOKEN
+                            )));
+                        }
+                        // THE SAME ARITY GUARD EVERY OTHER CAPTURED FIELD PASSES.
+                        // A census row's own grammar is whitespace-delimited, so a
+                        // TAB splits like a space rather than shifting a column —
+                        // but this row reaches an artifact a committed manifest
+                        // indexes, and it came from bytes an engine chose. §3
+                        // requires the two seats to attest ONE engine, not to be
+                        // `pistol`, so it is checked rather than assumed.
+                        if row.contains('\t') {
+                            return Err(refuse(format!(
+                                "{}: a census row carries a TAB, which this artifact's arity \
+                                 cannot survive: `{row}`",
+                                where_()
+                            )));
+                        }
+                        census.rows.push(row);
+                        continue;
+                    }
                     Step::Ignore => continue,
                     Step::Refuse(why) => return Err(refuse(format!("{}: {why}", where_()))),
                 }
@@ -239,10 +323,14 @@ fn ask(
 /// # Errors
 /// Any failure refuses the WHOLE run: a capture that silently omits positions is
 /// a corpus whose gaps are invisible to its consumer.
-pub fn run(transcript: &Transcript, label_nodes: u64) -> Result<Vec<CaptureRecord>, ArenaError> {
+pub fn run(
+    transcript: &Transcript,
+    label_nodes: u64,
+    census: &mut CensusSink,
+) -> Result<Vec<CaptureRecord>, ArenaError> {
     one_engine(transcript)?;
     crate::replay::verify_engines(transcript)?;
-    let go = label_go_line(label_nodes);
+    let go = label_go_line(label_nodes, census.request);
     let seats = [Seat {
         section: &transcript.engines[0],
         identity: &transcript.identities[0],
@@ -259,6 +347,7 @@ pub fn run(transcript: &Transcript, label_nodes: u64) -> Result<Vec<CaptureRecor
                     transcript.hang_timeout_ms,
                     game.index,
                     k,
+                    census,
                 )?;
                 let record = CaptureRecord {
                     game: game.index,

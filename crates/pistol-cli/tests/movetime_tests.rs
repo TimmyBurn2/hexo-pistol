@@ -6,7 +6,9 @@ use std::time::Instant;
 use common::{PLAY, committed, engine, repo};
 use pistol_cli::sha256::sha256_hex;
 use pistol_core::Turn;
-use pistol_engine::{Budget, Engine, Pistol, PositionSpec, SearchInfo, SearchOutcome};
+use pistol_engine::{
+    Budget, CensusRequest, Engine, Pistol, PositionSpec, SearchInfo, SearchOutcome,
+};
 
 /// The reproducer fixture, and the pin that catches an edited copy (D-37).
 const SPREAD_FIXTURE: &str = "crates/pistol-cli/tests/fixtures/spread_v1.txt";
@@ -96,7 +98,7 @@ fn timed_search(
         .unwrap_or_else(|error| panic!("the fixture position was refused: {error}"));
     let started = Instant::now();
     let outcome = engine
-        .go_reporting(Budget::MovetimeMs(movetime), report)
+        .go_reporting(Budget::MovetimeMs(movetime), CensusRequest::Off, report)
         .unwrap_or_else(|error| {
             panic!(
                 "movetime {movetime} on {} stones was refused: {error}",

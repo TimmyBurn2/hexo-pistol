@@ -46,6 +46,7 @@
 
 pub mod capture;
 pub mod capture_file;
+pub mod census_file;
 pub mod channel;
 pub mod conclusion;
 pub mod config;

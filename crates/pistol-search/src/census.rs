@@ -1,3 +1,41 @@
+/// The two identity columns of one firing, both derived from ONE state by ONE
+/// function.
+///
+/// **IT IS A TYPE RATHER THAN TWO EXPRESSIONS AT EACH FIRING SITE, AND THE
+/// REASON IS A MEASUREMENT.** The columns differ only in WHICH derivation lands
+/// in WHICH field, and a review demonstrated that exchanging them at a call site
+/// — the identity column carrying `GameState::key`, the option the design's F2
+/// rules out — left **seventy tests green**, including the one written to catch
+/// it. With the derivation here there is no call-site assignment left to
+/// exchange: a site hands over a state and takes back both columns, and any
+/// exchange has to happen inside [`CensusKeys::at`], where a test pins each
+/// field against an independently computed referent.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CensusKeys {
+    /// The position up to transposition AND symmetry — the identity D-537's
+    /// *disjoint positions* denominator is counted over.
+    pub key: pistol_core::Key128,
+    /// The same position under `GameState::key`: transpositions folded,
+    /// symmetries NOT. Carried for the comparison
+    /// `docs/experiments/wp20b_design.md` §9 registers, never for counting.
+    pub key_pos: pistol_core::Key128,
+}
+
+impl CensusKeys {
+    /// Both columns of the position `state` stands on.
+    ///
+    /// The one place either is computed. A caller cannot get one without the
+    /// other and cannot choose which is which.
+    pub fn at(state: &pistol_core::GameState) -> CensusKeys {
+        let stones: Vec<(pistol_core::Coord, pistol_core::Player)> =
+            state.board().stones().collect();
+        CensusKeys {
+            key: pistol_core::canonical_key(&stones),
+            key_pos: state.key(),
+        }
+    }
+}
+
 /// One trigger firing, described by the O(1) facts a per-node detector could
 /// read at it, plus what the solver then answered.
 ///
@@ -12,6 +50,31 @@
 /// one back, so recording them cannot move a move (CLAUDE.md rule 4).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TriggerObservation {
+    /// The position this firing happened at, as the identity that makes two
+    /// firings on ONE position count as one: transpositions and symmetries
+    /// both folded (`pistol_core::canonical_key`). It is what
+    /// docs/decisions.md D-537's *disjoint positions* denominator is counted
+    /// over, and the reason the census carries a key at all.
+    pub key: pistol_core::Key128,
+    /// The same firing's position under `GameState::key` — transpositions
+    /// folded, symmetries NOT.
+    ///
+    /// Carried beside [`TriggerObservation::key`] because the symmetry fold's
+    /// only measurement in this project is ZERO: the pilot corpus's three keys
+    /// agreed at 347 distinct positions over 742 records (docs/decisions.md
+    /// D-560), so at the ROOT population symmetry merged nothing. The census
+    /// population is IN-TREE, where a search generates symmetric
+    /// transpositions by construction, and whether the fold's yield there is
+    /// materially above zero is settled by counting distinct values of these
+    /// two columns over one run rather than argued
+    /// (docs/experiments/wp20b_design.md §2's strongest surviving attack, §9).
+    ///
+    /// Free at the firing: the state carries it incrementally, and reading it
+    /// is one XOR. It is NOT on the wire — §4's field order is pinned by a
+    /// report test — and reaches a reader through
+    /// `crates/pistol-search/examples/trigger_census.rs`, the instrument every
+    /// census measurement in this arc was taken with.
+    pub key_pos: pistol_core::Key128,
     /// What the position looked like at the decision.
     pub columns: TriggerColumns,
     /// Visits the attacker direction spent, and whether it proved.

@@ -39,6 +39,23 @@ registered from a measurement rather than chosen — `docs/experiments/book_v2_r
 | `openings_skip` | `openings_take` | range | consumed by | pre-registration |
 |---|---|---|---|---|
 | 0 | 13 | `0..12` | the WP-2.0 label-pipeline PILOT, `configs/arena_wp20_label_pilot.toml` | `docs/experiments/wp20_pilot_prereg.md` revision 4 |
+| 13 | 4487 | `13..4499` | the WP-2.1 PRODUCTION LABEL SWEEP, sixteen tranches from `tools/wp21_tranche_config.py` | `docs/experiments/wp21_prereg.md` revision 1 |
+
+**THE SECOND ROW TAKES THE REST OF THE BOOK, AND ITS CONFIG IS NOT ONE FILE.**
+The sweep is sixteen tranches of one shape, and this table's rule — *"adds its
+row here in the same commit that adds its arena config"* — is satisfied by the
+GENERATOR rather than by sixteen near-identical committed documents: every value
+they carry is fixed in the pre-registration and written by
+`tools/wp21_tranche_config.py`, which has a test driving the shipped script and
+whose own partition claim — contiguous, disjoint, exhaustive over `13..4499` —
+is what that test asserts. **The range is consumed by the DOCUMENT, not by the
+tranche**: a tranche that voids does not give its openings back, because a
+second run over them would be a second reading of a sample this registration
+chose. **AND THE BOOK IS NOW FULLY CLAIMED**: `0..12` and `13..4499` exhaust
+4 500 openings, so the two standing claimants below — the Stage-3 detector's
+SPRT and the WP-1.5d resolution run — have no unconsumed range left in v2 and
+need a successor book or a ruling. That is stated here because it is the kind of
+fact a ledger exists to make impossible to discover late.
 
 **THE FIRST ROW, and what it does and does not spend.** Thirteen is what the
 pre-registration's RULE-1 returns from the per-unit costs its dry run measured

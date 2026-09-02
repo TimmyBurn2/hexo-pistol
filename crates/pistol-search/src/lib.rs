@@ -49,7 +49,7 @@ pub(crate) mod pvs;
 pub(crate) mod quiescence;
 
 pub use candidates::candidate_cells;
-pub use census::{TriggerAnswer, TriggerObservation};
+pub use census::{CensusKeys, CoverClass, TriggerAnswer, TriggerColumns, TriggerObservation};
 pub use error::SearchError;
 pub use fallback::{FallbackAnswer, fallback_turn};
 pub use info::{Provenance, SearchInfo, SearchOutcome, SolverCallCounters, StageCounters};

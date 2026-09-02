@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use pistol_engine::{Budget, EngineError, EngineMode};
+use pistol_engine::{Budget, CensusRequest, EngineError, EngineMode};
 
 use crate::count::plain_count;
 
@@ -12,6 +12,8 @@ pub const DEPTH_TURNS_BUDGET: &str = "depth_turns";
 pub const NODES_BUDGET: &str = "nodes";
 /// A wall-clock duration in milliseconds.
 pub const MOVETIME_BUDGET: &str = "movetime";
+/// The optional third word of a `go` line: the trigger census on the answer.
+pub const CENSUS_TOKEN: &str = "census";
 
 /// One of each budget kind, to ask the engine's mode which ones it honours.
 ///
@@ -22,14 +24,23 @@ const BUDGET_KINDS: [Budget; 3] = [
     Budget::MovetimeMs(1),
 ];
 
-/// The budget a `go` line asks for.
+/// The budget a `go` line asks for, and whether it asks for the census.
 ///
 /// A `go` with no budget at all is [`EngineError::BudgetMissing`] and not a
 /// protocol complaint: a budget is always explicit, and that variant exists to
 /// say exactly this (CLAUDE.md rule 1, docs/decisions.md D-4). A budget of zero
 /// is likewise the engine's named refusal rather than a parse failure — the line
 /// was understood, the amount was not acceptable.
-pub(crate) fn parse_budget(line: &str, rest: &str) -> Result<Budget, EngineError> {
+///
+/// A THIRD word is [`CENSUS_TOKEN`] or nothing. Any other third word keeps the
+/// refusal this grammar has always given it, quoting the THIRD word:
+/// ``go` takes one budget, and `<third>` follows it`.
+///
+/// A FOURTH word is refused naming the FOURTH word —
+/// ``go` takes one budget and at most the `census` token, and `<fourth>`
+/// follows them` — because a refusal that named the token instead would send a
+/// driver to fix a word that is not the one that broke the line.
+pub(crate) fn parse_budget(line: &str, rest: &str) -> Result<(Budget, CensusRequest), EngineError> {
     let words: Vec<&str> = rest.split_whitespace().collect();
     match words.as_slice() {
         [] => Err(EngineError::BudgetMissing),
@@ -41,12 +52,23 @@ pub(crate) fn parse_budget(line: &str, rest: &str) -> Result<Budget, EngineError
                 quoted(kind)
             ),
         )),
-        [kind, amount] => budget_of(line, kind, amount),
-        [_, _, extra, ..] => Err(protocol(
+        [kind, amount] => Ok((budget_of(line, kind, amount)?, CensusRequest::Off)),
+        [kind, amount, third] if *third == CENSUS_TOKEN => {
+            Ok((budget_of(line, kind, amount)?, CensusRequest::On))
+        }
+        [_, _, third] => Err(protocol(
             line,
             format!(
                 "`{GO}` takes one budget, and `{}` follows it",
-                quoted(extra)
+                quoted(third)
+            ),
+        )),
+        [_, _, _, fourth, ..] => Err(protocol(
+            line,
+            format!(
+                "`{GO}` takes one budget and at most the `{CENSUS_TOKEN}` token, and `{}` \
+                 follows them",
+                quoted(fourth)
             ),
         )),
     }

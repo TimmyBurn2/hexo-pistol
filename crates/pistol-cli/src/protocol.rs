@@ -3,7 +3,9 @@ use std::str::FromStr;
 use pistol_engine::{Engine, EngineError, ParsePositionError, PositionSpec};
 
 use crate::budget_token::{budget_tokens, parse_budget};
-use crate::report::{HANDSHAKE_OK, bestmove_line, error_line, id_line, info_line, totals_line};
+use crate::report::{
+    HANDSHAKE_OK, bestmove_line, census_line, error_line, id_line, info_line, totals_line,
+};
 
 /// The identity handshake.
 pub const HANDSHAKE: &str = "pistol";
@@ -156,7 +158,7 @@ impl<'e> Session<'e> {
         self.engine.set_position(&spec)
     }
 
-    /// `go <budget> <amount>`.
+    /// `go <budget> <amount> [census]`.
     ///
     /// The per-depth reports are written as they arrive, and the last `info`
     /// line before `bestmove` is the outcome's own: the last completed depth's
@@ -165,11 +167,36 @@ impl<'e> Session<'e> {
     /// is a reporting requirement (CLAUDE.md rule 6, docs/decisions.md D-80), so
     /// a driver that accounts for compute reads that line and not the one before
     /// it.
+    ///
+    /// **THE OPTIONAL THIRD WORD IS THE CENSUS TOKEN**
+    /// ([`crate::budget_token::CENSUS_TOKEN`]). With it, one
+    /// [`crate::report::census_line`] is written per trigger firing, as ONE
+    /// BLOCK after the last per-depth report and before the totals line — never
+    /// a per-depth stream, because the rows accumulate over the whole search
+    /// and are drained once, so a per-depth emission would print every earlier
+    /// firing again at every later depth. Without the token the block does not
+    /// exist: not an empty line, not a zero-row header, which is what makes the
+    /// gate-off byte-identity obligation satisfiable
+    /// (`docs/experiments/wp20b_design.md` §4).
+    ///
+    /// **A census asked of an engine that has none to give is REFUSED by name**
+    /// rather than answered with no rows, because an empty row set from such an
+    /// engine reads exactly like an empty row set from a search whose trigger
+    /// never fired (CLAUDE.md rule 3).
     fn go(&mut self, line: &str, rest: &str, out: &mut dyn FnMut(&str)) -> Result<(), EngineError> {
-        let budget = parse_budget(line, rest)?;
+        let (budget, census) = parse_budget(line, rest)?;
         let outcome = self
             .engine
-            .go_reporting(budget, &mut |info| out(&info_line(info)))?;
+            .go_reporting(budget, census, &mut |info| out(&info_line(info)))?;
+        // ONE BLOCK, after the last depth's report and before the totals line.
+        // The rows accumulate over the WHOLE search and are drained once, so a
+        // per-depth emission would print every earlier firing again at every
+        // later depth (docs/experiments/wp20b_design.md §4). Off the token
+        // there is no block and not an empty one, which is what makes the
+        // gate-off byte-identity obligation satisfiable.
+        for row in &outcome.census {
+            out(&census_line(row));
+        }
         out(&totals_line(&outcome.info));
         out(&bestmove_line(outcome.best));
         Ok(())

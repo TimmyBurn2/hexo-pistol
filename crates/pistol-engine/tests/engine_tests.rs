@@ -2,7 +2,9 @@ mod common;
 
 use common::{VALID, VALID_STAGED, buildable, replacing};
 use pistol_core::{Coord, Phase, Player, Turn};
-use pistol_engine::{Budget, Engine, EngineError, EngineMode, Pistol, PositionSpec, ScoreKind};
+use pistol_engine::{
+    Budget, CensusRequest, Engine, EngineError, EngineMode, Pistol, PositionSpec, ScoreKind,
+};
 
 /// An engine from a document.
 fn engine(document: &str) -> Pistol {
@@ -116,7 +118,7 @@ fn go_reporting_reports_once_per_completed_depth() {
 
     let mut depths = Vec::new();
     let outcome = engine
-        .go_reporting(Budget::DepthTurns(3), &mut |info| {
+        .go_reporting(Budget::DepthTurns(3), CensusRequest::Off, &mut |info| {
             depths.push((info.depth_turns, info.nodes));
         })
         .expect("an ongoing position");

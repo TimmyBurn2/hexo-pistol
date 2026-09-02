@@ -60,6 +60,16 @@ pub enum EngineError {
     /// A budget kind was requested that instrument mode cannot honour without
     /// breaking reproducibility.
     InstrumentBudgetUnsupported,
+    /// A trigger census was asked of an engine that has none to give.
+    ///
+    /// Refused rather than answered with no rows: an empty row set from an
+    /// engine that cannot produce one reads exactly like an empty row set from
+    /// a search whose trigger never fired (CLAUDE.md rule 3).
+    CensusUnsupported {
+        /// Which engine refused, so a driver holding more than one can say
+        /// which of them it was.
+        engine: String,
+    },
     /// An invariant this crate maintains was found violated. This is a bug in
     /// pistol, never operator error.
     InternalInvariant {
@@ -114,6 +124,7 @@ impl EngineError {
             EngineError::BudgetMissing | EngineError::InstrumentBudgetUnsupported => {
                 self.to_string()
             }
+            EngineError::CensusUnsupported { .. } => self.to_string(),
             EngineError::InternalInvariant { what } => what.clone(),
         }
     }
@@ -134,6 +145,7 @@ impl EngineError {
             EngineError::Protocol { .. } => "Protocol",
             EngineError::BudgetMissing => "BudgetMissing",
             EngineError::InstrumentBudgetUnsupported => "InstrumentBudgetUnsupported",
+            EngineError::CensusUnsupported { .. } => "CensusUnsupported",
             EngineError::InternalInvariant { .. } => "InternalInvariant",
         }
     }
@@ -157,6 +169,11 @@ impl fmt::Display for EngineError {
             EngineError::InstrumentBudgetUnsupported => f.write_str(
                 "instrument mode takes only depth_turns or nodes budgets: a wall-clock \
                  budget cannot be reproduced",
+            ),
+            EngineError::CensusUnsupported { engine } => write!(
+                f,
+                "`{engine}` cannot produce a trigger census, and answering with no rows would \
+                 read as a search whose trigger never fired"
             ),
             EngineError::InternalInvariant { what } => {
                 write!(f, "internal invariant violated: {what}")

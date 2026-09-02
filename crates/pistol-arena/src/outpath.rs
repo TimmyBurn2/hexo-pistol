@@ -1,5 +1,5 @@
 use std::fs::{File, OpenOptions};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::error::ArenaError;
 
@@ -42,4 +42,35 @@ pub fn claim(path: &Path) -> Result<File, ArenaError> {
 pub fn abandon(path: &Path) -> Result<(), ArenaError> {
     std::fs::remove_file(path)
         .map_err(|io| ArenaError::io(format!("removing the claimed {}", path.display()), io))
+}
+
+/// The census file that rides beside a capture: the capture's own name with
+/// `.census` before its extension.
+///
+/// DERIVED rather than taken as a second flag, so the two files of one run
+/// cannot be given names that do not say they belong together. It lives here
+/// rather than in the binary because it is a question about an out path, and
+/// the claim that follows it is the function above.
+///
+/// # Errors
+/// If the out path names no file. A capture could not be written there either,
+/// and it is refused by name rather than defaulted to something (CLAUDE.md
+/// rule 3).
+pub fn census_path(out: &Path) -> Result<PathBuf, ArenaError> {
+    let stem = out.file_stem().ok_or_else(|| {
+        ArenaError::config(
+            "--out",
+            format!(
+                "{} names no file, so no census file can be named beside it",
+                out.display()
+            ),
+        )
+    })?;
+    let mut name = stem.to_os_string();
+    name.push(".census");
+    if let Some(extension) = out.extension() {
+        name.push(".");
+        name.push(extension);
+    }
+    Ok(out.with_file_name(name))
 }

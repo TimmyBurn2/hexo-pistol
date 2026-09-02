@@ -74,6 +74,13 @@ pub struct Run<'a> {
     /// path, and nothing ever reads a row back, so a search that collects them
     /// takes the same moves as one that does not (CLAUDE.md rule 4).
     pub census: Option<Vec<crate::census::TriggerObservation>>,
+    /// How many times this run entered the canonical-key fold.
+    ///
+    /// The STRUCTURAL witness that the fold is paid once per firing rather
+    /// than once per node or twice per firing: at its measured cost no timing
+    /// instrument in this tree separates those (docs/experiments/wp20b_design.md
+    /// §9). Moved back to the [`crate::search::Searcher`] beside `census`.
+    pub census_folds: u64,
     /// The solver on the search path and its wiring (design wp18b §2),
     /// bundled so the OFF gate is ONE `None` — no solver, no wiring, no
     /// dead values. Borrowed from the [`crate::search::Searcher`].
@@ -134,6 +141,7 @@ impl<'a> Run<'a> {
             solver_refusals: 0,
             solver_calls: crate::info::SolverCallCounters::default(),
             census: None,
+            census_folds: 0,
             solver: None,
             root_restrict: None,
             seldepth_turns: 0,
@@ -621,6 +629,11 @@ impl<'a> Run<'a> {
         // is what makes that a fact about the decision rather than about its
         // outcome.
         let observed = self.census.is_some().then(|| {
+            // The identity, folded HERE and nowhere above: outside this closure
+            // it would be paid by every node of every shipped search, which is
+            // the defect test 17's counter exists to exclude.
+            self.census_folds = self.census_folds.saturating_add(1);
+            let keys = crate::census::CensusKeys::at(state);
             let counts = |side: pistol_core::Player| {
                 (
                     threats.hot_windows(side).len() as u32,
@@ -649,16 +662,19 @@ impl<'a> Run<'a> {
                     crate::census::CoverClass::Minimal(covers.len())
                 }
             };
-            crate::census::TriggerColumns {
-                turns_from_root: from_root,
-                mover_hot: mover_hot_n,
-                opponent_hot: opponent_hot_n,
-                mover_win_in_one_ply: mover_w1,
-                opponent_win_in_one_ply: opponent_w1,
-                mover_live_three: mover_l3,
-                opponent_live_three: opponent_l3,
-                cover,
-            }
+            (
+                keys,
+                crate::census::TriggerColumns {
+                    turns_from_root: from_root,
+                    mover_hot: mover_hot_n,
+                    opponent_hot: opponent_hot_n,
+                    mover_win_in_one_ply: mover_w1,
+                    opponent_win_in_one_ply: opponent_w1,
+                    mover_live_three: mover_l3,
+                    opponent_live_three: opponent_l3,
+                    cover,
+                },
+            )
         });
         // One clone serves both calls (the solver never mutates its input).
         let state_view = state.clone();
@@ -736,14 +752,16 @@ impl<'a> Run<'a> {
     /// so a firing's row exists whether or not the firing proved.
     fn observe(
         &mut self,
-        observed: Option<crate::census::TriggerColumns>,
+        observed: Option<(crate::census::CensusKeys, crate::census::TriggerColumns)>,
         attacker: crate::census::TriggerAnswer,
         defender: Option<crate::census::TriggerAnswer>,
     ) {
-        let (Some(columns), Some(census)) = (observed, self.census.as_mut()) else {
+        let (Some((keys, columns)), Some(census)) = (observed, self.census.as_mut()) else {
             return;
         };
         census.push(crate::census::TriggerObservation {
+            key: keys.key,
+            key_pos: keys.key_pos,
             columns,
             attacker,
             defender,

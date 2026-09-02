@@ -1,8 +1,12 @@
 use pistol_cli::report::{
-    TOTALS_MARKER, bestmove_line, error_line, id_line, info_line, score_token, totals_line,
+    TOTALS_MARKER, bestmove_line, census_line, error_line, id_line, info_line, score_token,
+    totals_line,
 };
-use pistol_core::{Coord, Turn};
-use pistol_engine::{EngineError, MATE, SearchInfo, SolverCallCounters, StageCounters};
+use pistol_core::{Coord, Turn, canonical_key};
+use pistol_engine::{
+    CoverClass, EngineError, MATE, SearchInfo, SolverCallCounters, StageCounters, TriggerAnswer,
+    TriggerColumns, TriggerObservation,
+};
 
 /// A report with every field set to something recognisable.
 fn info() -> SearchInfo {
@@ -187,4 +191,97 @@ fn the_solver_call_counters_print_with_the_node_pair_and_only_then() {
         !without.contains("solver_firings"),
         "the counters ride with the node pair, never alone: {without}"
     );
+}
+
+/// One firing whose columns are all distinguishable, so a swap between two of
+/// them shows in the rendered line.
+fn firing(defender: Option<TriggerAnswer>) -> TriggerObservation {
+    TriggerObservation {
+        key: canonical_key(&[(Coord::new(1, -2), pistol_core::Player::P1)]),
+        key_pos: canonical_key(&[(Coord::new(2, -1), pistol_core::Player::P2)]),
+        columns: TriggerColumns {
+            turns_from_root: 3,
+            mover_hot: 4,
+            opponent_hot: 5,
+            mover_win_in_one_ply: 6,
+            opponent_win_in_one_ply: 7,
+            mover_live_three: 8,
+            opponent_live_three: 9,
+            cover: CoverClass::Minimal(11),
+        },
+        attacker: TriggerAnswer {
+            visits: 12,
+            proved: true,
+        },
+        defender,
+    }
+}
+
+#[test]
+fn a_census_row_spells_an_unasked_defender_rather_than_omitting_it() {
+    // The engine's own rows at every committed armed seat ASK the defender, so
+    // the absent case is unreachable from a seated test and is pinned here, on
+    // the pure function that renders it. A row that omitted the two fields
+    // would move every field after them — and there are none, which is exactly
+    // why omission would be invisible without this.
+    let line = census_line(&firing(None));
+    assert!(
+        line.ends_with(" defender_visits - defender_proved -"),
+        "an unasked defender is spelled, not omitted: {line}"
+    );
+    assert_eq!(
+        line.split_whitespace().count(),
+        2 + 14 * 2,
+        "the absent pair still occupies its two fields: {line}"
+    );
+}
+
+#[test]
+fn a_census_row_prints_its_fields_in_the_documented_order() {
+    let line = census_line(&firing(Some(TriggerAnswer {
+        visits: 13,
+        proved: false,
+    })));
+    assert_eq!(
+        line,
+        format!(
+            "info census key {} turns_from_root 3 mover_hot 4 opponent_hot 5 \
+             mover_win_in_one_ply 6 opponent_win_in_one_ply 7 mover_live_three 8 \
+             opponent_live_three 9 cover minimal cover_count 11 attacker_visits 12 \
+             attacker_proved 1 defender_visits 13 defender_proved 0",
+            canonical_key(&[(Coord::new(1, -2), pistol_core::Player::P1)])
+        )
+    );
+}
+
+#[test]
+fn a_census_row_spells_each_direction_as_its_own_field_and_never_a_sum() {
+    // docs/decisions.md D-512 and D-535. Every column here is distinct, so a
+    // line that summed a pair would be one field short and would carry a value
+    // neither side has.
+    let line = census_line(&firing(Some(TriggerAnswer {
+        visits: 13,
+        proved: false,
+    })));
+    for (name, value) in [
+        ("mover_hot", "4"),
+        ("opponent_hot", "5"),
+        ("mover_win_in_one_ply", "6"),
+        ("opponent_win_in_one_ply", "7"),
+        ("mover_live_three", "8"),
+        ("opponent_live_three", "9"),
+        ("attacker_visits", "12"),
+        ("defender_visits", "13"),
+    ] {
+        assert!(
+            line.contains(&format!("{name} {value}")),
+            "`{name} {value}` prints: {line}"
+        );
+    }
+    for sum in ["hot 9", "win_in_one_ply 13", "live_three 17", "visits 25"] {
+        assert!(
+            !line.contains(sum),
+            "a summed pair reached the line: {line}"
+        );
+    }
 }

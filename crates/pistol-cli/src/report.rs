@@ -1,5 +1,5 @@
 use pistol_core::Turn;
-use pistol_engine::{EngineError, ScoreKind, SearchInfo, classify};
+use pistol_engine::{EngineError, ScoreKind, SearchInfo, TriggerObservation, classify};
 
 /// The reply that ends the `pistol` handshake.
 pub const HANDSHAKE_OK: &str = "pistolok";
@@ -16,6 +16,16 @@ pub const ERROR_PREFIX: &str = "error";
 pub const NPS_FIELD: &str = "nps";
 /// Wall-clock milliseconds: likewise.
 pub const TIME_FIELD: &str = "time";
+
+/// The word after `info` on a trigger-census row.
+pub const CENSUS_MARKER: &str = "census";
+
+/// What a census field with no value is spelled as.
+///
+/// The same spelling the corpus already uses for an absent field
+/// (`pistol_arena::labels::EMPTY_FIELD`), so absence reads one way across the
+/// two documents this project writes.
+pub const CENSUS_EMPTY_FIELD: &str = "-";
 
 /// The marker that distinguishes the closing report from a per-depth one.
 ///
@@ -95,6 +105,61 @@ fn render_info(info: &SearchInfo, totals: bool) -> String {
         line.push_str(&turn.to_string());
     }
     line
+}
+
+/// One trigger firing, as one line.
+///
+/// The key set is exactly this ordered list, and a driver keys on the names
+/// rather than on positions (docs/decisions.md D-88's precedent, applied to a
+/// second line kind): `key turns_from_root mover_hot opponent_hot
+/// mover_win_in_one_ply opponent_win_in_one_ply mover_live_three
+/// opponent_live_three cover cover_count attacker_visits attacker_proved
+/// defender_visits defender_proved`.
+///
+/// `key` leads because it is the only field that is not a count, and it is the
+/// identity two rows are counted as ONE position by (docs/decisions.md D-537).
+///
+/// Each direction is its own field on both axes — `mover_*` against
+/// `opponent_*`, `attacker_*` against `defender_*` — and never a sum: the two
+/// are different quantities and a row's answer in one says nothing about the
+/// other (docs/decisions.md D-512, D-535).
+///
+/// The defender pair is spelled [`CENSUS_EMPTY_FIELD`] rather than omitted when
+/// the attacker proved and the defender was never asked. Every value on this
+/// line is ONE word, which is what lets a reader take the word after a key
+/// (docs/decisions.md D-551's lesson, from the score field that is two).
+pub fn census_line(row: &TriggerObservation) -> String {
+    let columns = row.columns;
+    let (defender_visits, defender_proved) = match row.defender {
+        Some(answer) => (answer.visits.to_string(), proved_token(answer.proved)),
+        None => (
+            String::from(CENSUS_EMPTY_FIELD),
+            String::from(CENSUS_EMPTY_FIELD),
+        ),
+    };
+    format!(
+        "{INFO_PREFIX} {CENSUS_MARKER} key {} turns_from_root {} mover_hot {} opponent_hot {} \
+         mover_win_in_one_ply {} opponent_win_in_one_ply {} mover_live_three {} \
+         opponent_live_three {} cover {} cover_count {} attacker_visits {} attacker_proved {} \
+         defender_visits {defender_visits} defender_proved {defender_proved}",
+        row.key,
+        columns.turns_from_root,
+        columns.mover_hot,
+        columns.opponent_hot,
+        columns.mover_win_in_one_ply,
+        columns.opponent_win_in_one_ply,
+        columns.mover_live_three,
+        columns.opponent_live_three,
+        columns.cover.token(),
+        columns.cover.count(),
+        row.attacker.visits,
+        proved_token(row.attacker.proved),
+    )
+}
+
+/// Whether a direction proved, as the one digit a census row spells it with.
+fn proved_token(proved: bool) -> String {
+    String::from(if proved { "1" } else { "0" })
 }
 
 /// One identity line: `id <rest>`, folded to one line.

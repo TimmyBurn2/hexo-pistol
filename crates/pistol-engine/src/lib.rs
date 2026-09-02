@@ -38,7 +38,7 @@ mod validate;
 
 pub use budget::Budget;
 pub use config::{Config, EngineMode, SCHEMA_VERSION};
-pub use engine::Engine;
+pub use engine::{CensusRequest, Engine};
 pub use error::EngineError;
 pub use instance::Pistol;
 pub use position::PositionSpec;
@@ -49,5 +49,6 @@ pub use position_token::ParsePositionError;
 // the seam returns (CLAUDE.md rule 11).
 pub use pistol_search::score::{MATE, ScoreKind, classify};
 pub use pistol_search::{
-    MAX_DEPTH_TURNS, Provenance, SearchInfo, SearchOutcome, SolverCallCounters, StageCounters,
+    CoverClass, MAX_DEPTH_TURNS, Provenance, SearchInfo, SearchOutcome, SolverCallCounters,
+    StageCounters, TriggerAnswer, TriggerColumns, TriggerObservation,
 };

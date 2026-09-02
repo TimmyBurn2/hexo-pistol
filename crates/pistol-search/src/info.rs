@@ -242,6 +242,14 @@ pub struct SearchOutcome {
     pub info: SearchInfo,
     /// Where the answer came from.
     pub provenance: Provenance,
+    /// The trigger census rows of this search, when its caller asked for one.
+    ///
+    /// EMPTY FROM [`crate::Searcher::search`] ITSELF, always. The searcher
+    /// accumulates rows behind `collect_trigger_census`/`take_trigger_census`,
+    /// and the engine seam moves them here so that a caller holding only a
+    /// `SearchOutcome` — the protocol layer — has them without depending on
+    /// this crate (CLAUDE.md rule 11, docs/experiments/wp20b_design.md §6.1).
+    pub census: Vec<crate::census::TriggerObservation>,
 }
 
 /// Where a search's answer came from — closed, and telling a consumer exactly

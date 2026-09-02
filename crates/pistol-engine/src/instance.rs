@@ -9,7 +9,7 @@ use pistol_search::{
 
 use crate::budget::Budget;
 use crate::config::{CandidatePolicy, Config, EngineMode, EvalBackend, QTriggers, TieBreak};
-use crate::engine::Engine;
+use crate::engine::{CensusRequest, Engine};
 use crate::error::EngineError;
 use crate::position::PositionSpec;
 
@@ -59,6 +59,18 @@ impl Pistol {
     pub fn table_bytes(&self) -> u64 {
         self.searcher.table_bytes()
     }
+
+    /// How many times the last census `go` entered the canonical-key fold.
+    ///
+    /// Exposed for the one thing no other observation can see: whether the
+    /// disarm at the end of a census `go` actually ran. A plain `go` after a
+    /// census `go` answers with no rows either way — the rows only reach a
+    /// `SearchOutcome` when they were asked for — so the cost is the whole
+    /// difference, and this counter is where it shows
+    /// (docs/experiments/wp20b_design.md §6.1, invariant 8).
+    pub fn census_fold_entries(&self) -> u64 {
+        self.searcher.census_fold_entries()
+    }
 }
 
 impl Engine for Pistol {
@@ -86,13 +98,36 @@ impl Engine for Pistol {
     fn go_reporting(
         &mut self,
         budget: Budget,
+        census: CensusRequest,
         report: &mut dyn FnMut(&SearchInfo),
     ) -> Result<SearchOutcome, EngineError> {
         let budget = Budget::resolve(Some(budget), self.config.engine.mode)?;
         let stop = stop_for(budget)?;
-        self.searcher
+        if census == CensusRequest::Off {
+            return self
+                .searcher
+                .search(&self.state, stop, report)
+                .map_err(from_search);
+        }
+        // THE CENSUS LIFETIME IS EXACTLY THIS `go`, and every limb of that is
+        // load-bearing (docs/experiments/wp20b_design.md §6.1). The searcher's
+        // collector does not stop on its own and `new_game`'s `clear` does not
+        // touch it, so without the disarm every later `go` in this session
+        // would pay the fold and accumulate rows across `go` boundaries. The
+        // take comes FIRST because taking after the disarm panics, and both
+        // run on the ERROR path too — a refused search that left the collector
+        // armed is the same leak by a quieter route.
+        self.searcher.collect_trigger_census();
+        let answer = self
+            .searcher
             .search(&self.state, stop, report)
-            .map_err(from_search)
+            .map_err(from_search);
+        let rows = self.searcher.take_trigger_census();
+        self.searcher.stop_trigger_census();
+        answer.map(|mut outcome| {
+            outcome.census = rows;
+            outcome
+        })
     }
 }
 

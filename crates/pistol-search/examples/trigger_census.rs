@@ -214,11 +214,23 @@ fn main() -> ExitCode {
         }
         for row in engine.take_trigger_census() {
             let columns = row.columns;
+            // `key_pos` RIDES BESIDE `key` because the two answer a question
+            // this project has one measurement of and it is zero: the pilot's
+            // corpus agreed at 347 on all three keys, so the symmetry fold's
+            // yield at the ROOT population is nothing (docs/decisions.md
+            // D-560). The census population is IN-TREE, where a search
+            // generates symmetric transpositions by construction, and whether
+            // that fold's yield is materially above zero is settled by
+            // counting distinct values of these two columns over one run
+            // (docs/experiments/wp20b_design.md §2, §9).
             println!(
-                "trigger_census: row entry {entries} turns {} mover_hot {} opp_hot {} \
+                "trigger_census: row entry {entries} key {} key_pos {} turns {} mover_hot {} \
+                 opp_hot {} \
                  mover_w1 {} opp_w1 {} mover_l3 {} opp_l3 {} cover {} covers {} \
                  att_visits {} att_proved {} \
                  def_asked {} def_visits {} def_proved {}",
+                row.key,
+                row.key_pos,
                 columns.turns_from_root,
                 columns.mover_hot,
                 columns.opponent_hot,

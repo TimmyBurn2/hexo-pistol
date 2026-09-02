@@ -3,6 +3,7 @@ use std::fmt;
 use crate::board::Player;
 use crate::coord::{Coord, overflow};
 use crate::turn::{Turn, canonical_pair};
+use crate::zobrist::{Key128, cell_key};
 
 /// One of the twelve symmetries of the lattice about the origin.
 ///
@@ -176,6 +177,35 @@ pub fn canonical_form(stones: &[(Coord, Player)]) -> Vec<(Coord, Player)> {
     // be the empty position — a legitimate answer, and so indistinguishable from
     // a correct one at the seam that decides opening identity (rule 3).
     best.unwrap_or_else(|| unreachable!("Symmetry::ALL is never empty"))
+}
+
+/// The key of a position's canonical form: the identity two firings carry
+/// exactly when they fired on ONE position — one up to a symmetry of the
+/// lattice and up to the order its stones were played in.
+///
+/// A fold of [`canonical_form`] through [`cell_key`]: the canonical spelling
+/// this module already defines, read as a key, rather than a fourth notion of
+/// sameness for a caller to keep in step with the other three
+/// (docs/decisions.md D-8, D-137).
+///
+/// Side to move and intra-turn phase are absent and are not missing. Turn 1
+/// places one stone and every later turn two, so the stone count fixes both
+/// ([`crate::GameState::to_move`], [`crate::GameState::phase`]), and two
+/// positions holding the same stones are at the same point of the same
+/// mover's turn.
+///
+/// # Panics
+/// Through [`Symmetry::apply`], on coordinate overflow. The radius-8 legal
+/// region (CLAUDE.md rule 5) holds every reachable coordinate far below that
+/// bound — approaching it takes on the order of a thousand turns — so the
+/// panic is unreachable in play. It is named here so that widening the region
+/// reads its consequence at this function rather than in a crash.
+pub fn canonical_key(stones: &[(Coord, Player)]) -> Key128 {
+    canonical_form(stones)
+        .into_iter()
+        .fold(Key128::ZERO, |key, (cell, player)| {
+            key ^ cell_key(cell, player)
+        })
 }
 
 /// A GAME under a symmetry: every turn transformed, in the order it was played.

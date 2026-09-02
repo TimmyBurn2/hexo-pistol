@@ -385,16 +385,6 @@ fn a_capture_identity_moves_when_the_format_version_moves() {
 }
 
 #[test]
-fn the_label_go_line_is_the_one_budget_section_spells() {
-    assert_eq!(
-        pistol_arena::capture::label_go_line(5_000),
-        pistol_arena::config::BudgetSection::Nodes { value: 5_000 }
-            .go_line()
-            .expect("a nodes budget spells a go line")
-    );
-}
-
-#[test]
 fn a_label_node_count_spelled_a_way_this_program_will_not_echo_back_is_refused() {
     let scratch = Scratch::new("capture-spelling");
     let out = scratch.path("never.txt");

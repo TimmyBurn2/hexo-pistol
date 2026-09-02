@@ -33,7 +33,7 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
     enum Mode {
         Play(PathBuf),
         Replay(PathBuf, usize),
-        Capture(PathBuf, u64),
+        Capture(PathBuf, u64, bool),
         Labels(PathBuf, PathBuf),
     }
     let (mode, out_path) = match words {
@@ -49,7 +49,27 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
             PathBuf::from(out),
         ),
         ["--capture", source, "--out", out, "--label-nodes", nodes] => (
-            Mode::Capture(PathBuf::from(source), count_of(nodes, "label node count")?),
+            Mode::Capture(
+                PathBuf::from(source),
+                count_of(nodes, "label node count")?,
+                false,
+            ),
+            PathBuf::from(out),
+        ),
+        [
+            "--capture",
+            source,
+            "--out",
+            out,
+            "--label-nodes",
+            nodes,
+            "--census",
+        ] => (
+            Mode::Capture(
+                PathBuf::from(source),
+                count_of(nodes, "label node count")?,
+                true,
+            ),
             PathBuf::from(out),
         ),
         ["--labels", capture, "--report", report, "--out", out] => (
@@ -67,10 +87,34 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
     // The claim IS the existence check: one O_EXCL syscall, no window for a
     // second run to slip through (docs/decisions.md D-200).
     let claimed = outpath::claim(&out_path).map_err(|error| error.to_string())?;
+    // The census file is claimed HERE, beside `--out` and before any game, for
+    // the same reason `--out` is (docs/decisions.md D-200). A claim that failed
+    // leaves no report either: the `--out` claim is given back first, so the
+    // refusal is the same "no report at all" exit 2 every pre-game refusal is.
+    let census = match &mode {
+        Mode::Capture(_, _, true) => {
+            let path = outpath::census_path(&out_path).map_err(|error| error.to_string())?;
+            match outpath::claim(&path) {
+                Ok(file) => Some((path, file)),
+                Err(error) => {
+                    if let Err(cleanup) = outpath::abandon(&out_path) {
+                        eprintln!("arena: {cleanup}");
+                    }
+                    return Err(error.to_string());
+                }
+            }
+        }
+        _ => None,
+    };
+    // The path is copied out before the pair is handed over, because the
+    // failure arm below has to name a file it no longer owns.
+    let census_cleanup: Option<PathBuf> = census.as_ref().map(|(path, _)| path.clone());
     let outcome = match &mode {
         Mode::Play(config) => run(config, &out_path, claimed),
         Mode::Replay(source, workers) => replay_pass(source, &out_path, claimed, *workers),
-        Mode::Capture(source, nodes) => passes::capture(source, &out_path, claimed, *nodes),
+        Mode::Capture(source, nodes, _) => {
+            passes::capture(source, &out_path, claimed, *nodes, census)
+        }
         Mode::Labels(capture, report) => passes::labels(capture, report, &out_path, claimed),
     };
     match outcome {
@@ -82,6 +126,11 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
             // own claim (outpath::abandon says why removing it is safe). A
             // failed removal is reported, never swallowed.
             if let Err(cleanup) = outpath::abandon(&out_path) {
+                eprintln!("arena: {cleanup}");
+            }
+            if let Some(path) = &census_cleanup
+                && let Err(cleanup) = outpath::abandon(path)
+            {
                 eprintln!("arena: {cleanup}");
             }
             Err(error.to_string())

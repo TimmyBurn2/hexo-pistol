@@ -11,7 +11,7 @@ arena — the paired-openings SPRT judge for pistol
 usage:
   arena --config <path> --out <path>
   arena --replay <report path> --out <path> --workers <n>
-  arena --capture <report path> --out <path> --label-nodes <n>
+  arena --capture <report path> --out <path> --label-nodes <n> [--census]
   arena --labels <capture path> --report <report path> --out <path>
 
   --config  an arena config. Always explicit: there is no default path and no
@@ -53,6 +53,15 @@ usage:
             program will echo it back. It is the only budget this mode takes:
             there is no wall-clock spelling to refuse, because a wall-clock
             label would be a fact about the machine.
+  --census  ask each label at the engine's census token and keep the trigger
+            rows it answers with, in a second file named beside --out. LAST,
+            and optional: a capture without it is the capture this pipeline has
+            always taken. It changes the `go` line and therefore the capture's
+            own identity digest, so a census-on capture is a DIFFERENT
+            instrument from the otherwise identical census-off one. An engine
+            that cannot serve a census refuses the token by name, and the run
+            is refused with it — a capture that quietly wrote no rows would be
+            indistinguishable from one whose engine never fired a trigger.
 
   --labels  a capture THIS program wrote, turned into the training corpus. Reads
             no engine and spawns nothing: it is a pure function of the capture

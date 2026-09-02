@@ -89,6 +89,16 @@ impl Fixture {
         let _ = writeln!(self.body, "# {line}");
     }
 
+    /// The header alone, up to but not including the payload digest line.
+    ///
+    /// For a writer whose payload is too large to hold: it takes the header
+    /// from here, digests its own rows as it walks them, and writes the digest
+    /// line itself. [`BODY_DIGEST`] is the one spelling of that line, so the
+    /// two paths cannot drift into two grammars.
+    pub fn render_header(&self) -> String {
+        self.header.clone()
+    }
+
     /// The finished file: header, the payload digest, then the payload.
     pub fn render(&self) -> String {
         let mut out = String::with_capacity(self.header.len() + self.body.len() + 80);

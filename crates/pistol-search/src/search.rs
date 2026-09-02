@@ -78,6 +78,9 @@ pub struct Searcher {
     /// that can cost two whole caps would rank an option field on the wrong
     /// rows (docs/decisions.md D-516).
     census: Option<Vec<crate::census::TriggerObservation>>,
+    /// How many times the canonical-key fold was entered since the last
+    /// [`Searcher::collect_trigger_census`] — the root's own firing included.
+    census_folds: u64,
 }
 
 impl Searcher {
@@ -188,6 +191,7 @@ impl Searcher {
             position: Position::new(eval, tracks_threats),
             heuristics: crate::heuristics::HeuristicTables::new(),
             census: None,
+            census_folds: 0,
         })
     }
 
@@ -205,6 +209,35 @@ impl Searcher {
     /// `trigger_census` example.
     pub fn collect_trigger_census(&mut self) {
         self.census = Some(Vec::new());
+        // Reset WITH the rows: a fold count carried over from an earlier
+        // census would be compared against this one's row count.
+        self.census_folds = 0;
+    }
+
+    /// Stop collecting, discarding whatever has not been taken.
+    ///
+    /// The disarm half of the pair [`Searcher::collect_trigger_census`] arms,
+    /// and the reason a caller can have a census for exactly one search: the
+    /// collector does not stop on its own, and [`Searcher::clear`] does not
+    /// touch it (docs/experiments/wp20b_design.md §6.1). Take the rows FIRST —
+    /// [`Searcher::take_trigger_census`] panics once this has run.
+    ///
+    /// The fold count is left standing, so a caller can read
+    /// [`Searcher::census_fold_entries`] on either side of the disarm.
+    pub fn stop_trigger_census(&mut self) {
+        self.census = None;
+    }
+
+    /// How many times the canonical-key fold was entered since the last
+    /// [`Searcher::collect_trigger_census`].
+    ///
+    /// An instrument, not a knob. It is the only witness that separates a fold
+    /// paid once per firing from one hoisted out of its guard, one called per
+    /// node, or one called twice — a distinction three orders below what an
+    /// nps comparison at this seat resolves (docs/experiments/wp20b_design.md
+    /// §9).
+    pub fn census_fold_entries(&self) -> u64 {
+        self.census_folds
     }
 
     /// The rows collected since the last take, leaving collection ON.
@@ -301,10 +334,12 @@ impl Searcher {
                 unreachable!("the wiring exists only when the solver does")
             };
             root_calls.firings += 1;
-            let root_columns = self
-                .census
-                .is_some()
-                .then(|| root_census_columns(&mut self.position));
+            let root_site = self.census.is_some().then(|| {
+                // Under the same guard as the in-tree fold and counted by the
+                // same counter: the root's firing is a firing.
+                self.census_folds = self.census_folds.saturating_add(1);
+                root_census_site(&mut self.position)
+            });
             let attacker = solver.solve(state, cap);
             root_solver_nodes += attacker.nodes;
             root_calls.invocations += 1;
@@ -315,7 +350,7 @@ impl Searcher {
             if let pistol_solver::SolveOutcome::Win(tree) = attacker.outcome {
                 root_calls.proofs += 1;
                 root_calls.root_nodes = root_solver_nodes;
-                push_root_census(&mut self.census, root_columns, attacker_answer, None);
+                push_root_census(&mut self.census, root_site, attacker_answer, None);
                 return Ok(solver_proof_outcome(
                     state,
                     &tree,
@@ -336,7 +371,7 @@ impl Searcher {
             root_calls.invocations += 1;
             push_root_census(
                 &mut self.census,
-                root_columns,
+                root_site,
                 attacker_answer,
                 Some(crate::census::TriggerAnswer {
                     visits: defender.nodes,
@@ -418,6 +453,7 @@ impl Searcher {
                 best,
                 info,
                 provenance: Provenance::CompletedDepth,
+                census: Vec::new(),
             });
 
             if is_mate(score) {
@@ -464,6 +500,7 @@ impl Searcher {
                     stages: crate::info::StageCounters::default(),
                 },
                 provenance: Provenance::PartialRoot,
+                census: Vec::new(),
             }
         } else if let Some(done) = outcome {
             done
@@ -500,6 +537,7 @@ impl Searcher {
                     stages: crate::info::StageCounters::default(),
                 },
                 provenance: Provenance::Fallback,
+                census: Vec::new(),
             }
         };
         // What the last completed depth found, and what the whole search cost —
@@ -523,6 +561,7 @@ impl Searcher {
         // one search and the next accumulate in one place and the run owns
         // them while it is the thing that fires.
         self.census = run.census.take();
+        self.census_folds = self.census_folds.saturating_add(run.census_folds);
         outcome.info.nps = per_second(run.total_nodes(), elapsed);
         outcome.info.time_ms = elapsed.as_millis() as u64;
         outcome.info.seldepth_turns = run.seldepth_turns;
@@ -715,8 +754,11 @@ pub fn proof_line(
 /// mutable borrow of the solver field, and the columns come from the position
 /// field: two disjoint borrows the compiler can see only if they are asked for
 /// separately.
-fn root_census_columns(position: &mut Position) -> crate::census::TriggerColumns {
+fn root_census_site(
+    position: &mut Position,
+) -> (crate::census::CensusKeys, crate::census::TriggerColumns) {
     let (state, threats, _) = position.staged_context();
+    let keys = crate::census::CensusKeys::at(state);
     let mover = state.to_move();
     let opponent = mover.opponent();
     let counts = |side| {
@@ -741,30 +783,35 @@ fn root_census_columns(position: &mut Position) -> crate::census::TriggerColumns
         pistol_solver::Cover::Impossible => crate::census::CoverClass::Impossible,
         pistol_solver::Cover::Minimal(covers) => crate::census::CoverClass::Minimal(covers.len()),
     };
-    crate::census::TriggerColumns {
-        // The root's own firing sits at turn 0 from itself.
-        turns_from_root: 0,
-        mover_hot,
-        opponent_hot,
-        mover_win_in_one_ply: mover_w1,
-        opponent_win_in_one_ply: opponent_w1,
-        mover_live_three: mover_l3,
-        opponent_live_three: opponent_l3,
-        cover,
-    }
+    (
+        keys,
+        crate::census::TriggerColumns {
+            // The root's own firing sits at turn 0 from itself.
+            turns_from_root: 0,
+            mover_hot,
+            opponent_hot,
+            mover_win_in_one_ply: mover_w1,
+            opponent_win_in_one_ply: opponent_w1,
+            mover_live_three: mover_l3,
+            opponent_live_three: opponent_l3,
+            cover,
+        },
+    )
 }
 
 /// Push the ROOT's census row, if a census was asked for.
 fn push_root_census(
     census: &mut Option<Vec<crate::census::TriggerObservation>>,
-    columns: Option<crate::census::TriggerColumns>,
+    site: Option<(crate::census::CensusKeys, crate::census::TriggerColumns)>,
     attacker: crate::census::TriggerAnswer,
     defender: Option<crate::census::TriggerAnswer>,
 ) {
-    let (Some(columns), Some(rows)) = (columns, census.as_mut()) else {
+    let (Some((keys, columns)), Some(rows)) = (site, census.as_mut()) else {
         return;
     };
     rows.push(crate::census::TriggerObservation {
+        key: keys.key,
+        key_pos: keys.key_pos,
         columns,
         attacker,
         defender,
@@ -805,5 +852,6 @@ fn solver_proof_outcome(
             stages: crate::info::StageCounters::default(),
         },
         provenance: Provenance::SolverProof,
+        census: Vec::new(),
     }
 }

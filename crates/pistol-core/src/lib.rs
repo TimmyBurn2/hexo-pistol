@@ -83,7 +83,7 @@ pub use rules::{
     FIRST_TURN, FIRST_TURN_STONES, LEGAL_RADIUS, TURN_STONES, WIN_LEN, stones_in_turn,
 };
 pub use state::GameState;
-pub use symmetry::{Symmetry, canonical_form, canonical_sequence};
+pub use symmetry::{Symmetry, canonical_form, canonical_key, canonical_sequence};
 pub use turn::{Outcome, ParseTurnError, Phase, PlyOutcome, Turn};
 pub use win::{Run, wins_at};
 pub use window::{WINDOW_LEN, WINDOWS_PER_CELL, Window, windows_through, windows_through_indexed};

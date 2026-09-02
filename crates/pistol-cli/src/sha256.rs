@@ -15,35 +15,98 @@ const INITIAL_STATE: [u32; 8] = [
 
 /// The SHA-256 of `bytes`, lower-case hex.
 pub fn sha256_hex(bytes: &[u8]) -> String {
-    let digest = sha256(bytes);
-    let mut hex = String::with_capacity(64);
-    for byte in digest {
-        hex.push_str(&format!("{byte:02x}"));
-    }
-    hex
+    let mut digest = Sha256::new();
+    digest.update(bytes);
+    digest.finish_hex()
 }
 
-/// The SHA-256 of `bytes`.
-fn sha256(bytes: &[u8]) -> [u8; 32] {
-    let mut state = INITIAL_STATE;
+/// A SHA-256 taken over bytes handed to it in pieces.
+///
+/// The one-shot [`sha256_hex`] is this, fed once — so the two cannot disagree,
+/// and the published vectors that pin one pin the other.
+///
+/// **It exists so a digest over a large payload does not require the payload.**
+/// The one-shot form copies its whole input to pad it, and a caller that also
+/// has to hold the payload to write it afterwards pays for it twice more; the
+/// arena's census artifact is the case that made this worth having, at a
+/// design estimate of some gigabytes.
+pub struct Sha256 {
+    state: [u32; 8],
+    /// Bytes not yet in a full block. Never 64 — a full one is compressed and
+    /// cleared the moment it fills.
+    buffer: [u8; 64],
+    buffered: usize,
+    /// Bytes fed so far, which is what the padding's length field states.
+    length: u64,
+}
 
-    let bit_length = (bytes.len() as u64) * 8;
-    let mut padded = bytes.to_vec();
-    padded.push(0x80);
-    while padded.len() % 64 != 56 {
-        padded.push(0);
+impl Sha256 {
+    /// A digest of nothing.
+    pub fn new() -> Sha256 {
+        Sha256 {
+            state: INITIAL_STATE,
+            buffer: [0u8; 64],
+            buffered: 0,
+            length: 0,
+        }
     }
-    padded.extend_from_slice(&bit_length.to_be_bytes());
 
-    for block in padded.chunks_exact(64) {
-        compress(&mut state, block);
+    /// Feed the next piece. Feeding `a` then `b` digests exactly as feeding
+    /// `ab` does: where the pieces are cut is not part of the answer.
+    pub fn update(&mut self, mut bytes: &[u8]) {
+        self.length = self.length.wrapping_add(bytes.len() as u64);
+        if self.buffered > 0 {
+            let want = (64 - self.buffered).min(bytes.len());
+            self.buffer[self.buffered..self.buffered + want].copy_from_slice(&bytes[..want]);
+            self.buffered += want;
+            bytes = &bytes[want..];
+            if self.buffered < 64 {
+                // Still short of a block. RETURNING here is load-bearing: the
+                // tail below would otherwise overwrite `buffered` with the
+                // remainder of an empty slice and drop what is held.
+                return;
+            }
+            let block = self.buffer;
+            compress(&mut self.state, &block);
+            self.buffered = 0;
+        }
+        let mut blocks = bytes.chunks_exact(64);
+        for block in &mut blocks {
+            compress(&mut self.state, block);
+        }
+        let rest = blocks.remainder();
+        self.buffer[..rest.len()].copy_from_slice(rest);
+        self.buffered = rest.len();
     }
 
-    let mut digest = [0u8; 32];
-    for (out, word) in digest.chunks_exact_mut(4).zip(state) {
-        out.copy_from_slice(&word.to_be_bytes());
+    /// The digest of everything fed, lower-case hex.
+    pub fn finish_hex(mut self) -> String {
+        let bit_length = self.length.wrapping_mul(8);
+        // The padding is fed through `update`'s own path rather than assembled
+        // beside it, so there is one block-splitting rule in this file and not
+        // two that can come apart.
+        // `0x80`, then zeros, then the length: the total is 56 mod 64 before
+        // the eight length bytes. Written as an addition because `56 - x` on a
+        // `usize` underflows for the very lengths that need the most padding.
+        let zeros = (55 + 64 - (self.length as usize % 64)) % 64;
+        self.length = 0;
+        self.update(&[0x80]);
+        self.update(&vec![0u8; zeros]);
+        self.update(&bit_length.to_be_bytes());
+        let mut hex = String::with_capacity(64);
+        for word in self.state {
+            for byte in word.to_be_bytes() {
+                hex.push_str(&format!("{byte:02x}"));
+            }
+        }
+        hex
     }
-    digest
+}
+
+impl Default for Sha256 {
+    fn default() -> Sha256 {
+        Sha256::new()
+    }
 }
 
 /// One 64-byte block into the state.
@@ -93,7 +156,30 @@ fn compress(state: &mut [u32; 8], block: &[u8]) {
 
 #[cfg(test)]
 mod tests {
-    use super::sha256_hex;
+    use super::{Sha256, sha256_hex};
+
+    /// Where the pieces are cut is not part of the answer.
+    ///
+    /// The published vectors below pin the one-shot form; this pins that the
+    /// streaming form agrees with it under every split of the same bytes,
+    /// including splits that land inside a block and on its boundary — which is
+    /// where a buffer that carried a partial block wrongly would show.
+    #[test]
+    fn a_streamed_digest_does_not_depend_on_where_the_pieces_were_cut() {
+        let payload: Vec<u8> = (0..1000u32).map(|n| (n % 251) as u8).collect();
+        let whole = sha256_hex(&payload);
+        for cut in [0, 1, 63, 64, 65, 127, 128, 129, 500, 999, 1000] {
+            let mut digest = Sha256::new();
+            digest.update(&payload[..cut]);
+            digest.update(&payload[cut..]);
+            assert_eq!(digest.finish_hex(), whole, "cut at {cut}");
+        }
+        let mut byte_at_a_time = Sha256::new();
+        for byte in &payload {
+            byte_at_a_time.update(&[*byte]);
+        }
+        assert_eq!(byte_at_a_time.finish_hex(), whole, "one byte at a time");
+    }
 
     /// The published FIPS 180-4 vectors (docs/decisions.md D-37, D-60). The pins
     /// in this workspace's fixture tests are computed by this function, so an

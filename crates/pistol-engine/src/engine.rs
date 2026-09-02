@@ -6,6 +6,19 @@ use crate::config::EngineMode;
 use crate::error::EngineError;
 use crate::position::PositionSpec;
 
+/// Whether a `go` asks for the trigger census on its answer.
+///
+/// A closed two-variant enum rather than a `bool`, because a `false` at a call
+/// site says nothing about what is off, and this parameter sits beside a
+/// budget and a reporting sink.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CensusRequest {
+    /// No census. Nothing is armed and the outcome carries no rows.
+    Off,
+    /// The trigger census, for exactly this search.
+    On,
+}
+
 /// An engine that can be asked for a move.
 ///
 /// Object safe on purpose: the protocol layer holds one of these without being
@@ -51,7 +64,7 @@ pub trait Engine {
     /// this workspace (CLAUDE.md rule 1) — and a budget this engine's mode
     /// cannot honour is refused by name rather than substituted.
     fn go(&mut self, budget: Budget) -> Result<SearchOutcome, EngineError> {
-        self.go_reporting(budget, &mut |_| {})
+        self.go_reporting(budget, CensusRequest::Off, &mut |_| {})
     }
 
     /// [`Engine::go`], reporting once per completed depth.
@@ -60,9 +73,21 @@ pub trait Engine {
     /// completed iteration. The outcome's own report carries the last completed
     /// depth's line and score with the whole search's totals, which is not the
     /// same thing as the last report the sink saw (docs/decisions.md D-80).
+    ///
+    /// `census` asks for the trigger census on the outcome. An implementor that
+    /// cannot produce one REFUSES [`CensusRequest::On`] by name: an engine that
+    /// accepted the request and answered with an empty row set would be
+    /// indistinguishable from one whose trigger never fired, which is the
+    /// silence CLAUDE.md rule 3 forbids.
+    ///
+    /// # Errors
+    /// Everything [`Engine::go`] can refuse, plus
+    /// [`EngineError::CensusUnsupported`] from an implementor that has no
+    /// census to give.
     fn go_reporting(
         &mut self,
         budget: Budget,
+        census: CensusRequest,
         report: &mut dyn FnMut(&SearchInfo),
     ) -> Result<SearchOutcome, EngineError>;
 }
