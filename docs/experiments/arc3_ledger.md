@@ -1096,3 +1096,87 @@ collision: **6 passed, 0 failed** (`artifacts/arc3_wp21_assemble_worktree_test.l
 sha256 `7b88f989…`, taken at `b07d774` under rustc 1.98.0). The worktree held nothing
 gitignored but its target directory and was removed. **It owes a `tools/` review
 against `tools/SHELL_CHECKLIST.md`**, dispatched beside round 5.
+
+---
+
+## §1e — STOP. THE DESIGN GATE FAILED ITS FIFTH ROUND ON ONE WORD OF ONE TEST ROW.
+
+**PLAIN LANGUAGE FIRST.** The label cache's design went through five review rounds
+and the mechanism has been sound since round 2. Round 5 — the last round D-585
+grants, remedies-only — returned **FAIL: 0 BLOCKING, 1 MAJOR, 2 minor**
+(`wp21_label_cache_design_rev6_REVIEW.md`, at `5c77a8f`). The MAJOR is that test
+row T6's forfeit report names the stub behaviour `illegal`, which answers a
+capture's `go` with no totals line, so the capture is refused at game 0, turn 0
+and the byte-identity test over that report cannot run. **The fix is one word**
+— `demands_newgame_per_ask` — verified by the reviewer against the code: it
+forfeits in play at the first mover's second turn and answers honestly under the
+capture's per-ask `newgame`, which `capture_tests.rs:250-261` already pins.
+**Under the dispatch's STOP protocol a fifth failed round at any gate is a STOP**,
+and this session stops here rather than reading the grant as one round longer.
+**THE DECISION OWED**: whether the one-word remedy lands under a scoped
+verification pass (the shape D-568 took for WP-2.0b's B1/B2), or the package is
+split, or the gate is re-granted.
+
+**WHY THE WORD WAS WRONG, because it is the arc's recurring defect in the
+session that had just written it down twice.** Round 4's MAJOR 4 offered two
+fixes for T6 and this session adopted (a) — `illegal` on both seats — from the
+reviewer's sentence, reading `capture_tests.rs:529`'s *"pass 2 walks that report"*
+as *"captures"*. The three tests under that comment assert the walk is REFUSED.
+§1d says *"every finding reproduced against the code before its fix"*; **the
+finding was reproduced and the fix was not.** A reviewer's suggested fix is a
+claim like any other.
+
+| round | at | verdict | counts |
+|---|---|---|---|
+| 1 | `239f21f` | FAIL | 6B / 12M / 4m |
+| 2 | `fde1497` | FAIL | 4B / 7M / 4m |
+| 3 | `f87cbbe` | FAIL | 4B / 8M / 4m |
+| 4 (revision 5, rewritten whole) | `b07d774` | FAIL | 1B / 4M / 6m |
+| 5 (revision 6, remedies-only) | `5c77a8f` | **FAIL** | **0B / 1M / 2m** |
+
+**ROUND 5's DISPOSITION OF ROUND 4**: ten of eleven CLOSED against the code, one
+PARTIAL (the forfeit half of T6). The reviewer re-derived the rule-4-win fixture
+with its own greedy and `Coord` ordering and confirmed it: at turn 6 P2 plays
+`(-1,5)/(-1,6)` and at turn 7 P1's smallest cluster neighbour `(-5,0)` completes
+six. **The two minors are recorded as findings for IMPL**: (A) T4's cached-arm
+assertion *"refused within game 1"* is not guaranteed by any happens-before —
+after game 0's last answer the main thread never reads the pipe again, so the
+stray's delivery races the whole of game 1's hits, a window ESTIMATED at tens of
+microseconds; the mutant arm is deterministic (exit 0); a deterministic hit-path
+stray test needs either a wait, which D-159 forbids, or a drain after `quit`,
+which is a mechanism change. (B) row 6's reason for rejecting `doubled.sh` is
+inexact — a script on both seats does pass `one_engine`; the true reason is that
+it doubles at its first `go`, a miss. And two nits: row 9's *"nine rows"* is
+eight, and gate 20's `PROPOSES` still listed `tools/wp21_assemble.py` — removed in
+the STOP commit.
+
+**D-588 IS OWED AND NOT APPENDED**, because it belongs with the registration
+revision that cites it: D-581's *"no limb of gate 9 ever asks the same position
+twice inside one process"* is too strong — `tools/determinism.sh`'s A/B session
+is `budgets x positions` in ONE process (`:221-227`), so every position is asked
+twice, once per budget; the true statement is that no limb asks the same
+`(position, go)` pair twice, and the identical ask — a hit — is the repeat it
+never takes (`wp21_throughput_prereg_rev3_REVIEW.md` MAJOR 8, re-verified here
+against the script). The conclusion that §4.4 closes the gap is unchanged.
+
+### STATE AT THE STOP
+
+| what | where |
+|---|---|
+| `dev` | **`5c77a8f`**, clean: revision 6 of the design, D-586, D-587, the assembler at its first revision with six tests. **CI has not been run since `adb2012`**; the three commits since are documents, one `tools/` script and one test suite |
+| `arc3-stopped` | this commit: both review reports, the assembler's round-2 remedies (unreviewed WIP), the two registration DRAFTS, the gate-20 list fix, this ledger, the summary |
+| the cache design | revision 6, one word from its reviewer's own remedy; **no code of the package exists** — IMPL never started, as the process requires |
+| the assembler | `tools/wp21_assemble.py` round 2 answers all thirteen findings of `wp21_assemble_REVIEW.md` (`5c77a8f`, FAIL 0B/6M/7m); its suite is eleven tests, **11 passed, 0 failed** (`artifacts/arc3_wp21_assemble_test_r5.log`, digest in the summary); clippy and CI **not run** on this WIP; **unreviewed** — owes round 2 of its tools/ review |
+| the registrations | `wp21_prereg_rev5_DRAFT.md` and `wp21_throughput_prereg_rev4_DRAFT.md`, whole rewrites answering every round-2 finding of both, with dry-run and instrument SLOTS empty because the cache does not exist; **NOT GOVERNING** until landed under their real names and reviewed. Each names a generator change it needs: a `--pilot-range` window form, because the generator refuses `skip < 13` and both dry runs and the throughput study's play pass need the pilot's consumed `0..12` |
+| worktrees, processes | none; `git worktree list` is the main tree alone; `ps` holds no cargo, no arena, no python of this project's |
+| artifacts (gitignored), with digests in the summary | `arc3_wp21_assemble_worktree_test.log` (round 1, 6 of 6 at `b07d774`), `arc3_wp21_assemble_test_r4.log` (round 2, the count in the summary) |
+| the box | another session's job — a `pi` subagent building a different project — was on the box during this session and had finished by the STOP; recorded because a timing-sensitive receipt taken beside it would have been about the load |
+
+**WHAT A SUCCESSOR DOES, IN ORDER, ONCE THE OPERATOR HAS RULED ON THE DESIGN GATE**:
+(1) the one-word T6 fix, and minors A/B and the nits, in whatever form the ruling
+allows; (2) IMPL of the cache package per revision 6 — REVIEW-impl, RED-TEAM,
+mutation receipt with its `git grep` enumeration, CI; (3) round 2 of the
+assembler's tools/ review; (4) the generator's `--pilot-range` form with its
+tests; (5) both registrations landed from their drafts, D-588 appended, dry runs
+taken and their records filled, then round 3 of each registration's review; (6)
+lever A; (7) the sweep. **Nothing in the sweep starts until (5) closes.**
