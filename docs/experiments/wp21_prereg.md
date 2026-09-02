@@ -542,6 +542,15 @@ with its digest"*; §8 named none. The preamble now says the slot is filled befo
 tranche one, and **filling it is an amendment that reopens this document's
 review** — which is the honest cost of a slot.
 
+**AND THE COMPILER IS NAMED BESIDE THE DIGESTS, WHICH REVISION 4 DID NOT SAY.**
+`rustc --version` moved from 1.97.1 to 1.98.0 during this arc's own session and a
+CI run straddled the change (arc III ledger F-1.11). **A binary digest is a
+statement about a compiler as much as about a source tree**, and D-577's
+*"rebuild means re-record"* applies to a toolchain the operator did not choose to
+change. The run log carries `rustc --version` and `cargo --version` beside every
+digest, and a toolchain change between tranches VOIDS the tranches taken after it
+until the digests are re-recorded.
+
 Filled from the closure head before tranche one, and quoted in the run log:
 the revision, `target/release/pistol`, `target/release/arena`,
 `target/release/corpus-check`, `tools/cold_label_check.py`,

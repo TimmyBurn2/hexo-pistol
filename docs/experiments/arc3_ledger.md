@@ -706,3 +706,38 @@ by name; `:104-105` was the comment above the gate, not the gate. **The design
 joins `tools/governing_citation_check.sh`'s list in the same commit**, and the
 gate immediately catches the fourth: `label_cache_tests.rs`, a file §6 proposes
 and the tree does not have, now declared.
+
+### F-1.11 — THE RUST TOOLCHAIN CHANGED UNDER THE SESSION, AND EVERY EARLIER RECEIPT IS A 1.97.1 RECEIPT
+
+`artifacts/arc3_ci_tools.txt` returned **`ci: FAIL: tests`, EXIT=1** at gate 3, and
+**the failure is not a regression**. Four `error[E0514]: found crate … compiled by
+an incompatible version of rustc`, in the doctest run, against rlibs the tree had
+been carrying:
+
+```
+crate `serde` compiled by rustc 1.97.1 (8bab26f4f 2026-07-14)
+help: please recompile that crate using this compiler (rustc 1.98.0 (88d9e12ae 2026-08-18))
+```
+
+**`rustup` INSTALLED 1.98.0 AT 20:21 TODAY, MID-SESSION** —
+`ls /home/tom/.rustup/toolchains/` dates `1.98.0-x86_64-unknown-linux-gnu` to
+20:21 and the stale `libserde` rlib to 2026-08-17. The run straddled the change.
+
+**THREE CONSEQUENCES, AND THE THIRD IS THE ONE THAT OUTLIVES THE INCIDENT.**
+
+1. **The run is a VOID and not a failure.** `tools/SHELL_CHECKLIST.md` item 12's
+   distinction: no gate answered NO, the compiler refused to adjudicate. `ci.sh`
+   spells it FAIL because `cargo` exits nonzero, which is a gap in the seam rather
+   than in the gates — recorded, not fixed here.
+2. **Every CI receipt earlier in this session was taken under rustc 1.97.1** —
+   `arc3_ci_premerge_2b94f04.txt`, `arc3_ci_dev_HEAD.txt`, `arc3_ci_gate20.txt` —
+   and so is every binary digest any of them attests. They remain true statements
+   about the compiler that took them, and a successor comparing a digest across
+   the boundary is comparing two compilers.
+3. **D-577's "rebuild means re-record" bites before the package that coined it
+   exists.** The codegen-tuning package is not scheduled and the toolchain moved
+   anyway. **A pinned instrument binary must reproduce on any host, and it does
+   not reproduce across a compiler change** — so the sweep's own
+   `binary_sha256` slot (`wp21_prereg.md` §8) must be filled AFTER the toolchain
+   settles, and the run log must name the `rustc --version` beside it. That is an
+   amendment the registration owes and did not have.
