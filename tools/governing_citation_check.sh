@@ -50,6 +50,7 @@ GOVERNING=(
 	docs/experiments/anchor_v3_openings_design.md
 	docs/experiments/matrix_label_cache_key.md
 	docs/experiments/sealbot_anchor_v3_prereg.md
+	docs/experiments/wp21_label_cache_design.md
 	docs/experiments/wp21_prereg.md
 	docs/experiments/wp21_throughput_prereg.md
 )
@@ -59,6 +60,8 @@ GOVERNING=(
 PROPOSES=(
 	# wp21_prereg.md §8: the assembly instrument §6's manifests need.
 	tools/wp21_assemble.py
+	# wp21_label_cache_design.md §6: the suite the cache package brings.
+	crates/pistol-arena/tests/label_cache_tests.rs
 )
 
 for doc in "${GOVERNING[@]}"; do

@@ -661,3 +661,48 @@ the commands exist, and both of these registered four.
 
 **RESUME POINT FOR A SUCCESSOR: step 1 above.** Nothing in the sweep starts until
 6 closes.
+
+### THE CACHE DESIGN'S REVIEW — FAIL, AND THREE FINDINGS CHANGED THE MECHANISM
+
+Round 1 at `239f21f`: **6 BLOCKING, 12 MAJOR, 4 minor**
+(`wp21_label_cache_design_REVIEW.md`). Revision 2 answers every one and rejects
+one with its reproducer.
+
+**THE THREE THAT CHANGED THE MECHANISM RATHER THAN THE PROSE.**
+
+1. **THE MEMO WAS A PARAMETER, AND `capture::run` IS `pub`.** The registration
+   registers the memo's lifetime as an invariant — constructed inside `run`,
+   dropped with it, never shared. Revision 1 threaded a `&mut LabelCache` in from
+   the binary, which makes that invariant a property of **every caller, including
+   ones that do not exist yet**, and a REVIEW-impl cannot check it by reading the
+   function. Revision 2 passes a **MODE** and builds the map inside `run`: the
+   map's type appears in no signature, so there is no way to share one.
+2. **NOBODY HAD SAID WHICH SIDE OF `normalise` THE MEMO SITS ON.** `run` stores
+   `normalise(&totals)?` into each record, stripping ` nps <n> time <n>` — the two
+   machine-dependent fields. **A memo holding the RAW totals would write those
+   bytes into the 53% of records that are hits**, and §4.4's byte-identity would
+   fail on a difference that says nothing about the cache. Registered: the memo
+   holds the POST-`normalise` pair, so a hit reproduces the record's bytes by
+   construction.
+3. **TWO GUARDS INSIDE `ask` STOP RUNNING ON HITS.** `channel.unsolicited()`
+   (`capture.rs:241-246`) refuses an engine that spoke before it was asked;
+   skipping the ask skips the check, so a stray line lands on a LATER prefix or is
+   missed. **The uncached and cached passes must refuse the same input at the same
+   place** — stronger than byte-identity on well-behaved input — so the guard is
+   HOISTED into `run`'s loop (X3). The census guard beside it is moot under X1 and
+   is said to be rather than left unsaid.
+
+**AND ONE FINDING IS REJECTED WITH ITS REPRODUCER.** The review said the design
+never mentions `no_tab`, which the registration names as a candidate cache
+defect. **`no_tab` runs in `run`, on the constructed record, outside `ask`**
+(`capture.rs:355-360`): a hit skips the ask, not the record construction, so it
+cannot skip the guard. The normalise half of the same finding is accepted in full
+and is §2.1.
+
+**THE CITATION GATE WOULD HAVE CAUGHT THREE OF THE REVIEW'S FINDINGS AND THE
+DESIGN WAS NOT ON ITS LIST.** Revision 1's ONE LINE said *"CI gate 6"* — config
+validation — in a design whose governing registration corrects that exact error
+by name; `:104-105` was the comment above the gate, not the gate. **The design
+joins `tools/governing_citation_check.sh`'s list in the same commit**, and the
+gate immediately catches the fourth: `label_cache_tests.rs`, a file §6 proposes
+and the tree does not have, now declared.
