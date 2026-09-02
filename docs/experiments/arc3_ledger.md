@@ -541,3 +541,67 @@ are the same kind of agent minutes apart, but in what each is doing.
 | gate the existing citation checker | owed, its own package, its own review |
 | the `docs/process.md` reviewer clause | owed |
 | `tools/ci.sh` gate-total derivation | **dropped with the package** — a separate change that was riding in it |
+
+### THE REPLACEMENT LANDED, AND ONE MORE FALSE CLAIM CORRECTED ON THE WAY
+
+**1. THE CITATION GATE.** `tools/governing_citation_check.sh` names the eight
+documents that GOVERN something now and runs the already-committed
+`tools/design_citation_check.py` over them; `tools/ci.sh` runs it as **gate 20**.
+
+**THE LIST IS NAMED RATHER THAN GLOBBED, AND THE REASON IS MEASURED.** Run over
+every document in `docs/`, the checker reports unreproduced citations in **70 of
+~245 files** — almost all RECORDS whose citations were true when written and
+rotted as the tree moved. **Demanding that a record match today's tree is
+demanding that history be falsified**, so the gate covers documents where a stale
+citation misleads rather than remembers. Adding one is a commitment; removing one
+says it has become a record.
+
+**AND THE GATE TOTAL NOW LIVES IN ONE PLACE.** `tools/ci.sh` asserted `19`
+nineteen times — D-423 at nineteen, and adding a gate meant editing all of them.
+`readonly GATE_TOTAL=20`, one literal, one place. **This is NOT the withdrawn
+package's self-referential `grep` derivation**, which the review showed had four
+silent-miscount modes; it is one number in one place, which is all D-423 asks.
+**CLAUDE.md's own sentence was false on landing** — it said the script prints
+`gate N/19` — and is corrected to `gate N/$GATE_TOTAL`. **That is an edit to the
+operator's file and is flagged here rather than buried.**
+
+**2. THE RE-DERIVATION CLAUSE**, now standing in `docs/process.md` and addressed
+to the REVIEWER: *a count the reviewer reproduces only by running the document's
+own command is NOT reproduced.* It no longer depends on whoever writes a dispatch
+prompt.
+
+### F-1.10 — THE MATRIX'S A-PRIORI ARGUMENT WAS FALSE AT k=2, AND THE MEASUREMENT IS BETTER THAN THE ARGUMENT WOULD HAVE BEEN
+
+Revision 2 of the cache-key matrix replaced a bad MEASURED claim with an
+a-priori one: *"the book dedupes openings by `canonical_form`, so no two openings
+can transpose or mirror onto each other at `k <= opening_turns`."* **Deduping the
+WHOLE opening constrains nothing about its PREFIXES.**
+`wp21_throughput_prereg_rev3_REVIEW.md` BLOCKING 2 refuted it with a two-second
+computation, and `tools/opening_prefix_fold.py` re-takes it here:
+
+| `k` | exact-key classes | stone-set | symmetry | (tranche one, 218 openings) |
+|---|---|---|---|---|
+| 1 | 1 | 1 | 1 | every prefix is the forced origin stone |
+| 2 | **213** | **213** | **171** | the a-priori claim is FALSE here |
+| 3 | 218 | 218 | 218 | `canonical_form`'s dedupe — the only depth it held |
+
+**WHAT THE FOLD IS WORTH: 42 extra searches a tranche — 0.72% of its ESTIMATED
+5 819 misses.** So *"the fold merges nothing"* was wrong and *"the fold merges a
+great deal and is worth under one percent"* is right; only the second is a fact
+about the run. **AND ALL 42 SIT WHERE THE FOLD WOULD BE WRONG** — each is a
+prefix whose symmetry partner is a different position, so a symmetry key answers
+it with a `bestmove` in the wrong frame. That is a better argument for the exact
+key than the one the matrix made up. Receipt
+`artifacts/arc3_opening_prefix_fold.txt`; matrix revision 3.
+
+**THE PATTERN, FOR A SUCCESSOR**: revision 1 of the matrix asserted a measurement
+at the wrong population, revision 2 replaced it with an argument that was never
+checked, and revision 3 replaced that with the measurement. **Two of the three
+revisions reached for something cheaper than running the command.**
+
+**GATE 20 IS GREEN AND THE RECEIPT IS ITS OWN LOG.**
+`artifacts/arc3_ci_gate20.txt` — **`ci: all gates passed`, EXIT=0**, **20** gate
+lines, and gate 20 itself reports 112 citations checked across the eight
+governing documents, 0 unreproduced. The gate prints its own disclaimer, which is
+the honest half: *"A GREEN RUN MEANS THE CITATIONS ARE REAL, NOT THAT THE
+DOCUMENT IS RIGHT."*
