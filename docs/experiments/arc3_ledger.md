@@ -605,3 +605,59 @@ lines, and gate 20 itself reports 112 citations checked across the eight
 governing documents, 0 unreproduced. The gate prints its own disclaimer, which is
 the honest half: *"A GREEN RUN MEANS THE CITATIONS ARE REAL, NOT THAT THE
 DOCUMENT IS RIGHT."*
+
+---
+
+## §1c — ROUND 2 FAILED ON BOTH REGISTRATIONS, AND THE SIX BLOCKING FINDINGS ARE ONE STRUCTURAL FACT
+
+| document | round | verdict | findings |
+|---|---|---|---|
+| `wp21_prereg.md` rev 4 | 2 | **FAIL** | 3 BLOCKING, 12 MAJOR, 5 minor |
+| `wp21_throughput_prereg.md` rev 3 | 2 | **FAIL** | 3 BLOCKING, 8 MAJOR |
+
+Both reviews record real progress — 11 of 23 and 17 of 22 round-1 findings
+genuinely CLOSED, each verified against the code rather than against the sentence
+claiming it — and both fail on the same thing read two ways.
+
+**THE SIX BLOCKING FINDINGS ARE FOUR PIECES OF MACHINERY THAT DO NOT EXIST.**
+
+| the finding | the machinery |
+|---|---|
+| `--label-cache` is a registered command word the binary refuses | the cache flag, `crates/pistol-arena/src/bin/arena.rs` |
+| the dry run is registered and not taken; three of its commands are unrunnable | `--partition`, `--skip/--take`, `--label-cache` |
+| `wp21_prereg.md` names `tools/wp21_assemble.py` and the tree has no such file | the assembly instrument |
+| §1/§5 computed on a superseded revision's arithmetic | (a real defect, and the only one of the six a round 3 could fix) |
+
+**A ROUND 3 CANNOT FIX FIVE OF THE SIX.** `docs/process.md`'s dry-run discipline
+requires the literal commands exercised BEFORE the review passes, and **a command
+whose flag does not exist cannot be exercised by any amount of rewriting.** The
+loop grant's third round is remedies-only; there is no remedy in prose for a flag
+that is not implemented.
+
+### THE DECISION: SPLIT, AND THE CODE GOES FIRST
+
+**ARCHITECT DEFAULT APPLIED.** This is the dispatch's own *"STOP and split"*
+applied one round early and for a reason the dispatch did not anticipate: the
+registrations are not failing on their reasoning, they are failing because they
+register an instrument the tree does not have. The order inverts:
+
+1. **the label cache package** — design, REVIEW-design, IMPL, REVIEW-impl,
+   RED-TEAM on the cache path, mutation receipt, CI. It brings `--label-cache`
+   and the two coarser-fold counters D-581 registers.
+2. **`tools/cold_label_check.py --partition hits|misses|all`** — required
+   argument, class named on the summary line, coverage test.
+3. **`tools/wp21_tranche_config.py --skip/--take`** — T-F's sub-range config
+   comes from the shipped generator like every other.
+4. **`tools/wp21_assemble.py`** — needed by §6 and not by tranche one; it may
+   follow the sweep.
+5. **the dry runs**, both documents', taken and recorded.
+6. **round 3 of both registrations**, at a revision where every registered
+   command runs — which is the first revision either of them could honestly have
+   been reviewed at.
+
+**THE COST OF HAVING DONE IT THE OTHER WAY ROUND IS TWO REVIEW ROUNDS**, and it
+is worth naming: a registration that registers commands is not reviewable before
+the commands exist, and both of these registered four.
+
+**RESUME POINT FOR A SUCCESSOR: step 1 above.** Nothing in the sweep starts until
+6 closes.
