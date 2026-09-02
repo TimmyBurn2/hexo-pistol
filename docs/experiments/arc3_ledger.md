@@ -1028,4 +1028,71 @@ the cached pass finishes at exit 0.
 | revision 5 written whole | done | this commit |
 | D-586 | done | `docs/decisions.md` |
 | gate 20 over the nine governing documents | **EXIT=0, every document 0 unreproduced** | run at this revision, `tools/governing_citation_check.sh` |
-| REVIEW-design round 4 of five | dispatched at this revision's SHA | `wp21_label_cache_design_rev5_REVIEW.md` |
+| REVIEW-design round 4 of five, at `b07d774` | **FAIL — 1 BLOCKING, 4 MAJOR, 6 minor**, from 16 the round before | `wp21_label_cache_design_rev5_REVIEW.md` |
+| revision 6, remedies only | written; every finding reproduced against the code before its fix | this commit |
+| REVIEW-design round 5 of five — the LAST, remedies-only | dispatched at this revision's SHA | `wp21_label_cache_design_rev6_REVIEW.md` |
+
+### ROUND 4 — THE COUNT FELL FROM 16 TO 11 AND THE MECHANISM HELD; WHAT FAILED WAS ONE INTEGER
+
+**Every citation reproduced, and the reviewer re-derived D-586's sixteen floors
+with its own group implementation over its own parse of the book.** The mechanism,
+the key, T2, T5, T8, the X1/X1b placement and the limb-4 finding all survived.
+
+**THE BLOCKING FINDING IS AN OFF-BY-ONE THIS SESSION MADE BY READING `ask` AND
+NOT `with_seats`.** The capture runs inside `seats::with_seats`, which sends one
+`newgame` per spawn (`seats.rs:47`) before `ask`'s per-ask one. So the stub's n-th
+`newgame` at `n = P0` is the one before game 0's SECOND-to-last ask, the stray lands
+on a MISS, and the hoisted guard and the un-hoisted one are indistinguishable there —
+`docs/process.md`'s vacuous criterion, on the one guard the package adds. **`n = P0 + 1`.**
+
+**THREE MAJORS ARE THE SAME LESSON AT SMALLER SIZES.** An `info`-shaped stray is
+IGNORED by `classify` (`capture.rs:197-199`), so the mutant's stated observable was
+false — the stray is now a second `bestmove`. *"No engine in the tree writes an
+unsolicited line"* counted the WORD and not the behaviour: `protocol_abuse_tests.rs`
+has a shell script that doubles its `bestmove` — round 3's `git grep unsolicited`
+was the arc's recurring defect one more time, and this session repeated the
+reviewer's sentence rather than re-deriving it. The `asks`-derived mutant dies at
+T2's UNCACHED arm, and its mode-conditional form is an EQUIVALENT mutant, said so.
+T6's fixture could not come from one stub behaviour — `one_engine` binds both seats
+to one `behave` word — and is now two reports, `illegal` for the forfeit and `honest`
+over a five-on-one-axis opening for the rule-4 win.
+
+**D-586 MISQUOTED D-581 AND THE LOG IS APPEND-ONLY, SO D-587 CORRECTS IT.**
+
+**THE RACE THE REVIEWER NAMED IS REAL AND IS NOW STATED**: `unsolicited()` is
+`try_recv`, a time-of-check; a stray not yet queued by the reader thread is found at
+the next check rather than this one, in both passes. T4 therefore asserts the cached
+run refuses *within game 1* — nine hit prefixes, every one a check — rather than at
+turn 0, and the mutant that leaves the guard on the miss path still dies
+deterministically, because under it game 1 has no check at all and the run exits 0.
+
+---
+
+## §2c — THE ASSEMBLY INSTRUMENT, WRITTEN WHILE THE DESIGN REVIEW RAN
+
+`tools/wp21_assemble.py` is `wp21_prereg.md` §8's second missing instrument (§1c's
+item 4, *"may follow the sweep"*), and it is independent of the cache, so it was
+written while round 4 ran and tested in a detached worktree at `b07d774` with its
+own `CARGO_TARGET_DIR` on `/home` — never the live tree, which a review was reading.
+
+**WHAT IT WRITES**: a RAW manifest (one row per corpus: index, file, the corpus's
+own `body_sha256`, records, `capture_sha256`) and a DEDUPED manifest — one row per
+distinct position under D-562(2)'s default, three-key agreement, the deeper label
+winning, ties to the first — as an INDEX into the raw corpora (corpus index, record
+line, the three keys, depth, result, end) rather than a merged corpus, because a
+merged corpus would need one `experiment_sha256` and sixteen tranches have sixteen.
+It counts records, distinct positions, the DECIDED subset (a win by the rules with
+`end normal`, the subset D-562(1) lets outcome enter on) and outcome coverage, and
+it counts KEY DISAGREEMENTS — records agreeing with an earlier one on some keys and
+not all — as distinct positions, because which key rules such a pair is exactly what
+D-562(2) leaves open.
+
+**SHAKEDOWN ON THE PILOT**: over `corpus_v1.txt` twice, 1 484 records, **347
+distinct**, decided 191, coverage 0.5504, disagreements 0 — 347 is the figure
+`wp20_CLOSURE.md` reports. Six tests drive the shipped script, including the
+independent tally, the deeper-wins case, the disagreement case, the digest VOID and
+the exclusive-claim refusal that gives the first manifest back on the second's
+collision: **6 passed, 0 failed** (`artifacts/arc3_wp21_assemble_worktree_test.log`,
+sha256 `7b88f989…`, taken at `b07d774` under rustc 1.98.0). The worktree held nothing
+gitignored but its target directory and was removed. **It owes a `tools/` review
+against `tools/SHELL_CHECKLIST.md`**, dispatched beside round 5.

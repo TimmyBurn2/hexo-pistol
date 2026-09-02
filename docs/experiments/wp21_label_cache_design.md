@@ -1,4 +1,4 @@
-# WP-2.1 lever B — the label cache. DESIGN, revision 5.
+# WP-2.1 lever B — the label cache. DESIGN, revision 6.
 
 > **ONE LINE.** `arena --capture` asks the engine at every asked prefix of every
 > game, and the pilot MEASURED **742 asks over 347 distinct questions**. This
@@ -11,7 +11,7 @@
 
 **GOVERNING**: `docs/experiments/wp21_throughput_prereg.md` revision 3 §2, §2.0,
 §4.2, §4.4, §4.5; `docs/experiments/wp21_prereg.md` revision 4 §4 and §5; D-576,
-D-581, D-584, D-586. This document designs only what those name. Its revision
+D-581, D-584, D-586, D-587. This document designs only what those name. Its revision
 history is in `docs/experiments/arc3_ledger.md`, not here. **`file:line`
 citations are at `adb2012`**, the tree before IMPL.
 
@@ -23,17 +23,17 @@ citations are at `adb2012`**, the tree before IMPL.
 |---|---|---|
 | 1 | `crates/pistol-arena/src/label_cache.rs`, new | `pub enum LabelCache { Off, On }`; `pub struct CaptureCounts { asks, records, hits, key_pos_collisions, key_full_collisions, fold_ms }`; a crate-private `Memo` holding the `BTreeMap<String, (String, String)>`, the two coarser-key sets and the counts. Its own file because a symmetry fold is not *"the capture ask"*, `capture.rs`'s registered subject in `docs/rule9_justifications.md` |
 | 2 | `crates/pistol-arena/src/capture.rs`, `run` (`:326`) | takes a `LabelCache` MODE, builds the `Memo` inside the `with_seats` closure (`:338`) so the map's type is in no signature and no caller can share one; returns `(Vec<CaptureRecord>, CaptureCounts)` |
-| 2a | `run`, first statement | **X1b**: a census-on sink with `LabelCache::On` is refused naming both, before `one_engine` (§3) |
-| 2b | the prefix loop (`:341`), before the lookup | **X3**: the stray-line guard, moved here from `ask` (`:241-246`) so a hit pays it (§3) |
-| 2c | the same loop, at the call to `ask` (`:343`) | **the LOOKUP**: a `position` in the memo takes the stored pair and makes no ask; a miss increments `asks` **here and nowhere else**, then asks |
+| 2a | `run`, first statement | **X1b** (§3) |
+| 2b | the prefix loop (`:341`), before the lookup | **X3** (§3), moved here from `ask` (`:241-246`) |
+| 2c | the same loop, at the call to `ask` (`:343`) | **the LOOKUP**: a `position` in the memo takes the stored pair and makes no ask; a miss increments `asks` (§2.5), then asks |
 | 2d | the same loop, after `normalise` (`:356`) | **the INSERT**: the post-`normalise` pair under `position`, and the miss's two coarser keys into their sets, bumping a counter for each key already present (§2.4) |
 | 3 | `crates/pistol-arena/src/passes.rs` (`:82-96`) | threads the mode in and prints the counts line (§2.5) |
-| 4 | `crates/pistol-arena/src/bin/arena.rs`, the `match words` (`:39-86`) | five reachable spellings of a capture line ending in `--label-cache`: `… --label-nodes n` (`:51`) and `… --census` (`:59-74`) exist; `… --label-cache` is new and legal; `… --census --label-cache` and `… --label-cache --census` are ONE or-pattern arm, **X1**, refused naming both words. Everything else falls to the catch-all (`:79-85`), which names neither |
+| 4 | `crates/pistol-arena/src/bin/arena.rs`, the `match words` (`:39-86`) | five reachable spellings of a capture line: `… --label-nodes n` (`:51`) and `… --census` (`:59-74`) exist; `… --label-cache` is new and legal; `… --census --label-cache` and `… --label-cache --census` are ONE or-pattern arm, **X1** (§3). Everything else falls to the catch-all (`:79-85`), which names neither word |
 | 5 | `crates/pistol-arena/src/usage.rs` | the word, that its absence means off, what the counts line means |
-| 6 | `crates/pistol-arena/src/bin/stub_engine.rs` | `Behave::StrayAfterNewGame(n)`, spelled `stray_after_newgame <n>`: honest, and after answering the `go` that follows its n-th `newgame` it writes one unsolicited `info` line. Play sends one `newgame` per spawn and the capture one per ask, so at `n >= 2` play never reaches it — necessarily, since a play-pass stray forfeits (`exchange.rs:34`) and the report is captured with the config that played it. No engine in the tree writes an unsolicited line, so X3 has no test without this |
+| 6 | `crates/pistol-arena/src/bin/stub_engine.rs` | `Behave::StrayAfterNewGame(n)`, spelled `stray_after_newgame <n>`: honest, and the answer to the `go` that follows its n-th `newgame` carries a SECOND `bestmove` line, written in the same `write` as the answer. **The count**: `seats::with_seats` sends one `newgame` per spawn (`seats.rs:47`) and `ask` one per ask (`:247`), so in play the stub sees one and in a capture one plus one per ask; at `n >= 2` play never reaches the deviation — necessarily, since a play-pass stray forfeits (`exchange.rs:34`) and the report is captured with the config that played it. **A `bestmove`-shaped stray, not an `info` one**: `classify` ignores an unrecognised `info` line (`:197-199`), so only a `bestmove` is read as the answer to a later ask. No `Behave` variant writes a line after its `bestmove`; the one test engine that does (`crates/pistol-arena/tests/protocol_abuse_tests.rs:180-199`) is a shell script whose identity no report this pipeline captures can attest, so X3's test needs a stub behaviour |
 | 7 | `tools/cold_label_check.py` | the ten-sampled-record floor `wp21_prereg.md` §4 registers: fewer than ten sampled records in a class is a VOID (exit 2), not a pass. A named constant, printed in the void message. `--partition` landed at `f1acc57` |
 | 8 | `crates/pistol-arena/tests/label_cache_tests.rs`, new; `tests/cold_label_check_tests.rs` | §5's rows; T8 beside the checker's existing cases |
-| 9 | `docs/rule9_justifications.md`; `tools/governing_citation_check.sh` | `capture.rs`'s entry gains the lookup and insert as part of the ask decision; the `--proposes` entries go when their files exist |
+| 9 | `docs/rule9_justifications.md`; `tools/governing_citation_check.sh` | `capture.rs`'s entry gains the lookup and insert as part of the ask decision; `label_cache_tests.rs` gets an entry of its own — nine rows over one two-stage fixture plus a fixture builder that checks its geometry with `pistol-core`, which is the shape `cold_label_check_tests.rs`'s entry already justifies; the `--proposes` entries go when their files exist |
 
 **NOTHING ELSE.** No format version moves (D-572), no column, no manifest field,
 `capture_sha256` untouched. The capture file carries no trace of the mode by
@@ -52,22 +52,20 @@ folds nothing — not a symmetry, not a transposition, not a re-spelling of a tu
 which `Turn::pair` makes canonical by type — so the memo has no equivalence to
 get wrong; every coarser key buys its saving with a class of wrong answer (D-576,
 `matrix_label_cache_key.md`). A `BTreeMap`: no hasher, one string compare where
-a hit replaces a ~885 ms search. **The strongest attack**: gate 9's five seats do
-not include `configs/instrument_v0.toml`, none of its budgets is `nodes 400000`,
-and no limb asks one position twice at the same `go` in one process — which is a
-hit. §4.4's byte-identity run at the sweep's seat and budget takes that shape
-~6 600 times a tranche, and that is what closes it.
+a hit replaces a ~885 ms search. The strongest attack on the key is D-581's and
+the matrix's §4's — gate 9 never takes a hit's exact shape at this seat — and
+§4.4's byte-identity run at the sweep's seat and budget is what closes it.
 
-**2.2 The memo is a mode.** `run` is `pub`, so an invariant about its callers
-cannot be checked by reading it. The registration's invariant — built inside
-`run`, dropped with it, never shared — is made structural: the mode goes in, the
-counts come out, the map never crosses the signature. Within one `run` the
+**2.2 The memo is a mode.** The registration's §2.0 invariant — built inside
+`run`, dropped with it, never shared — is made structural, because `run` is `pub`:
+the mode goes in, the counts come out, the map never crosses the signature. Within one `run` the
 binary, config and `go` are fixed, so `position` is the only argument that varies
 and the key is complete.
 
 **2.3 The memo holds the post-`normalise` pair**, exactly the strings the record
 carries, so a hit reproduces them by construction and the hit path cannot reach
-`normalise`. The registration's §4.2 says *"the pair the engine returned"*, the
+`normalise`; it skips `ask`, not record construction, so `no_tab` (`:359`) runs on
+every record. The registration's §4.2 says *"the pair the engine returned"*, the
 raw one; the two are equal through a pure function, and the normalised side is
 fixed here so both paths build the record at one place from strings normalised
 once. The divergence is recorded here and corrected in the registration's next
@@ -97,8 +95,10 @@ merges  42 51 48 55 47 48 50 44 53 48 51 60 45 56 48 46   792
 Each tranche's count is read against its own floor, and what that reading
 decides is **D-586**, which amends D-581's flip clause to this per-tranche
 floor-relative form with a number for *"materially"*, corrects the matrix's
-*"no extra search"*, and withdraws *"settles D-562(2)"* — the counters measure a
-fold's yield and adjudicate nothing between keys.
+*"one sort the arena already does"* (D-587 corrects D-586's attribution of that
+phrase to D-581, which says only *"no extra search"* — true, a sort is not a
+search), and withdraws *"settles D-562(2)"*: the counters measure a fold's yield
+and adjudicate nothing between keys.
 
 **2.5 The counts line.** One stdout line beside the manifest row:
 `arena: label cache on: asks A records R hits H key_pos_collisions P key_full_collisions F fold_ms M`,
@@ -116,13 +116,17 @@ green on a cache that never ran. `hits` is `records - asks`.
 |---|---|---|
 | **X1** | `--label-cache` with `--census`, either order, refused at the argument parse naming both words, before `outpath::claim` (`:89`) so no file is left behind | a hit performs no search and emits no census row: a cached census capture writes fewer rows than positions asked, indistinguishable from a quiet search |
 | **X1b** | the same refusal as `run`'s first statement | the CLI arm is another crate; `run` is `pub` and the combination is spellable at the seam where the damage is done — a guard in one file with its consequence in another, the shape `capture.rs`'s rule-9 entry names |
-| **X3** | `channel.unsolicited()` at every prefix, before the lookup, moved out of `ask` | a guard that stops running on the ~53% of prefixes that hit: a stray in the pipe at a hit is read as the answer to a LATER miss, or never |
+| **X3** | `channel.unsolicited()` at every prefix, before the lookup, moved out of `ask` | a guard that stops running on the prefixes that hit: a `bestmove` stray in the pipe at a hit is read as the answer to a LATER miss, or never |
 
 X3's residual: nothing checks the pipe after the final prefix of the final game,
-in either pass; the hoist restores parity and does not close that. The census-row
-guard inside `ask` is untouched and moot — X1b makes a cached run never a census
-run at the seam. There is no *"cache disagrees"* refusal: a self-check that
-re-asked would cost what it saves, and §4.4 is the external referent.
+in either pass; the hoist restores parity and does not close that. **And the
+guard is a time-of-check**: `unsolicited()` is `try_recv`, so a stray the reader
+thread has not yet queued is missed at that prefix and found at the next check —
+true of the uncached pass today, and the reason T4 asserts a refusal *within* the
+run of hits rather than at one prefix. The census-row guard inside `ask` is
+untouched and moot — X1b makes a cached run never a census run at the seam. There
+is no *"cache disagrees"* refusal: a self-check that re-asked would cost what it
+saves, and §4.4 is the external referent.
 
 ---
 
@@ -147,9 +151,9 @@ stub unless a row says otherwise.
 | T2 | the counts line reads `asks < records` cached and `asks == records` uncached. Two games must share a prefix: the arena plays every opening from both colours, and with one stub on both seats the two games are identical, so every prefix of the second is a hit |
 | T3 | `--label-cache` with `--census`, **in both orders**, is refused naming both words and leaves no output file |
 | T3b | `capture::run` given a census-on sink and `LabelCache::On` returns the refusal naming both, before any engine is spawned — a library-level test over a report the arena wrote |
-| T4 | a stray line at a prefix the cached run treats as a HIT is refused **at that prefix in both runs**: row 6's stub with `n` = the asked-prefix count of game 0, read off an honest play of the same opening, so the stray follows game 0's last answer and game 1's first prefix, a hit, finds it |
+| T4 | a stray line in the pipe while the cached run is serving HITS is refused in both runs. Row 6's stub with **`n = P0 + 1`**, `P0` being game 0's asked-prefix count read off `capture::asked_prefixes` over an honest play of the same opening: the `(P0 + 1)`-th `newgame` is the one before game 0's last `go`, so the stray follows game 0's last answer and sits in the pipe through game 1, every prefix of which is a hit. The uncached run refuses at game 1, turn 0 (by the guard, or by `ask` reading the stray as an answer with no totals); the cached run refuses **within game 1** |
 | T5 | over a one-opening report both counters are zero — every miss has a distinct stone count; over the fixture below `key_pos_collisions >= 1`, `key_full_collisions >= 2`, `key_full >= key_pos` |
-| T6 | T1 over a report holding a forfeit and a rule-4 win |
+| T6 | T1 over two further reports, neither producible from one stub behaviour beside the other (`one_engine` binds both seats to one `behave` word): one played by `illegal` on both seats, where every game forfeits at the first engine move and the report still writes; one played by `honest` over a five-turn opening whose P1 stones lie on one axis at `(-4..0, 0)` with P2's far off it, so the stub's smallest cluster neighbour `(-5, 0)` completes six and it plays the single stone — a rule-4 win from the shipped stub |
 | T7 | `--label-cache` twice, or anywhere but last, is refused |
 | T8 | in `cold_label_check_tests.rs`: a capture cut to nine HIT records is a VOID at `--partition hits`; cut to ten, it passes |
 
@@ -178,11 +182,12 @@ Against call sites enumerated by a `git grep` receipt in the mutation document
 | 2d, insert | stores the raw pair | T1: ` nps` in a hit's record |
 | 2, mode | consulted nowhere — `On` behaves as `Off` | T2 |
 | `asks` | reports `records` | T2, **cached** arm |
-| `asks` | derived from the records or the memo | T2, cached arm |
+| `asks` | derived from the records or the memo, unconditionally | T2, **uncached** arm: the derivation reads fewer than `records` |
+| `asks` | derived only when the mode is `On` | **EQUIVALENT while the cache is live** — distinguishable only on a dead cache, which no test has; listed as such in the receipt, and §2.5 is a REVIEW-impl item |
 | X1 | the arm removed | T3: the combination falls to the catch-all, which also refuses and exits 2 but names neither word |
 | X1 | one alternative of the or-pattern removed | T3, that order |
 | X1b | removed | T3b |
-| X3 | the hoisted guard removed | T4: the cached run exits 0 where the uncached refuses |
+| X3 | the guard left inside `ask` and not hoisted, or removed | T4: the cached run finishes at exit 0, every prefix of game 1 being a hit and none an ask |
 | counters | `key_pos_collisions` removed | T5, the collision fixture |
 | counters | `key_full_collisions` removed | T5, the collision fixture |
 | counters | inverted — non-collisions counted | T5, the one-opening fixture |
@@ -191,20 +196,11 @@ Against call sites enumerated by a `git grep` receipt in the mutation document
 
 ---
 
-## 7. THE ONE REJECTED FINDING
-
-Round 1: the design never mentions `no_tab`, which the registration names as a
-candidate cache defect. `no_tab` runs in `run` on the constructed record (`:359`),
-after `ask` and outside it; a hit skips `ask`, not record construction, so it
-cannot skip the guard. This package does not touch it and adds no mutant for it.
-
----
-
-## 8. OBLIGATIONS
+## 7. OBLIGATIONS
 
 | obligation | discharged by |
 |---|---|
-| REVIEW-design, fresh context, against this revision whole | round 4 of five (D-585) |
+| REVIEW-design, fresh context | round 4 FAIL (1B/4M/6m); round 5, remedies-only, against this revision |
 | IMPL; REVIEW-impl, fresh context, not the implementer; RED-TEAM on the cache path | subagents. The red team's inputs: a forfeit, a rule-4 win, the T5 fixture, a stray line, `--census`, a doubled word |
 | the mutation receipt with its `git grep` enumeration | at IMPL, its own document |
 | the `tools/` coverage rule | T8 drives the shipped checker; §5 the shipped `arena` |
@@ -213,13 +209,11 @@ cannot skip the guard. This package does not touch it and adds no mutant for it.
 
 ---
 
-## 9. WHAT THIS DESIGN DOES NOT DO
+## 8. WHAT THIS DESIGN DOES NOT DO
 
 1. **Persist across processes** — the memo dies with `run`, structurally.
-2. **Fold transpositions or symmetries** — each a class of wrong answer, worth 42
-   to 60 searches a tranche at `k = 2` (§2.4).
+2. **Fold anything, or settle D-562(2)** (§2.4).
 3. **Change any criterion of `wp21_prereg.md` §4** — it supplies T-A's floor.
-4. **Settle D-562(2)** (§2.4).
-5. **Make `search_nodes` a measure of work**: under the cache ~53% of records
+4. **Make `search_nodes` a measure of work**: under the cache ~53% of records
    carry a `search_nodes` for a search not run (registration §4.2); summing that
    column over-counts by the duplication factor.
