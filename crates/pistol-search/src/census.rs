@@ -6,10 +6,11 @@
 /// in WHICH field, and a review demonstrated that exchanging them at a call site
 /// — the identity column carrying `GameState::key`, the option the design's F2
 /// rules out — left **seventy tests green**, including the one written to catch
-/// it. With the derivation here there is no call-site assignment left to
-/// exchange: a site hands over a state and takes back both columns, and any
-/// exchange has to happen inside [`CensusKeys::at`], where a test pins each
-/// field against an independently computed referent.
+/// it. Deriving both here removes the DUPLICATED derivation and not the
+/// exchange: each firing site still names the two fields when it builds its
+/// row, so each is attacked by a registered mutant of its own, and the test
+/// that kills them reads an IN-TREE row's identity against a referent replayed
+/// outside the search (`docs/experiments/wp20b_B1_remedy.md`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CensusKeys {
     /// The position up to transposition AND symmetry — the identity D-537's

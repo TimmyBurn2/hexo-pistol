@@ -182,6 +182,18 @@ its registered digests, differing from the governed workload only in budget:
 | `census_rows > 0` on ON, `0` on both OFF arms | an ON arm that paid nothing | **18 / 0 / 0**, identical across all six reps |
 | **18 `arm` lines in six distinct orders** | the rotation not actually rotating | **6 reps x 3 arms**, each arm in each slot **twice** |
 
+**ERRATUM ON THE LAST ROW, RECORDED RATHER THAN REWRITTEN.** *"six distinct
+orders"* is a criterion the registered instrument can never satisfy: the
+rotation has a THREE-cycle, so `REPS=6` produces three distinct orders each used
+twice, which is what the raw shows and what the result cell already states. **The
+registered wording is not edited** — a criterion rewritten after its run is the
+post-hoc threshold move `docs/process.md` forbids, whichever direction it moves.
+What is recorded instead is the disposition: the check actually made is *"each
+arm in each slot equally often"*, it is strictly what the named defect — the
+rotation not rotating — requires excluded, and a registration that asked for six
+distinct orders asked for something a three-cycle cannot produce. Found by
+REVIEW-impl round 3 (m3).
+
 It is not a governed sample and does not consume this registration's run.
 
 **The dry run's own H1 is `1.0056` and is not a result**: at `nodes 2000` a
@@ -191,9 +203,21 @@ reach the intended positions, that every arm ran, and that the ON arm paid.
 
 ### 3.5 THE GOVERNED RUN, AND ITS VERDICT
 
-Taken after this registration passed its review, with the instrument at §3.1's
-digests. Raw `artifacts/wp20b_perf_guard_v2.txt`, receipt
+**REVISION 2's FIRST FRESH-CONTEXT REVIEW IS REVIEW-impl ROUND 3**
+(`docs/experiments/wp20b_impl_REVIEW_r3.md`, committed `a518cc7`,
+`2026-09-02 15:17:35 +0200`), which read this section as a pre-registration,
+found round 2's ten limbs discharged and confirmed the instrument computes the
+statistic §3.3 registers. **THE RUN THIS SECTION FIRST REPORTED PREDATED THAT
+REVIEW AND THEREFORE DID NOT GOVERN**: `artifacts/wp20b_perf_guard_v2.txt` was
+taken at `14:52:31`, and this document, the receipt and the ledger each said a
+review had preceded it. No such artefact existed. The three sentences are
+deleted, that run joins revision 1's on the superseded record
+(`artifacts/wp20b_perf_RECEIPT_v2_SUPERSEDED.txt`), and **the governed run is
+the RE-RUN below**, taken after round 3's commit with the instrument at §3.1's
+digests. Raw `artifacts/wp20b_perf_guard_v3.txt`, receipt
 `artifacts/wp20b_perf_RECEIPT.txt`.
+
+RUN_TABLE_PLACEHOLDER
 
 | what | value |
 |---|---|
@@ -329,11 +353,21 @@ carries `turns_from_root > 0` — the in-tree site was reached — before runnin
 again with no census and asserting the fold count is zero. The budget moved from
 600 to 1 500 nodes for the same reason.
 
-**THE RECEIPT THIS PACKAGE CLOSES ON IS RUN 5**,
-`artifacts/wp20b_mutants_v5.txt`: **26 registered, 26 dead at their registered
-test, 0 dead elsewhere, 0 alive, 0 harness faults, EXIT=0**, at revision
-`595f004`, whose tree is byte-identical to the reviewed `eff179b`. Nine of the
-twenty-six are call-removed.
+**AN EARLIER REVISION OF THIS SECTION NAMED RUN 5 AS THE RECEIPT AND THAT WAS
+WRONG** (REVIEW-impl round 3's M2). Run 5's tree at `595f004` differs from the
+reviewed one in **eleven source and test files** — `census.rs` and
+`census_identity_tests.rs` among them, the very files round 2's remedies rewrote
+— so run 5 knows nothing about `CensusKeys`, M27, M28 or M29, and the sentence
+*"the receipt covers the reviewed code exactly"* was false at that revision. Run
+5 stays on the record below as one of the superseded runs it is.
+
+**THE RECEIPT THIS PACKAGE CLOSES ON IS THE RUN TAKEN AT THE REMEDIED TREE**,
+whose count, revision and verdict are in
+`docs/experiments/wp20b_VERIFICATION.md` §2 together with the `git grep` receipt
+D-568 requires a mutation set to be specified against. **The B1 remedy added four
+mutants — M30 to M33, one per defect class per PUSH SITE** — because the set as
+it stood registered a mutant only inside `CensusKeys::at`, the one place the
+exchange defect no longer needed.
 
 **THE FOUR EARLIER RUNS ARE ON THE RECORD AND TWO OF THEM FAILED**, which is
 recorded rather than tidied away:

@@ -159,7 +159,10 @@ fn each_identity_column_is_the_derivation_it_is_named_for() {
     // Both columns are now pinned against referents computed here, sharing no
     // code with the census: `canonical_key` over the board's own stones, and
     // `GameState::key`. An exchange inside `CensusKeys::at` fails BOTH
-    // assertions; there is no call site left to exchange them at.
+    // assertions. It says NOTHING about the two firing sites, which name the
+    // fields themselves — that is
+    // `an_in_tree_rows_identity_is_the_canonical_key_of_the_position_it_fired_on`
+    // below and the root half of the test after this one.
     for cells in [
         BENCH_B15_FIRST,
         &BENCH_B15_FIRST[..7],
@@ -234,4 +237,96 @@ fn a_second_collect_starts_the_fold_count_again() {
     assert_eq!(engine.census_fold_entries(), first);
     engine.collect_trigger_census();
     assert_eq!(engine.census_fold_entries(), 0);
+}
+
+/// The position the IN-TREE firing happens on when `BENCH_B15_FIRST` is
+/// searched at 1,500 nodes on the seat above — those fifteen stones plus the
+/// four the search's first two turns add.
+///
+/// **DERIVED FROM THE FIRING SITE, NOT CHOSEN**: the run that read it off, and
+/// the instrumentation that re-reads it, are recorded in
+/// `docs/experiments/wp20b_B1_remedy.md` §1. Nothing here is taken on trust —
+/// the test REPLAYS these stones and computes both identities from
+/// `pistol-core` alone, so a fixture that stopped being the firing position
+/// would fail the test rather than quietly weaken it.
+const IN_TREE_FIRING_AT_1500: &[&str] = &[
+    "0,0", "-1,1", "1,0", "0,1", "0,2", "-1,0", "1,-1", "0,-1", "1,-2", "0,-2", "0,3", "-1,-1",
+    "1,1", "-1,2", "-1,3", "-1,4", "4,-2", "-2,3", "-3,3",
+];
+
+#[test]
+fn an_in_tree_rows_identity_is_the_canonical_key_of_the_position_it_fired_on() {
+    // THE ASSERTION ROUND 2 SPECIFIED AND ROUND 3 FOUND MISSING, and the one
+    // every other in-tree check in this repository is a correlate of. The
+    // others compare an in-tree row's two columns to each other
+    // (`key != key_pos`), and an EXCHANGE of the columns PRESERVES that — which
+    // is how the option-A identity design F2 forbids reached every in-tree
+    // census row with seventy-three tests green.
+    //
+    // The referent here is derived OUTSIDE the search twice over: from a
+    // position replayed stone by stone, and through the MIRROR — the value
+    // asserted is the canonical key of TRANSFORMED spellings of those stones.
+    // Only a symmetry-folded identity equals that. `GameState::key` of any
+    // spelling does not, so an exchange at the in-tree push site fails here
+    // instead of passing.
+    let replayed = state_of(IN_TREE_FIRING_AT_1500);
+    let stones: Vec<(Coord, pistol_core::Player)> = replayed.board().stones().collect();
+    let referents: std::collections::BTreeSet<pistol_core::Key128> = pistol_core::Symmetry::ALL
+        .iter()
+        .map(|&symmetry| {
+            pistol_core::canonical_key(&pistol_core::symmetry::transform(&stones, symmetry))
+        })
+        .collect();
+    assert_eq!(
+        referents.len(),
+        1,
+        "the twelve images of one position do not share a canonical key, so this referent \
+         proves nothing about folding: {referents:?}"
+    );
+    let referent = *referents
+        .iter()
+        .next()
+        .expect("a one-element set has an element");
+    assert_ne!(
+        referent,
+        replayed.key(),
+        "the canonical key and the position key of the firing position coincide, so this \
+         position cannot tell the two columns apart"
+    );
+
+    let mut engine = searcher(true);
+    engine.collect_trigger_census();
+    engine
+        .search(&state_of(BENCH_B15_FIRST), Stop::Nodes(1_500), &mut |_| {})
+        .expect("the search runs");
+    let rows = engine.take_trigger_census();
+    let in_tree: Vec<_> = rows
+        .iter()
+        .filter(|row| row.columns.turns_from_root > 0)
+        .collect();
+    assert!(
+        !in_tree.is_empty(),
+        "this budget never reached the IN-TREE firing site, so the assertion below would pass \
+         vacuously"
+    );
+    let carrying = in_tree
+        .iter()
+        .find(|row| row.key == referent)
+        .unwrap_or_else(|| {
+            panic!(
+                "no IN-TREE census row carries the canonical key of the position it fired on. \
+                 TWO THINGS PRODUCE THIS and they are told apart by whether the search moved: \
+                 (a) the identity column is not a canonical key at the in-tree push site — the \
+                 defect this test exists for; (b) the search now fires in-tree somewhere else, \
+                 so IN_TREE_FIRING_AT_1500 is stale and must be re-derived by \
+                 docs/experiments/wp20b_B1_remedy.md section 2. Referent {referent}, rows \
+                 {in_tree:?}"
+            )
+        });
+    assert_eq!(
+        carrying.key_pos,
+        replayed.key(),
+        "the IN-TREE row whose identity column is the firing position's canonical key carries \
+         some other position's `GameState::key` beside it"
+    );
 }
