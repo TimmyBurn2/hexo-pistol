@@ -917,3 +917,50 @@ is identical cached or not — so T2 would go green on a dead cache**, reinstati
 round 2's central finding. Revision 4 registers the field, fixes the increment at
 the call to `ask`, and moves the kill criterion to T2's **cached** arm, where
 revision 3 had named the uncached one — the arm where that mutant survives.
+
+### CI IS GREEN AT 20 OF 20 UNDER rustc 1.98.0
+
+`artifacts/arc3_ci_198_v3.txt` — **`ci: all gates passed`, EXIT=0**, twenty gate
+lines, at `3d559b0`. **This is the first green under the new toolchain** and it
+covers everything landed this session: the merge and the audit, gate 20, both
+tools changes, and the `as_chunks` rewrite of both FIPS-pinned SHA-256 copies.
+It took three attempts and none of the three failures was a defect in the code
+under test — F-1.11 (the compiler moved), F-1.14 (a lint arrived with it),
+F-1.15 (the gate reads the index and the fix was unstaged).
+
+### F-1.16 — THE DESIGN GATE IS NOT CONVERGING, AND THE REASON IS THE REVISION METHOD
+
+Three rounds, and the finding counts do not fall: **22, 15, 16**. The disposition
+is the number that says why:
+
+| round | its findings | what the NEXT revision did to them |
+|---|---|---|
+| 1 | 22 | round 3 reads them 9 CLOSED, 6 PARTIAL, 6 OPEN |
+| 2 | 15 | round 3 reads them **1 CLOSED, 4 PARTIAL, 10 OPEN** |
+
+**REVISION 3 CLOSED ONE OF ROUND 2's FIFTEEN.** Not because the findings were
+wrong — because each revision answered the BLOCKING findings and left the MAJORs
+and minors, and then the new text generated findings of its own.
+
+**BOTH REVIEWERS DIAGNOSED IT THE SAME WAY, WITH THE SAME COMMAND.** Round 2 ran
+`git diff` and found **§4 and §5 had no hunks** while the header claimed every
+finding was disposed of. Round 3 ran it again and found **seven sections with no
+hunks**, with §4 untouched for three revisions running.
+
+**THE MECHANISM: the revision is driven by the review's QUOTE LIST rather than by
+the document.** A finding that quotes §2 gets §2 opened; a finding about §4 that
+nobody quoted does not. And because each revision narrates its own correction of
+the last, the document grows a section per round — §9 came to say *"42 searches a
+tranche"* seventy lines below §1.1's correction of exactly that, which is D-423's
+own defect produced by the act of fixing D-423's own defect.
+
+**WHAT IS NOT WRONG IS THE DESIGN.** Its mechanism converged: the memo is a mode
+rather than a parameter, it sits on the post-`normalise` side, the stray-line
+guard is hoisted, X2 is deleted as unreachable, the stub gains the behaviour X3's
+test needs. **What has not converged is the DOCUMENT**, which is now four
+revisions of self-narration around about fifteen lines of Rust.
+
+**THE FIX IS NOT A FOURTH PATCH.** It is to rewrite the design WHOLE and SHORT
+from the settled mechanism, with every section written once and no revision
+history inside it — the history belongs here, in the ledger, which is what a
+ledger is for.
