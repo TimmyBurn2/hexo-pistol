@@ -797,3 +797,37 @@ MOVED. It caught one real thing on landing and will catch more as the tree moves
 it catches no wrong-but-in-range citation, ever. **D-582's reviewer clause is the
 only thing that does**, which is the whole reason the clause and not the gate is
 the answer to the class.
+
+### F-1.14 — THE TOOLCHAIN'S SECOND BITE: A NEW CLIPPY LINT MADE EIGHT SITES RED, ONE OF THEM THE FIPS-PINNED SHA-256
+
+The clean rebuild under rustc 1.98.0 reached **gate 4** and returned
+`ci: FAIL: clippy`. Not a regression either: **`clippy::chunks_exact_to_as_chunks`
+is new in 1.98** and refuses `chunks_exact` with a constant chunk size. Eight
+sites, in code that was clippy-clean an hour earlier:
+
+```
+crates/pistol-core/tests/common/sha256.rs      x3
+crates/pistol-solver/tests/common/sha256.rs    x3   (D-37's deliberate duplicate)
+crates/pistol-cli/src/sha256.rs                x2
+crates/pistol-arena/src/score.rs               x2
+crates/pistol-arena/src/transcript.rs          x1
+crates/pistol-arena/tests/scoring_tests.rs     x1
+crates/pistol-cli/tests/wp16_warm_attribution_check_tests.rs  x1
+```
+
+plus `clippy::useless_format` at `crates/pistol-arena/tests/replay_tests.rs:137`.
+
+**THE MAPPING IS EXACT AND THAT IS WHY IT IS SAFE.** `as_chunks::<N>()` returns
+the pair `chunks_exact` splits into — whole chunks, then the tail — so
+`pistol-cli`'s streaming digest keeps `remainder()`'s meaning as the tuple's
+second element, and `score.rs`'s deliberately dropped odd trailing game is still
+dropped. **CHECKED RATHER THAN ARGUED**: both SHA-256 implementations still match
+their published FIPS vectors, and the streaming one still passes
+`a_streamed_digest_does_not_depend_on_where_the_pieces_were_cut` — the test D-572
+landed for exactly this kind of edit.
+
+**WHAT IT COSTS THE ARC** is one more instance of F-1.11's lesson: *"clippy clean
+is mechanical law"* (CLAUDE.md) is a law against a MOVING standard, so a green CI
+receipt is a statement about a toolchain as much as about a tree. The run log's
+`rustc --version` line, registered this session in `wp21_prereg.md` §8, is the
+thing that makes an old receipt readable rather than merely old.

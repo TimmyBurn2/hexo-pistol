@@ -89,8 +89,13 @@ pub fn tally(records: &[GameRecord]) -> Tally {
 /// contributes nothing, which is why the stop only ever fires at a pair
 /// boundary (docs/decisions.md D-165).
 pub fn pair_buckets(records: &[GameRecord]) -> Vec<usize> {
+    // `as_chunks` rather than `chunks_exact`: constant chunk size, which
+    // clippy's `chunks_exact_to_as_chunks` (rustc 1.98) refuses. Same pairs,
+    // same dropped odd trailing game.
     records
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|pair| {
             // Two games, each scoring 0, 1/2 or 1 for engine A, so the sum is a
             // multiple of a half in `0..=2`, and twice the sum indexes the five
@@ -151,7 +156,9 @@ pub fn first_crossing_pairs(records: &[GameRecord], sprt: &SprtSection) -> Optio
 /// D-158).
 pub fn pairs_without_forfeits(records: &[GameRecord]) -> Vec<GameRecord> {
     records
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .filter(|pair| !pair[0].is_forfeit() && !pair[1].is_forfeit())
         .flatten()
         .cloned()

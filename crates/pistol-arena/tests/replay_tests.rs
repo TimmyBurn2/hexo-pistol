@@ -134,7 +134,7 @@ fn a_real_run_replays_with_no_divergence_and_the_same_node_counts() {
     );
     assert_eq!(
         pass.records("divergences"),
-        vec![format!("divergences 0")],
+        vec!["divergences 0".to_string()],
         "nothing disagreed: {}",
         pass.document()
     );

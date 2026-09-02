@@ -272,7 +272,7 @@ fn the_clean_verdict_drops_whole_pairs_not_single_games() {
     );
     // Every surviving pair is still two games of ONE opening, which is the
     // property a game-wise filter destroys.
-    for pair in kept.chunks_exact(2) {
+    for pair in kept.as_chunks::<2>().0 {
         assert_eq!(
             pair[0].opening, pair[1].opening,
             "a pair must not straddle two openings: {} and {}",

@@ -70,11 +70,14 @@ impl Sha256 {
             compress(&mut self.state, &block);
             self.buffered = 0;
         }
-        let mut blocks = bytes.chunks_exact(64);
-        for block in &mut blocks {
+        // `as_chunks` rather than `chunks_exact`: the chunk size is a constant,
+        // and clippy's `chunks_exact_to_as_chunks` (rustc 1.98) refuses the
+        // latter. The tuple is the same pair — whole blocks, then the tail this
+        // call keeps for the next one.
+        let (blocks, rest) = bytes.as_chunks::<64>();
+        for block in blocks {
             compress(&mut self.state, block);
         }
-        let rest = blocks.remainder();
         self.buffer[..rest.len()].copy_from_slice(rest);
         self.buffered = rest.len();
     }
@@ -112,7 +115,7 @@ impl Default for Sha256 {
 /// One 64-byte block into the state.
 fn compress(state: &mut [u32; 8], block: &[u8]) {
     let mut schedule = [0u32; 64];
-    for (word, source) in schedule.iter_mut().zip(block.chunks_exact(4)) {
+    for (word, source) in schedule.iter_mut().zip(block.as_chunks::<4>().0) {
         *word = u32::from_be_bytes([source[0], source[1], source[2], source[3]]);
     }
     for index in 16..64 {

@@ -97,7 +97,7 @@ fn keyed(record: &str) -> Result<Vec<(&str, &str)>, ArenaError> {
         )));
     }
     let mut out: Vec<(&str, &str)> = Vec::with_capacity(words.len() / 2);
-    for pair in words.chunks_exact(2) {
+    for pair in words.as_chunks::<2>().0 {
         if out.iter().any(|(key, _)| *key == pair[0]) {
             return Err(refuse(format!(
                 "the key `{}` appears twice on `{record}`",

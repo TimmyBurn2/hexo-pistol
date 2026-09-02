@@ -163,7 +163,9 @@ fn report(dir: &Path, fixture: &Fixture) -> String {
 fn buckets(fixture: &Fixture) -> Vec<u8> {
     fixture
         .games
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|pair| ((pair[0].score_a() + pair[1].score_a()) * 2.0).round() as u8)
         .collect()
 }
