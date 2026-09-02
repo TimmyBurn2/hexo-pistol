@@ -964,3 +964,68 @@ revisions of self-narration around about fifteen lines of Rust.
 from the settled mechanism, with every section written once and no revision
 history inside it — the history belongs here, in the ledger, which is what a
 ledger is for.
+
+---
+
+## §1d — THE CACHE DESIGN IS REWRITTEN WHOLE AS REVISION 5, AND THE FLIP CLAUSE GETS ITS NUMBER
+
+**THE DISPATCH'S INSTRUCTION, taken as written**: *"rewrite the cache design
+WHOLE, do not patch it … every section once, NO revision history inside it …
+target well under half its current length."* F-1.16's diagnosis was the method,
+not the mechanism, so revision 5 is written from the settled mechanism and not
+from revision 4's text. **The seven settled points are all present and none is
+re-opened**: the memo is a MODE and `run` builds the map (§2.2); it holds the
+post-`normalise` pair (§2.3); X3 is hoisted (§3); X2 is gone — it is not
+mentioned, because a deleted guard that cannot fire needs no paragraph; the stub
+gains the behaviour X3's test needs (§1 row 6); `asks` is a counter at the call
+to `ask` (§2.5); the key is the `position` line (§2.1).
+
+**SIZE**: 4 747 words at revision 4, **2 680 at revision 5 — 56%**, against a
+target of *"well under half"*. The remainder is tables: nine change rows, three
+refusals, nine tests, eighteen mutants, each row answering a finding one of the
+three rounds raised, and the arc's own experience is that a row a reviewer asked
+for and a revision dropped comes back as a finding. The size is reported against
+the target rather than argued to meet it; the review is the judge of whether
+what remains is load-bearing.
+
+**WHAT REVISION 5 SETTLES THAT REVISION 4 LEFT OPEN**, each a round-1 or round-2
+finding that stood OPEN or PARTIAL through three rounds:
+
+| finding | how revision 5 disposes of it |
+|---|---|
+| M14 / K — X1 enforced only in another crate | **X1b**: the same refusal as `run`'s first statement, with its own mutant and a library-level test (T3b) |
+| M12 — hard rule 9, a symmetry fold inside `capture.rs` | the memo, the counters and the mode live in a new `label_cache.rs`; `capture.rs` gains the lookup, the insert, the guard and the count |
+| M10(a) — a MEASURED cost claim with no instrument | `fold_ms`, printed on every cached run |
+| M10(b) — the quadratic replay | the stone list is built from the prefix's turns, no `GameState`, no fallible step |
+| M10(c) / G — the design contradicts the matrix and D-581 three ways | **D-586**, appended with this revision, corrects all three in the log; the matrix is not re-taken |
+| M7(iii) / F — *"materially"* undefined, threshold silently moved | D-586: one percent of the cached tranches' misses beyond each tranche's own floor, with the ground for the number |
+| M13 — a cached run leaves no trace | said plainly: the counts line names the mode, and nothing in any artifact corroborates it |
+| M15 — the `search_nodes` consequence | §9 item 5 |
+| M16 — §4 in the wrong document | §4 is four sentences and a pointer |
+| MAJOR 7 — a wrong-key mutant unobservable on T1's fixture | the T5 fixture is registered with its three properties, checked by the test itself, and both wrong-key mutants die there |
+| MAJOR 8 — the ten-record floor had no mutant and no test | row 7, T8, and a mutant row |
+| MAJOR 10 — limb 4 of the sibling's dry run cannot fail | an obligation row: the registration's next revision reads the printed `asks` |
+| MAJOR 11 — X1's arm count | the five spellings are enumerated, three legal; T3 asserts both refusal orders; two mutants |
+| H — §2.1 diverges from §4.2 unrecorded | recorded in §2.3, corrected in the registration's next revision |
+| O — the end-of-game residual | stated in §3 |
+| L, M, minor 13, minor 16 — wrong or missing line citations | every citation is at a named revision (`adb2012`) and gate 20 reports 0 unreproduced; the comment block above gate 8 is not cited at all |
+| m18, m19, m20, m21 | *"at the same `go`"*; a hit replaces the search; *"none of its budgets"*; memory ESTIMATED |
+| minor 14, minor 15 | one mutant per row; T2's two-games-per-opening reason stated |
+
+**THE STRAY-LINE TEST HAS A SHAPE, AND IT COST A CODE FACT TO FIND.** The play
+pass refuses an unsolicited line before every ask (`exchange.rs:34`) and forfeits
+the game, and a capture must run with the config that played its report, so a
+stub that wrote a stray at a fixed point in play would leave no report to
+capture. The stub instead counts `newgame`s — one per spawn in play, one per ask
+in a capture — and writes its stray after the answer that follows the n-th. T4
+sets `n` to game 0's asked-prefix count, read off an honest play of the same
+opening, so the stray sits in the pipe when game 1's first prefix, a HIT, is
+processed; under the hoisted guard both passes refuse there, and under the mutant
+the cached pass finishes at exit 0.
+
+| step | state | receipt |
+|---|---|---|
+| revision 5 written whole | done | this commit |
+| D-586 | done | `docs/decisions.md` |
+| gate 20 over the nine governing documents | **EXIT=0, every document 0 unreproduced** | run at this revision, `tools/governing_citation_check.sh` |
+| REVIEW-design round 4 of five | dispatched at this revision's SHA | `wp21_label_cache_design_rev5_REVIEW.md` |
