@@ -854,3 +854,26 @@ all registered.**
 that moved (F-1.11), a lint that arrived with it (F-1.14), and a gate whose
 subject is the index while the author's subject is the disk. None is a defect in
 the code under test, and all three cost a CI round.
+
+### THE LOOP GRANT IS FIVE ROUNDS, BY OPERATOR RULING — **D-585**
+
+*"I allow up to 5 revisions."* Every review gate in this arc may take up to five
+rounds. **THE OTHER TWO LIMBS OF D-565 ARE KEPT** — the last granted round is
+remedies-only, and a failure at the last round is STOP and split rather than a
+sixth. Architect default on that reading: a ruling that raises a bound is not
+read as removing the structure the bound sits in.
+
+**IT ARRIVES WHERE IT MATTERS.** Three gates stood at round 2 FAIL — both
+registrations and the cache design — and under three rounds each had one
+remedies-only round left, which for the two registrations **could not have
+succeeded**: five of their six BLOCKING findings are machinery that does not
+exist, and `docs/process.md` requires the literal commands exercised before a
+review passes. The extra rounds buy §1c's order without spending a gate's last
+round on a document that cannot pass yet.
+
+| gate | rounds used | left |
+|---|---|---|
+| `wp21_prereg.md` | 2 (rev 3 FAIL, rev 4 FAIL) | 3 |
+| `wp21_throughput_prereg.md` | 2 (rev 2 FAIL, rev 3 FAIL) | 3 |
+| `wp21_label_cache_design.md` | 2 (rev 1 FAIL, rev 2 FAIL) | 3 |
+| `derivation_gate_design.md` | 1 (FAIL, **WITHDRAWN** — the grant is not spent on a package nobody is building) | — |
