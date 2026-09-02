@@ -94,13 +94,44 @@ fn the_sixteen_tranches_partition_the_books_unconsumed_range_exactly() {
         total += take;
     }
     assert_eq!(
-        total, 4487,
-        "the sixteen tranches take the whole unconsumed range"
+        total, 3487,
+        "the sixteen tranches take the whole SWEPT range — the book's 4,500 openings less the \
+         pilot's 13 and the 1,000-opening holdout"
     );
     assert_eq!(
-        expected_skip, 4500,
-        "the last tranche ends at the book's own end"
+        expected_skip, 3500,
+        "the last tranche ends where the holdout begins"
     );
+}
+
+#[test]
+fn no_tranche_reaches_the_reserved_holdout() {
+    // D-568 reserves the LAST 1,000 openings of the book for governed runs and
+    // forbids labelling them. The test above pins the partition's arithmetic;
+    // this one pins what the arithmetic is FOR, so a successor who widens the
+    // range to reclaim a thousand openings meets a named refusal rather than a
+    // corpus that quietly consumed the Stage-3 detector's slice.
+    const HOLDOUT_FIRST: u32 = 3_500;
+    let scratch = Scratch::new("wp21-holdout");
+    for tranche in 1..=TRANCHES {
+        let (output, out) = generate(
+            &scratch,
+            &tranche.to_string(),
+            &format!("tranche-{tranche}.toml"),
+            SHA,
+        );
+        assert!(output.status.success());
+        let text = std::fs::read_to_string(&out).expect("the config was written");
+        let skip: u32 = value(&text, "openings_skip").parse().expect("a count");
+        let take: u32 = value(&text, "openings_take").parse().expect("a count");
+        assert!(
+            skip + take <= HOLDOUT_FIRST,
+            "tranche {tranche} labels openings {}..{}, which reaches into the holdout that \
+             begins at {HOLDOUT_FIRST}",
+            skip,
+            skip + take - 1
+        );
+    }
 }
 
 #[test]
@@ -208,7 +239,65 @@ fn the_printed_digest_is_the_digest_of_the_bytes_that_were_written() {
     let bytes = std::fs::read(&out).expect("the config was written");
     assert_eq!(claimed, pistol_cli::sha256::sha256_hex(&bytes));
     assert!(
-        printed.contains("openings_skip 2260 openings_take 280"),
+        printed.contains("openings_skip 1757 openings_take 218"),
         "the line states the slice it wrote: {printed}"
+    );
+}
+
+#[test]
+fn an_unwritable_out_directory_is_a_void_and_not_a_refusal() {
+    // ITEM 12'S OWN POINT, DRIVEN. The suite has named `VOID = 2` since it was
+    // written and no test ever made the script take that path, so the class a
+    // reader is most likely to misread as a regression — "no answer was taken"
+    // — was defended by a constant and a comment. A read-only directory is the
+    // cheapest way to reach it, and the assertion is that the exit is 2 and not
+    // 1: a REFUSAL says the answer is NO, and there is no answer here.
+    let scratch = Scratch::new("wp21-void");
+    let locked = scratch.path("locked");
+    std::fs::create_dir_all(&locked).expect("the scratch directory is made");
+    let mut permissions = std::fs::metadata(&locked)
+        .expect("the directory exists")
+        .permissions();
+    permissions.set_readonly(true);
+    std::fs::set_permissions(&locked, permissions).expect("the directory is made read-only");
+
+    let out = locked.join("tranche-1.toml");
+    let output = Command::new("python3")
+        .arg(repo().join("tools/wp21_tranche_config.py"))
+        .arg("--tranche")
+        .arg("1")
+        .arg("--out")
+        .arg(&out)
+        .arg("--binary-sha256")
+        .arg(SHA)
+        .output()
+        .expect("python3 runs the generator");
+
+    // Restored before the assertion, so a failing assertion still leaves a
+    // scratch tree the harness can sweep (tools/SHELL_CHECKLIST.md item 11).
+    let mut restore = std::fs::metadata(&locked)
+        .expect("the directory exists")
+        .permissions();
+    #[allow(clippy::permissions_set_readonly_false)]
+    restore.set_readonly(false);
+    std::fs::set_permissions(&locked, restore).expect("the directory is writable again");
+
+    let code = output.status.code();
+    assert_eq!(
+        code,
+        Some(VOID),
+        "an unwritable --out must be VOID (exit {VOID}), not a refusal (exit {REFUSED}): \
+         no answer was taken and none was written. Got {code:?}. stderr: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        String::from_utf8_lossy(&output.stderr).contains("VOID"),
+        "the void says so on its own line: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        !out.exists(),
+        "a voided run wrote a config anyway: {}",
+        out.display()
     );
 }

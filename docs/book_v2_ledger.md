@@ -39,23 +39,33 @@ registered from a measurement rather than chosen — `docs/experiments/book_v2_r
 | `openings_skip` | `openings_take` | range | consumed by | pre-registration |
 |---|---|---|---|---|
 | 0 | 13 | `0..12` | the WP-2.0 label-pipeline PILOT, `configs/arena_wp20_label_pilot.toml` | `docs/experiments/wp20_pilot_prereg.md` revision 4 |
-| 13 | 4487 | `13..4499` | the WP-2.1 PRODUCTION LABEL SWEEP, sixteen tranches from `tools/wp21_tranche_config.py` | `docs/experiments/wp21_prereg.md` revision 1 |
+| 13 | 3487 | `13..3499` | the WP-2.1 PRODUCTION LABEL SWEEP, sixteen tranches from `tools/wp21_tranche_config.py` | `docs/experiments/wp21_prereg.md` revision 2 |
+| 3500 | 1000 | `3500..4499` | **RESERVED FOR GOVERNED RUNS — NEVER LABELLED.** Not consumed by anything yet; held back so a governed run has an unseen slice | `docs/decisions.md` D-568 |
 
-**THE SECOND ROW TAKES THE REST OF THE BOOK, AND ITS CONFIG IS NOT ONE FILE.**
-The sweep is sixteen tranches of one shape, and this table's rule — *"adds its
-row here in the same commit that adds its arena config"* — is satisfied by the
-GENERATOR rather than by sixteen near-identical committed documents: every value
-they carry is fixed in the pre-registration and written by
-`tools/wp21_tranche_config.py`, which has a test driving the shipped script and
-whose own partition claim — contiguous, disjoint, exhaustive over `13..4499` —
-is what that test asserts. **The range is consumed by the DOCUMENT, not by the
-tranche**: a tranche that voids does not give its openings back, because a
-second run over them would be a second reading of a sample this registration
-chose. **AND THE BOOK IS NOW FULLY CLAIMED**: `0..12` and `13..4499` exhaust
-4 500 openings, so the two standing claimants below — the Stage-3 detector's
-SPRT and the WP-1.5d resolution run — have no unconsumed range left in v2 and
-need a successor book or a ruling. That is stated here because it is the kind of
-fact a ledger exists to make impossible to discover late.
+**THE SECOND ROW IS THE SWEEP AND ITS CONFIG IS NOT ONE FILE.** The sweep is
+sixteen tranches of one shape, and this table's rule — *"adds its row here in the
+same commit that adds its arena config"* — is satisfied by the GENERATOR rather
+than by sixteen near-identical committed documents: every value they carry is
+fixed in the pre-registration and written by `tools/wp21_tranche_config.py`,
+which has a test driving the shipped script and whose own partition claim —
+contiguous, disjoint, exhaustive over `13..3499` — is what that test asserts.
+**The range is consumed by the DOCUMENT, not by the tranche**: a tranche that
+voids does not give its openings back, because a second run over them would be a
+second reading of a sample this registration chose.
+
+**THE THIRD ROW IS A HOLDOUT AND IT IS A DIFFERENT KIND OF ROW.** Every other
+row here records a range something SPENT. This one records a range nothing may
+spend: D-568 reserves the LAST 1,000 openings for governed runs, and the rule
+fixing it — the last 1,000, by position and by nothing observable — is stated
+before the sweep starts, because a holdout chosen after seeing which openings
+label well is not a holdout. **It is enforced mechanically and not by this
+sentence**: `no_tranche_reaches_the_reserved_holdout` drives the shipped
+generator over all sixteen tranches and fails if any slice crosses `3500`. An
+earlier revision of this ledger recorded the book as FULLY CLAIMED, which is why
+the reservation is worth its own row — the two standing claimants below, the
+Stage-3 detector's SPRT and the WP-1.5d resolution run, now have a range to draw
+from. **Dividing it between them is not decided here** and belongs to whichever
+package needs it first.
 
 **THE FIRST ROW, and what it does and does not spend.** Thirteen is what the
 pre-registration's RULE-1 returns from the per-unit costs its dry run measured

@@ -78,6 +78,11 @@ consumed range for a governed verdict. **This is a sizing question the operator
 owns, not one a tranche plan may settle by arithmetic** — it is carried into
 D-562's flip clause so it cannot be lost.
 
+**SETTLED — D-568.** The operator reserved a 1,000-opening holdout. The numbers
+above are this document's own and stay as written; the range the sweep actually
+takes is `docs/experiments/wp21_prereg.md` revision 2's, and the reservation is a
+row of `docs/book_v2_ledger.md`. Nothing here is restated there or here (D-423).
+
 ## 4. Decision owed
 
 1. **Run WP-2.0b next** (its dispatch exists, unrun), then WP-2.1 starts as written;
