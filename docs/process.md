@@ -77,3 +77,41 @@ measurement that cannot be taken again, and it is the wrong instrument
 for a workload measured in seconds. Neither this rule nor the dry-run
 rule is mechanized, and neither catches a run whose answer is already
 known before it is taken — that defect is judged, not checked.
+
+## Re-derivation, and it is addressed to the reviewer
+
+**A reviewer of a governing document RE-DERIVES its load-bearing counts and
+citations with commands THE REVIEWER CHOOSES, never the document's**, prints each
+command with its scope beside the number it returns, and reports the comparison.
+**A count the reviewer reproduces only by running the document's own command is
+NOT reproduced.**
+
+**WHY THE LAST SENTENCE IS THE WHOLE CLAUSE.** The recurring defect this project
+pays for is not an unchecked claim; it is a claim CHECKED AGAINST THE WRONG
+POPULATION — a `git grep` scoped to `src` that missed its answer in `tests`, a
+line count scoped to `src` that counted `src/bin`. In every one of those the
+command was run and its output transcribed faithfully. **Re-running the
+document's own command re-derives nothing**, and any mechanism that executes it —
+including a CI gate — is green forever on exactly this class (D-582).
+Independence of SCOPE is the property that catches it, and only a second party
+choosing differently has that property.
+
+**WHY IT IS ADDRESSED TO THE REVIEWER AND NOT THE AUTHOR.** D-568 and D-574 wrote
+the same instruction for authors twice; the arc that wrote them broke them four
+more times, and the next arc broke them at least nine, three of those inside the
+document restating the law. The same arc briefed three fresh contexts to
+re-derive and they returned 57 findings between them. **The difference is not
+diligence** — the author and the reviewer are the same kind of agent, minutes
+apart, holding the same rule. The author is reaching for a label for something
+already believed; the reviewer is paid to disbelieve it.
+
+**WHAT A DISPATCHER OWES**: nothing. This clause is standing, so a review no
+longer depends on whoever wrote the prompt remembering to ask for it.
+
+**WHAT IS MECHANIZED, AND IT IS ONLY THE CHEAP HALF.** CI's
+governing-document citation gate (`tools/governing_citation_check.sh`) refuses a
+citation, in a document on its own named list, that the tree does not hold. It
+catches ROT — a path or line that moved — and it catches nothing about scope. The
+list is named rather than globbed because most documents in this repository are
+RECORDS, whose citations were true when written, and demanding a record match
+today's tree is demanding that history be falsified.

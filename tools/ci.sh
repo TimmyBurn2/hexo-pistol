@@ -14,6 +14,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# THE TOTAL LIVES IN ONE PLACE. It used to be a literal repeated in every one of
+# the step strings below, which is docs/decisions.md D-423's "a claim the document
+# makes twice is a defect waiting" at nineteen: adding a gate meant editing
+# nineteen numbers, and the twentieth would mean editing twenty.
+readonly GATE_TOTAL=20
 step() { printf '\n=== %s\n' "$*"; }
 fail() { printf 'ci: FAIL: %s\n' "$*" >&2; exit 1; }
 # THE VOID, CARRIED ACROSS THE SEAM (tools/SHELL_CHECKLIST.md item 12
@@ -60,10 +65,10 @@ done
 
 # First because it is instant and needs no build: fastest possible feedback
 # (docs/decisions.md D-30).
-step "gate 1/19: cargo fmt --all --check"
+step "gate 1/$GATE_TOTAL: cargo fmt --all --check"
 cargo fmt --all --check || fail "formatting: run \`cargo fmt --all\`"
 
-step "gate 2/19: build from the git-tracked file set"
+step "gate 2/$GATE_TOTAL: build from the git-tracked file set"
 # The point of this gate is to catch a build that depends on a file nobody
 # tracked. The tracked set is the git index: it equals HEAD on a fresh checkout,
 # and equals the about-to-be-committed tree when work is staged, so the gate
@@ -78,30 +83,30 @@ echo "ci: building $(git ls-files | wc -l) tracked files in $WORK/repo"
 rm -rf "$WORK"
 trap - EXIT
 
-step "gate 3/19: cargo test --workspace --locked"
+step "gate 3/$GATE_TOTAL: cargo test --workspace --locked"
 cargo test --workspace --locked || fail "tests"
 
 # --all-targets so tests and examples are linted too, which is strictly more
 # than CLAUDE.md asks for and costs nothing.
-step "gate 4/19: cargo clippy --workspace --all-targets -- -D clippy::all"
+step "gate 4/$GATE_TOTAL: cargo clippy --workspace --all-targets -- -D clippy::all"
 cargo clippy --workspace --all-targets --locked -- -D clippy::all || fail "clippy"
 
-step "gate 5/19: artifact rejection"
+step "gate 5/$GATE_TOTAL: artifact rejection"
 gate "artifact check" tools/artifact_check.sh
 
-step "gate 6/19: config validation"
+step "gate 6/$GATE_TOTAL: config validation"
 gate "config check" tools/config_check.sh
 
-step "gate 7/19: perft oracle"
+step "gate 7/$GATE_TOTAL: perft oracle"
 gate "perft oracle" tools/perft_check.sh
 
 # The determinism law's executable form (CLAUDE.md rule 4, docs/decisions.md D-7).
 # It runs last of the two engine gates because it is the slowest: two processes
 # over the whole sha-pinned fixture set at two budgets.
-step "gate 8/19: tactical fixture at its pre-registered threshold"
+step "gate 8/$GATE_TOTAL: tactical fixture at its pre-registered threshold"
 gate "tactical fixture" tools/tactical_check.sh
 
-step "gate 9/19: cross-process determinism"
+step "gate 9/$GATE_TOTAL: cross-process determinism"
 gate "determinism" tools/determinism.sh
 
 # The search's oracle, and the last of the correctness gates because it is the
@@ -110,7 +115,7 @@ gate "determinism" tools/determinism.sh
 # determinism gate for the same reason that one runs after the tactical gate —
 # the cheapest thing that can fail should fail first (docs/decisions.md D-106,
 # D-120).
-step "gate 10/19: differential search oracle"
+step "gate 10/$GATE_TOTAL: differential search oracle"
 gate "search oracle" tools/search_oracle_check.sh
 
 # THE STAGED GENERATOR'S OWN SOUNDNESS GATE (docs/decisions.md D-316, D-361):
@@ -121,7 +126,7 @@ gate "search oracle" tools/search_oracle_check.sh
 # gate: this is the staged generator's analogous oracle, and the cheapest thing
 # that can fail should fail first, ahead of the play-mode ceiling below (which
 # reuses this gate's release build).
-step "gate 11/19: staged generator soundness (four parts)"
+step "gate 11/$GATE_TOTAL: staged generator soundness (four parts)"
 gate "staged soundness" tools/staged_soundness_check.sh
 
 # The play-mode ceiling (WP-1.4, superseding docs/decisions.md D-95): release
@@ -136,16 +141,16 @@ gate "staged soundness" tools/staged_soundness_check.sh
 # run after the search's own oracle for the same reason that one runs late:
 # the cheapest thing that can fail should fail first, and gate (c)'s sigma
 # sweep is the longest correctness check in the suite.
-step "gate 12/19: solver oracle (four gates)"
+step "gate 12/$GATE_TOTAL: solver oracle (four gates)"
 gate "solver oracle" tools/solver_oracle_check.sh
 
 # D-7's law gains its solver seat (WP-1.8a design §7): the selftest binary,
 # two processes, byte-identical transcripts — value, node count, seesaw and
 # proof digest all included, nothing exempt.
-step "gate 13/19: solver determinism"
+step "gate 13/$GATE_TOTAL: solver determinism"
 gate "solver determinism" tools/solver_determinism.sh
 
-step "gate 14/19: movetime ceiling on the D-95 reproducer class"
+step "gate 14/$GATE_TOTAL: movetime ceiling on the D-95 reproducer class"
 gate "movetime ceiling" tools/movetime_check.sh
 
 # The judge itself. It runs after the engine gates because it USES the engine:
@@ -154,7 +159,7 @@ gate "movetime ceiling" tools/movetime_check.sh
 # in advance and is asserted exactly, and it repeats the run to cover the
 # arena's own determinism — which nothing else in this suite does
 # (docs/decisions.md D-169).
-step "gate 15/19: arena self-match smoke"
+step "gate 15/$GATE_TOTAL: arena self-match smoke"
 gate "arena smoke" tools/arena_smoke.sh
 
 # THE SEALBOT ANCHOR PLATFORM'S OWN SUITE (REVIEW finding F5, SHELL_CHECKLIST
@@ -167,13 +172,13 @@ gate "arena smoke" tools/arena_smoke.sh
 # the arena smoke because it is the same kind of gate — a match harness
 # driven end to end — and before the read-only gates, which stay last by
 # their own stated rule.
-step "gate 16/19: sealbot anchor platform suite"
+step "gate 16/$GATE_TOTAL: sealbot anchor platform suite"
 gate "sealbot suite" tools/sealbot/tests/run_tests.sh
 
 # CLAUDE.md rule 9's soft cap. Last because it is the only gate that reads the
 # tracked files rather than building them, so it costs nothing to put it where a
 # reader looks for the summary (docs/decisions.md D-131).
-step "gate 17/19: file-justification check"
+step "gate 17/$GATE_TOTAL: file-justification check"
 gate "file justification" tools/file_justification_check.sh
 
 # The decision log's own integrity, and the last gate for the same reason the
@@ -181,7 +186,7 @@ gate "file justification" tools/file_justification_check.sh
 # and `D-277` were each appended TWICE with different text and nothing detected
 # it (docs/decisions.md D-279, D-284), and every ADR reference in this repository
 # is by number.
-step "gate 18/19: decision-key uniqueness"
+step "gate 18/$GATE_TOTAL: decision-key uniqueness"
 gate "decision key check" tools/decision_key_check.sh
 
 # The carve documents' own self-state, and the last gate for the reason the two
@@ -191,7 +196,10 @@ gate "decision key check" tools/decision_key_check.sh
 # matrix under attack asserted only a fresh reviewer's hand inventory could
 # reach — and the loop MISSED A THIRD, because it read a fixed-depth tail
 # (docs/decisions.md D-338 row R4, matrix_META1_REDTEAM.md M2 and M3).
-step "gate 19/19: carve-document label consistency"
+step "gate 19/$GATE_TOTAL: carve-document label consistency"
 gate "label consistency" tools/label_consistency_check.sh
+
+step "gate 20/$GATE_TOTAL: governing-document citations"
+gate "governing citations" tools/governing_citation_check.sh
 
 printf '\nci: all gates passed\n'

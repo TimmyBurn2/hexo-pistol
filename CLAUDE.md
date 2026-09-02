@@ -40,7 +40,8 @@ technique.
 - Build/test: `cargo build --workspace --locked` / `cargo test --workspace --locked`
   (add `--release` to ship).
 - CI: `tools/ci.sh` — sole definition of the gates, no truer list exists elsewhere
-  (its own header says so); it prints `gate N/19: <name>` as each one runs.
+  (its own header says so); it prints `gate N/$GATE_TOTAL: <name>` as each one runs,
+  with the total defined once at the top of the script.
 - Determinism: `tools/determinism.sh` — the hard-rule-4 self-test (same position +
   budget twice ⇒ identical bestmove + node count).
 - Bench: `tools/bench_delta.sh` — pre-registered hotspot, IQR-gated, per-side
