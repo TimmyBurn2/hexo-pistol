@@ -56,6 +56,7 @@ pub mod exchange;
 pub mod game;
 pub mod handshake;
 pub mod identity;
+pub mod label_cache;
 pub mod labels;
 pub mod labels_file;
 pub mod openings;

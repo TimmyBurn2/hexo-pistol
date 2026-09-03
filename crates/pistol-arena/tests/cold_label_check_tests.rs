@@ -381,3 +381,79 @@ fn a_partition_the_capture_cannot_fill_is_a_void_and_not_a_pass() {
         meaning(&output)
     );
 }
+
+// ---------------------------------------------------------------------------
+// THE REGISTERED FLOOR (docs/experiments/wp21_prereg.md §4): fewer than ten
+// SAMPLED records in a class is a VOID, not a pass.
+// ---------------------------------------------------------------------------
+
+/// The capture cut to its first `keep` records, so that its HIT class holds
+/// exactly `keep - misses` records: game 0's records are all misses and game 1
+/// duplicates game 0, so the first hit is game 1's first record.
+fn cut_to(capture: &Path, keep: usize) -> String {
+    let text = std::fs::read_to_string(capture).expect("the capture is readable");
+    let header: String = text
+        .lines()
+        .take_while(|line| !line.starts_with("# body_sha256 "))
+        .map(|line| format!("{line}\n"))
+        .collect();
+    let body: String = pistol_cli::corpus::emit::body_of(&text)
+        .expect("a capture carries a body digest")
+        .split('\n')
+        .filter(|line| !line.is_empty())
+        .take(keep)
+        .map(|line| format!("{line}\n"))
+        .collect();
+    format!(
+        "{header}# body_sha256 {}\n{body}",
+        pistol_cli::sha256::sha256_hex(body.as_bytes())
+    )
+}
+
+#[test]
+fn a_class_with_nine_sampled_records_is_a_void_and_with_ten_it_passes() {
+    let scratch = Scratch::new("cold-floor");
+    let staged = staged(&scratch, "floor");
+    let text = std::fs::read_to_string(&staged.capture).expect("readable");
+    let rows: Vec<Vec<String>> = pistol_cli::corpus::emit::body_of(&text)
+        .expect("a body")
+        .split('\n')
+        .filter(|line| !line.is_empty())
+        .map(|line| line.split('\t').map(str::to_string).collect())
+        .collect();
+    let misses = rows.iter().take_while(|row| row[0] == "0").count();
+    assert!(
+        rows.len() >= misses + 10 && rows[misses][0] == "1",
+        "the fixture needs at least ten hits after game 0's {misses} misses; it has {}",
+        rows.len()
+    );
+    // Both cuts keep the whole of game 0, so the HIT class alone moves.
+    let nine = scratch.write("nine-hits.txt", &cut_to(&staged.capture, misses + 9));
+    let output = partitioned_check(&nine, &staged.engine_config, "1", "hits");
+    assert_eq!(
+        output.status.code(),
+        Some(2),
+        "nine sampled hits is below the registered floor and must be a VOID (exit 2), not a \
+         pass: {}",
+        meaning(&output)
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(
+        stderr.contains("RUN VOID") && stderr.contains("9 sampled HIT") && stderr.contains("10"),
+        "the void names the count it found and the floor it wanted: {stderr}"
+    );
+
+    let ten = scratch.write("ten-hits.txt", &cut_to(&staged.capture, misses + 10));
+    let output = partitioned_check(&ten, &staged.engine_config, "1", "hits");
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "ten sampled hits meets the floor and every one agrees: {}",
+        meaning(&output)
+    );
+    assert!(
+        String::from_utf8_lossy(&output.stdout).contains("10 of 10 sampled HIT"),
+        "{}",
+        meaning(&output)
+    );
+}

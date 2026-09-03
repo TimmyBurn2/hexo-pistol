@@ -398,3 +398,127 @@ fn naming_no_range_at_all_is_refused_rather_than_defaulted() {
     refused(&output, "neither form given");
     assert!(!out.exists());
 }
+
+/// The shipped script's PILOT-RANGE form: the window form over the pilot's
+/// consumed `0..12`, which a dry run and the throughput study's play pass need
+/// (`wp21_prereg.md` §9.1, `wp21_throughput_prereg.md` §3.1) and the plain
+/// window form refuses.
+fn generate_pilot_range(
+    scratch: &Scratch,
+    skip: &str,
+    take: &str,
+    name: &str,
+) -> (Output, PathBuf) {
+    let out = scratch.path(name);
+    let output = Command::new("python3")
+        .arg(repo().join("tools/wp21_tranche_config.py"))
+        .arg("--skip")
+        .arg(skip)
+        .arg("--take")
+        .arg(take)
+        .arg("--pilot-range")
+        .arg("--out")
+        .arg(&out)
+        .arg("--binary-sha256")
+        .arg(SHA)
+        .output()
+        .expect("python3 runs the generator");
+    (output, out)
+}
+
+#[test]
+fn the_pilot_range_form_writes_a_window_inside_the_pilots_consumed_range() {
+    let scratch = Scratch::new("wp21-pilot-range");
+    for (skip, take, name) in [
+        ("0", "1", "dry.toml"),
+        ("0", "3", "play.toml"),
+        ("0", "13", "all.toml"),
+    ] {
+        let (output, out) = generate_pilot_range(&scratch, skip, take, name);
+        assert!(
+            output.status.success(),
+            "{name}: stderr: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let text = std::fs::read_to_string(&out).expect("the pilot-range config is readable");
+        assert_eq!(value(&text, "openings_skip"), skip, "{text}");
+        assert_eq!(value(&text, "openings_take"), take, "{text}");
+        assert_eq!(
+            value(&text, "config"),
+            "configs/instrument_v0.toml",
+            "the stand-in carries the sweep's own seat: {text}"
+        );
+        let first = text.lines().next().unwrap_or_default();
+        assert!(
+            first.contains("PILOT-RANGE") && !first.contains("TRANCHE"),
+            "a stand-in must say what it is on its first line: {first}"
+        );
+        assert!(
+            text.contains("ENTERS A CORPUS"),
+            "the document says on its own face that nothing it plays is corpus: {text}"
+        );
+        let printed = String::from_utf8_lossy(&output.stdout).to_string();
+        assert!(
+            printed.contains("pilot-range window")
+                && printed.contains(&format!("openings_skip {skip} openings_take {take}")),
+            "the receipt line names the form and the slice: {printed}"
+        );
+    }
+}
+
+#[test]
+fn a_pilot_range_window_reaching_past_the_pilots_range_is_refused() {
+    let scratch = Scratch::new("wp21-pilot-range-over");
+    for (skip, take, name) in [
+        ("10", "5", "over.toml"),
+        ("13", "1", "first.toml"),
+        ("0", "14", "wide.toml"),
+    ] {
+        let (output, out) = generate_pilot_range(&scratch, skip, take, name);
+        refused(
+            &output,
+            &format!("a pilot-range window {skip}+{take} reaching opening 13"),
+        );
+        assert!(
+            !out.exists(),
+            "{name}: a refused window must leave no document behind"
+        );
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        assert!(
+            stderr.contains("--pilot-range") && stderr.contains("0..12"),
+            "the refusal names the form and the range it admits: {stderr}"
+        );
+    }
+}
+
+#[test]
+fn pilot_range_with_the_tranche_form_is_refused() {
+    let scratch = Scratch::new("wp21-pilot-range-tranche");
+    let out = scratch.path("never.toml");
+    let output = Command::new("python3")
+        .arg(repo().join("tools/wp21_tranche_config.py"))
+        .arg("--tranche")
+        .arg("1")
+        .arg("--pilot-range")
+        .arg("--out")
+        .arg(&out)
+        .arg("--binary-sha256")
+        .arg(SHA)
+        .output()
+        .expect("python3 runs the generator");
+    refused(&output, "--pilot-range with --tranche");
+    assert!(!out.exists());
+}
+
+#[test]
+fn the_plain_window_form_still_refuses_the_pilots_range_and_names_the_form_that_admits_it() {
+    let scratch = Scratch::new("wp21-window-pilot-pointer");
+    let (output, out) = generate_window(&scratch, "0", "1", "plain.toml");
+    refused(&output, "a plain window over the pilot's range");
+    assert!(!out.exists());
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(
+        stderr.contains("--pilot-range"),
+        "the refusal names the form that admits the range: {stderr}"
+    );
+}

@@ -124,6 +124,22 @@ enum Behave {
     /// unreachable from any test and its call-removed mutant survives
     /// (docs/decisions.md D-553).
     CensusRowsUnasked,
+    /// Plays honestly, and the answer to the `go` that follows its n-th
+    /// `newgame` carries a SECOND `bestmove` line — in the same write syscall
+    /// as the answer, so the only window between the two is the reader's.
+    ///
+    /// The capture pass sends one `newgame` per ask on one long-lived channel
+    /// and, under the label cache, asks at some prefixes and not others; a
+    /// stray in the pipe at a prefix that is not asked is read as the answer
+    /// to a later one unless the pipe is checked at EVERY prefix. Counting
+    /// `newgame`s is what lets a test put the stray exactly after one game's
+    /// last answer (docs/experiments/wp21_label_cache_design.md, T4). In play
+    /// each spawn sees one `newgame`, so at `n >= 2` play never deviates —
+    /// necessarily, because a play-pass stray forfeits and the report is
+    /// captured with the config that played it. The one test engine that
+    /// already doubles its `bestmove` does so at its FIRST `go`, a miss in any
+    /// run, which is why this is a behaviour and not that script.
+    StrayAfterNewGame(u32),
 }
 
 impl Behave {
@@ -147,7 +163,16 @@ impl Behave {
             "census_none" => Behave::CensusNone,
             "census_tab" => Behave::CensusTab,
             "census_rows_unasked" => Behave::CensusRowsUnasked,
-            _ => return None,
+            _ => {
+                let count = word.strip_prefix("stray_after_newgame ")?;
+                // The spelling is validated, not only the value: a count a
+                // receipt could not copy back is not a count (SHELL_CHECKLIST 8).
+                let n: u32 = count.parse().ok()?;
+                if n.to_string() != count || n == 0 {
+                    return None;
+                }
+                Behave::StrayAfterNewGame(n)
+            }
         })
     }
 
@@ -156,7 +181,7 @@ impl Behave {
                                exit, bad_protocol, play_mode, edit_own_config, demands_newgame, \
                                demands_newgame_per_ask, refuses_go, tab_totals, census_rows, \
                                census_none, census_tab, \
-                               census_rows_unasked";
+                               census_rows_unasked, stray_after_newgame <n>";
 }
 
 /// What this instrument calls itself when it refuses something by name.
@@ -409,8 +434,18 @@ fn serve(
     let mut session = pistol_cli::Session::new(engine).identify(vec![weights_line]);
     let mut config_edited = false;
     let mut told_new_game = false;
+    let mut new_games: u32 = 0;
+    let mut stray_armed = false;
     for line in stdin.lock().lines() {
         let mut line = line.map_err(|io| format!("stdin: {io}"))?;
+        if let Behave::StrayAfterNewGame(n) = behave
+            && line
+                .trim_start()
+                .starts_with(pistol_cli::protocol::NEW_GAME)
+        {
+            new_games += 1;
+            stray_armed |= new_games == n;
+        }
         if behave == Behave::CensusRowsUnasked
             && line.trim_start().starts_with(pistol_cli::protocol::GO)
         {
@@ -542,8 +577,32 @@ fn serve(
         }
         let mut answers: Vec<String> = Vec::new();
         let flow = session.line(&line, &mut |answer| answers.push(answer.to_string()));
-        for answer in answers {
-            writeln!(out, "{}", deviate(&answer, behave)).map_err(io_error)?;
+        let bestmove_prefix = format!("{} ", pistol_cli::report::BESTMOVE_PREFIX);
+        let stray = answers
+            .iter()
+            .find(|answer| stray_armed && answer.starts_with(&bestmove_prefix))
+            .cloned();
+        match stray {
+            Some(stray) => {
+                // ONE buffer, ONE `write_all`: the locked stdout is line-buffered
+                // and hands everything up to the last newline to one syscall, so
+                // the answer and the stray reach the pipe together and the only
+                // window between them is the arena reader's own.
+                let mut buffer = String::new();
+                for answer in &answers {
+                    buffer.push_str(&deviate(answer, behave));
+                    buffer.push('\n');
+                }
+                buffer.push_str(&stray);
+                buffer.push('\n');
+                out.write_all(buffer.as_bytes()).map_err(io_error)?;
+                stray_armed = false;
+            }
+            None => {
+                for answer in answers {
+                    writeln!(out, "{}", deviate(&answer, behave)).map_err(io_error)?;
+                }
+            }
         }
         out.flush().map_err(io_error)?;
         if flow == pistol_cli::Flow::Quit {

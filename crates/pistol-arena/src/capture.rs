@@ -6,6 +6,7 @@ use pistol_engine::CensusRequest;
 use crate::channel::{Channel, Received};
 use crate::error::ArenaError;
 use crate::exchange;
+use crate::label_cache::{CaptureCounts, LabelCache, Memo};
 use crate::seats::{self, Seat};
 use crate::transcript::{RecordedGame, Transcript};
 
@@ -238,12 +239,6 @@ fn ask(
     census: &mut CensusSink,
 ) -> Result<(String, String), ArenaError> {
     let where_ = || format!("game {game}, turn {k}");
-    if let Some(stray) = channel.unsolicited() {
-        return Err(refuse(format!(
-            "{}: the engine spoke before it was asked ({stray:?})",
-            where_()
-        )));
-    }
     for line in [pistol_cli::protocol::NEW_GAME, position, go] {
         if channel.send(line).is_err() {
             return Err(refuse(format!("{}: the engine closed its input", where_())));
@@ -318,7 +313,27 @@ fn ask(
     }
 }
 
+/// Refuse a census under the label cache, naming both words.
+///
+/// A hit performs no search and emits no census row, so a cached census
+/// capture would write fewer rows than positions asked — indistinguishable
+/// from a quiet search. The CLI refuses the spelling; this is the same refusal
+/// at the seam where the damage would be done, because `run` is `pub`.
+fn refuse_census_under_cache(census: CensusRequest, cache: LabelCache) -> Result<(), ArenaError> {
+    if census == CensusRequest::On && cache == LabelCache::On {
+        return Err(refuse(
+            "`--label-cache` with `--census`: a cache hit performs no search and emits no census              row, so a cached census capture would under-report firings at exit 0",
+        ));
+    }
+    Ok(())
+}
+
 /// Walk one report, asking every asked position on one channel.
+///
+/// Under [`LabelCache::On`] a prefix whose `position` line this run has already
+/// asked takes the pair it already has and the engine is not asked; every
+/// record is still built, in order, from the same normalised strings, so the
+/// file is byte-identical to the uncached pass's.
 ///
 /// # Errors
 /// Any failure refuses the WHOLE run: a capture that silently omits positions is
@@ -327,7 +342,9 @@ pub fn run(
     transcript: &Transcript,
     label_nodes: u64,
     census: &mut CensusSink,
-) -> Result<Vec<CaptureRecord>, ArenaError> {
+    cache: LabelCache,
+) -> Result<(Vec<CaptureRecord>, CaptureCounts), ArenaError> {
+    refuse_census_under_cache(census.request, cache)?;
     one_engine(transcript)?;
     crate::replay::verify_engines(transcript)?;
     let go = label_go_line(label_nodes, census.request);
@@ -336,31 +353,51 @@ pub fn run(
         identity: &transcript.identities[0],
     }];
     seats::with_seats(&seats, transcript.hang_timeout_ms, |channels| {
+        let mut memo = Memo::new(cache);
         let mut out: Vec<CaptureRecord> = Vec::new();
         for game in &transcript.games {
             for k in asked_prefixes(game)? {
+                // BEFORE the lookup, at every prefix: a guard that ran only on
+                // the prefixes that ask would leave a stray in the pipe at a
+                // hit to be read as the answer to a LATER miss, or never.
+                if let Some(stray) = channels[0].unsolicited() {
+                    return Err(refuse(format!(
+                        "game {}, turn {k}: the engine spoke before it was asked ({stray:?})",
+                        game.index
+                    )));
+                }
                 let position = position_line(&game.moves[..k]);
-                let (totals, bestmove) = ask(
-                    &mut channels[0],
-                    &position,
-                    &go,
-                    transcript.hang_timeout_ms,
-                    game.index,
-                    k,
-                    census,
-                )?;
+                let (totals, bestmove) = match memo.lookup(&position) {
+                    Some(pair) => pair,
+                    None => {
+                        memo.asked();
+                        let (totals, bestmove) = ask(
+                            &mut channels[0],
+                            &position,
+                            &go,
+                            transcript.hang_timeout_ms,
+                            game.index,
+                            k,
+                            census,
+                        )?;
+                        let pair = (normalise(&totals)?, bestmove);
+                        memo.insert(&position, &game.moves[..k], pair.clone());
+                        pair
+                    }
+                };
                 let record = CaptureRecord {
                     game: game.index,
                     turns_played: k,
                     position,
-                    totals: normalise(&totals)?,
+                    totals,
                     bestmove,
                 };
                 no_tab(&record)?;
+                memo.recorded();
                 out.push(record);
             }
         }
-        Ok(out)
+        Ok((out, memo.into_counts()))
     })
 }
 

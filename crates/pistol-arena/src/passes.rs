@@ -3,6 +3,7 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use crate::error::ArenaError;
+use crate::label_cache::LabelCache;
 
 /// One report, read back as the run it describes.
 ///
@@ -43,6 +44,7 @@ pub fn capture(
     mut claimed: std::fs::File,
     label_nodes: u64,
     census: Option<(std::path::PathBuf, std::fs::File)>,
+    cache: LabelCache,
 ) -> Result<ExitCode, ArenaError> {
     let transcript = read_report(source)?;
     let request = match census {
@@ -51,12 +53,12 @@ pub fn capture(
     };
     let go_line = crate::capture::label_go_line(label_nodes, request);
     let mut rows: Vec<String> = Vec::new();
-    let records = {
+    let (records, counts) = {
         let mut sink = crate::capture::CensusSink {
             request,
             rows: &mut rows,
         };
-        crate::capture::run(&transcript, label_nodes, &mut sink)?
+        crate::capture::run(&transcript, label_nodes, &mut sink, cache)?
     };
     let rendered = crate::capture_file::render(&transcript, &go_line, &records);
     claimed
@@ -84,6 +86,7 @@ pub fn capture(
         records.len(),
         transcript.games.len()
     );
+    println!("{}", counts.line(cache));
     println!(
         "{}",
         crate::capture_file::manifest_row(&transcript, &go_line, &rendered, out_path)?

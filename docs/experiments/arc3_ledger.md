@@ -1215,3 +1215,51 @@ every other governing document 0. Not reviewed as a design (D-589).
 | D-588..D-594 | done | `docs/decisions.md` |
 | design revision 7 | done | this commit |
 | CI on `dev` before the code | running in a detached worktree on `/home` | below |
+
+**CI ON `dev` BEFORE THE CODE — GREEN.** `tools/ci.sh` at `02c1601` in a detached
+worktree on `/home` (`/home/tom/pistol-wt/ci-arc3r`, its own `target/`), started
+04:44:05 UTC: **`ci: all gates passed`, `CI_EXIT=0`**, every `=== gate N/20` line
+1 through 20 present in `artifacts/arc3r_ci_02c1601.txt` (sha256
+`91dab89ee7fd3549979f3518341f31724f820598aa3893f17c3f7581df1379cb`), under
+`rustc 1.98.0 (88d9e12ae 2026-08-18)` / `cargo 1.98.0 (797e8a9bc 2026-08-05)`,
+printed at the log's head. **Beside it on the box, after the run finished**: a
+`cargo test --workspace --exclude itrs-wasm` from `/home/tom/Projects/intransitive-bot`
+— another project's job, first seen after `CI_EXIT=0` was written. The cache
+package's own builds and suites below are functional receipts, not timing ones,
+so they were taken beside it and are recorded as such (D-592).
+
+### §2.1 — THE LABEL CACHE PACKAGE, IMPL
+
+Against revision 7. **Every row of §1 landed as the design names it**:
+`label_cache.rs` (mode, counts, the crate-private memo, the two folds with
+`fold_ms`); `capture::run` takes the mode, refuses census-under-cache as its first
+statement (X1b), hoists the stray check to every prefix before the lookup (X3),
+counts `asks` at the call and inserts the post-`normalise` pair on a miss, returns
+the counts; `passes::capture` prints the counts line; `bin/arena.rs`'s capture arm
+takes a tail — nothing, `--census`, `--label-cache`, the two together refused by
+name in either order (X1), anything else the usage refusal; `usage.rs` names the
+word; the stub gains `stray_after_newgame <n>`, its stray written in ONE
+`write_all` with the answer (D-589's syscall obligation); `cold_label_check.py`
+gains `MIN_SAMPLED = 10` as a VOID; `label_cache_tests.rs` carries T1–T7 over the
+§5 fixture (its geometry checked in Python before the suite existed, then by the
+test itself with `pistol-core`), T8 sits in `cold_label_check_tests.rs`; the
+rule-9 entries and gate 20's `PROPOSES` list follow. **One architect default**:
+`bin/arena.rs` came out of rustfmt at 308 lines, so the four command-line
+vocabulary helpers (`count_of`, `workers_of`, the capture tail, the usage refusal)
+moved into `usage.rs`, whose stated subject is *"what it refuses to guess"* —
+`arena.rs` is 249 lines, `usage.rs` 167, no new rule-9 entry.
+
+**§2.3 landed in the same commit**: `tools/wp21_tranche_config.py --pilot-range`,
+a window form admitting only `skip + take <= 13` and refused with `--tranche` or
+past the pilot's range; the plain window form's refusal now names it; four tests
+drive the shipped script.
+
+**D-591 APPLIED TO IMPL**: T4 at `n = P0 + 1` and T6's two reports were RUN, in
+the suite, before this dispatch — `cargo test -p pistol-arena --locked`, whole
+crate: every suite `ok`, `label_cache_tests` **9 passed**, `cold_label_check_tests`
+**12 passed** (T8 among them), `wp21_tranche_config_tests` **18 passed**,
+`capture_tests` 39, `census_capture_tests` 14; clippy `-D clippy::all` clean over
+all targets; `cargo fmt --check` clean; gates 17 (69 over the cap, all registered),
+18 (596 keys) and 20 (0 unreproduced, `PROPOSES` empty) green over the staged
+index. First run of the new suite was green; the only fixes on the way were two
+clippy `expect_err` lints and the line-count move.

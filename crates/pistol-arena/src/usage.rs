@@ -1,3 +1,5 @@
+use crate::label_cache::LabelCache;
+
 /// What the `arena` binary does, and what it refuses to guess.
 ///
 /// Extracted from the binary because a third and fourth mode arm push
@@ -11,7 +13,7 @@ arena — the paired-openings SPRT judge for pistol
 usage:
   arena --config <path> --out <path>
   arena --replay <report path> --out <path> --workers <n>
-  arena --capture <report path> --out <path> --label-nodes <n> [--census]
+  arena --capture <report path> --out <path> --label-nodes <n> [--census | --label-cache]
   arena --labels <capture path> --report <report path> --out <path>
 
   --config  an arena config. Always explicit: there is no default path and no
@@ -62,6 +64,21 @@ usage:
             that cannot serve a census refuses the token by name, and the run
             is refused with it — a capture that quietly wrote no rows would be
             indistinguishable from one whose engine never fired a trigger.
+  --label-cache
+            memoise, within this run, the answer to a `position` line this run
+            has already asked, so an identical prefix is not searched twice.
+            LAST, and optional: absent means OFF, which is the capture this
+            pipeline has always taken. A hit returns the exact bytes the first
+            ask produced, so the written capture is byte-identical either way
+            and carries no trace of the mode; the one record that a run was
+            cached is the counts line this mode prints beside the manifest row
+            — `arena: label cache on: asks A records R hits H
+            key_pos_collisions P key_full_collisions F fold_ms M`, or `arena:
+            label cache off: asks A records R` — where `asks` counts calls to
+            the engine, `hits` is `records - asks`, and the two collision
+            counters say how many misses a coarser key would have merged.
+            Refused with --census, by name: a hit performs no search and emits
+            no census row.
 
   --labels  a capture THIS program wrote, turned into the training corpus. Reads
             no engine and spawns nothing: it is a pure function of the capture
@@ -85,3 +102,66 @@ usage:
 exit: 0 completed cleanly, 1 abandoned or forfeited (report still written),
       2 a document this build refuses (no report).
 ";
+
+/// What a capture line may end with.
+///
+/// # Errors The two words together are refused BY
+/// NAME, in either order, before any file is claimed; a word twice or out of
+/// place is the usage refusal, which names neither.
+pub fn capture_tail(tail: &[&str]) -> Result<(bool, LabelCache), String> {
+    match tail {
+        [] => Ok((false, LabelCache::Off)),
+        ["--census"] => Ok((true, LabelCache::Off)),
+        ["--label-cache"] => Ok((false, LabelCache::On)),
+        ["--census", "--label-cache"] | ["--label-cache", "--census"] => Err(String::from(
+            "--label-cache with --census is refused: a cache hit performs no search and emits \
+             no census row, so a cached census capture would under-report firings at exit 0",
+        )),
+        _ => Err(usage_error()),
+    }
+}
+
+pub fn usage_error() -> String {
+    format!(
+        "--config and --out are both required, or --replay, --out and --workers, or --capture, \
+         --out and --label-nodes, or --labels, --report and --out, each in that order\n\n{USAGE}"
+    )
+}
+
+/// The worker count, with its SPELLING validated and not merely its value.
+///
+/// # Errors
+/// `+4`, ` 4` and `04` all parse to four and would land in a document's timing
+/// block unnormalised, describing a run nobody can reproduce by copying the line
+/// back (tools/SHELL_CHECKLIST.md item 8).
+pub fn workers_of(word: &str) -> Result<usize, String> {
+    let parsed = usize::try_from(count_of(word, "worker count")?)
+        .map_err(|_| format!("`{word}` is more workers than this machine can address"))?;
+    if parsed == 0 {
+        return Err(String::from("--workers 0 would replay nothing at all"));
+    }
+    Ok(parsed)
+}
+
+/// A count off the command line, with its SPELLING validated and not merely its
+/// value.
+///
+/// # Errors
+/// `+4`, ` 4` and `04` all parse to four and would land in a document
+/// describing a run nobody can reproduce by copying the line back
+/// (tools/SHELL_CHECKLIST.md item 8).
+pub fn count_of(word: &str, what: &str) -> Result<u64, String> {
+    let parsed: u64 = word
+        .parse()
+        .map_err(|_| format!("`{word}` is not a {what}\n\n{USAGE}"))?;
+    if parsed.to_string() != word {
+        return Err(format!(
+            "`{word}` is a {what} spelled a way this program will not echo back; write it as \
+             `{parsed}`\n\n{USAGE}"
+        ));
+    }
+    if parsed == 0 {
+        return Err(format!("a {what} of zero asks for nothing at all"));
+    }
+    Ok(parsed)
+}

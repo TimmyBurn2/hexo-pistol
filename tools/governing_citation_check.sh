@@ -58,9 +58,6 @@ GOVERNING=(
 # Files a governing document names and the tree does not hold yet, each with the
 # document that proposes it. An entry that outlives its document is a finding.
 PROPOSES=(
-	# wp21_label_cache_design.md §1: the suite and the module the cache package brings.
-	crates/pistol-arena/tests/label_cache_tests.rs
-	crates/pistol-arena/src/label_cache.rs
 )
 
 for doc in "${GOVERNING[@]}"; do

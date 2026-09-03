@@ -6,8 +6,9 @@ use std::io::Write as _;
 
 use pistol_arena::config::ArenaConfig;
 use pistol_arena::error::ArenaError;
+use pistol_arena::label_cache::LabelCache;
 use pistol_arena::report::Written;
-use pistol_arena::usage::USAGE;
+use pistol_arena::usage::{USAGE, capture_tail, count_of, usage_error, workers_of};
 use pistol_arena::{
     identity, openings, outpath, passes, replay, replay_report, report, schedule, score, summary,
 };
@@ -33,7 +34,7 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
     enum Mode {
         Play(PathBuf),
         Replay(PathBuf, usize),
-        Capture(PathBuf, u64, bool),
+        Capture(PathBuf, u64, bool, LabelCache),
         Labels(PathBuf, PathBuf),
     }
     let (mode, out_path) = match words {
@@ -48,14 +49,6 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
             Mode::Replay(PathBuf::from(source), workers_of(workers)?),
             PathBuf::from(out),
         ),
-        ["--capture", source, "--out", out, "--label-nodes", nodes] => (
-            Mode::Capture(
-                PathBuf::from(source),
-                count_of(nodes, "label node count")?,
-                false,
-            ),
-            PathBuf::from(out),
-        ),
         [
             "--capture",
             source,
@@ -63,26 +56,24 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
             out,
             "--label-nodes",
             nodes,
-            "--census",
-        ] => (
-            Mode::Capture(
-                PathBuf::from(source),
-                count_of(nodes, "label node count")?,
-                true,
-            ),
-            PathBuf::from(out),
-        ),
+            tail @ ..,
+        ] => {
+            let (census, cache) = capture_tail(tail)?;
+            (
+                Mode::Capture(
+                    PathBuf::from(source),
+                    count_of(nodes, "label node count")?,
+                    census,
+                    cache,
+                ),
+                PathBuf::from(out),
+            )
+        }
         ["--labels", capture, "--report", report, "--out", out] => (
             Mode::Labels(PathBuf::from(capture), PathBuf::from(report)),
             PathBuf::from(out),
         ),
-        _ => {
-            return Err(format!(
-                "--config and --out are both required, or --replay, --out and --workers, or \
-                 --capture, --out and --label-nodes, or --labels, --report and --out, each in \
-                 that order\n\n{USAGE}"
-            ));
-        }
+        _ => return Err(usage_error()),
     };
     // The claim IS the existence check: one O_EXCL syscall, no window for a
     // second run to slip through (docs/decisions.md D-200).
@@ -92,7 +83,7 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
     // leaves no report either: the `--out` claim is given back first, so the
     // refusal is the same "no report at all" exit 2 every pre-game refusal is.
     let census = match &mode {
-        Mode::Capture(_, _, true) => {
+        Mode::Capture(_, _, true, _) => {
             let path = outpath::census_path(&out_path).map_err(|error| error.to_string())?;
             match outpath::claim(&path) {
                 Ok(file) => Some((path, file)),
@@ -112,8 +103,8 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
     let outcome = match &mode {
         Mode::Play(config) => run(config, &out_path, claimed),
         Mode::Replay(source, workers) => replay_pass(source, &out_path, claimed, *workers),
-        Mode::Capture(source, nodes, _) => {
-            passes::capture(source, &out_path, claimed, *nodes, census)
+        Mode::Capture(source, nodes, _, cache) => {
+            passes::capture(source, &out_path, claimed, *nodes, census, *cache)
         }
         Mode::Labels(capture, report) => passes::labels(capture, report, &out_path, claimed),
     };
@@ -136,42 +127,6 @@ fn dispatch(words: &[&str]) -> Result<ExitCode, String> {
             Err(error.to_string())
         }
     }
-}
-
-/// The worker count, with its SPELLING validated and not merely its value.
-///
-/// `+4`, ` 4` and `04` all parse to four and would land in a document's timing
-/// block unnormalised, describing a run nobody can reproduce by copying the line
-/// back (tools/SHELL_CHECKLIST.md item 8).
-fn workers_of(word: &str) -> Result<usize, String> {
-    let parsed = usize::try_from(count_of(word, "worker count")?)
-        .map_err(|_| format!("`{word}` is more workers than this machine can address"))?;
-    if parsed == 0 {
-        return Err(String::from("--workers 0 would replay nothing at all"));
-    }
-    Ok(parsed)
-}
-
-/// A count off the command line, with its SPELLING validated and not merely its
-/// value.
-///
-/// `+4`, ` 4` and `04` all parse to four and would land in a document
-/// describing a run nobody can reproduce by copying the line back
-/// (tools/SHELL_CHECKLIST.md item 8).
-fn count_of(word: &str, what: &str) -> Result<u64, String> {
-    let parsed: u64 = word
-        .parse()
-        .map_err(|_| format!("`{word}` is not a {what}\n\n{USAGE}"))?;
-    if parsed.to_string() != word {
-        return Err(format!(
-            "`{word}` is a {what} spelled a way this program will not echo back; write it as \
-             `{parsed}`\n\n{USAGE}"
-        ));
-    }
-    if parsed == 0 {
-        return Err(format!("a {what} of zero asks for nothing at all"));
-    }
-    Ok(parsed)
 }
 
 /// Re-drive one report's games through the engines that report attests.

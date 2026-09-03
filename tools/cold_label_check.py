@@ -43,6 +43,13 @@
 # about `all` while a criterion said `hits`, which is the one failure this
 # argument exists to prevent.
 #
+# A SAMPLE BELOW THE REGISTERED FLOOR IS A VOID, NOT A PASS. A class can exist
+# and still be too thin to say anything: nine sampled records agreeing is not
+# the criterion docs/experiments/wp21_prereg.md section 4 registers, which is
+# ten. The floor is in SAMPLED records, so it binds the stride to the capture
+# rather than the capture to the stride; the void names the count it found and
+# the floor it wanted.
+#
 # Usage:
 #   tools/cold_label_check.py --capture <path> --binary <path>
 #                             --engine-config <path> --stride <n>
@@ -72,6 +79,10 @@ PARTITIONS = ("hits", "misses", "all")
 
 VOID = 2
 DISAGREES = 1
+
+# docs/experiments/wp21_prereg.md section 4: fewer sampled records than this in
+# a class is a VOID (exit 2), never a pass.
+MIN_SAMPLED = 10
 
 
 class Void(Exception):
@@ -269,6 +280,12 @@ def main():
     want = args.partition
     classed = partitioned(rows, want, source)
     sampled = [pair for n, pair in enumerate(classed) if n % stride == 0]
+    if len(sampled) < MIN_SAMPLED:
+        raise Void(
+            f"{len(sampled)} sampled {want.upper()} record(s) at stride {stride} is below "
+            f"the registered floor of {MIN_SAMPLED}; a class too thin to sample is a VOID "
+            f"and not a pass"
+        )
     say(
         f"{len(rows)} record(s) in {source}, of which {len(classed)} are "
         f"{want.upper()}; the sample is every {want.upper()} record whose "
