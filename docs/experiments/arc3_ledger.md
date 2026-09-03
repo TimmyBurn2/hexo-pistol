@@ -1525,3 +1525,25 @@ at N = 1 and N = 2 (`leverA:` lines `wall_s 0.544` and `0.766`, 32 records, all
 files byte-identical) and the pair through it (`s_per_ask 0.017516` uncached,
 `0.019984` cached at a toy budget); every limb green; §7.1's RECORD is that run.
 **Round 4 of each is dispatched at the commit that lands this.**
+
+### §2.4 — THE ASSEMBLER'S SCOPED ROUND 3 OVER `9c4366c..5b17132`: PASS — 0 BLOCKING, 0 MAJOR, 2 minor
+
+`wp21_assemble_REVIEW_round3.md`, by execution in the reviewer's worktree at
+`5b17132` (the script and suite byte-identical from there to `735fc37`): **N1–N7
+all CLOSED**; suite 11 of 11; **round 2's two surviving mutants (a wrong manifest
+self-digest, the capture-duplicate VOID deleted) both KILLED** by the tests N4
+added; the pilot reproduced (742 / 347 / 191 / 0.5504 / 0, byte-identical twice,
+manifest digests `0022220f…` / `0a1001ac…` equal to round 2's); the backstop
+passes `SystemExit` and `KeyboardInterrupt` through and turns a generic exception
+into a VOID with no file. **Two new minors, both on paths the diff opened and
+neither a wrong number or file**: m1, a CLOSED stdout makes the `reconfigure` loop
+raise above the `try` (exit 1 with a traceback); m2, `say()` after `write_pair`
+failing on a full `/dev/full` stdout prints `RUN VOID` with both manifests
+already complete on disk. **ARCHITECT DEFAULT APPLIED: neither is landed before
+the sweep.** `wp21_prereg.md` §8 registers the assembler at `5b17132`'s digest,
+the registration's round 4 is in flight at that digest, and a one-line change to
+an instrument reopens its review (docs/process.md); the two remedies (`if stream
+is not None`; a written-flag the backstop reads) are queued for the closure's
+assembly step or the optimization arc's tools tranche, with a scoped review then.
+**§6 may run: the instrument at its registered digest has a PASS at its own
+revision.**
