@@ -1547,3 +1547,63 @@ is not None`; a written-flag the backstop reads) are queued for the closure's
 assembly step or the optimization arc's tools tranche, with a scoped review then.
 **§6 may run: the instrument at its registered digest has a PASS at its own
 revision.**
+
+### §3 — ROUND 4 OF BOTH REGISTRATIONS: FAIL AND FAIL; REVISIONS 7 AND 6 ARE THE LAST ROUND'S REMEDIES
+
+**`wp21_prereg_rev6_REVIEW.md` at `735fc37`: FAIL — 0 BLOCKING, 5 MAJOR, 8 minor**;
+round 3's sixteen all CLOSED; the whole §9.1 record, §3's arithmetic, the
+partition, every digest (binaries from the reviewer's own fresh release build),
+the coverage suites and T-F's cross-report compare all reproduced. **Revision 7**:
+M1 the T-A rows quote `MISSES`/`HITS`, the words the instrument prints; M2 the T-F
+body compare re-taken with the registered `head -n` form (the dry run's fourth
+take, `artifacts/arc3r_dryrun_sweep_0c4f3b4_v4.txt`, 20 of 20 at exit 0); M3 §5's
+checker keys on the `cmp -s` **`exit=0`** line, a non-zero one voiding; M4 T-F gets
+its registered consequence — the sibling's C1 class, THE SWEEP STOPS, no tranche
+re-run; M5 `docs/book_v2_ledger.md`'s row names revision 7; m1 the driver's
+`run()` now prints each argument shell-quoted (`%q`), so the record's `bash -c`
+lines run as printed; m2 closed by `73979e7`; m3 the four restatements gone (the
+basename courtesy said once, §6.1 a pointer, the RECORD's history paragraph out,
+the T-F sub-range paragraph folded into its row); m4 the two constraint-free
+sentences deleted; m5 an INTERRUPTED tranche does not count toward the two
+consecutive VOIDs; m6 *"or its passing `-run<k>`"* on the referent pair's paths;
+**m7 the generator's own header line *"Validate this file with
+tools/config_check.sh"* replaced** (`tools/wp21_tranche_config.py`, suite 18 of 18,
+new digest in both §8s — the honest cost of a digested instrument, taken); m8
+limb 2 cites the one `document()` template.
+
+**`wp21_throughput_prereg_rev5_REVIEW.md` at `735fc37`: FAIL — 1 BLOCKING, 3 MAJOR,
+13 minor**; the harness reproduced on the reviewer's own build, every field
+§3.3/§4.5 reads printed, all digests, all 60 record lines, the stand-in disjoint
+and transferring. **Revision 6**: B1 — new text of revision 5 — §4.5's 5 % clause
+divided a wave-one wall by a between-the-waves wall, `1/c(N)` for a perfect cache;
+**the clause is decided on the play-pass pair alone, one-sided, and tranche one's
+pair contributes byte-identity only**; M1 the sibling at revision 7; M2 §1 carries
+percentages and no seconds; M3 the tie rule is *"the SMALLEST N whose median
+throughput is at least 95 % of the highest median"*, the base stated; m1 `rc` read
+— a non-zero or missing line is a VOID setting-rep under C2; m2 the driver prints
+C1 and C2's commands and C2's referent is derived off the REPORT by `awk` (a
+decided game asks `turns`, a capped one `turns + 1`; 34 on the stand-in's report,
+which is what its capture holds); m3 the divides-16 guard deleted; m4 C3 stated
+once, *"over N = 4 at `c = 1`"*; m5 A3, not A7; m6 the transfer evidence is the
+registered record's opening 3 (games 6–7 of the pilot's report, `diff` empty);
+m7 the `%q` printing; m8 the dry run no longer runs `config_check.sh`; **m9 the
+driver is registered** — `lever_a.sh` rewritten to call the harness fifteen times
+in §3.2's order and print C1/C2, printed whole in §7, digested in §8; m10 the
+harness refuses N below 1 and any tail word but `--label-cache`, and prints no
+line and exits 2 when a process wrote no counts line; m11 2.2 min; m12 the idle
+rule covers the §4.5 pair; m13 the receipt is registered as
+`artifacts/arc3r_leverA_<commit>.txt`, its digest to be carried by the slot
+amendment. **The throughput dry run's third take**
+(`artifacts/arc3r_dryrun_throughput_0c4f3b4_v3.txt`): the hardened harness at
+N = 1 and N = 2 and for the pair, every limb green, no validator, quoted lines.
+
+**A pattern, named because it cost two rounds**: three of the last four MAJORs
+across the pair were a REVISION NUMBER or a DIGEST cited one commit stale
+(the design at 7 with 10 in the tree; the sibling at 5 with 6 in the same
+commit; the book ledger's row). Gate 20 cannot see a stale number, only a stale
+path. Before this commit every cross-citation was set to the number the cited
+document has AT THIS COMMIT: the sweep at 7, the throughput at 6, the design at
+10, the generator at its new digest in both §8s.
+
+**Round 5 of each — the LAST round under D-585, remedies-only — is dispatched at
+the commit that lands this.**

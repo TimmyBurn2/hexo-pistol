@@ -169,7 +169,8 @@ def document(tranche, skip, take, binary_sha256, pilot_range):
 # `arena --capture` accepts; every pair scores alike and the verdict is
 # degenerate by construction (D-156).
 #
-# Validate this file with tools/config_check.sh.
+# Its acceptance is the arena's own strict parse at pass 1 (hard rule 1); no other
+# validator is registered for it.
 
 schema_version = {SCHEMA_VERSION}
 
