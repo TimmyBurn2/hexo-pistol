@@ -1298,3 +1298,12 @@ process writes. **The fix is the assertion, not the mechanism**: T3 reads the
 refusal's FIRST line. The design's row 4 and §6's X1 rows say so at **revision 8**
 — a test-assertion claim, IMPL's under D-590, corrected by execution and not
 re-reviewed as a design. Re-run of M12/M13 at the fixed revision: below.
+
+**THE RE-RUN, at `610225b`** (`artifacts/arc3r_mutation_610225b_X1.txt`): baseline
+9 of 9 and T8 green; **M12 DIED, M13 DIED**, M14 re-taken beside them and DIED.
+**The receipt is `docs/experiments/wp21_label_cache_MUTATION.md`**: the `git grep`
+enumeration at `9c4366c`, twenty-one rows, twenty of twenty non-equivalent mutants
+dying at the row the design names, M11 surviving as the EQUIVALENT it is labelled,
+both logs' digests inside it. The worktree `/home/tom/pistol-wt/mutation` stays
+until the package's reviews close, in case a reviewer's finding wants a row
+re-taken; it holds nothing gitignored but its `target/` and the driver.
