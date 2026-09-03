@@ -1,4 +1,4 @@
-# WP-2.1 lever B — the label cache. DESIGN, revision 7.
+# WP-2.1 lever B — the label cache. DESIGN, revision 8.
 
 > **ONE LINE.** `arena --capture` asks the engine at every asked prefix of every
 > game, and the pilot MEASURED **742 asks over 347 distinct questions**. This
@@ -16,7 +16,8 @@ revision history is in `docs/experiments/arc3_ledger.md`, not here. **`file:line
 citations are at `adb2012`**, the tree before IMPL. **The design gate closed at
 revision 6 by D-589**; revision 7 carries round 5's one MAJOR and two minors as the
 IMPL obligations D-589 names, and is not reviewed as a design — REVIEW-impl
-verifies each by running the suite (D-590).
+verifies each by running the suite (D-590). Revision 8 corrects one test-assertion
+claim the mutation receipt falsified (row 4, §6's X1 rows) and nothing else.
 
 ---
 
@@ -31,7 +32,7 @@ verifies each by running the suite (D-590).
 | 2c | the same loop, at the call to `ask` (`:343`) | **the LOOKUP**: a `position` in the memo takes the stored pair and makes no ask; a miss increments `asks` (§2.5), then asks |
 | 2d | the same loop, after `normalise` (`:356`) | **the INSERT**: the post-`normalise` pair under `position`, and the miss's two coarser keys into their sets, bumping a counter for each key already present (§2.4) |
 | 3 | `crates/pistol-arena/src/passes.rs` (`:82-96`) | threads the mode in and prints the counts line (§2.5) |
-| 4 | `crates/pistol-arena/src/bin/arena.rs`, the `match words` (`:39-86`) | five reachable spellings of a capture line: `… --label-nodes n` (`:51`) and `… --census` (`:59-74`) exist; `… --label-cache` is new and legal; `… --census --label-cache` and `… --label-cache --census` are ONE or-pattern arm, **X1** (§3). Everything else falls to the catch-all (`:79-85`), which names neither word |
+| 4 | `crates/pistol-arena/src/bin/arena.rs`, the `match words` (`:39-86`) | five reachable spellings of a capture line: `… --label-nodes n` (`:51`) and `… --census` (`:59-74`) exist; `… --label-cache` is new and legal; `… --census --label-cache` and `… --label-cache --census` are ONE or-pattern arm, **X1** (§3). Everything else falls to the catch-all, whose OWN sentence names neither word — the usage text it appends names every word this program has, so T3 reads the refusal's first line and not the whole of stderr (the mutation receipt at `9c4366c` found both X1 mutants surviving a whole-of-stderr search) |
 | 5 | `crates/pistol-arena/src/usage.rs` | the word, that its absence means off, what the counts line means |
 | 6 | `crates/pistol-arena/src/bin/stub_engine.rs` | `Behave::StrayAfterNewGame(n)`, spelled `stray_after_newgame <n>`: honest, and the answer to the `go` that follows its n-th `newgame` carries a SECOND `bestmove` line, **in the same write SYSCALL as the answer** — one `write_all` of one buffer ending in `\n` through the locked stdout, never two `writeln!`s, so the only window between the answer and the stray is the reader thread's own (§3, T4). A REVIEW-impl item. **The count**: `seats::with_seats` sends one `newgame` per spawn (`seats.rs:47`) and `ask` one per ask (`:247`), so in play the stub sees one and in a capture one plus one per ask; at `n >= 2` play never reaches the deviation — necessarily, since a play-pass stray forfeits (`exchange.rs:34`) and the report is captured with the config that played it. **A `bestmove`-shaped stray, not an `info` one**: `classify` ignores an unrecognised `info` line (`:197-199`), so only a `bestmove` is read as the answer to a later ask. No `Behave` variant writes a line after its `bestmove`; the one test engine that does (`crates/pistol-arena/tests/protocol_abuse_tests.rs:180-199`) doubles at its FIRST `go` — game 0, turn 0, a miss in any run — so X3's test needs a behaviour that deviates after a counted `newgame` |
 | 7 | `tools/cold_label_check.py` | the ten-sampled-record floor `wp21_prereg.md` §4 registers: fewer than ten sampled records in a class is a VOID (exit 2), not a pass. A named constant, printed in the void message. `--partition` landed at `f1acc57` |
@@ -190,7 +191,7 @@ Against call sites enumerated by a `git grep` receipt in the mutation document
 | `asks` | reports `records` | T2, **cached** arm |
 | `asks` | derived from the records or the memo, unconditionally | T2, **uncached** arm: the derivation reads fewer than `records` |
 | `asks` | derived only when the mode is `On` | **EQUIVALENT while the cache is live** — distinguishable only on a dead cache, which no test has; listed as such in the receipt, and §2.5 is a REVIEW-impl item |
-| X1 | the arm removed | T3: the combination falls to the catch-all, which also refuses and exits 2 but names neither word |
+| X1 | the arm removed | T3: the combination falls to the catch-all, which also refuses and exits 2 but whose own line names neither word |
 | X1 | one alternative of the or-pattern removed | T3, that order |
 | X1b | removed | T3b |
 | X3 | the guard left inside `ask` and not hoisted, or removed | T4: the cached run finishes at exit 0, every prefix of game 1 being a hit and none an ask |

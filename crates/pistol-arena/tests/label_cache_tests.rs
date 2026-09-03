@@ -288,9 +288,14 @@ fn label_cache_with_census_in_either_order_is_refused_naming_both_and_leaves_no_
             !out.exists() && !scratch.path(&format!("capture-{tag}.census.txt")).exists(),
             "{tag}: a refused run left a file behind"
         );
+        // THE REFUSAL'S OWN LINE, not the usage text the catch-all appends after
+        // its sentence: that text names every word this program has, so a
+        // search of the whole of stderr cannot tell X1's arm from the
+        // catch-all — which is exactly what the mutation receipt found.
+        let own = stderr.lines().next().unwrap_or_default();
         assert!(
-            stderr.contains("--label-cache") && stderr.contains("--census"),
-            "{tag}: the refusal must name both words: {stderr}"
+            own.contains("--label-cache") && own.contains("--census"),
+            "{tag}: the refusal's own line must name both words: {own}\n(whole stderr: {stderr})"
         );
     }
 }

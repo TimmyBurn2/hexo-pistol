@@ -1280,3 +1280,21 @@ Gate 20 over both: **24 and 12 citations, 0 unreproduced**. **NOT YET GOVERNING
 A RUN**: §8's instrument slots and §9.1/§7.1's RECORD slots are empty until the
 package closes its reviews and the closure head's binaries exist; the dry runs
 and the round-3 reviews follow that.
+
+### F-2.1 — BOTH X1 MUTANTS SURVIVED THE FIRST MUTATION RECEIPT, BECAUSE THE CATCH-ALL NAMES EVERY WORD
+
+**THE RECEIPT** (`artifacts/arc3r_mutation_9c4366c.txt`, driver
+`scratch_mutate.py` in the detached worktree `/home/tom/pistol-wt/mutation`, its
+own `target/`, rustc 1.98.0): baseline 9 of 9 and T8 green; **M01–M10, M14–M21
+DIED** at exactly the row the design names; **M11**, the `asks`-derived-only-when-On
+form, **SURVIVED the whole suite — the EQUIVALENT the design labels it**; **M12 and
+M13, the X1 arm removed and one alternative of its or-pattern removed, SURVIVED
+T3.** Cause, found by reading the surviving run's stderr: the usage catch-all
+refuses with its own sentence and then appends `USAGE`, which names
+`--label-cache` and `--census` among every other word, so T3's search of the
+WHOLE of stderr for both words is satisfied by the catch-all. The design's
+*"names neither word"* was true of the catch-all's sentence and false of what the
+process writes. **The fix is the assertion, not the mechanism**: T3 reads the
+refusal's FIRST line. The design's row 4 and §6's X1 rows say so at **revision 8**
+— a test-assertion claim, IMPL's under D-590, corrected by execution and not
+re-reviewed as a design. Re-run of M12/M13 at the fixed revision: below.
