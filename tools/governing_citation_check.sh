@@ -41,6 +41,7 @@ void() {
 
 command -v python3 >/dev/null || void "python3 is not on PATH"
 [ -f tools/design_citation_check.py ] || void "tools/design_citation_check.py is missing"
+[ -f tools/revision_citation_check.py ] || void "tools/revision_citation_check.py is missing"
 
 # The documents that GOVERN something as of this revision.
 GOVERNING=(
@@ -60,6 +61,15 @@ GOVERNING=(
 PROPOSES=(
 )
 
+# A document whose REVISION citations are not checked, with the reason. The
+# design's review gate CLOSED at revision 6 (docs/decisions.md D-589), so its
+# GOVERNING block records what governed it and its later revisions carry
+# implementation obligations only. The exemption is by that reason and never by
+# a pin disclaimer, which covers `file:line` citations alone (D-600).
+REVISION_EXEMPT=(
+	docs/experiments/wp21_label_cache_design.md
+)
+
 for doc in "${GOVERNING[@]}"; do
 	[ -f "$doc" ] || void "the governing document $doc is missing"
 done
@@ -72,3 +82,16 @@ done
 printf 'governing_citation_check: %d governing document(s), %d proposed path(s)\n' \
 	"${#GOVERNING[@]}" "${#PROPOSES[@]}"
 python3 tools/design_citation_check.py "${ARGS[@]}" "${GOVERNING[@]}"
+
+# THE SECOND HALF OF THE GATE. A `<doc>.md revision N` is a claim about another
+# document's title line, which the checker above cannot see: it matches paths,
+# and the citation that kept going stale is a bare basename with no directory
+# prefix, so it does not even match the path pattern (docs/decisions.md D-599,
+# D-600, D-601, D-602 — the class was caught five times by fresh reviewers before
+# anything mechanical looked for it).
+EXEMPT_ARGS=()
+for path in "${REVISION_EXEMPT[@]}"; do
+	EXEMPT_ARGS+=(--exempt "$path")
+done
+printf 'governing_citation_check: %d revision exemption(s)\n' "${#REVISION_EXEMPT[@]}"
+python3 tools/revision_citation_check.py "${EXEMPT_ARGS[@]}" "${GOVERNING[@]}"
