@@ -2058,3 +2058,21 @@ that reason written beside it. **Three tests were added for the three findings**
 each driving the shipped script; the suite is **10 of 10**, clippy and fmt clean,
 gate 17 unchanged. The gate is green over the nine governing documents: 6
 revision citations checked, 0 stale, 2 named exemptions.
+
+**CI GREEN AT HEAD.** `tools/ci.sh` at `486aaa4`, detached worktree on `/home`,
+its own `CARGO_TARGET_DIR`: **twenty gate lines, `gate 1/20` through `gate
+20/20`, `ci: all gates passed`, `CI_EXIT=0`**, under rustc 1.98.0. Log
+`artifacts/arc3r_ci_486aaa4.txt`, sha256
+`3f59d85469175ce004ff5c867628a244ecd92d508126c41bc282c85fb157c5a8`. **A first run
+at `ab9d2a9` was stopped by PID after the tools/ review found two exit-0 wrong
+answers in the new gate** — its commit was superseded and two `ci.sh` runs on one
+box is F-1.3's own defect — and its partial log is kept as
+`artifacts/arc3r_ci_final_superseded_ab9d2a9.txt`. **All worktrees removed**;
+`git worktree list` holds the main tree alone.
+
+**THE ARC'S CLOSURE IS `docs/experiments/arc3_CLOSURE.md`**, numbers first, with
+the two items that did NOT close named on its face: the census count against
+D-537's floor of 28, which needs a cap-calibration registration and a census
+registration that do not exist, and anchor v3, still blocked on a platform
+capability. **§5's 2 369 key disagreements are the arc's one new open question**
+and the first measurement D-562(2) has ever had.
