@@ -1607,3 +1607,26 @@ document has AT THIS COMMIT: the sweep at 7, the throughput at 6, the design at
 
 **Round 5 of each — the LAST round under D-585, remedies-only — is dispatched at
 the commit that lands this.**
+
+### F-3.1 — ROUND 5 OF BOTH REGISTRATIONS WAS VOID, NOT FAILED, AND THE GRANT IS UNTOUCHED
+
+Both round-5 reviewers were dispatched at `48a5802` and both were killed mid-read
+by the session's rate limit (`HTTP 429`, request ids in the task notifications).
+**Neither wrote a report**: `ls docs/experiments/ | grep -E 'wp21_prereg_rev7|wp21_throughput_prereg_rev6'`
+returns nothing, no finding was raised, no verdict returned. **This is a VOID and
+not the fifth failed round that would have STOPPED the sweep** — `SHELL_CHECKLIST`
+item 12's own distinction, made standing for reviews by **D-597**, which also
+scopes a remedies-only round to the DIFF rather than the document set (rounds 3
+and 4 cost ~250 000 tokens each to adjudicate a dozen remedies). Their two
+worktrees held nothing and were removed; the tree is clean at `48a5802`; no
+process of this project's is on the box.
+
+**ROUND 5 IS RE-DISPATCHED AT THE SAME REVISION**, lean: the reading list is the
+`735fc37..48a5802` diff of the document (191 and 205 changed lines), the round-4
+report, and the files the remedies touch; the reviewer still chooses its own
+commands under `docs/process.md`. **ARCHITECT DEFAULT APPLIED**: the two
+remedies-only rounds run on Sonnet rather than the arc's model, per D-597's
+second limb and recorded here and in each report — what they adjudicate is a
+grep, a digest, a paste-back and a tie-rule reading, and the arc's remaining
+budget is better spent on the sweep it gates than on re-reading two documents
+three fresh contexts have already reproduced.
