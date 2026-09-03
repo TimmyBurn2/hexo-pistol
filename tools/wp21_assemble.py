@@ -34,13 +34,17 @@
 # deduped count, not the raw one: two records of one position may disagree on
 # outcome across games, and the training input holds one of them.
 #
-# WHAT IT REFUSES, BY NAME, AS A VOID. Anything the corpus reader
-# (crates/pistol-arena/src/labels_file.rs) refuses: a schema other than 1, a
-# field count other than sixteen, an empty field, a result or end outside the
-# closed sets, a body that does not digest to its header. And two things the
-# reader cannot see because it reads one file: the same corpus twice (one
-# tranche listed twice doubles `records`), and corpora labelled at different
-# `label_go` lines (one training input, two teachers).
+# WHAT IT REFUSES, BY NAME, AS A VOID. What the corpus reader
+# (crates/pistol-arena/src/labels_file.rs) refuses THAT A COUNT HERE DEPENDS
+# ON: a schema other than 1, a field count other than sixteen, an empty field, a
+# depth that is not one, a result or end outside the closed sets, a body that
+# does not digest to its header. The reader's other refusals — a missing param,
+# a key's token shape, `to_move`, `book`, `score_kind` — are not re-checked,
+# because no number printed here reads those fields; a corpus a tranche passed
+# has already been through the reader. And two things the reader cannot see
+# because it reads one file: the same corpus twice (one tranche listed twice
+# doubles `records`), and corpora labelled at different `label_go` lines (one
+# training input, two teachers).
 #
 # IT NEVER OVERWRITES AND LEAVES NO HALF-WRITTEN PAIR. Both texts are rendered
 # before either file is claimed; both are claimed exclusively; a refusal or a
@@ -91,9 +95,20 @@ def say(what):
     print(f"wp21_assemble: {what}")
 
 
-def readable(word, what):
+def receipt_safe(word, what):
+    """A value that will be interpolated into a manifest, guarded at the boundary.
+
+    A line break or a TAB in it would inject a row or a column into a receipt
+    somebody parses (tools/SHELL_CHECKLIST.md item 9), and the two header values
+    a corpus supplies reach the manifests exactly as a caller's basename does.
+    """
     if not word.isprintable() or any(c in word for c in LINE_BREAKERS):
-        raise Void(f"the {what} path carries a character a receipt cannot hold: {word!r}")
+        raise Void(f"the {what} carries a character a receipt cannot hold: {word!r}")
+    return word
+
+
+def readable(word, what):
+    receipt_safe(word, f"{what} path")
     path = Path(word)
     if not path.is_file():
         raise Void(f"the {what} `{word}` is not a regular file")
@@ -120,7 +135,8 @@ def body_of(text, source):
     """The body, checked against the digest the header claims."""
     claimed = one_header(text, BODY_MARKER, source)
     at = text.index(BODY_MARKER)
-    body = text[text.index("\n", at) + 1:]
+    end = text.find("\n", at)
+    body = "" if end < 0 else text[end + 1:]
     actual = hashlib.sha256(body.encode("utf-8")).hexdigest()
     if actual != claimed:
         raise Void(f"{source} digests to {actual} and its header claims {claimed}")
@@ -171,9 +187,9 @@ def corpus_of(index, word):
     schema = one_header(text, SCHEMA_MARKER, source)
     if schema != SCHEMA:
         raise Void(f"{source} is corpus schema {schema}, and this instrument reads schema {SCHEMA}")
-    label_go = one_header(text, LABEL_GO_MARKER, source)
+    label_go = receipt_safe(one_header(text, LABEL_GO_MARKER, source), f"{source} label_go")
     digest, body = body_of(text, source)
-    capture = one_header(text, CAPTURE_MARKER, source)
+    capture = receipt_safe(one_header(text, CAPTURE_MARKER, source), f"{source} capture_sha256")
     return index, path, digest, capture, label_go, records_of(body, source)
 
 
@@ -342,6 +358,20 @@ def main():
             for t in order
         ],
     )
+    # PREFLIGHT, after both texts exist and before either file is claimed
+    # (tools/SHELL_CHECKLIST.md item 12): a shortage is a VOID naming the
+    # filesystem, what it has and what was wanted, not an errno found mid-write.
+    wanted = len(raw_text.encode("utf-8")) + len(deduped_text.encode("utf-8"))
+    try:
+        vfs = os.statvfs(out_dir)
+    except OSError as why:
+        raise Void(f"cannot preflight the output directory `{out_dir}`: {why}")
+    available = vfs.f_bavail * vfs.f_frsize
+    if available < wanted:
+        raise Void(
+            f"the filesystem holding `{out_dir}` has {available} bytes available and the two "
+            f"manifests want {wanted}"
+        )
     write_pair(raw_path, raw_text, deduped_path, deduped_text)
 
     say(f"corpora {len(corpora)}")
@@ -356,9 +386,19 @@ def main():
 
 
 if __name__ == "__main__":
+    # A path the terminal cannot spell must not turn two written manifests into
+    # a REFUSED exit at the last print (tools/SHELL_CHECKLIST.md item 4).
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(errors="backslashreplace")
     try:
         sys.exit(main())
     except Void as why:
         print(f"wp21_assemble: RUN VOID: {why}", file=sys.stderr)
         print("wp21_assemble: no manifest was written; this is NOT an answer", file=sys.stderr)
+        sys.exit(VOID)
+    except Exception:  # noqa: BLE001 — the backstop that keeps exit 1 meaning REFUSED
+        import traceback
+
+        traceback.print_exc()
+        print("wp21_assemble: RUN VOID: the instrument failed, see the traceback above", file=sys.stderr)
         sys.exit(VOID)

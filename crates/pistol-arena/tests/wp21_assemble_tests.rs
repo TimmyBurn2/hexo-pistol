@@ -194,6 +194,20 @@ fn two_corpora_assemble_into_a_raw_manifest_naming_each_ones_own_digest_and_coun
         derived(&raw, "records").parse::<usize>().ok(),
         Some(records(&a).len() + records(&b).len())
     );
+    // Each manifest's own claimed digest is the digest of the body it holds —
+    // the identity the closure cites for the pair.
+    for name in ["raw_manifest.txt", "deduped_manifest.txt"] {
+        let text = std::fs::read_to_string(dir.join(name)).expect("a manifest");
+        let claimed = pistol_cli::corpus::emit::claimed_body_digest(&text)
+            .unwrap_or_else(|| panic!("{name} claims no body digest"));
+        let body = pistol_cli::corpus::emit::body_of(&text)
+            .unwrap_or_else(|| panic!("{name} has no body"));
+        assert_eq!(
+            claimed,
+            pistol_cli::sha256::sha256_hex(body.as_bytes()),
+            "{name}'s header names bytes it does not hold"
+        );
+    }
 }
 
 #[test]
@@ -457,8 +471,10 @@ fn the_disagreement_count_does_not_depend_on_the_order_the_corpora_are_given() {
     );
     let forward = out_dir(&scratch, "forward");
     let backward = out_dir(&scratch, "backward");
-    assert_eq!(assemble(&forward, &[&a, &doctored]).status.code(), Some(0));
-    assert_eq!(assemble(&backward, &[&doctored, &a]).status.code(), Some(0));
+    let first = assemble(&forward, &[&a, &doctored]);
+    assert_eq!(first.status.code(), Some(0), "{}", meaning(&first));
+    let second = assemble(&backward, &[&doctored, &a]);
+    assert_eq!(second.status.code(), Some(0), "{}", meaning(&second));
     let f = std::fs::read_to_string(forward.join("deduped_manifest.txt")).expect("a manifest");
     let g = std::fs::read_to_string(backward.join("deduped_manifest.txt")).expect("a manifest");
     // The doctored record and the one it transposes are two distinct
@@ -495,6 +511,20 @@ fn the_same_corpus_given_twice_is_a_void_naming_both() {
     );
     let dir = out_dir(&scratch, "out");
     void_named(&assemble(&dir, &[&a, &copy]), "corpus 2");
+    assert!(std::fs::read_dir(&dir).expect("dir").next().is_none());
+    // The same CAPTURE under a different body — one tranche's corpus written
+    // twice with one record's depth edited — is the same tranche twice too.
+    let relabelled = scratch.write(
+        "corpus-a-relabelled.txt",
+        &rebuild(&a, |at, fields| {
+            if at == 0 {
+                fields[10] = String::from("7");
+            }
+        }),
+    );
+    let dir = out_dir(&scratch, "out-capture");
+    let output = assemble(&dir, &[&a, &relabelled]);
+    void_named(&output, "same capture");
     assert!(std::fs::read_dir(&dir).expect("dir").next().is_none());
 }
 

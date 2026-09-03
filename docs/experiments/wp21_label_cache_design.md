@@ -1,4 +1,4 @@
-# WP-2.1 lever B — the label cache. DESIGN, revision 8.
+# WP-2.1 lever B — the label cache. DESIGN, revision 9.
 
 > **ONE LINE.** `arena --capture` asks the engine at every asked prefix of every
 > game, and the pilot MEASURED **742 asks over 347 distinct questions**. This
@@ -17,7 +17,8 @@ citations are at `adb2012`**, the tree before IMPL. **The design gate closed at
 revision 6 by D-589**; revision 7 carries round 5's one MAJOR and two minors as the
 IMPL obligations D-589 names, and is not reviewed as a design — REVIEW-impl
 verifies each by running the suite (D-590). Revision 8 corrects one test-assertion
-claim the mutation receipt falsified (row 4, §6's X1 rows) and nothing else.
+claim the mutation receipt falsified (row 4, §6's X1 rows) and nothing else; revision 9
+names the site the arm landed at (row 4), a REVIEW-impl minor.
 
 ---
 
@@ -32,7 +33,7 @@ claim the mutation receipt falsified (row 4, §6's X1 rows) and nothing else.
 | 2c | the same loop, at the call to `ask` (`:343`) | **the LOOKUP**: a `position` in the memo takes the stored pair and makes no ask; a miss increments `asks` (§2.5), then asks |
 | 2d | the same loop, after `normalise` (`:356`) | **the INSERT**: the post-`normalise` pair under `position`, and the miss's two coarser keys into their sets, bumping a counter for each key already present (§2.4) |
 | 3 | `crates/pistol-arena/src/passes.rs` (`:82-96`) | threads the mode in and prints the counts line (§2.5) |
-| 4 | `crates/pistol-arena/src/bin/arena.rs`, the `match words` (`:39-86`) | five reachable spellings of a capture line: `… --label-nodes n` (`:51`) and `… --census` (`:59-74`) exist; `… --label-cache` is new and legal; `… --census --label-cache` and `… --label-cache --census` are ONE or-pattern arm, **X1** (§3). Everything else falls to the catch-all, whose OWN sentence names neither word — the usage text it appends names every word this program has, so T3 reads the refusal's first line and not the whole of stderr (the mutation receipt at `9c4366c` found both X1 mutants surviving a whole-of-stderr search) |
+| 4 | `crates/pistol-arena/src/bin/arena.rs`, the `match words` (`:39-86` at `adb2012`), and — as landed — the capture arm's TAIL parsed by `crates/pistol-arena/src/usage.rs`'s `capture_tail`, where the four command-line vocabulary helpers moved to keep `bin/arena.rs` under rule 9's cap | five reachable spellings of a capture line: `… --label-nodes n` and `… --census` exist; `… --label-cache` is new and legal; `… --census --label-cache` and `… --label-cache --census` are ONE or-pattern arm, **X1** (§3). Everything else falls to the catch-all, whose OWN sentence names neither word — the usage text it appends names every word this program has, so T3 reads the refusal's first line and not the whole of stderr (the mutation receipt at `9c4366c` found both X1 mutants surviving a whole-of-stderr search) |
 | 5 | `crates/pistol-arena/src/usage.rs` | the word, that its absence means off, what the counts line means |
 | 6 | `crates/pistol-arena/src/bin/stub_engine.rs` | `Behave::StrayAfterNewGame(n)`, spelled `stray_after_newgame <n>`: honest, and the answer to the `go` that follows its n-th `newgame` carries a SECOND `bestmove` line, **in the same write SYSCALL as the answer** — one `write_all` of one buffer ending in `\n` through the locked stdout, never two `writeln!`s, so the only window between the answer and the stray is the reader thread's own (§3, T4). A REVIEW-impl item. **The count**: `seats::with_seats` sends one `newgame` per spawn (`seats.rs:47`) and `ask` one per ask (`:247`), so in play the stub sees one and in a capture one plus one per ask; at `n >= 2` play never reaches the deviation — necessarily, since a play-pass stray forfeits (`exchange.rs:34`) and the report is captured with the config that played it. **A `bestmove`-shaped stray, not an `info` one**: `classify` ignores an unrecognised `info` line (`:197-199`), so only a `bestmove` is read as the answer to a later ask. No `Behave` variant writes a line after its `bestmove`; the one test engine that does (`crates/pistol-arena/tests/protocol_abuse_tests.rs:180-199`) doubles at its FIRST `go` — game 0, turn 0, a miss in any run — so X3's test needs a behaviour that deviates after a counted `newgame` |
 | 7 | `tools/cold_label_check.py` | the ten-sampled-record floor `wp21_prereg.md` §4 registers: fewer than ten sampled records in a class is a VOID (exit 2), not a pass. A named constant, printed in the void message. `--partition` landed at `f1acc57` |

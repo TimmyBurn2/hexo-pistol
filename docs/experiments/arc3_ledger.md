@@ -1307,3 +1307,45 @@ dying at the row the design names, M11 surviving as the EQUIVALENT it is labelle
 both logs' digests inside it. The worktree `/home/tom/pistol-wt/mutation` stays
 until the package's reviews close, in case a reviewer's finding wants a row
 re-taken; it holds nothing gitignored but its `target/` and the driver.
+
+### §2.4 — THE ASSEMBLER'S ROUND 2: PASS, AND SEVEN MINORS LANDED ON THE SAME DAY
+
+`wp21_assemble_REVIEW_round2.md` at `9c4366c` (the script, suite and rule-9 entry
+byte-identical through `037b196`): **PASS — 0 BLOCKING, 0 MAJOR, 7 minor**; **all
+thirteen of round 1's findings CLOSED by execution**, the pilot's five counts
+reproduced by the reviewer's own `awk`, two runs byte-identical, five of seven
+mutants of the shipped script killed. **The minors, and what landed**: N1, N2, N5,
+N7 are the reviewer's EXECUTED 30-line patch (a `find` for the last-line body
+marker, `receipt_safe` over `label_go` and `capture_sha256`, a `statvfs` preflight,
+`backslashreplace` on both streams and an exception backstop that keeps exit 1
+meaning REFUSED) — applied verbatim; N3 the header's overclaim reworded to *"what
+the reader refuses THAT A COUNT DEPENDS ON"*; N4's two surviving mutants get their
+tests — each manifest's own digest verified against its body, and the same
+`capture_sha256` under a different body is a VOID naming *"same capture"*; N6's two
+bare `Some(0)` asserts carry `meaning()`. **Runs**: the suite **11 of 11** after the
+edits; the reviewer's three reproducers re-taken against the shipped script —
+`captab` exit 2 naming `capture_sha256`, `goinject2` exit 2 naming `label_go`,
+`nobody_nonl` exit 2 *"holds no records"*; the pilot corpus once: records 742,
+distinct 347, decided 191, coverage 0.5504, disagreements 0. Round 3 is not owed
+on a PASS; the post-review edits are recorded here with their runs.
+
+### §2.1 — REVIEW-impl ROUND 1 AT `9c4366c`: FAIL — 1 BLOCKING, 0 MAJOR, 4 minor
+
+`wp21_label_cache_impl_REVIEW.md`. Everything ran in the reviewer's own worktree:
+36 of 36 suites, fmt, clippy, gate 17 and gate 20 clean; all nine §1 rows
+implemented; all eight test rows pass and pin what they claim; **all three D-589
+obligations discharged by execution** — the stray's single `write` syscall
+witnessed with an `LD_PRELOAD` shim (one `write(fd=1, len=193)` carrying four
+lines); T4's cached arm 5 of 5, the un-hoisted mutant 0 of 3, deterministically
+(D-593). **The BLOCKING is F-2.1** — both X1 mutants surviving T3 — found by the
+reviewer and by this session's receipt independently, minutes apart, and already
+dead at `610225b`; the reviewer's own executed fix takes the same shape (the
+refusal's own sentence). **The minors, landed here**: (1) a fourteen-space run
+inside the X1b refusal string — a heredoc's escaped line break — collapsed;
+(2) the mutation receipt, absent at `9c4366c`, is `037b196`; (3) **this ledger's
+"`cold_label_check_tests` 12 passed" was wrong — the file holds eleven tests and
+both runs print 11**, a count transcribed rather than derived, corrected here;
+(4) row 4 named the arm's site as `bin/arena.rs` where the package moved it to
+`usage.rs::capture_tail` — design **revision 9** names the landed site. Round 2,
+scoped to these remedies and to whatever the red team returns, is dispatched at
+one revision once the red team lands.

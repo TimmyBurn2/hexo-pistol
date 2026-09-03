@@ -322,7 +322,8 @@ fn ask(
 fn refuse_census_under_cache(census: CensusRequest, cache: LabelCache) -> Result<(), ArenaError> {
     if census == CensusRequest::On && cache == LabelCache::On {
         return Err(refuse(
-            "`--label-cache` with `--census`: a cache hit performs no search and emits no census              row, so a cached census capture would under-report firings at exit 0",
+            "`--label-cache` with `--census`: a cache hit performs no search and emits no census row, so a \
+             cached census capture would under-report firings at exit 0",
         ));
     }
     Ok(())
