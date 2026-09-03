@@ -1904,3 +1904,86 @@ reported at a revision is executed at that revision (`git grep <rev>` or a
 detached worktree), never against a working tree, because a working tree is not a
 revision and its output belongs to no commit. Non-blocking: no governing document
 and no run parameter moves, which is why the verification passed with it named.
+
+## §5 — THE SWEEP RAN, ALL SIXTEEN TRANCHES PASSED, AND THE CORPUS IS DELIVERED
+
+**T-F FIRST, ON THE IDLE BOX** (11:58–12:36 UTC, `tf/block.txt` in the run log):
+the twenty-opening sub-range played, captured twice at `nodes 400000`, **1 106
+records each and `cmp -s` exit 0**, both arms reporting `asks 1106 records 1106`
+so the flag was absent. **T-F's SECOND HALF also PASSED**, after tranche one
+existed: its 1 106 records are byte-identical to tranche one's first 1 106
+(`cmp -s` over the two bodies, exit 0) — a separately played report reaching the
+same bytes, which is the cross-report referent revision 6 registered rather than
+the same instrument twice.
+
+**THE WAVE**: sixteen tranches launched together 12:38 UTC, detached, polled
+with `ps`, the box otherwise idle; last verdict 20:00 UTC. **16 of 16 PASS, no
+VOID, no re-run, so the two-consecutive-VOID stop never came near.** Wall **7 h
+22 m** against §3's ESTIMATED 6 h 10 m; the overshoot sits exactly where §3 said
+it would, in the three terms that kept uncontended rates and were declared lower
+bounds (play, replay, the cold check) while capture alone was measured at N = 16.
+
+**EVERY CRITERION ON EVERY TRANCHE.** T-A1 and T-A2: every sampled record agreed
+byte for byte in both classes, 28–30 MISSES and 32–35 HITS per tranche, each
+above the registered ten-sample floor. T-B: `replayed 436 of 436` on fifteen and
+`434 of 434` on tranche 16 (217 openings, the partition's remainder), **0
+divergences** throughout. T-C: zero forfeits on both report lines and `end
+normal` on every corpus record. T-D: `corpus_check … ok` on all sixteen.
+**And the cache's absence is mechanical, not asserted**: every block carries
+`arena: label cache off: asks N records N`, `asks == records` on all sixteen.
+
+**WHAT THE SWEEP DELIVERED**, MEASURED off the deduped manifest:
+
+| | delivered | §3 ESTIMATED | |
+|---|---|---|---|
+| distinct labelled positions | **89 805** | 93 076 | 96.5 % |
+| records | 195 874 | 199 027 | 98.4 % |
+| decided | 46 653 | | coverage **0.5195** |
+| duplication factor | **2.1811** | 2.1383 on the pilot | |
+| key disagreements | **2 369** | — | first reading at scale |
+
+**§4.4's CAPABILITY VERIFICATION PASSED** (20:04–21:37 UTC): tranche one
+re-captured with `--label-cache` is **byte-identical** to its uncached capture,
+12 362 records, `cmp -s` exit 0. Its counts line reads `asks 5742 records 12362
+hits 6620 key_pos_collisions 0 key_full_collisions 42 fold_ms 110`. **The flip
+clause gets its first real reading and it is exactly the book's own floor**:
+`key_full_collisions` 42 against tranche one's registered floor of 42 from
+`artifacts/arc3_opening_prefix_fold.txt`, and `key_pos_collisions` 0 — the
+symmetry fold merged nothing beyond the opening book's shape, so the yield beyond
+the book is zero and D-586's one-percent line is not approached. `fold_ms 110`
+against a 5 742-search capture makes the counters' cost MEASURED and negligible,
+which D-586 asked for and could only estimate.
+
+**THE 2 369 KEY DISAGREEMENTS ARE A FINDING AND NOT A DEFECT**: they are distinct
+positions sharing at least one key value with another, counted order-free, which
+is exactly the three-key question D-562(2) leaves open and which no run had ever
+measured at scale. They are recorded here for the ruling that settles it and they
+change nothing about this corpus, whose dedup used all three keys agreeing.
+
+**EXPORTS, WITH DIGESTS** (rule 8, D-469): the corpora stay out of the tree and are sha-indexed here; the run log and both manifests are exported to `artifacts/`.
+
+```
+== the sweep's own artifacts, exported to artifacts/ (gitignored), with digests
+230a8a1c1a8154a3f561205e0b905738b4174a68f6feca56d8ac06e7f1ddf3a0  artifacts/arc3r_sweep_run_log.txt
+8a3f9f92171f1d4a963e4ed8b5f8cd525fd5e0b3332303c42434e7a9fcdc3c3b  artifacts/arc3r_sweep_raw_manifest.txt
+00f61780cc1654958696786051dbd8de7d1bbab3f5d49153b1694770caf35968  artifacts/arc3r_sweep_deduped_manifest.txt
+bb3cee05c139233fd8e71cc675e48ffad2ec549da453d5bd3ee35b1a1eb409af  artifacts/arc3r_sweep_cached_recapture.txt
+
+== the sixteen corpora, left in place under /home/tom/pistol-runs/arc3r-sweep (rule 8), sha-indexed here
+6452726844849563c0b9c30f1e8b77dde2dd3913078312add0bd181817375f32  tranche-1/corpus.txt
+9ca910a08e9e734139e6f3efab1e2881cadbf7a28f8d5b1de81348655a9b3fa8  tranche-2/corpus.txt
+14b42decad6da9b2ab63b2518c8473ffbf2015dbc667f6f9cba937b74445cfbf  tranche-3/corpus.txt
+6a5555e892748c6f6ea54a8132c15d260e4dfbc3254e71fbd5f4c30ece69a056  tranche-4/corpus.txt
+0a017e37ed73afde586713105f6535611f617f3fe034bc91469340e55b6879e0  tranche-5/corpus.txt
+a3f8fff632d8bac4ef778a126d00a16f043c7186311ffffb0f1027e32fa866a6  tranche-6/corpus.txt
+26f3fab44d39b2b3e6a6e097aa5d1b769cb68085b64441fd99ebdd070419de44  tranche-7/corpus.txt
+622b7dfac0404d328571b02ab06929a676604134103fda94e739703785c2398c  tranche-8/corpus.txt
+6a34148e9f5a9f5f646a970bc12a83f0abae75a1f03acad501e9331ce8230eb6  tranche-9/corpus.txt
+baf271213f57186342bc26b104a9a77eb392864b2f1cf58460809433da0513f4  tranche-10/corpus.txt
+b6a686f9e586422e4250a2de27b5c2db61bbde743f59a2931a4a90643a095a1a  tranche-11/corpus.txt
+4fb9cea6d8ae4423070f044300fa7ad12c1f84ac5cfaee23d1028ff525c217f4  tranche-12/corpus.txt
+06a6c5823aa566ca370c3abf7cde6575281b0e380071a4692a650681e73d1fe9  tranche-13/corpus.txt
+501282b6821ddfef0460238b2e62da92163309a04d5c05bd55dac98f07515acd  tranche-14/corpus.txt
+58c4c2d92c16b33d3ec448e79938ddb77ead5f046a24c2418028ca5281f3edb5  tranche-15/corpus.txt
+df48beadd165c513ba4461b010d426fdde7b12e40a90d6c2744f81405fd7b2e4  tranche-16/corpus.txt
+```
