@@ -447,6 +447,25 @@ fn a_stray_line_in_the_pipe_while_the_cached_run_serves_hits_is_refused_in_both_
     // the guard left inside `ask`, game 1 performs no channel operation at all
     // and every run exits 0 — so "at least one of five" kills it deterministically
     // and leaves correct code a flake bound of one in ten to the fifth under load.
+    // What a completing run must have written: the honest play's own uncached
+    // capture, body for body — the two reports differ only in the engine config
+    // the stub read, which the header carries and the records do not.
+    let (honest_output, honest_capture) = capture(
+        &scratch,
+        &report_at(&scratch, &honest, "stray-honest"),
+        "stray-honest-off",
+        LabelCache::Off,
+    );
+    assert!(
+        honest_capture.exists(),
+        "the honest report's capture was refused: {}",
+        String::from_utf8_lossy(&honest_output.stderr)
+    );
+    let honest_body = pistol_cli::corpus::emit::body_of(
+        &std::fs::read_to_string(&honest_capture).expect("readable"),
+    )
+    .expect("a body")
+    .to_string();
     let mut refused_within_game_1 = 0;
     for run in 0..5 {
         let (on, out) = capture(
@@ -468,6 +487,15 @@ fn a_stray_line_in_the_pipe_while_the_cached_run_serves_hits_is_refused_in_both_
             assert!(
                 on.status.success() && out.exists(),
                 "a cached run neither refused within game 1 nor completed cleanly: {stderr}"
+            );
+            let body = pistol_cli::corpus::emit::body_of(
+                &std::fs::read_to_string(&out).expect("readable"),
+            )
+            .expect("a body")
+            .to_string();
+            assert_eq!(
+                body, honest_body,
+                "a completing cached run wrote records that are not the honest capture's"
             );
         }
     }

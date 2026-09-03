@@ -1386,3 +1386,27 @@ revision: below.
 (`artifacts/arc3r_mutation_4fab9ed_X3.txt`, digest in the receipt), the mutant arm
 0 of 5 in each. REVIEW-impl round 2, scoped to the seven remedies (round 1's
 BLOCKING and four minors, the red team's F1–F3), dispatched at `4fab9ed`.
+
+### §2.1 — REVIEW-impl ROUND 2 AT `4fab9ed`: PASS — 0 BLOCKING, 0 MAJOR, 2 minor. THE PACKAGE'S REVIEWS CLOSE.
+
+`wp21_label_cache_impl_REVIEW_round2.md`. **All seven remedies CLOSED by
+execution** in the reviewer's own worktrees: both X1 mutants die at T3's
+first-line assertion and correct code passes; the X1b string single-spaced in the
+binary; five receipt rows (M03, M07, M09, M16, M21) reproduced; the eleven-test
+count; row 4's site; T4 five of five under a looped `cargo test` load (loadavg
+7–11), the un-hoisted mutant 0 of 3 deterministically; the reviewer's OWN
+measurement of the residual **1 of 20 loaded, 0 of 10 unloaded**, every refusal at
+game 1 turn 0, the exit-0 file byte-identical to the honest capture, a flake bound
+for the five-run form of 3.1e-7 at the point estimate and ≤ 4.7e-4 at the
+one-sided 95 % Clopper–Pearson bound (≤ 2.0e-4 pooled with the red team's 3 of
+40); the exit case named in §3 and F3 recorded. Gates in the reviewer's worktree:
+36 of 36 suites, clippy, fmt, gate 20. **Two minors**: N1 — the ledger's *"below"*
+had nothing below at `4fab9ed`; `036b4a4` is that below. N2 — T4's completing
+cached runs were accepted on exit 0 and a file alone, where D-595 flips on a wrong
+byte in exactly such a run; **landed here**: every completing run's body is now
+compared record for record with the honest play's own uncached capture (the two
+reports differ only in the config the stub read, which the header carries and
+the records do not) — T4 green, clippy clean. **The label cache package's reviews
+are closed: REVIEW-impl round 2 PASS, RED-TEAM round 1's MAJOR and minors remedied
+and verified in that round 2, the mutation receipt complete. Design revision 10,
+D-589..D-595.**
