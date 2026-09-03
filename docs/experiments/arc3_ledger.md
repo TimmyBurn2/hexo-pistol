@@ -1263,3 +1263,20 @@ all targets; `cargo fmt --check` clean; gates 17 (69 over the cap, all registere
 18 (596 keys) and 20 (0 unreproduced, `PROPOSES` empty) green over the staged
 index. First run of the new suite was green; the only fixes on the way were two
 clippy `expect_err` lints and the line-count move.
+
+### §3 — THE REGISTRATIONS LAND FROM THEIR DRAFTS, SLOTS STILL EMPTY
+
+`wp21_prereg_rev5_DRAFT.md` becomes **`wp21_prereg.md` revision 5** and
+`wp21_throughput_prereg_rev4_DRAFT.md` becomes **`wp21_throughput_prereg.md`
+revision 4**, the drafts deleted; their history is this ledger (§1, §1b, §1c for
+revisions 1–4 and 1–3; §1e for the drafts). **Edits on landing, and nothing
+else**: the DRAFT banners go; the throughput document names the design's
+revision 7 and D-588 (now appended); the two prose citations of `bin/arena.rs`'s
+capture arm follow the code — the arm is `bin/arena.rs:52-59` and its tail is
+parsed by `usage.rs:111`, where the package moved the command-line vocabulary;
+the sweep registration's promise to edit `overnight2_ledger.md` §2 is withdrawn
+(a record stays as written) and `docs/book_v2_ledger.md`'s row names revision 5.
+Gate 20 over both: **24 and 12 citations, 0 unreproduced**. **NOT YET GOVERNING
+A RUN**: §8's instrument slots and §9.1/§7.1's RECORD slots are empty until the
+package closes its reviews and the closure head's binaries exist; the dry runs
+and the round-3 reviews follow that.

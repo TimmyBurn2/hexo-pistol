@@ -39,7 +39,7 @@ registered from a measurement rather than chosen — `docs/experiments/book_v2_r
 | `openings_skip` | `openings_take` | range | consumed by | pre-registration |
 |---|---|---|---|---|
 | 0 | 13 | `0..12` | the WP-2.0 label-pipeline PILOT, `configs/arena_wp20_label_pilot.toml` | `docs/experiments/wp20_pilot_prereg.md` revision 4 |
-| 13 | 3487 | `13..3499` | the WP-2.1 PRODUCTION LABEL SWEEP, sixteen tranches from `tools/wp21_tranche_config.py` | `docs/experiments/wp21_prereg.md` revision 2 |
+| 13 | 3487 | `13..3499` | the WP-2.1 PRODUCTION LABEL SWEEP, sixteen tranches from `tools/wp21_tranche_config.py` | `docs/experiments/wp21_prereg.md` revision 5 |
 | 3500 | 1000 | `3500..4499` | **RESERVED FOR GOVERNED RUNS — NEVER LABELLED.** Not consumed by anything yet; held back so a governed run has an unseen slice | `docs/decisions.md` D-568 |
 
 **THE SECOND ROW IS THE SWEEP AND ITS CONFIG IS NOT ONE FILE.** The sweep is
