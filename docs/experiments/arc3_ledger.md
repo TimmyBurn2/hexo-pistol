@@ -1845,3 +1845,37 @@ are records and stay as written**: round 3's report counted 34 where 53 is right
 (its conclusion re-verified over all 53), and round 3's pin-disclaimer reasoning
 is superseded by D-600's. A review report is a record, and this project does not
 edit records to match a later tree.
+
+### F-4.2 — THE AMENDMENT'S ROUND 5 (THE LAST GRANTED) FAILED ON A COUNT, AND THE COUNT IS WITHDRAWN RATHER THAN CORRECTED A THIRD TIME
+
+`wp21_amendment_REVIEW_round5.md` at `d61e161`: **FAIL — 0 BLOCKING, 1 MAJOR, 2
+minor.** D-600's re-grounding of the design's exemption checks out against the
+design's own text and D-589; its append-only hygiene is clean (additions only,
+key check green, each line once). **The MAJOR is that D-600's own count of four
+is undercounted**: a fifth occurrence sits in `wp21_label_cache_design_REVIEW.md`
+BLOCKING 6 — the design's GOVERNING block citing the throughput study at revision
+2 where the tree held 3 — missed because round 4's search globbed only the two
+registrations' review files and never the design's five, though D-600's own first
+occurrence already treats that design as a party to the class.
+
+**THREE DERIVATIONS, THREE POPULATIONS, EACH NARROWER THAN THE CLASS.** That is
+`docs/process.md`'s own named defect — a claim checked against the wrong
+population — three times inside the lines diagnosing it. **D-601 withdraws the
+count** under CLAUDE.md's overrule test: D-599's conclusion reads identically at
+three, four, five or nine, so the integer licenses nothing and is deleted rather
+than refined. **What replaces it is the search**, printed with its scope and its
+output at a named revision: over `docs/experiments/*REVIEW*.md` it returns **25
+reports at `d61e161`**, spanning WP-15b, WP-20b, WP-20s and WP-21 — wider than any
+of the three populations taken, and the one a future count must use. The standing
+rule is that a class found by searching is reported AS the search.
+
+**THE DISPOSITION IS D-598's**, and the load-bearing fact is mechanical: **no
+governing document changed across the whole correction chain**. `git diff --stat
+4e3d1b6 HEAD -- docs/experiments/wp21_prereg.md docs/experiments/wp21_throughput_prereg.md
+tools crates configs` returns one file and four lines — the throughput's title and
+its one cross-citation, which IS round 3's remedy. D-599, D-600 and D-601 touched
+`docs/decisions.md` and this ledger and nothing else. So the registrations the
+run launches under are the ones rounds 3, 4 and 5 each swept for a criterion that
+cannot fail, a command that does not run and a contradiction about the schedule,
+and each found none. The scoped verification D-598 requires is dispatched over
+exactly that.
