@@ -1824,3 +1824,24 @@ review and the sweep's registration is already green), and is built while the
 sweep runs. Until it lands the rule is manual and stated: a commit that bumps a
 governing document's revision carries every sibling citation of it, and says so.
 Both documents are now revision 10.
+
+**THE AMENDMENT'S ROUND 4: FAIL — 0 BLOCKING, 1 MAJOR, 2 minor**
+(`wp21_prereg_rev10_amendment_REVIEW_round4.md` at `0be90de`). **The remedy is
+CLOSED**: both titles read revision 10, the sibling cites 10, and the reviewer
+swept every `revision N` citation in both directions across gate 20's whole
+nine-document list and found no other stale one. **D-599's mechanical claim is
+verified against the script**: `design_citation_check.py`'s only regex matches
+`path` and `path:line`, never a `revision N`, and a bare `` `wp21_prereg.md` ``
+without a directory prefix does not even match the path pattern — the class is
+doubly invisible to it. **THE MAJOR IS INSIDE D-599 ITSELF**: its history was
+transcribed, not derived. Derived from the reports here, the class has **four**
+occurrences and not three, and D-599's first attribution names the wrong
+document, the wrong magnitude and the wrong report. **D-600 corrects it**, adds
+the fifth instance one step outside (the book ledger's own row, `wp21_prereg_rev6_REVIEW.md`
+M5) which widens the owed check from the two registrations to every document on
+gate 20's list, and re-grounds the design's exemption on D-589's closed gate
+rather than on a pin disclaimer that covers only `file:line`. **The two minors
+are records and stay as written**: round 3's report counted 34 where 53 is right
+(its conclusion re-verified over all 53), and round 3's pin-disclaimer reasoning
+is superseded by D-600's. A review report is a record, and this project does not
+edit records to match a later tree.
