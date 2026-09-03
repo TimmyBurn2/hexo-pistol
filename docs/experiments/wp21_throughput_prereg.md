@@ -1,4 +1,4 @@
-# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 6.
+# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 7.
 
 > **ONE LINE.** `wp21_prereg.md` §3 owns the sweep's wall and this document does
 > not restate it. It measures the two things that could move it: **what concurrency
@@ -215,7 +215,7 @@ defect class it excludes and each falsifiable:
 
 | # | criterion | the defect class it excludes |
 |---|---|---|
-| **C1** | every process's **capture file** — pass 2's five-TAB-field output, not a corpus — at every N and every rep is byte-identical to every other's: §7's driver `cmp`s all forty-five against `cap-N1-rep1-p1.txt` | a capture whose answers depend on machine load |
+| **C1** | every process's **capture file** — pass 2's five-TAB-field output, not a corpus — at every N and every rep is byte-identical to every other's: §7's driver `cmp`s all **93** — `3 x (1 + 2 + 4 + 8 + 16)`, the schedule §3.2 registers — against `cap-N1-rep1-p1.txt`| a capture whose answers depend on machine load |
 | **C2** | every process's record count equals the report's own asked-prefix count, **derived off the REPORT and no capture** — a decided game asks `turns` prefixes, a capped one `turns + 1` (`crates/pistol-arena/src/capture.rs`'s `asked_prefixes`), summed by §7's driver's `awk` over the report's `game` lines; and every `leverA:` line's `rc` is 0 — **a setting-rep whose line carries `rc 1`, or no line (the harness's VOID), is VOID under C2's consequence** | a process that exited early and looked fast |
 | **C3** | the realised seconds-per-label at a setting's median rep is at most **3.54 s** — `c(N) <= 4`, four times the MEASURED 0.885445; a setting over it is REFUSED and leaves the field before §3.4 reads it | a setting whose contention eats what its parallelism buys. **Four** because at `c = 4` sixteen processes deliver what four deliver at `c = 1`, so a setting past it has bought nothing over N = 4 at `c = 1`; the 120 s `hang_timeout_ms` watchdog stays the backstop and fires as a run failure, not as C3 |
 | **C4** | the N = 1 median rep's realised seconds-per-label is within 20% of the pilot's MEASURED 0.885445 | a study whose serial baseline is not the sweep's — a box, a binary or a workload that makes the comparison about something else. **Twenty** because the two workloads' `search_nodes` differ by 0.42 % (the round-2 review's A3 re-derivation, 1.0042), so the compiler between rustc 1.97.1 and 1.98.0 is the only unmeasured term, and a fifth is the largest build-to-build difference under which a rate is still the same instrument; ten would void the study on a toolchain's ordinary variance |
@@ -420,7 +420,8 @@ tools/wp21_tranche_config.py --skip 0 --take 3 --pilot-range --out <SCRATCH>/are
 arena --config <SCRATCH>/arena_playpass.toml --out <SCRATCH>/report.txt
 
 # lever A — the DRIVER runs the fifteen setting-reps in §3.2's order through the HARNESS,
-# then C1 and C2 over all forty-five files; its stdout IS the receipt:
+# then C1 and C2 over all 93 capture files — 3 x (1 + 2 + 4 + 8 + 16), the schedule
+# §3.2 registers; its stdout IS the receipt:
 <DRIVER> <SCRATCH>/report.txt <SCRATCH>/leverA > artifacts/arc3r_leverA_<commit>.txt
 
 # one setting-rep, as the driver invokes it — the HARNESS starts N captures together,

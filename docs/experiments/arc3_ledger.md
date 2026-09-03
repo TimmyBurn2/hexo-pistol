@@ -1630,3 +1630,47 @@ second limb and recorded here and in each report — what they adjudicate is a
 grep, a digest, a paste-back and a tie-rule reading, and the arc's remaining
 budget is better spent on the sweep it gates than on re-reading two documents
 three fresh contexts have already reproduced.
+
+### §3 — ROUND 5, RE-DISPATCHED LEAN: THE SWEEP REGISTRATION PASSES, THE THROUGHPUT STUDY FAILS ON ONE NUMBER
+
+Both re-dispatched under D-597 at `f33593a` (the documents byte-identical to
+`48a5802`), scoped to the diff and run on Sonnet, each report saying so on its
+own face.
+
+**`wp21_prereg_rev7_REVIEW.md`: PASS — 0 BLOCKING, 0 MAJOR, 0 minor.** All
+thirteen of round 4's findings CLOSED, each re-derived in the reviewer's own
+worktree: the T-A rows quote what the instrument prints, the T-F `head -n`
+literal is the record's, §5's checker reads `exit=0`, T-F carries the sibling's
+C1 consequence, the book ledger names revision 7, a recorded `bash -c` line
+pastes back and runs, the generator's header no longer names a validator and its
+suite is 18 of 18 at the digest §8 registers. Nothing new. **The sweep
+registration is GOVERNING at revision 7.**
+
+**`wp21_throughput_prereg_rev6_REVIEW.md`: FAIL — 0 BLOCKING, 1 MAJOR (new), 0
+minor.** All seventeen of round 4's findings CLOSED and independently
+re-derived — B1's 5 % clause carries no run-log wall (`grep` for `seconds=`
+returns none on a lever-B path), the tie rule resolves both of round 4's example
+outcomes to one answer, C2's referent derives off the report (`ASKED=32`,
+matching every capture), the harness's refusals exit 2 with no line, the driver
+is byte-identical to §7's block at §8's digest, the record's pipeline pastes back
+whole. **THE ONE NEW FINDING IS MINE AND IT IS THE ARC'S RECURRING DEFECT**: the
+document said the driver compares *"forty-five"* files, a figure I transcribed
+out of round 4's own report instead of deriving it from the schedule §3.2
+registers. **The true count is 93** — `3 x (1 + 2 + 4 + 8 + 16)` — derived here
+twice, by arithmetic and by running the driver's own filename glob over the
+registered schedule (93 files). **Revision 7 fixes both occurrences and puts the
+derivation on the document's face.**
+
+**THE DISPOSITION IS D-598**, and it is an architect default flagged to the
+operator: the finding is accepted and fixed, no verdict of the study ever read
+the wrong figure (the driver globs the files it wrote), and what follows is a
+SCOPED VERIFICATION PASS over the corrected lines and the DEFECT CLASS rather
+than a sixth round. **The class sweep was taken here first**: every number the
+last two revisions added to either registration, derived rather than
+transcribed — the T-F sub-range `13..32` (13 + 20 − 1), a tranche's ~3 h
+(11 018 s), the four per-tranche fractions (79.1 / 10.4 / 10.1 / 0.4 % of
+13 927), 0.5263 (80/152), ~2.2 min (152 × 0.885445 = 134.6 s) and ~1.1 min
+(72 × 0.885445 = 63.8 s), 3.54 s (4 × 0.885445), 0.56–1.12 h
+(5 × 3 × 152 × 0.885445 = 2 019 s, times contention 1–2), 1.0042 and 0.42 %
+(round 2's A3, re-verified by round 4) — **and 45, the only one that did not
+derive.** The scoped pass verifies that sweep from a fresh context.
