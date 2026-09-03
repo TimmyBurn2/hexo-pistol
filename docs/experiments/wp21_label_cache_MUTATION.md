@@ -6,9 +6,7 @@ after the finding below; every other row is unchanged text and unchanged code
 between the two (`git diff 9c4366c 610225b -- crates/pistol-arena/src` is empty;
 the diff is one test assertion and the design's row 4 / §6 wording).
 **Where**: the detached worktree `/home/tom/pistol-wt/mutation` on `/home`, its own
-`target/`, never the live tree; driver `scratch_mutate.py` (untracked, kept in the
-worktree), each mutant applied by exact string replacement, the named row run,
-the tree restored with `git checkout -- .` before the next.
+`target/`, never the live tree; driver `scratch_mutate.py`, each mutant applied by exact string replacement, the named row run, the tree restored with `git checkout -- .` before the next. **THE WORKTREE IS GONE AND THE DRIVER SURVIVES IT**: exported at closure to `artifacts/arc3r_mutation_driver.py`, sha256 `d6f81f070b20c0f28be2005f5a60cfc154b258260417b36ddbf5c814bbc2f37a` — removal takes a worktree's gitignored files with it, and WP-1.8c's four review reports survive only in a transcript for want of this step.
 **Toolchain**: rustc 1.98.0 (88d9e12ae 2026-08-18).
 **T4's three mutants re-taken at `4fab9ed`** (design revision 10, T4's cached arm five runs — D-595): M15, M16, M20 all DIED, `artifacts/arc3r_mutation_4fab9ed_X3.txt` sha256 `1b5ab0f11d4c259c7af69f11388c8b759072f28fffa4bb6b8157d18fbec7749e`; under the five-run form the mutant arm's kill is deterministic (0 of 5 refusals under any of the three), where at `9c4366c` it was a ~0.9-probability kill under load (the red team's F1).
 **Logs** (gitignored, digests here): `artifacts/arc3r_mutation_9c4366c.txt`

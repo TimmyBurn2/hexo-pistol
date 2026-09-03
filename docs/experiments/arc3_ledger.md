@@ -1987,3 +1987,39 @@ b6a686f9e586422e4250a2de27b5c2db61bbde743f59a2931a4a90643a095a1a  tranche-11/cor
 58c4c2d92c16b33d3ec448e79938ddb77ead5f046a24c2418028ca5281f3edb5  tranche-15/corpus.txt
 df48beadd165c513ba4461b010d426fdde7b12e40a90d6c2744f81405fd7b2e4  tranche-16/corpus.txt
 ```
+
+## §7 — CLOSURE
+
+**THE OWED CITATION GATE IS BUILT** (D-599's *"built while the sweep runs"*, taken
+after it instead and recorded as such). `tools/revision_citation_check.py` reads
+every `` `X.md` revision N `` in a document on gate 20's own GOVERNING list where
+`X.md` is on that list too, and refuses one whose N is not X's own title
+revision. **It exists because the class is invisible to the checker beside it**:
+`design_citation_check.py` matches `path` and `path:line`, and the citation that
+drifted five times is a bare basename with no directory prefix, so it does not
+even match that pattern. **The exemption is named with its reason**, not
+inferred: `wp21_label_cache_design.md`, whose review gate CLOSED at revision 6
+(D-589), so its GOVERNING block records what governed it — and the ground is
+D-589 and not the pin disclaimer, which covers `file:line` alone (D-600).
+**Wired into gate 20** and reported by it; over the nine governing documents at
+this revision it checks **6 revision citations, 0 stale, 1 exemption**.
+
+**FOUR TESTS DRIVE THE SHIPPED SCRIPT** (`SHELL_CHECKLIST` item 10), and the one
+that matters carries its own control: the same pair of fixtures once citing the
+revision the tree holds and once citing the one before it, so a checker that
+refused everything fails the first half and one that refused nothing fails the
+second. The other three pin the named exemption, the VOID-not-refusal
+distinction when a cited document states no revision, and that the GATE actually
+runs the check. Whole suite 7 of 7; `cargo fmt --check` clean; gate 17 at 69 over
+the cap, all registered. **Its tools/ review is dispatched** against
+`SHELL_CHECKLIST` at this revision.
+
+**WORKTREES REMOVED, WITH THE ONE EXPORT THEY OWED.** `ci-arc3r` and `mutation`
+are gone; `git worktree list` holds the main tree and the two review worktrees in
+flight. Neither held untracked `artifacts/` content and their `sessions/` was
+tracked repo content, so nothing of a run was in them — **except the mutation
+driver**, which the receipt named as living in the worktree and which removal
+would have taken: `scratch_mutate.py` is exported to
+`artifacts/arc3r_mutation_driver.py`, sha256
+`d6f81f070b20c0f28be2005f5a60cfc154b258260417b36ddbf5c814bbc2f37a`, and the
+receipt now says so. That is the step WP-1.8c's four review reports were lost for.
