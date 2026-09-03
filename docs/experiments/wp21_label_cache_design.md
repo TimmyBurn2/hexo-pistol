@@ -1,4 +1,4 @@
-# WP-2.1 lever B — the label cache. DESIGN, revision 6.
+# WP-2.1 lever B — the label cache. DESIGN, revision 7.
 
 > **ONE LINE.** `arena --capture` asks the engine at every asked prefix of every
 > game, and the pilot MEASURED **742 asks over 347 distinct questions**. This
@@ -11,9 +11,12 @@
 
 **GOVERNING**: `docs/experiments/wp21_throughput_prereg.md` revision 3 §2, §2.0,
 §4.2, §4.4, §4.5; `docs/experiments/wp21_prereg.md` revision 4 §4 and §5; D-576,
-D-581, D-584, D-586, D-587. This document designs only what those name. Its revision
-history is in `docs/experiments/arc3_ledger.md`, not here. **`file:line`
-citations are at `adb2012`**, the tree before IMPL.
+D-581, D-584, D-586, D-587, D-588. This document designs only what those name. Its
+revision history is in `docs/experiments/arc3_ledger.md`, not here. **`file:line`
+citations are at `adb2012`**, the tree before IMPL. **The design gate closed at
+revision 6 by D-589**; revision 7 carries round 5's one MAJOR and two minors as the
+IMPL obligations D-589 names, and is not reviewed as a design — REVIEW-impl
+verifies each by running the suite (D-590).
 
 ---
 
@@ -30,10 +33,10 @@ citations are at `adb2012`**, the tree before IMPL.
 | 3 | `crates/pistol-arena/src/passes.rs` (`:82-96`) | threads the mode in and prints the counts line (§2.5) |
 | 4 | `crates/pistol-arena/src/bin/arena.rs`, the `match words` (`:39-86`) | five reachable spellings of a capture line: `… --label-nodes n` (`:51`) and `… --census` (`:59-74`) exist; `… --label-cache` is new and legal; `… --census --label-cache` and `… --label-cache --census` are ONE or-pattern arm, **X1** (§3). Everything else falls to the catch-all (`:79-85`), which names neither word |
 | 5 | `crates/pistol-arena/src/usage.rs` | the word, that its absence means off, what the counts line means |
-| 6 | `crates/pistol-arena/src/bin/stub_engine.rs` | `Behave::StrayAfterNewGame(n)`, spelled `stray_after_newgame <n>`: honest, and the answer to the `go` that follows its n-th `newgame` carries a SECOND `bestmove` line, written in the same `write` as the answer. **The count**: `seats::with_seats` sends one `newgame` per spawn (`seats.rs:47`) and `ask` one per ask (`:247`), so in play the stub sees one and in a capture one plus one per ask; at `n >= 2` play never reaches the deviation — necessarily, since a play-pass stray forfeits (`exchange.rs:34`) and the report is captured with the config that played it. **A `bestmove`-shaped stray, not an `info` one**: `classify` ignores an unrecognised `info` line (`:197-199`), so only a `bestmove` is read as the answer to a later ask. No `Behave` variant writes a line after its `bestmove`; the one test engine that does (`crates/pistol-arena/tests/protocol_abuse_tests.rs:180-199`) is a shell script whose identity no report this pipeline captures can attest, so X3's test needs a stub behaviour |
+| 6 | `crates/pistol-arena/src/bin/stub_engine.rs` | `Behave::StrayAfterNewGame(n)`, spelled `stray_after_newgame <n>`: honest, and the answer to the `go` that follows its n-th `newgame` carries a SECOND `bestmove` line, **in the same write SYSCALL as the answer** — one `write_all` of one buffer ending in `\n` through the locked stdout, never two `writeln!`s, so the only window between the answer and the stray is the reader thread's own (§3, T4). A REVIEW-impl item. **The count**: `seats::with_seats` sends one `newgame` per spawn (`seats.rs:47`) and `ask` one per ask (`:247`), so in play the stub sees one and in a capture one plus one per ask; at `n >= 2` play never reaches the deviation — necessarily, since a play-pass stray forfeits (`exchange.rs:34`) and the report is captured with the config that played it. **A `bestmove`-shaped stray, not an `info` one**: `classify` ignores an unrecognised `info` line (`:197-199`), so only a `bestmove` is read as the answer to a later ask. No `Behave` variant writes a line after its `bestmove`; the one test engine that does (`crates/pistol-arena/tests/protocol_abuse_tests.rs:180-199`) doubles at its FIRST `go` — game 0, turn 0, a miss in any run — so X3's test needs a behaviour that deviates after a counted `newgame` |
 | 7 | `tools/cold_label_check.py` | the ten-sampled-record floor `wp21_prereg.md` §4 registers: fewer than ten sampled records in a class is a VOID (exit 2), not a pass. A named constant, printed in the void message. `--partition` landed at `f1acc57` |
 | 8 | `crates/pistol-arena/tests/label_cache_tests.rs`, new; `tests/cold_label_check_tests.rs` | §5's rows; T8 beside the checker's existing cases |
-| 9 | `docs/rule9_justifications.md`; `tools/governing_citation_check.sh` | `capture.rs`'s entry gains the lookup and insert as part of the ask decision; `label_cache_tests.rs` gets an entry of its own — nine rows over one two-stage fixture plus a fixture builder that checks its geometry with `pistol-core`, which is the shape `cold_label_check_tests.rs`'s entry already justifies; the `--proposes` entries go when their files exist |
+| 9 | `docs/rule9_justifications.md`; `tools/governing_citation_check.sh` | `capture.rs`'s entry gains the lookup and insert as part of the ask decision; `label_cache_tests.rs` gets an entry of its own — eight rows over one two-stage fixture plus a fixture builder that checks its geometry with `pistol-core`, which is the shape `cold_label_check_tests.rs`'s entry already justifies; the `--proposes` entries go when their files exist |
 
 **NOTHING ELSE.** No format version moves (D-572), no column, no manifest field,
 `capture_sha256` untouched. The capture file carries no trace of the mode by
@@ -122,8 +125,11 @@ X3's residual: nothing checks the pipe after the final prefix of the final game,
 in either pass; the hoist restores parity and does not close that. **And the
 guard is a time-of-check**: `unsolicited()` is `try_recv`, so a stray the reader
 thread has not yet queued is missed at that prefix and found at the next check —
-true of the uncached pass today, and the reason T4 asserts a refusal *within* the
-run of hits rather than at one prefix. The census-row guard inside `ask` is
+true of the uncached pass today. **The residual, as round 5 worded it**: the cached
+arm has no check after game 1's last hit; T4's cached assertion holds unless the
+reader thread is preempted between its two sends for the whole of game 1, a window
+ESTIMATED at tens of microseconds; the mutant arm has no such residual. A drain
+after `quit` would close it and is a mechanism change, NOT taken (D-593). The census-row guard inside `ask` is
 untouched and moot — X1b makes a cached run never a census run at the seam. There
 is no *"cache disagrees"* refusal: a self-check that re-asked would cost what it
 saves, and §4.4 is the external referent.
@@ -153,7 +159,7 @@ stub unless a row says otherwise.
 | T3b | `capture::run` given a census-on sink and `LabelCache::On` returns the refusal naming both, before any engine is spawned — a library-level test over a report the arena wrote |
 | T4 | a stray line in the pipe while the cached run is serving HITS is refused in both runs. Row 6's stub with **`n = P0 + 1`**, `P0` being game 0's asked-prefix count read off `capture::asked_prefixes` over an honest play of the same opening: the `(P0 + 1)`-th `newgame` is the one before game 0's last `go`, so the stray follows game 0's last answer and sits in the pipe through game 1, every prefix of which is a hit. The uncached run refuses at game 1, turn 0 (by the guard, or by `ask` reading the stray as an answer with no totals); the cached run refuses **within game 1** |
 | T5 | over a one-opening report both counters are zero — every miss has a distinct stone count; over the fixture below `key_pos_collisions >= 1`, `key_full_collisions >= 2`, `key_full >= key_pos` |
-| T6 | T1 over two further reports, neither producible from one stub behaviour beside the other (`one_engine` binds both seats to one `behave` word): one played by `illegal` on both seats, where every game forfeits at the first engine move and the report still writes; one played by `honest` over a five-turn opening whose P1 stones lie on one axis at `(-4..0, 0)` with P2's far off it, so the stub's smallest cluster neighbour `(-5, 0)` completes six and it plays the single stone — a rule-4 win from the shipped stub |
+| T6 | T1 over two further reports, neither producible from one stub behaviour beside the other (`one_engine` binds both seats to one `behave` word): one played by `demands_newgame_per_ask` on both seats, where every game forfeits at the first mover's second turn (`seats.rs:47` sends one `newgame` per spawn, the latch clears on `go`, `stub_engine.rs:460-465`, so the mover's SECOND `position` draws an `error` line and `exchange.rs:70-75` forfeits it) and the capture's per-ask `newgame` lets every position be re-asked, which `capture_tests.rs:250-261` already pins; one played by `honest` over a five-turn opening whose P1 stones lie on one axis at `(-4..0, 0)` with P2's far off it, so the stub's smallest cluster neighbour `(-5, 0)` completes six and it plays the single stone — a rule-4 win from the shipped stub |
 | T7 | `--label-cache` twice, or anywhere but last, is refused |
 | T8 | in `cold_label_check_tests.rs`: a capture cut to nine HIT records is a VOID at `--partition hits`; cut to ten, it passes |
 
@@ -200,7 +206,7 @@ Against call sites enumerated by a `git grep` receipt in the mutation document
 
 | obligation | discharged by |
 |---|---|
-| REVIEW-design, fresh context | round 4 FAIL (1B/4M/6m); round 5, remedies-only, against this revision |
+| REVIEW-design, fresh context | round 4 FAIL (1B/4M/6m); round 5 FAIL (0B/1M/2m) at revision 6; **gate closed by D-589** — the MAJOR (T6's stub word), minor A (§3's residual; the stray's single syscall, row 6) and minor B (row 6's reason) are the IMPL obligations of this revision, each verified by REVIEW-impl running the row (D-590) |
 | IMPL; REVIEW-impl, fresh context, not the implementer; RED-TEAM on the cache path | subagents. The red team's inputs: a forfeit, a rule-4 win, the T5 fixture, a stray line, `--census`, a doubled word |
 | the mutation receipt with its `git grep` enumeration | at IMPL, its own document |
 | the `tools/` coverage rule | T8 drives the shipped checker; §5 the shipped `arena` |

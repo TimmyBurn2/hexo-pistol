@@ -1180,3 +1180,38 @@ assembler's tools/ review; (4) the generator's `--pilot-range` form with its
 tests; (5) both registrations landed from their drafts, D-588 appended, dry runs
 taken and their records filled, then round 3 of each registration's review; (6)
 lever A; (7) the sweep. **Nothing in the sweep starts until (5) closes.**
+
+---
+
+## §1f — RESUMED 2026-09-03. THE OPERATOR RULED, THE GATE IS CLOSED, THE CODE STARTS.
+
+**THE RULINGS, APPENDED FIRST** (the dispatch's §R, *"before any other tree work"*):
+D-588 (R6, the gate-9 correction — numbered by the operator, so it takes the first
+free number and R1–R5/R7 follow it), D-589 (R1, the gate closed at revision 6),
+D-590 (R2, design vs IMPL law), D-591 (R3, remedies executed), D-592 (R4, reviewers
+run cargo in worktrees), D-593 (R5, no drain after `quit`), D-594 (R7, the STOP
+stands). **The dispatch text reached this session with several ruling lines cut
+mid-word**; each ADR quotes what arrived and marks the cut with `[…]` rather than
+silently completing the operator's sentence. `tools/decision_key_check.sh`: 589
+keys, no repeat outside the D-279 exemption.
+
+**FIRST ACTIONS** (§1): `git merge --ff-only arc3-stopped` into `dev` — fast-forward
+from `5c77a8f` to `c69a0a5`; `merge-base --is-ancestor` yes; branch deleted. `ps`
+before any cargo: no cargo, no arena, no python of this project's, no other
+project's job (the `pi` subagent §1e recorded is gone). `/home` 800 G free, `/tmp`
+22 G free.
+
+**REVISION 7 OF THE DESIGN**, per D-589, four edits and nothing else: T6(a) reads
+`demands_newgame_per_ask` with the forfeit mechanism cited at its three sites; §3
+carries minor A's residual as round 5 worded it, with D-593's *not taken*; row 6
+states the stray shares the answer's single write syscall (a REVIEW-impl item) and
+gives minor B's true reason for not using `doubled.sh`; row 9 says eight rows.
+Gate 20 at this revision: **18 citations checked, 0 unreproduced** over the design,
+every other governing document 0. Not reviewed as a design (D-589).
+
+| step | state | receipt |
+|---|---|---|
+| merge, branch deleted | done | `git log`: `dev` at `c69a0a5` |
+| D-588..D-594 | done | `docs/decisions.md` |
+| design revision 7 | done | this commit |
+| CI on `dev` before the code | running in a detached worktree on `/home` | below |
