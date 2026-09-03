@@ -439,16 +439,42 @@ fn a_stray_line_in_the_pipe_while_the_cached_run_serves_hits_is_refused_in_both_
          {stderr}"
     );
 
-    let (on, out) = capture(&scratch, &report, "stray-on", LabelCache::On);
-    let stderr = String::from_utf8_lossy(&on.stderr).to_string();
+    // FIVE cached runs, at least one of which must refuse within game 1. The
+    // guard is a time-of-check: after game 0's last answer the main thread never
+    // reads the pipe again, so the stray's delivery races game 1's hits, and the
+    // red team MEASURED the cached arm exiting 0 in 2 of 20 runs under `cargo
+    // test` load (design §3, D-595). The mutant arm has no such residual — with
+    // the guard left inside `ask`, game 1 performs no channel operation at all
+    // and every run exits 0 — so "at least one of five" kills it deterministically
+    // and leaves correct code a flake bound of one in ten to the fifth under load.
+    let mut refused_within_game_1 = 0;
+    for run in 0..5 {
+        let (on, out) = capture(
+            &scratch,
+            &report,
+            &format!("stray-on-{run}"),
+            LabelCache::On,
+        );
+        let stderr = String::from_utf8_lossy(&on.stderr).to_string();
+        if stderr.contains("game 1,") && stderr.contains("spoke before it was asked") {
+            assert!(
+                !out.exists(),
+                "a refused cached run left a capture behind: {stderr}"
+            );
+            refused_within_game_1 += 1;
+        } else {
+            // The stated residual and nothing else: exit 0 with a complete file,
+            // every record of which came from a real answer.
+            assert!(
+                on.status.success() && out.exists(),
+                "a cached run neither refused within game 1 nor completed cleanly: {stderr}"
+            );
+        }
+    }
     assert!(
-        !out.exists(),
-        "the cached run served game 1 from the memo and never looked at the pipe: {stderr}"
-    );
-    assert!(
-        stderr.contains("game 1,") && stderr.contains("spoke before it was asked"),
-        "cached, every prefix of game 1 is a hit, and the guard at a hit is what refuses: \
-         {stderr}"
+        refused_within_game_1 >= 1,
+        "cached, every prefix of game 1 is a hit, and the guard at a hit is what refuses; \
+         none of five runs did, which is what the un-hoisted guard produces every time"
     );
 }
 

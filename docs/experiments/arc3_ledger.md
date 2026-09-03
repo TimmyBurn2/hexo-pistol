@@ -1349,3 +1349,35 @@ both runs print 11**, a count transcribed rather than derived, corrected here;
 `usage.rs::capture_tail` — design **revision 9** names the landed site. Round 2,
 scoped to these remedies and to whatever the red team returns, is dispatched at
 one revision once the red team lands.
+
+### §2.1 — RED-TEAM ROUND 1 AT `9c4366c`: FAIL — 0 BLOCKING, 1 MAJOR, 2 minor; NO WRONG BYTE ANYWHERE
+
+`wp21_label_cache_REDTEAM.md`, sixty-four tool uses in its own worktrees, six stub
+behaviours of its own, a harness in its appendix. **Every class PASSED**: a forfeit
+report, a rule-4 win, the T5 fixture with late-differing positions, an uncanonical
+pair (refused at the loader), eighteen misspellings and doublings of the tail (all
+the usage refusal, no file), `--census` in every combination, the memo over
+prefix-of-game reports both ways and a zero-move game, a two-engine report refused
+in both modes, the counters, the counts line's placement. **Every cached capture
+that exited 0 was byte-identical to the uncached one.**
+
+### F-2.2 — THE STRAY RESIDUAL WAS ESTIMATED AT MICROSECONDS AND MEASURES AT ONE IN TEN UNDER LOAD
+
+The red team's F1 (MAJOR): T4's own shape, committed stub, cached arm x20 under a
+concurrent `cargo test`: **exit 0 in 2 of 20**; unloaded **0 of 20**; the un-hoisted
+mutant **20 of 20 exit 0**. Round 5's *"tens of microseconds"* was an ESTIMATE where a
+measurement cost a shell loop (D-291), and gate 3 runs test binaries in parallel, so
+the loaded figure is CI's own. F2 (minor): an engine that EXITS after the last miss
+completes under the cache (9 of 20 loaded, 8 of 10 unloaded) where the uncached
+pass refuses — a real answer in every record, byte-identical, the death after the
+last needed ask. F3 (minor): the time-of-check loses at a miss too, in both modes;
+the wrong-record consequence tried ninety times and never produced — recorded as
+unreproduced and pre-existing. **WHAT LANDED**: the mechanism does not move (R5,
+D-593); the design's §3 carries the measurements in place of the estimate and
+names the exit case; **T4's cached arm is five runs with at least one refusal
+required** — deterministic on the mutant side (0 of 5, always), a one-in-ten-to-
+the-fifth bound on the correct side — design revision 10, **D-595** (architect
+default applied: the red team's load is CI's load, so D-593's flip condition is
+reached, and its route is the five-run form now and the drain as its own package
+only if that flakes). T4 run once here: green. M15/M16/M20 re-taken at this
+revision: below.

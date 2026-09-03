@@ -1,4 +1,4 @@
-# WP-2.1 lever B — the label cache. DESIGN, revision 9.
+# WP-2.1 lever B — the label cache. DESIGN, revision 10.
 
 > **ONE LINE.** `arena --capture` asks the engine at every asked prefix of every
 > game, and the pilot MEASURED **742 asks over 347 distinct questions**. This
@@ -18,7 +18,9 @@ revision 6 by D-589**; revision 7 carries round 5's one MAJOR and two minors as 
 IMPL obligations D-589 names, and is not reviewed as a design — REVIEW-impl
 verifies each by running the suite (D-590). Revision 8 corrects one test-assertion
 claim the mutation receipt falsified (row 4, §6's X1 rows) and nothing else; revision 9
-names the site the arm landed at (row 4), a REVIEW-impl minor.
+names the site the arm landed at (row 4), a REVIEW-impl minor; revision 10 replaces §3's
+estimated residual with the red team's measurement and makes T4's cached arm five runs
+(D-595).
 
 ---
 
@@ -128,10 +130,21 @@ in either pass; the hoist restores parity and does not close that. **And the
 guard is a time-of-check**: `unsolicited()` is `try_recv`, so a stray the reader
 thread has not yet queued is missed at that prefix and found at the next check —
 true of the uncached pass today. **The residual, as round 5 worded it**: the cached
-arm has no check after game 1's last hit; T4's cached assertion holds unless the
-reader thread is preempted between its two sends for the whole of game 1, a window
-ESTIMATED at tens of microseconds; the mutant arm has no such residual. A drain
-after `quit` would close it and is a mechanism change, NOT taken (D-593). The census-row guard inside `ask` is
+arm has no check after game 1's last hit; a cached run refuses a stray written
+after game 0's last answer only if the reader thread has queued it before game 1's
+hits have all been checked. **MEASURED, not estimated** (RED-TEAM at `9c4366c`,
+T4's own shape): the cached run exited 0 in **2 of 20** runs under `cargo test`
+load and **0 of 20** unloaded — the round-5 estimate of *"tens of microseconds"* was
+wrong by orders of magnitude under the load CI itself produces (D-291). The same
+window covers an engine that EXITS after the last miss: EOF reaches `try_recv`
+later than a buffered line, and the cached run completed in 9 of 20 loaded and 8 of
+10 unloaded runs where the uncached pass refuses — every record a real answer, the
+file byte-identical, the engine dead after the last position the run needed. The
+mutant arm (the guard left inside `ask`) has no residual: game 1 performs no
+channel operation and every run exits 0. **So T4's cached arm is FIVE runs, at
+least one refusing within game 1** — deterministic on the mutant side, a flake
+bound of one in ten to the fifth under load on the correct side (D-595). A drain
+after `quit` would close the window and is a mechanism change, NOT taken (D-593). The census-row guard inside `ask` is
 untouched and moot — X1b makes a cached run never a census run at the seam. There
 is no *"cache disagrees"* refusal: a self-check that re-asked would cost what it
 saves, and §4.4 is the external referent.
@@ -159,7 +172,7 @@ stub unless a row says otherwise.
 | T2 | the counts line reads `asks < records` cached and `asks == records` uncached. Two games must share a prefix: the arena plays every opening from both colours, and with one stub on both seats the two games are identical, so every prefix of the second is a hit |
 | T3 | `--label-cache` with `--census`, **in both orders**, is refused naming both words and leaves no output file |
 | T3b | `capture::run` given a census-on sink and `LabelCache::On` returns the refusal naming both, before any engine is spawned — a library-level test over a report the arena wrote |
-| T4 | a stray line in the pipe while the cached run is serving HITS is refused in both runs. Row 6's stub with **`n = P0 + 1`**, `P0` being game 0's asked-prefix count read off `capture::asked_prefixes` over an honest play of the same opening: the `(P0 + 1)`-th `newgame` is the one before game 0's last `go`, so the stray follows game 0's last answer and sits in the pipe through game 1, every prefix of which is a hit. The uncached run refuses at game 1, turn 0 (by the guard, or by `ask` reading the stray as an answer with no totals); the cached run refuses **within game 1** |
+| T4 | a stray line in the pipe while the cached run is serving HITS is refused in both runs. Row 6's stub with **`n = P0 + 1`**, `P0` being game 0's asked-prefix count read off `capture::asked_prefixes` over an honest play of the same opening: the `(P0 + 1)`-th `newgame` is the one before game 0's last `go`, so the stray follows game 0's last answer and sits in the pipe through game 1, every prefix of which is a hit. The uncached run refuses at game 1, turn 0 (by the guard, or by `ask` reading the stray as an answer with no totals); the cached run refuses **within game 1** in at least one of FIVE runs, each run that does not refuse exiting 0 with a complete file — the residual §3 measures (D-595) |
 | T5 | over a one-opening report both counters are zero — every miss has a distinct stone count; over the fixture below `key_pos_collisions >= 1`, `key_full_collisions >= 2`, `key_full >= key_pos` |
 | T6 | T1 over two further reports, neither producible from one stub behaviour beside the other (`one_engine` binds both seats to one `behave` word): one played by `demands_newgame_per_ask` on both seats, where every game forfeits at the first mover's second turn (`seats.rs:47` sends one `newgame` per spawn, the latch clears on `go`, `stub_engine.rs:460-465`, so the mover's SECOND `position` draws an `error` line and `exchange.rs:70-75` forfeits it) and the capture's per-ask `newgame` lets every position be re-asked, which `capture_tests.rs:250-261` already pins; one played by `honest` over a five-turn opening whose P1 stones lie on one axis at `(-4..0, 0)` with P2's far off it, so the stub's smallest cluster neighbour `(-5, 0)` completes six and it plays the single stone — a rule-4 win from the shipped stub |
 | T7 | `--label-cache` twice, or anywhere but last, is refused |
@@ -195,7 +208,7 @@ Against call sites enumerated by a `git grep` receipt in the mutation document
 | X1 | the arm removed | T3: the combination falls to the catch-all, which also refuses and exits 2 but whose own line names neither word |
 | X1 | one alternative of the or-pattern removed | T3, that order |
 | X1b | removed | T3b |
-| X3 | the guard left inside `ask` and not hoisted, or removed | T4: the cached run finishes at exit 0, every prefix of game 1 being a hit and none an ask |
+| X3 | the guard left inside `ask` and not hoisted, or removed | T4: the cached run finishes at exit 0 in every one of its five runs, every prefix of game 1 being a hit and none an ask; correct code refuses in at least one |
 | counters | `key_pos_collisions` removed | T5, the collision fixture |
 | counters | `key_full_collisions` removed | T5, the collision fixture |
 | counters | inverted — non-collisions counted | T5, the one-opening fixture |
