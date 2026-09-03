@@ -68,6 +68,13 @@ PROPOSES=(
 # a pin disclaimer, which covers `file:line` citations alone (D-600).
 REVISION_EXEMPT=(
 	docs/experiments/wp21_label_cache_design.md
+	# matrix_label_cache_key.md NARRATES revisions rather than citing them: its two
+	# occurrences say the key was chosen in "an UNCOMMITTED revision 2" and "an
+	# uncommitted revision 3" before any matrix existed, and its very next paragraph
+	# is about revision 1 having cited those as if the tree held them. A reader is
+	# told they are historical in the same sentence, which is the distinction this
+	# checker cannot draw and a named exemption can.
+	docs/experiments/matrix_label_cache_key.md
 )
 
 for doc in "${GOVERNING[@]}"; do

@@ -2023,3 +2023,38 @@ would have taken: `scratch_mutate.py` is exported to
 `artifacts/arc3r_mutation_driver.py`, sha256
 `d6f81f070b20c0f28be2005f5a60cfc154b258260417b36ddbf5c814bbc2f37a`, and the
 receipt now says so. That is the step WP-1.8c's four review reports were lost for.
+
+### F-7.1 — THE NEW GATE'S OWN tools/ REVIEW FOUND TWO EXIT-0 WRONG ANSWERS IN IT, AND THEY ARE FIXED
+
+`wp21_revision_check_REVIEW.md` at `ab9d2a9`: **FAIL — 2 BLOCKING, 1 MAJOR, 4
+minor.** What it confirmed: all seven tests passing, the coverage rule and item
+12's three obligations met, and — proved live, by building a throwaway wrapper
+over scratch fixtures — **the VOID/FAIL/PASS distinction surviving the seam**,
+the wrapper's exit code matching the script's in all three cases and `ci.sh`'s
+`gate()` carrying it unchanged. The spec conformance to D-599/D-600 holds,
+including that the design's exemption is grounded on D-589 and is load-bearing.
+
+**THE TWO BLOCKINGS WERE BOTH THE CLASS THE CHECKLIST IS ABOUT.** (F1) the title
+matcher took the FIRST `revision N` on a first line, so a title naming another
+document before itself handed the checker that other number as the truth every
+comparison is made against; (F2) the index was keyed by bare basename, so two
+governing documents sharing one would shadow each other and a citation of the
+shadowed one would be checked against the other — an answer taken from list
+order. **Both fixed**: every citing form is struck from the title line before
+its own revision is read, and a basename collision is a VOID naming both paths.
+**The MAJOR (F3) is sharper than a miss**: the matcher saw only ``  `X.md`
+revision N `` and not `` revision N of `X.md` ``, a form this tree already uses,
+so those citations were INVISIBLE rather than unflagged — a check reporting zero
+because it looked for one shape. Both forms now match.
+
+**AND THE FIX IMMEDIATELY CAUGHT TWO CITATIONS NOTHING HAD SEEN**, in
+`matrix_label_cache_key.md`: *"an UNCOMMITTED revision 2 of
+`wp21_throughput_prereg.md`"* and *"an uncommitted revision 3 of
+`wp21_prereg.md`"*. **They are history, not live claims** — the document says
+UNCOMMITTED in the same sentence and its very next paragraph is about revision 1
+having cited those as if the tree held them. That is a distinction the checker
+cannot draw and a named exemption can, so the matrix joins the exempt list with
+that reason written beside it. **Three tests were added for the three findings**,
+each driving the shipped script; the suite is **10 of 10**, clippy and fmt clean,
+gate 17 unchanged. The gate is green over the nine governing documents: 6
+revision citations checked, 0 stale, 2 named exemptions.

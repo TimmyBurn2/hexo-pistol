@@ -208,3 +208,81 @@ fn the_gate_runs_the_revision_check_over_the_documents_it_governs() {
         "the gate ran it but reported no count. {told}"
     );
 }
+
+// ---------------------------------------------------------------------------
+// THE THREE THE tools/ REVIEW FOUND, each an exit-0 wrong answer or an
+// invisible citation before its fix (wp21_revision_check_REVIEW.md F1, F2, F3).
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_title_that_cites_another_revision_before_its_own_still_reports_its_own() {
+    // F1, and it was a wrong answer at exit 0: the title's FIRST `revision N`
+    // was taken as the document's own, so a title naming another document
+    // first handed every later comparison that other document's number.
+    let scratch = common::Scratch::new("revcite-title");
+    let cited = doc(&scratch, "cited.md", 10, "body.");
+    let probe = scratch.write(
+        "probe.md",
+        "# a probe quoting `cited.md` revision 3 before its own, revision 5.\n\n\
+         see `cited.md` revision 3.\n",
+    );
+    let output = revisions(&[&cited, &probe], &[]);
+    assert_eq!(
+        output.status.code(),
+        Some(1),
+        "a citation of revision 3 was accepted against a document at revision 10, \
+         which means the probe's title was read as its own revision. {}",
+        meaning(&output)
+    );
+    assert!(
+        said(&output).contains("cited.md is at revision 10"),
+        "the refusal did not name the cited document's true revision. {}",
+        said(&output)
+    );
+}
+
+#[test]
+fn the_reverse_citing_form_is_seen_and_not_merely_unflagged() {
+    // F3: `revision N of `X.md`` occurs in this tree and matched nothing, so it
+    // was INVISIBLE — a check reporting zero because it looked for one shape.
+    let scratch = common::Scratch::new("revcite-reverse");
+    let cited = doc(&scratch, "cited.md", 10, "body.");
+    let reverse = doc(&scratch, "reverse.md", 2, "see revision 9 of `cited.md`.");
+    let output = revisions(&[&cited, &reverse], &[]);
+    assert_eq!(
+        output.status.code(),
+        Some(1),
+        "the reverse citing form was not seen. {}",
+        meaning(&output)
+    );
+    assert!(
+        said(&output).contains("1 revision citation(s) checked"),
+        "the reverse form was not counted as a citation at all. {}",
+        said(&output)
+    );
+}
+
+#[test]
+fn two_governing_documents_sharing_a_basename_are_a_void_and_not_an_answer() {
+    // F2: citations name a bare basename, so two governing documents sharing
+    // one would shadow each other and a citation of the shadowed one would be
+    // checked against the other — an answer taken from list order.
+    let scratch = common::Scratch::new("revcite-shadow");
+    std::fs::create_dir_all(scratch.path("a")).expect("a directory");
+    std::fs::create_dir_all(scratch.path("b")).expect("b directory");
+    let first = scratch.write("a/same.md", "# one, revision 10.\n\nbody.\n");
+    let second = scratch.write("b/same.md", "# two, revision 1.\n\nbody.\n");
+    let output = revisions(&[&first, &second], &[]);
+    assert_eq!(
+        output.status.code(),
+        Some(2),
+        "a basename collision must be a VOID (exit 2): no answer can be taken, \
+         and taking one from list order is the defect. {}",
+        meaning(&output)
+    );
+    assert!(
+        said(&output).contains("share the basename"),
+        "the void did not name the collision. {}",
+        said(&output)
+    );
+}

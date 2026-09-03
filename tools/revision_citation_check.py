@@ -38,11 +38,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# `` `name.md` revision 7 `` — the citing form that goes stale. The name may be
-# a bare basename or a path; both are normalised to a basename before lookup,
-# because the same document is cited both ways across this tree.
+# THE TWO CITING FORMS, and both are in this tree: `` `name.md` revision 7 ``
+# and `` revision 7 of `name.md` ``. Matching only the first leaves the second
+# INVISIBLE rather than merely unflagged, which is the shape of a check that
+# reports zero because it looked for the wrong thing. The name may be a bare
+# basename or a path; both normalise to a basename before lookup, because the
+# same document is cited both ways here.
 CITATION = re.compile(
-    r"`(?P<name>[A-Za-z0-9_./-]+\.md)`\s+revision\s+(?P<revision>\d+)",
+    r"`(?P<name>[A-Za-z0-9_./-]+\.md)`\s+revision\s+(?P<revision>\d+)"
+    r"|revision\s+(?P<revision2>\d+)\s+of\s+`(?P<name2>[A-Za-z0-9_./-]+\.md)`",
     re.IGNORECASE,
 )
 
@@ -66,6 +70,13 @@ def title_revision(path):
     Read from the FIRST line only. A document states its revision once, in its
     title; a `revision N` further down is a citation of something else, and
     reading those would make a document its own referent.
+
+    AND A CITATION ON THE TITLE LINE IS NOT THE TITLE'S OWN REVISION. A title
+    that names another document before naming itself would otherwise hand this
+    checker that other document's number as the truth every later comparison is
+    made against — an exit-0 wrong answer, and the one a checker must not have.
+    So every citing form is struck from the line first, and what remains is the
+    document's own claim.
     """
     try:
         first = path.read_text(encoding="utf-8").split("\n", 1)[0]
@@ -73,7 +84,7 @@ def title_revision(path):
         void(f"cannot read {path}: {why}")
     except UnicodeDecodeError as why:
         void(f"{path} is not UTF-8: {why}")
-    found = TITLE_REVISION.search(first)
+    found = TITLE_REVISION.search(CITATION.sub("", first))
     return int(found.group("revision")) if found else None
 
 
@@ -88,11 +99,13 @@ def check(document, governing, exempt):
         void(f"{document} is not UTF-8: {why}")
     seen, bad = 0, []
     for match in CITATION.finditer(text):
-        name = Path(match.group("name")).name
+        raw = match.group("name") or match.group("name2")
+        cited_revision = match.group("revision") or match.group("revision2")
+        name = Path(raw).name
         if name not in governing or name == Path(document).name:
             continue
         seen += 1
-        cited = int(match.group("revision"))
+        cited = int(cited_revision)
         actual = governing[name]
         if actual is None:
             void(f"{governing_path[name]} states no revision on its first line")
@@ -116,8 +129,21 @@ def main(argv):
     if not documents:
         void("name at least one document")
 
+    # TWO GOVERNING DOCUMENTS SHARING A BASENAME WOULD SHADOW EACH OTHER, and a
+    # citation of the shadowed one would be compared against the other's title —
+    # an exit-0 wrong answer. A collision is a VOID, loudly, rather than an
+    # answer taken from whichever document was listed last.
     global governing_path
-    governing_path = {Path(d).name: d for d in documents}
+    governing_path = {}
+    for document in documents:
+        name = Path(document).name
+        if name in governing_path and governing_path[name] != document:
+            void(
+                f"two governing documents share the basename `{name}` "
+                f"({governing_path[name]} and {document}); a citation of either "
+                f"would be checked against the other"
+            )
+        governing_path[name] = document
     governing = {Path(d).name: title_revision(ROOT / d) for d in documents}
 
     failed = False
