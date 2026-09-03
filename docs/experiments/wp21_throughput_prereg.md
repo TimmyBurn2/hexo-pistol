@@ -1,8 +1,7 @@
-# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 4.
+# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 5.
 
-> **ONE LINE.** `wp21_prereg.md` §3 owns the sweep's wall — **7.74 h uncached at
-> N = 8, a lower bound with contention at 1.00** — and this document does not
-> restate it. It measures the two things that could move it: **what concurrency
+> **ONE LINE.** `wp21_prereg.md` §3 owns the sweep's wall and this document does
+> not restate it. It measures the two things that could move it: **what concurrency
 > the box actually pays for** (lever A), and **whether the 2.14x duplication the
 > corpus is REQUIRED to carry must be paid for twice in SEARCH time** (lever B,
 > the label cache). It changes no label, no criterion and no captured byte; it
@@ -13,7 +12,8 @@
 **GOVERNING**: D-576 (the cache and its amended criterion), D-581, D-584, D-586,
 D-587, D-588 (the key and what is claimed about it); `wp21_prereg.md` revision 5
 §1 (the slot lever A fills), §3 (the wall), §4 (the criteria this study may not
-touch), §6.1; `wp21_label_cache_design.md` revision 7 (what lever B builds);
+touch), §6.1; `wp21_label_cache_design.md` revision 10 (what lever B builds; its
+revisions 8–10 changed test rows and §3's measured residual only — D-589, D-595);
 `matrix_label_cache_key.md` revision 3 as corrected by D-586 through D-588. **This
 document's revision history is in `arc3_ledger.md` and nowhere here.**
 
@@ -91,8 +91,8 @@ ask, which is a hit, is the repeat it never takes (D-588, correcting D-581's
 *"never asks the same position twice"*). **That is the strongest surviving attack
 on the key, recorded as a cost**, and what closes it is §4.4's byte-identity run at
 the sweep's own seat and budget, which asks the same position at the same `go` in
-one process ~6 600 times a tranche and compares every byte against a pass that
-never did. The supporting evidence is the within-process channel hunt a fresh
+one process ~6 600 times a tranche (ESTIMATED, the sibling's `hits 6 624`) and
+compares every byte against a pass that never did. The supporting evidence is the within-process channel hunt a fresh
 context ran and lost — the TT generation counter, the census collector,
 `Instant::now()` on the ordering path, hash iteration order, `Board::stones()`,
 the eval's apply/undo, `ThreatState`'s rebuild, the solver — which found no channel
@@ -155,35 +155,43 @@ writes the sweep's own seat (§1 of `wp21_prereg.md`: `configs/instrument_v0.tom
 on both seats, `nodes 50000`, turn cap 40, `hang_timeout_ms 120000`) over the
 pilot's range with the digest of the binary this study actually runs — a
 committed config could not, because every committed `binary_sha256` predates the
-toolchain change (arc III F-1.11). §3.4's 120 s guard reads `hang_timeout_ms` off
-that config. Its command is in §7.
+toolchain change (arc III F-1.11). §3.5 C3's 120 s watchdog reads
+`hang_timeout_ms` off that config. Its command is in §7. **Its record count is
+read off its own report by C2**: the 152 records §5 costs with are MEASURED on the
+pilot's capture of the same six games under the pilot's binary
+(`artifacts/arc3_leverB_41_count_v3.txt`), and the dry run shows opening 0's two
+games move-for-move identical across the toolchain, so the count is expected to
+transfer and is not assumed to.
 
 ### 3.2 The settings and the reps
 
 **THE FIELD IS {1, 2, 4, 8, 16} AND 12 IS DELIBERATELY ABSENT.** With sixteen
 tranches, wall is `ceil(16/N)` waves, so only an N that divides 16 gives balanced
-waves; N = 12 runs twelve and then four and cannot beat N = 8. **The consequence
-is a rule: if the sweep's concurrency changes, the tranche count changes with it,
-so that `TR mod N == 0`** — and every member of this field divides 16, so nothing
-in it reopens the partition.
+waves; N = 12 runs twelve and then four and cannot beat N = 8. Every member of
+this field divides 16, so no result reopens the partition (§3.4 forbids changing
+it in any case).
 
 **3 reps each, in the fixed order `1, 2, 4, 8, 16` and then that order twice
 more** — not three reps of one setting before the next, so a thermal ramp lands on
-every setting equally (`wp20b_perf_guard.sh`'s rotation lesson). At each setting N
-processes each run `arena --capture <the report> --out <distinct path>
---label-nodes 400000` concurrently, started together; the setting ends when the
-last exits. The word order is the binary's (`crates/pistol-arena/src/bin/arena.rs:52-59`, positional).
+every setting equally (the arm-order rotation `docs/experiments/wp20b_artifacts.md`
+records for the perf guard). **THE INSTRUMENT IS §7's HARNESS**: at each setting it
+starts N `arena --capture <the report> --out <distinct path> --label-nodes 400000`
+processes together, waits for the last, and reads its own clock before the first
+spawn and after the last exit. The word order is the binary's
+(`crates/pistol-arena/src/bin/arena.rs:52-59`, positional).
 
 ### 3.3 The statistic, and it is one
 
-**Realised seconds per label at concurrency N** = (wall from first start to last
-exit) / `records`, where `records` is the report's own record count — the wall of
-one process's capture at that concurrency — and the aggregate **throughput** is
-`N x records / wall`. Multiplying the maximum process wall by N over-states
-machine-seconds where processes finish unevenly; it cancels in the statistic, so no
-conclusion moves. Reported per setting: **median throughput over the three reps**
-and the **contention factor** `c(N)` = realised seconds per label / **0.885445**,
-the pilot's MEASURED serial rate.
+**Realised seconds per label at concurrency N** = `wall_s / records`, both read
+off the harness's one printed line: `wall_s` is the harness's own two clock reads
+(before the first spawn, after the last exit) and `records` is counted off the
+first process's capture file. The aggregate **throughput** is `N x records /
+wall_s`, the same line's last field. Multiplying the maximum process wall by N
+over-states machine-seconds where processes finish unevenly; it cancels in the
+statistic, so no conclusion moves. Reported per setting: **the median rep by
+throughput**, its throughput and its **contention factor** `c(N)` = its realised
+seconds per label / **0.885445**, the pilot's MEASURED serial rate. **C3 and C4
+are read at that median rep and at no other.**
 
 ### 3.4 THE DECISION RULE, REGISTERED BEFORE THE RUN
 
@@ -193,11 +201,8 @@ fire before it:
 - **A tie inside 5% goes to the SMALLER N.** The smaller one leaves the box able
   to answer.
 - **The selected N must divide the tranche count** (§3.2).
-- **Any N whose realised MEAN seconds-per-label exceeds C3's threshold is REFUSED
-  whatever its throughput** (§3.5).
-- **If the highest-throughput N is 16, its wall figure carries the note that 16 is
-  SMT-shared**: a per-tranche time at 16 more than 2x the time at 8 means the
-  second wave was cheaper than the sharing.
+- **Any N whose realised seconds-per-label at its median rep exceeds C3's
+  threshold is REFUSED whatever its throughput** (§3.5).
 
 **WHAT THE RESULT MAY AND MAY NOT DO.** It fills `wp21_prereg.md` §1's slot — a
 run parameter, not a criterion — by an amendment that reopens that document's
@@ -215,8 +220,8 @@ defect class it excludes and each falsifiable:
 |---|---|---|
 | **C1** | every process's **capture file** — pass 2's five-TAB-field output, not a corpus — at every N and every rep is byte-identical to every other's | a capture whose answers depend on machine load |
 | **C2** | every process's record count equals the report's own asked-prefix count | a process that exited early and looked fast |
-| **C3** | the realised MEAN seconds-per-label at the selected N is at most **3.54 s** — `c(N) <= 4`, four times the MEASURED 0.885445 | a setting whose contention eats what its parallelism buys. **Four** because §3.4's own SMT note treats a 2x per-tranche slowdown at 16 as the sign that sharing cost more than it paid, and a factor of four is the point at which N = 16 could not beat N = 4 at all; the 120 s `hang_timeout_ms` watchdog stays the backstop and fires as a run failure, not as C3 |
-| **C4** | the N = 1 realised seconds-per-label is within 20% of the pilot's MEASURED 0.885445 | a study whose serial baseline is not the sweep's — a box, a binary or a workload that makes the comparison about something else |
+| **C3** | the realised seconds-per-label at the selected N's median rep is at most **3.54 s** — `c(N) <= 4`, four times the MEASURED 0.885445 | a setting whose contention eats what its parallelism buys. **Four** because at `c = 4` sixteen processes deliver what four deliver at `c = 1`, so a setting past it has bought nothing over the smallest N that shares no core; the 120 s `hang_timeout_ms` watchdog stays the backstop and fires as a run failure, not as C3 |
+| **C4** | the N = 1 median rep's realised seconds-per-label is within 20% of the pilot's MEASURED 0.885445 | a study whose serial baseline is not the sweep's — a box, a binary or a workload that makes the comparison about something else. **Twenty** because the two workloads' `search_nodes` differ by 0.42 % (the round-2 review's A7 re-derivation, 1.0042), so the compiler between rustc 1.97.1 and 1.98.0 is the only unmeasured term, and a fifth is the largest build-to-build difference under which a rate is still the same instrument; ten would void the study on a toolchain's ordinary variance |
 
 **C4 IS THE ONE THAT KEEPS THE REST HONEST**: an external referent, measured by a
 different run of a different document. **C4's referent was measured on the
@@ -249,14 +254,17 @@ counts under three keys at once:
 ```
 python3 tools/label_cache_count.py --capture <the pilot's capture_v1.txt>
 
-asked prefixes                          742
-distinct `position` lines (cache key)   347
-distinct sorted (cell, player) lists    347
-distinct symmetry-folded stone lists    347
-duplication factor (asked/cache key)    2.1383
-hit rate                                0.5323
-   345 `position` line(s) asked 2 time(s)
-     2 `position` line(s) asked 26 time(s)
+label_cache_count: capture capture_v1.txt, body sha256 1ea2710bc101495eb2d4980882c94badd6e7331878c6b7a545cc469f54183e60
+label_cache_count: asked prefixes                          742
+label_cache_count: distinct `position` lines (cache key)   347
+label_cache_count: distinct sorted (cell, player) lists    347
+label_cache_count: distinct symmetry-folded stone lists    347
+label_cache_count: duplication factor (asked/cache key)    2.1383
+label_cache_count: cache hits                              395
+label_cache_count: cache misses                            347
+label_cache_count: hit rate                                0.5323
+label_cache_count:      345 `position` line(s) asked 2 time(s)
+label_cache_count:        2 `position` line(s) asked 26 time(s)
 ```
 
 **RATIO 2.1383 >= 1.5, so lever B survives**, and 0.5323 MEASURED is what
@@ -285,7 +293,14 @@ implementation of the same two folds in a different language:
 
 **THE AGREEMENT CRITERION**: the script's sorted-stone count equals the corpus's
 distinct `key_pos`, and its symmetry-folded count equals the corpus's distinct
-`key_full`. **Consequence of disagreement**: a finding about the instruments that
+`key_full`. **What it can and cannot falsify**: on every population it has been
+taken on the three keys coincide (347/347/347; 17/17/17), so a derivation that
+folded NOTHING would agree too — the criterion catches an over-fold, not an
+under-fold. The under-fold half is pinned elsewhere:
+`crates/pistol-arena/tests/label_cache_count_tests.rs`'s
+`a_mirrored_position_folds_only_under_the_symmetry_column` (a fixture whose two
+coarser columns differ by one) and `tools/opening_prefix_fold.py`'s 792 merges at
+`k = 2`, which is the derivation folding. **Consequence of disagreement**: a finding about the instruments that
 suspends lever B's clearance until closed; it is not resolved by preferring one.
 **And it is a REPLICATION, not a pre-registered second instrument**: the first
 instrument had run before this pipeline was registered, which `docs/process.md`
@@ -294,7 +309,7 @@ names as the order that does not count. It is recorded as what it is. Taken:
 
 ### 4.2 What is implemented
 
-`wp21_label_cache_design.md` revision 7, in one paragraph: a memo inside
+`wp21_label_cache_design.md` revision 10, in one paragraph: a memo inside
 `capture::run`, keyed on the `position` line's exact bytes, holding the
 **post-`normalise`** `(totals, bestmove)` pair — exactly the two strings the
 record carries, so a hit reproduces the record's bytes by construction. Every
@@ -302,16 +317,16 @@ record is still written, in the same order, with the same fields. **The switch i
 `--label-cache`, an optional LAST word on `arena --capture`, absent meaning off**,
 named in `crates/pistol-arena/src/usage.rs`, the `--census` precedent
 (`crates/pistol-arena/src/usage.rs:111`, the one parser of a capture line's tail); **the default being off is §4.4's mechanism.** The pass
-prints one counts line — the mode, `asks`, `records`, `hits`, the two collision
-counters and `fold_ms` — and `asks` is a counter at the call to the engine, never
-derived from the file. **It refuses to run with a census, by name, in either
+prints one counts line in two shapes — `arena: label cache off: asks A records R`,
+or `on` with `hits`, the two collision counters and `fold_ms` after them — and
+`asks` is a counter at the call to the engine, never derived from the file. **It refuses to run with a census, by name, in either
 order**: a hit performs no search and emits no census row, so a cached census
 capture would write fewer rows than positions asked. The map is a `BTreeMap`:
 no hasher, one string compare where a hit replaces a search.
 
 **ONE CONSEQUENCE IS REGISTERED HERE BECAUSE A LATER CONSUMER WOULD NOT SEE IT**:
-under the cache, ~53% of corpus records carry `search_nodes` for a search that was
-not run. Nothing in this sweep sums that column, but a consumer summing it as
+under the cache, ~53% of corpus records (ESTIMATED: the pilot's 0.5323 applied to
+the sweep) carry `search_nodes` for a search that was not run. Nothing in this sweep sums that column, but a consumer summing it as
 machine work would over-count by the duplication factor.
 
 ### 4.3 What it costs to be wrong
@@ -325,16 +340,18 @@ byte-identity against an uncached run and not a sample.
 **An uncached capture and a cached capture of the SAME report produce
 BYTE-IDENTICAL capture files** — pass 2's output, compared with `cmp -s`. The
 uncached pass is the referent and shares no code with the cache. Taken twice: over
-the pilot's report (742 records, ~11 min uncached and ~5 min cached) and **over
-tranche one's own report**, whose uncached capture the sweep must take anyway —
+the §3.1 play-pass report (152 records, 72 distinct `position` lines, hit rate
+0.5263 — MEASURED on the pilot's capture of the same six games; ESTIMATED ~2.3 min
+uncached and ~1.1 min cached at the pilot's rate; the pilot's own 13-opening report
+is not capturable under this revision's binary, whose digest it does not attest)
+and **over tranche one's own report**, whose uncached capture the sweep must take anyway —
 so tranche one's corpus of record is its UNCACHED capture, and the only added
 cost is its cached re-capture (1.43 h ESTIMATED, on the critical path,
 `wp21_prereg.md` §3).
 
 - **no tranche runs cached until the comparison returns byte-identity**, with a
-  MECHANISM (the flag is absent unless typed) and a NAMED CHECKER (the run log:
-  the `cmp -s` exit line with its timestamp appears before the first block whose
-  command carries `--label-cache`, `wp21_prereg.md` §5);
+  MECHANISM (the flag is absent unless typed) and a NAMED CHECKER, which is
+  `wp21_prereg.md` §5's run-log rule and is stated there and nowhere else;
 - **a single differing byte voids lever B**, and the cache is not repaired and
   re-compared: a cache whose first byte-identity run failed is one whose
   correctness is being fitted to the check. **Consequence: lever B is abandoned
@@ -347,9 +364,13 @@ cost is its cached re-capture (1.43 h ESTIMATED, on the critical path,
 ### 4.5 The decision rule
 
 Lever B stays taken **only if** §4.4 returns byte-identity on both reports **and**
-the cached capture's measured seconds per MISS — its wall over its `asks` — is
-within 5% of the uncached capture's seconds per record, the last excluding a cache
-whose bookkeeping ate its own saving. The architect's approval (D-576) settled
+the cached capture's measured seconds per MISS — the harness's `s_per_ask`, its
+`wall_s` over the counts line's `asks`, at N = 1 with `--label-cache` — is within
+5% of the uncached capture's `s_per_label` from the same harness at N = 1 without
+it, the last excluding a cache whose bookkeeping ate its own saving. Over the
+play-pass report both are §7's commands; over tranche one's report the two walls
+are the run log's `seconds=` on its two pass-2 commands (`wp21_prereg.md` §5),
+divided by that block's `asks` and `records`. The architect's approval (D-576) settled
 whether the cache is built; it cannot settle whether it is right, and a failure of
 either clause abandons the lever per §4.4.
 
@@ -360,15 +381,16 @@ either clause abandons the lever per §4.4.
 | part | ESTIMATED |
 |---|---|
 | the one play pass over openings `0..2` | ~5 s |
-| lever A: 5 settings x 3 reps, **152 records MEASURED** per process (`artifacts/arc3_leverB_41_count_v3.txt`), ~135 s at N = 1 and rising with N | **~1.0 h** at contention 1.0–2.0 |
+| lever A: 5 settings x 3 reps, **152 records MEASURED** per process on the pilot's capture of the same games (`artifacts/arc3_leverB_41_count_v3.txt`), ~135 s at N = 1 and rising with N | **0.56 h at contention 1.0, 1.12 h at 2.0** (`5 x 3 x 152 x 0.885445 = 2 019 s`, times c) |
 | lever B §4.1 | seconds — it reads a file |
-| lever B §4.4's pilot pair | ~11 min + ~5 min |
+| lever B §4.4's play-pass pair | ~2.3 min + ~1.1 min (§4.4) |
 | lever B §4.4's tranche-sized pair | the cached re-capture alone, ~1.43 h, on the sweep's critical path |
 
 **AGAINST WHAT IT SAVES**, all from `wp21_prereg.md` §3 and not restated: the
-cached schedule with its gate is 7.54 h against 7.74 h uncached — **~0.20 h net on
-this sweep**, and 1.63 h only if the verification were free. Counting lever A's
-hour and the pilot pair, **the lever is net negative on this sweep's wall**. There
+difference between its cached-with-gate line and its uncached line is **~0.20 h
+net on this sweep**, and ~1.6 h only if the verification were free. Counting lever
+A's 0.56–1.12 h and the play-pass pair, **the lever is net negative on this
+sweep's wall**. There
 is no later sweep to point at: the book's remainder is this sweep's and its last
 thousand are the holdout. **What the lever buys is a verified capability and a
 smaller second wave**, and the decision to take it is the architect's (D-576),
@@ -382,8 +404,10 @@ taken against this number.
    tranches already give the box N-way parallelism; an internal split would add a
    deterministic-merge obligation for nothing.
 2. **Touch the two seats.** The duplication is structural (D-558(2)).
-3. **Make a strength claim or produce a corpus.** Every artifact it writes is
-   scratch on `/home` and is deleted; nothing it produces may enter a corpus.
+3. **Make a strength claim or produce a corpus OF RECORD.** Every artifact it
+   writes is scratch on `/home` (the §4.1 second instrument reads a corpus the dry
+   run writes there, `arena --labels` below); nothing it produces may enter a
+   corpus of record.
 
 ---
 
@@ -393,21 +417,60 @@ taken against this number.
 # the play pass — the sweep's seat over the pilot's consumed range, from the SHIPPED generator
 tools/wp21_tranche_config.py --skip 0 --take 3 --pilot-range --out <SCRATCH>/arena_playpass.toml \
                              --binary-sha256 <the current binary's digest>
-tools/config_check.sh <SCRATCH>/arena_playpass.toml
 arena --config <SCRATCH>/arena_playpass.toml --out <SCRATCH>/report.txt
 
-# lever A — one of the N concurrent processes at each setting
-arena --capture <SCRATCH>/report.txt --out <SCRATCH>/cap-N<n>-rep<r>-p<i>.txt --label-nodes 400000
+# lever A — one setting-rep: the HARNESS starts N captures together, waits for the last,
+# and prints one line: leverA: N <n> rep <r> cache off rc <rc> wall_s <w> records <R> asks <A>
+#                                 s_per_label <w/R> s_per_ask <w/A> throughput <n*R/w>
+<HARNESS> <SCRATCH>/report.txt <N> <rep> 400000 <SCRATCH>/leverA
 
-# lever B §4.4 — the pilot pair
-arena --capture <SCRATCH>/report.txt --out <SCRATCH>/uncached.txt --label-nodes 400000
-arena --capture <SCRATCH>/report.txt --out <SCRATCH>/cached.txt   --label-nodes 400000 --label-cache
-cmp -s <SCRATCH>/uncached.txt <SCRATCH>/cached.txt
+# lever B §4.4 — the play-pass pair, through the same harness at N = 1, cached and not
+<HARNESS> <SCRATCH>/report.txt 1 1 400000 <SCRATCH>/pair
+<HARNESS> <SCRATCH>/report.txt 1 1 400000 <SCRATCH>/pair --label-cache
+cmp -s <SCRATCH>/pair/cap-N1-rep1-p1.txt <SCRATCH>/pair/cap-N1-rep1-p1-cached.txt
 
-# §4.1's count, and its second instrument
-python3 tools/label_cache_count.py --capture <a capture file>
-/usr/bin/grep -v '^#' <the corpus from that capture> | cut -f5 | LC_ALL=C sort -u | wc -l
-/usr/bin/grep -v '^#' <the corpus from that capture> | cut -f6 | LC_ALL=C sort -u | wc -l
+# §4.1's count, and its second instrument, over the corpus of the pair's uncached capture
+arena --labels <SCRATCH>/pair/cap-N1-rep1-p1.txt --report <SCRATCH>/report.txt --out <SCRATCH>/corpus.txt
+python3 tools/label_cache_count.py --capture <SCRATCH>/pair/cap-N1-rep1-p1.txt
+/usr/bin/grep -v '^#' <SCRATCH>/corpus.txt | cut -f5 | LC_ALL=C sort -u | wc -l
+/usr/bin/grep -v '^#' <SCRATCH>/corpus.txt | cut -f6 | LC_ALL=C sort -u | wc -l
+```
+
+**`<HARNESS>` IS THIS SCRIPT, VERBATIM**, kept at
+`/home/tom/pistol-runs/arc3r-leverA/lever_a_harness.sh` and digested in §8; the
+registered number is its `wall_s`, and the document's text is its revision:
+
+```bash
+#!/usr/bin/env bash
+# wp21_throughput_prereg.md §7 — the lever-A harness. N concurrent captures of ONE
+# report, timed from before the first spawn to after the last exit; one line out.
+# Usage: lever_a_harness.sh <report> <N> <rep> <label nodes> <out dir> [--label-cache]
+# Run from the repository root; the arena is target/release/arena.
+set -u
+REPORT=$1; N=$2; REP=$3; NODES=$4; OUT=$5; shift 5
+TAG=${1:-}
+mkdir -p "$OUT"
+pids=()
+t0=$(date +%s.%N)
+for i in $(seq 1 "$N"); do
+  target/release/arena --capture "$REPORT" --out "$OUT/cap-N$N-rep$REP-p$i${TAG:+-cached}.txt" \
+      --label-nodes "$NODES" $TAG > "$OUT/cap-N$N-rep$REP-p$i${TAG:+-cached}.log" 2>&1 &
+  pids+=($!)
+done
+rc=0; for p in "${pids[@]}"; do wait "$p" || rc=1; done
+t1=$(date +%s.%N)
+first="$OUT/cap-N$N-rep$REP-p1${TAG:+-cached}"
+records=$(/usr/bin/grep -v '^#' "$first.txt" | /usr/bin/grep -c .)
+asks=$(/usr/bin/grep -o 'asks [0-9]*' "$first.log" | /usr/bin/grep -o '[0-9]*')
+python3 - "$N" "$REP" "$rc" "$t0" "$t1" "$records" "$asks" "${TAG:-off}" <<'PY'
+import sys
+n, rep, rc, t0, t1, records, asks, tag = sys.argv[1:]
+n = int(n); wall = float(t1) - float(t0); records = int(records); asks = int(asks)
+mode = "on" if tag == "--label-cache" else "off"
+print(f"leverA: N {n} rep {rep} cache {mode} rc {rc} wall_s {wall:.3f} records {records} asks {asks} "
+      f"s_per_label {wall / records:.6f} s_per_ask {wall / asks:.6f} throughput {n * records / wall:.3f}")
+PY
+exit $rc
 ```
 
 **`<SCRATCH>` is on `/home`, never `/tmp`** (a 24 GiB tmpfs). **The box is
@@ -418,10 +481,13 @@ registered.
 ### 7.1 THE DRY RUN — what it exercised, and its record
 
 Input of the same kind and never the registered workload: the generator's
-`--skip 0 --take 1 --pilot-range` stand-in, one opening, two games, at
-`--label-nodes 2000`. Its limbs:
+`--skip 3 --take 1 --pilot-range` stand-in — opening 3, DISJOINT from the study's
+own `0..2`, one opening, two games — at `--label-nodes 2000`. Its limbs:
 
-1. every command above is accepted by the shipped binary and exits 0;
+1. every command above is accepted by the shipped binary and exits 0, the
+   harness included at **N = 1 and N = 2**, so the concurrent launch, the wait for
+   the last exit and the `leverA:` line are in the record, and the N = 2 pair's two
+   files and the N = 1 file are byte-identical (C1's shape);
 2. `--label-cache` with `--census` is REFUSED naming both words, in both orders,
    before any game and leaving no output file;
 3. the cached and uncached captures of the one report are byte-identical under
@@ -429,21 +495,22 @@ Input of the same kind and never the registered workload: the generator's
 4. the cached run's counts line reads `asks < records`, and the uncached run's
    `asks == records` — the cache was exercised, read off the count the pass
    prints and not off the file, which is identical either way;
-5. §4.1's script and its second instrument agree on the stand-in's corpus.
+5. §4.1's script and its second instrument agree on the stand-in's corpus, the
+   corpus written by `arena --labels` from the pair's uncached capture.
 
 **A DRY-RUN FAILURE STOPS THE STUDY AND IS REPORTED AS A FINDING.**
 
 **RECORD.** Taken before this revision's review was dispatched, on the box
-otherwise idle, log `artifacts/arc3r_dryrun_throughput_0c4f3b4.txt` (sha256
-`1e9296448b1ef82d9086418098cbeefc712ab54fa399c0c194f63fc81ea8fd33`), `<SCRATCH>` =
-`/home/tom/pistol-runs/arc3r-dryrun/throughput`. Its head line: `== dry run at 0c4f3b4b8a6c910015a28d7917b91b38282541bd, Thu Sep  3 06:45:51 AM UTC 2026, rustc 1.98.0 (88d9e12ae 2026-08-18), cargo 1.98.0 (797e8a9bc 2026-08-05)`.
-The stand-in config's sha256: `772958a901c0881c8bff2568c255b92b60d30264cdce708884e40da57153f053`. **Every command and its exit line,
-verbatim** (the `ls` exit 2 is the four refused files' ABSENCE, which is limb 2's
-claim; the two `sort -u` pipelines print their count and have no exit line of
-their own):
+otherwise idle, log `artifacts/arc3r_dryrun_throughput_0c4f3b4_v2.txt` (sha256
+`947f73e8c8a14dc0373c3d197922ac32de350fde99785e166bc5a52dcf14801e`), `<SCRATCH>` =
+`/home/tom/pistol-runs/arc3r-dryrun/throughput-v2`, `<HARNESS>` as §7. Its head
+line: `== dry run at c4963b3908a1ff60da96a229b5ed364ce5a02f52, Thu Sep  3 07:06:12 AM UTC 2026, rustc 1.98.0 (88d9e12ae 2026-08-18), cargo 1.98.0 (797e8a9bc 2026-08-05)`. The stand-in config's sha256: `9644fc9fd3a2ebd73b365a66f521a3d4713aba567a50e59cb83e617bc42717d9`. **Every command
+and its exit line, verbatim** (the `ls` exit 2 is the four refused files' ABSENCE,
+limb 2's claim; the two `sort -u` pipelines run under `bash -c` so their exit is
+recorded):
 
 ```
-$ tools/wp21_tranche_config.py --skip 0 --take 1 --pilot-range --out <SCRATCH>/arena_playpass.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
+$ tools/wp21_tranche_config.py --skip 3 --take 1 --pilot-range --out <SCRATCH>/arena_playpass.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
 exit=0
 $ tools/config_check.sh <SCRATCH>/arena_playpass.toml
 exit=0
@@ -451,7 +518,13 @@ $ sha256sum <SCRATCH>/arena_playpass.toml
 exit=0
 $ target/release/arena --config <SCRATCH>/arena_playpass.toml --out <SCRATCH>/report.txt
 exit=0
-$ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/cap-N1-rep1-p1.txt --label-nodes 2000
+$ <HARNESS> <SCRATCH>/report.txt 1 1 2000 <SCRATCH>/leverA
+exit=0
+$ <HARNESS> <SCRATCH>/report.txt 2 1 2000 <SCRATCH>/leverA
+exit=0
+$ cmp -s <SCRATCH>/leverA/cap-N1-rep1-p1.txt <SCRATCH>/leverA/cap-N2-rep1-p1.txt
+exit=0
+$ cmp -s <SCRATCH>/leverA/cap-N2-rep1-p1.txt <SCRATCH>/leverA/cap-N2-rep1-p2.txt
 exit=0
 $ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/never-a.txt --label-nodes 2000 --census --label-cache
 exit=2
@@ -459,44 +532,58 @@ $ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/never-b.tx
 exit=2
 $ ls <SCRATCH>/never-a.txt <SCRATCH>/never-b.txt <SCRATCH>/never-a.census.txt <SCRATCH>/never-b.census.txt
 exit=2
-$ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/uncached.txt --label-nodes 2000
+$ <HARNESS> <SCRATCH>/report.txt 1 1 2000 <SCRATCH>/pair
 exit=0
-$ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/cached.txt --label-nodes 2000 --label-cache
+$ <HARNESS> <SCRATCH>/report.txt 1 1 2000 <SCRATCH>/pair --label-cache
 exit=0
-$ cmp -s <SCRATCH>/uncached.txt <SCRATCH>/cached.txt
+$ cmp -s <SCRATCH>/pair/cap-N1-rep1-p1.txt <SCRATCH>/pair/cap-N1-rep1-p1-cached.txt
 exit=0
-$ target/release/arena --labels <SCRATCH>/uncached.txt --report <SCRATCH>/report.txt --out <SCRATCH>/corpus.txt
+$ cat <SCRATCH>/pair/cap-N1-rep1-p1.log
 exit=0
-$ python3 tools/label_cache_count.py --capture <SCRATCH>/uncached.txt
+$ cat <SCRATCH>/pair/cap-N1-rep1-p1-cached.log
 exit=0
-$ /usr/bin/grep -v '^#' corpus.txt | cut -f5 | LC_ALL=C sort -u | wc -l
-17
-$ /usr/bin/grep -v '^#' corpus.txt | cut -f6 | LC_ALL=C sort -u | wc -l
-17
+$ target/release/arena --labels <SCRATCH>/pair/cap-N1-rep1-p1.txt --report <SCRATCH>/report.txt --out <SCRATCH>/corpus.txt
+exit=0
+$ python3 tools/label_cache_count.py --capture <SCRATCH>/pair/cap-N1-rep1-p1.txt
+exit=0
+$ bash -c /usr/bin/grep -v '^#' <SCRATCH>/corpus.txt | cut -f5 | LC_ALL=C sort -u | wc -l
+exit=0
+$ bash -c /usr/bin/grep -v '^#' <SCRATCH>/corpus.txt | cut -f6 | LC_ALL=C sort -u | wc -l
+exit=0
 ```
 
-**The printed lines the limbs read**, verbatim — the counts lines (limb 4: the
-uncached `asks 34 records 34` twice, the cached `asks 17 records 34 hits 17`), the
-refusal in both orders (limb 2), the four absent files, and limb 5's script counts
-(17, 17, 17 against the two `sort -u` counts of 17 and 17 above):
+**The printed lines the limbs read**, verbatim — the `leverA:` lines at N = 1 and
+N = 2 (limb 1) and for the pair (limb 4's two counts lines are in the pair's logs,
+printed below them), the refusal in both orders (limb 2), the four absent files,
+limb 5's script counts and the two `sort -u` counts, 16 and 16:
 
 ```
-arena: label cache off: asks 34 records 34
+leverA: N 1 rep 1 cache off rc 0 wall_s 0.544 records 32 asks 32 s_per_label 0.017008 s_per_ask 0.017008 throughput 58.794
+leverA: N 2 rep 1 cache off rc 0 wall_s 0.766 records 32 asks 32 s_per_label 0.023930 s_per_ask 0.023930 throughput 83.576
 arena: --label-cache with --census is refused: a cache hit performs no search and emits no census row, so a cached census capture would under-report firings at exit 0
 arena: --label-cache with --census is refused: a cache hit performs no search and emits no census row, so a cached census capture would under-report firings at exit 0
-ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput/never-a.txt': No such file or directory
-ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput/never-b.txt': No such file or directory
-ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput/never-a.census.txt': No such file or directory
-ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput/never-b.census.txt': No such file or directory
-arena: label cache off: asks 34 records 34
-arena: label cache on: asks 17 records 34 hits 17 key_pos_collisions 0 key_full_collisions 0 fold_ms 0
-label_cache_count: asked prefixes                          34
-label_cache_count: distinct `position` lines (cache key)   17
-label_cache_count: distinct sorted (cell, player) lists    17
-label_cache_count: distinct symmetry-folded stone lists    17
+ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput-v2/never-a.txt': No such file or directory
+ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput-v2/never-b.txt': No such file or directory
+ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput-v2/never-a.census.txt': No such file or directory
+ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput-v2/never-b.census.txt': No such file or directory
+leverA: N 1 rep 1 cache off rc 0 wall_s 0.561 records 32 asks 32 s_per_label 0.017516 s_per_ask 0.017516 throughput 57.089
+leverA: N 1 rep 1 cache on rc 0 wall_s 0.320 records 32 asks 16 s_per_label 0.009992 s_per_ask 0.019984 throughput 100.078
+arena: label cache off: asks 32 records 32
+arena: label cache on: asks 16 records 32 hits 16 key_pos_collisions 0 key_full_collisions 0 fold_ms 0
+label_cache_count: asked prefixes                          32
+label_cache_count: distinct `position` lines (cache key)   16
+label_cache_count: distinct sorted (cell, player) lists    16
+label_cache_count: distinct symmetry-folded stone lists    16
 label_cache_count: duplication factor (asked/cache key)    2.0000
 label_cache_count: hit rate                                0.5000
+16
+16
 ```
+
+An earlier run, `artifacts/arc3r_dryrun_throughput_0c4f3b4.txt`, is on disk and
+is not this record: it took the stand-in inside the study's own range and launched
+no concurrent setting, which round 3 found; both are fixed in the registration and
+this second run is the registered one.
 
 **The review that governs the run is taken after this record was filled.**
 
@@ -511,5 +598,6 @@ label_cache_count: hit rate                                0.5000
 | the `sort -u` pipelines | §4.1's second instrument | the commands ARE the revision; printed in §7 |
 | `tools/wp21_tranche_config.py` | §3.1's play-pass config | `707acacc8eab1c86c65e05497ff3918d5f5ebe83e3d6f1a1ddc2031d23f6e42a` — with the `--pilot-range` form landed |
 | `arena`, `pistol` | every capture in §3 and §4.4 | `arena` `a1a405cb44d21f1a70918f44b15553f0a90d23f02e9f959458545707a69614c3`, `pistol` `78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749` — the `--release --locked` build at `0c4f3b4` under `rustc 1.98.0 (88d9e12ae 2026-08-18)`, `wp21_prereg.md` §8 |
+| the lever-A harness (§7, printed whole) | every `wall_s`, `s_per_label`, `s_per_ask` and `throughput` in §3 and §4.5 | sha256 `baf4a6d9c298875ecdbfcf80c0d2d45459532f5cdec5204146e37c29e5ec864e` of `/home/tom/pistol-runs/arc3r-leverA/lever_a_harness.sh`, byte-identical to §7's block |
 | `cmp -s` | §4.4's verdict | POSIX, no revision |
 | the pilot's rate 0.885445 | C4's referent | `artifacts/wp20pilot_RUN_2cd4f79_v1.txt`, `capture1 seconds=657` over 742 records, on binary `180b4c40…` under rustc 1.97.1 |

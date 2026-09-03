@@ -1,4 +1,4 @@
-# WP-2.1 — the production label sweep. RUN REGISTRATION, revision 5.
+# WP-2.1 — the production label sweep. RUN REGISTRATION, revision 6.
 
 > **ONE LINE FOR THE MORNING.** The book's unconsumed range less a reserved
 > 1 000-opening holdout — **3 487 openings**, **~93 076 distinct positions
@@ -22,10 +22,12 @@ sweep in its title, amends its parameters and asks for its output at closure
 (`arc3_ledger.md` F-0.4). Tranche one runs when §9.1's dry run and this document's
 review are green, and not before.
 
-**THE CENSUS IS OFF FOR THIS SWEEP**, by the dispatch's own words — *"gates OFF,
-census OFF"*. This supersedes D-562(3)'s *"census ON from game one"* for this run
-only: the sweep starts no clock against D-537's minimum, and the census count the
-arc owes comes from the census run over this corpus's positions (arc III §6).
+**THE CENSUS IS OFF FOR THIS SWEEP — D-596**, which records the dispatch's *"gates
+OFF, census OFF"* as the ADR line hard rule 10 asks for and gives its grounds (a
+gate-off seat records nothing, D-563; the cache refuses a census by name). It
+supersedes D-562(3) for this run only: the sweep starts no clock against D-537's
+minimum, and the census count the arc owes comes from the census run over this
+corpus's positions (arc III §6).
 
 **THE HOLDOUT IS THE LAST 1 000 OPENINGS OF THE BOOK, `3500..4499`**, chosen by
 position and by nothing this sweep could observe (D-568), recorded in
@@ -52,7 +54,7 @@ written; `docs/book_v2_ledger.md`'s row for this sweep names this revision.
 | turn cap | `40` | the pilot's; an evaluation horizon and never a game rule (game rule 6) |
 | `n_workers` **per tranche** | **1** | N tranches run at once, and a tranche that also fanned out four ways would oversubscribe the box |
 | **concurrent tranches** | **a REGISTERED SLOT, incumbent 8** | filled from `wp21_throughput_prereg.md` lever A's measured median throughput under its own §3.4 rule, before tranche one. **Any selected N other than 8 reopens this document**: §3's wall arithmetic is stated at N = 8, and every member of the study's field divides 16, so nothing else would reopen it |
-| **label cache** | **ON**, keyed on the `position` line's exact bytes | D-576; the design is `wp21_label_cache_design.md`; the criterion is the sibling's §4.4. Tranche one and everything in its wave run UNCACHED as that criterion's referent, and nothing runs cached until it returns byte-identity (§6.1) |
+| **label cache** | **ON** from the tranche §6.1 names, keyed on the `position` line's exact bytes | D-576; the design is `wp21_label_cache_design.md` revision 10; which tranches run cached, and on what condition, is §6.1's and nothing else's |
 | `hang_timeout_ms` | `120000` | the pilot's |
 | SPRT block | the pilot's | present because the schema requires it. No strength claim: both seats are one engine and the verdict is `inconclusive_degenerate` by construction (D-156) |
 
@@ -114,15 +116,15 @@ MEASURED   hit rate under the cache key           =  0.5323     (395 / 742)
 ESTIMATED  games     3487 x 2                     =   6 974
 ESTIMATED  records   3487 x 57.0769               = 199 027
 ESTIMATED  distinct  3487 x 26.6923               =  93 076
-ESTIMATED  capture   199 027 x 0.885445           = 176 228 s = 48.95 h SERIAL
+ESTIMATED  capture   199 027 x 0.885445           = 176 227 s = 48.95 h SERIAL
 ```
 
 Per tranche, at the larger take of 218 openings:
 
 ```
 ESTIMATED  games 436     records 12 443     distinct 5 819     hits 6 624
-ESTIMATED  capture  12 443 x 0.885445            = 11 017 s = 3.06 h
-ESTIMATED  play     436 x 0.827115 x 4           =  1 443 s = 0.40 h   (x4: the measured rate is a 4-worker throughput and this seat runs one)
+ESTIMATED  capture  12 443 x 0.885445            = 11 018 s = 3.06 h
+ESTIMATED  play     436 x 0.827115 x 4           =  1 442 s = 0.40 h   (x4: the measured rate is a 4-worker throughput and this seat runs one)
 ESTIMATED  replay   436 x 0.807692 x 4           =  1 409 s = 0.39 h   (x4 for the same reason; T-B mandates --workers 1)
 ESTIMATED  cold     (34 + 30) x 0.904313         =     58 s             (two strides, §4: ceil(6624/200) + ceil(5819/200))
                                                    ------------------
@@ -132,9 +134,9 @@ ESTIMATED  tranche                                 13 927 s = 3.87 h
 **THE SAME TRANCHE WITH THE CACHE.** Only a MISS costs a search:
 
 ```
-ESTIMATED  labels searched  12 443 x (1 - 0.5323) = 5 819   (= 218 x 26.6923, the distinct count, as it must)
+ESTIMATED  labels searched  12 443 x (1 - 395/742) = 5 819   (= 218 x 26.6923, the distinct count, as it must; at the rounded 0.5323 it reads 5 820)
 ESTIMATED  capture, cached  5 819 x 0.885445      = 5 152 s = 1.43 h
-ESTIMATED  tranche, cached  13 927 - 11 017 + 5 152 = 8 062 s = 2.24 h
+ESTIMATED  tranche, cached  13 927 - 11 018 + 5 152 = 8 061 s = 2.24 h
 ```
 
 **THE WALL, STATED ONCE HERE, AND EVERY OTHER SECTION POINTS AT IT** (D-423).
@@ -144,17 +146,19 @@ wave one — so it sits on the critical path between the waves:
 
 ```
 UNCACHED, N = 8, two waves                  2 x 13 927                = 27 854 s = 7.74 h
-CACHED from wave two, the gate uncosted     13 927 + 8 062            = 21 989 s = 6.11 h
-CACHED from wave two, WITH the §6.1 gate    13 927 + 5 152 + 8 062    = 27 141 s = 7.54 h
+CACHED from wave two, the gate uncosted     13 927 + 8 061            = 21 988 s = 6.11 h
+CACHED from wave two, WITH the §6.1 gate    13 927 + 5 152 + 8 061    = 27 140 s = 7.54 h
                                             NET ESTIMATED SAVING ON THIS SWEEP        0.20 h
-SERIAL, uncached                            3 487 x 57.0769 x 0.885445 = 176 228 s = 48.95 h
+SERIAL, uncached                            3 487 x 57.0769 x 0.885445 = 176 228 s = 48.95 h   (176 227.60; the block above rounds 176 227.46)
 ```
 
 **AND TRANCHE ONE CARRIES A SURCHARGE THE WALL ABOVE ALREADY HOLDS THE FIRST LINE
 OF**: the cached re-capture (1.43 h, in the gate line), plus T-F's sub-range pair
 (§4.1): `2 x (20 x 57.0769 x 0.885445) = 2 x 1 011 s = 0.56 h` of capture and
-`2 x 40 x 0.827115 x 4 = 265 s = 0.07 h` of play — **2.06 h in all**, of which
-0.63 h is outside the wall block and runs beside wave one.
+`2 x 40 x 0.827115 x 4 = 265 s = 0.07 h` of play — **2.06 h in all**. T-F's 0.63 h
+runs BEFORE wave one, the box otherwise idle, because wave one's realised
+seconds-per-label is read for contention and a job beside it would be in that
+reading; the referent re-capture sits between the waves as the gate line says.
 
 **EVERY FIGURE IS A LOWER BOUND.** The per-label rate was measured with the box
 otherwise idle; N concurrent engines share memory bandwidth and boost budget, and
@@ -177,8 +181,7 @@ production stride where a stride is affordable and unchanged where it is not.
 | **T-B** | `arena: replayed G of G game(s) … 0 divergence(s)`, exit 0, `--workers 1` | a report whose recorded moves are not what its attested engines answer |
 | **T-C** | **zero forfeits**: the report's own `counts n … forfeits N` line (`crates/pistol-arena/src/conclusion.rs:81`) and its `first_player_wins … forfeits N` line (`:111`) both read zero, and the corpus's `end` column holds `normal` on every record, readable off `corpus_check`'s own `end 1 (normal)` | a game ended by the driver rather than by the rules |
 | **T-D** | `corpus_check: … ok, N record(s)`, exit 0 | a corpus the shipped loader will not read |
-| **T-E** | a `capture_manifest` row and a `corpus_manifest` row, each carrying `body_sha256` | an artifact nothing binds (rule 8, D-469) |
-| **T-F**, **tranche one only** | a second capture over a **registered sub-range** of tranche one's report is byte-identical to the first over the same range, `cmp -s` exit 0 | a capture that is not a function of its inputs. A SUB-RANGE because a full re-run doubles a 49-hour sweep, and the pilot already ran the whole-corpus form once (`capture-determinism exit=0`) |
+| **T-F**, **before tranche one** | over a separate play of the **registered sub-range** — openings `13..32`, the first twenty of tranche one's range — two captures are byte-identical (`cmp -s` exit 0), AND that play's capture records equal, record for record, tranche one's own records over the same twenty openings (`cmp -s` over the two bodies, headers aside, exit 0), because play is deterministic and the sub-range's games ARE tranche one's first forty | a capture that is not a function of its inputs; the second half is the external referent — two runs of one report agreeing is the same instrument twice. A SUB-RANGE because a full re-run doubles a 49-hour sweep, and the pilot already ran the whole-corpus form once (`capture-determinism exit=0`) |
 
 **HOW T-A TELLS A HIT FROM A MISS, WITHOUT A NEW COLUMN.** Walk the records in
 order; a record whose `position` field has not been seen before is a MISS, every
@@ -196,7 +199,7 @@ tools/cold_label_check.py --capture <path> --binary <path> --engine-config <path
 cold_label_check: 34 of 34 sampled HIT record(s) agree byte for byte
 ```
 
-**AN UNDER-FILLED CLASS IS A VOID, NOT A PASS.** `records_of()` voids an empty
+**AN UNDER-FILLED CLASS IS A VOID, NOT A PASS.** `partitioned()` voids an empty
 class; a filter over an already-read list would otherwise print `0 of 0 … agree`
 and exit 0, the vacuous pass `docs/process.md` forbids. **REGISTERED: fewer than
 ten SAMPLED records in the class makes the invocation a VOID (exit 2)**, and a
@@ -205,13 +208,17 @@ capture**: a full tranche at stride 200 samples 34 hits and 30 misses (§3); the
 floor therefore binds only a capture smaller than 1 801 records per class, which
 no tranche is. T-A runs on the sixteen tranche captures and on nothing else: T-F's
 two captures are compared with `cmp -s` and sampled by nothing, and §9.1's
-stand-in runs at stride 1.
+stand-in runs at stride 1. **A T-A VOID IS READ BY WHAT IT NAMES**: a VOID naming
+the floor voids the tranche (the capture is too thin to sample); a VOID naming the
+ENGINE — a spawn failure, a timeout under `--timeout-s` — is a fact about the
+referent process and not the capture, and the invocation is re-taken once over the
+same capture; a second engine VOID voids the tranche.
 
 **THE SUB-RANGE FOR T-F IS REGISTERED HERE, BEFORE TRANCHE ONE: the first 20
 openings of tranche one**, `openings_skip = 13, openings_take = 20`, run as its
-own play/capture pair twice and compared with `cmp -s`. Twenty is a round number
-above the pilot's thirteen, fixed before the tranche; the check is not weaker than
-the one the pilot passed at any take above thirteen.
+own play, captured twice and compared with `cmp -s`, then its body compared with
+tranche one's records over the same openings once tranche one's capture exists.
+Twenty is a round number above the pilot's thirteen, fixed before the tranche.
 
 **THE VOID RULE, IN THE DISPATCH'S OWN WORDS: a failed tranche is "VOID and re-run
 whole".** A tranche that fails any criterion is VOID AS A WHOLE: its artifacts are
@@ -234,8 +241,7 @@ did not land and why.
 ## 4.1 WHERE THE SIXTEEN TRANCHES WRITE, AND WHY IT IS REGISTERED
 
 ```
-<SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml   the generated config — the `arena_` basename is
-                                           what `tools/config_check.sh` keys its arena schema on
+<SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml   the generated config
 <SWEEP_DIR>/tranche-<n>/report.txt         pass 1's report        (arena --out)
 <SWEEP_DIR>/tranche-<n>/capture.txt        pass 2's capture       (arena --capture --out)
 <SWEEP_DIR>/tranche-<n>/corpus.txt         pass 3's corpus        (arena --labels --out)
@@ -259,11 +265,8 @@ did not land and why.
 one path is a refusal *before any game*, and a plan with one capture path per
 tranche would have refused its own cached re-capture mid-sweep.
 
-**`<SWEEP_DIR>` IS ON `/home` AND NEVER ON `/tmp`.** The sweep's output is
-**ESTIMATED ~0.2 GB** from the pilot's own per-record sizes (capture 307 B and
-corpus 633 B per record, report 1.2 kB per opening, over 199 027 records and 3 487
-openings) — not a size that threatens the 24 GiB tmpfs. The ground is that a
-tmpfs does not survive a reboot and this sweep spans days.
+**`<SWEEP_DIR>` IS ON `/home` AND NEVER ON `/tmp`**, because a tmpfs does not
+survive a reboot and this sweep spans days.
 
 ---
 
@@ -283,14 +286,22 @@ tranche's `key_full_collisions` is read against that tranche's own floor from
 
 **THE COMMAND IS RECORDED VERBATIM AND THAT IS NOT BOOKKEEPING**: with it, the
 presence of `--label-cache` is a fact a reader reads, corroborated by the counts
-line's `on`/`off`, rather than a sentence a reader believes. **The `cmp -s` exit
-line of §6.1's comparison, with its timestamp, appears in the run log BEFORE the
-first block whose command carries `--label-cache`**; a block carrying the flag
-with no such line above it is a VOID tranche under §4's void rule.
+line's `on`/`off`, rather than a sentence a reader believes. **THE CHECKER OF
+§6.1's GATE IS THIS LOG**: the `cmp -s` exit line of the comparison, with its
+timestamp, appears BEFORE the first block whose PASS-2 command — the one that
+writes `capture.txt` — carries `--label-cache`; a block whose pass 2 carries the
+flag with no such line above it is a VOID tranche under §4's void rule. Tranche
+one's `capture-cached.txt` re-capture is the comparison's own referent, carries
+the flag, precedes the line by construction, and is the one flagged command that
+may.
 
 **THE RESUME POINT.** A successor reads the log and **starts at the first tranche
 that has no PASS verdict** — a VOID tranche is an unfinished one and is re-run
-whole under its next `-run<k>` directory, per §4. A tranche with a PASS is never
+whole under its next `-run<k>` directory, per §4. **A tranche with no PASS and no
+VOID whose directory holds any claimed file is INTERRUPTED** — a reboot, a kill, a
+capture stopped mid-ask — and is treated as VOID: re-run whole under `-run<k>`,
+the partial directory kept, because `--out` is claimed with `O_EXCL` and a
+re-launch in place would refuse at the claim. A tranche with a PASS is never
 re-run: its capture is ~3 hours and its answer is recorded. `docs/book_v2_ledger.md`
 carries one row for this whole registration; the per-tranche state lives only in
 the run log.
@@ -332,12 +343,11 @@ tranche-sized referent; **no tranche runs cached until the comparison of that
 capture with tranche one's cached re-capture returns byte-identity**; and the wave
 schedule is derived in the run log once lever A fixes N.
 
-**IF THE COMPARISON FAILS, THE SWEEP DOES NOT STOP.** Lever B is abandoned per its
-own registered consequence and every remaining tranche runs uncached at §3's
-uncached wall. The cause is not pre-attributed: the sibling's §4.4 separates the
-cache from `newgame`'s isolation by re-running the uncached pass twice before
-either is named. **Nothing in this registration's criteria, partition, seat or
-budget depends on the cache.**
+**IF THE COMPARISON FAILS, THE SWEEP DOES NOT STOP**: the sibling's §4.4 owns the
+consequence (lever B abandoned, every remaining tranche uncached at §3's uncached
+wall) and the diagnosis (two uncached runs before either cause is named), and
+they are not restated here. **Nothing in this registration's criteria, partition,
+seat or budget depends on the cache.**
 
 ---
 
@@ -367,8 +377,8 @@ revision tranche one runs at, quoted again in the run log's first block:
 | `tools/cold_label_check.py` | `6386d6bfe2eaf48789dd9cbc9f89794573e3339e829ef5bd66fd4a134ff2238e` — with the ten-sample floor landed (`MIN_SAMPLED = 10`) |
 | `tools/wp21_tranche_config.py` | `707acacc8eab1c86c65e05497ff3918d5f5ebe83e3d6f1a1ddc2031d23f6e42a` — with the `--pilot-range` form landed |
 | `tools/label_cache_count.py` | `1a890b5331c302cf97372603e7ec21a41b08e6131390d92b78b0168bc77c1e18` — the producer of §3's 0.5323; its receipt `artifacts/arc3_leverB_41_count_v3.txt` is `cbad0786505e8d7958610a2ff24d8b4186de29fd85b0127d60df7b04b4e342ed` |
-| `tools/wp21_assemble.py` | `a367d84754162b65e24bbff98b8a791dc3e9d2678e7f653a71457e4853fee39b` — §6's instrument, reviewed twice (`wp21_assemble_REVIEW.md` FAIL, `wp21_assemble_REVIEW_round2.md` PASS with its minors landed) |
-| `artifacts/arc3_opening_prefix_fold.txt` | the per-tranche floors D-586 reads the counters against; sha-anchored in `arc3_ledger.md` |
+| `tools/wp21_assemble.py` | `a367d84754162b65e24bbff98b8a791dc3e9d2678e7f653a71457e4853fee39b` — §6's instrument. Its round-2 PASS (`wp21_assemble_REVIEW_round2.md`) reviewed the script at `9c4366c`; this digest is `5b17132`'s, the reviewer's own executed minors applied and run (`arc3_ledger.md` §2.4), and that diff has its own scoped round 3 (`wp21_assemble_REVIEW_round3.md`); **§6 does not run before that round passes** |
+| `artifacts/arc3_opening_prefix_fold.txt` | the per-tranche floors D-586 reads the counters against: sha256 `b6d4751e24e3594d7da827687bc3a35630c3b5052c6e6cd8f3d260076e3e97de`, taken at this revision; the sixteen floors are transcribed in D-584 |
 
 An instrument that produces a registered number is named with its revision
 (`docs/process.md`), and a change to any of them after the slots are filled
@@ -379,19 +389,19 @@ reopens this registration.
 ## 9. THE COMMANDS, AND THE DRY RUN THAT PROVES THEY ARE THE BINARY'S
 
 ```
-# 0 — the tranche's config, from the SHIPPED generator, then ACCEPTED by the schema
-#     gate 6 runs (the `arena_` basename is what that script keys the arena schema on)
+# 0 — the tranche's config, from the SHIPPED generator. Its acceptance is the arena's
+#     own strict parse at pass 1 (`serde(deny_unknown_fields)`, hard rule 1); no
+#     second validator is registered. The `arena_` basename lets gate 6's script read
+#     it by hand as an operator preflight, which is not a registered step.
 tools/wp21_tranche_config.py --tranche <n> --out <SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml \
                              --binary-sha256 <the closure binary's digest>
-tools/config_check.sh <SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml
 
 # 1 — play
 arena --config <SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml --out <SWEEP_DIR>/tranche-<n>/report.txt
 
 # 2 — capture. The word order is POSITIONAL (`crates/pistol-arena/src/bin/arena.rs:52-59`,
 #     the tail parsed by `crates/pistol-arena/src/usage.rs:111`);
-#     --label-cache is the LAST word, present only from the first tranche after §6.1's
-#     comparison has returned, and absent on every tranche of wave one
+#     --label-cache is the LAST word, present exactly on the tranches §6.1 admits
 arena --capture <SWEEP_DIR>/tranche-<n>/report.txt --out <SWEEP_DIR>/tranche-<n>/capture.txt \
       --label-nodes 400000 [--label-cache]
 
@@ -411,27 +421,31 @@ arena --replay <SWEEP_DIR>/tranche-<n>/report.txt --out <SWEEP_DIR>/tranche-<n>/
 # T-D
 corpus-check <SWEEP_DIR>/tranche-<n>/corpus.txt
 
-# tranche one only: the sibling's §4.4 referent pair, and T-F
-arena --capture <SWEEP_DIR>/tranche-1/report.txt --out <SWEEP_DIR>/tranche-1/capture-cached.txt \
-      --label-nodes 400000 --label-cache
-cmp -s <SWEEP_DIR>/tranche-1/capture.txt <SWEEP_DIR>/tranche-1/capture-cached.txt
+# T-F, BEFORE wave one, the box otherwise idle
 tools/wp21_tranche_config.py --skip 13 --take 20 --out <SWEEP_DIR>/tf/arena_tf.toml \
                              --binary-sha256 <the closure binary's digest>
-tools/config_check.sh <SWEEP_DIR>/tf/arena_tf.toml
 arena --config <SWEEP_DIR>/tf/arena_tf.toml --out <SWEEP_DIR>/tf/report.txt
 arena --capture <SWEEP_DIR>/tf/report.txt --out <SWEEP_DIR>/tf/capture-a.txt --label-nodes 400000
 arena --capture <SWEEP_DIR>/tf/report.txt --out <SWEEP_DIR>/tf/capture-b.txt --label-nodes 400000
 cmp -s <SWEEP_DIR>/tf/capture-a.txt <SWEEP_DIR>/tf/capture-b.txt
+# T-F's second half, once tranche one's capture exists: the bodies, headers aside.
+#     T-F's forty games are tranche one's first forty, so the records coincide.
+cmp -s <(grep -v '^#' <SWEEP_DIR>/tf/capture-a.txt) \
+       <(grep -v '^#' <SWEEP_DIR>/tranche-1/capture.txt | head -n $(grep -v '^#' <SWEEP_DIR>/tf/capture-a.txt | wc -l))
+
+# tranche one only, between the waves: the sibling's §4.4 referent pair
+arena --capture <SWEEP_DIR>/tranche-1/report.txt --out <SWEEP_DIR>/tranche-1/capture-cached.txt \
+      --label-nodes 400000 --label-cache
+cmp -s <SWEEP_DIR>/tranche-1/capture.txt <SWEEP_DIR>/tranche-1/capture-cached.txt
 
 # assembly, once, over the passing tranches in order
 tools/wp21_assemble.py --out-dir <SWEEP_DIR>/assembly --corpus <SWEEP_DIR>/tranche-1/corpus.txt … 
 ```
 
 **THE BOX IS OTHERWISE IDLE DURING A TRANCHE** — no cargo, no bench, no other
-session's job — checked with `ps` before each wave is launched, because the
-per-label rate is a wall-clock quantity and a concurrent job voids the contention
-measurement wave one is read for. **Tranches are launched detached** (`setsid
-nohup`) and polled with `ps`, never watched.
+session's job, no T-F — checked with `ps` before each wave is launched, because
+the per-label rate is a wall-clock quantity and a concurrent job voids the
+contention measurement wave one is read for.
 
 ### 9.1 THE DRY RUN — a stand-in tranche, and what a failure means
 
@@ -445,39 +459,35 @@ give each cold-check class its ten samples. Seconds rather than hours.
 1. every command above, T-F's and the assembly included, is **accepted by the
    shipped binary and exits 0**, the capture run twice — once without and once with
    `--label-cache` — and the two compared with `cmp -s`;
-2. the generator writes a config `arena` accepts, in the `--tranche`, the
-   `--skip/--take` and the `--pilot-range` forms — the stand-in by being played,
-   all three by `tools/config_check.sh`, gate 6's own validator;
+2. the generator writes a config `arena` accepts: the stand-in, by being played.
+   The `--tranche` and `--skip/--take` forms differ from it in the two integers
+   and the header comment only, which the generator's own suite pins over all
+   sixteen tranches and the T-F window (`wp21_tranche_config_tests.rs`), and they
+   are not played by a dry run;
 3. `--partition hits` and `--partition misses` each print a line **naming the
-   class**, and **their class counts sum to the record count** — the partition is
-   exhaustive and disjoint; nothing is claimed about their strided samples, which
-   sum to more than a single stride's;
+   class**, and **the checker's two class sizes equal the cached counts line's
+   `asks` and `hits`** — the arena's memo and the checker's first-seen walk are two
+   implementations of one partition, in two languages, and the sum alone would
+   survive a misclassification;
 4. `corpus-check` reads the produced corpus and reports its record count, and
    `tools/wp21_assemble.py` over that one corpus reports it again;
-5. the whole sequence leaves exactly the files §4.1 registers and no others.
+5. the whole sequence leaves exactly the files §4.1 registers for `tranche-1/`,
+   `tf/` and `assembly/`, and no others — and no `run_log.txt`, because a dry run
+   appends no block; the log IS the artifact, under `artifacts/`.
 
 **A DRY-RUN FAILURE STOPS THE SWEEP AND IS REPORTED AS A FINDING**, not worked
 around by editing a command until something runs. **The dry run's input and its
 output are recorded here**, per `docs/process.md`:
 
 **RECORD.** Taken before this revision's review was dispatched, on the box
-otherwise idle, log `artifacts/arc3r_dryrun_sweep_0c4f3b4_v2.txt` (sha256
-`95a772717502386d1603a4d89e8df803e613110a4e7fac9fdd5370d3eca30bb0`), `<DRY>` =
-`/home/tom/pistol-runs/arc3r-dryrun/sweep`. Its head line: `== dry run at 0c4f3b4b8a6c910015a28d7917b91b38282541bd, Thu Sep  3 06:45:40 AM UTC 2026, rustc 1.98.0 (88d9e12ae 2026-08-18), cargo 1.98.0 (797e8a9bc 2026-08-05)`.
+otherwise idle, log `artifacts/arc3r_dryrun_sweep_0c4f3b4_v3.txt` (sha256
+`2654f0022537eb9b4d87b276373d7d6cad16485189f28a5e01a5e5f63c29a24e`), `<DRY>` =
+`/home/tom/pistol-runs/arc3r-dryrun/sweep`. Its head line: `== dry run at c4963b3908a1ff60da96a229b5ed364ce5a02f52, Thu Sep  3 07:08:25 AM UTC 2026, rustc 1.98.0 (88d9e12ae 2026-08-18), cargo 1.98.0 (797e8a9bc 2026-08-05)`.
 The stand-in config's sha256: `772958a901c0881c8bff2568c255b92b60d30264cdce708884e40da57153f053`. **Every command and its exit
-line, verbatim** (the `forms/` pair are the `--tranche 1` and `--skip 13 --take 20`
-configs, written and validated by `tools/config_check.sh` and never played):
+line, verbatim**:
 
 ```
 $ tools/wp21_tranche_config.py --skip 0 --take 1 --pilot-range --out <DRY>/tranche-1/arena_tranche-1.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
-exit=0
-$ tools/wp21_tranche_config.py --tranche 1 --out <DRY>/forms/arena_tranche-1.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
-exit=0
-$ tools/wp21_tranche_config.py --skip 13 --take 20 --out <DRY>/forms/arena_tf.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
-exit=0
-$ tools/config_check.sh <DRY>/tranche-1/arena_tranche-1.toml
-exit=0
-$ tools/config_check.sh <DRY>/forms/arena_tranche-1.toml <DRY>/forms/arena_tf.toml
 exit=0
 $ sha256sum <DRY>/tranche-1/arena_tranche-1.toml
 exit=0
@@ -501,8 +511,6 @@ $ target/release/corpus-check <DRY>/tranche-1/corpus.txt
 exit=0
 $ tools/wp21_tranche_config.py --skip 0 --take 1 --pilot-range --out <DRY>/tf/arena_tf.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
 exit=0
-$ tools/config_check.sh <DRY>/tf/arena_tf.toml
-exit=0
 $ target/release/arena --config <DRY>/tf/arena_tf.toml --out <DRY>/tf/report.txt
 exit=0
 $ target/release/arena --capture <DRY>/tf/report.txt --out <DRY>/tf/capture-a.txt --label-nodes 2000
@@ -511,18 +519,20 @@ $ target/release/arena --capture <DRY>/tf/report.txt --out <DRY>/tf/capture-b.tx
 exit=0
 $ cmp -s <DRY>/tf/capture-a.txt <DRY>/tf/capture-b.txt
 exit=0
+$ bash -c cmp -s <(/usr/bin/grep -v '^#' <DRY>/tf/capture-a.txt) <(/usr/bin/grep -v '^#' <DRY>/tranche-1/capture.txt)
+exit=0
 $ tools/wp21_assemble.py --out-dir <DRY>/assembly --corpus <DRY>/tranche-1/corpus.txt
+exit=0
+$ bash -c tools/cold_label_check.py --capture <DRY>/tranche-1/capture.txt --binary target/release/pistol --engine-config configs/instrument_v0.toml --stride 1 --partition misses | /usr/bin/grep -o 'of which [0-9]* are MISSES'
+exit=0
+$ bash -c tools/cold_label_check.py --capture <DRY>/tranche-1/capture.txt --binary target/release/pistol --engine-config configs/instrument_v0.toml --stride 1 --partition hits | /usr/bin/grep -o 'of which [0-9]* are HITS'
 exit=0
 ```
 
-**The printed lines the limbs read**, verbatim:
+**The printed lines the limbs read**, verbatim (limb 3: the checker's `17 are
+MISSES` / `17 are HITS` against the cached line's `asks 17 … hits 17`):
 
 ```
-validate_arena_config: /home/tom/pistol-runs/arc3r-dryrun/sweep/tranche-1/arena_tranche-1.toml ok
-validate_arena_config: 1 document(s) ok
-validate_arena_config: /home/tom/pistol-runs/arc3r-dryrun/sweep/forms/arena_tranche-1.toml ok
-validate_arena_config: /home/tom/pistol-runs/arc3r-dryrun/sweep/forms/arena_tf.toml ok
-validate_arena_config: 2 document(s) ok
 arena: captured 34 position(s) from 2 game(s) at go nodes 2000
 arena: label cache off: asks 34 records 34
 arena: captured 34 position(s) from 2 game(s) at go nodes 2000
@@ -533,8 +543,6 @@ cold_label_check: 34 record(s) in capture.txt, of which 17 are HITS; the sample 
 cold_label_check: 17 of 17 sampled HITS record(s) agree byte for byte
 arena: replayed 2 of 2 game(s) from /home/tom/pistol-runs/arc3r-dryrun/sweep/tranche-1/report.txt, 0 divergence(s)
 corpus_check: /home/tom/pistol-runs/arc3r-dryrun/sweep/tranche-1/corpus.txt ok, 34 record(s), capture_sha256 4c99f011128a7a87c3ce54c54965fa548d6f0cb2d19be2fd5291601bf92dd3e9
-validate_arena_config: /home/tom/pistol-runs/arc3r-dryrun/sweep/tf/arena_tf.toml ok
-validate_arena_config: 1 document(s) ok
 arena: captured 34 position(s) from 2 game(s) at go nodes 2000
 arena: label cache off: asks 34 records 34
 arena: captured 34 position(s) from 2 game(s) at go nodes 2000
@@ -544,16 +552,15 @@ wp21_assemble: distinct positions 17
 wp21_assemble: decided 17
 wp21_assemble: outcome coverage 1.0000
 wp21_assemble: key disagreements 0
+of which 17 are MISSES
+of which 17 are HITS
 ```
 
-Limb 3: 34 records, of which 17 MISSES and 17 HITS — the two classes sum to the
-record count. Limb 5, the files left behind, and no others:
+Limb 5, the files left behind, and no others:
 
 ```
 ./assembly/deduped_manifest.txt
 ./assembly/raw_manifest.txt
-./forms/arena_tf.toml
-./forms/arena_tranche-1.toml
 ./tf/arena_tf.toml
 ./tf/capture-a.txt
 ./tf/capture-b.txt
@@ -566,8 +573,12 @@ record count. Limb 5, the files left behind, and no others:
 ./tranche-1/report.txt
 ```
 
-A first run, `artifacts/arc3r_dryrun_sweep_0c4f3b4.txt`, wrote the configs under a
-basename `tools/config_check.sh` classifies as an ENGINE config and refused; the
-registered paths gained the `arena_` basename and the validator step above, and
-this record is the second run. That is a dry-run finding about the registration's
-own spelling, fixed in the registration, not a command edited until it ran.
+Two earlier runs are on disk and are not this record: the first
+(`artifacts/arc3r_dryrun_sweep_0c4f3b4.txt`) registered a second validator,
+`tools/config_check.sh`, whose refusal of the generated config was a basename
+convention and not the arena's schema — the arena played the same file — and the
+second (`…_v2.txt`) kept that validator under an `arena_` basename; the round-3
+review found the step unpinned and its verdict adding nothing the arena's own
+parse does not, so the step is gone and this third run is the registered one.
+The `arena_` basename stays: it costs nothing and lets gate 6's script read a
+sweep config by hand.

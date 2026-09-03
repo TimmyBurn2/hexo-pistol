@@ -1454,3 +1454,74 @@ the second instrument agrees. Every RECORD paragraph and every §8 slot of both
 registrations is filled verbatim from these logs (digests inside the documents).
 **Round 3 of each registration's review is dispatched at the commit that lands
 this, fresh contexts, cargo in their own worktrees (D-592).**
+
+### §3 — ROUND 3 OF BOTH REGISTRATIONS: FAIL AND FAIL, AND WHAT REVISION 6 / REVISION 5 DO ABOUT IT
+
+**`wp21_prereg_rev5_REVIEW.md` at `c4963b3`: FAIL — 1 BLOCKING, 8 MAJOR, 7 minor.**
+What survived: all twenty round-2 dispositions; the release build reproduced
+byte-for-byte from a fresh worktree at a different path (**a release build IS
+reproducible on this box**, by measurement); the partition and holdout from the
+shipped generator; all 22 commands and 26 quoted lines of §9.1 in the log; the dry
+run of the same KIND; the four coverage suites green; the reviewer's own `pistol`
+reproducing all 34 dry-run records cold. **The findings, and revision 6's answer
+to each**: B1, T-E could not fail (the row is printed unconditionally and the
+binding is checked by T-A and T-D already) — **deleted** (D-424); M1, §5's `cmp`
+rule voided tranche one by construction — keyed on the PASS-2 command, tranche
+one's referent re-capture named as the one flagged command that precedes the
+line; M2, limb 5 failed on its own record (`forms/`, no `run_log.txt`) **and this
+ledger's §3 claimed the opposite — a count transcribed rather than derived,
+corrected here**: limb 5 now names the three directories and says a dry run
+appends no block; M3, no disposition for an INTERRUPTED tranche — one added
+(treated as VOID, re-run under `-run<k>`, the partial directory kept); M4, the fold
+receipt's *"sha-anchored in the ledger"* was false — its digest
+`b6d4751e24e3594d7da827687bc3a35630c3b5052c6e6cd8f3d260076e3e97de` is now in §8 and
+here; M5, census OFF reversed D-562(3) without an ADR line — **D-596**; M6, the
+assembler's digest is 64 lines past its PASS — §8 says so and names the scoped
+round 3 (`wp21_assemble_REVIEW_round3.md`, dispatched), §6 does not run before it
+passes; M7, T-F's text and commands tested different things — T-F reworded to what
+§9 runs and given the reviewer's free external referent (its body against tranche
+one's records over the same twenty openings), which the dry run now exercises
+(exit 0 on the stand-in); M8, `tools/config_check.sh` registered, unpinned,
+untested, `cargo run` from the live tree — **the step is deleted**: the arena's own
+`deny_unknown_fields` parse is the acceptance, the first dry run showed the
+validator's refusal was a basename convention the arena does not share, and the
+`arena_` basename stays as a courtesy; m1 the four addends corrected (11 018,
+1 442, 8 061, 21 988, 27 140; 5 819 at the exact 395/742); m2 `partitioned()`; m3
+a T-A VOID read by what it names (floor → tranche VOID; engine → re-taken once);
+m4 the gate stated in §5 once, §1 and §6.1 and the sibling pointing; m5 the three
+deletions taken; m6 T-F moved BEFORE wave one on the idle box; m7 limb 3 registers
+the checker's classes against the cached line's `asks`/`hits`. **The sweep dry run
+was re-taken as `artifacts/arc3r_dryrun_sweep_0c4f3b4_v3.txt`: 20 commands, 20 at
+exit 0**, the T-F body compare and limb 3's two reads among them, the listing
+exactly §4.1's; §9.1's RECORD is that run.
+
+**`wp21_throughput_prereg_rev4_REVIEW.md` at `c4963b3`: FAIL — 1 BLOCKING, 3 MAJOR,
+14 minor.** What survived: every §2 soundness claim re-derived from
+`tools/determinism.sh` and the engine; all §8 digests from the reviewer's own
+build; 742/347/2.1383/0.5323 and the multiplicities; 152; the corpus columns and
+the 17/17 second instrument; all 45 quoted lines; C1 satisfiable. **The findings,
+and revision 5's answer**: B1, lever A's registered number was a wall clock no
+registered instrument produced and the concurrent launch was never dry-run —
+**the harness is written** (`/home/tom/pistol-runs/arc3r-leverA/lever_a_harness.sh`,
+printed whole in §7, digested in §8: it starts N captures together, waits for the
+last, reads its own clock before and after, prints one `leverA:` line with
+`wall_s`, `records`, `asks`, `s_per_label`, `s_per_ask`, `throughput`), §3.3 reads
+its fields, §4.5 gets the same harness at N = 1 with and without the cache and
+the run log's `seconds=` for tranche one; M1 the design cited at revision 10; M2
+the *"pilot's report"* pair could not run (the closure binary is refused by a
+report attesting `180b4c40…`) — §4.4 and §5 now cost the play-pass pair (152
+records, 72 distinct, ~2.3 + 1.1 min); M3 C3 and C4 read at the median rep and no
+other; the fourteen minors: §3.4's SMT note and §3.2's `TR mod N` rule deleted
+(D-424), 7.74 h no longer restated, §4.1's transcript pasted whole with the
+under-fold blindness of its criterion stated and where that half is pinned,
+`wp20b_perf_guard.sh` cited through `wp20b_artifacts.md`, §3.1's cross-reference,
+the `sort -u` lines run under `bash -c` with full paths, the stand-in moved to
+opening 3 (disjoint from `0..2`), lever A's cost as a bracket 0.56–1.12 h with
+C4's twenty given a reason, the counts line's two shapes, §6.3's *"corpus OF
+RECORD"*, `~6 600` and `~53 %` marked ESTIMATED, the 152 attributed to the pilot's
+capture. **The throughput dry run was re-taken as
+`artifacts/arc3r_dryrun_throughput_0c4f3b4_v2.txt`** on opening 3 with the harness
+at N = 1 and N = 2 (`leverA:` lines `wall_s 0.544` and `0.766`, 32 records, all
+files byte-identical) and the pair through it (`s_per_ask 0.017516` uncached,
+`0.019984` cached at a toy budget); every limb green; §7.1's RECORD is that run.
+**Round 4 of each is dispatched at the commit that lands this.**
