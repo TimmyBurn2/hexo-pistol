@@ -1674,3 +1674,28 @@ transcribed — the T-F sub-range `13..32` (13 + 20 − 1), a tranche's ~3 h
 (5 × 3 × 152 × 0.885445 = 2 019 s, times contention 1–2), 1.0042 and 0.42 %
 (round 2's A3, re-verified by round 4) — **and 45, the only one that did not
 derive.** The scoped pass verifies that sweep from a fresh context.
+
+**THE SCOPED CLASS VERIFICATION: PASS** (`wp21_number_class_VERIFICATION.md`,
+fresh context, Sonnet, at `41a8f7b`). Every number of the class derives:
+**fifteen** checked, the ten of this session's own sweep re-derived by the
+verifier's own commands and **five more it found beyond the table** — the
+"fifteen" setting-reps, the opening-3/games-6–7 correction, C2's
+`turns`/`turns + 1` formula against `capture.rs`'s `asked_prefixes`, the 95 %/5 %
+consistency, and the m7 citation trace. The three extra checks pass: the two
+corrected sentences agree with each other and with §3.2's schedule; both lever-A
+scripts are byte-identical to §7's printed blocks and match §8's digests (the fix
+touched the document and not the scripts); gate 20 exits 0. **One precision nit
+taken**: *"(round 4's m7)"* named no report, and this document's round 4 and the
+sibling's are two reports with different m7s — it now names
+`wp21_prereg_rev6_REVIEW.md`. **The verifier's own "WHAT THIS PASS DID NOT LOOK
+AT"** is on its report: transcribed dry-run arithmetic, prose-only changes, the
+round-5 reviewer's `cargo test` not re-run, both documents coincidentally landing
+on revision 7, and no live lever A. **It also declared its own deviation** — two
+throwaway files under `/tmp` for one `diff`, deleted, nothing built or run there
+— which is recorded rather than omitted because a pass that hides its own
+deviations is not one.
+
+**BOTH REGISTRATIONS ARE GOVERNING**: `wp21_prereg.md` revision 7 (round 5 PASS)
+and `wp21_throughput_prereg.md` revision 7 (round 5 FAIL on one number, fixed,
+disposed of by D-598's scoped class verification, which PASSED). **Lever A may
+run.**
