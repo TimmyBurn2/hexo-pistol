@@ -1,4 +1,4 @@
-# WP-2.1 — the production label sweep. RUN REGISTRATION, revision 9.
+# WP-2.1 — the production label sweep. RUN REGISTRATION, revision 10.
 
 > **ONE LINE FOR THE MORNING.** The book's unconsumed range less a reserved
 > 1 000-opening holdout — **3 487 openings**, **~93 076 distinct positions
@@ -174,7 +174,9 @@ ARE LOWER BOUNDS.** Capture is 87 % of the tranche above and its rate is lever A
 median rep at N = 16, taken with sixteen captures actually running — so it is not
 an idle-box rate extrapolated, and `c(16) = 1.7521` is measured rather than
 guessed. **Play, replay and the cold check keep their uncontended rates** (four
-workers, an idle box) and are therefore lower bounds, worth 0.79 h of the 6.17 h;
+workers, an idle box) and are therefore lower bounds, worth `1 442 + 1 409 + 58
+= 2 909 s = 0.81 h` of the 6.17 h, which is also 6.17 less the capture term's
+5.36;
 the wave's own realised seconds-per-label is reported at closure against both.
 Nothing in this registration's criteria, partition, seat or budget depends on
 any of it.
@@ -440,7 +442,7 @@ arena --replay <SWEEP_DIR>/tranche-<n>/report.txt --out <SWEEP_DIR>/tranche-<n>/
 # T-D
 corpus-check <SWEEP_DIR>/tranche-<n>/corpus.txt
 
-# T-F, BEFORE wave one, the box otherwise idle
+# T-F, BEFORE the wave, the box otherwise idle
 tools/wp21_tranche_config.py --skip 13 --take 20 --out <SWEEP_DIR>/tf/arena_tf.toml \
                              --binary-sha256 <the closure binary's digest>
 arena --config <SWEEP_DIR>/tf/arena_tf.toml --out <SWEEP_DIR>/tf/report.txt

@@ -1791,3 +1791,19 @@ rounded printout instead of the statistic §3.3 registers. Revision 9 states the
 exact throughputs (rep 3 1.098020, rep 1 1.098107, rep 2 1.099330), names rep 1
 the median, and gives the two candidates' distance — 0.008 % of throughput, 0.01
 points of C4's twenty. The selection and every verdict are unmoved.
+
+**THE AMENDMENT'S ROUND 2: FAIL — 0 BLOCKING, 1 MAJOR, 1 minor**
+(`wp21_prereg_rev9_amendment_REVIEW.md` at `8a73bec`), from 4 BLOCKING / 2 MAJOR.
+**F-1 through F-5 CLOSED**, each independently re-derived — the reviewer recomputed
+the three N = 1 throughputs straight from the receipt and confirmed rep 1 is the
+median and +2.85 % the figure — and it verified in `label_cache.rs` that D-586's
+flip clause reads nothing here because the collision counters are printed only by
+the ON shape and never even incremented under OFF. **F-6 PARTIAL and one minor,
+both mine, both in text revision 9 introduced**: the lower-bound paragraph named
+*"play, replay and the cold check"* and then summed only the first two —
+`1 442 + 1 409 = 2 851 s = 0.79 h` where the three are `2 909 s = 0.81 h`, which
+is also the 6.17 less the capture term's 5.36; and a shell comment in §9 still
+read *"BEFORE wave one"*. **Revision 10 fixes both, and shows the addition rather
+than stating its total.** The capture share re-derives at 86.9 %, so *"87 %"*
+stands. The one surviving wave ordinal is T-F's deliberate N = 8 counterfactual,
+which round 2 read as the honest record F-2 asked for.
