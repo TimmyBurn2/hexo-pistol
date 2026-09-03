@@ -1879,3 +1879,28 @@ run launches under are the ones rounds 3, 4 and 5 each swept for a criterion tha
 cannot fail, a command that does not run and a contradiction about the schedule,
 and each found none. The scoped verification D-598 requires is dispatched over
 exactly that.
+
+### §5 — THE PRE-RUN VERIFICATION PASSED, AND THE SWEEP IS CLEARED TO LAUNCH
+
+`wp21_prerun_VERIFICATION.md` at `6ddd959`: **PASS on all five launch
+preconditions.** (1) **The load-bearing one**: across the whole ADR correction
+chain the only change under the governing paths is the throughput document's
+title and its one cross-citation — round 3's own remedy — and `wp21_prereg.md` is
+untouched since. (2) Both registrations' sha256 at HEAD equal their sha256 at
+every revision rounds 3, 4 and 5 name as reviewed, so no unreviewed edit slipped
+in behind the sweeps. (3) D-601's withdrawal is sound and its invariance argument
+correct, **with one finding**: its search was reported at `d61e161` and returns 24
+there, not 25 — see below. (4) Append-only hygiene clean, both gate scripts exit
+0. (5) Tree clean, no process of this project running, all three release binaries
+digest to what §8 registers, toolchain matching.
+
+**F-4.3 — D-601 LABELLED ITS SEARCH WITH A REVISION IT WAS NOT RUN AT.** Derived
+with `git grep` per revision: **24 at `d61e161`, 25 at `6ddd959` and at HEAD**; the
+25th is the round-5 report, which `6ddd959` first committed alongside D-601
+itself. The mechanism is that the command was run with `/usr/bin/grep` against the
+WORKING TREE, which held that report untracked, and the output was labelled with
+the last commit. **D-602 corrects the numbers and strengthens the rule**: a search
+reported at a revision is executed at that revision (`git grep <rev>` or a
+detached worktree), never against a working tree, because a working tree is not a
+revision and its output belongs to no commit. Non-blocking: no governing document
+and no run parameter moves, which is why the verification passed with it named.
