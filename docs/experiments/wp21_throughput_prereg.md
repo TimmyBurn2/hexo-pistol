@@ -1,4 +1,4 @@
-# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 9.
+# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 10.
 
 > **ONE LINE.** `wp21_prereg.md` §3 owns the sweep's wall and this document does
 > not restate it. It measures the two things that could move it: **what concurrency
@@ -12,7 +12,7 @@
 > verified capability, which §4.4 takes after the wave.
 
 **GOVERNING**: D-576 (the cache and its amended criterion), D-581, D-584, D-586,
-D-587, D-588 (the key and what is claimed about it); `wp21_prereg.md` revision 9
+D-587, D-588 (the key and what is claimed about it); `wp21_prereg.md` revision 10
 §1 (the slot lever A fills), §3 (the wall), §4 (the criteria this study may not
 touch), §6.1; `wp21_label_cache_design.md` revision 10 (what lever B builds; its
 revisions 8–10 changed test rows and §3's measured residual only — D-589, D-595);

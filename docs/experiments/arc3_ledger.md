@@ -1807,3 +1807,20 @@ read *"BEFORE wave one"*. **Revision 10 fixes both, and shows the addition rathe
 than stating its total.** The capture share re-derives at 86.9 %, so *"87 %"*
 stands. The one surviving wave ordinal is T-F's deliberate N = 8 counterfactual,
 which round 2 read as the honest record F-2 asked for.
+
+**THE AMENDMENT'S ROUND 3: FAIL — 0 BLOCKING, 1 MAJOR, 0 minor**
+(`wp21_prereg_rev10_amendment_REVIEW.md` at `4e3d1b6`). **Both of round 2's
+remedies CLOSED**: the lower-bound sum re-derives by both routes
+(`1 442 + 1 409 + 58 = 2 909 s = 0.81 h`, and `6.17 − 5.36` at the seconds level),
+87 % stands at 86.9 %, and the reviewer agrees the one surviving wave ordinal is
+T-F's honest N = 8 counterfactual. The three changed lines introduced nothing.
+**The MAJOR came from the reviewer's own closing sweep and is the same class a
+third time**: the sibling cited the sweep at revision 9 while the amendment had
+just bumped it to 10 — round 1's F-5 and the throughput's own round-4 M1 were this
+defect at 7-against-8. **Fixed, and the mechanism is owed as D-599**: gate 20 reads
+paths and cannot see a *"revision N"* claim, so the check that would catch it is
+specified there, is NOT built before the sweep (a CI gate is a package with its own
+review and the sweep's registration is already green), and is built while the
+sweep runs. Until it lands the rule is manual and stated: a commit that bumps a
+governing document's revision carries every sibling citation of it, and says so.
+Both documents are now revision 10.
