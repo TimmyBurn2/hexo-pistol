@@ -1381,3 +1381,8 @@ default applied: the red team's load is CI's load, so D-593's flip condition is
 reached, and its route is the five-run form now and the drain as its own package
 only if that flakes). T4 run once here: green. M15/M16/M20 re-taken at this
 revision: below.
+
+**M15/M16/M20 AT `4fab9ed`**: all three DIED under the five-run T4
+(`artifacts/arc3r_mutation_4fab9ed_X3.txt`, digest in the receipt), the mutant arm
+0 of 5 in each. REVIEW-impl round 2, scoped to the seven remedies (round 1's
+BLOCKING and four minors, the red team's F1–F3), dispatched at `4fab9ed`.

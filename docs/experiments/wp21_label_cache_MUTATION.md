@@ -10,6 +10,7 @@ the diff is one test assertion and the design's row 4 / §6 wording).
 worktree), each mutant applied by exact string replacement, the named row run,
 the tree restored with `git checkout -- .` before the next.
 **Toolchain**: rustc 1.98.0 (88d9e12ae 2026-08-18).
+**T4's three mutants re-taken at `4fab9ed`** (design revision 10, T4's cached arm five runs — D-595): M15, M16, M20 all DIED, `artifacts/arc3r_mutation_4fab9ed_X3.txt` sha256 `1b5ab0f11d4c259c7af69f11388c8b759072f28fffa4bb6b8157d18fbec7749e`; under the five-run form the mutant arm's kill is deterministic (0 of 5 refusals under any of the three), where at `9c4366c` it was a ~0.9-probability kill under load (the red team's F1).
 **Logs** (gitignored, digests here): `artifacts/arc3r_mutation_9c4366c.txt`
 sha256 `95914dce001308cdf41f61e993717a416a1b256e8c6cba68df41f9fd3535172e`; `artifacts/arc3r_mutation_610225b_X1.txt` sha256
 `29784d1bb9af6e4859818e22caf6bd5b217ecb1b85e9aae1fda62096d3d8407c`.
@@ -79,6 +80,7 @@ Recorded in `arc3_ledger.md` F-2.1.
 - M11's equivalence is a claim about THIS suite: no row distinguishes an `asks`
   derived from the memo under `On` from the counter, because under a live cache
   they are equal. A dead cache is what would separate them, and no test has one.
-- T4's cached arm is the row with the design's stated residual (§3, D-593); M15,
-  M16 and M20 died deterministically because under each the cached run performs
-  no channel read in game 1 and exits 0, which is the arm that has no residual.
+- T4's cached arm is the row with the design's stated residual (§3, D-593, measured
+  by the red team and carried at D-595); M15, M16 and M20 die deterministically
+  because under each the cached run performs no channel read in game 1 and exits
+  0 in every one of the five runs, which is the arm that has no residual.
