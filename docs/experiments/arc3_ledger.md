@@ -1699,3 +1699,51 @@ deviations is not one.
 and `wp21_throughput_prereg.md` revision 7 (round 5 FAIL on one number, fixed,
 disposed of by D-598's scoped class verification, which PASSED). **Lever A may
 run.**
+
+### §4 — LEVER A RAN, AND THE ANSWER IS NOT THE INCUMBENT: N = 16, WHICH REOPENS THE SWEEP REGISTRATION
+
+Run at `c68e69e` on the idle box (`ps` empty of cargo, arena, pistol; loadavg 1.89
+before), 10:01–10:41 UTC, 40 minutes against §5's ESTIMATED 0.56–1.12 h. Receipt
+`artifacts/arc3r_leverA_c68e69e.txt`, sha256
+`5eb62d6c909699d76078b96f71801741d544fda98c3a58cbb07a83209eeeef01`, fifteen
+`leverA:` lines, the driver's `ps`, loadavg and C1/C2 readings on its face.
+**Before it ran, the three binaries were checked against §8**: `pistol`
+`78a7600a…`, `arena` `a1a405cb…`, `corpus-check` `efbb76b6…`, all three equal to
+the registered digests, and `git diff --stat 0c4f3b4 HEAD -- crates configs`
+empty. **The play pass produced 152 asked prefixes**, the figure §5 costs with,
+MEASURED here under the closure toolchain rather than assumed to transfer.
+
+| N | median throughput | its rep | s per label | c(N) | C3 (bar 3.54 s) |
+|---|---|---|---|---|---|
+| 1 | 1.098 | 3 | 0.910729 | 1.0286 | PASS |
+| 2 | 2.177 | 3 | 0.918487 | 1.0373 | PASS |
+| 4 | 4.353 | 3 | 0.918989 | 1.0379 | PASS |
+| 8 | 7.985 | 2 | 1.001925 | 1.1315 | PASS |
+| **16** | **10.314** | 2 | 1.551364 | 1.7521 | PASS |
+
+**C1: 0 of 93 capture files differ** from `cap-N1-rep1-p1.txt` (sha256
+`83c706ac…`). **C2: 0 of 93 short** of the report's own 152, every `rc` 0.
+**C4: N = 1's median rep is 0.910729 s against the pilot's 0.885445, +2.86 %**,
+inside the 20 % bar — the serial baseline is the sweep's. **§3.4's rule, applied:
+the highest median is 10.314, 95 % of it is 9.798, and the smallest N at or above
+that is 16**; the incumbent 8 reaches 77.4 % and does not tie. **Nothing was
+chosen after the numbers**: the rule was registered at revision 6 and read once.
+
+**THE ANSWER REOPENS `wp21_prereg.md` BY ITS OWN §1 CLAUSE**, and **revision 8** is
+that amendment. Sixteen tranches at once is ONE wave, so §3's wall is one
+tranche's and its capture term is now MEASURED at the concurrency the sweep runs
+at: **22 213 s = 6.17 h** for the whole sweep, against 8.54 h at the incumbent
+N = 8 with its own measured rate. **AND THE CACHE IS NOT USED BY ANY TRANCHE OF
+THIS SWEEP** (§6.1): the gate forbids a cached tranche until the byte-identity
+comparison returns, the comparison needs tranche one's uncached capture, and in a
+single wave that capture exists only when the sweep ends. Every tranche runs
+uncached, re-runs included; **§4.4's comparison is still taken after the wave** as
+the capability verification the sibling's ONE LINE says the lever is for, and it
+governs no tranche of this sweep. The throughput study's own *"and a smaller
+second wave"* is corrected with it (**revision 8**): at N = 16 there is no second
+wave to shorten. The 0.20 h the cache was priced at goes with the second wave,
+which is the number the sibling already called net negative on this sweep.
+
+**The amendment is dispatched for a scoped fresh-context review before tranche
+one, per `docs/process.md`'s rule that the revision GOVERNING a run passes review
+before the first run it governs.**

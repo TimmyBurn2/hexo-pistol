@@ -1,4 +1,4 @@
-# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 7.
+# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 8.
 
 > **ONE LINE.** `wp21_prereg.md` §3 owns the sweep's wall and this document does
 > not restate it. It measures the two things that could move it: **what concurrency
@@ -392,8 +392,9 @@ net on this sweep**, and ~1.6 h only if the verification were free. Counting lev
 A's 0.56–1.12 h and the play-pass pair, **the lever is net negative on this
 sweep's wall**. There
 is no later sweep to point at: the book's remainder is this sweep's and its last
-thousand are the holdout. **What the lever buys is a verified capability and a
-smaller second wave**, and the decision to take it is the architect's (D-576),
+thousand are the holdout. **What the lever buys is a verified capability**, and
+at the N = 16 lever A selected there is no second wave for it to shorten
+(`wp21_prereg.md` §6.1). The decision to take it is the architect's (D-576),
 taken against this number.
 
 ---

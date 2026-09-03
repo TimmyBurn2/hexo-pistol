@@ -1,4 +1,4 @@
-# WP-2.1 — the production label sweep. RUN REGISTRATION, revision 7.
+# WP-2.1 — the production label sweep. RUN REGISTRATION, revision 8.
 
 > **ONE LINE FOR THE MORNING.** The book's unconsumed range less a reserved
 > 1 000-opening holdout — **3 487 openings**, **~93 076 distinct positions
@@ -53,7 +53,7 @@ written; `docs/book_v2_ledger.md`'s row for this sweep names this revision.
 | **label budget** | `nodes 400000` | the pilot's, unchanged; a command-line argument to `arena --capture`, never a config key |
 | turn cap | `40` | the pilot's; an evaluation horizon and never a game rule (game rule 6) |
 | `n_workers` **per tranche** | **1** | N tranches run at once, and a tranche that also fanned out four ways would oversubscribe the box |
-| **concurrent tranches** | **a REGISTERED SLOT, incumbent 8** | filled from `wp21_throughput_prereg.md` lever A's measured median throughput under its own §3.4 rule, before tranche one. **Any selected N other than 8 reopens this document**: §3's wall arithmetic is stated at N = 8, and every member of the study's field divides 16, so nothing else would reopen it |
+| **concurrent tranches** | **16 — the slot, FILLED** | by `wp21_throughput_prereg.md` lever A under its own §3.4 rule, run before tranche one on the idle box: median throughputs 1.098, 2.177, 4.353, 7.985, **10.314** over N = 1, 2, 4, 8, 16, so the smallest N at or above 95 % of the highest (9.798) is 16 and the incumbent 8 sits at 77.4 %. C1 (93 of 93 capture files byte-identical), C2 (93 of 93 at the report's own 152 asked prefixes, every `rc` 0), C3 (1.5514 s per label, `c(16) = 1.7521`, bar 3.54 s) and C4 (N = 1 at 0.9107 s, +2.86 % on the pilot's 0.885445, bar 20 %) all PASS. Receipt `artifacts/arc3r_leverA_c68e69e.txt`, sha256 `5eb62d6c909699d76078b96f71801741d544fda98c3a58cbb07a83209eeeef01`. **The answer was not the incumbent, so it reopened this document; revision 8 is that amendment** — §3's wall and §6.1 are re-derived at one wave |
 | **label cache** | **ON** from the tranche §6.1 names, keyed on the `position` line's exact bytes | D-576; the design is `wp21_label_cache_design.md` revision 10; which tranches run cached, and on what condition, is §6.1's and nothing else's |
 | `hang_timeout_ms` | `120000` | the pilot's |
 | SPRT block | the pilot's | present because the schema requires it. No strength claim: both seats are one engine and the verdict is `inconclusive_degenerate` by construction (D-156) |
@@ -131,29 +131,37 @@ ESTIMATED  cold     (34 + 30) x 0.904313         =     58 s             (two str
 ESTIMATED  tranche                                 13 927 s = 3.87 h
 ```
 
-**THE SAME TRANCHE WITH THE CACHE.** Only a MISS costs a search:
+**THE WALL, STATED ONCE HERE AT THE SELECTED N = 16, AND EVERY OTHER SECTION
+POINTS AT IT** (D-423). Sixteen tranches at once is ONE wave, so the sweep's wall
+is one tranche's; and the capture term is no longer estimated at the pilot's
+serial rate but MEASURED at the concurrency the sweep runs at — lever A's median
+rep at N = 16, **1.551364 s per label** (`c(16) = 1.7521`):
 
 ```
-ESTIMATED  labels searched  12 443 x (1 - 395/742) = 5 819   (= 218 x 26.6923, the distinct count, as it must; at the rounded 0.5323 it reads 5 820)
-ESTIMATED  capture, cached  5 819 x 0.885445      = 5 152 s = 1.43 h
-ESTIMATED  tranche, cached  13 927 - 11 018 + 5 152 = 8 061 s = 2.24 h
+MEASURED   seconds per label at N = 16                       =  1.551364   (lever A, §1)
+ESTIMATED  capture   12 443 x 1.551364                       = 19 304 s = 5.36 h
+ESTIMATED  play      436 x 0.827115 x 4                      =  1 442 s = 0.40 h
+ESTIMATED  replay    436 x 0.807692 x 4                      =  1 409 s = 0.39 h
+ESTIMATED  cold      (34 + 30) x 0.904313                    =     58 s
+                                                                ------------------
+ESTIMATED  one tranche at N = 16, and the sweep is one wave   = 22 213 s = 6.17 h
+
+for comparison, at the incumbent N = 8 (MEASURED 1.001925 s per label, two waves):
+           capture 12 443 x 1.001925 = 12 467 s; tranche 15 376 s; 2 waves = 30 752 s = 8.54 h
+SERIAL, uncached  3 487 x 57.0769 x 0.885445                 = 176 228 s = 48.95 h
 ```
 
-**THE WALL, STATED ONCE HERE, AND EVERY OTHER SECTION POINTS AT IT** (D-423).
-§6.1 forbids a cached tranche before the sibling's §4.4 comparison returns, and
-that comparison's second half is tranche one's own CACHED re-capture, taken after
-wave one — so it sits on the critical path between the waves:
+**THE CACHE BUYS NOTHING ON THIS SWEEP AND IS NOT USED BY ANY TRANCHE OF IT**
+(§6.1): one wave has no second wave to serve, and the gate cannot return before
+the wave it would have to precede. The arithmetic that priced a cached second
+wave at a net 0.20 h is gone with the second wave, and the sibling's ONE LINE
+already says the lever is taken for a verified capability rather than for this
+sweep's wall.
 
-```
-UNCACHED, N = 8, two waves                  2 x 13 927                = 27 854 s = 7.74 h
-CACHED from wave two, the gate uncosted     13 927 + 8 061            = 21 988 s = 6.11 h
-CACHED from wave two, WITH the §6.1 gate    13 927 + 5 152 + 8 061    = 27 140 s = 7.54 h
-                                            NET ESTIMATED SAVING ON THIS SWEEP        0.20 h
-SERIAL, uncached                            3 487 x 57.0769 x 0.885445 = 176 228 s = 48.95 h   (176 227.60; the block above rounds 176 227.46)
-```
-
-**AND TRANCHE ONE CARRIES A SURCHARGE THE WALL ABOVE ALREADY HOLDS THE FIRST LINE
-OF**: the cached re-capture (1.43 h, in the gate line), plus T-F's sub-range pair
+**AND TRANCHE ONE CARRIES A SURCHARGE THE WALL ABOVE DOES NOT HOLD**: the cached
+re-capture — 5 819 misses at the pilot's rate, `5 819 x 0.885445 = 5 152 s =
+1.43 h`, taken AFTER the wave as §4.4's capability verification and on no
+tranche's critical path — plus T-F's sub-range pair
 (§4.1): `2 x (20 x 57.0769 x 0.885445) = 2 x 1 011 s = 0.56 h` of capture and
 `2 x 40 x 0.827115 x 4 = 265 s = 0.07 h` of play — **2.06 h in all**. T-F's 0.63 h
 runs BEFORE wave one, the box otherwise idle, because wave one's realised
@@ -334,15 +342,24 @@ distinct because which key rules such a pair is what D-562(2) leaves open. The
 instrument also refuses, as a VOID, a corpus given twice and corpora labelled at
 different `label_go` lines.
 
-## 6.1 THE CACHE, AND WHICH TRANCHES USE IT
+## 6.1 THE CACHE, AND WHY NO TRANCHE OF THIS SWEEP RUNS CACHED
 
-**Tranche one's corpus of record is its UNCACHED capture; no tranche runs cached
-until the sibling's §4.4 comparison of that capture with tranche one's cached
-re-capture returns byte-identity; §5's run log is the checker.** Everything else —
-the criterion, the consequence of a failure (lever B abandoned, every remaining
-tranche uncached), the diagnosis — is the sibling's §4.4 and is not restated here.
-**Nothing in this registration's criteria, partition, seat or budget depends on
-the cache.**
+**The gate is unchanged and it is what settles this**: tranche one's corpus of
+record is its UNCACHED capture, and no tranche runs cached until the sibling's
+§4.4 comparison of that capture with tranche one's cached re-capture returns
+byte-identity, with §5's run log as the checker. **At the selected N = 16 the
+sixteen tranches are one wave, so tranche one's uncached capture exists only when
+the wave ends, and the comparison cannot return before the thing it would have to
+precede. EVERY TRANCHE OF THIS SWEEP THEREFORE RUNS UNCACHED — a re-run of a VOID
+tranche included**, because the gate would have returned by then and putting one
+tranche's corpus on a different instrument from the other fifteen is not worth a
+saving §3 prices at 0.20 h on a wall that no longer has a second wave.
+**§4.4's comparison is still taken, after the wave**, at tranche one's own report:
+it is the capability verification the sibling registers, its byte-identity or its
+single differing byte is a finding of this arc, and it governs no tranche of this
+sweep. Everything else — the criterion, the consequence of a failure, the
+diagnosis — is the sibling's §4.4 and is not restated here. **Nothing in this
+registration's criteria, partition, seat or budget depends on the cache.**
 
 ---
 
@@ -395,9 +412,10 @@ arena --config <SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml --out <SWEEP_DIR>/
 
 # 2 — capture. The word order is POSITIONAL (`crates/pistol-arena/src/bin/arena.rs:52-59`,
 #     the tail parsed by `crates/pistol-arena/src/usage.rs:111`);
-#     --label-cache is the LAST word, present exactly on the tranches §6.1 admits
+#     --label-cache is the LAST word, and §6.1 admits it on NO tranche of this
+#     sweep, so it appears on no pass-2 command below
 arena --capture <SWEEP_DIR>/tranche-<n>/report.txt --out <SWEEP_DIR>/tranche-<n>/capture.txt \
-      --label-nodes 400000 [--label-cache]
+      --label-nodes 400000
 
 # 3 — corpus
 arena --labels <SWEEP_DIR>/tranche-<n>/capture.txt --report <SWEEP_DIR>/tranche-<n>/report.txt \
