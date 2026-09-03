@@ -1410,3 +1410,47 @@ the records do not) — T4 green, clippy clean. **The label cache package's revi
 are closed: REVIEW-impl round 2 PASS, RED-TEAM round 1's MAJOR and minors remedied
 and verified in that round 2, the mutation receipt complete. Design revision 10,
 D-589..D-595.**
+
+### §3 — THE CODE CLOSED AT `0c4f3b4`, THE RELEASE BINARIES ARE DIGESTED, AND BOTH DRY RUNS ARE TAKEN
+
+**Release build** at `0c4f3b4`, `cargo build --workspace --release --locked`, box
+idle (`ps` empty of cargo, arena, pistol): `pistol` `78a7600a…`, `arena`
+`a1a405cb…`, `corpus-check` `efbb76b6…` (full digests in both registrations' §8),
+under rustc 1.98.0. Instrument digests: `cold_label_check.py` `6386d6bf…`,
+`wp21_tranche_config.py` `707acacc…`, `wp21_assemble.py` `a367d847…`,
+`label_cache_count.py` `1a890b53…` (unchanged).
+
+**THE SWEEP REGISTRATION'S §9.1 DRY RUN, TWICE.** The first run
+(`artifacts/arc3r_dryrun_sweep_0c4f3b4.txt`) found a defect in the REGISTRATION's
+own spelling: it wrote the generated config as `tranche-1.toml`, and
+`tools/config_check.sh` classifies by basename — `arena_*.toml` is an arena
+config, anything else an engine config — so the validator refused all three forms
+with *"unknown field `budget`"*. Every other limb was green on that run. **Fixed in
+the registration, not in the command**: §4.1's paths are `arena_tranche-<n>.toml`
+and `arena_tf.toml`, step 0 gains `tools/config_check.sh` over each generated
+config as the acceptance check limb 2 asks for, and the throughput registration's
+play pass follows (`arena_playpass.toml`). The second run
+(`artifacts/arc3r_dryrun_sweep_0c4f3b4_v2.txt`): **22 commands, 22 at exit 0** —
+the stand-in and the `--tranche 1` and `--skip 13 --take 20` forms all
+`validate_arena_config … ok`; play 2 games; capture uncached `asks 34 records 34`
+and cached `asks 17 records 34 hits 17 key_pos_collisions 0 key_full_collisions 0
+fold_ms 0`, `cmp -s` exit 0; corpus 34 records; T-A `17 of 17 sampled MISSES` and
+`17 of 17 sampled HITS agree byte for byte` (17 + 17 = 34, limb 3); T-B `2 of 2
+game(s), 0 divergence(s)`; T-D `corpus_check … ok, 34 record(s)`; T-F's pair
+`cmp -s` exit 0; assembly records 34, distinct 17, decided 17, coverage 1.0000,
+disagreements 0; limb 5's listing exactly §4.1's files. **A limb-3 helper of the
+first script tripped the ten-sample floor** by asking stride 1 000 000 and was
+voided — the floor doing its job; the class sizes are read off the stride-1 lines.
+
+**THE THROUGHPUT REGISTRATION'S §7.1 DRY RUN**
+(`artifacts/arc3r_dryrun_throughput_0c4f3b4.txt`): the play pass from the shipped
+generator, validated; lever A's one-process shape exit 0; `--census --label-cache`
+and `--label-cache --census` both **exit 2** with one line naming both words and
+**no file** in either name; uncached and cached captures `cmp -s` exit 0; the two
+counts lines `asks 34 records 34` / `asks 17 records 34 hits 17`;
+`label_cache_count.py` 34 asked, **17 / 17 / 17** under the three keys,
+duplication 2.0000, hit rate 0.5000; the two `sort -u` pipelines **17 and 17** —
+the second instrument agrees. Every RECORD paragraph and every §8 slot of both
+registrations is filled verbatim from these logs (digests inside the documents).
+**Round 3 of each registration's review is dispatched at the commit that lands
+this, fresh contexts, cargo in their own worktrees (D-592).**

@@ -391,9 +391,10 @@ taken against this number.
 
 ```
 # the play pass — the sweep's seat over the pilot's consumed range, from the SHIPPED generator
-tools/wp21_tranche_config.py --skip 0 --take 3 --pilot-range --out <SCRATCH>/playpass.toml \
+tools/wp21_tranche_config.py --skip 0 --take 3 --pilot-range --out <SCRATCH>/arena_playpass.toml \
                              --binary-sha256 <the current binary's digest>
-arena --config <SCRATCH>/playpass.toml --out <SCRATCH>/report.txt
+tools/config_check.sh <SCRATCH>/arena_playpass.toml
+arena --config <SCRATCH>/arena_playpass.toml --out <SCRATCH>/report.txt
 
 # lever A — one of the N concurrent processes at each setting
 arena --capture <SCRATCH>/report.txt --out <SCRATCH>/cap-N<n>-rep<r>-p<i>.txt --label-nodes 400000
@@ -432,11 +433,72 @@ Input of the same kind and never the registered workload: the generator's
 
 **A DRY-RUN FAILURE STOPS THE STUDY AND IS REPORTED AS A FINDING.**
 
-**RECORD — SLOT.** Filled from the run before this revision's review is
-dispatched: the stand-in config's sha256, every command's exit line, the two
-counts lines, the refusal text in both orders, the `cmp -s` exit, the three
-counts of limb 5. **The review that governs the run is taken after the record is
-filled.**
+**RECORD.** Taken before this revision's review was dispatched, on the box
+otherwise idle, log `artifacts/arc3r_dryrun_throughput_0c4f3b4.txt` (sha256
+`1e9296448b1ef82d9086418098cbeefc712ab54fa399c0c194f63fc81ea8fd33`), `<SCRATCH>` =
+`/home/tom/pistol-runs/arc3r-dryrun/throughput`. Its head line: `== dry run at 0c4f3b4b8a6c910015a28d7917b91b38282541bd, Thu Sep  3 06:45:51 AM UTC 2026, rustc 1.98.0 (88d9e12ae 2026-08-18), cargo 1.98.0 (797e8a9bc 2026-08-05)`.
+The stand-in config's sha256: `772958a901c0881c8bff2568c255b92b60d30264cdce708884e40da57153f053`. **Every command and its exit line,
+verbatim** (the `ls` exit 2 is the four refused files' ABSENCE, which is limb 2's
+claim; the two `sort -u` pipelines print their count and have no exit line of
+their own):
+
+```
+$ tools/wp21_tranche_config.py --skip 0 --take 1 --pilot-range --out <SCRATCH>/arena_playpass.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
+exit=0
+$ tools/config_check.sh <SCRATCH>/arena_playpass.toml
+exit=0
+$ sha256sum <SCRATCH>/arena_playpass.toml
+exit=0
+$ target/release/arena --config <SCRATCH>/arena_playpass.toml --out <SCRATCH>/report.txt
+exit=0
+$ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/cap-N1-rep1-p1.txt --label-nodes 2000
+exit=0
+$ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/never-a.txt --label-nodes 2000 --census --label-cache
+exit=2
+$ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/never-b.txt --label-nodes 2000 --label-cache --census
+exit=2
+$ ls <SCRATCH>/never-a.txt <SCRATCH>/never-b.txt <SCRATCH>/never-a.census.txt <SCRATCH>/never-b.census.txt
+exit=2
+$ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/uncached.txt --label-nodes 2000
+exit=0
+$ target/release/arena --capture <SCRATCH>/report.txt --out <SCRATCH>/cached.txt --label-nodes 2000 --label-cache
+exit=0
+$ cmp -s <SCRATCH>/uncached.txt <SCRATCH>/cached.txt
+exit=0
+$ target/release/arena --labels <SCRATCH>/uncached.txt --report <SCRATCH>/report.txt --out <SCRATCH>/corpus.txt
+exit=0
+$ python3 tools/label_cache_count.py --capture <SCRATCH>/uncached.txt
+exit=0
+$ /usr/bin/grep -v '^#' corpus.txt | cut -f5 | LC_ALL=C sort -u | wc -l
+17
+$ /usr/bin/grep -v '^#' corpus.txt | cut -f6 | LC_ALL=C sort -u | wc -l
+17
+```
+
+**The printed lines the limbs read**, verbatim — the counts lines (limb 4: the
+uncached `asks 34 records 34` twice, the cached `asks 17 records 34 hits 17`), the
+refusal in both orders (limb 2), the four absent files, and limb 5's script counts
+(17, 17, 17 against the two `sort -u` counts of 17 and 17 above):
+
+```
+arena: label cache off: asks 34 records 34
+arena: --label-cache with --census is refused: a cache hit performs no search and emits no census row, so a cached census capture would under-report firings at exit 0
+arena: --label-cache with --census is refused: a cache hit performs no search and emits no census row, so a cached census capture would under-report firings at exit 0
+ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput/never-a.txt': No such file or directory
+ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput/never-b.txt': No such file or directory
+ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput/never-a.census.txt': No such file or directory
+ls: cannot access '/home/tom/pistol-runs/arc3r-dryrun/throughput/never-b.census.txt': No such file or directory
+arena: label cache off: asks 34 records 34
+arena: label cache on: asks 17 records 34 hits 17 key_pos_collisions 0 key_full_collisions 0 fold_ms 0
+label_cache_count: asked prefixes                          34
+label_cache_count: distinct `position` lines (cache key)   17
+label_cache_count: distinct sorted (cell, player) lists    17
+label_cache_count: distinct symmetry-folded stone lists    17
+label_cache_count: duplication factor (asked/cache key)    2.0000
+label_cache_count: hit rate                                0.5000
+```
+
+**The review that governs the run is taken after this record was filled.**
 
 ---
 
@@ -447,7 +509,7 @@ filled.**
 | `tools/label_cache_count.py` | §4.1's counts | `1a890b5331c302cf97372603e7ec21a41b08e6131390d92b78b0168bc77c1e18` |
 | `artifacts/arc3_leverB_41_count_v3.txt` | §4.1's receipt (gitignored; anchored here) | `cbad0786505e8d7958610a2ff24d8b4186de29fd85b0127d60df7b04b4e342ed` |
 | the `sort -u` pipelines | §4.1's second instrument | the commands ARE the revision; printed in §7 |
-| `tools/wp21_tranche_config.py` | §3.1's play-pass config | **SLOT** — its sha256 with the `--pilot-range` form landed |
-| `arena`, `pistol` | every capture in §3 and §4.4 | **SLOT** — the closure binaries' digests, `wp21_prereg.md` §8, with `rustc --version` beside them |
+| `tools/wp21_tranche_config.py` | §3.1's play-pass config | `707acacc8eab1c86c65e05497ff3918d5f5ebe83e3d6f1a1ddc2031d23f6e42a` — with the `--pilot-range` form landed |
+| `arena`, `pistol` | every capture in §3 and §4.4 | `arena` `a1a405cb44d21f1a70918f44b15553f0a90d23f02e9f959458545707a69614c3`, `pistol` `78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749` — the `--release --locked` build at `0c4f3b4` under `rustc 1.98.0 (88d9e12ae 2026-08-18)`, `wp21_prereg.md` §8 |
 | `cmp -s` | §4.4's verdict | POSIX, no revision |
 | the pilot's rate 0.885445 | C4's referent | `artifacts/wp20pilot_RUN_2cd4f79_v1.txt`, `capture1 seconds=657` over 742 records, on binary `180b4c40…` under rustc 1.97.1 |

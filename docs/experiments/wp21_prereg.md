@@ -234,7 +234,8 @@ did not land and why.
 ## 4.1 WHERE THE SIXTEEN TRANCHES WRITE, AND WHY IT IS REGISTERED
 
 ```
-<SWEEP_DIR>/tranche-<n>/tranche-<n>.toml   the generated config
+<SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml   the generated config — the `arena_` basename is
+                                           what `tools/config_check.sh` keys its arena schema on
 <SWEEP_DIR>/tranche-<n>/report.txt         pass 1's report        (arena --out)
 <SWEEP_DIR>/tranche-<n>/capture.txt        pass 2's capture       (arena --capture --out)
 <SWEEP_DIR>/tranche-<n>/corpus.txt         pass 3's corpus        (arena --labels --out)
@@ -244,7 +245,7 @@ did not land and why.
 # tranche one only
 <SWEEP_DIR>/tranche-1/capture-cached.txt   the CACHED re-capture of tranche one's own
                                            report — the sibling's §4.4 referent half
-<SWEEP_DIR>/tf/tf.toml                     T-F's sub-range config, skip 13 take 20
+<SWEEP_DIR>/tf/arena_tf.toml               T-F's sub-range config, skip 13 take 20
 <SWEEP_DIR>/tf/report.txt                  T-F's own play pass
 <SWEEP_DIR>/tf/capture-{a,b}.txt           T-F's two captures, compared with cmp -s
 
@@ -354,19 +355,19 @@ budget depends on the cache.**
 
 ## 8. THE GOVERNING REVISION, THE COMPILER AND THE INSTRUMENTS
 
-**THE SLOTS BELOW ARE EMPTY UNTIL THE CLOSURE HEAD EXISTS, AND FILLING THEM IS AN
-AMENDMENT THAT REOPENS THIS REVIEW** — the honest cost of a slot. They are filled
-from the revision tranche one runs at, quoted in the run log's first block:
+**THE SLOTS BELOW ARE FILLED FROM THE CLOSURE HEAD, AND CHANGING ANY OF THEM IS AN
+AMENDMENT THAT REOPENS THIS REVIEW** — the honest cost of a slot. They name the
+revision tranche one runs at, quoted again in the run log's first block:
 
 | instrument | revision / digest |
 |---|---|
-| the tree | **SLOT** — the commit |
-| `rustc --version`, `cargo --version` | **SLOT** — recorded beside every digest; **a toolchain change between tranches VOIDS the tranches after it until every digest is re-recorded** (arc III F-1.11, F-1.14; D-577's *"rebuild means re-record"*) |
-| `target/release/pistol`, `target/release/arena`, `target/release/corpus-check` | **SLOT** — sha256 of the `--release --locked` build at that commit |
-| `tools/cold_label_check.py` | **SLOT** — its sha256 at that commit, with the ten-sample floor landed |
-| `tools/wp21_tranche_config.py` | **SLOT** — with the `--pilot-range` form landed |
+| the tree | **`0c4f3b4`** for every binary and instrument below — the commit the label cache package closed at; the commit that lands this revision is docs-only above it (`git diff --stat 0c4f3b4 <this commit> -- crates tools configs` is empty), so the digests are its own |
+| `rustc --version`, `cargo --version` | **`rustc 1.98.0 (88d9e12ae 2026-08-18)`, `cargo 1.98.0 (797e8a9bc 2026-08-05)`** — recorded beside every digest; **a toolchain change between tranches VOIDS the tranches after it until every digest is re-recorded** (arc III F-1.11, F-1.14; D-577's *"rebuild means re-record"*) |
+| `target/release/pistol`, `target/release/arena`, `target/release/corpus-check` | `78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749`, `a1a405cb44d21f1a70918f44b15553f0a90d23f02e9f959458545707a69614c3`, `efbb76b643fb72fc4024168a278542836a94d1470ebd831cdb707890593e3abf` — the `--release --locked` build at that commit |
+| `tools/cold_label_check.py` | `6386d6bfe2eaf48789dd9cbc9f89794573e3339e829ef5bd66fd4a134ff2238e` — with the ten-sample floor landed (`MIN_SAMPLED = 10`) |
+| `tools/wp21_tranche_config.py` | `707acacc8eab1c86c65e05497ff3918d5f5ebe83e3d6f1a1ddc2031d23f6e42a` — with the `--pilot-range` form landed |
 | `tools/label_cache_count.py` | `1a890b5331c302cf97372603e7ec21a41b08e6131390d92b78b0168bc77c1e18` — the producer of §3's 0.5323; its receipt `artifacts/arc3_leverB_41_count_v3.txt` is `cbad0786505e8d7958610a2ff24d8b4186de29fd85b0127d60df7b04b4e342ed` |
-| `tools/wp21_assemble.py` | **SLOT** — §6's instrument, landed and reviewed (`wp21_assemble_REVIEW.md`) before the closure may report §6's counts |
+| `tools/wp21_assemble.py` | `a367d84754162b65e24bbff98b8a791dc3e9d2678e7f653a71457e4853fee39b` — §6's instrument, reviewed twice (`wp21_assemble_REVIEW.md` FAIL, `wp21_assemble_REVIEW_round2.md` PASS with its minors landed) |
 | `artifacts/arc3_opening_prefix_fold.txt` | the per-tranche floors D-586 reads the counters against; sha-anchored in `arc3_ledger.md` |
 
 An instrument that produces a registered number is named with its revision
@@ -378,12 +379,14 @@ reopens this registration.
 ## 9. THE COMMANDS, AND THE DRY RUN THAT PROVES THEY ARE THE BINARY'S
 
 ```
-# 0 — the tranche's config, from the SHIPPED generator
-tools/wp21_tranche_config.py --tranche <n> --out <SWEEP_DIR>/tranche-<n>/tranche-<n>.toml \
+# 0 — the tranche's config, from the SHIPPED generator, then ACCEPTED by the schema
+#     gate 6 runs (the `arena_` basename is what that script keys the arena schema on)
+tools/wp21_tranche_config.py --tranche <n> --out <SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml \
                              --binary-sha256 <the closure binary's digest>
+tools/config_check.sh <SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml
 
 # 1 — play
-arena --config <SWEEP_DIR>/tranche-<n>/tranche-<n>.toml --out <SWEEP_DIR>/tranche-<n>/report.txt
+arena --config <SWEEP_DIR>/tranche-<n>/arena_tranche-<n>.toml --out <SWEEP_DIR>/tranche-<n>/report.txt
 
 # 2 — capture. The word order is POSITIONAL (`crates/pistol-arena/src/bin/arena.rs:52-59`,
 #     the tail parsed by `crates/pistol-arena/src/usage.rs:111`);
@@ -412,9 +415,10 @@ corpus-check <SWEEP_DIR>/tranche-<n>/corpus.txt
 arena --capture <SWEEP_DIR>/tranche-1/report.txt --out <SWEEP_DIR>/tranche-1/capture-cached.txt \
       --label-nodes 400000 --label-cache
 cmp -s <SWEEP_DIR>/tranche-1/capture.txt <SWEEP_DIR>/tranche-1/capture-cached.txt
-tools/wp21_tranche_config.py --skip 13 --take 20 --out <SWEEP_DIR>/tf/tf.toml \
+tools/wp21_tranche_config.py --skip 13 --take 20 --out <SWEEP_DIR>/tf/arena_tf.toml \
                              --binary-sha256 <the closure binary's digest>
-arena --config <SWEEP_DIR>/tf/tf.toml --out <SWEEP_DIR>/tf/report.txt
+tools/config_check.sh <SWEEP_DIR>/tf/arena_tf.toml
+arena --config <SWEEP_DIR>/tf/arena_tf.toml --out <SWEEP_DIR>/tf/report.txt
 arena --capture <SWEEP_DIR>/tf/report.txt --out <SWEEP_DIR>/tf/capture-a.txt --label-nodes 400000
 arena --capture <SWEEP_DIR>/tf/report.txt --out <SWEEP_DIR>/tf/capture-b.txt --label-nodes 400000
 cmp -s <SWEEP_DIR>/tf/capture-a.txt <SWEEP_DIR>/tf/capture-b.txt
@@ -442,7 +446,8 @@ give each cold-check class its ten samples. Seconds rather than hours.
    shipped binary and exits 0**, the capture run twice — once without and once with
    `--label-cache` — and the two compared with `cmp -s`;
 2. the generator writes a config `arena` accepts, in the `--tranche`, the
-   `--skip/--take` and the `--pilot-range` forms;
+   `--skip/--take` and the `--pilot-range` forms — the stand-in by being played,
+   all three by `tools/config_check.sh`, gate 6's own validator;
 3. `--partition hits` and `--partition misses` each print a line **naming the
    class**, and **their class counts sum to the record count** — the partition is
    exhaustive and disjoint; nothing is claimed about their strided samples, which
@@ -455,7 +460,114 @@ give each cold-check class its ten samples. Seconds rather than hours.
 around by editing a command until something runs. **The dry run's input and its
 output are recorded here**, per `docs/process.md`:
 
-**RECORD — SLOT.** Filled from the run before this revision's review is
-dispatched: the stand-in config's sha256, every command's exit line, the counts
-lines, the two `cold_label_check` summary lines, the `cmp -s` exit, the file
-listing.
+**RECORD.** Taken before this revision's review was dispatched, on the box
+otherwise idle, log `artifacts/arc3r_dryrun_sweep_0c4f3b4_v2.txt` (sha256
+`95a772717502386d1603a4d89e8df803e613110a4e7fac9fdd5370d3eca30bb0`), `<DRY>` =
+`/home/tom/pistol-runs/arc3r-dryrun/sweep`. Its head line: `== dry run at 0c4f3b4b8a6c910015a28d7917b91b38282541bd, Thu Sep  3 06:45:40 AM UTC 2026, rustc 1.98.0 (88d9e12ae 2026-08-18), cargo 1.98.0 (797e8a9bc 2026-08-05)`.
+The stand-in config's sha256: `772958a901c0881c8bff2568c255b92b60d30264cdce708884e40da57153f053`. **Every command and its exit
+line, verbatim** (the `forms/` pair are the `--tranche 1` and `--skip 13 --take 20`
+configs, written and validated by `tools/config_check.sh` and never played):
+
+```
+$ tools/wp21_tranche_config.py --skip 0 --take 1 --pilot-range --out <DRY>/tranche-1/arena_tranche-1.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
+exit=0
+$ tools/wp21_tranche_config.py --tranche 1 --out <DRY>/forms/arena_tranche-1.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
+exit=0
+$ tools/wp21_tranche_config.py --skip 13 --take 20 --out <DRY>/forms/arena_tf.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
+exit=0
+$ tools/config_check.sh <DRY>/tranche-1/arena_tranche-1.toml
+exit=0
+$ tools/config_check.sh <DRY>/forms/arena_tranche-1.toml <DRY>/forms/arena_tf.toml
+exit=0
+$ sha256sum <DRY>/tranche-1/arena_tranche-1.toml
+exit=0
+$ target/release/arena --config <DRY>/tranche-1/arena_tranche-1.toml --out <DRY>/tranche-1/report.txt
+exit=0
+$ target/release/arena --capture <DRY>/tranche-1/report.txt --out <DRY>/tranche-1/capture.txt --label-nodes 2000
+exit=0
+$ target/release/arena --capture <DRY>/tranche-1/report.txt --out <DRY>/tranche-1/capture-cached.txt --label-nodes 2000 --label-cache
+exit=0
+$ cmp -s <DRY>/tranche-1/capture.txt <DRY>/tranche-1/capture-cached.txt
+exit=0
+$ target/release/arena --labels <DRY>/tranche-1/capture.txt --report <DRY>/tranche-1/report.txt --out <DRY>/tranche-1/corpus.txt
+exit=0
+$ tools/cold_label_check.py --capture <DRY>/tranche-1/capture.txt --binary target/release/pistol --engine-config configs/instrument_v0.toml --stride 1 --partition misses
+exit=0
+$ tools/cold_label_check.py --capture <DRY>/tranche-1/capture.txt --binary target/release/pistol --engine-config configs/instrument_v0.toml --stride 1 --partition hits
+exit=0
+$ target/release/arena --replay <DRY>/tranche-1/report.txt --out <DRY>/tranche-1/replay.txt --workers 1
+exit=0
+$ target/release/corpus-check <DRY>/tranche-1/corpus.txt
+exit=0
+$ tools/wp21_tranche_config.py --skip 0 --take 1 --pilot-range --out <DRY>/tf/arena_tf.toml --binary-sha256 78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749
+exit=0
+$ tools/config_check.sh <DRY>/tf/arena_tf.toml
+exit=0
+$ target/release/arena --config <DRY>/tf/arena_tf.toml --out <DRY>/tf/report.txt
+exit=0
+$ target/release/arena --capture <DRY>/tf/report.txt --out <DRY>/tf/capture-a.txt --label-nodes 2000
+exit=0
+$ target/release/arena --capture <DRY>/tf/report.txt --out <DRY>/tf/capture-b.txt --label-nodes 2000
+exit=0
+$ cmp -s <DRY>/tf/capture-a.txt <DRY>/tf/capture-b.txt
+exit=0
+$ tools/wp21_assemble.py --out-dir <DRY>/assembly --corpus <DRY>/tranche-1/corpus.txt
+exit=0
+```
+
+**The printed lines the limbs read**, verbatim:
+
+```
+validate_arena_config: /home/tom/pistol-runs/arc3r-dryrun/sweep/tranche-1/arena_tranche-1.toml ok
+validate_arena_config: 1 document(s) ok
+validate_arena_config: /home/tom/pistol-runs/arc3r-dryrun/sweep/forms/arena_tranche-1.toml ok
+validate_arena_config: /home/tom/pistol-runs/arc3r-dryrun/sweep/forms/arena_tf.toml ok
+validate_arena_config: 2 document(s) ok
+arena: captured 34 position(s) from 2 game(s) at go nodes 2000
+arena: label cache off: asks 34 records 34
+arena: captured 34 position(s) from 2 game(s) at go nodes 2000
+arena: label cache on: asks 17 records 34 hits 17 key_pos_collisions 0 key_full_collisions 0 fold_ms 0
+cold_label_check: 34 record(s) in capture.txt, of which 17 are MISSES; the sample is every MISSES record whose zero-based position within that class is a multiple of 1, which is 17 of them
+cold_label_check: 17 of 17 sampled MISSES record(s) agree byte for byte
+cold_label_check: 34 record(s) in capture.txt, of which 17 are HITS; the sample is every HITS record whose zero-based position within that class is a multiple of 1, which is 17 of them
+cold_label_check: 17 of 17 sampled HITS record(s) agree byte for byte
+arena: replayed 2 of 2 game(s) from /home/tom/pistol-runs/arc3r-dryrun/sweep/tranche-1/report.txt, 0 divergence(s)
+corpus_check: /home/tom/pistol-runs/arc3r-dryrun/sweep/tranche-1/corpus.txt ok, 34 record(s), capture_sha256 4c99f011128a7a87c3ce54c54965fa548d6f0cb2d19be2fd5291601bf92dd3e9
+validate_arena_config: /home/tom/pistol-runs/arc3r-dryrun/sweep/tf/arena_tf.toml ok
+validate_arena_config: 1 document(s) ok
+arena: captured 34 position(s) from 2 game(s) at go nodes 2000
+arena: label cache off: asks 34 records 34
+arena: captured 34 position(s) from 2 game(s) at go nodes 2000
+arena: label cache off: asks 34 records 34
+wp21_assemble: records 34
+wp21_assemble: distinct positions 17
+wp21_assemble: decided 17
+wp21_assemble: outcome coverage 1.0000
+wp21_assemble: key disagreements 0
+```
+
+Limb 3: 34 records, of which 17 MISSES and 17 HITS — the two classes sum to the
+record count. Limb 5, the files left behind, and no others:
+
+```
+./assembly/deduped_manifest.txt
+./assembly/raw_manifest.txt
+./forms/arena_tf.toml
+./forms/arena_tranche-1.toml
+./tf/arena_tf.toml
+./tf/capture-a.txt
+./tf/capture-b.txt
+./tf/report.txt
+./tranche-1/arena_tranche-1.toml
+./tranche-1/capture-cached.txt
+./tranche-1/capture.txt
+./tranche-1/corpus.txt
+./tranche-1/replay.txt
+./tranche-1/report.txt
+```
+
+A first run, `artifacts/arc3r_dryrun_sweep_0c4f3b4.txt`, wrote the configs under a
+basename `tools/config_check.sh` classifies as an ENGINE config and refused; the
+registered paths gained the `arena_` basename and the validator step above, and
+this record is the second run. That is a dry-run finding about the registration's
+own spelling, fixed in the registration, not a command edited until it ran.
