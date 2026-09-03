@@ -1747,3 +1747,47 @@ which is the number the sibling already called net negative on this sweep.
 **The amendment is dispatched for a scoped fresh-context review before tranche
 one, per `docs/process.md`'s rule that the revision GOVERNING a run passes review
 before the first run it governs.**
+
+### F-4.1 — THE AMENDMENT'S ROUND 1 FAILED, AND THE LESSON IS THAT I AMENDED THE PLACE AND NOT THE CLASS
+
+`wp21_prereg_rev8_amendment_REVIEW.md` at `e3497b9`: **FAIL — 4 BLOCKING, 2
+MAJOR, 0 minor.** What it CONFIRMED, each independently re-derived and none of it
+disputed: the N = 16 selection under §3.4's rule, C1 by a full sha256 sweep of all
+**93** capture files (not a spot check), C2's record counts at 152, every line of
+§3's new wall arithmetic, and gate 20 green. **What it found is that revision 8
+changed §1's slot, §3's wall and §6.1, and left every OTHER sentence in both
+documents still describing two waves and a cached second one.**
+
+| # | the contradiction revision 8 left standing | where |
+|---|---|---|
+| F-1 B | §1's cache row still read *"**ON** from the tranche §6.1 names"* against §6.1's every-tranche-uncached | sweep §1 |
+| F-2 B | four *"between the waves"* / *"wave two"* references, and T-F's consequence promising a stop *"before wave two"* that no schedule at N = 16 can take | sweep §3, §4, §9 |
+| F-3 B | the sibling still called the cached re-capture *"on the critical path"* in three places and priced the lever at *"~0.20 h net"* off a §3 block that no longer exists | throughput ONE LINE, §4.4, §4.5, §5 |
+| F-4 B | C4's figure read the median rep off the harness's THREE-DECIMAL throughput, where reps 1 and 3 tie at 1.098; on the exact statistic rep 1 is the median and the figure is **+2.85 %**, not +2.86 % | sweep §1 |
+| F-5 M | the sibling cited the sweep at revision 7 | throughput GOVERNING |
+| F-6 M | *"EVERY FIGURE IS A LOWER BOUND"* is now over-broad: the capture term is MEASURED under real contention | sweep §3 |
+
+**REVISION 9 OF BOTH DOCUMENTS IS THE REMEDY, AND IT WAS TAKEN OVER THE CLASS
+RATHER THAN THE SIX INSTANCES**: every occurrence of *wave*, *cached*, *critical
+path*, *lower bound* and a sibling revision number in both documents was listed
+with `grep` and dispositioned. Beyond the six: §4.1's *"refused its own cached
+re-capture mid-sweep"* now says the re-capture is taken after the wave; §5's
+counts-line paragraph says every block carries the OFF shape and that **D-586's
+flip clause reads nothing on this sweep**, its per-tranche floors going unread
+because only the ON shape prints the counters; §9's *"before each wave"* is *"the
+wave"*. **The one surviving *"between the waves"* is deliberate** — T-F's row
+states what the second half would have saved at the incumbent N = 8 and says
+that saving is gone, which is F-2's own point recorded rather than buried.
+
+**AND F-2's SHARPEST LIMB IS A REAL COST OF N = 16, NOW REGISTERED**: T-F's second
+half needs tranche one's capture, which in one wave exists only when the sweep is
+over, so it can no longer stop the sweep to save compute — it VOIDS the corpus the
+sweep just produced. At N = 8 it would have stopped the run between the waves and
+saved half. That is a weakening of a registered guarantee and it is written into
+the T-F row rather than left for a reader to discover.
+
+**F-4 IS THE ARC'S OWN DEFECT ONE MORE TIME**: the median rep was read off a
+rounded printout instead of the statistic §3.3 registers. Revision 9 states the
+exact throughputs (rep 3 1.098020, rep 1 1.098107, rep 2 1.099330), names rep 1
+the median, and gives the two candidates' distance — 0.008 % of throughput, 0.01
+points of C4's twenty. The selection and every verdict are unmoved.

@@ -1,16 +1,18 @@
-# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 8.
+# WP-2.1 sweep throughput — a scaling study. PRE-REGISTRATION, revision 9.
 
 > **ONE LINE.** `wp21_prereg.md` §3 owns the sweep's wall and this document does
 > not restate it. It measures the two things that could move it: **what concurrency
 > the box actually pays for** (lever A), and **whether the 2.14x duplication the
 > corpus is REQUIRED to carry must be paid for twice in SEARCH time** (lever B,
 > the label cache). It changes no label, no criterion and no captured byte; it
-> may only change how long producing them takes. **On THIS sweep the cache's net
-> saving is ~0.20 h ESTIMATED once its own verification is on the critical path**
-> (§5) — the lever is taken for a verified capability, not for this sweep's wall.
+> may only change how long producing them takes. **On THIS sweep the cache saves
+> NOTHING**: lever A selected N = 16, the sixteen tranches are one wave, and a
+> gate that needs tranche one's uncached capture cannot admit a tranche of a
+> sweep that ends with it (`wp21_prereg.md` §6.1). The lever is taken for a
+> verified capability, which §4.4 takes after the wave.
 
 **GOVERNING**: D-576 (the cache and its amended criterion), D-581, D-584, D-586,
-D-587, D-588 (the key and what is claimed about it); `wp21_prereg.md` revision 7
+D-587, D-588 (the key and what is claimed about it); `wp21_prereg.md` revision 9
 §1 (the slot lever A fills), §3 (the wall), §4 (the criteria this study may not
 touch), §6.1; `wp21_label_cache_design.md` revision 10 (what lever B builds; its
 revisions 8–10 changed test rows and §3's measured residual only — D-589, D-595);
@@ -343,8 +345,8 @@ uncached and ~1.1 min cached at the pilot's rate; the pilot's own 13-opening rep
 is not capturable under this revision's binary, whose digest it does not attest)
 and **over tranche one's own report**, whose uncached capture the sweep must take anyway —
 so tranche one's corpus of record is its UNCACHED capture, and the only added
-cost is its cached re-capture (1.43 h ESTIMATED, on the critical path,
-`wp21_prereg.md` §3).
+cost is its cached re-capture (1.43 h ESTIMATED), taken AFTER the wave and on no
+tranche's critical path (`wp21_prereg.md` §3, §6.1).
 
 - **no tranche runs cached until the comparison returns byte-identity**, with a
   MECHANISM (the flag is absent unless typed) and a NAMED CHECKER, which is
@@ -367,9 +369,9 @@ harness's `s_per_ask`, its `wall_s` over the counts line's `asks`, at N = 1 with
 the same harness at N = 1 without it, minutes apart on the same idle box: the
 clause excludes a cache whose bookkeeping ate its own saving, and it is one-sided
 because a faster cache is not a defect. **Tranche one's pair contributes
-byte-identity and nothing about its wall**: its uncached capture runs in wave
-one under N-way contention and its re-capture alone between the waves, so their
-quotient carries `c(N)` and would fail or pass on contention rather than
+byte-identity and nothing about its wall**: its uncached capture runs inside the
+wave under sixteen-way contention and its re-capture alone after the wave, so
+their quotient carries `c(N)` and would fail or pass on contention rather than
 bookkeeping. The architect's approval (D-576) settled
 whether the cache is built; it cannot settle whether it is right, and a failure of
 either clause abandons the lever per §4.4.
@@ -384,13 +386,14 @@ either clause abandons the lever per §4.4.
 | lever A: 5 settings x 3 reps, **152 records MEASURED** per process on the pilot's capture of the same games (`artifacts/arc3_leverB_41_count_v3.txt`), ~135 s at N = 1 and rising with N | **0.56 h at contention 1.0, 1.12 h at 2.0** (`5 x 3 x 152 x 0.885445 = 2 019 s`, times c) |
 | lever B §4.1 | seconds — it reads a file |
 | lever B §4.4's play-pass pair | ~2.2 min + ~1.1 min (§4.4) |
-| lever B §4.4's tranche-sized pair | the cached re-capture alone, ~1.43 h, on the sweep's critical path |
+| lever B §4.4's tranche-sized pair | the cached re-capture alone, ~1.43 h, after the wave and on no tranche's critical path |
 
-**AGAINST WHAT IT SAVES**, all from `wp21_prereg.md` §3 and not restated: the
-difference between its cached-with-gate line and its uncached line is **~0.20 h
-net on this sweep**, and ~1.6 h only if the verification were free. Counting lever
-A's 0.56–1.12 h and the play-pass pair, **the lever is net negative on this
-sweep's wall**. There
+**AGAINST WHAT IT SAVES, WHICH ON THIS SWEEP IS NOTHING**: at the N = 16 lever A
+selected there is one wave, no tranche of the sweep runs cached, and the ~0.20 h
+this document priced the lever at over two waves went with the second wave
+(`wp21_prereg.md` §3, §6.1). Counting lever A's 0.56–1.12 h, the play-pass pair
+and the 1.43 h re-capture, **the lever is net negative on this sweep's wall by
+its whole cost**. There
 is no later sweep to point at: the book's remainder is this sweep's and its last
 thousand are the holdout. **What the lever buys is a verified capability**, and
 at the N = 16 lever A selected there is no second wave for it to shorten
