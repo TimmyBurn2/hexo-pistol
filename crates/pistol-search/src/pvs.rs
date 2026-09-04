@@ -112,6 +112,10 @@ pub struct Run<'a> {
     /// before. Armed only when the seat asks for it; `None` costs one branch
     /// per root node.
     pub root_scores: Option<Vec<(pistol_core::Coord, i32)>>,
+    /// How many one-cell forced replies this LINE may still extend (S2).
+    /// Decremented on grant and restored on the way back up, so the budget is
+    /// per root-to-leaf path and not per search.
+    pub extension_budget: u32,
     /// Set once the stop condition has fired; every node above unwinds without
     /// using its result.
     pub aborted: bool,
@@ -161,6 +165,7 @@ impl<'a> Run<'a> {
             stages: crate::info::StageCounters::default(),
             widths: None,
             root_scores: None,
+            extension_budget: 0,
             aborted: false,
             abortable: false,
             root_score: None,
@@ -330,6 +335,7 @@ impl<'a> Run<'a> {
         // the heuristic gates exist only inside `StagedParams`, so nothing
         // is recorded there and the bound is never read).
         let mut forced_bound: Option<usize> = None;
+        let mut row_class: Option<StagedRow> = None;
         // Whether this node's emitted set was cut by the safety-net cap. Read
         // again at the store below: a node that did not search its whole set
         // proved a lower bound and nothing else (§6.3's store rule).
@@ -481,6 +487,7 @@ impl<'a> Run<'a> {
                     );
                 }
                 forced_bound = Some(set.forced);
+                row_class = Some(row);
                 set.cells
             }
         };
@@ -507,6 +514,22 @@ impl<'a> Run<'a> {
         // Filled as the children are searched, and handed to the next
         // iteration at the end of this one.
         let mut scored: Vec<(pistol_core::Coord, i32)> = Vec::new();
+
+        // THE ONE-CELL FORCED-REPLY EXTENSION (S2). A FILTERED row whose cover
+        // is a single cell is SINGULAR by construction — the defence has one
+        // legal answer and the search needs no exclusion search to know it — so
+        // extending it by a whole TURN costs branching 1. Whole turns only:
+        // D-111 forbids a horizon that lands mid-turn, so the extension is two
+        // plies, added once and charged against a per-line budget so a forcing
+        // chain cannot extend without end.
+        let mut extension = 0;
+        if self.extension_budget > 0
+            && matches!(row_class, Some(StagedRow::Filtered))
+            && cells.len() == 1
+        {
+            extension = 2;
+            self.extension_budget -= 1;
+        }
 
         let original_alpha = alpha;
         let mut best_score = -INFINITY;
@@ -538,16 +561,34 @@ impl<'a> Run<'a> {
                     mate_in(turns)
                 }
                 // The same side owes another stone: same window, no flip.
-                PlyOutcome::TurnContinues => {
-                    self.child(depth_plies - 1, alpha, beta, ply + 1, index == 0, true)
-                }
+                PlyOutcome::TurnContinues => self.child(
+                    depth_plies - 1 + extension,
+                    alpha,
+                    beta,
+                    ply + 1,
+                    index == 0,
+                    true,
+                ),
                 // The turn is complete and the opponent is to move.
-                PlyOutcome::TurnComplete => {
-                    self.child(depth_plies - 1, alpha, beta, ply + 1, index == 0, false)
-                }
+                PlyOutcome::TurnComplete => self.child(
+                    depth_plies - 1 + extension,
+                    alpha,
+                    beta,
+                    ply + 1,
+                    index == 0,
+                    false,
+                ),
             };
             self.position.undo();
             if self.aborted {
+                // The abort path leaves the node too, so it gives the grant
+                // back like the ordinary exit does. An abort discards this
+                // node's score, but the budget is the caller's, not this
+                // node's, and a leak here would silently narrow every sibling
+                // an outer iteration still searches.
+                if extension > 0 {
+                    self.extension_budget += 1;
+                }
                 return 0;
             }
 
@@ -578,11 +619,23 @@ impl<'a> Run<'a> {
             }
         }
 
+        // The extension budget is a property of the LINE, so a grant made on
+        // the way down is given back on the way up: a sibling subtree starts
+        // with the budget this one was entered with, not with what this one
+        // left. Without it the first forcing chain in the tree would spend the
+        // whole search's allowance.
+        if extension > 0 {
+            self.extension_budget += 1;
+        }
+
         // Hand this iteration's root scores to the next one, best first. Only
         // a COMPLETED iteration may: an aborted one scored an arbitrary prefix,
         // and ordering the next iteration by a prefix is worse than not
         // ordering it at all.
-        if ply == 0 && !self.aborted && let Some(slot) = self.root_scores.as_mut() {
+        if ply == 0
+            && !self.aborted
+            && let Some(slot) = self.root_scores.as_mut()
+        {
             scored.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
             *slot = scored;
         }
@@ -1106,6 +1159,7 @@ mod tests {
                 tier_t_top_k: 0,
                 root_reorder: false,
                 aspiration_delta: 0,
+                extension_budget: 0,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1179,6 +1233,7 @@ mod tests {
                 tier_t_top_k: 0,
                 root_reorder: false,
                 aspiration_delta: 0,
+                extension_budget: 0,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1241,6 +1296,7 @@ mod tests {
             tier_t_top_k: 0,
             root_reorder: false,
             aspiration_delta: 0,
+            extension_budget: 0,
             tier_t_own_count: 2,
             tier_t_opponent_count: 3,
             q_depth_turns: 0,

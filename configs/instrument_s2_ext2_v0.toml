@@ -88,7 +88,7 @@ aspiration_delta = 0
 # One-cell forced-reply extensions a single line may grant (S2): a FILTERED row
 # whose cover is one cell is singular by construction, so extending it a whole
 # turn costs branching 1. 0 grants none and is the committed value.
-extension_budget = 0
+extension_budget = 2
 tier_t_own_count = 2
 tier_t_opponent_count = 3
 q_depth_turns = 0

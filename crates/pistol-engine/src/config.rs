@@ -232,6 +232,7 @@ pub enum CandidatePolicy {
         tier_t_top_k: u64,
         root_reorder: bool,
         aspiration_delta: i32,
+        extension_budget: u32,
         /// Stage Q's own knob: cumulative quiet-cell batch boundaries after
         /// the first, strictly increasing, each greater than `quiet_top_k`.
         /// Validated for schema completeness; not read by this D-scope's

@@ -1,0 +1,50 @@
+# pistol — S2's GOVERNED EXPERIMENT: the one-cell forced-reply extension
+# against the committed value of no extension.
+#
+# THIS IS THE DOCUMENT docs/experiments/s2_registration.md registers. The two
+# seats are ONE binary and differ in exactly one config key,
+# `extension_budget`, 2 against 0. Node identity is not asserted and cannot
+# be: the seats search different trees by construction, which is the seat.
+
+schema_version = 2
+
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+# 600 paired games is the registered cap; UNDECIDED at the cap keeps the key
+# at 0 and closes the package as a measured finding.
+openings_take = 600
+openings_skip = 0
+turn_cap = 40
+n_workers = 4
+hang_timeout_ms = 120000
+
+[budget]
+# An INSTRUMENT budget, per hard rule 6, so the result is not a clock
+# measurement. 200 000 is where the sensitivity check found the mechanism
+# changes 12 of 24 openings; at 50 000 it fires 933 times and changes none.
+kind = "nodes"
+value = 200000
+
+[sprt]
+elo0 = 0.0
+# +10, not P1's +25: this is a search-shape change on top of an eval that
+# cannot see far past the extension's own horizon (D-428), so the registered
+# expectation is null-to-small and the bound is set where a small true effect
+# is still detectable rather than where only a large one would be.
+elo1 = 10.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+# The EXTENSION seat in slot A: the arena's statistic is slot A's score and the
+# registration's H1 is "the extension is stronger".
+label = "ext2"
+binary = "target/release/pistol"
+binary_sha256 = "7faefd6ff8d0fb3f04a8c93a120ab988a3d42ca5f950f78c7bdaddf84caff0df"
+config = "configs/instrument_s2_ext2_v0.toml"
+
+[engine_b]
+label = "ext0"
+binary = "target/release/pistol"
+binary_sha256 = "7faefd6ff8d0fb3f04a8c93a120ab988a3d42ca5f950f78c7bdaddf84caff0df"
+config = "configs/instrument_v0.toml"

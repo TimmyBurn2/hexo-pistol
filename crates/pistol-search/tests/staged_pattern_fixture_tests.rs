@@ -38,6 +38,7 @@ fn pat_gaps_singleton_cell_is_forced_by_the_staged_generator() {
         tier_t_top_k: 0,
         root_reorder: false,
         aspiration_delta: 0,
+        extension_budget: 0,
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
         q_depth_turns: 0,

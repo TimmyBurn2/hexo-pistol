@@ -86,6 +86,9 @@ pub struct StagedParams {
     /// Half-width of the aspiration window, in evaluation units (S1). `0`
     /// opens every iteration at full width, and `0` is the committed value.
     pub aspiration_delta: i32,
+    /// How many one-cell forced replies a single line may extend (S2). `0`
+    /// grants no extension and is the committed value.
+    pub extension_budget: u32,
     /// `LAW-SUPPORT`'s threshold for the side to move's own qualifying
     /// windows: 2 or 3 (`U3_tier_t.md` §6.1, the THRESHOLD reading — own
     /// windows qualify at count `>= tier_t_own_count`).

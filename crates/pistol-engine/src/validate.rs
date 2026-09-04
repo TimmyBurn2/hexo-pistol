@@ -88,6 +88,7 @@ impl SearchSection {
                 tier_t_top_k: _,
                 root_reorder: _,
                 aspiration_delta: _,
+                extension_budget: _,
                 widen_schedule,
                 tier_t_own_count,
                 tier_t_opponent_count,

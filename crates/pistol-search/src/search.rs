@@ -444,6 +444,9 @@ impl Searcher {
         {
             run.root_scores = Some(Vec::new());
         }
+        if let CandidatePolicy::Staged(staged) = self.params.candidate_policy {
+            run.extension_budget = staged.extension_budget;
+        }
 
         // S1: the last completed iteration's score, and the half-width the
         // seat asked for. `0` disables the window, which is the committed value.
