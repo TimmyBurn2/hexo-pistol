@@ -130,7 +130,7 @@ impl ClassSet {
 /// One side's five sorted window sets.
 ///
 /// Each is an independently maintained sorted `Vec<Window>`: there is no shared
-/// position field carried in the table, and none is possible, because the sets
+/// position field carried in the store, and none is possible, because the sets
 /// OVERLAP — a window at own == 5 is in both `hot` and `win_in_one_ply`, and one
 /// position per window cannot locate it in two sets at once. Insertion and
 /// removal are `binary_search` then `insert`/`remove`, which at the measured
@@ -153,7 +153,7 @@ impl WindowSets {
     /// The windows in `class`, sorted by `(axis, start)`.
     ///
     /// Sorted BY CONSTRUCTION, not by sorting here: this is the ordering the
-    /// determinism law cares about, and it is what lets the table underneath be
+    /// determinism law cares about, and it is what lets the store underneath be
     /// hashed (CLAUDE.md rule 4).
     pub(crate) fn windows(&self, class: Class) -> &[Window] {
         &self.sets[class.slot()]

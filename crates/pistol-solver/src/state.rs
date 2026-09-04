@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 
-use pistol_core::window::{Window, windows_through_indexed};
-use pistol_core::{Coord, Player};
+use pistol_core::window::{WINDOW_LEN, Window, windows_through_indexed};
+use pistol_core::{Axis, Coord, Player};
 
+use crate::line::{Chunk, LinePos, LineStore};
 use crate::sets::{Class, ClassSet, WindowSets};
-use crate::table::{WindowMasks, WindowTable};
+use crate::table::{FULL_MASK, WindowMasks};
 
 /// Named invariant: the stones this state was fed and the stones a caller
 /// believes it holds have drifted apart.
@@ -14,6 +15,15 @@ use crate::table::{WindowMasks, WindowTable};
 /// `pistol-eval` (CLAUDE.md rule 3, docs/decisions.md D-45).
 pub const THREAT_DESYNC: &str = "THREAT_DESYNC";
 
+/// An axis's slot in a per-axis array, in `Axis::ALL` order.
+const fn axis_slot(axis: Axis) -> usize {
+    match axis {
+        Axis::ConstQ => 0,
+        Axis::ConstR => 1,
+        Axis::ConstS => 2,
+    }
+}
+
 /// Which side's sets a player's are.
 const fn slot(side: Player) -> usize {
     match side {
@@ -22,13 +32,54 @@ const fn slot(side: Player) -> usize {
     }
 }
 
-/// The incremental threat state: a per-window occupancy record plus the ten
-/// sorted sets every query answers out of.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+/// The incremental threat state: per-axis line bitboards, read window by
+/// window, plus the ten sorted sets every query answers out of.
+///
+/// `undo` takes back THE LAST STONE APPLIED and refuses any other: the store
+/// is restored from a log rather than recomputed, and a log can only be
+/// replayed in reverse. Every caller unwinds in that order already; a caller
+/// that cannot rebuilds through [`ThreatState::new`] and `apply`.
+#[derive(Debug, Clone, Default)]
 pub struct ThreatState {
-    table: WindowTable,
+    table: LineStore,
     sets: [WindowSets; 2],
+    /// Per touched window of every applied stone, what it held before and the
+    /// class transitions the stone caused — what `undo` replays in reverse.
+    log: Vec<Touched>,
+    /// Per applied stone, the three chunks it flipped and what each held before.
+    chunks: Vec<(u64, Chunk)>,
+    /// The applied stones, newest last, each with its `log` entry count.
+    applied: Vec<Applied>,
 }
+
+/// How far a window through a cell reaches along its line on either side.
+const REACH: u32 = WINDOW_LEN - 1;
+
+/// One window a stone touched, with each side's class set before and after.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Touched {
+    window: Window,
+    was: [ClassSet; 2],
+    now: [ClassSet; 2],
+}
+
+/// One applied stone and how many `Touched` entries it pushed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Applied {
+    at: Coord,
+    player: Player,
+    touched: u8,
+}
+
+// The log is bookkeeping for `undo`, not state: two states that hold the same
+// windows in the same classes are the same state whatever path built them.
+impl PartialEq for ThreatState {
+    fn eq(&self, other: &ThreatState) -> bool {
+        self.table == other.table && self.sets == other.sets
+    }
+}
+
+impl Eq for ThreatState {}
 
 impl ThreatState {
     /// An empty state: no stones, no entries, no set members.
@@ -44,51 +95,92 @@ impl ThreatState {
     /// there. That means this state and the board it is supposed to mirror have
     /// drifted apart, which is a caller bug rather than operator input.
     pub fn apply(&mut self, at: Coord, player: Player) {
-        self.touch(at, player, true);
+        // Per axis: the eleven positions around the stone before and after it,
+        // read once and set once. The windows come from `pistol-core`'s own
+        // enumeration below, never from a loop of this crate's (CLAUDE.md
+        // rule 2), and each reads its masks out of its axis's run by shift.
+        let mut runs = [(0u64, 0u64, 0u64, 0u64); Axis::ALL.len()];
+        for axis in Axis::ALL {
+            let here = LinePos::of(axis, at);
+            let (p1, p2) = self
+                .table
+                .run(axis, here.line, here.pos - REACH as i32, 2 * REACH + 1);
+            assert!(
+                ((p1 | p2) >> REACH) & 1 == 0,
+                "{THREAT_DESYNC}: {player} stone on {at} lands on a cell of its {axis:?} line \
+                 that already holds one"
+            );
+            let (key, before) = self.table.place(axis, at, player);
+            self.chunks.push((key, before));
+            let (p1_after, p2_after) = match player {
+                Player::P1 => (p1 | (1 << REACH), p2),
+                Player::P2 => (p1, p2 | (1 << REACH)),
+            };
+            runs[axis_slot(axis)] = (p1, p2, p1_after, p2_after);
+        }
+        let mut touched = 0u8;
+        for (window, index) in windows_through_indexed(at) {
+            let (p1, p2, p1_after, p2_after) = runs[axis_slot(window.axis)];
+            let shift = REACH - u32::from(index);
+            let masks = |p1: u64, p2: u64| WindowMasks {
+                p1: ((p1 >> shift) as u8) & FULL_MASK,
+                p2: ((p2 >> shift) as u8) & FULL_MASK,
+            };
+            let before = masks(p1, p2);
+            let after = masks(p1_after, p2_after);
+            let mut was = [ClassSet::default(); 2];
+            let mut now = [ClassSet::default(); 2];
+            for side in [Player::P1, Player::P2] {
+                let s = slot(side);
+                was[s] = ClassSet::of(before.own_count(side), before.opp_count(side));
+                now[s] = ClassSet::of(after.own_count(side), after.opp_count(side));
+                if was[s] != now[s] {
+                    self.sets[s].transition(window, was[s], now[s]);
+                }
+            }
+            self.log.push(Touched { window, was, now });
+            touched += 1;
+        }
+        self.applied.push(Applied {
+            at,
+            player,
+            touched,
+        });
     }
 
-    /// The same stone back up.
+    /// The last stone applied, back up.
     ///
     /// # Panics
     ///
-    /// With [`THREAT_DESYNC`] if `player` has no stone at `at` — including the
-    /// case where the OTHER player does, which is the same drift by a different
-    /// door.
+    /// With [`THREAT_DESYNC`] unless `player`'s stone at `at` is the most
+    /// recently applied stone still down: a stone that was never applied, the
+    /// other player's stone, or a stone applied earlier than the last are all
+    /// refused. The first two are the drift the incumbent refused too; the
+    /// third is the contract stated on the type.
     pub fn undo(&mut self, at: Coord, player: Player) {
-        self.touch(at, player, false);
-    }
-
-    fn touch(&mut self, at: Coord, player: Player, placing: bool) {
-        for (window, index) in windows_through_indexed(at) {
-            let before = self.table.masks(window);
-            let bit = 1u8 << index;
-            if placing {
-                assert!(
-                    (before.p1 | before.p2) & bit == 0,
-                    "{THREAT_DESYNC}: {player} stone on {at} lands on cell {index} of \
-                     {window:?}, which already holds one"
-                );
-            } else {
-                assert!(
-                    before.own(player) & bit != 0,
-                    "{THREAT_DESYNC}: taking back a {player} stone at {at} that cell {index} of \
-                     {window:?} does not hold"
-                );
-            }
-            let after = before.with(player, index, placing);
-
-            // BOTH sides, on every window: the stone changes the mover's own
-            // count and the opponent's LIVENESS, and a state that updated only
-            // the mover's sets would leave a dead window standing in the
-            // opponent's hot set (crate::sets).
-            for side in [Player::P1, Player::P2] {
-                let was = ClassSet::of(before.own_count(side), before.opp_count(side));
-                let now = ClassSet::of(after.own_count(side), after.opp_count(side));
-                if was != now {
-                    self.sets[slot(side)].transition(window, was, now);
+        let last = self.applied.pop();
+        let frame = match last {
+            Some(frame) if frame.at == at && frame.player == player => frame,
+            _ => panic!(
+                "{THREAT_DESYNC}: taking back a {player} stone at {at}, which is not the last \
+                 stone applied ({last:?})"
+            ),
+        };
+        for _ in 0..frame.touched {
+            let touched = self.log.pop().unwrap_or_else(|| {
+                panic!("{THREAT_DESYNC}: the undo log is shorter than its own frame")
+            });
+            for s in [slot(Player::P1), slot(Player::P2)] {
+                if touched.was[s] != touched.now[s] {
+                    self.sets[s].transition(touched.window, touched.now[s], touched.was[s]);
                 }
             }
-            self.table.set(window, after);
+        }
+        for _ in Axis::ALL {
+            let (key, before) = self.chunks.pop().unwrap_or_else(|| {
+                panic!("{THREAT_DESYNC}: the chunk log is shorter than its own frame")
+            });
+            self.table.restore(key, before);
         }
     }
 
@@ -102,9 +194,10 @@ impl ThreatState {
         self.sets[slot(side)].windows(class)
     }
 
-    /// How many windows hold a stone.
+    /// How many windows hold a stone. Enumerates the store: diagnostics only,
+    /// never a choice path.
     pub fn window_count(&self) -> usize {
-        self.table.len()
+        self.table.snapshot().len()
     }
 
     /// Whether no window holds a stone.
@@ -112,10 +205,11 @@ impl ThreatState {
         self.table.is_empty()
     }
 
-    /// The whole window table, sorted by window — for oracles and diagnostics.
+    /// Every window holding a stone, sorted by window — for oracles and
+    /// diagnostics.
     ///
-    /// Never on a choice path: see `WindowTable::snapshot`, whose doc says why
-    /// the table underneath may be hashed at all.
+    /// Never on a choice path: see `LineStore::snapshot`, whose doc says why
+    /// the store underneath may be hashed at all.
     pub fn table_snapshot(&self) -> BTreeMap<Window, WindowMasks> {
         self.table.snapshot()
     }

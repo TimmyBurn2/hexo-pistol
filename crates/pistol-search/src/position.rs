@@ -49,9 +49,12 @@ impl Position {
     /// — an unwound eval is indistinguishable from a fresh one, whatever order
     /// the stones came off in (docs/decisions.md D-61, D-62) — and it keeps this
     /// from needing a way to construct a backend it only knows as `dyn Eval`.
-    /// The threat state is simply replaced: `ThreatState::new` is O(1) and its
-    /// own `apply` is what rebuilds it, in the same loop as the eval — O(stones
-    /// × 18) once per search, per `U2_node_protocol.md` §2.1.
+    /// The threat state is REPLACED rather than unwound, and that is the only
+    /// correct spelling: its `undo` takes back the last stone applied and
+    /// refuses any other, while the loop above hands the eval its stones in
+    /// board order (D-61 makes the eval's unwind order-free). `ThreatState::new`
+    /// is O(1) and its own `apply` is what rebuilds it, in the same loop as the
+    /// eval — O(stones × 18) once per search, per `U2_node_protocol.md` §2.1.
     pub fn reset_to(&mut self, state: &GameState) {
         let stones: Vec<(Coord, Player)> = self.state.board().stones().collect();
         for (at, player) in stones {

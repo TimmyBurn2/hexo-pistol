@@ -105,8 +105,8 @@ impl ThreatState {
     /// Nothing in this crate can reach that case — every caller passes
     /// [`ThreatState::hot_windows`], whose members were entered by
     /// `pistol_core::window`'s own enumeration, and the two doors that could
-    /// produce a window otherwise, the packed key's `unpack` and `empty_cells`
-    /// itself, are both crate-private — which the crate root turns into
+    /// produce a window otherwise, the line store's snapshot enumeration and
+    /// `empty_cells` itself, are both crate-private — which the crate root turns into
     /// compile-fail examples rather than leaving as prose, since a sentence
     /// about visibility is falsified by any commit that re-publishes what it
     /// names. The one door that guard does not cover is named there

@@ -1,12 +1,12 @@
 mod common;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use common::playouts::{Rng, random_ply};
-use common::reference::Reference;
+use common::reference::{RefWindow, Reference};
 use common::{cell_list, window_list};
-use pistol_core::window::Window;
-use pistol_core::{Coord, GameState, Player};
+use pistol_core::window::{Window, windows_through_indexed};
+use pistol_core::{Axis, Board, Coord, GameState, Player};
 use pistol_solver::{
     Cover, HitBudget, LiveCount, MinimalCover, NearHot, StonesLeft, THREAT_DESYNC, ThreatState,
 };
@@ -342,4 +342,211 @@ fn taking_back_the_wrong_player_is_a_desync() {
     let mut threats = ThreatState::new();
     threats.apply(Coord::ORIGIN, Player::P1);
     threats.undo(Coord::ORIGIN, Player::P2);
+}
+
+#[test]
+#[should_panic(expected = "THREAT_DESYNC")]
+fn taking_back_a_stone_that_is_not_the_last_applied_is_a_desync() {
+    let mut threats = ThreatState::new();
+    threats.apply(Coord::ORIGIN, Player::P1);
+    threats.apply(Coord::new(1, 0), Player::P2);
+    threats.undo(Coord::ORIGIN, Player::P1);
+}
+
+/// The cell at `pos` along `axis` on the line through the origin: the axis
+/// direction is `(0,1)`, `(1,0)` or `(1,-1)`, so the position is the
+/// coordinate that grows along it.
+fn along(axis: Axis, pos: i16) -> Coord {
+    match axis {
+        Axis::ConstQ => Coord::new(0, pos),
+        Axis::ConstR => Coord::new(pos, 0),
+        Axis::ConstS => Coord::new(pos, -pos),
+    }
+}
+
+/// Every window through every stone reads as the board does, the snapshot is
+/// the reference's table, and every class set is the reference's — the sets
+/// are read here because a store maintained at the edge while a set is not
+/// would pass the first two checks and fail a query.
+fn assert_matches_board(board: &Board, threats: &ThreatState, at: &str) {
+    let reference = Reference::from_board(board);
+    for side in [Player::P1, Player::P2] {
+        assert_eq!(
+            window_list(threats.hot_windows(side)),
+            window_list(&reference.hot(side)),
+            "{at} {side}: hot"
+        );
+        assert_eq!(
+            window_list(threats.win_in_one_ply_windows(side)),
+            window_list(&reference.win_in_one_ply(side)),
+            "{at} {side}: win1"
+        );
+        assert_eq!(
+            window_list(threats.completed_windows(side)),
+            window_list(&reference.completed(side)),
+            "{at} {side}: completed"
+        );
+        for count in [LiveCount::Two, LiveCount::Three] {
+            assert_eq!(
+                window_list(threats.live_windows_at_count(side, count)),
+                window_list(&reference.live_at(side, count)),
+                "{at} {side}: live {count:?}"
+            );
+        }
+    }
+    for (stone, _) in board.stones() {
+        for (window, _) in windows_through_indexed(stone) {
+            let held = RefWindow::read(window, board);
+            let masks = threats.masks(window);
+            assert_eq!((masks.p1, masks.p2), (held.p1, held.p2), "{at}: {window:?}");
+        }
+    }
+    let carried: BTreeMap<Window, (u8, u8)> = threats
+        .table_snapshot()
+        .into_iter()
+        .map(|(window, masks)| (window, (masks.p1, masks.p2)))
+        .collect();
+    let fresh: BTreeMap<Window, (u8, u8)> = reference
+        .table()
+        .iter()
+        .map(|(&window, held)| (window, (held.p1, held.p2)))
+        .collect();
+    assert_eq!(carried, fresh, "{at}: the snapshot");
+}
+
+#[test]
+fn windows_straddling_a_chunk_boundary_read_as_the_reference_does() {
+    // The store holds a line in runs of 64 positions. The origin is position 0
+    // of every line, so the first boundary any game crosses is -1 / 0, then
+    // -64 / -65; 63 / 64 is the positive one. Six consecutive stones across
+    // each, so that the run reader is exercised on both sides of every
+    // boundary; which particular windows straddle is not asserted, because
+    // every window through every stone is compared to the reference either way.
+    // Two colourings per boundary: one side only, so the windows climb through
+    // every live class to a completed six and the class sets are read
+    // populated; then alternating, which kills every window ALONG the stones'
+    // own axis for both sides while leaving the windows through them on the
+    // other two axes live at one stone.
+    let one_side = |_: i16| Player::P1;
+    let alternating = |pos: i16| if pos % 2 == 0 { Player::P1 } else { Player::P2 };
+    let colourings: [(&str, &dyn Fn(i16) -> Player); 2] =
+        [("one side", &one_side), ("alternating", &alternating)];
+    for axis in Axis::ALL {
+        for (boundary, positions) in [
+            ("-1/0", -3..=2i16),
+            ("-64/-65", -67..=-62),
+            ("63/64", 61..=66),
+        ] {
+            for (colouring, side_of) in colourings {
+                let name = format!("{boundary} {colouring}");
+                let mut board = Board::empty();
+                let mut threats = ThreatState::new();
+                let mut placed = Vec::new();
+                for pos in positions.clone() {
+                    let player = side_of(pos);
+                    let at = along(axis, pos);
+                    board.apply(at, player).expect("an empty cell");
+                    threats.apply(at, player);
+                    placed.push((at, player));
+                    assert_matches_board(&board, &threats, &format!("{axis:?} {name} after {at}"));
+                }
+                while let Some((at, player)) = placed.pop() {
+                    threats.undo(at, player);
+                    board.undo(at).expect("a placed stone");
+                    assert_matches_board(
+                        &board,
+                        &threats,
+                        &format!("{axis:?} {name} undoing {at}"),
+                    );
+                }
+                assert_eq!(
+                    threats,
+                    ThreatState::new(),
+                    "{axis:?} {name}: fully unwound"
+                );
+                assert!(threats.is_empty(), "{axis:?} {name}: no chunk survives");
+            }
+        }
+    }
+}
+
+#[test]
+fn threat_windows_stop_at_the_edge_of_the_addressable_lattice() {
+    // The threat counterpart of the eval's test of the same name: stones at
+    // the four corners of the `i16` lattice and along its edges, where most of
+    // the eighteen windows through a cell run off the lattice and are not
+    // windows at all. The state must hold exactly the windows
+    // `windows_through_indexed` enumerates, and read them as the board does.
+    let edge = [
+        i16::MIN,
+        i16::MIN + 1,
+        i16::MIN + 7,
+        0,
+        i16::MAX - 7,
+        i16::MAX - 1,
+        i16::MAX,
+    ];
+    let mut board = Board::empty();
+    let mut threats = ThreatState::new();
+    let mut placed = Vec::new();
+    for (i, &q) in edge.iter().enumerate() {
+        for (j, &r) in edge.iter().enumerate() {
+            let at = Coord::new(q, r);
+            let player = if (i + j) % 2 == 0 {
+                Player::P1
+            } else {
+                Player::P2
+            };
+            board.apply(at, player).expect("an empty cell");
+            threats.apply(at, player);
+            placed.push((at, player));
+        }
+    }
+    assert_matches_board(&board, &threats, "the lattice edge");
+    assert!(
+        threats.window_count() > 0,
+        "the corners still lie on some windows"
+    );
+    while let Some((at, player)) = placed.pop() {
+        threats.undo(at, player);
+    }
+    assert_eq!(
+        threats,
+        ThreatState::new(),
+        "the lattice edge: fully unwound"
+    );
+}
+
+#[test]
+fn every_snapshot_window_reads_back_through_masks() {
+    // The snapshot and `masks` are two doors onto one store; a window the
+    // snapshot lists that `masks` reads differently would be caught only where
+    // both are read. Also: the snapshot lists every window the board's own
+    // enumeration reaches and no other.
+    for seed in 1..=3 {
+        let mut rng = Rng::new(seed);
+        let mut game = GameState::new_game();
+        let mut threats = ThreatState::new();
+        while game.board().stone_count() < PLIES && !game.outcome().is_decided() {
+            let next = random_ply(game.board(), &mut rng);
+            let mover = game.to_move();
+            game.place(next).expect("a sampled legal cell");
+            threats.apply(next, mover);
+        }
+        let snapshot = threats.table_snapshot();
+        for (&window, &listed) in &snapshot {
+            assert_eq!(threats.masks(window), listed, "seed {seed}: {window:?}");
+        }
+        let mut expected = BTreeSet::new();
+        for (stone, _) in game.board().stones() {
+            expected.extend(windows_through_indexed(stone).map(|(window, _)| window));
+        }
+        let listed: BTreeSet<Window> = snapshot.keys().copied().collect();
+        assert_eq!(listed, expected, "seed {seed}: the snapshot's window set");
+        assert_eq!(
+            threats.window_count(),
+            expected.len(),
+            "seed {seed}: window_count"
+        );
+    }
 }
