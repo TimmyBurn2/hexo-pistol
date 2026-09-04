@@ -22,7 +22,7 @@
 | adversarial search for a wrong byte | **none found**: 1 167 813 state steps against an independent reference, 1 763 two-binary transcript pairs |
 | what it does NOT claim | any gain at a solver-armed seat, where the same two binaries measure 1.018 early and 1.003 late |
 
-**Landed revision:** `<landed>`. **Baseline:** `ffc5c10f4d16356f574e3221a023f78399d2e3bb`,
+**Landed revision:** `56ee55fd92b6bf4f781bc795308cc98673305ff0`. **Baseline:** `ffc5c10f4d16356f574e3221a023f78399d2e3bb`,
 arc III's closing commit. **The benched binary and the landed binary are the same
 bytes**, `1413698a22ffbb95fd008b2f27c533c88e3399b8806b62f71b4f827e30271e6d`, against
 `78a7600adcf099de0b04149535f1f4bffe0b6c945609a3206d73a4e5ee853749` at the baseline.
@@ -118,7 +118,7 @@ exhaustion, and the fix is unverified by a reviewer and says so.
 `p1_bench_prereg_REVIEW{,_rev2,_rev3}.md`,
 `matrix_P1_threat_state_REDTEAM{,_round2,_round3}.md`,
 `matrix_P1_threat_state_VERIFICATION.md`.
-**CI at the landing revision**: `<ci artifact>` — `<ci result>`.
+**CI at the landing revision**: `artifacts/p1_ci_56ee55f.txt`, sha256 `bec973b5…` — **twenty gate lines, `gate 1/20` through `gate 20/20`, `ci: all gates passed`, `CI_EXIT=0`**, under `rustc 1.98.0 (88d9e12ae 2026-08-18)`, run in a detached worktree on `/home` at the landing commit.
 
 ## What is owed, and to whom
 
