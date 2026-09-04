@@ -264,6 +264,39 @@ document while its review runs; a correction that cannot wait is a re-dispatch.
 The saving grace is only that the prereg's own gate found the same defect
 independently at its round 2, from a pinned copy.
 
+---
+
+## §P2 — legality per candidate (A-04). CLOSED AS A MEASURED FINDING, NOT LANDED.
+
+| step | state | receipt |
+|---|---|---|
+| re-profile at the package's own SHA (D-477) | done, `45df2c8` | `Board::check_placement` **23.25 %** on a 1 025-stone grid, **below 1.5 %** at the bench seat |
+| the audit's named call site, checked | **A-04 IS WRONG ABOUT IT** — the dominant caller is `GameState::place` (`state.rs:163`), the rules' own validation of every stone the search plays; a prototype fixing only the candidate filter measured **4 %** | `docs/experiments/p2_registration.md` |
+| implementation | `p2/impl` = `7731d71a77624baa12cee5d0dfbb54bde303c313`: one `BTreeMap` range bound in `in_legal_region`, exact because hex distance dominates the axial component; a differential test against a full sweep over ~70 000 cells; 173 suites green, clippy clean | that branch |
+| expectation and abort, registered BEFORE the runs | expected null, 1.00–1.02; abort < 0.98 | `p2_registration.md` |
+| bench at the registered seat | **0.994 / 0.995** — missed the expectation, above the abort; identity leg **IDENTICAL** | `artifacts/p2_bench_v1.txt`, `artifacts/p2_identity_v1.txt` |
+| crossover measurement | **pays only beyond ~160 stones**; a 40-turn game ends at 79 | `p2_registration.md` |
+| **VERDICT** | **NOT LANDED.** A measured structural floor is a finding, not a failure (rule 5). The change costs half a per cent at every size the engine plays and wins only past any game's reach | this ledger |
+
+**F-P2.1 — THE AUDIT'S PERF RECEIPT NAMED A REAL HOTSPOT AND THE WRONG CALLER,
+AND ONLY A PROFILE COULD TELL.** A-04 quotes `candidates.rs`'s
+`filter(|cell| board.is_legal_placement(cell))` and calls the cost *"paid per
+candidate"*. It is paid there, and that half is worth 4 %; the other 19 points
+are `GameState::place` validating every stone the search puts down. **The
+package that trusted the ledger row would have optimised the wrong line and
+banked a fifth of the available win** — and then measured a null at its own
+bench seat and had no idea why. What separated them was one `perf` run and a
+`git grep` for the callers, which is D-477's *"re-profiled at the package's own
+SHA, never inherited"* doing exactly the work it exists for.
+
+**F-P2.2 — A HOTSPOT'S SIZE IS A FUNCTION OF THE POSITION, AND THE AUDIT
+MEASURED IT WHERE THE ENGINE DOES NOT PLAY.** A-04's growth series runs to 4 097
+stones. Rule 3 and the arena's 40-turn cap put a real game at **79**. At 79 the
+optimisation measures **0.985**. A perf finding taken on a pathological position
+is a finding about pathological positions, and the arc's standing rule from here
+is that a package states the STONE COUNT its receipt was taken at and whether a
+game reaches it.
+
 ### ENVIRONMENT NOTES FOR §P1
 
 - Measurement worktree `/home/tom/pistol-wt/p1-measure`, detached, own
