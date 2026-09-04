@@ -151,6 +151,16 @@ fn walk(
                 Answer::Move(turn) if turn == *recorded => None,
                 Answer::Move(turn) => Some(Answered::Move(turn)),
                 Answer::Forfeit { reason, line } => Some(Answered::Forfeit { reason, line }),
+                // A replay that voids is a replay that could not ask its
+                // question, which is a divergence from the recorded game in the
+                // only sense replay cares about: it has no move to compare.
+                Answer::Void { nodes, budget } => Some(Answered::Forfeit {
+                    reason: crate::record::ForfeitReason::ProtocolError,
+                    line: Some(format!(
+                        "instrument void: first iteration spent {nodes} nodes against a budget \
+                         of {budget}"
+                    )),
+                }),
             };
             if let Some(answered) = disagreed {
                 return Ok(finish(

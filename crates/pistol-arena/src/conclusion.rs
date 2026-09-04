@@ -20,9 +20,16 @@ pub fn games(out: &mut String, written: &Written<'_>) {
         } else {
             (label_b, label_a)
         };
+        let void_reason;
         let (end, reason) = match record.end {
             End::Normal => ("normal", "none"),
             End::Forfeit(why) => ("forfeit", why.token()),
+            // Its own token, never `forfeit`: a reader grepping the report for
+            // forfeits must not find a game nobody lost.
+            End::Void { nodes, budget } => {
+                void_reason = format!("first_iteration_{nodes}_of_{budget}");
+                ("void", void_reason.as_str())
+            }
         };
         let by = match record.forfeit_by {
             Some(0) => label_a,
@@ -78,13 +85,14 @@ pub fn found(out: &mut String, written: &Written<'_>) {
     }
     let _ = writeln!(
         out,
-        "counts n {} distinct_n {} wins_a {} capped {} losses_a {} forfeits {} decided {}",
+        "counts n {} distinct_n {} wins_a {} capped {} losses_a {} forfeits {} voids {} decided {}",
         counted.n,
         dedupe::distinct_count(&duplicates),
         counted.wins_a,
         counted.capped,
         counted.losses_a,
         counted.forfeits,
+        counted.voids,
         counted.decided
     );
     let p = counted.pentanomial;

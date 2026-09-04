@@ -6,6 +6,21 @@ use crate::game::Rules;
 use crate::reap::Death;
 use crate::record::{Compute, ForfeitReason};
 
+/// How far past its node budget a search's FIRST iteration may run before the
+/// instrument declines to read the game.
+///
+/// **DERIVED, and from the runs this instrument actually takes**
+/// (`docs/experiments/i2_registration.md`): over the first 60 openings of
+/// `random_openings_v2.txt` at the committed seat and the governed
+/// `go nodes 50000`, the first iteration's share of the budget has a median of
+/// 0.0898 and a **maximum of 0.1754**. Four is 23x that maximum, so no position
+/// of the kind these runs draw reaches it by being merely awkward; and it is
+/// four orders of magnitude below the 57 000x the pathological reproducer
+/// spends, so the class this exists to catch cannot hide beneath it. The
+/// multiple is NOT derived from those reproducers, which is what the dispatch
+/// forbids.
+pub const FIRST_ITERATION_MULTIPLE: u64 = 4;
+
 /// What one `go` produced.
 pub enum Answer {
     /// The turn the engine would play.
@@ -17,6 +32,51 @@ pub enum Answer {
         /// The line that earned it, verbatim, when there was one.
         line: Option<String>,
     },
+    /// The instrument declined to read this game: the first iteration ran past
+    /// [`FIRST_ITERATION_MULTIPLE`] times the node budget.
+    Void {
+        /// What that iteration spent.
+        nodes: u64,
+        /// The budget it was given.
+        budget: u64,
+    },
+}
+
+/// The node budget a `go` line asks for, or `None` if it asks for another kind.
+///
+/// Only a NODE budget can be overrun in this sense: a `movetime` search is
+/// abortable by construction and a `depth_turns` search has no node bound to
+/// exceed. A run under either is never voided by this rule, and that is a
+/// property of the rule rather than a gap in it.
+pub(crate) fn node_budget(go_line: &str) -> Option<u64> {
+    let mut words = go_line.split_whitespace();
+    loop {
+        let word = words.next()?;
+        if word == "nodes" {
+            return words.next()?.parse().ok();
+        }
+    }
+}
+
+/// The node count on a first-iteration `info` line, or `None` for any other.
+///
+/// Matched on `depth_turns 1` and never on the closing `totals` line, which
+/// carries the WHOLE search's nodes and would read every completed search as an
+/// overrun the moment it passed one iteration.
+pub(crate) fn first_iteration_nodes(line: &str) -> Option<u64> {
+    let words: Vec<&str> = line.split_whitespace().collect();
+    if words.first() != Some(&"info") || words.contains(&"totals") {
+        return None;
+    }
+    let depth = words
+        .iter()
+        .position(|&word| word == "depth_turns")
+        .and_then(|at| words.get(at + 1))?;
+    if *depth != "1" {
+        return None;
+    }
+    let at = words.iter().position(|&word| word == "nodes")?;
+    words.get(at + 1)?.parse().ok()
 }
 
 /// Send the position and the budget, and read to `bestmove`.
@@ -78,6 +138,17 @@ pub fn ask(
                     continue;
                 }
                 if line.starts_with(&format!("{} ", pistol_cli::report::INFO_PREFIX)) {
+                    // A-01's detection. The first iteration is not abortable
+                    // under a node stop, so a wide enough root turn answers a
+                    // small budget with an enormous count; a game containing
+                    // one is not evidence about strength and the instrument
+                    // says so rather than scoring it.
+                    if let (Some(nodes), Some(budget)) =
+                        (first_iteration_nodes(&line), node_budget(rules.go_line))
+                        && nodes > budget.saturating_mul(FIRST_ITERATION_MULTIPLE)
+                    {
+                        return Ok(Answer::Void { nodes, budget });
+                    }
                     continue;
                 }
                 return Ok(Answer::Forfeit {

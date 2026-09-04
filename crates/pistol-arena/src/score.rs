@@ -17,6 +17,12 @@ pub struct Tally {
     pub pentanomial: [u64; 5],
     /// Games that ended in a forfeit.
     pub forfeits: usize,
+    /// Games the INSTRUMENT declined to read (`End::Void`): a search's first
+    /// iteration ran past its node budget's registered multiple. Counted, never
+    /// scored, and never a forfeit — reported so that a run whose voids are
+    /// numerous is visibly not the run its `n` claims
+    /// (`docs/experiments/i2_registration.md`).
+    pub voids: usize,
     /// Games the rules decided, which is every game that was not capped.
     /// Forfeits are decided — the offender lost — so they are in here.
     pub decided: usize,
@@ -56,6 +62,14 @@ pub fn tally(records: &[GameRecord]) -> Tally {
         ..Tally::default()
     };
     for record in records {
+        // A VOID game is counted and then skipped. It is not a result: the
+        // instrument declined to read it, so it enters neither the win/loss
+        // columns nor the pentanomial, and `n` above still names how many games
+        // were PLAYED so the two numbers together say what happened.
+        if record.is_void() {
+            out.voids += 1;
+            continue;
+        }
         match record.result {
             GameResult::Capped => out.capped += 1,
             _ => {
@@ -96,6 +110,10 @@ pub fn pair_buckets(records: &[GameRecord]) -> Vec<usize> {
         .as_chunks::<2>()
         .0
         .iter()
+        // A pair either side of which the instrument voided contributes no
+        // bucket. Its surviving half is a real game, but half a pair is not a
+        // pair, and the pentanomial's every bucket is one.
+        .filter(|pair| !pair[0].is_void() && !pair[1].is_void())
         .map(|pair| {
             // Two games, each scoring 0, 1/2 or 1 for engine A, so the sum is a
             // multiple of a half in `0..=2`, and twice the sum indexes the five
@@ -159,7 +177,15 @@ pub fn pairs_without_forfeits(records: &[GameRecord]) -> Vec<GameRecord> {
         .as_chunks::<2>()
         .0
         .iter()
-        .filter(|pair| !pair[0].is_forfeit() && !pair[1].is_forfeit())
+        // A pair with ONE voided game is dropped whole. Scoring its surviving
+        // half would put an unpaired result into a pentanomial whose every
+        // bucket is a pair, which is the asymmetry the void exists to prevent.
+        .filter(|pair| {
+            !pair[0].is_forfeit()
+                && !pair[1].is_forfeit()
+                && !pair[0].is_void()
+                && !pair[1].is_void()
+        })
         .flatten()
         .cloned()
         .collect()

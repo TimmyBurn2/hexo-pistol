@@ -83,6 +83,22 @@ pub fn play(
                     compute,
                 ));
             }
+            // The instrument declined to read this game (A-01). It ends HERE
+            // and carries `GameResult::Capped` — the same "nobody won" result a
+            // horizon gives — because a void has no winner and inventing one
+            // would put a result into the record that no play produced. Nothing
+            // scores it: every reader that counts games asks `is_void` first.
+            // `forfeit_by` stays `None`: no side did anything wrong.
+            Answer::Void { nodes, budget } => {
+                return Ok(finish(
+                    GameResult::Capped,
+                    End::Void { nodes, budget },
+                    None,
+                    None,
+                    moves,
+                    compute,
+                ));
+            }
         };
 
         // pistol-core is the referee and the only judge of legality (rule 2).

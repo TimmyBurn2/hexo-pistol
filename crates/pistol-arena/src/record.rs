@@ -43,6 +43,22 @@ pub enum End {
     Normal,
     /// One side stopped playing legally, and lost for it.
     Forfeit(ForfeitReason),
+    /// The INSTRUMENT declined to read this game: a search's first iteration
+    /// ran past [`FIRST_ITERATION_MULTIPLE`] times the node budget it was
+    /// given, so the budget was not a bound on that position and the
+    /// equal-per-side-compute premise rule 6 rests on does not hold for it
+    /// (`docs/audit/repo_audit_2026-09.md` A-01, D-578,
+    /// `docs/experiments/i2_registration.md`).
+    ///
+    /// **NOT a forfeit.** Nobody played illegally; both engines answered
+    /// correctly and one of them was asked a question its budget could not
+    /// bound. A void is excluded from scoring and counted by its own name.
+    Void {
+        /// What the first iteration actually spent.
+        nodes: u64,
+        /// The budget it was given.
+        budget: u64,
+    },
 }
 
 /// Why a side forfeited. A closed set: these are report tokens.
@@ -165,6 +181,14 @@ impl GameRecord {
     /// Whether a forfeit ended this game.
     pub fn is_forfeit(&self) -> bool {
         matches!(self.end, End::Forfeit(_))
+    }
+
+    /// Whether the instrument voided this game (`End::Void`).
+    ///
+    /// Kept apart from [`GameRecord::is_forfeit`] at every reader: a void is
+    /// the instrument declining to read a game, not a side losing one.
+    pub fn is_void(&self) -> bool {
+        matches!(self.end, End::Void { .. })
     }
 
     /// Whether the game was decided by the rules rather than by the horizon.
