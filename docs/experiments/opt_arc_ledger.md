@@ -320,6 +320,38 @@ of 1.07**, or registered `cgu1` as a free win and shipped a regression. D-14
 deferred this decision *"until there is a bench to judge it by"* precisely
 because the answer is not derivable from the flags' descriptions.
 
+---
+
+## TRANCHE 1 CLOSURE — the combined factor, MEASURED end to end, both terms named
+
+`tools/bench_delta.sh rev:ffc5c10 rev:a517ae31bfdcd5ddd631b04d41b7dbef7f4d65a5 5`,
+idle receipts both ends, node identity holding per position at both budgets in
+all five reps, exit 0 (`artifacts/tranche1_combined_v1.txt`):
+
+| | early | late |
+|---|---|---|
+| **tranche 1 combined, arc III's close to tranche 1's end** | **1.294** | **1.293** |
+| P1, the threat state's store | 1.243 | 1.217 |
+| P3, codegen | 1.068 | 1.064 |
+| P2, the legality probe | not landed — 0.994 / 0.995 | |
+
+**The combined number is measured, not composed**, which is what the dispatch
+asked for and why: multiplying the two landed terms gives 1.327 early and 1.295
+late, and the engine actually delivers **1.294 / 1.293**. The early band's
+product overstates by 0.033, because the two changes share a hot path and the
+second cannot re-win what the first already took. **CI at the landed commit:
+twenty gate lines, `gate 1/20` through `gate 20/20`, `ci: all gates passed`,
+`CI_EXIT=0`** (`artifacts/t1_ci_a517ae3.txt`).
+
+**WHAT TRANCHE 1 COST AND WHAT IT BOUGHT.** Three packages, two landed, one
+refused on its own measurement. Every one of the three produced a finding that
+reading the audit could not have: P1's stated premise was worth under 3 % and
+the lever was elsewhere; P2's hotspot was attributed to the wrong caller and its
+remedy loses at every size a game reaches; P3's most aggressive setting is not
+its fastest and its cheapest is a regression. All three were byte-identical
+changes judged by proof and a clock, which is the last time in this arc that
+will be true.
+
 ### ENVIRONMENT NOTES FOR §P1
 
 - Measurement worktree `/home/tom/pistol-wt/p1-measure`, detached, own
