@@ -52,7 +52,9 @@ pub use candidates::candidate_cells;
 pub use census::{CensusKeys, CoverClass, TriggerAnswer, TriggerColumns, TriggerObservation};
 pub use error::SearchError;
 pub use fallback::{FallbackAnswer, fallback_turn};
-pub use info::{Provenance, SearchInfo, SearchOutcome, SolverCallCounters, StageCounters};
+pub use info::{
+    Provenance, SearchInfo, SearchOutcome, SolverCallCounters, StageCounters, WidthHistogram,
+};
 pub use params::{
     CandidatePolicy, OrderingHeuristics, QTriggers, SearchParams, SolverTrigger, SolverWiring,
     StagedParams,

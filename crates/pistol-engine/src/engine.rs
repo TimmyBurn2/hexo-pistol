@@ -1,5 +1,5 @@
 use pistol_core::GameState;
-use pistol_search::{SearchInfo, SearchOutcome};
+use pistol_search::{SearchInfo, SearchOutcome, WidthHistogram};
 
 use crate::budget::Budget;
 use crate::config::EngineMode;
@@ -90,4 +90,26 @@ pub trait Engine {
         census: CensusRequest,
         report: &mut dyn FnMut(&SearchInfo),
     ) -> Result<SearchOutcome, EngineError>;
+
+    /// [`Engine::go`], answering also with the per-node candidate WIDTHS the
+    /// search saw (`docs/audit/search_gap_2026-09.md` C-2).
+    ///
+    /// **Added rather than folded into [`Engine::go_reporting`]'s signature**:
+    /// that seam is the contract the API layer will adapt (CLAUDE.md rule 11),
+    /// and widening it would have rewritten every implementor for a
+    /// measurement instrument. The default refuses, so an engine that has no
+    /// histogram says so instead of answering with zeros.
+    ///
+    /// # Errors
+    /// Everything [`Engine::go`] can refuse, plus
+    /// [`EngineError::WidthsUnsupported`] by default.
+    fn go_widths(
+        &mut self,
+        budget: Budget,
+    ) -> Result<(SearchOutcome, WidthHistogram), EngineError> {
+        let _ = budget;
+        Err(EngineError::WidthsUnsupported {
+            engine: format!("{:?} engine", self.mode()),
+        })
+    }
 }

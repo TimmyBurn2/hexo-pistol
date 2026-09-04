@@ -70,6 +70,15 @@ pub enum EngineError {
         /// which of them it was.
         engine: String,
     },
+    /// A width histogram was asked of an engine that has none to give.
+    ///
+    /// Refused for the same reason [`EngineError::CensusUnsupported`] is: an
+    /// all-zero histogram from an engine that cannot build one reads exactly
+    /// like one from a search that expanded no staged node.
+    WidthsUnsupported {
+        /// Which engine refused.
+        engine: String,
+    },
     /// An invariant this crate maintains was found violated. This is a bug in
     /// pistol, never operator error.
     InternalInvariant {
@@ -125,6 +134,7 @@ impl EngineError {
                 self.to_string()
             }
             EngineError::CensusUnsupported { .. } => self.to_string(),
+            EngineError::WidthsUnsupported { .. } => self.to_string(),
             EngineError::InternalInvariant { what } => what.clone(),
         }
     }
@@ -146,6 +156,7 @@ impl EngineError {
             EngineError::BudgetMissing => "BudgetMissing",
             EngineError::InstrumentBudgetUnsupported => "InstrumentBudgetUnsupported",
             EngineError::CensusUnsupported { .. } => "CensusUnsupported",
+            EngineError::WidthsUnsupported { .. } => "WidthsUnsupported",
             EngineError::InternalInvariant { .. } => "InternalInvariant",
         }
     }
@@ -174,6 +185,11 @@ impl fmt::Display for EngineError {
                 f,
                 "`{engine}` cannot produce a trigger census, and answering with no rows would \
                  read as a search whose trigger never fired"
+            ),
+            EngineError::WidthsUnsupported { engine } => write!(
+                f,
+                "`{engine}` cannot produce a width histogram, and an all-zero one would be \
+                 indistinguishable from a search that expanded no staged node"
             ),
             EngineError::InternalInvariant { what } => {
                 write!(f, "internal invariant violated: {what}")

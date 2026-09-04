@@ -261,3 +261,40 @@ fn one_line(text: &str) -> String {
         .map(|c| if c.is_control() { '?' } else { c })
         .collect()
 }
+
+/// The width histogram as `info widths` lines, one per measured series.
+///
+/// One line per series rather than one wide line: a reader of these is picking
+/// a cap from a distribution, and a series per line is what a column-oriented
+/// tool can take. Empty series are omitted, so a search that reached no staged
+/// node of a class prints nothing for it rather than a row of zeros.
+pub fn width_lines(histogram: &pistol_engine::WidthHistogram) -> Vec<String> {
+    let mut lines = Vec::new();
+    let series = |name: &str, counts: &[u64]| -> Option<String> {
+        if counts.iter().all(|&count| count == 0) {
+            return None;
+        }
+        let body: Vec<String> = counts
+            .iter()
+            .enumerate()
+            .filter(|&(_, &count)| count > 0)
+            .map(|(bucket, count)| format!("{bucket}:{count}"))
+            .collect();
+        Some(format!("info widths {name} {}", body.join(" ")))
+    };
+    for (row, name) in ["win_now", "filtered", "batched", "batched_lost"]
+        .into_iter()
+        .enumerate()
+    {
+        if let Some(line) = series(name, &histogram.emitted[row]) {
+            lines.push(line);
+        }
+    }
+    if let Some(line) = series("tier_t", &histogram.tier_t) {
+        lines.push(line);
+    }
+    if let Some(line) = series("quiet", &histogram.quiet) {
+        lines.push(line);
+    }
+    lines
+}

@@ -95,6 +95,26 @@ impl Engine for Pistol {
         Ok(())
     }
 
+    /// The histogram's lifetime is exactly this `go`, for the same three
+    /// reasons the census's is (`go_reporting` below): the collector does not
+    /// stop on its own, `new_game` does not touch it, and the take must
+    /// precede the disarm. Unlike the census there is no early return for the
+    /// off case — a caller that did not want a histogram called `go_reporting`.
+    fn go_widths(
+        &mut self,
+        budget: Budget,
+    ) -> Result<(SearchOutcome, pistol_search::WidthHistogram), EngineError> {
+        let budget = Budget::resolve(Some(budget), self.config.engine.mode)?;
+        let stop = stop_for(budget)?;
+        self.searcher.collect_widths();
+        let answer = self
+            .searcher
+            .search(&self.state, stop, &mut |_| {})
+            .map_err(from_search);
+        let widths = self.searcher.take_widths();
+        answer.map(|outcome| (outcome, widths))
+    }
+
     fn go_reporting(
         &mut self,
         budget: Budget,

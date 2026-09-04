@@ -465,6 +465,7 @@ mod tests {
             ],
             forced: 1,
             used_quiet_safety_net: false,
+            ..StagedSet::default()
         };
         let before_forced = set.cells[0];
 
@@ -505,6 +506,7 @@ mod tests {
             ],
             forced: 1,
             used_quiet_safety_net: false,
+            ..StagedSet::default()
         };
         tables.pair_killers[0] = Some(canonical(Coord::new(0, 5), Coord::new(-2, 4)));
         tables.order_candidates(
@@ -543,6 +545,7 @@ mod tests {
             cells: vec![Coord::new(-1, 4), Coord::new(-2, 4), Coord::new(0, 5)],
             forced: 0,
             used_quiet_safety_net: false,
+            ..StagedSet::default()
         };
         tables.order_candidates(
             OrderingHeuristics {
@@ -571,6 +574,7 @@ mod tests {
             cells: vec![Coord::new(-1, 4), Coord::new(-2, 4), Coord::new(0, 5)],
             forced: 0,
             used_quiet_safety_net: false,
+            ..StagedSet::default()
         };
         tables.order_candidates(
             OrderingHeuristics {
@@ -601,6 +605,7 @@ mod tests {
             cells: vec![Coord::new(-1, 4), Coord::new(-2, 4), Coord::new(0, 5)],
             forced: 0,
             used_quiet_safety_net: false,
+            ..StagedSet::default()
         };
         // The caller has already promoted the table's move to the head…
         set.promote_table_move(Some(Coord::new(-1, 4)));

@@ -2,6 +2,80 @@ use pistol_core::Turn;
 
 use crate::staged::StagedRow;
 
+/// Per-node candidate-set WIDTHS, bucketed — the distribution a width cap is
+/// chosen against (`docs/audit/search_gap_2026-09.md` C-2).
+///
+/// The stage counters beside this one count ROWS; nothing in the engine counted
+/// how WIDE a row's set was, so a cap would have been picked from a guess. This
+/// is that number and nothing more: it decides no move, changes no search, and
+/// is filled only when a `go` line asks for it.
+///
+/// Sizes are bucketed exactly up to 32 and lumped beyond, because a cap is
+/// chosen from the head of the distribution and the tail only has to be visible.
+// No derived `Default` and no `Copy`: an array longer than 32 has neither in
+// std, and at ~1.6 KB this is a thing to hand out by reference rather than to
+// copy on every read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct WidthHistogram {
+    /// Emitted-set sizes at each row class, bucketed by
+    /// [`WidthHistogram::bucket`]: WIN-NOW, FILTERED, BATCHED, BATCHED-lost.
+    /// A row that expands no child (`LAW-OVERLOAD`'s early return) has no
+    /// width and is absent by construction.
+    pub emitted: [[u64; WidthHistogram::BUCKETS]; 4],
+    /// Tier T's OWN union size at the BATCHED rows, before the quiet-ball
+    /// safety net could stand in for it. This is the distribution a width cap
+    /// is chosen against, and it is why the instrument exists.
+    pub tier_t: [u64; WidthHistogram::BUCKETS],
+    /// The quiet ball's size on the rows where Tier T was empty and the net
+    /// fired. Kept apart from [`WidthHistogram::tier_t`] because a cap on one
+    /// is not a cap on the other (docs/decisions.md D-491, D-492).
+    pub quiet: [u64; WidthHistogram::BUCKETS],
+}
+
+impl WidthHistogram {
+    /// Buckets 0..=127 hold their own size and the last holds everything
+    /// wider.
+    ///
+    /// **The first run of this instrument is why the range is this wide.** At
+    /// 34 buckets, 42 % of BATCHED nodes on a 15-stone bench position landed in
+    /// the overflow — a cap cannot be chosen from a distribution whose largest
+    /// single bucket is "everything above the top". The head is exact where a
+    /// cap would be set and the overflow is now genuinely a tail.
+    pub const BUCKETS: usize = 129;
+
+    /// A size's bucket: itself up to 32, then one bucket for 33 and beyond.
+    pub fn bucket(size: usize) -> usize {
+        size.min(WidthHistogram::BUCKETS - 1)
+    }
+
+    /// Record one node's widths. `row` indexes [`WidthHistogram::emitted`] in
+    /// the order that array's doc names.
+    pub fn record(&mut self, row: usize, emitted: usize, tier_t: usize, quiet: Option<usize>) {
+        self.emitted[row][WidthHistogram::bucket(emitted)] += 1;
+        if row >= 2 {
+            self.tier_t[WidthHistogram::bucket(tier_t)] += 1;
+            if let Some(quiet) = quiet {
+                self.quiet[WidthHistogram::bucket(quiet)] += 1;
+            }
+        }
+    }
+
+    /// Whether any node was recorded — what the reporter asks before printing.
+    pub fn is_empty(&self) -> bool {
+        self.emitted.iter().flatten().all(|&count| count == 0)
+    }
+}
+
+impl Default for WidthHistogram {
+    fn default() -> Self {
+        WidthHistogram {
+            emitted: [[0; WidthHistogram::BUCKETS]; 4],
+            tier_t: [0; WidthHistogram::BUCKETS],
+            quiet: [0; WidthHistogram::BUCKETS],
+        }
+    }
+}
+
 /// The node protocol's stage-share counters (docs/decisions.md U2-M item 2).
 ///
 /// All zero under `CandidatePolicy::Radius`, where the staged dispatch never

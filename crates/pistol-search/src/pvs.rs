@@ -99,6 +99,11 @@ pub struct Run<'a> {
     /// copies it there on every construction path, including both salvage
     /// ones).
     pub stages: crate::info::StageCounters,
+    /// The width histogram, `Some` exactly when THIS ASK requested one. A
+    /// property of one `go` line and never of a seat, for the reason D-571
+    /// gives about the census: a config key would arm every search a process
+    /// makes. `None` costs one branch per staged node and writes nothing.
+    pub widths: Option<crate::info::WidthHistogram>,
     /// Set once the stop condition has fired; every node above unwinds without
     /// using its result.
     pub aborted: bool,
@@ -146,6 +151,7 @@ impl<'a> Run<'a> {
             root_restrict: None,
             seldepth_turns: 0,
             stages: crate::info::StageCounters::default(),
+            widths: None,
             aborted: false,
             abortable: false,
             root_score: None,
@@ -323,6 +329,26 @@ impl<'a> Run<'a> {
                 let mut set = StagedSet::default();
                 let row = staged_candidates(state, threats, eval, is_pv, params, &mut set);
                 self.stages.record(row);
+                if let Some(widths) = self.widths.as_mut() {
+                    let class = match row {
+                        StagedRow::WinNow => Some(0),
+                        StagedRow::Filtered => Some(1),
+                        StagedRow::Batched => Some(2),
+                        StagedRow::BatchedLost => Some(3),
+                        // No child is expanded, so the node has no width to
+                        // record and is absent by construction rather than
+                        // recorded as a zero.
+                        StagedRow::OverloadReturn => None,
+                    };
+                    if let Some(class) = class {
+                        widths.record(
+                            class,
+                            set.cells.len(),
+                            set.tier_t_len,
+                            set.used_quiet_safety_net.then_some(set.quiet_len),
+                        );
+                    }
+                }
                 if set.used_quiet_safety_net {
                     self.stages.record_quiet_safety_net();
                 }

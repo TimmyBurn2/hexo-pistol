@@ -67,6 +67,16 @@ pub struct StagedSet {
     /// on the WIN-NOW and FILTERED rows, where it is never consulted. Read by
     /// `crate::info::StageCounters::record_quiet_safety_net`'s one caller.
     pub used_quiet_safety_net: bool,
+    /// How many cells Tier T's own union held on this row, BEFORE the
+    /// safety net could stand in for it — `0` on a row that never built one,
+    /// and `0` on the very row where the net fires, which is what makes the
+    /// two quantities separable. Written for the width histogram (WP I1) and
+    /// read by nothing else; a search that is not measuring widths still fills
+    /// it, because it is one `len()` on a vector already in hand.
+    pub tier_t_len: usize,
+    /// How many cells the quiet ball held when the net fired, and `0`
+    /// otherwise.
+    pub quiet_len: usize,
 }
 
 impl StagedSet {
@@ -74,6 +84,8 @@ impl StagedSet {
         self.cells.clear();
         self.forced = 0;
         self.used_quiet_safety_net = false;
+        self.tier_t_len = 0;
+        self.quiet_len = 0;
     }
 
     /// Promote `table_move` to the front of the UNFORCED range
@@ -220,6 +232,7 @@ fn batched(
     out: &mut StagedSet,
 ) {
     let mut tier_t = tier_t_union(threats, us, params);
+    out.tier_t_len = tier_t.len();
     if tier_t.is_empty() {
         // The safety net. See the module doc: at the game's earliest plies no
         // window anywhere has reached a live count, so Tier T is provably
@@ -228,6 +241,7 @@ fn batched(
         // arm answers with, uncapped — `quiet_top_k` is stage Q's own knob and
         // this D-scope does not arm stage Q.
         tier_t = within_radius(board, params.quiet_radius);
+        out.quiet_len = tier_t.len();
         out.used_quiet_safety_net = true;
     }
     delta_rank(&mut tier_t, eval, us);
@@ -307,6 +321,7 @@ mod tests {
             cells: vec![Coord::new(0, 0), Coord::new(1, 0), Coord::new(2, 0)],
             forced: 1,
             used_quiet_safety_net: false,
+            ..StagedSet::default()
         };
         let before = set.cells.clone();
 
@@ -342,6 +357,7 @@ mod tests {
             cells: vec![Coord::new(0, 0)],
             forced: 1,
             used_quiet_safety_net: false,
+            ..StagedSet::default()
         };
         set.promote_table_move(Some(Coord::new(0, 0)));
         assert_eq!(set.cells, vec![Coord::new(0, 0)]);

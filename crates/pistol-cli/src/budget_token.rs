@@ -2,6 +2,20 @@ use std::str::FromStr;
 
 use pistol_engine::{Budget, CensusRequest, EngineError, EngineMode};
 
+/// Whether a `go` line asked for the width histogram.
+///
+/// A closed enum beside [`CensusRequest`] rather than a `bool`, for the reason
+/// that one gives: a `false` at a call site says nothing about what is off.
+/// The two are mutually exclusive by grammar — a `go` takes at most one
+/// optional token — which is why neither is a field of the other.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WidthsRequest {
+    /// No histogram.
+    Off,
+    /// The width histogram, for exactly this search.
+    On,
+}
+
 use crate::count::plain_count;
 
 use crate::protocol::{GO, protocol, quoted};
@@ -14,6 +28,8 @@ pub const NODES_BUDGET: &str = "nodes";
 pub const MOVETIME_BUDGET: &str = "movetime";
 /// The optional third word of a `go` line: the trigger census on the answer.
 pub const CENSUS_TOKEN: &str = "census";
+/// The other optional third word: the per-node candidate-width histogram.
+pub const WIDTHS_TOKEN: &str = "widths";
 
 /// One of each budget kind, to ask the engine's mode which ones it honours.
 ///
@@ -40,7 +56,10 @@ const BUDGET_KINDS: [Budget; 3] = [
 /// ``go` takes one budget and at most the `census` token, and `<fourth>`
 /// follows them` — because a refusal that named the token instead would send a
 /// driver to fix a word that is not the one that broke the line.
-pub(crate) fn parse_budget(line: &str, rest: &str) -> Result<(Budget, CensusRequest), EngineError> {
+pub(crate) fn parse_budget(
+    line: &str,
+    rest: &str,
+) -> Result<(Budget, CensusRequest, WidthsRequest), EngineError> {
     let words: Vec<&str> = rest.split_whitespace().collect();
     match words.as_slice() {
         [] => Err(EngineError::BudgetMissing),
@@ -52,10 +71,21 @@ pub(crate) fn parse_budget(line: &str, rest: &str) -> Result<(Budget, CensusRequ
                 quoted(kind)
             ),
         )),
-        [kind, amount] => Ok((budget_of(line, kind, amount)?, CensusRequest::Off)),
-        [kind, amount, third] if *third == CENSUS_TOKEN => {
-            Ok((budget_of(line, kind, amount)?, CensusRequest::On))
-        }
+        [kind, amount] => Ok((
+            budget_of(line, kind, amount)?,
+            CensusRequest::Off,
+            WidthsRequest::Off,
+        )),
+        [kind, amount, third] if *third == CENSUS_TOKEN => Ok((
+            budget_of(line, kind, amount)?,
+            CensusRequest::On,
+            WidthsRequest::Off,
+        )),
+        [kind, amount, third] if *third == WIDTHS_TOKEN => Ok((
+            budget_of(line, kind, amount)?,
+            CensusRequest::Off,
+            WidthsRequest::On,
+        )),
         [_, _, third] => Err(protocol(
             line,
             format!(

@@ -78,6 +78,11 @@ pub struct Searcher {
     /// that can cost two whole caps would rank an option field on the wrong
     /// rows (docs/decisions.md D-516).
     census: Option<Vec<crate::census::TriggerObservation>>,
+    /// Armed for ONE ask by [`Searcher::collect_widths`] and taken back by
+    /// [`Searcher::take_widths`], the same shape the census uses and for the
+    /// same reason (docs/decisions.md D-571): a width histogram is a property
+    /// of one question, not of a seat.
+    widths: Option<crate::info::WidthHistogram>,
     /// How many times the canonical-key fold was entered since the last
     /// [`Searcher::collect_trigger_census`] — the root's own firing included.
     census_folds: u64,
@@ -191,6 +196,7 @@ impl Searcher {
             position: Position::new(eval, tracks_threats),
             heuristics: crate::heuristics::HeuristicTables::new(),
             census: None,
+            widths: None,
             census_folds: 0,
         })
     }
@@ -207,6 +213,24 @@ impl Searcher {
     /// answers (CLAUDE.md rule 4). Off unless a caller asks, and no committed
     /// config can ask — the only callers are this crate's own tests and the
     /// `trigger_census` example.
+    /// Arm the width histogram for the next search.
+    pub fn collect_widths(&mut self) {
+        self.widths = Some(crate::info::WidthHistogram::default());
+    }
+
+    /// Take the histogram the last search filled, and disarm.
+    ///
+    /// # Panics
+    ///
+    /// If no search was armed — a caller asking for a measurement it never
+    /// requested is a bug here, not an answer to anyone's question
+    /// (CLAUDE.md rule 3).
+    pub fn take_widths(&mut self) -> crate::info::WidthHistogram {
+        self.widths
+            .take()
+            .expect("take_widths without collect_widths")
+    }
+
     pub fn collect_trigger_census(&mut self) {
         self.census = Some(Vec::new());
         // Reset WITH the rows: a fold count carried over from an earlier
@@ -414,6 +438,7 @@ impl Searcher {
         root_calls.root_nodes = root_solver_nodes;
         run.solver_calls = root_calls;
         run.census = self.census.take();
+        run.widths = self.widths.take();
 
         let mut outcome = None;
         for depth_turns in 1..=max_depth {
@@ -561,6 +586,11 @@ impl Searcher {
         // one search and the next accumulate in one place and the run owns
         // them while it is the thing that fires.
         self.census = run.census.take();
+        // Handed to the run and taken back for the same reason the census is:
+        // the run owns it while it is the thing that fires.
+        if run.widths.is_some() {
+            self.widths = run.widths.take();
+        }
         self.census_folds = self.census_folds.saturating_add(run.census_folds);
         outcome.info.nps = per_second(run.total_nodes(), elapsed);
         outcome.info.time_ms = elapsed.as_millis() as u64;

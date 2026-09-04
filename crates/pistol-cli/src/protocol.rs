@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use pistol_engine::{Engine, EngineError, ParsePositionError, PositionSpec};
 
-use crate::budget_token::{budget_tokens, parse_budget};
+use crate::budget_token::{WidthsRequest, budget_tokens, parse_budget};
 use crate::report::{
     HANDSHAKE_OK, bestmove_line, census_line, error_line, id_line, info_line, totals_line,
 };
@@ -184,7 +184,20 @@ impl<'e> Session<'e> {
     /// engine reads exactly like an empty row set from a search whose trigger
     /// never fired (CLAUDE.md rule 3).
     fn go(&mut self, line: &str, rest: &str, out: &mut dyn FnMut(&str)) -> Result<(), EngineError> {
-        let (budget, census) = parse_budget(line, rest)?;
+        let (budget, census, widths) = parse_budget(line, rest)?;
+        if widths == WidthsRequest::On {
+            // The histogram's own path: one block before the totals line, on
+            // the same ground the census block sits there, and no block at all
+            // without the token — which is what keeps the token's absence
+            // byte-identical.
+            let (outcome, histogram) = self.engine.go_widths(budget)?;
+            for text in crate::report::width_lines(&histogram) {
+                out(&text);
+            }
+            out(&totals_line(&outcome.info));
+            out(&bestmove_line(outcome.best));
+            return Ok(());
+        }
         let outcome = self
             .engine
             .go_reporting(budget, census, &mut |info| out(&info_line(info)))?;

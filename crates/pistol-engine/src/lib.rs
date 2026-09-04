@@ -50,5 +50,5 @@ pub use position_token::ParsePositionError;
 pub use pistol_search::score::{MATE, ScoreKind, classify};
 pub use pistol_search::{
     CoverClass, MAX_DEPTH_TURNS, Provenance, SearchInfo, SearchOutcome, SolverCallCounters,
-    StageCounters, TriggerAnswer, TriggerColumns, TriggerObservation,
+    StageCounters, TriggerAnswer, TriggerColumns, TriggerObservation, WidthHistogram,
 };
