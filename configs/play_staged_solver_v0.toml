@@ -43,6 +43,12 @@ widen_schedule = [32]
 # safety-net row may emit, at every node but the root turn's. 0 disables it, and
 # 0 is the committed value everywhere until an SPRT says otherwise.
 safety_net_top_k = 0
+# The Tier-T width cap (W1): cells of Tier T's own union a BATCHED row may emit,
+# at every node but the root turn's. 0 disables it, and 0 is the committed value
+# in every document until an SPRT says otherwise. Distinct from
+# safety_net_top_k above, which caps the quiet ball that stands in when Tier T
+# is empty — the two sets have medians of 12 and 76 over the governed book.
+tier_t_top_k = 0
 tier_t_own_count = 2
 tier_t_opponent_count = 3
 q_depth_turns = 0

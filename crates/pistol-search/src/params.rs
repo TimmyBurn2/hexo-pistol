@@ -70,6 +70,15 @@ pub struct StagedParams {
     /// stone and every later turn two, so no ply threshold names the played
     /// turn at every turn number (docs/experiments/wp15d_design.md §1).
     pub safety_net_top_k: u64,
+    /// Cells of TIER T's own union a BATCHED row may emit, at every node but
+    /// the root turn's. `0` disables the cap, and `0` is the committed value
+    /// until an SPRT says otherwise.
+    ///
+    /// Distinct from [`StagedParams::safety_net_top_k`], which caps the QUIET
+    /// BALL that stands in when Tier T is empty: the two sets have different
+    /// widths (medians 12 and 76 over the governed book) and a cap on one is
+    /// not a cap on the other (docs/decisions.md D-491, D-492).
+    pub tier_t_top_k: u64,
     /// `LAW-SUPPORT`'s threshold for the side to move's own qualifying
     /// windows: 2 or 3 (`U3_tier_t.md` §6.1, the THRESHOLD reading — own
     /// windows qualify at count `>= tier_t_own_count`).

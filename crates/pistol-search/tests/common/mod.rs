@@ -72,6 +72,7 @@ pub fn staged_params(
         candidate_policy: CandidatePolicy::Staged(StagedParams {
             quiet_radius,
             safety_net_top_k: 0,
+            tier_t_top_k: 0,
             tier_t_own_count,
             tier_t_opponent_count,
             q_depth_turns,
@@ -88,6 +89,7 @@ pub fn staged_params_for_cap(quiet_radius: u32, safety_net_top_k: u64) -> Staged
     StagedParams {
         quiet_radius,
         safety_net_top_k,
+        tier_t_top_k: 0,
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
         q_depth_turns: 0,

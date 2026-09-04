@@ -69,6 +69,7 @@ fn params(quiet_radius: u32, own: u8, opponent: u8) -> StagedParams {
     StagedParams {
         quiet_radius,
         safety_net_top_k: 0,
+        tier_t_top_k: 0,
         tier_t_own_count: own,
         tier_t_opponent_count: opponent,
         q_depth_turns: 0,
@@ -421,6 +422,7 @@ fn a_q_depth_turns_this_search_cannot_honour_is_refused_by_name() {
     let bad = pistol_search::params::StagedParams {
         quiet_radius: 2,
         safety_net_top_k: 0,
+        tier_t_top_k: 0,
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
         q_depth_turns: u32::MAX,

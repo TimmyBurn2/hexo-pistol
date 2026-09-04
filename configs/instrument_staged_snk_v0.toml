@@ -45,6 +45,10 @@ widen_schedule = [32]
 # this document and that one differ by exactly the key under test — which is
 # what makes a verdict attributable to it (CLAUDE.md rule 6).
 safety_net_top_k = 16
+# The Tier-T width cap (W1), off here: this document exists to arm the QUIET
+# BALL's cap above, and the two sets are different (medians 12 and 76 over the
+# governed book).
+tier_t_top_k = 0
 # LAW-SUPPORT's threshold reading (U3_tier_t.md §6.1): own windows qualify at
 # count >= 2.
 tier_t_own_count = 2

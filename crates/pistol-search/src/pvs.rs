@@ -397,6 +397,27 @@ impl<'a> Run<'a> {
                         .record_safety_net_cap(set.cells.len() as u64, cap as u64);
                     set.cells.truncate(cap);
                 }
+                // THE TIER-T WIDTH CAP (W1). Same shape as the safety net's
+                // above and for the same reasons: the root turn is exempt
+                // because rule 3 gives turn 1 one stone and every later turn
+                // two, so no ply threshold names the played turn at every turn
+                // number; a truncated node proves a LOWER BOUND and nothing
+                // more, which the store rule below reads off `truncated`; and a
+                // K too large for `usize` saturates rather than narrowing to
+                // zero. It caps TIER T and never the net — the two are
+                // different sets with different widths — and never the FILTERED
+                // or WIN-NOW rows, whose cells are a cover the search proved it
+                // needs.
+                let tier_cap = usize::try_from(params.tier_t_top_k).unwrap_or(usize::MAX);
+                if params.tier_t_top_k > 0
+                    && self.turns_from_root() > 0
+                    && !set.used_quiet_safety_net
+                    && matches!(row, StagedRow::Batched | StagedRow::BatchedLost)
+                    && set.cells.len() > tier_cap
+                {
+                    truncated = true;
+                    set.cells.truncate(tier_cap);
+                }
                 // Promotion runs AFTER the truncation, so the table's move is
                 // promoted within the cut set and can never re-admit a cell the
                 // cap removed (§2.3).
@@ -1022,6 +1043,7 @@ mod tests {
             CandidatePolicy::Staged(crate::params::StagedParams {
                 quiet_radius: 2,
                 safety_net_top_k: 0,
+                tier_t_top_k: 0,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1092,6 +1114,7 @@ mod tests {
             CandidatePolicy::Staged(crate::params::StagedParams {
                 quiet_radius: 2,
                 safety_net_top_k: 0,
+                tier_t_top_k: 0,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1151,6 +1174,7 @@ mod tests {
         let staged = crate::StagedParams {
             quiet_radius: 2,
             safety_net_top_k: 0,
+            tier_t_top_k: 0,
             tier_t_own_count: 2,
             tier_t_opponent_count: 3,
             q_depth_turns: 0,

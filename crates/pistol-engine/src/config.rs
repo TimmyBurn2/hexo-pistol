@@ -229,6 +229,7 @@ pub enum CandidatePolicy {
         /// the `q_depth_turns` shape, and the opposite of `quiet_top_k`, where
         /// a LARGE value is what disables the cut (`U3_tier_t.md` §10).
         safety_net_top_k: u64,
+        tier_t_top_k: u64,
         /// Stage Q's own knob: cumulative quiet-cell batch boundaries after
         /// the first, strictly increasing, each greater than `quiet_top_k`.
         /// Validated for schema completeness; not read by this D-scope's
