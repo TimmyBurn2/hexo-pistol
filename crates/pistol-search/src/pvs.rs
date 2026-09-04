@@ -177,13 +177,29 @@ impl<'a> Run<'a> {
     /// Search one iteration to `depth_plies`, returning its score, or `None` if
     /// the stop condition fired before it finished.
     pub fn iterate(&mut self, depth_plies: u32, abortable: bool) -> Option<i32> {
+        self.iterate_window(depth_plies, abortable, -INFINITY, INFINITY)
+    }
+
+    /// [`Run::iterate`] over a stated window — the aspiration search (S1).
+    ///
+    /// A window narrower than the full one is a BET that this iteration's score
+    /// lands near the last one's. When it does, more of the tree fails outside
+    /// the window and is cut; when it does not, the caller must re-search, and
+    /// the re-search is the bet's cost.
+    pub fn iterate_window(
+        &mut self,
+        depth_plies: u32,
+        abortable: bool,
+        alpha: i32,
+        beta: i32,
+    ) -> Option<i32> {
         self.abortable = abortable;
         // Reset with the iteration, exactly as `visit` clears the ply-0 line on
         // entry: an abort landing before this iteration's first ply-0 promotion
         // must find nothing salvageable, not the previous iteration's score
         // beside an empty line (the decision-red-team's MAJOR-4a).
         self.root_score = None;
-        let score = self.visit(depth_plies, -INFINITY, INFINITY, 0);
+        let score = self.visit(depth_plies, alpha, beta, 0);
         (!self.aborted).then_some(score)
     }
 
@@ -1089,6 +1105,7 @@ mod tests {
                 safety_net_top_k: 0,
                 tier_t_top_k: 0,
                 root_reorder: false,
+                aspiration_delta: 0,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1161,6 +1178,7 @@ mod tests {
                 safety_net_top_k: 0,
                 tier_t_top_k: 0,
                 root_reorder: false,
+                aspiration_delta: 0,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1222,6 +1240,7 @@ mod tests {
             safety_net_top_k: 0,
             tier_t_top_k: 0,
             root_reorder: false,
+            aspiration_delta: 0,
             tier_t_own_count: 2,
             tier_t_opponent_count: 3,
             q_depth_turns: 0,

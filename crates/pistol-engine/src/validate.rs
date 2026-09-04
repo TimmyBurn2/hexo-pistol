@@ -87,6 +87,7 @@ impl SearchSection {
                 safety_net_top_k: _,
                 tier_t_top_k: _,
                 root_reorder: _,
+                aspiration_delta: _,
                 widen_schedule,
                 tier_t_own_count,
                 tier_t_opponent_count,

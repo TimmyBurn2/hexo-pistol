@@ -67,6 +67,11 @@ tier_t_top_k = 0
 # ordering mechanism the opponent study found sealbot has and this engine does
 # not). false is the committed value until an SPRT says otherwise.
 root_reorder = false
+# The aspiration window's half-width in evaluation units (S1): each iteration
+# after the first opens (previous - delta, previous + delta) and re-searches at
+# full width if the score falls outside. 0 opens every iteration full width and
+# is the committed value until an SPRT says otherwise.
+aspiration_delta = 0
 tier_t_own_count = 2
 tier_t_opponent_count = 3
 q_depth_turns = 0

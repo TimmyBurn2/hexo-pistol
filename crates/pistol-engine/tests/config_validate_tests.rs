@@ -188,6 +188,8 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
         quiet_top_k,
         safety_net_top_k,
         tier_t_top_k: _,
+        root_reorder: _,
+        aspiration_delta: _,
         widen_schedule,
         tier_t_own_count,
         tier_t_opponent_count,

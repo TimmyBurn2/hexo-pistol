@@ -445,15 +445,40 @@ impl Searcher {
             run.root_scores = Some(Vec::new());
         }
 
+        // S1: the last completed iteration's score, and the half-width the
+        // seat asked for. `0` disables the window, which is the committed value.
+        let params_delta = match self.params.candidate_policy {
+            CandidatePolicy::Staged(staged) => staged.aspiration_delta,
+            CandidatePolicy::Radius { .. } => 0,
+        };
+        let mut previous_score: Option<i32> = None;
+
         let mut outcome = None;
         for depth_turns in 1..=max_depth {
             let depth_plies = plies_for(state.turn(), depth_turns);
             // Every iteration is abortable once a fallback answer is secured;
             // under a reproducible stop the first one still is not (D-74).
             let abortable = depth_turns > 1 || fallback.is_some();
-            let Some(score) = run.iterate(depth_plies, abortable) else {
+            // THE ASPIRATION WINDOW (S1). The first iteration and any mate
+            // score open full width: a window around a mate score is a window
+            // around a value the next iteration will leave by more than any
+            // delta, and re-searching it every time costs more than it saves.
+            // A fail outside the window re-searches at full width rather than
+            // widening in steps — one re-search is the whole cost, and a
+            // staged widening pays it twice on the same iteration.
+            let Some(score) = (match aspiration_window(previous_score, params_delta) {
+                Some((alpha, beta)) => {
+                    match run.iterate_window(depth_plies, abortable, alpha, beta) {
+                        Some(score) if score > alpha && score < beta => Some(score),
+                        Some(_) => run.iterate(depth_plies, abortable),
+                        None => None,
+                    }
+                }
+                None => run.iterate(depth_plies, abortable),
+            }) else {
                 break;
             };
+            previous_score = Some(score);
 
             let pv = turns_from_plies(state, run.line());
             let best = *pv.first().unwrap_or_else(|| {
@@ -889,4 +914,27 @@ fn solver_proof_outcome(
         provenance: Provenance::SolverProof,
         census: Vec::new(),
     }
+}
+
+/// The window an aspiration search opens, or `None` for a full-width one.
+///
+/// Full width on the first iteration, when the seat asks for no window, and
+/// around any MATE score: `score.rs`'s band puts mates far above `EVAL_MAX`, so
+/// a window of a few evaluation units around one is a window the next iteration
+/// leaves by construction, and re-searching it is pure cost.
+fn aspiration_window(previous: Option<i32>, delta: i32) -> Option<(i32, i32)> {
+    if delta <= 0 {
+        return None;
+    }
+    let previous = previous?;
+    if !matches!(
+        crate::score::classify(previous),
+        crate::score::ScoreKind::Eval(_)
+    ) {
+        return None;
+    }
+    Some((
+        previous.saturating_sub(delta),
+        previous.saturating_add(delta),
+    ))
 }

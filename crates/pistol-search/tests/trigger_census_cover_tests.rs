@@ -29,6 +29,7 @@ fn searcher(cap: u64) -> Searcher {
             safety_net_top_k: 0,
             tier_t_top_k: 0,
             root_reorder: false,
+            aspiration_delta: 0,
             tier_t_own_count: 2,
             tier_t_opponent_count: 3,
             q_depth_turns: 0,
