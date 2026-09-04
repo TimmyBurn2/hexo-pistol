@@ -104,6 +104,14 @@ pub struct Run<'a> {
     /// gives about the census: a config key would arm every search a process
     /// makes. `None` costs one branch per staged node and writes nothing.
     pub widths: Option<crate::info::WidthHistogram>,
+    /// Each root candidate and what the LAST completed iteration scored it,
+    /// best first — sealbot's root re-sort (`sealbot_study_2026-09.md` §6
+    /// item 3, `engine/search.h:171-177`), which this engine did not have.
+    ///
+    /// Empty until an iteration completes, so the first one orders exactly as
+    /// before. Armed only when the seat asks for it; `None` costs one branch
+    /// per root node.
+    pub root_scores: Option<Vec<(pistol_core::Coord, i32)>>,
     /// Set once the stop condition has fired; every node above unwinds without
     /// using its result.
     pub aborted: bool,
@@ -152,6 +160,7 @@ impl<'a> Run<'a> {
             seldepth_turns: 0,
             stages: crate::info::StageCounters::default(),
             widths: None,
+            root_scores: None,
             aborted: false,
             abortable: false,
             root_score: None,
@@ -460,6 +469,29 @@ impl<'a> Run<'a> {
             }
         };
 
+        // THE ROOT RE-SORT (W2). The table's move is promoted below whatever
+        // this does, so the best move from the last iteration still leads; what
+        // this changes is the order of everything AFTER it, which is where a
+        // cutoff is found or missed. A cell the last iteration never scored
+        // sorts after every cell it did, in the order the generator produced —
+        // a stable sort, so the delta rank survives underneath.
+        let mut cells = cells;
+        if ply == 0
+            && let Some(previous) = self.root_scores.as_ref()
+            && !previous.is_empty()
+        {
+            let rank = |at: &pistol_core::Coord| {
+                previous
+                    .iter()
+                    .position(|(cell, _)| cell == at)
+                    .unwrap_or(usize::MAX)
+            };
+            cells.sort_by_key(rank);
+        }
+        // Filled as the children are searched, and handed to the next
+        // iteration at the end of this one.
+        let mut scored: Vec<(pistol_core::Coord, i32)> = Vec::new();
+
         let original_alpha = alpha;
         let mut best_score = -INFINITY;
         let mut best_cell = cells[0];
@@ -503,6 +535,9 @@ impl<'a> Run<'a> {
                 return 0;
             }
 
+            if ply == 0 && self.root_scores.is_some() {
+                scored.push((at, score));
+            }
             if score > best_score {
                 best_score = score;
                 best_cell = at;
@@ -525,6 +560,15 @@ impl<'a> Run<'a> {
             if won || alpha >= beta {
                 break;
             }
+        }
+
+        // Hand this iteration's root scores to the next one, best first. Only
+        // a COMPLETED iteration may: an aborted one scored an arbitrary prefix,
+        // and ordering the next iteration by a prefix is worse than not
+        // ordering it at all.
+        if ply == 0 && !self.aborted && let Some(slot) = self.root_scores.as_mut() {
+            scored.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+            *slot = scored;
         }
 
         if !self.aborted {
@@ -1044,6 +1088,7 @@ mod tests {
                 quiet_radius: 2,
                 safety_net_top_k: 0,
                 tier_t_top_k: 0,
+                root_reorder: false,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1115,6 +1160,7 @@ mod tests {
                 quiet_radius: 2,
                 safety_net_top_k: 0,
                 tier_t_top_k: 0,
+                root_reorder: false,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1175,6 +1221,7 @@ mod tests {
             quiet_radius: 2,
             safety_net_top_k: 0,
             tier_t_top_k: 0,
+            root_reorder: false,
             tier_t_own_count: 2,
             tier_t_opponent_count: 3,
             q_depth_turns: 0,

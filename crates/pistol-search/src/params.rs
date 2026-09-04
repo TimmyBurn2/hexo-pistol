@@ -79,6 +79,10 @@ pub struct StagedParams {
     /// widths (medians 12 and 76 over the governed book) and a cap on one is
     /// not a cap on the other (docs/decisions.md D-491, D-492).
     pub tier_t_top_k: u64,
+    /// Re-sort the ROOT's candidates by the previous iteration's scores
+    /// (W2, sealbot `engine/search.h:171-177`). `false` is the committed value
+    /// until an SPRT says otherwise.
+    pub root_reorder: bool,
     /// `LAW-SUPPORT`'s threshold for the side to move's own qualifying
     /// windows: 2 or 3 (`U3_tier_t.md` §6.1, the THRESHOLD reading — own
     /// windows qualify at count `>= tier_t_own_count`).

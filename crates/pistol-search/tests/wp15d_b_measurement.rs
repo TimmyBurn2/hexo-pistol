@@ -88,6 +88,7 @@ fn searcher(safety_net_top_k: u64) -> Searcher {
                 quiet_radius: QUIET_RADIUS,
                 safety_net_top_k,
                 tier_t_top_k: 0,
+                root_reorder: false,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,

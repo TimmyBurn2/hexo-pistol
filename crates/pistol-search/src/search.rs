@@ -439,6 +439,11 @@ impl Searcher {
         run.solver_calls = root_calls;
         run.census = self.census.take();
         run.widths = self.widths.take();
+        if let CandidatePolicy::Staged(staged) = self.params.candidate_policy
+            && staged.root_reorder
+        {
+            run.root_scores = Some(Vec::new());
+        }
 
         let mut outcome = None;
         for depth_turns in 1..=max_depth {

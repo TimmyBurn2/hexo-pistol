@@ -63,6 +63,10 @@ quiet_top_k = 16
 widen_schedule = [32]
 safety_net_top_k = 0
 tier_t_top_k = 0
+# Re-sort the ROOT's candidates by the previous iteration's scores (W2, the one
+# ordering mechanism the opponent study found sealbot has and this engine does
+# not). false is the committed value until an SPRT says otherwise.
+root_reorder = false
 tier_t_own_count = 2
 tier_t_opponent_count = 3
 q_depth_turns = 0
