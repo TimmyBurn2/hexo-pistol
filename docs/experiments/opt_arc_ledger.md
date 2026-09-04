@@ -297,6 +297,29 @@ is a finding about pathological positions, and the arc's standing rule from here
 is that a package states the STONE COUNT its receipt was taken at and whether a
 game reaches it.
 
+---
+
+## §P3 — codegen flags (D-577, D-14). LANDED.
+
+| step | state | receipt |
+|---|---|---|
+| premise: the float hazard | ABSENT and checked — one file on no search path carries `f32`/`f64` | `p3_registration.md` |
+| expectation, acceptance, abort, registered BEFORE the runs | 1.05–1.20 for LTO, 1.00–1.08 for `cgu1`; winner needs both bands AND byte-identity; abort if none reaches 1.02 | `p3_registration.md` |
+| three variants benched, 5 reps, idle, node identity holding | `cgu1` **0.992 / 0.979** (a LOSS, below its own registered band), **`thin` 1.068 / 1.064**, `fat` 1.030 / 1.022 | `artifacts/p3_bench_{cgu1,thin,fat}_v1.txt` |
+| identity leg on the winner | **IDENTICAL**, 128 bestmove / 0 error per side, three seats | `artifacts/p3_identity_thin_v1.txt` |
+| **VERDICT** | **`lto = "thin"`, `codegen-units = 1` ACCEPTED and landed** | `Cargo.toml` |
+| new pinned digest | `619b81c9…`, bit for bit the benched `thin` binary, superseding `1413698a…` | that binary |
+
+**F-P3.1 — THE TWO DIALS ARE NOT INDEPENDENT AND THE AGGRESSIVE SETTING IS NOT
+THE FAST ONE.** `codegen-units = 1` alone LOSES (0.992 / 0.979): one unit costs
+more in worse in-crate inlining than it buys from whole-crate visibility. It only
+becomes a win with thin LTO on top, and `fat` — the most aggressive setting
+available — gives half the win back. **A package that had reasoned rather than
+measured would have registered `fat` as the obvious best and banked 1.03 instead
+of 1.07**, or registered `cgu1` as a free win and shipped a regression. D-14
+deferred this decision *"until there is a bench to judge it by"* precisely
+because the answer is not derivable from the flags' descriptions.
+
 ### ENVIRONMENT NOTES FOR §P1
 
 - Measurement worktree `/home/tom/pistol-wt/p1-measure`, detached, own

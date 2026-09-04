@@ -37,6 +37,17 @@ serde_path_to_error = "0.1.20"
 # hand-editing an assertion's class to go looking (D-128, D-129).
 [profile.release]
 overflow-checks = true
+# MEASURED, not assumed, and the two dials are not independent (D-577, P3).
+# `codegen-units = 1` ALONE is a LOSS — 0.992 / 0.979 — because the optimiser
+# gives up more inside the crate than it gains from seeing all of it. Thin LTO
+# on top turns that into 1.068 / 1.064, since this engine's hot path spans four
+# crates and cross-crate inlining is what it wants; `lto = "fat"` gives half of
+# that back at 1.030 / 1.022. Search output is byte-identical at all three, which
+# the whole search path having no floating-point is what allows. Portable flags
+# only: `-C target-cpu=native` and PGO stay out of a pinned instrument binary,
+# because a pinned binary must reproduce on a host that is not this one.
+lto = "thin"
+codegen-units = 1
 
 [profile.release-checked]
 inherits = "release"
