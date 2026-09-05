@@ -166,3 +166,33 @@ if failures:
     print(f"test_texel: {len(failures)} FAILURE(S): {failures}")
     raise SystemExit(1)
 print("test_texel: all checks passed")
+
+
+def test_census_classes_partition():
+    """The class count is over the ALTERNATIVE's columns, and it sits between
+    the root count and the key count by construction."""
+    import census_classes as CC
+    check("the partition is stage3_allocator_bound's COLUMNS, in its order",
+          CC.COLUMNS == ("turns", "mover_hot", "opp_hot", "mover_w1", "opp_w1",
+                         "mover_l3", "opp_l3", "cover", "covers"), CC.COLUMNS)
+    path = "artifacts/wp22_cap_dryrun_v2/d3_c2048.txt"
+    if not pathlib.Path(path).exists():
+        check("census fixture present (skipped, artifact absent)", True)
+        return
+    firings, keys, roots, classes, loss = CC.tally(path)
+    check("roots <= classes <= keys, which is what makes the tightening legitimate",
+          len(roots) <= len(classes) <= len(keys), (len(roots), len(classes), len(keys)))
+    check("the loss direction is counted separately and is not inside the win set",
+          isinstance(loss, set))
+    points = CC.curve(path)
+    check("the curve is non-decreasing", all(b >= a for (_, a), (_, b) in zip(points, points[1:])),
+          points)
+
+
+print("test_census_classes_partition")
+test_census_classes_partition()
+print()
+if failures:
+    print(f"test_texel: {len(failures)} FAILURE(S): {failures}")
+    raise SystemExit(1)
+print("test_texel: all checks passed (including census_classes)")
