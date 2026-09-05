@@ -1,4 +1,13 @@
-# WP-2.2 Phase 1 — the fit's own finding: excluding mate rows by kind removes half the evidence about the top of the table
+# WP-2.2 Phase 1 — the fit's own finding
+
+> **SUPERSEDED IN ITS MECHANISM BY D-621.** This document's direction is
+> BACKWARDS and its named successor cannot work. Every one of the 3 882
+> five-window positions has the window owned by the side NOT to move, so the
+> dropped mate rows are predominantly ones where the window FAILED (1 353 of
+> 1 873 are `mate_in`), and the side-to-move-relative feature takes ONE SIGN
+> ONLY. `w5` is not censored, it is NOT IDENTIFIABLE, and a censored likelihood
+> cannot repair it. The arithmetic below reproduces; the causal story does not.
+> Read D-621 first.
 
 **Run revision** `71fa6f1`. Corpus
 `artifacts/arc3r_sweep_deduped_manifest.txt`, 89 805 deduped positions.

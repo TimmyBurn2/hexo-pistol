@@ -466,11 +466,13 @@ NOT A WEIGHT TABLE (D-616).** The v0 eval is linear in its five weights — an
 oracle says so against the engine, 0 of 500 positions disagreeing — so the fit
 is exact and hyperparameter-free. Fitted to the sweep corpus's search scores it
 wants a table that is FLAT at the top: one-from-a-win at 65 against
-two-from-a-win's 64, where the committed table says 1500 against 300. The cause
-is measured and it is the exclusion rule, not the objective: a position holding
-a five-stone window is 4.6x likelier to be scored `mate_in` than `eval`, so
-dropping mate rows by kind removes 48 % of that evidence and keeps only the
-lines that did not convert. **Every offline diagnostic improves while this is
+two-from-a-win's 64, where the committed table says 1500 against 300. The cause is measured, and
+**D-621 corrects D-616 on what it is**: not censoring but NON-IDENTIFIABILITY.
+All 3 882 positions holding a five-stone window have it owned by the side NOT to
+move — rule 4 completes a win the instant a stone forms six, so a mover holding
+a live five-window would already have played it — and the side-to-move-relative
+feature therefore takes ONE SIGN ONLY across 2 009 rows. A regressor with no
+sign variation cannot report what a five-window is worth to its owner. **Every offline diagnostic improves while this is
 true**, which is what D-614 exists to forbid reading as progress. The censored
 likelihood — a mate row as *"value at or beyond the band"* rather than as
 missing data — is the named successor, and it is named before the SPRT rather
