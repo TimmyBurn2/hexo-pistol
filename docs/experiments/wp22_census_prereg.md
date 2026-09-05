@@ -1,9 +1,13 @@
-# WP-2.2 §B — census run pre-registration, revision 1.
+# WP-2.2 §B — census run pre-registration, revision 2.
 
-Governing revision: `71fa6f1` (`dev`). **This document does not
-run until `wp22_cap_prereg.md` has passed its review and returned a cap.** The
-cap is this registration's one free input and it is written in below before the
-run, never after.
+Governing revision: `84c1af2` (`dev`).
+
+**Revision 2 implements D-618, which RETIRED the cap calibration UNRUN.** The
+cap is no longer this document's free input: it is **2048**, fixed by D-618 on
+measurements that also showed the cap barely moves the quantity this census
+exists to produce (distinguishable-trial rate 0.10 / 0.07 / 0.08 per position
+across the three rungs, a spread of 1.4x). Revision 1 waited on a calibration
+that no longer exists.
 
 ## §1 What this run answers
 
@@ -52,12 +56,14 @@ the run.**
 
 ```
 trigger_census --fixture <census slice prefix> --nodes 50000 \
-               --cap <the cap wp22_cap_prereg.md returns> --gate on
+               --cap 2048 --gate on
 ```
 
-`--nodes 50000` is the seat the cap was chosen at, and
-`wp22_cap_prereg.md` §1 binds the cap to that budget: a census at another
-budget would need the calibration re-run, not this document amended.
+**Single instrument, one arm.** D-618 fixes the cap at 2048 and declines a
+second arm: the red team measured that two of the three roots cap 2048 alone
+proves are recovered by cap 16384 at `--nodes 200000`, so most of the apparent
+cap complementarity is a NODE-BUDGET artifact, and a union across two caps
+licenses no conclusion D-537 can read.
 
 **Why a census-capable seat is needed at all**: D-563 measured that the sweep's
 own labelling seat (`configs/instrument_v0.toml`, gate off) records ZERO
@@ -66,47 +72,47 @@ records that the WP-2.1 sweep therefore ran with the census OFF, and that the
 count *"comes from the census run over this corpus's positions … on a
 census-capable seat"*. **This is that run.**
 
-## §5 Sizing, and the stopping rule
+## §5 Sizing — on the count the floor's own statistics assume
 
-**`n` is fixed before the run, and it is sized on the ROOT rate rather than on
-the key rate, because the keys are clustered.** `wp22_cap_prereg.md` §6
-measured that a fixture position either proves nothing or proves several times:
-at cap 2048, **86 distinct win-proving keys came from 8 root positions** out of
-100. The effective sample size for `w` is the number of PROVING ROOTS, and a
-Bernoulli model over positions understates `w`'s variance badly.
+**D-537's floor is a one-sample BINOMIAL** (`overnight2_ledger.md` §4:
+`p0 = 8/14`, `p1 = 12/14`, `alpha = beta = 0.05`, `n = 28`, `c = 21`), and a
+binomial assumes independent trials. **The counted unit does not deliver them**,
+and the collapse is MEASURED (`artifacts/wp22_cap_decision/`, 100 positions at
+cap 2048): 86 win-proving keys, from **8 roots**, distributed
+`[35, 33, 11, 3, 1, 1, 1, 1]`, collapsing to **10 DISTINGUISHABLE TRIALS**
+against the candidate field of `tools/stage3_census_rank.py`. **28 keys are
+reachable from ONE search tree.**
 
-So, with `r` the calibration's measured proving-ROOT rate and `k` its measured
-keys per proving root, both at the selected cap:
+**So `n` is sized on distinguishable trials, not on keys.** A candidate detector
+is a boolean predicate over the census columns, and `p1 = 12/14` is defined as a
+bound OVER THOSE COLUMNS (`matrix_stage3_detector.md` §5.4), so two proving rows
+every candidate scores identically are one trial by the alternative's own
+definition.
 
-```
-n  =  ceil( 3 · 28 / (r · k) )
-```
+| quantity | MEASURED rate / position, cap 2048 | ESTIMATED `n` for 28 |
+|---|---|---|
+| distinct keys (D-537's letter) | 0.86 | 33 |
+| distinct proving roots | 0.08 | 350 |
+| **distinguishable trials** | **0.10** | **280** |
 
-**The factor of 3 is a margin registered rather than tuned**, and it is doing
-more work here than a margin usually does: it absorbs the clustering, which is
-why the sizing does not pretend to a variance it has not measured.
+**REGISTERED: `n = 800`**, ESTIMATED **45 minutes** at the MEASURED 3.41 s per
+position. That is well above the 280 the point estimate needs, and the margin is
+not decoration: the trial count advances **lumpily**, in steps, when a new root
+proves rather than smoothly — MEASURED, it sat at 2 through the first sixty
+positions and reached 10 over the next forty. A sample sized at the point
+estimate would be a coin toss.
 
-**A floor on the root count regardless**: `n` is never smaller than
-`ceil(3 · 28 / r) / k` would make it, and never smaller than **200 positions**,
-so that the count rests on tens of independent roots rather than on two or
-three. A census whose 28 keys came from 3 roots has met the floor's letter and
-not its purpose, and D-537 counts DISJOINT POSITIONS precisely to avoid that.
+**Saturation was checked before this was registered**, because distinct
+verdict-vectors are a coupon-collector quantity and a ceiling near 10 would put
+28 out of reach: the cumulative curve is still climbing over the second fifty
+positions at both caps examined, so **no ceiling is visible** and 28 is
+reachable. If the governed run's curve flattens instead, that is the finding
+§7 reports and not a failure of the run.
 
-**The run does NOT stop when it reaches 28.** It runs its registered `n` and
-reports the count. A run that stopped at the floor would make the count a
-function of the floor, and every subsequent reading of *"how rich is this
-corpus"* would be circular.
+**The run does NOT stop when any count reaches 28.** It runs its registered `n`.
+A run that stopped at the floor would make the count a function of the floor.
 
-**If `n` exceeds what the box affords** — stated in the receipt as hours before
-the run starts — the shortfall is registered by cutting `n` to what fits **and
-saying so in the closure line**, with the count reported against the floor
-either way. A short run is a short run; it is never reported as a floor that
-could not be cleared.
-
-**The proving-root count is reported beside `w` in every case** (§7), so a
-reader can see whether the floor was cleared by many roots or by a few.
-
-## §6 The cross-root collision correction
+## §6 What the three counts are for, and which one licenses what
 
 `w` counts distinct keys, so a position proving a win under two different roots
 counts once. **The calibration measures the proving-rows-to-distinct-keys ratio
@@ -120,9 +126,14 @@ successor can see whether the margin was doing that work.
 - `w` against the floor of **28**, and whether the floor is cleared.
 - Positions searched, total firings, invocations, rows with `att_proved`.
 - Distinct keys with `def_proved`, in their own column, never summed.
-- **The number of PROVING ROOT POSITIONS**, beside `w`, and the keys-per-root
-  ratio — without which `w` cannot be read for how much independent evidence it
-  represents.
+- **The number of PROVING ROOT POSITIONS** beside `w`, the keys-per-root
+  distribution, and the **DISTINGUISHABLE-TRIAL count** — without which `w`
+  cannot be read for how much independent evidence it represents.
+- The **cumulative trial curve** against positions processed, so a successor can
+  see whether the count was still climbing when the run ended.
+- The attacker-invocation **truncation rate** (invocations that hit the cap
+  without proving), MEASURED at 71.2 % at this cap on the dry-run slice, so what
+  a larger cap might have added is visible rather than argued.
 - `distinct key` against `distinct key_pos`, which is the symmetry fold's
   in-tree yield on a third population (the first two: D-570's 798 firings and
   this package's own dry run, both zero).

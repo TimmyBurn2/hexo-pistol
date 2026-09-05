@@ -159,3 +159,65 @@ that rather than to choose.
 - **The census's truncation column comes back near zero at 2048**, which would
   say the small cap is not losing proofs to its cap after all and would weaken
   F4 and the case for a second arm.
+
+---
+
+# §5 SELECTION — taken after the DECISION-RED-TEAM, and it is not the recommendation
+
+**SELECTED: option F, which this matrix did not list and its red team proposed.**
+
+> **F — RETIRE the cap calibration. Register ONE census: cap 2048,
+> `--nodes 50000`, single instrument, over the registered census slice. Size `n`
+> on the count that the floor's own statistics assume, and report three counts
+> side by side: D-537's literal distinct-key figure, the distinct-root figure,
+> and the DISTINGUISHABLE-TRIAL figure.**
+
+**Why the recommendation (E) fell.** E's primary count was to be taken at cap
+2048 — the arm §3's own F3 identifies as the most clustering-inflated — and the
+red team showed the inflation is not cosmetic but destroys the test the floor
+exists to power. Quoting the attack, which the ADR line records verbatim:
+
+> *"E takes its primary D-537 count at cap 2048 — the arm its own F3 identifies
+> as the most clustering-inflated — and the inflation is not cosmetic … rows
+> sharing a signature return one verdict to every hypothesis the test can
+> entertain, so a sample of exactly 28 distinct keys holds a median of 6
+> distinguishable trials and the registered one-sample binomial runs at an
+> actual size of 0.48 against its registered 0.05."*
+
+**This session then measured the attack's own quantity more sharply than the
+attack did, and it is worse.** Against the ACTUAL candidate field
+(`tools/stage3_census_rank.py`), cap 2048's **86 win-proving keys collapse to 10
+distinguishable trials** — an 8.6x collapse, not the red team's 3.5x over raw
+column tuples.
+
+**And that same measurement kills E's other limb.** The distinguishable-trial
+rate per position is **0.10 / 0.07 / 0.08** across the three caps: a spread of
+**1.4x**, against the 4.5x spread of the inflated key count. **On the currency
+that decides whether round 3 may open, the cap is very nearly irrelevant** — so
+E's second arm, bought for coverage, purchases little of what the census is for.
+The red team also measured that two of the three roots cap 2048 alone proves are
+recovered by cap 16384 at `--nodes 200000`, so most of §1's complementarity is a
+NODE-BUDGET artifact rather than a cap property, and the node budget is a knob
+this matrix's option field never considered.
+
+**Why F needs no operator ruling.** D-537 fixes its minimum as a floor: a
+successor *"may register a larger one with grounds and may never register a
+smaller one"*. Requiring 28 distinguishable trials is **strictly larger** than
+requiring 28 distinct keys (10 ≤ 86 on the arm in hand), in the same currency
+and in the tightening direction. It supplements D-570's identity rather than
+replacing it, which is why an ADR line is owed and a ruling is not.
+
+**What survives of this matrix.** F1 — the floor is not the binding constraint
+and the calibration was disproportionate — stands, and it is what kills options
+B and C. F2's *"no cap dominates"* survives in weakened form: one root (7)
+remains a genuine small-cap foreclosure. F3 and F4 stand and are, in the end,
+the facts that chose F.
+
+**The strongest surviving attack ON F**, recorded because the option's ADR line
+must carry one. From the red team's own flip clause: *if the operator rules that
+D-537's counted unit is the canonical key and may not be supplemented — that B1
+is a defect in the FLOOR to be fixed when round 3 registers, not in the census
+that feeds it — then F's third tally is premature and belongs to round 3's
+pre-registration rather than to this one.* F answers it by REPORTING all three
+counts and licensing on the letter, so nothing is withheld from a successor who
+takes that view; but the attack is not refuted, only accommodated.
