@@ -461,6 +461,21 @@ distilled from mantis self-play + human corpora. Acceptance bar
 (pre-registered): node-matched SPRT >= +150 Elo vs handcrafted_v0; otherwise
 handcrafted stays and the eval budget moves to search.
 
+**WP-2.2 PHASE 1 HAS RUN ITS FIT AND THE RESULT IS A CONSTRAINT ON THE CORPUS,
+NOT A WEIGHT TABLE (D-616).** The v0 eval is linear in its five weights — an
+oracle says so against the engine, 0 of 500 positions disagreeing — so the fit
+is exact and hyperparameter-free. Fitted to the sweep corpus's search scores it
+wants a table that is FLAT at the top: one-from-a-win at 65 against
+two-from-a-win's 64, where the committed table says 1500 against 300. The cause
+is measured and it is the exclusion rule, not the objective: a position holding
+a five-stone window is 4.6x likelier to be scored `mate_in` than `eval`, so
+dropping mate rows by kind removes 48 % of that evidence and keeps only the
+lines that did not convert. **Every offline diagnostic improves while this is
+true**, which is what D-614 exists to forbid reading as progress. The censored
+likelihood — a mate row as *"value at or beyond the band"* rather than as
+missing data — is the named successor, and it is named before the SPRT rather
+than after it.
+
 ## Stage 3 — Forcing search
 
 Full TSS/DBS with independent-region decomposition; CTSS conservative defense;
