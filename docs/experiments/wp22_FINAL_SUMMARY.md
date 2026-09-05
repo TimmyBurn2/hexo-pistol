@@ -8,8 +8,14 @@ fit is censored by dropping mate rows, and §B's floor counts a unit whose 86
 observations are 10 independent trials — and each was found by measuring the
 thing rather than arguing about it.**
 
-Read `wp22_STOP_SUMMARY.md` for the STOP that interrupted §B, and D-616 and
-D-618 for the two findings. This document is the whole record.
+**§B DID CLOSE.** The census ran under a registration that passed its third
+review, and every count clears D-537's floor: **118 column classes (the
+registered minimum), 248 keys, 63 roots, against 28**. Detector round 3 is
+licensed (D-620). **CI is green at the closure HEAD: 21 of 21 gates,
+`ci: all gates passed`, `EXIT=0`, over a tree clean for the run's whole length.**
+
+Read `wp22_STOP_SUMMARY.md` for the STOP that interrupted §B, and D-616, D-618,
+D-619 and D-620 for the findings. This document is the whole record.
 
 ## §1 What this session was asked for, and what it actually produced
 
@@ -265,15 +271,48 @@ estimate rather than at it.
   paragraph citing D-601/D-602 against transcription defects), and a population
   count that moved because my own outputs joined the set I was counting.
 
+## §9b §B, closed — and the three reviews it took
+
+The census registration failed twice and passed on the third round. The rounds
+mattered, and two of them corrected me on substance rather than presentation:
+
+- **Round 1** found I had computed the sizing quantity over
+  `stage3_census_rank.py`'s thirteen written-ordering predicates — **the NULL's
+  family**. `p1 = 12/14` is `knapsack_bound`'s bound over
+  `stage3_allocator_bound.py`'s nine `COLUMNS`. The narrow partition
+  under-counts 2.6x and turned a clearable criterion into an unreachable one.
+  Its headline — *"unreachable, not at n = 800, not at n = 89 205"* — was
+  measured over that same wrong partition.
+- **Round 2** adjudicated my reversal of that headline and **upheld it**,
+  attacking it four ways: Chao2 on the class partition gives 489-641 against
+  15-18 for the null's family. It still FAILed the document on four majors, the
+  sharpest being that my INDEPENDENCE rationale was refuted by measurement —
+  `knapsack_bound` scores firings while choosing classes, so a class count is a
+  RESOLUTION measure, not an independence one.
+- **Round 3** PASSED, having driven the CLI rather than the library, unpacked a
+  `git archive` with no `artifacts/` directory to prove the test suite is
+  hermetic, and killed five seeded mutations.
+
+**The governed run**: 800 positions, cap 2048, 2573 s against a 44-minute
+estimate. Class curve `100:17 200:33 300:52 400:75 500:84 600:88 700:114
+800:118` — still climbing, which settles round 1's saturation prediction on the
+run's own data.
+
+**Two things the run gave that no argument could**: 67.0 % of attacker
+invocations hit the cap without proving, so what a larger cap would buy is
+measured rather than inferred from D-563; and distinct `key` equals distinct
+`key_pos` at 248, a symmetry-fold yield of ZERO on a third population.
+
+**The caveat is carried forward, not closed**: 28 classes are reachable from as
+few as 3 roots on this run. It does not bite at 63 roots, and round 3 sizes on
+those.
+
 ## §10 What is owed next
 
-1. **Run the census** once its revision-2 review passes (~45 min), and state
-   §B's closure line: the three counts against the floor of 28, and detector
-   round 3 licensed or the shortfall stated.
-2. **Phase 1's SPRT** — candidate prepared and validated
+1. **Phase 1's SPRT** — candidate prepared and validated
    (`[1, 21, 22, 64, 65]`, sha256 `834b4f7f…`), expectation registered: it
    loses, and h0 is the finding that the v0 feature set is the limit.
-3. **R3's seat-swap anchor** — configured, needs a quiet box.
-4. **Phase 2** — not started. Its premise memo should quote D-616: the corpus
+2. **R3's seat-swap anchor** — configured, needs a quiet box.
+3. **Phase 2** — not started. Its premise memo should quote D-616: the corpus
    cannot be fitted by dropping its mate rows, and the censored likelihood is
    the named successor.

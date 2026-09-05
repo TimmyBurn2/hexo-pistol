@@ -1,6 +1,12 @@
 # WP-2.2 — session summary
 
-> **THIS SESSION ENDED IN A STOP.** See
+> **THE STOP WAS RESOLVED AND §B CLOSED.** The operator returned the decision;
+> an option matrix and a DECISION-RED-TEAM selected a sixth option (D-618, as
+> corrected by D-619), the census registration passed on its third review, and
+> the governed run cleared D-537's floor on all three counts (D-620). CI is
+> green at the closure HEAD: **21 of 21 gates, EXIT=0**.
+>
+> For the STOP itself see
 > `docs/experiments/wp22_STOP_SUMMARY.md` first — it names the one decision
 > owed to the operator. This document is the fuller record behind it.
 
