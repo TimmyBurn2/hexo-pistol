@@ -148,11 +148,11 @@ Every arc worktree's gitignored `artifacts/` and `sessions/` are copied into
 because removal takes them with it and WP-1.8c's four review reports survive only
 in a transcript.
 
-**101 files**, listed with their digests in
+**219 files**, listed with their digests in
 `artifacts/opt_arc_worktree_export/RECEIPT.sha256`, whose own sha256 is
-`44fe45ca80d2a1ca3d23a96626bf0c3edc1a56616f4f584a841ca177b29a0139`. The worktrees
-covered: `p1-measure`, `p1-mutants`, `p2`, `p3`, `i2`, `w1`, `w2`,
-`s1`, `s2`, `s3`, `t1-ci`, `arc3-base`.
+`a3e36bd64ab6ad41811dcb87a59222bdc18f1c518a10e4f58bc79921dfdbf775`. The thirteen
+worktrees covered: `p1-measure`, `p1-mutants`, `p2`, `p3`, `i2`, `w1`, `w2`,
+`s1`, `s2`, `s3`, `t1-ci`, `arc3-base`, `ci-arc`.
 
 **The one indirection**: the review reports for P1's three rounds live in
 `/home/tom/pistol-wt/p1-patches/` and in this session's scratchpad, not in a
