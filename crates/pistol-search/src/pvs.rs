@@ -760,7 +760,7 @@ impl<'a> Run<'a> {
         if first {
             return full(self);
         }
-        let mut null_window = |run: &mut Self, depth: u32| {
+        let null_window = |run: &mut Self, depth: u32| {
             if same_side {
                 run.visit(depth, alpha, alpha + 1, ply)
             } else {

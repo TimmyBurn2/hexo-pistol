@@ -226,3 +226,15 @@ workspace by intent):
   openings whose engine moves coincided counted as one. The opening is now part
   of a game's identity. Caught by the reader's own happy-path test on the day
   book support landed.
+
+
+## One build warning this arc did NOT introduce, named so nobody attributes it here
+
+A `--release` build reports `unused import: generate_turns` at
+`crates/pistol-solver/src/policy.rs:1`. The symbol is used at line 266 inside a
+`#[cfg(debug_assertions)]` block, so release compiles the use away and the
+import is genuinely unused there. **It reproduces at `ffc5c10`, the arc's own
+baseline** — checked, not assumed — and `policy.rs` was last touched before this
+arc began. It is left alone: a closure commit is the wrong place for an
+unrelated fix, and a warning silently repaired here would be indistinguishable
+from one this arc caused.
