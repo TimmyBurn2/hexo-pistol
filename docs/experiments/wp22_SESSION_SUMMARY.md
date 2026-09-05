@@ -1,5 +1,9 @@
 # WP-2.2 — session summary
 
+> **THIS SESSION ENDED IN A STOP.** See
+> `docs/experiments/wp22_STOP_SUMMARY.md` first — it names the one decision
+> owed to the operator. This document is the fuller record behind it.
+
 ## ONE LINE FOR THE MORNING
 
 **There is no Stage-2 Elo number yet, and the finding that stands in its place
@@ -149,8 +153,9 @@ and each is now pinned so the argument cannot be re-derived into the tree:
 
 ## The next session's first three acts
 
-1. Read `wp22_cap_prereg_rev3_REVIEW.md`; fix or proceed; then run the
-   calibration (~1 h 38 m, detached) and the census after it.
+1. **Take the operator's answer on the cap** (`wp22_STOP_SUMMARY.md`). The
+   calibration must NOT be run under revision 4 as it stands: its own rule
+   already returns 2048 on every branch.
 2. Run Phase 1's SPRT on the registered primary. The honest expectation is
    already on record: **these weights lose**, and the finding above says why.
 3. R3's anchor, in the calibration's idle time, on a quiet box.
