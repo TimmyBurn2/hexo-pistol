@@ -120,6 +120,27 @@ is where this engine's width actually is (W1's calibration, median 76 against
 holdout book to measure it on. That is the next width package, and it is named
 here so a successor does not re-derive it.
 
+## CI at the closure revision
+
+**Twenty gate lines, `gate 1/20` through `gate 20/20`, `ci: all gates passed`,
+`CI_EXIT=0`**, at `c7f561a` in a detached worktree on `/home`
+(`artifacts/opt_arc_ci_c7f561a.txt`, sha256 `fa35be68bdafd20e…`).
+
+**It took three runs, and the two failures are findings.** The first surfaced a
+stale `mut` on S3's null-window closure — `-D clippy::all` does not deny rustc's
+`unused_mut`, so gate 4 passed it and only the build's own warning showed it. The
+second **FAILED gate 17** on rule 9's cap with three unregistered files:
+`openings.rs` (this arc's), and **`info.rs` and `exchange.rs`, which had been
+over the cap since I1 and I2 landed**. Those two packages landed without a full
+CI run — only tranche 1 had one — so the closure's CI found a breach the arc had
+carried for four packages. **A closure that runs CI once at the end is not the
+same instrument as one that runs it per package, and this arc paid for the
+difference.**
+
+The one warning the run still reports, 16 times, is `unused import:
+generate_turns` in `pistol-solver`; it reproduces at `ffc5c10` and is named in
+its own section below rather than repaired here.
+
 ## Exports and receipts (D-469)
 
 Every arc worktree's gitignored `artifacts/` and `sessions/` are copied into
