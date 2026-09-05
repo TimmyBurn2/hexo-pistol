@@ -23,6 +23,11 @@ green: **20 of 20 gates, `ci: all gates passed`, `EXIT=0`**
 **§R — landed as D-610..D-614.** R2's own citation `D-56q` names no line that
 exists; D-611 records that rather than normalising it.
 
+**Two ADR lines carry the session's durable findings**: **D-615** (the
+canonical-image census shortcut is measured false) and **D-616** (the label
+corpus cannot be fitted by dropping its mate rows). The ROADMAP's Stage 2
+carries D-616, per hard rule 10.
+
 **R2's tabulation — closed (D-611).** Recomputed independently from the manifest
 body and agrees with its derived header at 2 369. **Zero of them are
 transposition disagreements**; all 2 369 are symmetry equivalences, which every
@@ -75,6 +80,20 @@ assignment and the output directory. It needs a quiet box.
 
 **Phase 2 in its entirety** — no matrix, no DECISION-RED-TEAM, no selection.
 **Phase 1's SPRT** — registered, not run.
+
+## What a successor must not redo
+
+Three things in this session were argued one way and then MEASURED the other,
+and each is now pinned so the argument cannot be re-derived into the tree:
+
+1. **The census draw** (D-615). Building fixtures from the manifest's canonical
+   sequence removes a join, a defect class and an out-of-tree dependency, and
+   the invariance argument for it is correct about the keys. It is still wrong.
+2. **The fit's constraint handling.** Projecting the unconstrained solution onto
+   the schema is not the constrained optimum; the two answers differ on this
+   corpus. Pinned by `tools/texel/test_texel.py`.
+3. **Dropping mate rows** (D-616). Correct in isolation, and it censors exactly
+   the top of the table.
 
 ## The next session's first three acts
 

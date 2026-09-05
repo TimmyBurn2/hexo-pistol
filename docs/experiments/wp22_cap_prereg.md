@@ -244,8 +244,19 @@ Run before this revision was written, per D-591.
    corpus's move order at cap 2048: **229 vs 236 firings, 206 vs 210 distinct
    keys, 6 vs 8 loss-direction keys.** The join was verified on `key_pos` AND
    `key_full` for all 20 before the comparison.
-2. **M5.** All 25 `trigger_census` outputs in `artifacts/`, by budget: **15 at
-   50 000 (every `stage3*` census), 10 at 400 000 (all `wp20b_*`).**
+2. **M5.** Reported as the SEARCH rather than as a transcribed integer
+   (D-601, D-602), run at `b876d1d`:
+
+   ```
+   LC_ALL=C grep -l "trigger_census: argv" artifacts/*.txt | while read f; do
+       LC_ALL=C grep -o -m1 '--nodes [0-9]*' "$f"; done | LC_ALL=C sort | uniq -c
+   ```
+
+   **25 files, 25 argv lines: 10 at `--nodes 400000`, 15 at `--nodes 50000`.**
+   The fifteen are every `stage3*` census; the ten are all `wp20b_*`. Counting
+   argv LINES rather than files gives the same split, so no file mixes budgets.
+   The round-2 review reported 17 and 6 over a differently scoped set; this
+   command and its scope are what this document's claim rests on.
 3. **F1/§10.1 carried.** `wp20b_cap_out_*`: **6 files, all `--nodes 400000`.**
 
 ## §11 Void against fail
