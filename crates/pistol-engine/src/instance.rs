@@ -259,6 +259,8 @@ fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
             root_reorder,
             aspiration_delta,
             extension_budget,
+            lmr_min_depth_turns,
+            lmr_late_index,
         } => SearchCandidatePolicy::Staged(pistol_search::StagedParams {
             quiet_radius: *quiet_radius,
             safety_net_top_k: *safety_net_top_k,
@@ -266,6 +268,8 @@ fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
             root_reorder: *root_reorder,
             aspiration_delta: *aspiration_delta,
             extension_budget: *extension_budget,
+            lmr_min_depth_turns: *lmr_min_depth_turns,
+            lmr_late_index: *lmr_late_index,
             tier_t_own_count: *tier_t_own_count,
             tier_t_opponent_count: *tier_t_opponent_count,
             q_depth_turns: *q_depth_turns,

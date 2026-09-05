@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use pistol_core::{Coord, Phase, PlyOutcome};
+use pistol_core::{Coord, Phase, PlyOutcome, TURN_STONES};
 
 use crate::candidates::candidate_cells;
 use crate::heuristics::HeuristicTables;
@@ -132,6 +132,25 @@ pub struct Run<'a> {
     root_score: Option<i32>,
     /// `pub(crate)`, same reason as `position`.
     pub(crate) pv: PvTable,
+}
+
+/// One descent into a child: everything [`Run::child`] needs about the step it
+/// is taking.
+///
+/// A struct rather than a parameter list because the list had grown past what a
+/// reader can check at a call site — seven positional arguments of which three
+/// were bare integers in a row.
+struct Descent {
+    depth_plies: u32,
+    alpha: i32,
+    beta: i32,
+    ply: usize,
+    /// The principal variation's first child, searched on the full window.
+    first: bool,
+    /// The same side owes another stone, so the window does not flip.
+    same_side: bool,
+    /// Plies to shave off this child's SCAN (S3); `0` is no reduction.
+    reduction: u32,
 }
 
 impl<'a> Run<'a> {
@@ -544,6 +563,19 @@ impl<'a> Run<'a> {
                 )
             });
             let won = matches!(outcome, PlyOutcome::Win { .. });
+            // LATE MOVE REDUCTIONS (S3). A candidate deep in the UNFORCED
+            // range of a BATCHED row is one the generator ranked last and the
+            // ordering heuristics did not lift: searching it at full depth
+            // costs the same as searching the move that is probably best. It
+            // is scanned shallower instead, and any scan that beats alpha is
+            // re-searched at full depth before it can change anything, so a
+            // reduction can cost time and never a move.
+            //
+            // WHOLE TURNS ONLY: D-111 forbids a horizon that lands between a
+            // turn's two stones, so the reduction is two plies and never one.
+            // FILTERED and WIN-NOW rows are never reduced — a forced reply and
+            // a winning stone are the two things a shallower look loses.
+            let reduction = self.reduction(row_class, forced_bound, index, depth_plies);
             let score = match outcome {
                 // Rule 4: this stone ended the turn and the game. The distance
                 // is in turns from the root, and both stones of a turn share
@@ -561,23 +593,32 @@ impl<'a> Run<'a> {
                     mate_in(turns)
                 }
                 // The same side owes another stone: same window, no flip.
-                PlyOutcome::TurnContinues => self.child(
-                    depth_plies - 1 + extension,
+                //
+                // S2's extension and S3's reduction meet here and cannot both
+                // fire: the extension is granted only on a FILTERED row and the
+                // reduction only on a BATCHED one. They are still carried
+                // independently — the extension is DEPTH, added for every child
+                // of this node, and the reduction is a shallower SCAN of one
+                // late child that a full-depth re-search verifies.
+                PlyOutcome::TurnContinues => self.child(Descent {
+                    depth_plies: depth_plies - 1 + extension,
                     alpha,
                     beta,
-                    ply + 1,
-                    index == 0,
-                    true,
-                ),
+                    ply: ply + 1,
+                    first: index == 0,
+                    same_side: true,
+                    reduction,
+                }),
                 // The turn is complete and the opponent is to move.
-                PlyOutcome::TurnComplete => self.child(
-                    depth_plies - 1 + extension,
+                PlyOutcome::TurnComplete => self.child(Descent {
+                    depth_plies: depth_plies - 1 + extension,
                     alpha,
                     beta,
-                    ply + 1,
-                    index == 0,
-                    false,
-                ),
+                    ply: ply + 1,
+                    first: index == 0,
+                    same_side: false,
+                    reduction,
+                }),
             };
             self.position.undo();
             if self.aborted {
@@ -699,15 +740,16 @@ impl<'a> Run<'a> {
     /// `same_side` is the second stone of the mover's own turn, which keeps the
     /// window as it stands; anything else is the opponent's reply and negates
     /// it.
-    fn child(
-        &mut self,
-        depth_plies: u32,
-        alpha: i32,
-        beta: i32,
-        ply: usize,
-        first: bool,
-        same_side: bool,
-    ) -> i32 {
+    fn child(&mut self, at: Descent) -> i32 {
+        let Descent {
+            depth_plies,
+            alpha,
+            beta,
+            ply,
+            first,
+            same_side,
+            reduction,
+        } = at;
         let full = |run: &mut Self| {
             if same_side {
                 run.visit(depth_plies, alpha, beta, ply)
@@ -718,11 +760,22 @@ impl<'a> Run<'a> {
         if first {
             return full(self);
         }
-        let scan = if same_side {
-            self.visit(depth_plies, alpha, alpha + 1, ply)
-        } else {
-            -self.visit(depth_plies, -alpha - 1, -alpha, ply)
+        let mut null_window = |run: &mut Self, depth: u32| {
+            if same_side {
+                run.visit(depth, alpha, alpha + 1, ply)
+            } else {
+                -run.visit(depth, -alpha - 1, -alpha, ply)
+            }
         };
+        let mut scan = null_window(self, depth_plies - reduction);
+        // THE VERIFICATION RE-SEARCH. A reduced scan that beats alpha proves
+        // nothing about the full-depth score, so it is never allowed to raise
+        // alpha or open the full window on its own: the same null window is
+        // re-run at full depth first. Without this a reduction changes the
+        // move it was supposed only to make cheaper.
+        if reduction > 0 && !self.aborted && scan > alpha {
+            scan = null_window(self, depth_plies);
+        }
         // An aborted scan returned the sentinel, not a score, and the sentinel
         // sits inside most windows — so without this the re-search fires on a
         // number that means nothing, spends a node the budget never granted, and
@@ -737,6 +790,45 @@ impl<'a> Run<'a> {
         } else {
             scan
         }
+    }
+
+    /// How many plies to shave off a late unforced candidate's SCAN (S3).
+    ///
+    /// Zero unless every condition holds: the policy arms it, the row is
+    /// BATCHED or BATCHED-lost, the candidate sits at or past the configured
+    /// late index inside the unforced range, and enough depth remains that a
+    /// whole turn can come off and leave a whole turn behind.
+    fn reduction(
+        &self,
+        row: Option<StagedRow>,
+        forced_bound: Option<usize>,
+        index: usize,
+        depth_plies: u32,
+    ) -> u32 {
+        let CandidatePolicy::Staged(params) = self.policy else {
+            return 0;
+        };
+        if params.lmr_min_depth_turns == 0 {
+            return 0;
+        }
+        if !matches!(row, Some(StagedRow::Batched | StagedRow::BatchedLost)) {
+            return 0;
+        }
+        // A candidate inside the forced prefix is a threat cover, never late.
+        let unforced_from = forced_bound.unwrap_or(0);
+        if index < unforced_from || (index - unforced_from) < params.lmr_late_index as usize {
+            return 0;
+        }
+        // TURNS to PLIES, and the child is searched at `depth_plies - 1`, so
+        // the test is against what the child will actually have.
+        // Saturating, because `lmr_min_depth_turns` is a u32 a config may set
+        // to anything: a wrapping multiply turns a huge floor into a tiny one
+        // and grants reductions the guard exists to refuse.
+        let floor = params.lmr_min_depth_turns.saturating_mul(TURN_STONES);
+        if depth_plies.saturating_sub(1) < floor + TURN_STONES {
+            return 0;
+        }
+        TURN_STONES
     }
 
     /// How many turns this position is from the root. Both plies of a turn
@@ -1160,6 +1252,8 @@ mod tests {
                 root_reorder: false,
                 aspiration_delta: 0,
                 extension_budget: 0,
+                lmr_min_depth_turns: 0,
+                lmr_late_index: 3,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1234,6 +1328,8 @@ mod tests {
                 root_reorder: false,
                 aspiration_delta: 0,
                 extension_budget: 0,
+                lmr_min_depth_turns: 0,
+                lmr_late_index: 3,
                 tier_t_own_count: 2,
                 tier_t_opponent_count: 3,
                 q_depth_turns: 0,
@@ -1297,6 +1393,8 @@ mod tests {
             root_reorder: false,
             aspiration_delta: 0,
             extension_budget: 0,
+            lmr_min_depth_turns: 0,
+            lmr_late_index: 3,
             tier_t_own_count: 2,
             tier_t_opponent_count: 3,
             q_depth_turns: 0,

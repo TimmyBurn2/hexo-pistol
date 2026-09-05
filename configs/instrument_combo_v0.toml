@@ -75,11 +75,11 @@ safety_net_top_k = 0
 # in every document until an SPRT says otherwise. Distinct from
 # safety_net_top_k above, which caps the quiet ball that stands in when Tier T
 # is empty — the two sets have medians of 12 and 76 over the governed book.
-tier_t_top_k = 0
+tier_t_top_k = 16
 # Re-sort the ROOT's candidates by the previous iteration's scores (W2, the one
 # ordering mechanism the opponent study found sealbot has and this engine does
 # not). false is the committed value until an SPRT says otherwise.
-root_reorder = false
+root_reorder = true
 # The aspiration window's half-width in evaluation units (S1): each iteration
 # after the first opens (previous - delta, previous + delta) and re-searches at
 # full width if the score falls outside. 0 opens every iteration full width and
@@ -88,12 +88,12 @@ aspiration_delta = 0
 # One-cell forced-reply extensions a single line may grant (S2): a FILTERED row
 # whose cover is one cell is singular by construction, so extending it a whole
 # turn costs branching 1. 0 grants none and is the committed value.
-extension_budget = 2
+extension_budget = 0
 # LATE MOVE REDUCTIONS (S3). Least depth in TURNS a child must still have for a
 # candidate deep in a BATCHED row's unforced range to be scanned one turn
 # shallower; any such scan that beats alpha is re-searched at full depth before
 # it may change a move. 0 arms no reduction and is the committed value.
-lmr_min_depth_turns = 0
+lmr_min_depth_turns = 1
 # Candidates of the unforced range scanned at full depth before reductions
 # begin. Read only when lmr_min_depth_turns is non-zero.
 lmr_late_index = 3

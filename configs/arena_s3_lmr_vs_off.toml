@@ -1,0 +1,40 @@
+# pistol — S3's GOVERNED EXPERIMENT: late move reductions on the unforced range
+# against the committed value of no reduction.
+#
+# Registered by docs/experiments/s3_registration.md. Two seats, ONE binary,
+# differing in exactly one key: `lmr_min_depth_turns`, 1 against 0.
+
+schema_version = 2
+
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+openings_take = 600
+openings_skip = 0
+turn_cap = 40
+n_workers = 4
+hang_timeout_ms = 120000
+
+[budget]
+kind = "nodes"
+value = 200000
+
+[sprt]
+elo0 = 0.0
+# +10. A reduction buys depth by risking a missed move; the registered
+# expectation at eval v0 is null-to-small, so the bound is set where a small
+# true effect is still detectable.
+elo1 = 10.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+label = "lmr1"
+binary = "target/release/pistol"
+binary_sha256 = "761f1b3a08cc243aa858bfee19e90514075344c43abc4e3fd33e497a0bbf4f20"
+config = "configs/instrument_s3_lmr1_v0.toml"
+
+[engine_b]
+label = "lmr0"
+binary = "target/release/pistol"
+binary_sha256 = "761f1b3a08cc243aa858bfee19e90514075344c43abc4e3fd33e497a0bbf4f20"
+config = "configs/instrument_v0.toml"

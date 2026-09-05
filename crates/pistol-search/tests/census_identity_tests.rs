@@ -32,6 +32,8 @@ fn searcher(gate_on: bool) -> Searcher {
             root_reorder: false,
             aspiration_delta: 0,
             extension_budget: 0,
+            lmr_min_depth_turns: 0,
+            lmr_late_index: 3,
             tier_t_own_count: 2,
             tier_t_opponent_count: 3,
             q_depth_turns: 0,

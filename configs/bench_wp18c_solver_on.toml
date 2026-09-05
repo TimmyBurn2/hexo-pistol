@@ -52,6 +52,14 @@ aspiration_delta = 0
 # whose cover is one cell is singular by construction, so extending it a whole
 # turn costs branching 1. 0 grants none and is the committed value.
 extension_budget = 0
+# LATE MOVE REDUCTIONS (S3). Least depth in TURNS a child must still have for a
+# candidate deep in a BATCHED row's unforced range to be scanned one turn
+# shallower; any such scan that beats alpha is re-searched at full depth before
+# it may change a move. 0 arms no reduction and is the committed value.
+lmr_min_depth_turns = 0
+# Candidates of the unforced range scanned at full depth before reductions
+# begin. Read only when lmr_min_depth_turns is non-zero.
+lmr_late_index = 3
 tier_t_own_count = 2
 tier_t_opponent_count = 3
 q_depth_turns = 0

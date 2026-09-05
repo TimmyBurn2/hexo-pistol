@@ -89,6 +89,8 @@ impl SearchSection {
                 root_reorder: _,
                 aspiration_delta: _,
                 extension_budget: _,
+                lmr_min_depth_turns: _,
+                lmr_late_index: _,
                 widen_schedule,
                 tier_t_own_count,
                 tier_t_opponent_count,

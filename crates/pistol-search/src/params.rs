@@ -89,6 +89,14 @@ pub struct StagedParams {
     /// How many one-cell forced replies a single line may extend (S2). `0`
     /// grants no extension and is the committed value.
     pub extension_budget: u32,
+    /// Least depth in TURNS a child must still have for a late unforced
+    /// candidate to be scanned a whole turn shallower (S3). `0` arms no
+    /// reduction and is the committed value.
+    pub lmr_min_depth_turns: u32,
+    /// How many candidates of a row's UNFORCED range are scanned at full depth
+    /// before reductions begin (S3). Read only when
+    /// [`StagedParams::lmr_min_depth_turns`] is non-zero.
+    pub lmr_late_index: u64,
     /// `LAW-SUPPORT`'s threshold for the side to move's own qualifying
     /// windows: 2 or 3 (`U3_tier_t.md` §6.1, the THRESHOLD reading — own
     /// windows qualify at count `>= tier_t_own_count`).

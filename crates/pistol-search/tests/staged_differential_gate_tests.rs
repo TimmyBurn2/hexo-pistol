@@ -79,6 +79,8 @@ fn the_filtered_row_matches_r1_at_every_filtered_node_of_the_corpus() {
         root_reorder: false,
         aspiration_delta: 0,
         extension_budget: 0,
+        lmr_min_depth_turns: 0,
+        lmr_late_index: 3,
         tier_t_own_count: 2,
         tier_t_opponent_count: 3,
         q_depth_turns: 0,
