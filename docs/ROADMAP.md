@@ -416,6 +416,14 @@ every landed change SPRT-positive.
 
 ## Stage 2 — Cheap learned eval
 
+**PROMOTED BY MEASUREMENT (D-609).** The optimization arc's four search-side
+experiments all say the same thing: this engine's binding constraint is the
+evaluation, not the search's depth or width. Sealbot reaches 5 turns to this
+engine's 2 and wins 60/40 over fifty paired openings — so depth is not
+worthless, THIS eval cannot use it. Stage 2 is the answer to that, and the arc's
+own leftover width package (the quiet ball's median width of 76, capped by the
+already-built `safety_net_top_k`) is the one search item that survives it.
+
 **WP-2.0 — the label pipeline. CLOSED (D-561).** `arena --capture` walks a report
 position by position and asks the engine again at a LABEL budget, one `newgame`
 per ask; `arena --labels` turns that capture into a sixteen-column corpus, a pure
@@ -470,6 +478,25 @@ Lazy SMP (shared TT, staggered depths), ABDADA fallback if efficiency < 0.4 at
 gauntlet per the report's verdict table (guarded/verified null-move, LMR,
 futility/razoring) — each kept only if SPRT-positive. Deterministic instrument
 mode stays single-threaded and untouched.
+
+**THE GAUNTLET'S LMR ROW IS ANSWERED EARLY, AND SO IS THE PREMISE UNDER IT
+(D-607, D-609).** The optimization arc ran LMR against this engine at its own
+reach: UNDECIDED over a full 600-pair cap, and the reduction bought no depth at
+all. It then ran LMR TOGETHER with a Tier-T width cap and root re-ordering,
+which **did** buy depth — 8 turns against the committed engine's 6, on 5.6 %
+fewer nodes — and lost 315 W / 391 L. **Two more turns of search made the engine
+measurably worse.** With S2's forced-reply extension (8 W / 61 L) that is four
+independent measurements in one direction, and the only variable held constant
+is the evaluation (D-428).
+
+**What this changes for Stage 4**: the gauntlet's remaining rows —
+guarded/verified null-move, futility, razoring — are all eval-margin techniques
+resting on the same evaluation, and running them here would be a fifth
+measurement of the same thing. They wait for Stage 2's eval, not for a
+scheduling slot. Lazy SMP and SPSA/Texel tuning are untouched by this and remain
+Stage 4's own work. **Every mechanism the arc built ships gated off rather than
+deleted**, so the eval that can use them arrives to find them tested and one
+config key from live.
 
 ## Stage 5 — Opening book + full harness
 

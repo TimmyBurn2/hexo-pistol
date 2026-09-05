@@ -362,3 +362,140 @@ will be true.
   `1.15` thresholds; those are not this package's numbers (the prereg registers
   its own), and the verdict wording is quoted beside the ratios, never read as
   the package's verdict.
+
+## TRANCHE 2 — the instruments. BOTH LANDED.
+
+### §I1 — width histogram. LANDED at `792d018`.
+
+`WidthHistogram` records emitted-set sizes per row class, plus Tier T's own
+union and the quiet ball kept apart (a cap on one is not a cap on the other).
+129 buckets: the first run at 34 put **42 %** of BATCHED nodes in the overflow,
+and a cap cannot be chosen from a distribution whose largest bucket is
+"everything above the top". Armed per ask by the `widths` budget token, so a
+search that is not measuring fills nothing. Byte-identical when off.
+
+**What it measured, which redirected W1**: BATCHED emitted mean 17.1 / median
+12; Tier T's own union mean 13.0 / median **12**; the quiet ball mean 76.2 /
+median **76**, on 1187 of 21746 BATCHED nodes. See `w1_calibration.md`.
+
+### §I2 — the budget-overrun VOID class. LANDED at `6602706`.
+
+`End::Void { nodes, budget }` and `Answer::Void`: an answer that spent more than
+`FIRST_ITERATION_MULTIPLE = 4` times its node budget is VOID, not a loss. Void
+games are skipped by `pair_buckets` and `pairs_without_forfeits`, so a broken
+seat cannot be scored as a weak one. The multiple is MEASURED, not chosen: over
+60 openings the first iteration's share of budget had median **0.090**, p90
+0.1527 and max **0.1754**, so 4x sits well clear of the honest maximum while
+still catching an order-of-magnitude overrun.
+
+## TRANCHE 3 — width. BOTH GATED OFF ON A MEASURED NULL.
+
+### §W1 — Tier-T width cap. `tier_t_top_k = 0` in all fifteen documents.
+
+The cap was calibrated by a rule written down BEFORE the histogram was read: no
+K below the measured median, because a cap below the median tests a different
+engine. That gave K = 16. At K = 16 the cap BINDS on **23.3 %** of BATCHED nodes
+and removes **11.2 %** of Tier-T cells, and changes the chosen move on **0 of
+24** governed openings — so the SPRT was not run, because there is nothing for
+it to see. K = 8 would change 16.7 % and moving to it after seeing the table is
+the post-hoc threshold move D-374 forbids. Full table in `w1_calibration.md`.
+
+### §W2 — root re-ordering. `root_reorder = false`.
+
+Re-sort the root's candidates by the previous iteration's scores, below the
+table move's promotion. **0 of 24** openings change at the governed budget
+(~2 turns) and **0 of 12** at `nodes 400000` (~4 turns); throughput unchanged
+(758 417 → 758 870 nps). The table move already leads, and at this reach the
+order of what follows it does not decide anything. `w2_finding.md`.
+
+## TRANCHE 4 — the pruning family.
+
+### §S1 — aspiration windows. `aspiration_delta = 0`.
+
+Each iteration after the first opens (previous − delta, previous + delta) and
+re-searches on a fail. **Every width changes 0 of 16 openings AND every width is
+slower**: 25 → 0.815, 50 → 0.508, 100 → 0.520, 200 → 0.561 of the full-window
+time. A narrow window at this reach fails high or low often enough that the
+re-searches cost more than the narrowing saves. `s1_finding.md`.
+
+### §S2 — one-cell forced-reply extension. `extension_budget = 0`. SPRT h0.
+
+The first package of tranches 3 and 4 to reach a match, and it lost it: **8 W /
+61 L**, LLR pair −2.956 against −2.9444, n = 90 of a 600-pair cap, normalized
+Elo −391.5. On the same nodes the extended seat reached **5 turns** where the
+committed seat reached **6**. `s2_registration.md`, D-605.
+
+**S2 also corrected the arc's own method** — see the closure's §1.
+
+### FINDINGS RAISED IN §S2 / §S3
+
+**F-S2.1 — `CARGO_TARGET_DIR` was exported around `cargo test`, in a session
+whose own memory file names the failure and its count.** The verification
+wrapper set `CARGO_TARGET_DIR=<worktree>/target` for the whole script, so
+`cargo test` inherited it, so the scratch cargo workspaces
+`solver_link_check_tests` builds shared one target directory and read each
+other's `dep-info`. **8 of that suite's 19 tests failed and cargo stopped there**,
+40 suites in — which reads as a broken commit and is not one. A worktree already
+isolates `target/`; the variable adds nothing and breaks this. **Practice
+changed**: the export is set for `cargo build` only, and every verification run
+uses `--no-fail-fast` so one bad suite cannot hide the other 130.
+
+**F-S2.2 — `pkill -f <pattern>` killed the issuing shell.** The harness runs each
+command inside a `bash -c` whose command line CONTAINS the pattern text, so
+`pkill -f s2_verify.sh` matched the pkill's own process and the shell died with
+exit 144, silently taking the `setsid nohup` launch in the same command with it.
+The SPRT appeared to have been launched and had not been. **Practice changed**:
+bracket the first character (`pkill -f '[s]2_verify.sh'`), and confirm a detached
+launch by `pgrep`-ing for the child rather than by the launcher's exit code.
+
+**F-S2.3 — a budget granted on the way down was not given back on the abort
+path.** The first draft restored the per-line extension budget after the child
+loop only, so the `if self.aborted { return 0 }` path inside the loop leaked one
+grant per abort. Unobservable in this package (an abort ends the search), but the
+fix is two lines and the leak is not a thing to reason about twice. Found by
+reading for early returns between the grant and the restore, which is the check
+any borrow-and-return of shared state owes.
+
+**F-S2.4 — a budget token that does not exist produced silent nothing.** A
+fixed-depth comparison was written `go depth 3`; the protocol's budgets are
+`depth_turns`, `nodes`, `movetime`. The engine refused each line correctly and by
+name (hard rule 3 working), but the comparison harness grepped for `^bestmove`,
+found none on either side, and reported **"0 of 0 differing"** — which reads as
+a clean identity result. **Practice changed**: every comparison run counts
+`^error` lines and its own denominator, and a denominator of zero is a failed
+run, never a null result.
+
+### §S3 — late move reductions. `lmr_min_depth_turns = 0`. SPRT UNDECIDED.
+
+Ran the whole 600-pair cap without the LLR reaching either bound: n = 1200,
+distinct-n 1200, `LLR pair -1.831`, normalized Elo −13.4, and **both seats
+reached 6 turns** on nearly equal nodes. UNDECIDED is not a pass.
+`s3_registration.md`, D-607.
+
+## THE COMBINATION — the question the arc never asked until closure
+
+Tranche 1's two perf packages WERE measured combined (1.294 / 1.293 against
+1.327 predicted). The five behaviour-changing ones never were. W1 + W2 + S3
+together reach **8 turns where the committed engine reaches 6, on 5.6 % fewer
+nodes**, and lose **315 W / 391 L**, normalized Elo −34.2, h0 at n = 910. The
+mechanisms compose and do what they were built to do; the extra depth is worth
+negative Elo at eval v0. `opt_arc_combination_finding.md`, D-609.
+
+## WHERE PERF STANDS, and the gap that names the next package
+
+`opt_arc_perf_finding.md`, receipt `artifacts/opt_arc_perf_sweep_v1.txt`:
+**1.28–1.40x faster for identical node counts**, and a **median depth of 2 turns
+at the 0.5 s deployment budget** against sealbot's **5 turns at 0.3 s** on
+~864 000 nps to this engine's ~488 000. Depth is logarithmic in nodes and the
+branching factor is large, so a third more nodes moved the median depth only at
+0.1 s.
+
+## THE ANCHOR, and the reader that made it mean something
+
+Anchor v4 on the platform's single opening read **0 W / 100 L** with an honest
+denominator of 2 (D-606). The openings reader — designed, red-teamed three
+rounds, never built — was built here, and anchor v5 over **50 paired openings**
+reads **40 W / 60 L**, 100 distinct games (D-608). Building it exposed three
+harness defects a single opening hides, including a `distinct_games` that
+ignored the opening, and four of the reader's own tests that were vacuous
+because the body digest masked every refusal they meant to prove.
