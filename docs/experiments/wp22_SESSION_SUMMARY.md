@@ -10,6 +10,20 @@ rows by kind removes 48 % of every position in the corpus that holds a
 five-stone window, and removes them on exactly the side where such a window
 won.**
 
+## CI at the closure HEAD
+
+**20 of 20 gates, `ci: all gates passed`, `EXIT=0`, at `162608b`, over a tree
+that stayed clean for the run's whole length** (`artifacts/wp22_ci_closure.log`).
+
+**The run before it returned `EXIT=2` — a VOID and not a failure**, and both
+causes are recorded in D-617: the WP-2.2 governing documents stated their
+revision on line 3 where `revision_citation_check.py` reads line 1, which was
+inert until the census registration cited the cap registration's revision; and
+the citation gates read the WORKING TREE while gates 2 and 18 read tracked
+bytes, so a run whose tree moves under it is a run of something that no longer
+exists. This session made that second mistake twice — killed the first run for
+it, then reintroduced it without noticing.
+
 ## What is finished
 
 **§0 — done, with receipts.** The thirteen worktrees are gone; `git worktree
