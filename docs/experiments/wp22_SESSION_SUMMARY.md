@@ -109,7 +109,12 @@ assignment and the output directory. It needs a quiet box.
 ## What has not been started
 
 **Phase 2 in its entirety** — no matrix, no DECISION-RED-TEAM, no selection.
-**Phase 1's SPRT** — registered, not run.
+**Phase 1's SPRT** — registered, not run, but its candidate is **prepared and
+receipted**: `artifacts/wp22_phase1_weights/eval_v0_texel_fit.toml`, sha256
+`834b4f7f…`, table `[1, 21, 22, 64, 65]`. It validates against the shipped
+schema, and it **changes play** — a different bestmove at the same budget on the
+same position — which is what makes the SPRT able to measure anything at all,
+and is checked rather than assumed. The honest expectation stands: it loses.
 
 ## D-534, restated because this package touched the solver
 
