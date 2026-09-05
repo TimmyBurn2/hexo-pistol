@@ -316,3 +316,50 @@ those.
 3. **Phase 2** — not started. Its premise memo should quote D-616: the corpus
    cannot be fitted by dropping its mate rows, and the censored likelihood is
    the named successor.
+
+## §11 HANDOFF — the state a successor starts from
+
+**Tree clean at `15569b1`, 22 commits, one worktree, no processes. CI green at
+HEAD: 21 of 21 gates, `EXIT=0`.**
+
+### The blocker, and it is not machine time
+
+**`wp22_phase1_design.md` has never been reviewed.** The dispatch requires
+Phase 1 to carry a fresh DESIGN review and a fresh IMPL review; the
+implementation was written, run and committed without either. **The registered
+SPRT may not run until the design review passes** — that is the gate, not the
+four hours of box time.
+
+A design review was dispatched at the close of this session and its report will
+land at `docs/experiments/wp22_phase1_design_REVIEW.md`. **A successor reads
+that first.** If the report is absent, the review did not survive the session
+and must be re-dispatched.
+
+### What is owed, in the order it should be taken
+
+1. **Read the Phase 1 design review**; fix what it finds. The impl review is
+   owed after it and has also never happened.
+2. **Then the SPRT** — candidate prepared, validated and receipted
+   (`artifacts/wp22_phase1_weights/`, `[1, 21, 22, 64, 65]`, sha256
+   `834b4f7f…`). It changes play, so the comparison can measure something. The
+   expectation is on record: **it loses**, and h0 is the finding that the v0
+   feature set is the limit.
+3. **R3's seat-swap anchor** (D-612) — `local/sealbot_anchor_v6_seatswap.toml`,
+   byte-identical to v5 but for the slot. Needs a quiet box; report only.
+4. **Phase 2** — not started. Its premise memo must quote D-616 and treat the
+   censored likelihood as the named successor, not the sigmoid link.
+
+### Hazards a successor will otherwise rediscover
+
+- **`find` is intercepted by a shim in this shell** and silently returns
+  nothing. It produced one empty digest receipt in this session, which looked
+  correct in a directory listing. Use `/usr/bin/find` or explicit paths, and
+  check a receipt's line count against its file count.
+- **CI's citation gates read the WORKING TREE** while gates 2 and 19 read
+  tracked bytes (D-617), so "CI green at HEAD" is only true of a tree frozen
+  for the whole run. This session made that mistake twice.
+- **A registration must pass review before it governs a run.** Six review
+  rounds across two §B documents returned FAIL three times on substance, not
+  presentation. Three of those findings overturned reasoning that was
+  internally clean (D-615, D-619, and the independence rationale). The pattern
+  is that arguments held and premises did not.
