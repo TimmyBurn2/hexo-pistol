@@ -31,10 +31,24 @@ def rows_of(path):
         yield {words[i]: words[i + 1] for i in range(2, len(words) - 1)}
 
 
+class OrderingViolated(Exception):
+    """`roots <= classes <= keys` failed, so the tightening is not one."""
+
+
 def tally(path):
     """Keys, roots and column-classes over the WIN-proving rows, plus the
     loss-direction key count, which is reported separately and never summed
-    (D-522, D-535)."""
+    (D-522, D-535).
+
+    # Errors
+
+    Raises [`OrderingViolated`] when `roots <= classes <= keys` does not hold.
+    That ordering is NOT a theorem — `turns` is root-relative, so one key can
+    carry several classes and `classes <= keys` is contingent — and registering
+    28 classes rather than 28 keys is a TIGHTENING only while it holds. It is
+    checked on every run rather than assumed, because the run that violates it
+    is the run whose count may not be read.
+    """
     keys, roots, classes, loss = set(), set(), set(), set()
     firings = 0
     for row in rows_of(path):
@@ -45,6 +59,11 @@ def tally(path):
             classes.add(tuple(row[c] for c in COLUMNS))
         if row["def_proved"] == "true":
             loss.add(row["key"])
+    if not len(roots) <= len(classes) <= len(keys):
+        raise OrderingViolated(
+            f"roots {len(roots)} <= classes {len(classes)} <= keys {len(keys)} is false, "
+            "so counting classes is not a tightening of counting keys on this run"
+        )
     return firings, keys, roots, classes, loss
 
 

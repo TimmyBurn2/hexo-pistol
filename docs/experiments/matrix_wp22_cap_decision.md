@@ -190,9 +190,12 @@ attack did, and it is worse.** Against the ACTUAL candidate field
 distinguishable trials** — an 8.6x collapse, not the red team's 3.5x over raw
 column tuples.
 
-**And that same measurement kills E's other limb.** The distinguishable-trial
-rate per position is **0.10 / 0.07 / 0.08** across the three caps: a spread of
-**1.4x**, against the 4.5x spread of the inflated key count. **On the currency
+**And that same measurement kills E's other limb.** The class rate per position
+is **0.26 / 0.14 / 0.15** across the three caps: a spread of **1.86x**, against
+the 4.5x spread of the inflated key count. (Revision 1 of this section quoted
+0.10 / 0.07 / 0.08 and 1.4x — those are the NULL-family figures D-619 retired;
+the corrected currency does not change the conclusion, and the correction is
+recorded rather than substituted.) **On the currency
 that decides whether round 3 may open, the cap is very nearly irrelevant** — so
 E's second arm, bought for coverage, purchases little of what the census is for.
 The red team also measured that two of the three roots cap 2048 alone proves are

@@ -1,8 +1,21 @@
-# WP-2.2 §B — census run pre-registration, revision 3.
+# WP-2.2 §B — census run pre-registration, revision 4.
 
 Governing revision: `0097f83` (`dev`).
 
-**Revision 3 is the granted fix round on `wp22_census_prereg_REVIEW.md`
+**Revision 4 answers `wp22_census_prereg_rev3_REVIEW.md` (FAIL, 4 MAJOR), whose
+adjudication of the reversal is the reason this document is still alive**: it
+attacked revision 3's partition correction four ways and could not break it —
+`p1 = 12/14` IS `knapsack_bound`'s bound over the nine `COLUMNS`
+(`matrix_stage3_detector.md` **§5.8**), the pilot reproduces to the digit, the
+curve is not an ordering artifact, and Chao2 on the class partition gives an
+asymptote of 489-641 against 15-18 for the null's family. **Round 1's M1 is
+correctly dissolved and the run is runnable.** What revision 4 fixes is the four
+majors that survived: the criterion stated two ways (§2 now owns it), the
+`roots <= classes <= keys` claim asserted as a theorem (now checked and refused),
+the tests that nothing ran (now CI gate 18), and the independence REASON, which
+was wrong (§2).
+
+**Revision 3 was the granted fix round on `wp22_census_prereg_REVIEW.md`
 (FAIL, 6 MAJOR).** Its two decisive findings are conceded and corrected in
 D-619: revision 2 computed its sizing quantity over the NULL's family of
 predicates rather than the ALTERNATIVE's column partition, and it extrapolated a
@@ -19,7 +32,8 @@ that no longer exists.
 ## §1 What this run answers
 
 **One number: how many WIN-PROVING FIRINGS ON DISJOINT POSITIONS the sweep
-corpus yields**, counted against D-537's registered floor of **28**.
+corpus yields**, counted against D-537's floor of **28** in the currency §2
+registers.
 
 D-537 fixes the floor and the counting rule; `overnight2_ledger.md` §4 computes
 the floor from `p0 = 8/14`, `p1 = 12/14`, `alpha = beta = 0.05`, giving
@@ -30,18 +44,45 @@ never.
 **What clearing it does**: it re-opens detector round 3 (D-538, licensed-not-
 scheduled). **This run schedules nothing** — it produces a count.
 
-## §2 The quantity, spelled out because it has been miscounted twice
+## §2 The quantity — stated ONCE here, and pointed at from everywhere else
 
-`w` = the number of **distinct `key` values** (`pistol_core::canonical_key`, the
-identity D-570 selected as C2) carrying at least one census row with
-`att_proved true`.
+**Three counts are taken over the win-proving firings. THE CLASS COUNT IS THE
+REGISTERED MINIMUM AND IS WHAT LICENSES DETECTOR ROUND 3.** Every other section
+of this document points here rather than restating it, because a criterion
+stated twice is the defect D-423 names and the round-1 and round-2 reviews both
+caught it stated two ways.
 
-- **Win direction only.** D-522: `def_proved` answers whether the OPPONENT
-  forces a win and is a proven LOSS. It is counted and reported in its own
-  column and is **never summed** into `w`. D-535 preserves that distinction.
-- **Disjoint POSITIONS, not firings and not games** — D-537's own words. The
-  denominator is distinct keys, which is why the count is over a set and not a
-  sum.
+| count | what it is | role |
+|---|---|---|
+| **CLASSES** | distinct nine-column vectors (`tools/stage3_allocator_bound.py` `COLUMNS`) | **the registered minimum: 28. This licenses round 3.** |
+| KEYS | distinct `pistol_core::canonical_key` (D-570's identity) | D-537's literal figure. Reported always, never suppressed. |
+| ROOTS | distinct fixture positions that proved | the unit carrying statistical independence. Reported. |
+
+**Win direction only** (D-522, D-535): `def_proved` answers whether the OPPONENT
+forces a win and is a proven LOSS. It is reported in its own column and **never
+summed** into any of the three.
+
+**WHY 28 CLASSES IS REGISTERED, AND THE REASON IS NOT THE ONE REVISION 3 GAVE.**
+D-537 forbids a successor to LOOSEN its minimum and expressly permits *"a larger
+one with grounds"*. Requiring 28 classes is strictly larger than requiring 28
+keys **whenever `classes <= keys` holds**, and that is the whole ground.
+
+**It is NOT registered on the ground that classes restore the binomial's
+independence, which the round-2 review refuted by measurement**:
+`knapsack_bound` scores FIRINGS while choosing CLASSES, so `p1 = 12/14` is not a
+per-class rate — in class currency the same reference band gives 6/8 = 0.750 —
+and 28 classes are reachable from as few as **7** root searches. **The
+independence defect D-618 identified is real and is NOT fixed by this
+registration.** It is carried by the ROOT count, which is why the root count is
+reported, and whether D-537's floor should be re-solved in class currency
+(ESTIMATED at n = 42-150) is round 3's question and not this document's.
+
+**`roots <= classes <= keys` IS NOT A THEOREM.** `turns` is root-relative, so
+one key can carry several classes and `classes <= keys` is contingent. It held
+over 600 positions and 6 366 keys and it is **checked on every run**:
+`tools/texel/census_classes.py` raises `OrderingViolated` and the run is refused
+rather than reported, because a run that breaks it is a run whose count is not a
+tightening.
 
 ## §3 The sample
 
@@ -123,25 +164,11 @@ is there because a class curve is lumpy — it advances when a new root proves.
 **If the governed curve flattens below 28**, that is the finding §7 reports, and
 D-619's flip clause fires. It is not a failed run.
 
-## §6 What the three counts are for, and which one licenses what
+## §6 Which count licenses — see §2
 
-- **Distinct canonical KEYS** — D-537's literal unit, fixed by D-570. Reported
-  always, and never suppressed.
-- **Distinct proving ROOTS** — how many separate searches the evidence comes
-  from. It is the rate that transferred between samples (0.080 -> 0.072).
-- **Distinct COLUMN CLASSES** — the partition `p1 = 12/14` is defined over, and
-  therefore the count the floor's binomial actually assumes.
-
-**The CLASS COUNT licenses detector round 3.** Revision 2 said both that the
-floor is adjudicated on the key count and that a larger minimum is registered;
-those are incompatible, and D-619 resolves it — registering a larger minimum
-under D-537's own permission means the LARGER one licenses.
-
-**`roots <= classes <= keys` always**, which is what makes this a tightening
-rather than a change of unit; `tools/texel/test_texel.py` pins the ordering.
-D-537 forbids a successor to LOOSEN its minimum and expressly permits a larger
-one with grounds, so nothing here needs an operator ruling — though the grounds
-are the measurement in `artifacts/wp22_census_pilot/`, not this paragraph.
+**§2 owns this and states it once**: the CLASS count is the registered minimum
+and licenses detector round 3; the KEY count is D-537's literal figure and is
+always reported; the ROOT count carries independence and is always reported.
 
 **The calibration this section used to defer to no longer exists** (D-618
 retired it unrun), and §5 applies no rate correction because it no longer sizes
@@ -152,26 +179,29 @@ on a rate.
 | instrument | revision | produces |
 |---|---|---|
 | `crates/pistol-search/examples/trigger_census.rs` | `0f58533`, unchanged at HEAD | every census row |
-| `tools/texel/draw_census_samples.py` | `0097f83` | the census fixture |
-| `tools/texel/census_classes.py` | `0097f83` | all three counts and the class curve |
-| `crates/pistol-core/examples/fixture_key_full.rs` | `0097f83` | §8's referent |
+| `tools/texel/draw_census_samples.py` | `42967e0` | the census fixture |
+| `tools/texel/census_classes.py` | `0097f83`, gated by `tools/texel_tests.sh` | all three counts, the class curve, and the ordering refusal |
+| `crates/pistol-core/examples/fixture_key_full.rs` | `42967e0` | §8's referent |
 
-**All four are tracked and the class counter is tested**
-(`tools/texel/test_texel.py` pins its partition against
-`stage3_allocator_bound.py`'s and the `roots <= classes <= keys` ordering).
-Revision 2 registered a count no committed instrument produced, which the review
-raised as M5; that is what this section answers.
+**All four are tracked, and the class counter's tests now RUN**: CI gate 18
+(`tools/texel_tests.sh`) invokes them. The round-2 review found the suite was
+invoked by nothing and self-SKIPPED to a pass when a gitignored artifact was
+absent — so in CI it would have reported success having checked nothing. The
+tests are hermetic now, they check the partition against
+`stage3_allocator_bound.py` ITSELF rather than a second copy of it, and one
+seeds an ordering violation to prove the refusal fires.
 
 ## §7 What is reported — the closure line
 
-- `w` against the floor of **28**, and whether the floor is cleared.
+- **The three counts of §2**, and whether the registered minimum (28 CLASSES) is cleared. §2 owns the criterion; this section does not restate it.
 - Positions searched, total firings, invocations, rows with `att_proved`.
 - Distinct keys with `def_proved`, in their own column, never summed.
-- **The number of PROVING ROOT POSITIONS** beside `w`, the keys-per-root
-  distribution, and the **DISTINGUISHABLE-TRIAL count** — without which `w`
-  cannot be read for how much independent evidence it represents.
-- The **cumulative trial curve** against positions processed, so a successor can
-  see whether the count was still climbing when the run ended.
+- The keys-per-root distribution, without which the key count cannot be read
+  for how much independent evidence it represents.
+- The **cumulative CLASS curve** against positions processed, so a successor can
+  see whether the count was still climbing when the run ended — and so the
+  saturation question round 1 raised is answered by this run's own data rather
+  than by extrapolation.
 - The attacker-invocation **truncation rate** (invocations that hit the cap
   without proving), MEASURED at 71.2 % at this cap on the dry-run slice, so what
   a larger cap might have added is visible rather than argued.

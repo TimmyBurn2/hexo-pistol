@@ -18,7 +18,7 @@ cd "$ROOT"
 # the step strings below, which is docs/decisions.md D-423's "a claim the document
 # makes twice is a defect waiting" at nineteen: adding a gate meant editing
 # nineteen numbers, and the twentieth would mean editing twenty.
-readonly GATE_TOTAL=20
+readonly GATE_TOTAL=21
 step() { printf '\n=== %s\n' "$*"; }
 fail() { printf 'ci: FAIL: %s\n' "$*" >&2; exit 1; }
 # THE VOID, CARRIED ACROSS THE SEAM (tools/SHELL_CHECKLIST.md item 12
@@ -186,7 +186,10 @@ gate "file justification" tools/file_justification_check.sh
 # and `D-277` were each appended TWICE with different text and nothing detected
 # it (docs/decisions.md D-279, D-284), and every ADR reference in this repository
 # is by number.
-step "gate 18/$GATE_TOTAL: decision-key uniqueness"
+step "gate 18/$GATE_TOTAL: offline texel and census tooling"
+gate "texel tools" tools/texel_tests.sh
+
+step "gate 19/$GATE_TOTAL: decision-key uniqueness"
 gate "decision key check" tools/decision_key_check.sh
 
 # The carve documents' own self-state, and the last gate for the reason the two
@@ -196,10 +199,10 @@ gate "decision key check" tools/decision_key_check.sh
 # matrix under attack asserted only a fresh reviewer's hand inventory could
 # reach — and the loop MISSED A THIRD, because it read a fixed-depth tail
 # (docs/decisions.md D-338 row R4, matrix_META1_REDTEAM.md M2 and M3).
-step "gate 19/$GATE_TOTAL: carve-document label consistency"
+step "gate 20/$GATE_TOTAL: carve-document label consistency"
 gate "label consistency" tools/label_consistency_check.sh
 
-step "gate 20/$GATE_TOTAL: governing-document citations"
+step "gate 21/$GATE_TOTAL: governing-document citations"
 gate "governing citations" tools/governing_citation_check.sh
 
 printf '\nci: all gates passed\n'

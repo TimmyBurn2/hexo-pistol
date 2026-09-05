@@ -168,29 +168,80 @@ if failures:
 print("test_texel: all checks passed")
 
 
-def test_census_classes_partition():
-    """The class count is over the ALTERNATIVE's columns, and it sits between
-    the root count and the key count by construction."""
+def _census_line(entry, key, cols, att, deff="false"):
+    """One `trigger_census` row in the shipped print format."""
+    c = dict(zip(("turns", "mover_hot", "opp_hot", "mover_w1", "opp_w1",
+                  "mover_l3", "opp_l3", "cover", "covers"), cols))
+    return (f"trigger_census: row entry {entry} key {key} key_pos kp{key} "
+            f"turns {c['turns']} mover_hot {c['mover_hot']} opp_hot {c['opp_hot']} "
+            f"mover_w1 {c['mover_w1']} opp_w1 {c['opp_w1']} mover_l3 {c['mover_l3']} "
+            f"opp_l3 {c['opp_l3']} cover {c['cover']} covers {c['covers']} "
+            f"att_visits 10 att_proved {att} def_asked true def_visits 5 def_proved {deff}\n")
+
+
+def test_census_classes_partition_matches_its_source():
+    """The partition is checked against stage3_allocator_bound.py ITSELF.
+
+    Pinning it against a second hard-coded copy would pass while the two
+    drifted, which is the whole defect the pin exists to prevent.
+    """
     import census_classes as CC
-    check("the partition is stage3_allocator_bound's COLUMNS, in its order",
-          CC.COLUMNS == ("turns", "mover_hot", "opp_hot", "mover_w1", "opp_w1",
-                         "mover_l3", "opp_l3", "cover", "covers"), CC.COLUMNS)
-    path = "artifacts/wp22_cap_dryrun_v2/d3_c2048.txt"
-    if not pathlib.Path(path).exists():
-        check("census fixture present (skipped, artifact absent)", True)
-        return
-    firings, keys, roots, classes, loss = CC.tally(path)
-    check("roots <= classes <= keys, which is what makes the tightening legitimate",
-          len(roots) <= len(classes) <= len(keys), (len(roots), len(classes), len(keys)))
-    check("the loss direction is counted separately and is not inside the win set",
-          isinstance(loss, set))
-    points = CC.curve(path)
-    check("the curve is non-decreasing", all(b >= a for (_, a), (_, b) in zip(points, points[1:])),
-          points)
+    source = pathlib.Path("tools/stage3_allocator_bound.py").read_text()
+    body = source.split("COLUMNS = (", 1)[1].split(")", 1)[0]
+    named = tuple(w.strip().strip('",\'') for w in body.split() if w.strip(' ,').startswith('"'))
+    check("the class partition equals stage3_allocator_bound.py's own COLUMNS",
+          CC.COLUMNS == named, (CC.COLUMNS, named))
 
 
-print("test_census_classes_partition")
-test_census_classes_partition()
+def test_census_classes_counts_hermetically():
+    """Driven on rows this test writes, so it cannot pass by finding no data."""
+    import census_classes as CC
+    with tempfile.TemporaryDirectory() as tmp:
+        path = f"{tmp}/census.txt"
+        cols_a = (0, 1, 2, 0, 0, 3, 4, "minimal", 1)
+        cols_b = (1, 1, 2, 0, 0, 3, 4, "minimal", 1)
+        with open(path, "w") as sink:
+            # two roots; root 1 carries two keys in ONE class, root 2 one key
+            # in a second class. So roots=2, classes=2, keys=3.
+            sink.write(_census_line(1, "k1", cols_a, "true"))
+            sink.write(_census_line(1, "k2", cols_a, "true"))
+            sink.write(_census_line(2, "k3", cols_b, "true"))
+            sink.write(_census_line(3, "k4", cols_a, "false", deff="true"))
+        firings, keys, roots, classes, loss = CC.tally(path)
+        check("every row is counted as a firing", firings == 4, firings)
+        check("win keys are 3", len(keys) == 3, keys)
+        check("win roots are 2", len(roots) == 2, roots)
+        check("classes collapse the two same-column keys to 1, giving 2",
+              len(classes) == 2, classes)
+        check("the loss direction is separate and not in the win set",
+              len(loss) == 1 and "k4" not in keys, (loss, keys))
+        points = CC.curve(path, step=1)
+        check("the curve is non-decreasing",
+              all(b >= a for (_, a), (_, b) in zip(points, points[1:])), points)
+
+
+def test_ordering_violation_is_refused_not_assumed():
+    """classes <= keys is contingent (turns is root-relative), so a run that
+    breaks it must be REFUSED rather than reported."""
+    import census_classes as CC
+    with tempfile.TemporaryDirectory() as tmp:
+        path = f"{tmp}/census.txt"
+        with open(path, "w") as sink:
+            # ONE key appearing in two different classes -> classes(2) > keys(1)
+            sink.write(_census_line(1, "k1", (0, 1, 2, 0, 0, 3, 4, "minimal", 1), "true"))
+            sink.write(_census_line(1, "k1", (5, 1, 2, 0, 0, 3, 4, "minimal", 1), "true"))
+        try:
+            CC.tally(path)
+            check("a classes > keys run is refused", False, "no exception raised")
+        except CC.OrderingViolated as why:
+            check("a classes > keys run is refused by name", "tightening" in str(why), str(why))
+
+
+for extra in (test_census_classes_partition_matches_its_source,
+              test_census_classes_counts_hermetically,
+              test_ordering_violation_is_refused_not_assumed):
+    print(extra.__name__)
+    extra()
 print()
 if failures:
     print(f"test_texel: {len(failures)} FAILURE(S): {failures}")
