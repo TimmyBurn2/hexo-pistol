@@ -35,6 +35,22 @@ one of the three consumers' rules handles — so D-611's flip clause does not
 fire. Collateral: the symmetry fold yields 2.6 % at the ROOT population where
 D-560 and D-570 measured zero in tree.
 
+**Phase 1's loader is proven inert — the DONE list's "loader inert by identity".**
+A weights file differing from the committed one only in comments and spacing
+gives **byte-identical** deterministic engine output (same nodes at every depth,
+same PV, same bestmove); perturbing one entry from 60 to 61 changes the output
+at every depth, so the file is genuinely read and the test is not vacuous.
+`nps` and `time` are excluded and the exclusion is stated — they are wall-clock
+fields and a byte-identity claim including them would be false for reasons
+unrelated to the loader. Receipt: `artifacts/wp22_phase1_loader/`.
+
+**One thing that receipt records because it bears on the SPRT**: the two files
+that play identically advertise **different** `weights_sha256`, because the
+digest is over file bytes rather than values, and the arena refuses a mismatch.
+That is deliberate — content-identification is what closes WP-1.3's provenance
+hole — but it means a cosmetic edit to the tuned table after a run invalidates
+that run's identity though it cannot change a move.
+
 **Phase 1's premise and correctness gate — done.** The v0 eval is LINEAR in its
 five weights, and an oracle says so against the engine: 0 of 500 positions
 disagree, while perturbing one entry by 1 kills 410 of 500. The corpus join is
@@ -80,6 +96,23 @@ assignment and the output directory. It needs a quiet box.
 
 **Phase 2 in its entirety** — no matrix, no DECISION-RED-TEAM, no selection.
 **Phase 1's SPRT** — registered, not run.
+
+## D-534, restated because this package touched the solver
+
+**D-534 stands, untriggered, and nothing here weakens it.** It records that
+arming the solver in a committed PLAY config overshoots the deployment budget by
+a measured **725 ms median at a 500 ms budget** (max 1866 ms), which on HeXO —
+where the server owns the clock and hard-clamps the call — is a FORFEIT. Its
+precondition is that the overshoot be fixed and re-measured at the deployment
+budget before any committed play config sets `on_search_path = true`.
+
+**This package arms the solver only through `trigger_census`, an INSTRUMENT seat
+at a NODE budget**, never through a committed play config and never under
+movetime. No committed config moved. R3's seat-swap anchor runs
+`configs/play_staged_v0.toml` **as committed**, with the solver gate off, so it
+does not touch the precondition either. D-534's flip clause is untouched: it
+flips when the overshoot is fixed and re-measured, which remains its own work
+package and is not scheduled here.
 
 ## What a successor must not redo
 
