@@ -1,6 +1,6 @@
-# WP-2.2 §B — census run pre-registration
+# WP-2.2 §B — census run pre-registration, revision 1.
 
-**Revision 1.** Governing revision: `71fa6f1` (`dev`). **This document does not
+Governing revision: `71fa6f1` (`dev`). **This document does not
 run until `wp22_cap_prereg.md` has passed its review and returned a cap.** The
 cap is this registration's one free input and it is written in below before the
 run, never after.

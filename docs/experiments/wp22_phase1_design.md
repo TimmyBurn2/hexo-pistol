@@ -1,6 +1,6 @@
-# WP-2.2 Phase 1 — Texel tuning of eval v0: design
+# WP-2.2 Phase 1 — Texel tuning of eval v0: design, revision 2.
 
-**Revision 2.** Governing revision: `71fa6f1` (`dev`). Revision 2 amends §2's
+Governing revision: `71fa6f1` (`dev`). This revision amends §2's
 constraint handling (projection replaced by an exact constrained solve) and §8's
 named successor, both forced by
 `docs/experiments/wp22_phase1_fit_finding.md`; the amendment reopens this

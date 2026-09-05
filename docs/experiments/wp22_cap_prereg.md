@@ -1,9 +1,11 @@
-# WP-2.2 §B — cap calibration pre-registration
+# WP-2.2 §B — cap calibration pre-registration, revision 4.
 
-**Revision 4 — REMEDIES ONLY.** Governing revision of the work this registers:
+**REMEDIES ONLY** — the revision is the one this document's first line states,
+and it is stated there and nowhere else (D-599). Governing revision of the work
+this registers:
 `b876d1d` (`dev`). The run this document governs has not been taken.
 
-**Revision 4 fixes the findings of `wp22_cap_prereg_rev3_REVIEW.md` and adds
+**This revision fixes the findings of `wp22_cap_prereg_rev3_REVIEW.md` and adds
 nothing else.** That review returned FAIL on seven findings, three of them
 measured rather than argued. **Every one of the three was reproduced by this
 session before this revision was written** (§10), and the most important of them
