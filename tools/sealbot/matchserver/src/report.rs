@@ -89,6 +89,10 @@ pub struct MatchReport {
     /// budget is not reproducible by construction (docs/decisions.md D-22), so
     /// this is the number that says whether that bought any diversity.
     pub distinct_games: u64,
+    /// How many DISTINCT openings the games were played from. 1 for the
+    /// platform opening, which is why an anchor on it has a denominator of 2
+    /// however many games it plays (docs/decisions.md D-519, D-606).
+    pub distinct_openings: usize,
     /// Engine A's per-answer wall times, ascending — the overshoot column.
     ///
     /// Under a `movetime` budget the gap between these and the budget is the
@@ -117,6 +121,7 @@ impl MatchReport {
         turn_cap: u32,
         a_label: &str,
         b_label: &str,
+        distinct_openings: usize,
         summaries: Vec<GameSummary>,
     ) -> MatchReport {
         let mut a_as_p1 = SeatTally::default();
@@ -134,13 +139,24 @@ impl MatchReport {
         for summary in &summaries {
             // The stones of the game in submitted order, which is what makes
             // two games the SAME game: the same stones in the same order.
-            sequences.insert(
+            //
+            // THE OPENING IS PART OF THE GAME. Without it two games played from
+            // DIFFERENT book openings whose engine moves happen to coincide are
+            // counted as one — which under-reports the very diversity this
+            // number exists to measure, and did so on the day book support
+            // landed (`bk1`'s four games counted as two).
+            let mut stones: Vec<(i16, i16)> = summary
+                .opening_stones
+                .iter()
+                .map(|&(q, r)| (q, r))
+                .collect();
+            stones.extend(
                 summary
                     .turns
                     .iter()
-                    .flat_map(|turn| turn.stones.iter().map(|stone| (stone.q, stone.r)))
-                    .collect(),
+                    .flat_map(|turn| turn.stones.iter().map(|stone| (stone.q, stone.r))),
             );
+            sequences.insert(stones);
             a_answer_wall_ms.extend(
                 summary
                     .turns
@@ -189,6 +205,7 @@ impl MatchReport {
             decided,
             a_wins_decided,
             distinct_games: sequences.len() as u64,
+            distinct_openings,
             a_answer_wall_ms: {
                 a_answer_wall_ms.sort_unstable();
                 a_answer_wall_ms
@@ -221,6 +238,7 @@ impl MatchReport {
             "anchor": true,
             "games": self.games,
             "distinct_games": self.distinct_games,
+            "distinct_openings": self.distinct_openings,
             "turn_cap": self.turn_cap,
             "engines": { "a": self.a_label, "b": self.b_label },
             "a_as_p1": seat(&self.a_as_p1),
@@ -250,7 +268,15 @@ impl MatchReport {
         let a_total_capped = self.a_as_p1.capped + self.a_as_p2.capped;
         let a_total_forfeit = self.a_as_p1.forfeit + self.a_as_p2.forfeit;
         let a_by_forfeit = self.a_as_p1.win_by_opponent_forfeit + self.a_as_p2.win_by_opponent_forfeit;
-        text.push_str("ANCHOR match (not SPRT, not paired, not an Elo claim)\n");
+        // The pairing claim is READ FROM THE RUN, not asserted: a book run plays
+        // every opening from both seats and a platform run has one opening, so
+        // saying "not paired" of the first would be as false as saying "paired"
+        // of the second.
+        text.push_str(if self.distinct_openings > 1 {
+            "ANCHOR match (not SPRT, not an Elo claim; openings paired across seats)\n"
+        } else {
+            "ANCHOR match (not SPRT, not paired, not an Elo claim)\n"
+        });
         text.push_str(&format!(
             "{} vs {}: {} games, turn cap {}\n\n",
             self.a_label, self.b_label, self.games, self.turn_cap
@@ -292,6 +318,12 @@ impl MatchReport {
         text.push_str(&format!(
             "\nDistinct games: {} of {} played.\n",
             self.distinct_games, self.games
+        ));
+        // The number that says whether a denominator is real. With the platform
+        // opening it is 1 and every game is one of two, whatever `games` says.
+        text.push_str(&format!(
+            "Distinct openings: {}.\n",
+            self.distinct_openings
         ));
         text.push_str(&format!(
             "A per-answer wall: {} answers, median {} ms, max {} ms.\n",

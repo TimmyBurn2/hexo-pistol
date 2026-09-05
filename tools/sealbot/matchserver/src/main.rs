@@ -11,10 +11,12 @@
 mod budget;
 mod client;
 mod config;
+mod openings;
 mod pistol_client;
 mod referee;
 mod report;
 mod sealbot_client;
+mod sha256;
 mod transcript;
 
 use std::path::{Path, PathBuf};
@@ -67,12 +69,47 @@ fn run(config_path: &str) -> Result<(), String> {
         ));
     }
 
-    let mut a = build_client(&config.engine_a, &out_dir, "engine_a")?;
-    let mut b = build_client(&config.engine_b, &out_dir, "engine_b")?;
+    // The book is loaded BEFORE either process is spawned, so a bad document
+    // refuses at config load rather than after some games are written.
+    let book = match config.openings.kind {
+        config::OpeningsKind::PlatformStandard => None,
+        config::OpeningsKind::Book => {
+            let file = config.openings.file.as_deref().expect("checked at load");
+            let take = config.openings.take.expect("checked at load");
+            let skip = config.openings.skip.expect("checked at load");
+            let loaded = openings::load(Path::new(file), take, skip, config.turn_cap)
+                .map_err(|why| format!("openings: {why}"))?;
+            eprintln!(
+                "matchserver: book {} — {} of {} openings, {} turns each, body_sha256 {}",
+                file,
+                loaded.taken.len(),
+                loaded.total,
+                loaded.opening_turns,
+                loaded.body_sha256
+            );
+            Some(loaded)
+        }
+    };
+    // How many leading stones the SERVER plays, which the sealbot seat reports
+    // as `setup` rather than as its opponent's moves.
+    let setup_plies = match &book {
+        None => 1,
+        Some(loaded) => loaded.taken[0].plies.len(),
+    };
+
+    let mut a = build_client(&config.engine_a, &out_dir, "engine_a", setup_plies)?;
+    let mut b = build_client(&config.engine_b, &out_dir, "engine_b", setup_plies)?;
 
     let mut summaries = Vec::with_capacity(config.games as usize);
     for game in 1..=config.games {
         let a_is_p1 = game % 2 == 1;
+        // PAIRED: games 2k-1 and 2k are the SAME opening from opposite seats,
+        // so an opening's own first-player advantage cancels within the pair
+        // instead of being attributed to whichever engine drew it.
+        let opening = book.as_ref().map(|loaded| {
+            let pair = (game as usize - 1) / 2;
+            loaded.taken[pair].plies.as_slice()
+        });
         eprintln!(
             "matchserver: game {}/{} ({} as p1)",
             game,
@@ -83,7 +120,7 @@ fn run(config_path: &str) -> Result<(), String> {
                 &config.engine_b.label
             }
         );
-        let summary = run_game(game, a_is_p1, config.turn_cap, &mut *a, &mut *b);
+        let summary = run_game(game, a_is_p1, config.turn_cap, opening, &mut *a, &mut *b);
         let path = transcript::write_game(&out_dir, &summary)?;
         eprintln!(
             "matchserver: game {} done ({}), transcript {}",
@@ -99,6 +136,19 @@ fn run(config_path: &str) -> Result<(), String> {
         config.turn_cap,
         &label_of(&config.engine_a),
         &label_of(&config.engine_b),
+        match &book {
+            None => 1,
+            Some(loaded) => {
+                let mut keys: Vec<&str> = loaded
+                    .taken
+                    .iter()
+                    .map(|opening| opening.position_tail.as_str())
+                    .collect();
+                keys.sort_unstable();
+                keys.dedup();
+                keys.len()
+            }
+        },
         summaries,
     );
     let report_json = out_dir.join("report.json");
@@ -140,6 +190,7 @@ fn build_client(
     engine: &EngineSpec,
     out_dir: &Path,
     prefix: &str,
+    setup_plies: usize,
 ) -> Result<Box<dyn EngineClient>, String> {
     match engine.kind {
         EngineKind::Pistol => Ok(Box::new(PistolClient::new(
@@ -160,6 +211,7 @@ fn build_client(
             engine.turn_timeout_seconds,
             out_dir,
             prefix,
+            setup_plies,
         ))),
     }
 }

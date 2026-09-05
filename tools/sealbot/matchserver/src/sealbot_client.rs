@@ -32,6 +32,8 @@ pub struct SealbotClient {
     prefix: String,
     process: Option<LineProcess>,
     game_no: u32,
+    /// Leading stones the SERVER played, which `request` reports as `setup`.
+    setup_plies: usize,
 }
 
 impl SealbotClient {
@@ -45,6 +47,7 @@ impl SealbotClient {
         timeout_seconds: f64,
         out_dir: &Path,
         prefix: &str,
+        setup_plies: usize,
     ) -> SealbotClient {
         SealbotClient {
             label,
@@ -56,6 +59,7 @@ impl SealbotClient {
             prefix: prefix.to_string(),
             process: None,
             game_no: 0,
+            setup_plies,
         }
     }
 
@@ -66,21 +70,34 @@ impl SealbotClient {
     }
 
     /// One request for the position `plies` describes.
-    fn request(plies: &[(Coord, Player)], time_limit: f64) -> Result<String, EngineFailure> {
-        let setup: Vec<(i32, i32)> = match plies.split_first() {
-            None => {
-                return Err(EngineFailure::Protocol {
-                    why: "sealbot asked to move on an empty board: the server always plays \
-                          the opening first"
-                        .to_string(),
-                })
-            }
-            Some(((first, _), _)) => vec![(i32::from(first.q), i32::from(first.r))],
+    ///
+    /// `setup_plies` is how many leading stones the SERVER played — one for the
+    /// platform's origin stone, five for a `k_stones = 5` book opening. The
+    /// split matters because `setup` and `moves` are different claims about who
+    /// played what, and a book opening reported as the opponent's own moves is
+    /// a false record even where a shim happens to replay both the same way.
+    fn request(
+        plies: &[(Coord, Player)],
+        setup_plies: usize,
+        time_limit: f64,
+    ) -> Result<String, EngineFailure> {
+        if plies.len() < setup_plies {
+            return Err(EngineFailure::Protocol {
+                why: format!(
+                    "sealbot asked to move on {} stones with a {setup_plies}-stone server \
+                     opening: the server always plays the opening first",
+                    plies.len()
+                ),
+            });
+        }
+        let cells = |slice: &[(Coord, Player)]| -> Vec<(i32, i32)> {
+            slice
+                .iter()
+                .map(|(at, _)| (i32::from(at.q), i32::from(at.r)))
+                .collect()
         };
-        let moves: Vec<(i32, i32)> = plies[1..]
-            .iter()
-            .map(|(at, _)| (i32::from(at.q), i32::from(at.r)))
-            .collect();
+        let setup = cells(&plies[..setup_plies]);
+        let moves = cells(&plies[setup_plies..]);
         serde_json::to_string(&json!({ "setup": setup, "moves": moves, "time_limit": time_limit }))
             .map_err(|error| EngineFailure::Io {
                 why: format!("serialising the request: {error}"),
@@ -114,7 +131,7 @@ impl EngineClient for SealbotClient {
             why: "no process: new_game was not called".to_string(),
         })?;
         let deadline = deadline(self.timeout_seconds);
-        let request = Self::request(plies, self.time_limit_seconds)?;
+        let request = Self::request(plies, self.setup_plies, self.time_limit_seconds)?;
         process.send(&request)?;
         let line = match process.read_line(deadline) {
             Ok(line) => line,

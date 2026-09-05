@@ -69,6 +69,12 @@ pub struct TurnRecord {
 
 /// One game as the report records it.
 pub struct GameSummary {
+    /// The opening this game was seeded from, as the transcript records it.
+    /// A false value here would be a false record of what was played.
+    pub opening: String,
+    /// The opening's own stones, which are part of the game for the purpose
+    /// of asking whether two games are the same game.
+    pub opening_stones: Vec<(i16, i16)>,
     pub game: u32,
     /// Whether engine A played p1 this game (seats alternate per game).
     pub a_is_p1: bool,
@@ -99,17 +105,50 @@ pub fn run_game(
     game_no: u32,
     a_is_p1: bool,
     turn_cap: u32,
+    opening: Option<&[(Coord, Player)]>,
     a: &mut dyn EngineClient,
     b: &mut dyn EngineClient,
 ) -> GameSummary {
     let mut state = GameState::new_game();
-    // The server's opening: p1's turn-1 stone at the origin. The only stone
-    // the referee ever plays itself, exactly as the platform's server does.
-    match state.place(OPENING) {
-        Ok(PlyOutcome::TurnComplete) => {}
-        other => panic!("matchserver invariant: the opening stone did not complete turn 1: {other:?}"),
+    // The opening is the SERVER'S, whichever it is: the referee plays it and
+    // then asks. `None` is the platform's own single origin stone, which is
+    // what the HeXO server plays; `Some` is a book opening already replayed
+    // through the rules at config load, so nothing here can refuse.
+    let mut plies: Vec<(Coord, Player)> = Vec::new();
+    let opening_stones: Vec<(i16, i16)> = match opening {
+        None => vec![(OPENING.q, OPENING.r)],
+        Some(seed) => seed.iter().map(|(at, _)| (at.q, at.r)).collect(),
+    };
+    let opening_note = match opening {
+        None => "server: p1 turn 1 at 0,0 (the platform's standard setup)".to_string(),
+        Some(seed) => {
+            let cells: Vec<String> = seed.iter().map(|(at, _)| at.to_string()).collect();
+            format!("server: {}-stone book opening {}", seed.len(), cells.join(" "))
+        }
+    };
+    match opening {
+        None => {
+            match state.place(OPENING) {
+                Ok(PlyOutcome::TurnComplete) => {}
+                other => panic!(
+                    "matchserver invariant: the opening stone did not complete turn 1: {other:?}"
+                ),
+            }
+            plies.push((OPENING, Player::P1));
+        }
+        Some(seed) => {
+            for &(cell, _) in seed {
+                match state.place(cell) {
+                    Ok(PlyOutcome::TurnContinues | PlyOutcome::TurnComplete) => {}
+                    other => panic!(
+                        "matchserver invariant: the book opening was accepted at config load and \
+                         refused here at {cell}: {other:?}"
+                    ),
+                }
+            }
+            plies.extend_from_slice(seed);
+        }
     }
-    let mut plies: Vec<(Coord, Player)> = vec![(OPENING, Player::P1)];
 
     // A spawn failure at new_game is a forfeit AT THE SITE, not a discarded
     // Result that surfaces later misattributed (CLAUDE.md rule 3).
@@ -132,6 +171,8 @@ pub fn run_game(
         a.finish_game();
         b.finish_game();
         return GameSummary {
+            opening: opening_note,
+            opening_stones: opening_stones.clone(),
             game: game_no,
             a_is_p1,
             result: GameResult::Forfeit { loser, why: why.clone() },
@@ -261,6 +302,8 @@ pub fn run_game(
     b.finish_game();
 
     GameSummary {
+        opening: opening_note,
+        opening_stones,
         game: game_no,
         a_is_p1,
         result,

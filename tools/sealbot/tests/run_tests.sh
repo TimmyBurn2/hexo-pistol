@@ -88,7 +88,7 @@ scratch.joinpath("m6_sealbot.json").write_text(json.dumps([
 scratch.joinpath("m6_pistol.json").write_text(json.dumps([]))
 
 def config(name, sealbot_script, budget='nodes = 100', stub_mode="instrument"):
-    return f'''schema_version = 1
+    return f'''schema_version = 2
 games = 1
 turn_cap = 20
 output_dir = "artifacts/pistol-testscratch-matchserver/{name}"
@@ -108,6 +108,9 @@ command = ["python3", "tools/sealbot/tests/stub_sealbot.py", "{scratch}/{sealbot
 cwd = "."
 time_limit_seconds = 0.05
 turn_timeout_seconds = 10.0
+
+[openings]
+kind = "platform_standard"
 '''
 
 scratch.joinpath("m1.toml").write_text(config("m1", "m1_sealbot.json"))
@@ -372,5 +375,87 @@ for name, found, wanted in (("m8", "instrument", "play"), ("m9", "play", "instru
     check(f"engine mode is {found}, not {wanted}" in game["detail"],
           f"{name}'s refusal names the mode it found and the mode the budget seats")
 
-print("sealbot-tests: PASS (all scripted matches matched their hand-derived outcomes)")
+
 PY
+
+# --- THE OPENINGS READER ----------------------------------------------------
+# Every case below is a way a book can be wrong that would otherwise be PLAYED
+# rather than refused. The digest is the outermost gate, so each broken body is
+# RE-DIGESTED — without that, R1 masks the refusal under test and the case
+# proves nothing, which is how these were first written and found vacuous.
+python3 - "$SCRATCH" <<'PY'
+import hashlib, pathlib, sys
+
+scratch = pathlib.Path(sys.argv[1])
+source = pathlib.Path("crates/pistol-cli/tests/fixtures/random_openings_v1.txt").read_text()
+lines = source.split("\n")
+mark = next(i for i, line in enumerate(lines) if line.startswith("# body_sha256"))
+header, body = lines[:mark], [line for line in lines[mark + 1:] if line.strip()]
+
+def book(name, body_lines, redigest=True):
+    text = "\n".join(body_lines) + "\n"
+    digest = hashlib.sha256(text.encode()).hexdigest() if redigest else "0" * 64
+    path = scratch / f"book_{name}.txt"
+    path.write_text("\n".join(header) + f"\n# body_sha256 {digest}\n" + text)
+    return path
+
+def doc(name, book_path, take, games, turn_cap=20):
+    base = (scratch / "m1.toml").read_text()
+    base = base.replace("games = 1", f"games = {games}")
+    base = base.replace("turn_cap = 20", f"turn_cap = {turn_cap}")
+    base = base.replace(f'output_dir = "{scratch}/m1"', f'output_dir = "{scratch}/{name}"')
+    base = base.replace('kind = "platform_standard"',
+                        f'kind = "book"\nfile = "{book_path}"\ntake = {take}\nskip = 0')
+    (scratch / f"{name}.toml").write_text(base)
+
+book("r1", body[:2], redigest=False); doc("r1", scratch / "book_r1.txt", 2, 4)
+book("r2", [body[0], "# a comment inside the body", body[1]]); doc("r2", scratch / "book_r2.txt", 2, 4)
+book("r3", [body[0], "0,0 1,1/2,2"]); doc("r3", scratch / "book_r3.txt", 2, 4)
+book("r6", [body[0], body[0]]); doc("r6", scratch / "book_r6.txt", 2, 4)
+book("r7", [body[0], "start moves 0,0 -9,3/-6,-1"]); doc("r7", scratch / "book_r7.txt", 2, 4)
+book("r9", body[:1]); doc("r9", scratch / "book_r9.txt", 1, 2, turn_cap=3)
+book("r10", body[:2]); doc("r10", scratch / "book_r10.txt", 2, 3)
+book("ok", body[:2]); doc("bk1", scratch / "book_ok.txt", 2, 4)
+PY
+
+refuses() { # <config name> <needle>
+  set +e
+  local out rc
+  out="$(tools/sealbot/run_match.sh "$SCRATCH/$1.toml" 2>&1)"
+  rc=$?
+  set -e
+  [ "$rc" -ne 0 ] || fail "the reader accepted $1, which is a book it must refuse"
+  case "$out" in
+    *"$2"*) printf '  ok: the reader refuses %s (%s)\n' "$1" "$2" ;;
+    *) fail "$1 was refused without naming its reason: $out" ;;
+  esac
+}
+refuses r1  "does not match the digest"
+refuses r2  "a comment inside the body"
+refuses r3  "not a \`start moves"
+refuses r6  "up to a lattice symmetry"
+refuses r7  "has no single turn count"
+refuses r9  "ends each game before either engine is asked"
+refuses r10 "every opening played from both seats"
+
+# The happy path, and the two facts that say the pairing actually happened.
+tools/sealbot/run_match.sh "$SCRATCH/bk1.toml" >/dev/null 2>&1 || fail "the reader refused a good book"
+python3 - "$SCRATCH" <<'PY'
+import json, pathlib, sys
+scratch = pathlib.Path(sys.argv[1])
+def check(condition, what):
+    if not condition:
+        sys.exit(f"sealbot-tests: FAIL: {what}")
+    print(f"  ok: {what}")
+report = json.loads((scratch / "bk1" / "report.json").read_text())
+check(report["distinct_openings"] == 2, "bk1 played two distinct openings")
+openings = [json.loads((scratch / "bk1" / f"g{n:03}.jsonl").read_text().splitlines()[0])["opening"]
+            for n in (1, 2, 3, 4)]
+check(openings[0] == openings[1] and openings[2] == openings[3] and openings[0] != openings[2],
+      "bk1 paired each opening across both seats")
+check(all(o.startswith("server: 5-stone book opening") for o in openings),
+      "bk1's transcripts record the book opening they were seeded from, not the platform's")
+check(report["distinct_games"] == 4, "bk1's four games are four distinct stone sequences")
+PY
+
+printf 'sealbot-tests: PASS (all scripted matches matched their hand-derived outcomes)\n'

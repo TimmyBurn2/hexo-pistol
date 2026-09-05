@@ -10,8 +10,10 @@
 
 use serde::Deserialize;
 
-/// The only schema this harness has read so far.
-const SCHEMA_VERSION: u32 = 1;
+/// The only schema this harness has read so far. Revision 2 adds the
+/// required `[openings]` table, so a revision-1 document is refused by name
+/// rather than run with an opening nobody chose.
+const SCHEMA_VERSION: u32 = 2;
 
 /// A match: two engines, N games, a turn cap, an output directory.
 #[derive(Debug, Deserialize)]
@@ -30,6 +32,37 @@ pub struct MatchConfig {
     pub engine_b: EngineSpec,
     /// Where transcripts, stderr and the report are written.
     pub output_dir: String,
+    /// Which opening every game starts from. Required, because a match whose
+    /// opening was implicit is the match this harness ran for two revisions
+    /// without anyone stating that its denominator was 2.
+    pub openings: OpeningsSpec,
+}
+
+/// Where the games' starting positions come from.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OpeningsSpec {
+    /// `platform_standard` — the server's own origin stone, which is what the
+    /// HeXO platform plays — or `book`, a sha-pinned openings fixture.
+    pub kind: OpeningsKind,
+    /// `book` only: the fixture, repository-root-relative.
+    pub file: Option<String>,
+    /// `book` only: openings to take. `games` must be exactly twice this, so
+    /// every opening is played from both seats.
+    pub take: Option<usize>,
+    /// `book` only: openings skipped before taking, so two runs over one book
+    /// can be disjoint by construction.
+    pub skip: Option<usize>,
+}
+
+/// The closed set of opening sources.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum OpeningsKind {
+    /// The platform's own opening: p1's turn-1 stone at the origin.
+    PlatformStandard,
+    /// A sha-pinned openings book, played from both seats.
+    Book,
 }
 
 /// One engine seat: a subprocess to drive, and its budget.
@@ -82,9 +115,13 @@ pub fn load(text: &str) -> Result<MatchConfig, String> {
     if config.games == 0 {
         return Err("match config games must be at least 1".to_string());
     }
-    if config.turn_cap < 2 {
-        return Err("match config turn_cap must be at least 2 (the engines are first asked at turn 2)".to_string());
+    // The platform opening is one turn, so the first ask is turn 2. A book
+    // opening's own turn count is checked against the cap by the reader (R9),
+    // which knows the length this literal cannot.
+    if config.openings.kind == OpeningsKind::PlatformStandard && config.turn_cap < 2 {
+        return Err("match config turn_cap must be at least 2 (against the platform opening the engines are first asked at turn 2)".to_string());
     }
+    check_openings(&config)?;
     check_engine(&config.engine_a, "engine_a")?;
     check_engine(&config.engine_b, "engine_b")?;
     if config.command_is_empty() {
@@ -149,6 +186,55 @@ fn check_engine(engine: &EngineSpec, name: &str) -> Result<(), String> {
             if engine.movetime_ms.is_some() {
                 return Err(format!(
                     "{name} of kind sealbot refuses movetime_ms: its budget is time"
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// The `[openings]` table's kind-specific fields, and nothing else.
+///
+/// R11: a `platform_standard` document naming a book key names a value nothing
+/// reads, and a reader that ignored it would let a book be requested and
+/// silently not played.
+fn check_openings(config: &MatchConfig) -> Result<(), String> {
+    let openings = &config.openings;
+    match openings.kind {
+        OpeningsKind::PlatformStandard => {
+            for (name, present) in [
+                ("file", openings.file.is_some()),
+                ("take", openings.take.is_some()),
+                ("skip", openings.skip.is_some()),
+            ] {
+                if present {
+                    return Err(format!(
+                        "openings.kind is platform_standard and openings.{name} is set; a \
+                         document naming a value nothing reads is a document whose reader and \
+                         author disagree"
+                    ));
+                }
+            }
+        }
+        OpeningsKind::Book => {
+            if openings.file.is_none() {
+                return Err("openings.kind is book and openings.file is absent".to_string());
+            }
+            let Some(take) = openings.take else {
+                return Err("openings.kind is book and openings.take is absent".to_string());
+            };
+            if openings.skip.is_none() {
+                return Err("openings.kind is book and openings.skip is absent".to_string());
+            }
+            // R10: every opening is played from BOTH seats or the match is not
+            // paired, and an unpaired anchor cannot separate the opening's
+            // first-player advantage from the engine's strength.
+            let owed = take.saturating_mul(2);
+            if config.games as usize != owed {
+                return Err(format!(
+                    "openings.take is {take}, so games must be {owed} — every opening played \
+                     from both seats — and the document says {}",
+                    config.games
                 ));
             }
         }

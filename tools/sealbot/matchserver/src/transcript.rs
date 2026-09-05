@@ -22,7 +22,7 @@ pub fn write_game(dir: &Path, summary: &GameSummary) -> Result<std::path::PathBu
         "game": summary.game,
         "a_is_p1": summary.a_is_p1,
         "event": "game_start",
-        "opening": "server: p1 turn 1 at 0,0 (the platform's standard setup)",
+        "opening": summary.opening,
     }))
     .map_err(|error| format!("serialise game_start: {error}"))?;
     line.push('\n');
