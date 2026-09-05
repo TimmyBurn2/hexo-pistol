@@ -1,6 +1,6 @@
 # WP-2.2 §B — census run pre-registration, revision 4.
 
-Governing revision: `0097f83` (`dev`).
+Governing revision: `d664368` (`dev`).
 
 **Revision 4 answers `wp22_census_prereg_rev3_REVIEW.md` (FAIL, 4 MAJOR), whose
 adjudication of the reversal is the reason this document is still alive**: it
@@ -25,8 +25,9 @@ run for this revision.
 **Revision 2 implements D-618, which RETIRED the cap calibration UNRUN.** The
 cap is no longer this document's free input: it is **2048**, fixed by D-618 on
 measurements that also showed the cap barely moves the quantity this census
-exists to produce (distinguishable-trial rate 0.10 / 0.07 / 0.08 per position
-across the three rungs, a spread of 1.4x). Revision 1 waited on a calibration
+exists to produce (CLASS rate 0.26 / 0.14 / 0.15 per position across the three
+rungs, a spread of 1.86x — D-619 retired the 0.10 / 0.07 / 0.08 figures D-618
+quoted, and the conclusion is unchanged). Revision 1 waited on a calibration
 that no longer exists.
 
 ## §1 What this run answers
@@ -180,7 +181,7 @@ on a rate.
 |---|---|---|
 | `crates/pistol-search/examples/trigger_census.rs` | `0f58533`, unchanged at HEAD | every census row |
 | `tools/texel/draw_census_samples.py` | `42967e0` | the census fixture |
-| `tools/texel/census_classes.py` | `0097f83`, gated by `tools/texel_tests.sh` | all three counts, the class curve, and the ordering refusal |
+| `tools/texel/census_classes.py` | `d664368`, gated by `tools/texel_tests.sh` (gate 18) | all three counts, the class curve, and the ordering refusal |
 | `crates/pistol-core/examples/fixture_key_full.rs` | `42967e0` | §8's referent |
 
 **All four are tracked, and the class counter's tests now RUN**: CI gate 18
