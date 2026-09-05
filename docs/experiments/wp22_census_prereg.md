@@ -1,6 +1,13 @@
-# WP-2.2 §B — census run pre-registration, revision 2.
+# WP-2.2 §B — census run pre-registration, revision 3.
 
-Governing revision: `84c1af2` (`dev`).
+Governing revision: `0097f83` (`dev`).
+
+**Revision 3 is the granted fix round on `wp22_census_prereg_REVIEW.md`
+(FAIL, 6 MAJOR).** Its two decisive findings are conceded and corrected in
+D-619: revision 2 computed its sizing quantity over the NULL's family of
+predicates rather than the ALTERNATIVE's column partition, and it extrapolated a
+coupon-collector count linearly. Both are fixed below, on a 500-position pilot
+run for this revision.
 
 **Revision 2 implements D-618, which RETIRED the cap calibration UNRUN.** The
 cap is no longer this document's free input: it is **2048**, fixed by D-618 on
@@ -72,54 +79,88 @@ records that the WP-2.1 sweep therefore ran with the census OFF, and that the
 count *"comes from the census run over this corpus's positions … on a
 census-capable seat"*. **This is that run.**
 
-## §5 Sizing — on the count the floor's own statistics assume
+## §5 Sizing — on a MEASURED curve, over the ALTERNATIVE's own partition
 
 **D-537's floor is a one-sample BINOMIAL** (`overnight2_ledger.md` §4:
-`p0 = 8/14`, `p1 = 12/14`, `alpha = beta = 0.05`, `n = 28`, `c = 21`), and a
-binomial assumes independent trials. **The counted unit does not deliver them**,
-and the collapse is MEASURED (`artifacts/wp22_cap_decision/`, 100 positions at
-cap 2048): 86 win-proving keys, from **8 roots**, distributed
-`[35, 33, 11, 3, 1, 1, 1, 1]`, collapsing to **10 DISTINGUISHABLE TRIALS**
-against the candidate field of `tools/stage3_census_rank.py`. **28 keys are
-reachable from ONE search tree.**
+`p0 = 8/14`, `p1 = 12/14`, `alpha = beta = 0.05`, `n = 28`, `c = 21`), which
+assumes independent trials. **The counted unit does not deliver them**: MEASURED
+at cap 2048 on 100 positions, 86 win-proving keys come from 8 roots distributed
+`[35, 33, 11, 3, 1, 1, 1, 1]`, so **28 keys are reachable from ONE search tree**.
 
-**So `n` is sized on distinguishable trials, not on keys.** A candidate detector
-is a boolean predicate over the census columns, and `p1 = 12/14` is defined as a
-bound OVER THOSE COLUMNS (`matrix_stage3_detector.md` §5.4), so two proving rows
-every candidate scores identically are one trial by the alternative's own
-definition.
+**THE PARTITION IS THE ALTERNATIVE'S, AND REVISION 2 HAD IT WRONG.**
+`p1 = 12/14` is produced by `tools/stage3_allocator_bound.py`'s `knapsack_bound`
+over its nine-`COLUMNS` tuple applied atomically. That file states the principle:
 
-| quantity | MEASURED rate / position, cap 2048 | ESTIMATED `n` for 28 |
-|---|---|---|
-| distinct keys (D-537's letter) | 0.86 | 33 |
-| distinct proving roots | 0.08 | 350 |
-| **distinguishable trials** | **0.10** | **280** |
+> *"A score is a function of the columns, so it cannot tell two firings apart
+> when every column agrees. The finest partition it can act on is the
+> column-vector CLASS."*
 
-**REGISTERED: `n = 800`**, ESTIMATED **45 minutes** at the MEASURED 3.41 s per
-position. That is well above the 280 the point estimate needs, and the margin is
-not decoration: the trial count advances **lumpily**, in steps, when a new root
-proves rather than smoothly — MEASURED, it sat at 2 through the first sixty
-positions and reached 10 over the next forty. A sample sized at the point
-estimate would be a coin toss.
+Revision 2 used `stage3_census_rank.py`'s thirteen written-ordering predicates —
+**the NULL's family** — which under-counts by 2.6x and made the criterion
+unreachable. Conceded in full; the correction is D-619.
 
-**Saturation was checked before this was registered**, because distinct
-verdict-vectors are a coupon-collector quantity and a ceiling near 10 would put
-28 out of reach: the cumulative curve is still climbing over the second fifty
-positions at both caps examined, so **no ceiling is visible** and 28 is
-reachable. If the governed run's curve flattens instead, that is the finding
-§7 reports and not a failure of the run.
+**THE SIZING IS A MEASURED CURVE, NOT A RATE.** A class count accumulates
+distinct things and cannot be extrapolated: from n = 100 to n = 500 the root
+rate held (0.080 -> 0.072) while the class rate fell 2.1x and the key rate 4.1x.
+So `n` is read off the curve itself. Pilot: **500 positions of the ORPHANED
+calibration slice** (rows 100..599 — the sample D-618 retired unrun, disjoint
+from the census slice, so nothing governed was consumed),
+`artifacts/wp22_census_pilot/`:
 
-**The run does NOT stop when any count reaches 28.** It runs its registered `n`.
-A run that stopped at the floor would make the count a function of the floor.
+```
+positions  100   200   300   400   500
+classes     11    18    37    47    62
+```
+
+**The floor of 28 is crossed between n = 200 and n = 300, and the curve is still
+accelerating at 500.** It does not saturate on this partition.
+
+**REGISTERED: `n = 800`**, ESTIMATED **44 minutes** at the MEASURED 3.31 s per
+position. That is more than twice the position count at which the floor was
+observed to be crossed, on a disjoint sample of the same corpus, and the margin
+is there because a class curve is lumpy — it advances when a new root proves.
+
+**If the governed curve flattens below 28**, that is the finding §7 reports, and
+D-619's flip clause fires. It is not a failed run.
 
 ## §6 What the three counts are for, and which one licenses what
 
-`w` counts distinct keys, so a position proving a win under two different roots
-counts once. **The calibration measures the proving-rows-to-distinct-keys ratio
-and this run applies no correction to `n` for it** — the margin of §5 absorbs
-it, and applying a measured correction from one sample to another is the
-extrapolation D-563 warns against. The ratio is reported for both samples so a
-successor can see whether the margin was doing that work.
+- **Distinct canonical KEYS** — D-537's literal unit, fixed by D-570. Reported
+  always, and never suppressed.
+- **Distinct proving ROOTS** — how many separate searches the evidence comes
+  from. It is the rate that transferred between samples (0.080 -> 0.072).
+- **Distinct COLUMN CLASSES** — the partition `p1 = 12/14` is defined over, and
+  therefore the count the floor's binomial actually assumes.
+
+**The CLASS COUNT licenses detector round 3.** Revision 2 said both that the
+floor is adjudicated on the key count and that a larger minimum is registered;
+those are incompatible, and D-619 resolves it — registering a larger minimum
+under D-537's own permission means the LARGER one licenses.
+
+**`roots <= classes <= keys` always**, which is what makes this a tightening
+rather than a change of unit; `tools/texel/test_texel.py` pins the ordering.
+D-537 forbids a successor to LOOSEN its minimum and expressly permits a larger
+one with grounds, so nothing here needs an operator ruling — though the grounds
+are the measurement in `artifacts/wp22_census_pilot/`, not this paragraph.
+
+**The calibration this section used to defer to no longer exists** (D-618
+retired it unrun), and §5 applies no rate correction because it no longer sizes
+on a rate.
+
+## §6b The instruments, with their governing revisions
+
+| instrument | revision | produces |
+|---|---|---|
+| `crates/pistol-search/examples/trigger_census.rs` | `0f58533`, unchanged at HEAD | every census row |
+| `tools/texel/draw_census_samples.py` | `0097f83` | the census fixture |
+| `tools/texel/census_classes.py` | `0097f83` | all three counts and the class curve |
+| `crates/pistol-core/examples/fixture_key_full.rs` | `0097f83` | §8's referent |
+
+**All four are tracked and the class counter is tested**
+(`tools/texel/test_texel.py` pins its partition against
+`stage3_allocator_bound.py`'s and the `roots <= classes <= keys` ordering).
+Revision 2 registered a count no committed instrument produced, which the review
+raised as M5; that is what this section answers.
 
 ## §7 What is reported — the closure line
 
