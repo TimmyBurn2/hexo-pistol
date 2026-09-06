@@ -195,3 +195,25 @@ Nine rounds, all committed so none survives only in a transcript:
 
 **Not one shipped number was ever wrong.** What failed, every time, was what the
 documents licensed.
+
+## §9 The receipts, anchored
+
+`artifacts/` is gitignored (hard rule 8), so an artifact directory is evidence only
+while some tracked document carries its receipt's own digest. `wp22_phase1_impl_REVIEW.md`
+m-5 named that gap and it stayed open until closure; this section closes it.
+
+| directory | files | receipt digest (`sha256` of the receipt itself) |
+|---|---|---|
+| `artifacts/wp22_phase1_quiet/` | 23, `-c` 23 of 23 OK | `7d376e314e4d05366f081c70453dabd0efaf43d193474684780d81bb960eef6e` |
+| `artifacts/wp22_review3_export/` | 15, `-c` 15 of 15 OK | `a6a6b96db00ab06656532ab1c1d873578138852fdf20bba681709502bd7608e3` |
+
+The second directory is the round-3 reviewer's own working evidence — its independent
+fit, both oracle runs, the 73-mutant seeding and the re-mutation pass — exported out of
+`/home/tom/pistol-review-r3-work` before that directory was removed. It carries the
+reviewer's own 10-file receipt too, at
+`97aad9d434e3fcd610774ede2c0c817d0877ca73046493a733c0c133a420af7e`, which verifies 10 of
+10 against the exported copies. **This export exists because the same evidence was lost
+once already**: `/home/tom/pistol-review-wt` was removed unexported earlier in this
+package and its gate lines survive only transcribed into a report. The rule those two
+episodes are instances of is in CLAUDE.md's Process section; it has now been broken and
+then honoured inside one work package.
