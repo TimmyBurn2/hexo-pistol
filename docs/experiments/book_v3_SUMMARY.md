@@ -16,7 +16,7 @@ rounds under an explicit two-round grant. Detail lives in
 `matrix_book_v3_storage.md` (the decision); `docs/book_v3_ledger.md` (the
 consumed-ranges record).
 
-## The four findings, in the order they cost most
+## The five findings, in the order they cost most
 
 ### 1. The dispatch's storage ruling applied the wrong rule, and the enum it named could not host the job
 
@@ -107,6 +107,37 @@ EXTENDABLE** — the first 8500 openings of a 9000-opening v3 are byte-identical
 so a run already part-played can be continued into a larger book if 8500 is ever
 short.
 
+### 5. The mutation harness left the mutant compiled, so its own evidence had to be withdrawn
+
+The harness backed a source up with `cp`, mutated it, ran the tests, and restored
+with `mv "$file.orig" "$file"` — which puts back the **backup's** timestamp,
+older than the artifact cargo had just built from the mutated source. Cargo
+compares mtimes, sees a source older than its own artifact, and **rebuilds
+nothing**: the cached binary keeps the mutant while `git status` and `git diff`
+both read clean. Measured at diagnosis: the restored `filter.rs` timestamped
+34 minutes OLDER than the test binary built from it.
+
+It surfaced only by luck — a later baseline went red with `left: 76, right: 38`,
+and 76 is exactly twice 38 because the stale binary still carried M7's
+`rejected += 2`. **A harness with this defect prints exactly what a correct one
+prints**: every mutant still dies, because a mutant compiled in is a mutant under
+test. What it silently loses is the ATTRIBUTION — mutant N+1's verdict may be
+mutant N's binary, and the baseline licensing the run may be the previous run's
+last mutant.
+
+**The first mutation set is withdrawn, not re-interpreted**, and M1–M7 were
+re-taken from a purged build cache: baseline GREEN, all seven dead. The harness
+now touches the file on restore, asserts `git diff --quiet` on it and aborts the
+run if the restore did not land, and touches every source before the baseline.
+Recorded at **D-650**.
+
+**A pattern across findings 3, 4 and 5 worth stating once**: each fix was correct
+and each exposed a consequence only the full gate set could see — the bin
+conversion moved the workspace's shipped-binary count, the new tests crossed
+rule 9's line cap, and the mutation runs exposed the harness. The gates earned
+their keep three times; the lesson is to read `EXIT=0` before calling anything
+green, not to have skipped the fixes.
+
 ## Evidence
 
 | what | where |
@@ -115,7 +146,7 @@ short.
 | seed stability + extendability | `artifacts/book_v3/STABILITY.txt` `dbae4c4e…86a5d7a` |
 | decision red team | `artifacts/book_v3/REDTEAM_storage.md` `b6f27a59…01800e8` |
 | REVIEW-impl | `artifacts/book_v3/REVIEW_IMPL.md` |
-| mutants M1–M7 | `artifacts/book_v3/MUTANTS.txt` |
+| mutants M1–M7 (re-taken, D-650) | `artifacts/book_v3/MUTANTS.txt` — baseline GREEN, all seven dead |
 | disjointness receipt | `tools/book_v3_disjointness.sh`, four counts 0 of 8500 |
 | loadability (a)(b)(c) | `artifacts/book_v3/smoke_report.txt`; `OpeningsDigest` at exit 2 |
 
