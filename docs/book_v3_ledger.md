@@ -18,11 +18,11 @@ row here in the same commit that adds its arena config, and never re-reads a
 range this table already holds. Reading a consumed range for a CLOSED verdict is
 not a new use and needs no row.
 
-**THE BOOK HOLDS 8500 OPENINGS, AND THE NUMBER IS DERIVED.** `pairs_v3 = 7800`
+**THE BOOK HOLDS 8500 OPENINGS, AND THE NUMBER IS DERIVED.** `pairs_v3 = 8000`
 is the smallest pair cap the shipped `crates/pistol-arena/examples/sprt_power.rs`
 measures at power ≥ 0.90 for `elo0 0`, `elo1 10`, `alpha = beta = 0.05` on the
 WP-2.2 Phase 1 pentanomial (`--buckets 2,3,8,7,4`); 7750 answers 0.8992 and is
-below. `ceil_to_500(7800 + 500) = 8500` applies `book_v2_registration.md` §4's
+below. `ceil_to_500(8000 + 500) = 8500` applies `book_v2_registration.md` §4's
 rule. The worst-case closed form `ln(19)²/t1²` floors it at 5233 pairs and does
 not bind. Receipt: `artifacts/book_v3/POWER_v3.txt`, sha256
 `ea77d4416e8d2f39c89d7a4d7aa7319cfc78e5c8022cb524c49628fe612d3dbf`
@@ -85,10 +85,10 @@ nothing was concluded from those games.
 
 | claimant | status | what it will need |
 |---|---|---|
-| The R7 acceptance SPRT | **THE REASON THIS BOOK EXISTS** (D-638, D-643) | 7800 pairs at the registered bounds; the book covers it with 700 openings to spare |
+| The R7 acceptance SPRT | **THE REASON THIS BOOK EXISTS** (D-638, D-643) | 8000 pairs at the registered bounds; the book covers it with 500 openings to spare |
 
 **AND A NOTE THE v2 LEDGER SHOULD BE READ WITH.** D-568 reserves v2's last 1000
-openings for governed runs. R1's measurement is that the R7 question needs 7800
+openings for governed runs. R1's measurement is that the R7 question needs 8000
 pairs, so that reservation cannot power it, or the WP-1.5d resolution run, at the
 bounds either would register. Whether the v2 holdout is retained for some smaller
 question or retired is a ruling this package did not take.

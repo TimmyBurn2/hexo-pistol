@@ -1,139 +1,139 @@
-# `book_v3` — STOP at R1, on a classification premise
+# `book_v3` — CLOSED. What shipped, what it cost, and the four findings
 
-**Read this first.** The package stopped after R0 (premises) and R1 (sizing),
-before R2 (implementation). No book was generated, no opening was drawn, no
-range was claimed, the D-568 reservation is whole and untouched, and no strength
-claim of any kind was made. Detail and every quotation are in
-`docs/experiments/book_v3_registration.md`.
+**The book exists.** `crates/pistol-cli/tests/fixtures/random_openings_v3.txt`,
+**8500 openings**, sha256
+`9453763625c83a8a95d31bf5ee62e5ec6db91552d0fe81a604b190067e32f240`, committed as
+a rule-7 fixture beside v1 and v2. It is disjoint under canonical form from
+book_v1, from all of book_v2, and from the labelled corpus, and internally
+distinct — all four counts **0 of 8500**, measured by a script that shares no
+draw, no filter and no rendering with the builder. The D-568 reservation is
+whole. No strength claim was made and no range of v3 is consumed.
 
-## The blocking finding, in one paragraph
+**This package stopped once and was resumed by the operator**, who returned the
+blocking decision to the session rather than ruling on it. It then ran three more
+rounds under an explicit two-round grant. Detail lives in
+`book_v3_registration.md` (premises, sizing, receipts, the fix round);
+`matrix_book_v3_storage.md` (the decision); `docs/book_v3_ledger.md` (the
+consumed-ranges record).
 
-`book_v3` is not a **book** under hard rule 8. It is a **fixture** under hard
-rule 7, by this repository's own written test — D-151 draws the line ("no engine
-judgement, no eval, no search result, no solved value"; "a balance-filtered book
-WOULD be a book") and D-175 applies it to this exact generator, in as many
-words. BV3-3 rules the opposite: that v3 is a rule-8 artifact living under
-`artifacts/`, never committed, resolving through a new manifest. Three of that
-ruling's consequences are costs it does not name. The digest refusal it asks for
-**already exists three times over** — in-band (`# body_sha256` in the book's own
-header, re-verified by `openings::load` on every load, refusing with the named
-`ArenaError::OpeningsDigest`), out-of-band (the digests pinned as source
-constants in gate 3, whose own comment calls this *"the convention
-`tactical_v0.txt` and the corpus fixtures already use (CLAUDE.md rule 7)"* and
-notes it catches strictly more than the in-band pin), and by byte-for-byte
-regeneration from the committed config. A manifest would be a fourth path and
-the weakest of them, desynchronisable by a stale file. `BookVersion` **cannot host the behaviour
-assigned to it**: it lives in pistol-cli, is write-side only (it picks a file
-name and a header preamble), and pistol-arena references it at zero sites — so
-the Scope line "pistol-arena (BookVersion::V3 and its loader)" names the wrong
-crate and a mechanism that does not exist. And an uncommitted v3 **loses the
-byte-for-byte regeneration test v1 and v2 both have in gate 3**, degrading
-BV3-2's own reproducibility requirement from a standing gate to a one-time
-receipt.
+## The four findings, in the order they cost most
 
-## Which premise or fork it hit
+### 1. The dispatch's storage ruling applied the wrong rule, and the enum it named could not host the job
 
-**P1**, and it hit it by succeeding rather than by failing: P1 asked for the
-enum, its variants and every match site, and the answer is that the enum is in
-the wrong crate for the job BV3-3 gives it. R0's rule is "any failure: STOP".
+D-645 ruled book_v3 a hard-rule-8 artifact: uncommitted, under `artifacts/`,
+resolving through a new manifest. Two things were wrong with that, and the first
+is what stopped the package.
 
-The waiver in **BV3-9** — no OPTION MATRIX, no DECISION-RED-TEAM, on the ground
-of "zero free parameters" — is what P1 falsifies. Where v3's bytes live and
-which digest path governs them is a named decision with more than one viable
-option and different failure modes. CLAUDE.md's Process section says that is
-settled by an OPTION MATRIX attacked by a fresh-context DECISION-RED-TEAM
-**before** selection, and calls an option adopted without one "the same breach as
-silent architecture drift". This is not an OPERATOR OVERRULE either: that
-instrument is for when the code is done and a document blocks it, and no code was
-written.
+**`book_v3` is a rule-7 FIXTURE by this repository's own written test.** D-151
+draws the line by CONTENT — *"no engine judgement, no eval, no search result, no
+solved value"*, and *"a balance-filtered book WOULD be a book"* — and D-175
+applies it to this exact generator in as many words. `k_stones` stays 5 and there
+is no balance filter, so v3 is v1's and v2's class.
 
-A fourth item belongs to the same ruling. **BV3-4 demands zero canonical overlap
-against v1, v2 and the corpus.** No book here has ever met that: `book_v2_ledger.md`
-records v2 against v1 at 1 identical line and **10 positions up to symmetry**,
-"what chance gives", pinned by a test. Reaching zero needs a rejection filter —
-and filtering against the corpus `key_full` set is a curation step whose criterion
-derives from **engine play**, which is verbatim D-151's flip clause ("the moment a
-curation step consults an engine"). Whether that flip fires is itself the rule-8
-question, and it has to be answered before the generator runs, not after.
+**And `BookVersion` could not do what the ruling assigned it.** It lives in
+pistol-cli, is write-side only — it picks a file name and a header preamble —
+and **pistol-arena references it at zero sites**. "V3 resolves through the
+manifest" had no site to live at, and the dispatch's own Scope line named the
+wrong crate. The digest refusal the ruling wanted already existed as one run-time
+refusal (`ArenaError::OpeningsDigest`, re-verified on every load) and two gates.
 
-## What was completed
+Settled the way the Process section requires — an OPTION MATRIX attacked by a
+fresh-context DECISION-RED-TEAM **before** selection, which BV3-9 had waived on
+the "zero free parameters" premise that P1 falsified. Recorded at **D-647**.
 
-- **§0 in full.** The ten paste-block lines are appended at **D-637..D-646** —
-  none of the ten bracketed keys existed, so all ten landed. R-D's ROADMAP
-  correction landed in the same commit (`0a430d2`): SPSA/Texel tuning moved from
-  Stage 4 to Stage 2, and the Stage 4 header was corrected to match, nothing else
-  in the tree citing it. `ps` showed no engine process before any run.
-- **Two format decisions forced by gate 19**, both on correctness rather than
-  taste. The lines land as `D-637 [key]: …` at column 0, unwrapped, one line per
-  decision: `tools/decision_key_check.sh` extracts keys with `grep -oE '^D-[0-9]+'`,
-  so a pasted `- D-637 …` would not register as a key at all and would be
-  invisible to the uniqueness gate. Gate 19 re-run green afterwards: **648 keys,
-  no repeat outside the D-276/D-277 exemption**. Gates 17, 20 and 21 also green.
-- **D-644's two dangling citations resolved in the line itself**, on the precedent
-  of D-565, D-568, D-569 and D-611, because the log is append-only and a dangling
-  reference appended now is permanent. `D-56x` is **D-562** (the tree says so at
-  `wp21_DISPATCH.md:198`); `D-56q` is **D-568**, which took that number in its own
-  first sentence.
-- **R0**: P1..P9 quoted at `0a430d2`, in `book_v3_registration.md` §Premises.
-- **R1**: run, not merely computed (D-628 §7). Instrument cross-check reproduces
-  POWER.txt's 4000 and 8000 rows digit for digit.
-  - **`pairs_v3` = 7800 — MEASURED** (smallest cap at power ≥ 0.90; 7750 gives
-    0.8992, 7800 gives 0.9001).
-  - **Floor = 5233 — DERIVED**, `ln(19)²/t1²`; reproduces `training_pipeline_2026-09.md`
-    §5 exactly. It does not bind.
-  - **`openings_v3` = 8500 — DERIVED** via `book_v2_registration.md` §4's
-    `ceil_to_500(P + 500)`.
-  - **The size is insensitive to grid refinement**: `ceil_to_500(P+500)` is 8500
-    for every `P` in `(7500, 8000]`, and the crossing is bracketed in `(7750, 7800]`.
-  - BV3-1's ">2x ⇒ STOP" fork **did not fire**; 7800/8500 is the expected order.
-  - Receipt: `artifacts/book_v3/POWER_v3.txt`, sha256
-    `ea77d4416e8d2f39c89d7a4d7aa7319cfc78e5c8022cb524c49628fe612d3dbf`.
-- **P8 closed a conditional in R2's favour**: the arena handshake does **not**
-  advertise book versions (`identity.rs` is engine identity), so no golden
-  transcript refresh arises. The goldens are untouched.
+### 2. The red team broke my own argument, and the measurement it demanded replaced it
 
-## What was NOT done, and why
+The matrix's first revision answered the strongest attack — that filtering
+against a corpus derived from engine play is D-151's *"the moment a curation step
+consults an engine"* — by arguing v3 would never be regenerated when the engine
+changed. **That is a misreading**: D-151's flip is unconditional, and revision 1
+promoted a description of bookhood into a necessary condition on the flip. The
+argument is withdrawn.
 
-R2, R3, R4, R5 — implementation, call-site mutants M1..M6, REVIEW-impl, closure.
-All of them depend on the classification question above: R2's first two
-obligations are the manifest and the digest refusal, and both change shape or
-disappear under the other ruling. No partial book is registered, per the STOP
-protocol.
+What replaced it is a measurement nobody had taken. A game passes through exactly
+one five-stone position — its own opening, which the book chose and no engine did
+— and the corpus was labelled from book_v2 openings `13..3499`. So over all
+89 805 deduped rows: **3487 five-stone keys, `corpus₅ \ book_v2 = 0`, and
+`(corpus₅ ∩ v3) \ (book_v2 ∩ v3) = 0`.** D-644's corpus clause is extensionally
+empty given its own book_v2 clause. That removes the engine-derived input from
+the filter entirely — the flip has nothing to fire on — and it is why the filter
+reads only committed files, which is what lets the rebuild run on a machine that
+does not have the 43 MB corpus.
 
-Generation wall time is **unmeasured**, because no generation was run. BV3-7's
-attribution stands as recorded in D-646: the handoff's "~4.5 h" is an SPRT run
-cost at the 2.046 s/opening seat, not generation.
+The red team also caught that revision 1 reported **exact-line** overlap (0 and
+2) where the mandated filter is **canonical** (9 and 29): 38 openings are
+rejected, not 2, and reaching zero by re-rolling the seed is arithmetically
+closed at `P ≈ e⁻⁴³`.
 
-## What a resume needs
+### 3. A test that was green in CI and red under every narrower invocation
 
-**One operator ruling, on the classification.** Everything else follows from it.
+REVIEW-impl asked for a test driving the SHIPPED builder rather than a
+re-implementation. The test written for it located the tool under `examples/` and
+asserted its presence. **A bare `cargo test` builds example targets; `cargo test
+--test <name>` does not.** So it passed under `tools/ci.sh`, which runs the bare
+form, and failed everywhere else.
 
-- **If v3 is a fixture (rule 7), which is what D-151 and D-175 say:** v3 is
-  generated into `crates/pistol-cli/tests/fixtures/random_openings_v3.txt` and
-  committed like its two predecessors; `configs/random_openings_v3.toml` carries
-  the seed; the pinning test that regenerates it byte-for-byte joins gate 3;
-  **no manifest is built**, because the header's own `body_sha256` and
-  `ArenaError::OpeningsDigest` already do that job on every load. BV3-3 and
-  BV3-5(c) are struck; D-645 is superseded by a new line. Diff surface becomes
-  **pistol-cli**, not pistol-arena. This is the cheaper option and the one the
-  standing ADRs point at.
-- **If v3 is an artifact (rule 8):** then D-151's and D-175's test needs an ADR
-  saying why this book differs from its two predecessors, `artifact_check.sh`
-  needs to know about it, and the loss of the gate-3 regeneration pin needs
-  accepting on the record.
+The cost was not a red test. **It turned the R3 mutation baseline RED, and a red
+baseline makes every mutant verdict in that run meaningless** — a whole mutation
+set silently worthless while all 21 gates reported green. Fixed at the target
+kind: `build-book-v3` is now a `src/bin/` binary, where cargo guarantees
+`CARGO_BIN_EXE_*` and builds it for every integration test.
 
-**Separately, and needed either way:** a ruling on BV3-4's zero-overlap demand —
-whether a rejection filter against corpus keys is the curation-consults-an-engine
-flip D-151 names, and whether zero is the right target when the measured
-precedent between two existing books is 10 symmetry-overlaps of pure chance.
+**The same defect was already in the tree, on this package's own instrument.**
+`crates/pistol-arena/tests/sprt_power_tests.rs` uses the identical lookup and its
+comment stated the false premise verbatim — *"`cargo test` builds examples, so
+the path below exists whenever this test can run"*. All six of its tests fail
+under the narrow command in a fresh worktree, and `sprt_power` is what produced
+`POWER.txt` and this package's `POWER_v3.txt`. That one keeps its target kind for
+a stated reason; the false sentence is corrected, because **the wrong belief was
+read out of the tree rather than invented**. Recorded at **D-648**.
 
-A resume also adds `book_v3_registration.md` to
-`tools/governing_citation_check.sh`'s `GOVERNING` list. It is deliberately absent
-now: that list names documents that govern a run, and no run was licensed.
+### 4. The registered pair cap was a coin flip, and the book survived it by luck
 
-## State of the tree
+The sweep's first crossing of power 0.90 was 7800 pairs at 0.9001, against 7750's
+0.8992 — and **the simulation's standard error at p = 0.90 with 20 000 runs is
+0.00212**, so those two numbers are separated by one twentieth of a standard
+error. Measured across eight seeds: **at 7800, seed 8 answers 0.8989 — below the
+threshold the cap was registered for**; at 7750, two seeds answer above it. At
+8000 every seed answers ≥ 0.9039.
 
-`dev` at `0a430d2`, clean, one commit added by this package (the §0 decisions and
-ROADMAP commit). Nothing in pistol-core, pistol-eval, pistol-search, pistol-solver
-or pistol-engine was touched; no engine code was touched at all. No branch
-`book-v3-stopped` was needed — there is no work in progress to park.
+`pairs_v3` is corrected to **8000**. **The book does not move**, because
+`ceil_to_500(P + 500)` returns 8500 for every `P` in `(7500, 8000]` — the
+insensitivity the registration had already recorded is what contained a
+registered-number defect to a registered number. Had the rule been sharper, the
+same coin flip would have shipped the wrong book. Recorded at **D-649**, together
+with a second property probed in the same pass and found to hold: **v3 is
+EXTENDABLE** — the first 8500 openings of a 9000-opening v3 are byte-identical,
+so a run already part-played can be continued into a larger book if 8500 is ever
+short.
+
+## Evidence
+
+| what | where |
+|---|---|
+| sizing sweep | `artifacts/book_v3/POWER_v3.txt` |
+| seed stability + extendability | `artifacts/book_v3/STABILITY.txt` `dbae4c4e…86a5d7a` |
+| decision red team | `artifacts/book_v3/REDTEAM_storage.md` `b6f27a59…01800e8` |
+| REVIEW-impl | `artifacts/book_v3/REVIEW_IMPL.md` |
+| mutants M1–M7 | `artifacts/book_v3/MUTANTS.txt` |
+| disjointness receipt | `tools/book_v3_disjointness.sh`, four counts 0 of 8500 |
+| loadability (a)(b)(c) | `artifacts/book_v3/smoke_report.txt`; `OpeningsDigest` at exit 2 |
+
+Generation cost **0.036 s** for 8500 openings on this workstation — the handoff's
+"~4.5 h" is the SPRT RUN at the 2.046 s/opening seat and never was generation.
+
+## What a successor must know
+
+- **v3 is filtered, and its bytes depend on two other files.** That is a knowing
+  departure from D-518, which declined exactly this filter for v2. Rebuilding
+  needs `configs/random_openings_v3.toml` **and** the committed v1 and v2.
+- **The corpus is not an input** and must not become one: keeping it out is what
+  lets a fresh clone rebuild and verify the book.
+- **Disjointness is at the OPENING.** It does not claim that games played from v3
+  never transpose into a position the corpus holds at greater depth. D-644 asks
+  for openings and openings are what was delivered.
+- **Two things this package did not take**: a ruling on whether book_v2's now
+  under-powered 1000-opening holdout is retained or retired, and the stale
+  D-143 citation on the arena's load path (`openings.rs:47-48` justifies
+  windowing by "content-hash order"; these books are emitted in generation
+  order — the conclusion survives, the cited reason does not).

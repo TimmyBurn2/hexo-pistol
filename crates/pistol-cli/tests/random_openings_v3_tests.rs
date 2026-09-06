@@ -16,7 +16,7 @@ const RANDOM_OPENINGS_V3_SHA256: &str =
 
 /// What the book must hold, and it is DERIVED rather than chosen: `pairs_v3` is
 /// the smallest cap `sprt_power.rs` measures at power >= 0.90 for the R7
-/// question, and `ceil_to_500(7800 + 500)` applies book_v2_registration.md §4
+/// question, and `ceil_to_500(8000 + 500)` applies book_v2_registration.md §4
 /// (docs/decisions.md D-643).
 const OPENINGS: usize = 8500;
 
@@ -262,6 +262,44 @@ fn the_filter_refuses_a_survivor_count_that_is_not_the_size_asked_for() {
         }
         other => panic!("a survivor count that is not the size must be refused: {other:?}"),
     }
+}
+
+#[test]
+fn a_larger_v3_extends_this_book_rather_than_replacing_it() {
+    // THE ESCAPE HATCH IF 8500 EVER PROVES SHORT, pinned rather than assumed.
+    // v1's config claims this property for itself — "raising this number EXTENDS
+    // the sample rather than replacing it" — and v3's filter is a reason it might
+    // not hold here. It does, because the filter's predicate is a function of the
+    // candidate ALONE, so a longer draw is a prefix-preserving superset and the
+    // survivors keep generation order. Without this, a run that had already
+    // played part of v3 could not be continued into a bigger book.
+    let mut config = RandomOpeningsConfig::load(&repo(CONFIG)).expect("the v3 config loads");
+    let mut excluded = keys(BookVersion::V1);
+    excluded.extend(keys(BookVersion::V2));
+
+    // The draw that leaves exactly 500 more survivors (artifacts/book_v3/STABILITY.txt).
+    let bigger = 9000;
+    config.generate.n_openings = 9039;
+    let drawn = random_openings::generate(&config).expect("the larger draw generates");
+    let (book, _) = filter::retain_disjoint(drawn, &excluded, bigger, config.generate.n_openings)
+        .expect("9039 drawn leaves exactly 9000 survivors");
+
+    let text = committed(BookVersion::V3);
+    let committed_body: Vec<&str> = body_of(&text)
+        .expect("the header ends and a body follows")
+        .lines()
+        .collect();
+    let extended: Vec<&str> = book
+        .openings
+        .iter()
+        .take(OPENINGS)
+        .map(|opening| opening.tail.as_str())
+        .collect();
+    assert_eq!(committed_body.len(), OPENINGS);
+    assert_eq!(
+        extended, committed_body,
+        "a larger v3 must keep every opening this one holds, in order"
+    );
 }
 
 #[test]

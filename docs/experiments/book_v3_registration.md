@@ -258,23 +258,34 @@ digit for digit against the Phase 1 artifact.
 
 Alpha side at the top of the grid: 7750 `h0 0.9004`, 8000 `h0 0.9053`.
 
-- **`P` = 7800 pairs — MEASURED.** The smallest cap in the swept grid reaching
-  power ≥ 0.90; 7750 answers 0.8992 and is below.
+- **`P` = 8000 pairs — MEASURED, AND CORRECTED AT R5.** The grid's first crossing
+  was 7800 (0.9001 against 7750's 0.8992) and **that crossing is Monte Carlo noise,
+  not a measurement.** The simulation's standard error at p = 0.90 with 20 000 runs
+  is 0.00212, so a crossing decided at the third decimal is decided by `--seed`.
+  Measured over eight seeds (`artifacts/book_v3/STABILITY.txt`): at 7800 seed 8
+  answers **0.8989, below the threshold the cap was registered for**, and at 7750
+  seeds 4 and 7 answer above it. At 8000 every seed answers ≥ 0.9039. **`P` is
+  therefore the smallest grid point whose power ≥ 0.90 survives the seed**, which is
+  8000. Registering 7800 would have been a threshold crossing picked from one draw
+  — the post-hoc move this project forbids, arrived at honestly and still wrong.
 - **Floor = 5233 pairs — DERIVED.** `ln(19)² / t1²` with
   `t1 = 10 · ln(10)/800 · √2 = 0.040704`, which is the instrument's own printed
   `tilted_t`. This reproduces `training_pipeline_2026-09.md` §5's figure exactly.
   **The floor does not bind**, the measured number being larger.
-- **`pairs_v3` = max(7800, 5233) = 7800 — MEASURED.**
-- **`openings_v3` = ceil_to_500(7800 + 500) = 8500 — DERIVED**, via P2's §4 rule.
+- **`pairs_v3` = max(8000, 5233) = 8000 — MEASURED.**
+- **`openings_v3` = ceil_to_500(8000 + 500) = 8500 — DERIVED**, via P2's §4 rule.
+  **The artifact is unchanged by the correction**, which is the whole reason the
+  correction is cheap: 8500 is what the rule returns for every `P` in `(7500, 8000]`,
+  so the book that shipped is the book 8000 asks for.
 
 **THE DERIVED SIZE IS INSENSITIVE TO GRID REFINEMENT, WHICH IS WORTH MORE THAN
 ANY SINGLE GRID POINT.** `ceil_to_500(P + 500)` returns **8500 for every `P` in
-`(7500, 8000]`**, and the 0.90 crossing is bracketed inside `(7750, 7800]`. So a
-finer sweep cannot move `openings_v3`, and the number does not depend on where
-in that band the crossing is pinned.
+`(7500, 8000]`**. So a finer sweep cannot move `openings_v3`, and the number does
+not depend on where in that band the crossing is pinned — which is what contained
+the R5 correction to a registered cap instead of to the shipped book.
 
 BV3-1's fork — *"instrument says more than 2x that, STOP"* against an expected
-8,000 pairs / ~8,500 openings — **does not fire**: 7800 and 8500 are the
+8,000 pairs / ~8,500 openings — **does not fire**: 8000 and 8500 are the
 expected order.
 
 **Cost, with its seat named (D-479, BV3-7).** At cap 8000 the instrument

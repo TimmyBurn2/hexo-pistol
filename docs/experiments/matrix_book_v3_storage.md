@@ -199,7 +199,7 @@ the corpus clause by a receipted proof instead.
 ## Findings carried out of this matrix, not resolved by it
 
 - **The D-568 reservation is arithmetically dead and the ledger still advertises
-  it.** R1 measures the SPRT needs 7800 pairs; a 1000-opening holdout cannot power
+  it.** R1 measures the SPRT needs 8000 pairs; a 1000-opening holdout cannot power
   either standing claimant. `book_v3` exists because of that. A retention or
   retirement line for v2's holdout is owed and is NOT taken here.
 - **A pre-existing stale comment on the load path.**

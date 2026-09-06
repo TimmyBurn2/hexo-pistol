@@ -54,10 +54,10 @@ k_stones = 5
 # survivor count rather than truncating, because a book silently shortened is a
 # sample size nobody chose (CLAUDE.md rule 6).
 #
-# 8500 is DERIVED, not chosen: `pairs_v3 = 7800` is the smallest pair cap the
+# 8500 is DERIVED, not chosen: `pairs_v3 = 8000` is the smallest pair cap the
 # shipped `sprt_power.rs` measures at power >= 0.90 for elo0 0 / elo1 10 /
 # alpha = beta = 0.05 on the Phase 1 pentanomial, and
-# `ceil_to_500(7800 + 500) = 8500` applies book_v2_registration.md §4's rule
+# `ceil_to_500(8000 + 500) = 8500` applies book_v2_registration.md §4's rule
 # (docs/decisions.md D-643; artifacts/book_v3/POWER_v3.txt).
 n_openings = 8538
 
