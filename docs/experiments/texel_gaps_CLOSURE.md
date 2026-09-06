@@ -714,7 +714,7 @@ second failure on any item STOPs that item.
 
 | finding | what it caught | disposition |
 |---|---|---|
-| **BLOCKING-1** | the CLOSURE at the reviewed revision stopped at §1 P8, forward-referenced §2 and §3 four times, and cited **no gate log for any gate** | §2-§6 land here with gate output quoted in §7 |
+| **BLOCKING-1** | the CLOSURE at the reviewed revision stopped at §1 P8, forward-referenced §2 and §3 four times, and cited **no gate log for any gate** | §2-§7 land, and §7 quotes the gates' own output |
 | **MAJOR-1** | the fit receipt was pinned over a **19-column** fixture while item D, in the same package, made `extract.py` write **20** — two green tests pinning the fixture and the extractor APART | `synth_rows` writes the game key, the fixture is regenerated at 20 columns, `FIT_RECEIPT_SHA256` re-pinned to `5e17e8ff…` |
 | **MAJOR-2** | item D's headline number was defended by nothing: `games.add((index, game))` → `games.add(game)` survived the whole suite and prints 218 for the corpus's 3487 | the extract test captures stdout and asserts `from 4 distinct game(s)`; mutant **M8** |
 | **MAJOR-3** | `8e7fdf0`'s own fix disarmed the control it was fixing — `bool(directions)` in `free_ok` made the POSITIVE check fire and the negative control vacuous, the finding's property one step to the left | emptiness moves out of `_minimiser_conditions` to the caller, checked in BOTH directions plus a per-kind direction-count check; M2 now dies at its registered check |
@@ -772,3 +772,59 @@ the committed FIXTURE instead and dies at
 `and they are the rows the stated parameters produce`. The harness also learned
 to print a raise's last line rather than an empty list, because `got: []` beside
 a non-zero exit is not a legible verdict.
+
+## §7 The scoped confirmation, and what it found
+
+`docs/experiments/texel_gaps_confirm_REVIEW.md`, fresh context, pinned at
+`f73539e`, with its own worktrees under `/home/tom/confirm-wt/` and its own
+mutants. Its question was not whether the fix round was good work but whether
+each of REVIEW-impl's 21 findings had its PROPERTY discharged or its SENTENCE.
+**Nineteen were DISCHARGED, verified by rebuilding the reviewer's own mutants and
+harder variants; two were MOVED; and it found one NEW defect that alone made the
+revision unlandable.**
+
+**THE FOUR SURVIVING FINDINGS WERE ONE PROBLEM, AND NAMING IT IS THE POINT OF
+THIS SECTION.** Each was a hand-maintained LIST or a hand-counted NUMBER standing
+where a PROPERTY or a derived value was available:
+
+| what was found | the list or number | what replaced it |
+|---|---|---|
+| **NEW: gate 18 RED at `f73539e` in a clean checkout** | `RETIRED_MAY_NAME`, an allowlist of records — and the very next document landed, `texel_gaps_impl_REVIEW.md`, quotes the retired basenames in its own reproducers and was not on it | the allowlist is **deleted**. `_live_tree` alone decides: a retired name may stand in any record and in no config, crate or tool. MAJOR-9 had already said a list is not a property; the error was adding the property beside the list instead of in place of it |
+| **MAJOR-9 residual** | a case-sensitive `git grep -F` where the claim is about a NAME | `-F -i`, and mutant **M11** re-adds `configs/Eval_V0_Quiet_Fit_Weights.toml` to a live config |
+| **MAJOR-10 residual** | the tripwire's message listed four citing sites where D-669 had found more | the message names **the command**, and points at D-669 as the one place that enumerates — a list in a failure message rots exactly like the constant beside it |
+| **MINOR-9 / D-669** | "nine lines in six files", counted off its own seven-path list by eye | **D-671**, which corrects it to seven AND retires the number: the population is self-referential — at `19d565a` the same command answers 15 lines in 10 files, because this package's own review, confirmation and closure now discuss the digest — so the COMMAND is the claim and the load-bearing subset is a judgement over two sites |
+
+**BLOCKING-1 was rated MOVED for a reason worth keeping.** Its fix text said gate
+output would be *"quoted in §7"* and the document ended at §6 — a forward
+reference to a section that did not exist, which is the shape BLOCKING-1 was
+opened to fix, recreated in the sentence closing it. This is that §7.
+
+**What the confirmation could not break.** MAJOR-3's fix — the crux — holds: with
+the `both` row's direction list emptied, the positive check AND the negative
+control both fail, neither vacuous. MAJOR-5's fix was attacked with the exact
+D-650-class construction: a staged mutant passes `git diff --quiet --` (exit 0,
+falsely clean) and fails `git diff --quiet HEAD --` (exit 1), so the new referent
+closes the hole. D-665's four measured claims all re-derived by an independent
+method, including the 18-of-18 and exactly-5 seat enumerations by a `tomllib`
+parse rather than the `grep -A 4` window that caused the original miscount.
+
+**Two sub-claims of D-666 are recorded as NOT independently re-derived** — the
+"204 of 1140" flatness count and the set equality between the 525 that can bind
+and the 525 the two-constraint set refuses. Both are asserted here and pinned by
+the shipped suite; neither was re-taken by a second party, and the confirmation
+says so rather than passing them silently.
+
+### A finding this package walked into and is recording rather than fixing
+
+`tools/ci.sh` was first run in a worktree with `CARGO_TARGET_DIR` exported — the
+rule for MUTATION and verification work applied to the gate runner, which has
+path assumptions that rule was never about. The run went red at gate 3, and the
+message is the finding: `solver_determinism: RUN VOID: no binary at
+target/release/solver-selftest after a green build`. **The script was right and
+the seam was not.** `tools/solver_determinism.sh:32` resolves its binary by a
+path literal where D-250 moved four sibling gates onto cargo's own artifact
+stream, and `crates/pistol-cli/tests/solver_determinism_gate_tests.rs:18` asserts
+`output.status.success()`, so a VOID reads as a failing determinism gate —
+`tools/SHELL_CHECKLIST.md` item 12 obligation 3, and D-281/D-285's reading
+exactly. **D-672** records both halves with the reproducer; neither is fixed
+here, because a fix round is not where an unrelated gate is re-plumbed.
