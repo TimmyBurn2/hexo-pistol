@@ -1,10 +1,22 @@
-# `book_v3` — premises, size registration, and the classification finding that stopped the package
+# `book_v3` — premises, size registration, and the classification finding that stopped the package once
 
-**STATUS: STOPPED AT R1.** No book was generated, no range was claimed, no
-opening was drawn, and nothing was registered that a run could be taken over.
-R0 (premises) and R1 (sizing) are complete and are the whole of what this
-document reports. The package stopped before R2 on a premise conflict recorded
-in §11, which needs an operator ruling.
+**STATUS: R1 COMPLETE, R2 IN PROGRESS. The R1 stop is LIFTED.** This document
+stopped the package at R1 on the classification conflict in §11 and asked for an
+operator ruling. The operator returned the decision to this session, and it was
+settled the way CLAUDE.md's Process section requires a named decision with more
+than one viable option to be settled: an OPTION MATRIX
+(`docs/experiments/matrix_book_v3_storage.md`) attacked by a fresh-context
+DECISION-RED-TEAM before selection. The selection is **Option D**, recorded at
+**D-647**, which supersedes D-645.
+
+**CORRECTION, because this document said otherwise at `8f8c306` and the sentence
+is now false.** Revision 1 stated *"No book was generated, no range was claimed,
+no opening was drawn."* That was true when committed and is no longer: a
+candidate book of 8500 openings has since been generated, to measure generation
+cost and canonical overlap. **No RANGE has been claimed and no governed run has
+been taken** — those halves still hold — but a book has been generated, and the
+red team was right to name the contradiction rather than let a committed
+document and the tree disagree.
 
 **This document is deliberately NOT in `tools/governing_citation_check.sh`'s
 `GOVERNING` list.** That list names documents that GOVERN a run. This one
@@ -297,13 +309,23 @@ BV3-2 says v3 uses unchanged but for the seed:
 > question and not only as a curation one.
 
 `k_stones` stays 5 under BV3-2, and there is no balance filter. So v3 is v1's and
-v2's class. Mechanically: `tools/artifact_check.sh` (gate 5) enforces rule 8 by
-name pattern and content signature and passes today with both books committed.
+v2's class. **A CITATION IS STRUCK HERE RATHER THAN QUIETLY DROPPED.** Revision 1 argued
+that `tools/artifact_check.sh` (gate 5) *"enforces rule 8 by name pattern and
+content signature and passes today with both books committed"*, and offered its
+green as evidence for the fixture class. **It is not evidence.** Gate 5 carries
+content signatures for `arena_report` and `baseline_snapshot` and for nothing
+else; it cannot recognise an opening book at all, so its green is equally
+compatible with both books being rule-8 artefacts wrongly committed — which is
+verbatim D-203's recorded history, *"a report committed as `report.txt` sailed
+past them"*. The classification rests on D-151 and D-175, which is enough.
 
 **Four things follow, and each is a cost BV3-3 pays without saying so.**
 
-1. **The digest refusal BV3-3 asks for already exists — THREE TIMES, and a
-   manifest would be a weaker fourth.**
+1. **The digest protection BV3-3 asks for already exists — as ONE RUN-TIME
+   REFUSAL AND TWO GATES, and a manifest would be a weaker fourth.**
+   *(Corrected after the DECISION-RED-TEAM: revision 1 called all three
+   "refusals". F4 and F5 fail CI; they refuse nothing at run time. D-645 asks for
+   a refusal "with a named error", and only the first of the three answers it.)*
    - **In-band.** Every book carries `# body_sha256 ` in its own header;
      `openings::load` recomputes the body digest on **every load** and refuses
      with the named `ArenaError::OpeningsDigest { path, claimed, found }` (hard
