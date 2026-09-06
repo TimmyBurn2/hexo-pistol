@@ -6,7 +6,9 @@ numbers these produce are the fit diagnostics, the oracle's disagreement count
 and the census tallies, so all three are driven.
 """
 
+import contextlib
 import hashlib
+import io
 import pathlib
 import re
 import subprocess
@@ -55,8 +57,13 @@ def synth_rows(path, weights, n=3000, quiet_only=True):
         raw = sum(g[k] * weights[k] for k in range(5))
         label = max(-EVAL_MAX, min(EVAL_MAX, raw))
         key = hashlib.sha256(str(i).encode()).hexdigest()
+        # THE GAME KEY IS PART OF THE SHAPE, not decoration: `extract.py` writes
+        # 20 columns and a fixture one column narrower is not an instance of the
+        # kind the pipeline produces (docs/process.md, dry-run discipline). The
+        # 25 is the corpus's own measured positions-per-game mean rounded down,
+        # so a synthetic file groups the way a real one does.
         lines.append("\t".join([*map(str, a), *map(str, b), str(label), to_move,
-                                "eval", "4", "no", "p1_win", key]))
+                                "eval", "4", "no", "p1_win", key, f"0:{i // 25}"]))
     pathlib.Path(path).write_text("# synthetic\n" + "\n".join(lines) + "\n")
 
 
@@ -268,7 +275,7 @@ def _schema_triples(bound):
 
 
 def _solved_under(constraints, top, total):
-    """`fit()`'s own composition at `fit.py:394-397`, on a stated quadratic.
+    """`fit()`'s own composition at `fit.py:405-408`, on a stated quadratic.
 
     The quadratic is the identity with a zero right-hand side, so its
     unconstrained minimiser is `w1 = 0` — below every lower bound the schema can
@@ -775,8 +782,18 @@ def test_extract_is_driven_and_keeps_what_the_design_says_it_keeps():
     with tempfile.TemporaryDirectory() as tmp:
         manifest, tranche = _scratch_corpus(tmp)
         out = f"{tmp}/rows.txt"
-        written = EX.main(out, manifest, tranche)
+        # THE PRINTED LINE IS THE RECORDED NUMBER (SHELL_CHECKLIST item 10). The
+        # return value is the row count; the distinct-game count exists only on
+        # stdout, and `games.add(game)` in place of `games.add((index, game))`
+        # passed every other check here while printing 218 for the corpus's 3487.
+        said = io.StringIO()
+        with contextlib.redirect_stdout(said):
+            written = EX.main(out, manifest, tranche)
+        printed = said.getvalue()
         check("extract writes one row per manifest entry", written == 6, written)
+        check("and REPORTS the distinct game count, which is 4 here because the two "
+              "tranches carry a game 0 and a game 1 each",
+              "from 4 distinct game(s)" in printed, printed)
         body = [l.rstrip("\n").split("\t") for l in open(out) if not l.startswith("#")]
         kinds = [r[14] for r in body]
         check("MATE ROWS ARE KEPT, which is the property the design registers",
@@ -857,6 +874,13 @@ def _minimiser_conditions(train, quiet, tempo, directions):
     mutant that emptied the `both` row's directions survived exactly that way.
     The free-direction condition is the one that carries the pin's meaning, so
     the negative control is held against it by name.
+
+    `all([])` IS TRUE, so an empty direction list satisfies `free_ok` vacuously
+    and neither condition here rejects it. That is deliberate: emptiness is a
+    property of the DIRECTIONS and is checked where they are built, by the
+    caller, in both the positive and the negative direction. Folding it in here
+    made the positive check fire and the negative control vacuous, which
+    discharged one sentence and re-created its property one step to the left.
     """
     residuals = [row["label"] - tempo - sum(FIT.signed(row)[k] * quiet[k] for k in range(3))
                  for row in train]
@@ -864,7 +888,7 @@ def _minimiser_conditions(train, quiet, tempo, directions):
     gradients = [sum(r * sum(d[k] * FIT.signed(row)[k] for k in range(3))
                      for r, row in zip(residuals, train))
                  for d in directions]
-    free_ok = bool(directions) and all(abs(g) <= 1e-6 * scale for g in gradients)
+    free_ok = all(abs(g) <= 1e-6 * scale for g in gradients)
     return free_ok, abs(sum(residuals)) < 1e-6 * scale
 
 
@@ -943,11 +967,15 @@ def test_every_options_row_is_a_MINIMISER_and_a_rescale_of_the_free_solve_is_not
             name = label.strip()
             quiet, tempo = OPT.solve_pinned(train, kind, index, value, committed)
             directions = _free_directions(kind, index)
+            check(f"row '{name}' leaves the number of free directions its pin allows",
+                  len(directions) == {"index": 2, "sum": 2, "both": 1, "free": 3}[kind],
+                  (name, kind, directions))
             check(f"row '{name}' holds its pin",
                   _holds_the_pin(kind, index, value, quiet, committed), (name, quiet))
             free_ok, intercept_ok = _minimiser_conditions(train, quiet, tempo, directions)
             check(f"row '{name}' is a MINIMISER over the directions its pin leaves free",
-                  free_ok and intercept_ok, (name, quiet, free_ok, intercept_ok))
+                  bool(directions) and free_ok and intercept_ok,
+                  (name, quiet, free_ok, intercept_ok))
             control, control_tempo = _rescaled_free_solve(
                 kind, index, value, quiet_free, tempo_free, committed)
             check(f"the negative control for '{name}' holds the same pin",
@@ -956,7 +984,7 @@ def test_every_options_row_is_a_MINIMISER_and_a_rescale_of_the_free_solve_is_not
                 train, control, control_tempo, directions)
             check(f"and the rescaled free solve FAILS the FREE-DIRECTION condition for "
                   f"'{name}', which is the one the pin's own geometry decides",
-                  not control_free, (name, control))
+                  bool(directions) and not control_free, (name, control, directions))
 
 
 def test_the_interior_claim_is_CHECKED_per_row_and_can_answer_no():
@@ -1142,11 +1170,17 @@ def test_fit_END_TO_END_ships_the_pinned_model_and_not_the_contrast():
 
 # The three committed documents D-657 and D-662 retire, as a chain: each named
 # the next, so none of them can come back alone.
+# THE BASENAME AND NOT THE PATH. A defence narrower than the measurement that
+# found the references is a defence with a hole in it: the reference count was
+# taken on `eval_v0_quiet_fit_weights`, so a re-add spelling the basename alone
+# escaped a search for `configs/eval_v0_quiet_fit_weights.toml`. Measured, the
+# basename search returns the same file set as the path search for all three.
 RETIRED = (
-    "configs/eval_v0_quiet_fit_weights.toml",
-    "configs/instrument_quiet_fit_v0.toml",
-    "configs/arena_wp22_phase1_quiet_dryrun.toml",
+    "eval_v0_quiet_fit_weights",
+    "instrument_quiet_fit_v0",
+    "arena_wp22_phase1_quiet_dryrun",
 )
+RETIRED_PATHS = tuple(f"configs/{name}.toml" for name in RETIRED)
 
 # Where a retired name may still stand: the ruling, and the reports that
 # adjudicated the phase. A record's citations were true when written and
@@ -1161,6 +1195,17 @@ RETIRED_MAY_NAME = (
     "docs/research/training_pipeline_2026-09.md",
     "tools/texel/test_texel.py",
 )
+
+
+def _live_tree(path):
+    """Whether a path is under a directory this project SHIPS from.
+
+    `RETIRED_MAY_NAME` is a list, and a list silences the check the moment a live
+    path is added to it. This is the property the list was standing in for: a
+    retired name may appear in a record, and never in the tree's configs, its
+    crates or its tools.
+    """
+    return path.startswith(("configs/", "crates/", "tools/"))
 
 
 def _tracked_naming(text):
@@ -1186,15 +1231,19 @@ def test_the_retired_candidate_chain_is_named_by_RECORDS_and_by_nothing_live():
     pass this test while looking for the wrong string, which is the shape
     tools/SHELL_CHECKLIST.md item 10 asks every gate to rule out.
     """
-    for path in RETIRED:
+    for path in RETIRED_PATHS:
         check(f"{path} is not a tracked file",
               subprocess.run(["git", "ls-files", "--error-unmatch", "--", path],
                              capture_output=True).returncode != 0, path)
-        naming = _tracked_naming(path)
-        check(f"the ruling still names {path}, or this search found nothing",
+    for name in RETIRED:
+        naming = _tracked_naming(name)
+        check(f"the ruling still names {name}, or this search found nothing",
               "docs/decisions.md" in naming, naming)
+        live = [f for f in naming if _live_tree(f) and f != "tools/texel/test_texel.py"]
+        check(f"and nothing under configs/, crates/ or tools/ names {name}",
+              live == [], live)
         stray = [f for f in naming if f not in RETIRED_MAY_NAME]
-        check(f"and only RECORDS name {path}", stray == [], stray)
+        check(f"and only RECORDS name {name}", stray == [], stray)
 
 
 FIT_FIXTURE = HERE / "fixtures" / "fit_rows_v1.txt"
@@ -1205,7 +1254,7 @@ FIT_FIXTURE = HERE / "fixtures" / "fit_rows_v1.txt"
 # `configs/eval_v0_weights.toml` moves, when the pin rule moves, or when the
 # answer moves -- which is what makes it a reproduction pin rather than a
 # property check on digits.
-FIT_RECEIPT_SHA256 = "e49569ca5781ffa1b7265e28e00fc75ba34874fde6b03108e967db4569835d33"
+FIT_RECEIPT_SHA256 = "5e17e8ff64e13dfb9d0c4e95ec191f04f243dab327c3c84b1d28e8cbe5bbba7d"
 
 
 def _receipt_body(stdout):
@@ -1274,8 +1323,13 @@ def test_a_fitted_table_is_pinned_by_its_RECEIPT_and_not_by_its_digits():
     check("and it is the digest this suite pins",
           printed[0] == FIT_RECEIPT_SHA256,
           f"{printed[0]} — re-derive with tools/texel/fit.py "
-          f"tools/texel/fixtures/fit_rows_v1.txt; the fixture, "
-          f"configs/eval_v0_weights.toml, the pin rule and the answer all move it")
+          f"tools/texel/fixtures/fit_rows_v1.txt. THE FIXTURE, THE PIN RULE AND THE "
+          f"ANSWER ALL MOVE IT, AND SO DOES configs/eval_v0_weights.toml: if that is "
+          f"what you changed, D-663 owes a re-quote of its sha256 at every citing "
+          f"site — docs/experiments/matrix_wp22_quiet_scale.md:68 first, then "
+          f"matrix_wp22_quiet_scale_REDTEAM.md, matrix_M4_snapshot_config_seam_rev3.md "
+          f"and docs/decisions.md D-220 and D-627 — and updating this constant alone "
+          f"leaves those rotted with every gate green")
 
 
 def test_the_receipt_digest_MOVES_when_the_input_does():
@@ -1298,6 +1352,32 @@ def test_the_receipt_digest_MOVES_when_the_input_does():
         moved = [l for l in _receipt_body(done.stdout) if l.startswith("sha256 ")]
         check("and one changed label gives a different receipt digest",
               moved and moved[0] != f"sha256 {FIT_RECEIPT_SHA256}", moved)
+
+
+def test_read_rows_REFUSES_a_row_file_of_another_WIDTH():
+    """`read_rows` indexes, so a file of another width is read field by field
+    from the wrong place and answers in silence. Hard rule 3, and the reason it
+    matters here: this package widened `extract.py` from 19 columns to 20, and a
+    width-blind reader cannot tell a pre-package rows file from a post-package
+    one — which is what would have let the committed fixture and the shipped
+    extractor be pinned apart by two green tests."""
+    with tempfile.TemporaryDirectory() as tmp:
+        path = f"{tmp}/rows.txt"
+        synth_rows(path, [3, 20, 90, 400, 2000], n=20)
+        good = pathlib.Path(path).read_text()
+        check("the shipped generator writes what read_rows accepts",
+              len(FIT.read_rows(path)) == 20)
+        for width, text in (
+            (19, good.replace("\tp1_win\t", "\t", 1)),
+            (21, good.replace("\tp1_win\t", "\tp1_win\tp1_win\t", 1)),
+        ):
+            pathlib.Path(path).write_text(text)
+            try:
+                FIT.read_rows(path)
+                check(f"a {width}-column row file is refused", False, "no exception")
+            except FIT.FitError as why:
+                check(f"a {width}-column row file is refused by name",
+                      "column(s)" in str(why) and "extract.py" in str(why), str(why))
 
 
 def test_read_rows_REFUSES_an_unknown_to_move_token():
@@ -1373,6 +1453,7 @@ for test in (test_one_stone_features, test_turn_structure,
              test_the_committed_fixture_is_what_the_stated_generator_writes,
              test_a_fitted_table_is_pinned_by_its_RECEIPT_and_not_by_its_digits,
              test_the_receipt_digest_MOVES_when_the_input_does,
+             test_read_rows_REFUSES_a_row_file_of_another_WIDTH,
              test_read_rows_REFUSES_an_unknown_to_move_token,
              test_options_is_driven_and_every_pin_is_a_MINIMISER,
              test_every_options_row_is_a_MINIMISER_and_a_rescale_of_the_free_solve_is_not,

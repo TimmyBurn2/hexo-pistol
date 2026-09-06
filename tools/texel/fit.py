@@ -24,6 +24,10 @@ from itertools import combinations
 
 EVAL_MAX = 16000
 QUIET_COUNTS = 3
+# What `extract.py` writes, and the width this module refuses to read anything
+# but: twelve per-side counts, six labelled fields, the key digest and the game
+# key. A file of another width is another file (D-659).
+COLUMNS = 20
 COMMITTED_WEIGHTS = "configs/eval_v0_weights.toml"
 
 
@@ -39,13 +43,26 @@ def committed_table(path=COMMITTED_WEIGHTS):
 
 
 def read_rows(path):
-    """Rows as `extract.py` writes them: per-side counts, every score_kind."""
+    """Rows as `extract.py` writes them: per-side counts, every score_kind.
+
+    # Errors
+
+    `FitError` if the file is empty, if a row is not `COLUMNS` wide, or if a
+    row's `to_move` is a token the corpus schema does not define.
+    """
     rows = []
     with open(path) as handle:
         for number, line in enumerate(handle, start=1):
             if line.startswith("#"):
                 continue
             w = line.rstrip("\n").split("\t")
+            if len(w) != COLUMNS:
+                raise FitError(
+                    f"fit: {path} line {number} has {len(w)} column(s) and "
+                    f"`extract.py` writes {COLUMNS}; a row file of another width is "
+                    "another file, and reading it by index would take each field from "
+                    "the wrong place in silence"
+                )
             if w[13] not in ("p1", "p2"):
                 raise FitError(
                     f"fit: {path} line {number} has to_move {w[13]!r}; the only tokens "
@@ -62,6 +79,7 @@ def read_rows(path):
                 "book": w[16],
                 "result": w[17],
                 "key": w[18],
+                "game": w[19],
             })
     if not rows:
         raise FitError(f"fit: {path} holds no rows")
@@ -383,8 +401,11 @@ def tempo_constraints(top, total):
     refusal (docs/decisions.md D-658). It cannot bind at the registered pins
     (`top = 60`, `total = 74` put its bound at -45) and it binds at others.
 
-    Two rows share the normal `[1, 0]`, so an active set holding both is
-    singular; `constrained_min` counts that skip rather than swallowing it.
+    ALL THREE normals are parallel — `[1, 0]`, `[-2, 0]`, `[1, 0]` — so every
+    size-2 active set is singular and `constrained_min`'s skipped count goes from
+    1 to 3. It counts those rather than swallowing them, and the optimum is still
+    reached: the feasible set is a slab in `w1` crossed with a free `c`, whose
+    minimiser is attained at an active set of size 0 or 1.
     """
     return [([1.0, 0.0], 1.0),
             ([-2.0, 0.0], 1.0 - (float(total) - float(top))),
@@ -435,7 +456,10 @@ def receipt_lines(rows_path, weights_path, committed, answer):
 
     The rows file's PATH is deliberately absent and its digest present: a
     receipt that changed with the directory a run happened in would pin the
-    machine rather than the fit (CLAUDE.md rule 4).
+    machine rather than the fit (CLAUDE.md rule 4). The weights PATH is present
+    because it is not a caller's — it is this module's own constant naming a
+    committed document, so it is the same on every machine and it says WHICH
+    table the pins were taken from, which the digest beside it cannot.
     """
     top = committed[QUIET_COUNTS - 1]
     total = sum(committed[:QUIET_COUNTS])
