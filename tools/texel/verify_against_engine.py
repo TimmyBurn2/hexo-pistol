@@ -93,7 +93,7 @@ def coverage(chosen):
     }
 
 
-def check_sample_rule(chosen, tranches, kinds):
+def check_sample_rule(chosen, tranches, kinds, tables=None):
     """REFUSE a sample that does not meet design section 5's registered rule.
 
     Reporting the counts is not enough: the rule's two clauses -- the whole
@@ -114,6 +114,18 @@ def check_sample_rule(chosen, tranches, kinds):
         raise OracleError(
             "oracle: the sample holds no position from the tactical stratum, which "
             "is the stratum the phase's own finding is about")
+    if tables is not None:
+        clamps = [name for name in tables if name.startswith("clamp")]
+        if len(clamps) < 2:
+            raise OracleError(
+                f"oracle: the registered rule names a table saturating the band on "
+                f"EACH side and {len(clamps)} clamp table(s) are present; dropping "
+                "one removes a saturation regime the other does not reach")
+    if len(set(c[0] for c in chosen)) != len(chosen):
+        raise OracleError(
+            "oracle: the sample holds fewer distinct keys than positions, so it has "
+            "been folded on `key_full` — 2 369 corpus rows share one, and section 5 "
+            "registers that nothing is deduped by it")
     return span
 
 
@@ -147,7 +159,7 @@ def run(binary, stride=DEFAULT_STRIDE, rows=None, tranches=None, kinds=None):
     chosen = sample(rows if rows is not None else corpus_rows(), stride)
     span = coverage(chosen)
     if tranches is not None:
-        check_sample_rule(chosen, tranches, kinds)
+        check_sample_rule(chosen, tranches, kinds, TABLES)
     tactical = span["tactical"]
     print(f"oracle: draw = the whole tactical stratum plus every {stride}th position; "
           f"tranches {len(span['tranches'])}, score kinds {','.join(span['kinds'])}")

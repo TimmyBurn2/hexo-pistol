@@ -28,11 +28,21 @@ PINS = (
     ("    w2 = 12", "index", 1, 12.0),
     ("    sum = 74", "sum", None, 74.0),
     ("K   unpinned", "free", None, None),
+    ("T   w3=60 & sum=74", "both", None, None),
 )
 
 
 def solve_pinned(train, kind, index, value, committed):
-    """The intercept model's exact constrained minimiser under one pin."""
+    """The intercept model's minimiser under one pin, or under two for `both`.
+
+    THE PIN IS APPLIED INSIDE THE SOLVE, which is what makes each row a
+    minimiser rather than a rescale of a free one. The solve is the EQUALITY-
+    constrained optimum and the schema's inequalities are checked afterwards by
+    `round_to_schema`, so a pin whose optimum lies outside the schema is
+    reported INFEASIBLE where `fit.py`'s `constrained_min` would return a
+    boundary point. Every row this prints is strictly interior, so the two agree
+    here; a caller adding a pin that binds should use `constrained_min`.
+    """
     if kind == "free":
         rows_a = [[0.0] * 4 for _ in range(4)]
         rows_b = [0.0] * 4
@@ -45,6 +55,24 @@ def solve_pinned(train, kind, index, value, committed):
                 rows_b[i] += x[i] * row["label"]
         answer = FIT.solve(rows_a, rows_b)
         return answer[:3], answer[3]
+    if kind == "both":
+        # w3 held at the committed top quiet entry AND the quiet sum held at the
+        # committed sum: both exchange rates the corpus is silent about stay
+        # where they were, and one degree of freedom is left for it to speak in.
+        top = float(committed[2])
+        total = float(sum(committed[:3]))
+        rows_a = [[0.0] * 2 for _ in range(2)]
+        rows_b = [0.0] * 2
+        for row in train:
+            g = FIT.signed(row)
+            x = [g[0] - g[1], 1.0]
+            target = row["label"] - top * g[2] - (total - top) * g[1]
+            for i in range(2):
+                for j in range(2):
+                    rows_a[i][j] += x[i] * x[j]
+                rows_b[i] += x[i] * target
+        answer = FIT.solve(rows_a, rows_b)
+        return [answer[0], total - top - answer[0], top], answer[1]
     if kind == "sum":
         rows_a = [[0.0] * 3 for _ in range(3)]
         rows_b = [0.0] * 3
@@ -95,7 +123,7 @@ def main(rows_path):
 
     header = (f"{'option':<16}{'table':<26}{'val_MSE':>11}{'bias':>9}"
               f"{'resid var':>12}{'quiet rho':>11}{'ALL rho':>9}"
-              f"{'w3/w4':>8}{'sum/w4':>8}")
+              f"{'w3/w4':>8}{'sum/w4':>8}{'w4>sum':>9}{'w5>sum':>9}")
     print(header)
     print("-" * len(header))
     rows_out = [("--  committed", committed, None)]
@@ -113,13 +141,17 @@ def main(rows_path):
     for label, table, tempo in rows_out:
         mse, bias, variance, rho = diagnostics(val, table)
         _m, _b, _v, all_rho = diagnostics(all_val, table)
+        four, five = FIT.dominance(table)
         print(f"{label:<16}{str(table):<26}{mse:>11.1f}{bias:>9.1f}{variance:>12.1f}"
               f"{rho:>11.4f}{all_rho:>9.4f}"
-              f"{table[2] / table[3]:>8.4f}{sum(table[:3]) / table[3]:>8.4f}")
+              f"{table[2] / table[3]:>8.4f}{sum(table[:3]) / table[3]:>8.4f}"
+              f"{str(four):>9}{str(five):>9}")
     print()
     print("The `w3/w4` and `sum/w4` columns are the point: the filtered rows carry")
-    print("no evidence about ANY quiet-to-tactical exchange rate, and each pin holds")
-    print("one of them while moving the others.")
+    print("no evidence about ANY quiet-to-tactical exchange rate. Each single pin")
+    print("holds one and moves the other; the two-pin row holds BOTH, which is what")
+    print("D-627's own replacement principle asks for when it is applied fully.")
+    print("`w4>sum` and `w5>sum` are R6's registered dominance CHECK, per option.")
 
 
 if __name__ == "__main__":

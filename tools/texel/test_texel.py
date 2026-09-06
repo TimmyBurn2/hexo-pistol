@@ -295,20 +295,23 @@ def test_rounding_refuses_at_BOTH_ends_and_the_floor_is_the_one_that_fires():
     except FIT.FitError as why:
         check("a table rounding onto the pinned ceiling is refused by name",
               "ceiling" in str(why), str(why))
-    state = 99
-    broke = 0
+    # A DRAW THAT CAN ACTUALLY REACH THE CASE. An earlier revision pinned the
+    # opposite property over increments of 1/7, where a half-integer is
+    # unreachable, so its assertion could not have failed.
+    state, refused, ties = 99, 0, 0
     for _ in range(2000):
-        real = []
-        floor = 1.0
+        real, floor = [], 1.0
         for _ in range(3):
             state = (1103515245 * state + 12345) % (1 << 31)
-            floor += 1.0 + (state % 977) / 7.0
+            floor += 1.0 + (state % 8) / 2.0
             real.append(floor)
-        rounded = FIT.round_to_schema(real, 4000)
-        if any(rounded[k + 1] <= rounded[k] for k in range(2)):
-            broke += 1
-    check("rounding a FEASIBLE answer never breaks the increase, over 2000 draws, "
-          "which is why there is no clamp and no guard for one", broke == 0, broke)
+        ties += any(abs(x - int(x) - 0.5) < 1e-12 for x in real)
+        try:
+            FIT.round_to_schema(real, 4000)
+        except FIT.FitError:
+            refused += 1
+    check("the draw reaches the half-integer case the guard is about", ties > 0, ties)
+    check("and the guard fires on it rather than clamping silently", refused > 0, refused)
     try:
         FIT.round_to_schema([0.9146, 11.8779, 60.0], 300)
         check("an infeasible real-valued answer is refused before rounding",
@@ -420,6 +423,13 @@ def test_the_oracle_drives_the_engine_and_agrees():
         binary.chmod(0o755)
         report = ORACLE.run(str(binary), stride=1, rows=_oracle_rows())
         check("the oracle sampled every position", report["sampled"] == 2, report)
+        # THE ENFORCEMENT IS DRIVEN THROUGH `run`, not only as a function: a
+        # version that computed the rule and never applied it passed every gate,
+        # because the suite's own call left the enforcement argument unset.
+        check("run() APPLIES the rule and refuses when the draw fails it",
+              _refuses(lambda: ORACLE.run(str(binary), stride=1, rows=_oracle_rows(),
+                                          tranches=99, kinds=("eval", "mate_in")))
+              is not None)
         check("and it REPORTS what the draw spans, which the run receipt did not",
               report["coverage"]["tranches"] == [1, 2]
               and report["coverage"]["kinds"] == ["eval", "mate_in"],
@@ -451,6 +461,37 @@ def test_the_sample_takes_the_WHOLE_tactical_stratum_whatever_the_stride():
           [c[4] for c in chosen if c[0] == "kT"] == [True], chosen)
     check("while the stride still draws the quiet ones",
           sum(1 for c in chosen if not c[4]) == 3, [c[0] for c in chosen])
+    # 2 369 corpus rows share a `key_full`, so a draw that folded on it would
+    # silently shrink the registered sample. Two rows with ONE key must both
+    # survive.
+    shared = [(1, "same", tactical, "p2", "eval"), (1, "same", tactical, "p1", "eval")]
+    check("two positions sharing a key_full are BOTH kept",
+          len(ORACLE.sample(shared, stride=1)) == 2, ORACLE.sample(shared, stride=1))
+
+
+def _refuses(call):
+    """Run `call` and return the refusal it raises, or None if it did not."""
+    try:
+        call()
+        return None
+    except ORACLE.OracleError as why:
+        return str(why)
+
+
+def test_the_oracle_REFUSES_an_unknown_to_move_token():
+    """The same hard-rule-3 hazard `read_rows` guards, on the oracle's own walk."""
+    import tempfile as _t
+    with _t.TemporaryDirectory() as tmp:
+        manifest, tranche = _scratch_corpus(tmp)
+        for index in (1, 2):
+            path = pathlib.Path(tmp) / f"tranche-{index}" / "corpus.txt"
+            path.write_text(path.read_text().replace("\tp2\t", "\tP2\t", 1))
+        try:
+            list(ORACLE.corpus_rows(manifest, tranche))
+            check("the oracle refuses an unknown to_move token", False, "no exception")
+        except ORACLE.OracleError as why:
+            check("the oracle refuses an unknown to_move token by name",
+                  "to_move" in str(why), str(why))
 
 
 def test_the_oracle_REFUSES_a_sample_that_misses_the_registered_rule():
@@ -470,6 +511,17 @@ def test_the_oracle_REFUSES_a_sample_that_misses_the_registered_rule():
             check(f"{name} is refused", False, "no exception raised")
         except ORACLE.OracleError as why:
             check(f"{name} is refused by name", token in str(why), str(why))
+    check("the registered table set carries a clamp table on EACH side",
+          len([n for n in ORACLE.TABLES if n.startswith("clamp")]) == 2,
+          sorted(ORACLE.TABLES))
+    check("a missing clamp table is refused",
+          _refuses(lambda: ORACLE.check_sample_rule(
+              chosen, 2, ("eval", "mate_in", "mated_in"),
+              {"committed": [], "clamp_high": []})) is not None)
+    check("a sample folded on key_full is refused",
+          _refuses(lambda: ORACLE.check_sample_rule(
+              [chosen[0], chosen[0], chosen[1], chosen[2]], 2,
+              ("eval", "mate_in", "mated_in"))) is not None)
     flat = [(k, m, tm, s, False, n) for (k, m, tm, s, _, n) in chosen]
     try:
         ORACLE.check_sample_rule(flat, 2, ("eval", "mate_in", "mated_in"))
@@ -592,12 +644,13 @@ def test_the_tempo_term_is_fitted_so_it_is_not_absorbed_into_the_weights():
             g = FIT.signed(row)
             row["label"] = sum(g[k] * truth[k] for k in range(3)) + tempo
         fitted, _ = FIT.select(rows)
-        answer, _ = FIT.constrained_min(*FIT.tempo_normal_equations(fitted, truth[2]),
-                                        FIT.tempo_constraints(truth[2]))
-        check("the pinned-intercept fit recovers the generating weights",
-              abs(answer[0] - truth[0]) < 1e-6 and abs(answer[1] - truth[1]) < 1e-6, answer)
+        top, total = float(truth[2]), float(sum(truth[:3]))
+        answer, _ = FIT.constrained_min(*FIT.tempo_normal_equations(fitted, top, total),
+                                        FIT.tempo_constraints(top, total))
+        check("the pinned-intercept fit recovers the generating first weight",
+              abs(answer[0] - truth[0]) < 1e-6, answer)
         check("and recovers the offset it was given",
-              abs(answer[2] - tempo) < 1e-6, answer[2])
+              abs(answer[1] - tempo) < 1e-6, answer[1])
         plain = FIT.solve(*FIT.normal_equations(fitted))
         check("while the no-intercept fit moves the weights instead",
               any(abs(plain[k] - truth[k]) > 1.0 for k in range(3)), plain)
@@ -709,9 +762,33 @@ def test_options_is_driven_and_every_pin_is_a_MINIMISER():
             if kind == "index":
                 check(f"pin '{label.strip()}' holds its entry exactly",
                       abs(quiet[index] - value) < 1e-9, (label, quiet))
+                # HOLDING THE PIN IS WHAT A RESCALE DOES TOO, so it cannot tell a
+                # minimiser from one — and a rescale of the free solve is exactly
+                # the construction the matrix was corrected for. The defining
+                # property of a least-squares answer is that its RESIDUAL is
+                # orthogonal to every free direction, which a rescale violates.
+                free = [k for k in range(3) if k != index]
+                residuals = []
+                for row in train:
+                    g = FIT.signed(row)
+                    residuals.append(row["label"] - tempo
+                                     - sum(g[k] * quiet[k] for k in range(3)))
+                scale = sum(abs(r) for r in residuals) + 1.0
+                worse = all(
+                    abs(sum(r * FIT.signed(row)[k]
+                            for r, row in zip(residuals, train))) < 1e-6 * scale
+                    for k in free
+                ) and abs(sum(residuals)) < 1e-6 * scale
+                check(f"pin '{label.strip()}' is a MINIMISER and not a rescale",
+                      worse, (label, quiet))
             elif kind == "sum":
                 check(f"pin '{label.strip()}' holds the sum exactly",
                       abs(sum(quiet) - value) < 1e-9, (label, quiet))
+            elif kind == "both":
+                check("the two-pin row holds the top entry AND the sum, which is "
+                      "the whole reason it is on the matrix",
+                      abs(quiet[2] - committed[2]) < 1e-9
+                      and abs(sum(quiet) - sum(committed[:3])) < 1e-9, (label, quiet))
             else:
                 check("the unpinned solve recovers the generating weights",
                       all(abs(quiet[k] - [3, 20, 90][k]) < 1e-6 for k in range(3)), quiet)
@@ -721,6 +798,88 @@ def test_options_is_driven_and_every_pin_is_a_MINIMISER():
         check("options.py exits 0", done.returncode == 0, done.stderr[-300:])
         check("and prints the exchange-rate columns the matrix turns on",
               "w3/w4" in done.stdout and "sum/w4" in done.stdout, done.stdout[-200:])
+
+
+def test_fit_END_TO_END_ships_the_pinned_model_and_not_the_contrast():
+    """`fit()` produces the phase's registered number and had no test.
+
+    Three mutants inside it changed that number with every gate green: shipping
+    the no-intercept CONTRAST instead of the answer, fitting on the VALIDATION
+    slice, and skipping the schema rounding. These drive `fit()` itself.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        path = f"{tmp}/rows.txt"
+        truth, tempo = [3, 20, 90, 400, 2000], 500
+        synth_rows(path, truth, n=4000)
+        rows = FIT.read_rows(path)
+        for row in rows:
+            behind = row["b"] if row["to_move"] == "p1" else row["a"]
+            for k in (1, 2, 3):
+                behind[k] += 6
+            g = FIT.signed(row)
+            row["label"] = sum(g[k] * truth[k] for k in range(3)) + tempo
+            # THE TWO SLICES MUST DISAGREE, or fitting the wrong one is invisible:
+            # on noiseless data every subset gives the same answer, which is how a
+            # `fit on the validation slice` mutant survived.
+            if row["key"][-1] in "01":
+                row["label"] += 5000
+        answer = FIT.fit(rows, truth)
+        check("fit() recovers the generating weights under its own pins",
+              all(abs(answer["quiet"][k] - truth[k]) < 1e-6 for k in range(3)),
+              answer["quiet"])
+        check("and the tempo term it discards", abs(answer["tempo"] - tempo) < 1e-6,
+              answer["tempo"])
+        # THE CONTRAST IS A DIFFERENT ANSWER, so shipping it is detectable.
+        check("the no-intercept contrast is NOT the answer",
+              any(abs(answer["no_intercept"][k] - answer["quiet"][k]) > 1.0
+                  for k in range(3)), (answer["no_intercept"], answer["quiet"]))
+        # FITTING ON THE VALIDATION SLICE gives a different answer on real data;
+        # here the data is noiseless, so the split is pinned by its populations.
+        check("the fit consumes the TRAIN slice and not the validation one",
+              len(answer["train"]) > len(answer["val"]) * 5,
+              (len(answer["train"]), len(answer["val"])))
+        check("the assembled table is integers the schema can hold",
+              all(isinstance(x, int) for x in answer["table"])
+              and all(answer["table"][k + 1] > answer["table"][k] for k in range(4)),
+              answer["table"])
+        check("the reported populations are the ones select() actually applied",
+              answer["counts"]["fitted"] == len(answer["train"]) + len(answer["val"]),
+              answer["counts"])
+
+
+def test_the_committed_candidate_satisfies_the_pins_it_is_registered_under():
+    """The registered candidate is pinned by nothing but this.
+
+    Editing `configs/eval_v0_quiet_fit_weights.toml` to any other legal table
+    passed every gate. What defines the candidate is not its digits but the two
+    pins the matrix selects it under, and those are checkable without the corpus.
+    """
+    committed = FIT.committed_table("configs/eval_v0_weights.toml")
+    candidate = FIT.committed_table("configs/eval_v0_quiet_fit_weights.toml")
+    check("the candidate holds the tactical entries verbatim (R6, D-622)",
+          candidate[3:] == committed[3:], (candidate, committed))
+    check("it holds the top quiet entry at the committed value",
+          candidate[2] == committed[2], (candidate, committed))
+    check("it holds the quiet SUM at the committed value",
+          sum(candidate[:3]) == sum(committed[:3]), (candidate, committed))
+    check("and it is not the committed table, or the SPRT would be a self-match",
+          candidate != committed, candidate)
+
+
+def test_read_rows_REFUSES_an_unknown_to_move_token():
+    """Hard rule 3. Without this guard `signed()` reads any non-`p1` token as p2
+    and returns a schema-legal, dominance-passing, WRONG table in silence."""
+    with tempfile.TemporaryDirectory() as tmp:
+        path = f"{tmp}/rows.txt"
+        synth_rows(path, FIT.committed_table("configs/eval_v0_weights.toml"), n=8)
+        text = pathlib.Path(path).read_text().replace("\tp1\t", "\tP1\t", 1)
+        pathlib.Path(path).write_text(text)
+        try:
+            FIT.read_rows(path)
+            check("an unknown to_move token is refused", False, "no exception raised")
+        except FIT.FitError as why:
+            check("an unknown to_move token is refused by name",
+                  "to_move" in str(why) and "p1 and p2" in str(why), str(why))
 
 
 def test_shipped_script_runs():
@@ -768,8 +927,12 @@ for test in (test_one_stone_features, test_turn_structure,
              test_extract_REFUSES_a_join_that_addresses_the_wrong_record,
              test_the_oracle_drives_the_engine_and_agrees,
              test_the_sample_takes_the_WHOLE_tactical_stratum_whatever_the_stride,
+             test_the_oracle_REFUSES_an_unknown_to_move_token,
              test_the_oracle_REFUSES_a_sample_that_misses_the_registered_rule,
              test_the_oracle_FAILS_on_a_disagreeing_engine,
+             test_fit_END_TO_END_ships_the_pinned_model_and_not_the_contrast,
+             test_the_committed_candidate_satisfies_the_pins_it_is_registered_under,
+             test_read_rows_REFUSES_an_unknown_to_move_token,
              test_options_is_driven_and_every_pin_is_a_MINIMISER,
              test_shipped_script_runs):
     print(test.__name__)

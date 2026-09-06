@@ -137,36 +137,30 @@ def normal_equations(rows, dim=QUIET_COUNTS):
 
 
 def solve(m, rhs):
-    """Gaussian elimination with IMPLICIT (scale-relative) partial pivoting.
+    """Gaussian elimination with partial pivoting on a small dense system.
 
-    The KKT systems below mix the normal matrix, whose entries run to 1e7 on a
-    real corpus, with constraint rows of O(1). An ABSOLUTE pivot threshold reads
-    the small rows as singular, and whether it does so depends on the objective's
-    units rather than on the problem: multiplying every label by a constant, which
-    cannot move the minimiser, made an earlier version of this routine discard
-    fourteen of fifteen active sets. Each row is therefore weighed against its own
-    largest entry, so the test is invariant under scaling.
+    THE PIVOT THRESHOLD IS ABSOLUTE AND SMALL, AND THAT IS THE WHOLE MECHANISM.
+    An earlier revision carried a row EQUILIBRATION here and a comment claiming
+    it "is what makes the pivot test invariant". Measured, on the KKT systems
+    `constrained_min` actually builds, it does the opposite: dividing a normal
+    row by its own largest entry drives that row's O(1) constraint coefficients
+    down to O(1e-10), so the smallest column maximum goes from 1.0 WITHOUT
+    equilibration to 1.4e-10 WITH it. The routine tolerated label scaling only
+    because 1e-12 sits far below either. The mechanism claim was false, the code
+    implementing it was worse than nothing, and both are gone rather than
+    refined.
 
-    Returns `None` only for a genuinely singular system, which for an active set
-    means its constraints are linearly dependent — a legitimate skip, counted by
-    the caller rather than swallowed.
+    What is true is a MEASURED range, pinned by `test_texel.py`: the minimiser is
+    unchanged when the objective is scaled by up to 1e9, and beyond about 1e11
+    the constraint rows are cancelled away in double precision and the routine
+    REFUSES rather than answering.
+
+    Returns `None` for a singular system, which for an active set means its
+    constraints are linearly dependent — a legitimate skip, counted by the
+    caller rather than swallowed.
     """
     n = len(rhs)
     aug = [list(row) + [rhs[i]] for i, row in enumerate(m)]
-    # ROW EQUILIBRATION FIRST, and it is what makes the pivot test invariant.
-    # Scaling a row of [M | rhs] by a constant cannot move the solution, so
-    # dividing each row by its own largest coefficient is free -- and after it
-    # every row is O(1), so a plain relative pivot test means the same thing on
-    # a system whose blocks originally differed by seven orders of magnitude.
-    # Carrying a scale vector computed ONCE does not work: elimination cancels
-    # the constraint rows against the normal rows and the vector goes stale,
-    # which made an earlier version refuse feasible problems at large scales.
-    for row in aug:
-        largest = max((abs(x) for x in row[:n]), default=0.0)
-        if largest == 0.0:
-            return None
-        for index in range(n + 1):
-            row[index] /= largest
     for col in range(n):
         pivot = max(range(col, n), key=lambda r: abs(aug[r][col]))
         if abs(aug[pivot][col]) < 1e-12:
@@ -350,56 +344,62 @@ def split(rows):
     return train, val
 
 
-def tempo_normal_equations(rows, pin):
+def tempo_normal_equations(rows, top, total):
     """Normal equations for the model the ANSWER comes from.
 
-    `label = c + w1 g1 + w2 g2 + pin * g3`, free in `(w1, w2, c)`.
+    `label = c + w1 g1 + (total - top - w1) g2 + top g3`, free in `(w1, c)`.
 
-    TWO THINGS ARE DELIBERATE HERE. `c` is a mover-relative tempo term the v0
-    schema has no entry for: on the fitted population the mover is behind in
-    window count and ahead in label, because it is about to place two stones,
-    and a model without `c` can only absorb that by moving the weights. `pin`
-    holds the top quiet entry at its committed value because the filtered rows
-    carry no evidence at all about the quiet-to-tactical balance -- the tactical
-    regressors are identically zero on every one of them.
+    THREE THINGS ARE DELIBERATE. `c` is a mover-relative tempo term the v0 schema
+    has no entry for: on the fitted population the mover is behind in window
+    count and ahead in label, and a model without `c` absorbs that by moving the
+    weights. `top` holds the third quiet entry at its committed value and
+    `total` holds the quiet SUM at its committed value, because the filtered rows
+    carry no evidence about ANY quiet-to-tactical exchange rate -- the tactical
+    regressors are identically zero on every one of them -- and each of those two
+    pins holds one such rate where it already was. What is left is the single
+    degree of freedom the corpus can speak to: how the committed quiet total
+    divides between the one- and two-stone entries.
     """
-    a = [[0.0] * 3 for _ in range(3)]
-    b = [0.0] * 3
+    a = [[0.0] * 2 for _ in range(2)]
+    b = [0.0] * 2
     for row in rows:
         g = signed(row)
-        x = [g[0], g[1], 1.0]
-        target = row["label"] - g[2] * pin
-        for i in range(3):
-            for j in range(3):
+        x = [g[0] - g[1], 1.0]
+        target = row["label"] - top * g[2] - (total - top) * g[1]
+        for i in range(2):
+            for j in range(2):
                 a[i][j] += x[i] * x[j]
             b[i] += x[i] * target
     return a, b
 
 
-def tempo_constraints(pin):
-    """The schema, on the two free weights, with the third held at `pin`."""
-    return [([1.0, 0.0, 0.0], 1.0),
-            ([-1.0, 1.0, 0.0], 1.0),
-            ([0.0, -1.0, 0.0], -(float(pin) - 1.0))]
+def tempo_constraints(top, total):
+    """The schema, on the one free weight `w1`, with `w2 = total - top - w1`.
+
+    `w1 >= 1` and `w2 >= w1 + 1`, the latter being `total - top - 2*w1 >= 1`.
+    """
+    return [([1.0, 0.0], 1.0),
+            ([-2.0, 0.0], 1.0 - (float(total) - float(top)))]
 
 
 def fit(rows, committed):
     """The whole answer, and the contrast that says why it is that answer."""
     fitted, counts = select(rows)
     train, val = split(fitted)
-    pin = float(committed[QUIET_COUNTS - 1])
+    top = float(committed[QUIET_COUNTS - 1])
+    total = float(sum(committed[:QUIET_COUNTS]))
 
     # The shipping model, kept only as the contrast: no intercept, free scale.
     plain_a, plain_b = normal_equations(train)
     plain = solve(plain_a, plain_b)
 
-    answer, skipped = constrained_min(*tempo_normal_equations(train, pin),
-                                      tempo_constraints(pin))
-    quiet = [answer[0], answer[1], pin]
+    answer, skipped = constrained_min(*tempo_normal_equations(train, top, total),
+                                      tempo_constraints(top, total))
+    quiet = [answer[0], total - top - answer[0], top]
     table = round_to_schema(quiet, committed[QUIET_COUNTS]) + committed[QUIET_COUNTS:]
     return {
         "counts": counts, "train": train, "val": val,
-        "no_intercept": plain, "quiet": quiet, "tempo": answer[2], "table": table,
+        "no_intercept": plain, "quiet": quiet, "tempo": answer[1], "table": table,
         "singular_active_sets": skipped,
     }
 
@@ -422,7 +422,9 @@ def main(rows_path):
           f"schema has no entry for it)")
     print(f"fit: constrained quiet optimum {['%.4f' % x for x in answer['quiet']]}")
     print(f"fit: committed {committed}")
-    print(f"fit: fitted table {table}   (entries 4 and 5 pinned, R6/D-622)")
+    print(f"fit: fitted table {table}   (entries 4 and 5 pinned by R6/D-622; "
+          f"entry 3 and the quiet SUM pinned at the committed values, which leaves "
+          f"one degree of freedom)")
     gaps = [k + 1 for k in range(QUIET_COUNTS - 1)
             if answer["quiet"][k + 1] - answer["quiet"][k] < 1 + 1e-6]
     print(f"fit: gap constraints BINDING between quiet entries {gaps or 'none'}")
