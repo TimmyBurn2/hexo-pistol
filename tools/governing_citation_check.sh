@@ -57,6 +57,7 @@ GOVERNING=(
 	docs/experiments/wp22_cap_prereg.md
 	docs/experiments/wp22_census_prereg.md
 	docs/experiments/wp22_phase1_design.md
+	docs/experiments/wp22_phase2_premise.md
 )
 
 # Files a governing document names and the tree does not hold yet, each with the
