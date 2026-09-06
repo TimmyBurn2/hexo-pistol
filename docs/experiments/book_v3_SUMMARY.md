@@ -163,8 +163,10 @@ Generation cost **0.036 s** for 8500 openings on this workstation — the handof
 - **Disjointness is at the OPENING.** It does not claim that games played from v3
   never transpose into a position the corpus holds at greater depth. D-644 asks
   for openings and openings are what was delivered.
-- **Two things this package did not take**: a ruling on whether book_v2's now
-  under-powered 1000-opening holdout is retained or retired, and the stale
-  D-143 citation on the arena's load path (`openings.rs:47-48` justifies
-  windowing by "content-hash order"; these books are emitted in generation
-  order — the conclusion survives, the cited reason does not).
+- **Two things this package did not take, BOTH SINCE TAKEN.** The ruling on
+  book_v2's now under-powered 1000-opening holdout is **D-653** (retained whole
+  as the large-effect screening book). The stale D-143 citation on the arena's
+  load path — `openings.rs:47-48` justified windowing by "content-hash order"
+  where these books are emitted in generation order — is **D-667**: the
+  conclusion survived, the cited reason did not, and the comment now names the
+  emission order each book states in its own header.
