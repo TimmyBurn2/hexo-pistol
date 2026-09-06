@@ -16,6 +16,7 @@ point can sit on a face the true optimum never touches — and this module refus
 rather than projecting.
 """
 
+import hashlib
 import pathlib
 import sys
 import tomllib
@@ -412,6 +413,66 @@ def fit(rows, committed):
     }
 
 
+def file_digest(path):
+    """sha256 over a file's bytes, for the receipt's input pins."""
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for block in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def receipt_lines(rows_path, weights_path, committed, answer):
+    """What a registration pins a fitted table BY, and it is not the digits.
+
+    D-657. Six admissible tables satisfy every property a registration could
+    state about the candidate's digits (D-633), so a property check pins the
+    PINS and leaves the table free. What identifies a fitted table is the run
+    that produced it: these lines name the inputs by digest, the rule that fixed
+    the pins, the populations each filter clause left, and the answer. Their
+    digest is what a registration cites, and re-running the shipped fit on the
+    same inputs returns it or something moved.
+
+    The rows file's PATH is deliberately absent and its digest present: a
+    receipt that changed with the directory a run happened in would pin the
+    machine rather than the fit (CLAUDE.md rule 4).
+    """
+    top = committed[QUIET_COUNTS - 1]
+    total = sum(committed[:QUIET_COUNTS])
+    counts = answer["counts"]
+    return [
+        f"rows_sha256 {file_digest(rows_path)}",
+        f"weights_file {weights_path}",
+        f"weights_sha256 {file_digest(weights_path)}",
+        f"committed_table {committed}",
+        f"pins options_row=both w3={top} sum={total}",
+        f"rows all={counts['all']} fitted={counts['fitted']} "
+        f"dropped_score_kind={counts['dropped_score_kind']} "
+        f"dropped_one_sided_window={counts['dropped_one_sided_window']} "
+        f"dropped_saturated_label={counts['dropped_saturated_label']}",
+        f"split train={len(answer['train'])} val={len(answer['val'])}",
+        f"quiet {['%.4f' % x for x in answer['quiet']]}",
+        f"tempo {answer['tempo']:.4f}",
+        f"table {answer['table']}",
+    ]
+
+
+def receipt_digest(lines):
+    """The digest a registration cites, over the receipt body as printed."""
+    return hashlib.sha256(("\n".join(lines) + "\n").encode()).hexdigest()
+
+
+def print_receipt(rows_path, committed, answer, weights_path=COMMITTED_WEIGHTS):
+    """The receipt, one prefixed line each so a reader can lift the body back
+    out of a log and re-derive the digest without this module."""
+    body = receipt_lines(rows_path, weights_path, committed, answer)
+    print("fit-receipt BEGIN")
+    for line in body:
+        print(f"fit-receipt {line}")
+    print(f"fit-receipt sha256 {receipt_digest(body)}")
+    print("fit-receipt END")
+
+
 def main(rows_path):
     committed = committed_table()
     rows = read_rows(rows_path)
@@ -452,6 +513,7 @@ def main(rows_path):
         print(f"diag: depth {depth} n {len(slice_)} "
               f"committed_val_mse {mean_squared_error(slice_, committed):.1f} "
               f"fitted_val_mse {mean_squared_error(slice_, table):.1f}")
+    print_receipt(rows_path, committed, answer)
 
 
 if __name__ == "__main__":

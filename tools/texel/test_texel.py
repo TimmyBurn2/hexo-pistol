@@ -1151,6 +1151,109 @@ def test_the_committed_candidate_satisfies_the_pins_it_is_registered_under():
           candidate != committed, candidate)
 
 
+FIT_FIXTURE = HERE / "fixtures" / "fit_rows_v1.txt"
+
+# THE PIN, and it is the whole mechanism (docs/decisions.md D-657). Re-derive it
+# by running `tools/texel/fit.py tools/texel/fixtures/fit_rows_v1.txt` and
+# reading the `fit-receipt sha256` line. It moves when the fixture moves, when
+# `configs/eval_v0_weights.toml` moves, when the pin rule moves, or when the
+# answer moves -- which is what makes it a reproduction pin rather than a
+# property check on digits.
+FIT_RECEIPT_SHA256 = "e49569ca5781ffa1b7265e28e00fc75ba34874fde6b03108e967db4569835d33"
+
+
+def _receipt_body(stdout):
+    """The receipt's own lines, lifted back out of a log without `fit.py`."""
+    body = []
+    inside = False
+    for line in stdout.splitlines():
+        if line == "fit-receipt BEGIN":
+            inside = True
+            continue
+        if line == "fit-receipt END":
+            inside = False
+            continue
+        if inside and line.startswith("fit-receipt "):
+            body.append(line[len("fit-receipt "):])
+    return body
+
+
+def test_the_committed_fixture_is_what_the_stated_generator_writes():
+    """A fixture nothing regenerates rots the moment its generator moves, and
+    the receipt digest below would then pin bytes no one can produce again
+    (docs/decisions.md D-152, D-177's idiom, applied to a rows file)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        fresh = f"{tmp}/rows.txt"
+        synth_rows(fresh, [3, 20, 90, 400, 2000], n=400)
+        written = [l for l in open(fresh).read().splitlines() if not l.startswith("#")]
+        committed_rows = [l for l in FIT_FIXTURE.read_text().splitlines()
+                          if not l.startswith("#")]
+        check("the committed fixture holds 400 rows", len(committed_rows) == 400,
+              len(committed_rows))
+        check("and they are the rows the stated parameters produce",
+              committed_rows == written,
+              next((k for k in range(min(len(written), len(committed_rows)))
+                    if written[k] != committed_rows[k]), "length"))
+
+
+def test_a_fitted_table_is_pinned_by_its_RECEIPT_and_not_by_its_digits():
+    """The retired candidate was pinned by four property checks on its digits,
+    and `[1,13,..]`, `[3,11,..]`, `[5,9,..]` and `[6,8,..]` passed every one of
+    them (docs/research/training_pipeline_2026-09.md section 7 Gap B).
+
+    What pins a fitted table is REPRODUCTION: the shipped fit, driven on a
+    committed input, printing a receipt whose digest a registration cites. The
+    digest is RE-DERIVED here from the printed body rather than believed, so a
+    receipt digest taken over some narrower slice of the run is a red test.
+    """
+    done = subprocess.run([sys.executable, str(HERE / "fit.py"), str(FIT_FIXTURE)],
+                          capture_output=True, text=True)
+    check("the shipped fit runs on the committed fixture", done.returncode == 0,
+          done.stderr[-300:])
+    body = _receipt_body(done.stdout)
+    check("the receipt names its inputs by DIGEST and its answer",
+          any(l.startswith("rows_sha256 ") for l in body)
+          and any(l.startswith("weights_sha256 ") for l in body)
+          and any(l.startswith("table ") for l in body)
+          and any(l.startswith("pins ") for l in body), body)
+    check("and it names no path that a run's own directory could change",
+          not any(l.startswith("rows_file") for l in body), body)
+    printed = [l[len("sha256 "):] for l in body if l.startswith("sha256 ")]
+    digested = [l for l in body if not l.startswith("sha256 ")]
+    check("the receipt prints exactly one digest", len(printed) == 1, printed)
+    # RE-DERIVED, not read back: a digest taken over the pins alone, or over any
+    # other slice of the body, disagrees here.
+    check("the printed digest is the digest of the whole receipt body",
+          printed[0] == FIT.receipt_digest(digested), (printed, len(digested)))
+    check("and it is the digest this suite pins",
+          printed[0] == FIT_RECEIPT_SHA256,
+          f"{printed[0]} — re-derive with tools/texel/fit.py "
+          f"tools/texel/fixtures/fit_rows_v1.txt; the fixture, "
+          f"configs/eval_v0_weights.toml, the pin rule and the answer all move it")
+
+
+def test_the_receipt_digest_MOVES_when_the_input_does():
+    """A pin that cannot move is a constant. One row's label changed is a
+    different fit, and the receipt has to say so."""
+    with tempfile.TemporaryDirectory() as tmp:
+        altered = pathlib.Path(tmp) / "rows.txt"
+        lines = FIT_FIXTURE.read_text().splitlines()
+        for number, line in enumerate(lines):
+            if line.startswith("#"):
+                continue
+            fields = line.split("\t")
+            fields[12] = str(int(fields[12]) + 1)
+            lines[number] = "\t".join(fields)
+            break
+        altered.write_text("\n".join(lines) + "\n")
+        done = subprocess.run([sys.executable, str(HERE / "fit.py"), str(altered)],
+                              capture_output=True, text=True)
+        check("the altered fixture still fits", done.returncode == 0, done.stderr[-300:])
+        moved = [l for l in _receipt_body(done.stdout) if l.startswith("sha256 ")]
+        check("and one changed label gives a different receipt digest",
+              moved and moved[0] != f"sha256 {FIT_RECEIPT_SHA256}", moved)
+
+
 def test_read_rows_REFUSES_an_unknown_to_move_token():
     """Hard rule 3. Without this guard `signed()` reads any non-`p1` token as p2
     and returns a schema-legal, dominance-passing, WRONG table in silence."""
@@ -1221,6 +1324,9 @@ for test in (test_one_stone_features, test_turn_structure,
              test_the_oracle_FAILS_on_a_disagreeing_engine,
              test_fit_END_TO_END_ships_the_pinned_model_and_not_the_contrast,
              test_the_committed_candidate_satisfies_the_pins_it_is_registered_under,
+             test_the_committed_fixture_is_what_the_stated_generator_writes,
+             test_a_fitted_table_is_pinned_by_its_RECEIPT_and_not_by_its_digits,
+             test_the_receipt_digest_MOVES_when_the_input_does,
              test_read_rows_REFUSES_an_unknown_to_move_token,
              test_options_is_driven_and_every_pin_is_a_MINIMISER,
              test_every_options_row_is_a_MINIMISER_and_a_rescale_of_the_free_solve_is_not,
