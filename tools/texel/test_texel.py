@@ -1132,25 +1132,6 @@ def test_fit_END_TO_END_ships_the_pinned_model_and_not_the_contrast():
               answer["counts"])
 
 
-def test_the_committed_candidate_satisfies_the_pins_it_is_registered_under():
-    """The registered candidate is pinned by nothing but this.
-
-    Editing `configs/eval_v0_quiet_fit_weights.toml` to any other legal table
-    passed every gate. What defines the candidate is not its digits but the two
-    pins the matrix selects it under, and those are checkable without the corpus.
-    """
-    committed = FIT.committed_table("configs/eval_v0_weights.toml")
-    candidate = FIT.committed_table("configs/eval_v0_quiet_fit_weights.toml")
-    check("the candidate holds the tactical entries verbatim (R6, D-622)",
-          candidate[3:] == committed[3:], (candidate, committed))
-    check("it holds the top quiet entry at the committed value",
-          candidate[2] == committed[2], (candidate, committed))
-    check("it holds the quiet SUM at the committed value",
-          sum(candidate[:3]) == sum(committed[:3]), (candidate, committed))
-    check("and it is not the committed table, or the SPRT would be a self-match",
-          candidate != committed, candidate)
-
-
 FIT_FIXTURE = HERE / "fixtures" / "fit_rows_v1.txt"
 
 # THE PIN, and it is the whole mechanism (docs/decisions.md D-657). Re-derive it
@@ -1323,7 +1304,6 @@ for test in (test_one_stone_features, test_turn_structure,
              test_the_oracle_REFUSES_a_sample_that_misses_the_registered_rule,
              test_the_oracle_FAILS_on_a_disagreeing_engine,
              test_fit_END_TO_END_ships_the_pinned_model_and_not_the_contrast,
-             test_the_committed_candidate_satisfies_the_pins_it_is_registered_under,
              test_the_committed_fixture_is_what_the_stated_generator_writes,
              test_a_fitted_table_is_pinned_by_its_RECEIPT_and_not_by_its_digits,
              test_the_receipt_digest_MOVES_when_the_input_does,

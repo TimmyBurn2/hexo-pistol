@@ -1,4 +1,4 @@
-# WP-2.2 Phase 1 — the quiet-term fit of eval v0: design and run registration, revision 5.
+# WP-2.2 Phase 1 — the quiet-term fit of eval v0: design and run registration, revision 6.
 
 > **REVISION 4 UNDER THE OPERATOR'S GRANT (D-631), AND EVERY FIX HERE WAS RUN
 > RATHER THAN ARGUED.** Revision 3 FAILED its fresh REVIEW-design with five
@@ -17,6 +17,20 @@
 > - **§2 separates the two grounds** for pinning `w4` and `w5` (D-629).
 > - **The committed dry-run config has actually been run** and its report
 >   replaces the scratchpad ones.
+
+> **REVISION 6 — THE PHASE IS CLOSED AND ITS THREE COMMITTED CONFIGS ARE
+> RETIRED (docs/decisions.md D-637, D-657).** §9's run was never launched, and
+> R-A closed Phase 1 on findings: `[4, 10, 60, 300, 1500]` is one of six equally
+> principled two-pin tables, not derived and not deployed. TX-1 therefore retires
+> the candidate weights document, the candidate SEAT config that named it and the
+> dry-run arena config that named that — a chain, each link naming the next — and
+> a fitted table is pinned from now on by a fit RECEIPT over a committed fixture
+> rather than by property checks on its digits (D-657, `tools/texel/fit.py`'s
+> `receipt_lines`). §9 below no longer names the three retired documents, on this
+> document's own precedent for the arena config §9.2's power analysis withdrew.
+> **§1 to §8 are untouched**: the row filter §3 states still governs
+> `tools/texel/extract.py`, which is why this document stays on
+> `tools/governing_citation_check.sh`'s list.
 
 ## §1 What this phase changes, and what it does not
 
@@ -277,16 +291,21 @@ The governed arena config was removed with
 the claim, so no committed config names the slice — which is why this paragraph
 does not name it either.
 
-**Seats.** One binary, two configs differing in exactly one key, `weights_file`:
-`configs/instrument_v0.toml` against `configs/instrument_quiet_fit_v0.toml`. The
-arena's handshake carries each seat's `weights_sha256`.
+**Seats.** One binary, two configs differing in exactly one key, `weights_file`,
+the second of them naming the candidate table. The arena's handshake carries each
+seat's `weights_sha256`. **Both the candidate seat config and the arena config
+that paired it with `configs/instrument_v0.toml` were retired with the candidate
+(D-657), so no committed config names this pairing — which is why this paragraph
+does not name it either**, the same disposition the withdrawn governed config got
+above.
 
 **The candidate is `[4, 10, 60, 300, 1500]`** — the two-pin minimiser of
 `matrix_wp22_quiet_scale.md` §5, holding the top quiet entry AND the quiet sum
 at their committed values so that the only thing the comparison varies is the
-one degree of freedom the corpus has an opinion about. It is COMMITTED
-CONFIGURATION, not an artifact (D-11), at
-`configs/eval_v0_quiet_fit_weights.toml`.
+one degree of freedom the corpus has an opinion about. It was COMMITTED
+CONFIGURATION, not an artifact (D-11), and it is RETIRED: R-A found it neither
+derived nor deployed, and a table pinned by property checks on its digits is not
+pinned at all — four other legal tables passed every one of them (D-657).
 
 **Fixed by this registration**: `budget` nodes 50 000; `n_workers` 4;
 `hang_timeout_ms` 120 000; `alpha` = `beta` = 0.05; `turn_cap` **60** by §9.1;
@@ -385,9 +404,12 @@ the prior, or generate `book_v3` and answer R7 properly, or neither.* **It is no
 taken here** because the reservation is shared and the ruling is the operator's.
 
 **THE DRY RUN**, on an input of the same kind that is not a registered workload:
-24 openings of `random_openings_v1.txt` at `openings_skip = 0`, from
-`configs/arena_wp22_phase1_quiet_dryrun.toml` **as committed** — the report's own
-`timing config_sha256` is that file's digest.
+24 openings of `random_openings_v1.txt` at `openings_skip = 0`, from the committed
+dry-run arena config — the report's own `timing config_sha256` is that file's
+digest. **That config is retired with the candidate seat it named (D-657)**, so
+this paragraph records what the dry run was taken from and stops naming a document
+the tree no longer holds; `docs/experiments/wp22_phase1_impl_REVIEW.md` is the
+record that still names it, as a record may.
 
 - **THE CRITERION, corrected**: the report's pentanomial must be
   **NON-DEGENERATE**, and its verdict must not be `inconclusive_degenerate`.
