@@ -117,7 +117,12 @@ D-635 records.
 - **Generator filter inputs**: `random_openings_v1.txt` and
   `random_openings_v2.txt` — both committed, both digest-pinned, both present in
   any clone. Over-generate, reject a candidate whose canonical form is in either,
-  truncate to 8500.
+  and REFUSE any survivor count that is not 8500 rather than truncating — so
+  `n_openings` is solved for the draw at which exactly 8500 survive, and the gap
+  between the two numbers is the rejection count and nothing else. (Revision 2 of
+  this matrix said "truncate to 8500". The implementation took the safer reading
+  and this line follows the CODE, per REVIEW-impl M-2: a prefix of the survivors
+  would be a sample size nobody chose.)
 - **The corpus clause is DISCHARGED, not struck.** An independent `tools/` script
   reports all four counts including the corpus one, and its receipt records
   `v3 vs corpus: 0 of 8500`. It is **not** a CI gate, because it needs the 43 MB

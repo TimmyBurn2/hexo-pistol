@@ -1,9 +1,14 @@
 # pistol — the parameters `random_openings_v3.txt` was generated with.
 #
-# This is the ONLY home of those five values. UNLIKE v1's and v2's documents,
-# this one does not on its own determine the book: v3 is FILTERED against the
-# two committed books, so the bytes are a function of this file AND of
-# `crates/pistol-cli/tests/fixtures/random_openings_v{1,2}.txt`. That is a
+# This is the ONLY home of those five values — but UNLIKE v1's and v2's
+# documents it does not on its own determine the book, and TWO of the book's
+# inputs are not in it. v3 is FILTERED against the two committed books, so the
+# bytes are a function of this file AND of
+# `crates/pistol-cli/tests/fixtures/random_openings_v{1,2}.txt`. And the SIZE the
+# book ends up holding — 8500 — is not a key here at all: it is the builder's
+# `--openings`, which is REQUIRED and has no default, so a rebuild states it on
+# the command line and the schema never sees it. `n_openings` below is the DRAW,
+# which is a different number and larger. That is a
 # knowing departure from D-518, which declined exactly this filter for v2, and
 # what buys it is D-644: acceptance openings must be disjoint from every
 # governed book, or an eval trained on the labelled corpus is tested on

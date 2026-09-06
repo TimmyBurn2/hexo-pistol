@@ -280,8 +280,10 @@ expected order.
 **Cost, with its seat named (D-479, BV3-7).** At cap 8000 the instrument
 measures `mean_pairs 3102.1` — the expected pairs a run actually plays, not the
 cap. The `~4.5 h` of the handoff is an SPRT RUN cost at the 2.046 s/opening
-instrument seat, not a generation cost. **Generation cost was not measured,
-because no generation was run.**
+instrument seat, not a generation cost. **Generation cost was not measured at
+R1, because no generation had been run then**; it was measured at R2 and is
+0.036 s — see §12. (Corrected: this sentence said generation cost "was not
+measured" full stop, which R2 made false. REVIEW-impl m-9.)
 
 ## §11 — THE BLOCKING FINDING
 
@@ -418,7 +420,7 @@ committed pin records.
 
 **BV3-2 — regeneration from the committed seed reproduces the digest.** Two
 fresh processes, byte-identical:
-`757f15bd5e66a4e417723adaaf23dd97db8caa125d157808652ae1df6a49726a`. Pinned
+`9453763625c83a8a95d31bf5ee62e5ec6db91552d0fe81a604b190067e32f240`. Pinned
 out-of-band as `RANDOM_OPENINGS_V3_SHA256` and re-derived in-process by
 `random_openings_v3_is_what_this_build_produces`.
 
@@ -426,6 +428,10 @@ out-of-band as `RANDOM_OPENINGS_V3_SHA256` and re-derived in-process by
 `tools/book_v3_disjointness.sh`, which shares no code with the generator:
 
 ```
+book_v3_disjointness: input 895a05ed…f076e7  …/random_openings_v1.txt
+book_v3_disjointness: input 829361a9…6cc29a  …/random_openings_v2.txt
+book_v3_disjointness: input 94537636…32f240  …/random_openings_v3.txt
+book_v3_disjointness: input 00f61780…f35968  …/deduped_manifest.txt
 book_v3_disjointness: control: corpus5 ^ v2: 3487 of 3487 (the renderings agree)
 book_v3_disjointness: v3 vs v1: 0 of 8500
 book_v3_disjointness: v3 vs v2: 0 of 8500
@@ -453,7 +459,7 @@ openings_take 4 of 8500
 
 ```
 counts n 8 distinct_n 4 wins_a 4 capped 0 losses_a 4 forfeits 0 voids 0 decided 8
-VERDICT inconclusive_degenerate
+verdict inconclusive_degenerate
 ```
 
 The verdict is the knowably-correct one for a self-match and is asserted rather
@@ -481,3 +487,83 @@ degenerate by construction and measures nothing. No range of `book_v3` is
 consumed: `docs/book_v3_ledger.md` records the book as whole, and records the
 smoke match explicitly as a non-consuming loadability check so that a successor
 may still draw `0..3` for a governed run.
+
+## §13 — R4, the fix round
+
+REVIEW-impl ran fresh-context against `c443720` and returned **FAIL**, with the
+engineering sound and every binding number reproduced independently — the digest,
+the four counts, the rejection arithmetic and the digest refusal were all
+re-derived by the reviewer — but with the shipped artifact's own header stating
+two things untrue of it. Report: `artifacts/book_v3/REVIEW_IMPL.md`. This is the
+package's **one** fix round (D-481).
+
+### What was wrong, and what it cost to fix
+
+**M-1 (MAJOR) — the preamble named the wrong file for its own pin.** It said
+`RANDOM_OPENINGS_V3_SHA256` and `random_openings_v3_is_what_this_build_produces`
+live in `random_openings_document_tests.rs`. They live in
+`random_openings_v3_tests.rs`. The sentence was v1's and v2's, copied — TRUE
+there, false here, and §11 leans on exactly that out-of-band pin as the mechanism
+that "catches strictly more than the in-band digest", so a successor would have
+grepped the named file and found nothing.
+
+**M-2 (MODERATE) — the preamble described a truncating filter the code refuses to
+be.** It said "keep the first `openings` survivors in generation order". The
+builder REFUSES a survivor count that is not the size asked for. The paragraph
+also contradicted itself: under truncation the gap between the two header numbers
+would be rejections *plus* discards, so its next sentence was true only under the
+non-truncating code. **The matrix's own selected-option text said "truncate to
+8500" too** — the implementation took the safer reading, and
+`matrix_book_v3_storage.md` now follows the code and says so.
+
+Both were fixed in one regeneration. **The file digest moved and the body digest
+did not**: the preamble sits above `# body_sha256`, which covers only the body, so
+`7df96afb…450acd31` is unchanged and **every load-side receipt in §12 stands
+without being re-taken** — the smoke report and the `OpeningsDigest` refusal are
+still the run they claim to be. Only `RANDOM_OPENINGS_V3_SHA256` and §12's file
+digest moved, to `9453763625c83a8a95d31bf5ee62e5ec6db91552d0fe81a604b190067e32f240`.
+
+### What else was closed
+
+- **M-3** — the receipt identified none of its four inputs. It now prints each by
+  sha256 before any count. The corpus was the sharp case: a 43 MB file outside the
+  repository with no in-tree pin, so `v3 vs corpus` named one term and left the
+  other unidentified, in a package whose own lesson (D-479) is the opposite. **An
+  unplanned cross-check falls out of it**: the corpus digest the script prints,
+  `00f61780…caf35968`, equals the value D-636 recorded when the corpus moved.
+- **M-4** — the rebuild command the config documents was executed by no test; the
+  suite re-implemented the composition instead. Two tests now drive the SHIPPED
+  example: one asserts it writes the committed bytes, one drops an `--against` and
+  asserts it refuses and writes nothing.
+- **M-5, A SEVENTH MUTANT THAT SURVIVED** — `rejected` reached only a `println!`,
+  so a drifted counter would have the tool announce one number while the book it
+  wrote in the same run implied another. `the_filter_rejects_exactly_the_gap_the_header_states`
+  pins it at 38 and at `n_openings − openings`.
+- **m-1, m-2** — statements that could die under `set -e` with exit 1, which the
+  script's usage block defines as "the answer is no", for environmental reasons;
+  and a count the instrument could not produce was spelled `fail` where item 12
+  makes it a VOID. Both corrected, plus one dead line removed.
+- **m-3, m-4, m-6, m-7, m-8, m-9, m-10** — claims stated more strongly than the
+  code supports, corrected rather than defended: the `SurvivorCount` suggestion is
+  a STEP toward the size and not a guarantee; "shares no code with the generator"
+  becomes "shares no draw, no filter and no rendering" (it does share
+  `canonical_form`, and must, since that is the identity D-644 is stated over);
+  `Unreadable`'s doc now covers its use on a draw index; `unwrap_or(i64::MAX)`
+  becomes this crate's own `unreachable!` convention; §11's "generation cost was
+  not measured" is corrected as now-false; and the v3 config no longer inherits
+  v1's "ONLY home" claim unqualified, because the book's SIZE is the builder's
+  required `--openings` and the schema never sees it.
+
+### What was NOT changed, and why
+
+The reviewer's own analysis is recorded where it clears the design rather than
+only where it faults it: the control is sound in both directions and exit 2 is
+the right class for its failure; `random_openings_v3_is_what_this_build_produces`
+is a real check and not agreement by construction; no test passes if the filter
+is removed; the script is clean against checklist item 11; and **given the
+control, `v3 vs corpus: 0` is implied by `v3 vs v2: 0`** — D-647's proof,
+mechanized. One observation is carried forward rather than fixed: D-647 states
+`v1 ∩ v3 = 9`, `v2 ∩ v3 = 29`, `corpus₅ ∩ v3 = 23` for the CANDIDATE draw, where
+the shipped book's values are 0/0/0. The log is append-only and the surrounding
+clause supplies the context; it is noted here for a successor rather than
+rewritten.

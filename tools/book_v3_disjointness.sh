@@ -6,7 +6,9 @@
 # WHY THIS EXISTS AND WHY IT IS NOT A CI GATE. D-644 requires the disjointness;
 # D-647 selects the shape that delivers it. The GENERATOR enforces the first two
 # terms by construction, so a check that shared its code would prove nothing —
-# this reads the finished books through `book_keys`, which generates nothing.
+# this reads the finished books through `book_keys`, which shares no draw, no
+# filter and no rendering with the builder. It does share `canonical_form`, the
+# fold itself, and must: that is the identity D-644 is stated over.
 # It is not in `tools/ci.sh` because the corpus term needs a 43 MB file that
 # lives OUTSIDE the repository (D-636) and that no clone has: a gate depending
 # on it would be green on one workstation and red everywhere else.
@@ -76,12 +78,21 @@ keys_of() { # $1 = a book
 	LC_ALL=C sort -u <"$SCRATCH/raw"
 }
 
+# THE INPUTS, NAMED BY CONTENT BEFORE ANY COUNT (docs/decisions.md D-479). Three
+# of the four are committed and digest-pinned in the tree; the CORPUS is not — it
+# is a 43 MB file outside the repository with no in-tree pin — so `v3 vs corpus`
+# would otherwise name one term and leave the other unidentified.
+command -v sha256sum >/dev/null || void "sha256sum is not on PATH, so no input can be named"
+for f in "$V1" "$V2" "$V3" "$CORPUS"; do
+	digest="$(sha256sum -- "$f")" || void "cannot digest $f"
+	printf 'book_v3_disjointness: input %s\n' "${digest%% *}  $f"
+done
+
 keys_of "$V1" >"$SCRATCH/v1"
 keys_of "$V2" >"$SCRATCH/v2"
 "$KEYS_BIN" "$V3" >"$SCRATCH/v3.raw" 2>"$SCRATCH/err" ||
 	void "the key tool refused $V3: $(tr '\n' ' ' <"$SCRATCH/err")"
-LC_ALL=C sort <"$SCRATCH/v3.raw" >"$SCRATCH/v3.sorted"
-LC_ALL=C sort -u <"$SCRATCH/v3.raw" >"$SCRATCH/v3"
+LC_ALL=C sort -u <"$SCRATCH/v3.raw" >"$SCRATCH/v3" || void "cannot sort the v3 keys"
 
 # The corpus's own `key_full` column, restricted to the five-stone rows — the
 # only ones a five-stone opening can equal. Column 5, tab-separated, per the
@@ -99,8 +110,9 @@ LC_ALL=C sort -u <"$SCRATCH/v3.raw" >"$SCRATCH/v3"
 # book_v2 is the control because the corpus was labelled FROM it: every
 # five-stone corpus key must be one of its openings, so this intersection is the
 # whole corpus slice or the two sides are not speaking the same language.
-CORPUS_N="$(wc -l <"$SCRATCH/corpus5" | tr -d ' ')"
-CONTROL="$(LC_ALL=C comm -12 "$SCRATCH/corpus5" "$SCRATCH/v2" | wc -l | tr -d ' ')"
+CORPUS_N="$(wc -l <"$SCRATCH/corpus5" | tr -d ' ')" || void "cannot count the corpus keys"
+CONTROL="$(LC_ALL=C comm -12 "$SCRATCH/corpus5" "$SCRATCH/v2" | wc -l | tr -d ' ')" ||
+	void "cannot intersect the corpus with book_v2"
 [ "$CORPUS_N" -gt 0 ] || void "the corpus manifest yielded no five-stone key_full rows"
 if [ "$CONTROL" -ne "$CORPUS_N" ]; then
 	printf 'book_v3_disjointness: control: corpus5 ^ v2: %s of %s\n' "$CONTROL" "$CORPUS_N" >&2
@@ -112,18 +124,21 @@ fi
 printf 'book_v3_disjointness: control: corpus5 ^ v2: %s of %s (the renderings agree)\n' \
 	"$CONTROL" "$CORPUS_N"
 
-N="$(wc -l <"$SCRATCH/v3.raw" | tr -d ' ')"
+N="$(wc -l <"$SCRATCH/v3.raw" | tr -d ' ')" || void "cannot count the v3 openings"
 case "$N" in
-'' | *[!0-9]*) fail "the opening count is not a number: \`$N\`" ;;
+# A count the instrument could not produce is a VOID and not a finding about
+# book_v3 (tools/SHELL_CHECKLIST.md item 12).
+'' | *[!0-9]*) void "the opening count is not a number: \`$N\`" ;;
 esac
-[ "$N" -gt 0 ] || fail "$V3 states no openings"
+[ "$N" -gt 0 ] || void "$V3 states no openings, so no disjointness question was asked"
 
 overlap() { LC_ALL=C comm -12 "$SCRATCH/v3" "$1" | wc -l | tr -d ' '; }
-A="$(overlap "$SCRATCH/v1")"
-B="$(overlap "$SCRATCH/v2")"
-C="$(overlap "$SCRATCH/corpus5")"
+A="$(overlap "$SCRATCH/v1")" || void "cannot intersect v3 with v1"
+B="$(overlap "$SCRATCH/v2")" || void "cannot intersect v3 with v2"
+C="$(overlap "$SCRATCH/corpus5")" || void "cannot intersect v3 with the corpus"
 # Internal: how many openings are NOT their own distinct key.
-D="$((N - $(wc -l <"$SCRATCH/v3" | tr -d ' ')))"
+DISTINCT="$(wc -l <"$SCRATCH/v3" | tr -d ' ')" || void "cannot count the distinct v3 keys"
+D="$((N - DISTINCT))"
 
 printf 'book_v3_disjointness: v3 vs v1: %s of %s\n' "$A" "$N"
 printf 'book_v3_disjointness: v3 vs v2: %s of %s\n' "$B" "$N"

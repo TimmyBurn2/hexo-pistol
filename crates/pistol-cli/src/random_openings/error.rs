@@ -112,7 +112,11 @@ pub enum RandomOpeningsError {
         /// How many words were rejected in a row.
         tries: usize,
     },
-    /// A book the disjointness filter was asked to read states a line it cannot.
+    /// A position line the disjointness filter cannot read.
+    ///
+    /// `source` is a book path when the line came from a file and a phrase like
+    /// `a generated opening` when it came from the draw, in which case `line` is
+    /// an index into that draw rather than a file line.
     Unreadable {
         /// What was being read, for a refusal that can name it.
         source: String,

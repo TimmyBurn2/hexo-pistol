@@ -60,9 +60,11 @@ pub fn key_of_tail(source: &str, line: usize, tail: &str) -> Result<Key, RandomO
 /// (docs/decisions.md D-143's argument).
 ///
 /// # Errors
-/// [`RandomOpeningsError::SurvivorCount`] when the count is not `wanted`,
-/// naming the `n_openings` that would land on it; the book is never truncated
-/// to fit.
+/// [`RandomOpeningsError::SurvivorCount`] when the count is not `wanted`; the
+/// book is never truncated to fit. The suggested `n_openings` is a STEP toward
+/// the size, not a guarantee of it: if a draw the correction adds or removes is
+/// itself a rejection, the next run refuses again with a smaller suggestion. It
+/// converges, and it is stated as a step because that is what it is.
 pub fn retain_disjoint(
     drawn: Book,
     excluded: &BTreeSet<Key>,
@@ -86,12 +88,21 @@ pub fn retain_disjoint(
         // Signed, deliberately: the correction is negative when the filter left
         // MORE than was asked for, and computing it in `usize` would wrap to an
         // astronomical suggestion instead of a smaller book.
-        let correction = i64::try_from(wanted).unwrap_or(i64::MAX)
-            - i64::try_from(kept.len()).unwrap_or(i64::MAX);
+        //
+        // `unreachable!` and not a saturating default, which is this crate's own
+        // convention (`ball`): every one of these came from a validated config
+        // or from a `Vec` length, so a value past `i64` means an invariant broke
+        // rather than a number to clamp.
+        let as_i64 = |what: &str, value: usize| {
+            i64::try_from(value)
+                .unwrap_or_else(|_| unreachable!("{what} is {value}, which does not fit an i64"))
+        };
+        let correction =
+            as_i64("the size asked for", wanted) - as_i64("the survivor count", kept.len());
         return Err(RandomOpeningsError::SurvivorCount {
             wanted,
             survived: kept.len(),
-            suggestion: i64::try_from(n_openings).unwrap_or(i64::MAX) + correction,
+            suggestion: as_i64("n_openings", n_openings) + correction,
         });
     }
     Ok((

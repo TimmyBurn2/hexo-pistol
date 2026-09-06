@@ -44,6 +44,10 @@ the generator — `tools/book_v3_disjointness.sh`, which reads the finished book
 through `book_keys` and prints both terms of every count:
 
 ```
+book_v3_disjointness: input 895a05ed…f076e7  …/random_openings_v1.txt
+book_v3_disjointness: input 829361a9…6cc29a  …/random_openings_v2.txt
+book_v3_disjointness: input 94537636…32f240  …/random_openings_v3.txt
+book_v3_disjointness: input 00f61780…f35968  …/deduped_manifest.txt
 book_v3_disjointness: control: corpus5 ^ v2: 3487 of 3487 (the renderings agree)
 book_v3_disjointness: v3 vs v1: 0 of 8500
 book_v3_disjointness: v3 vs v2: 0 of 8500

@@ -12,9 +12,10 @@ usage:
 The rendering matches crates/pistol-arena/src/labels.rs's `key_full` exactly —
 `q,r:p1` pairs, space-joined, over pistol-core's `canonical_form` — so a key
 printed here is comparable with a corpus row's `key_full` column by string
-equality. It GENERATES NOTHING and shares no code with the generator, which is
-what makes it usable as that generator's independent check (docs/decisions.md
-D-647).";
+equality. It GENERATES NOTHING: it shares no draw, no filter and no rendering
+with the book builder, which is what makes it usable as that builder's
+independent check. It DOES share `canonical_form` — the fold itself — and must,
+since that is the identity D-644 is stated over (docs/decisions.md D-647).";
 
 fn render(stones: &[(Coord, Player)]) -> String {
     stones

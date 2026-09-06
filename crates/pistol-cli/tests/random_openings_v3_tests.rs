@@ -12,7 +12,7 @@ use pistol_cli::sha256::sha256_hex;
 
 /// The SHA-256 of the committed `fixtures/random_openings_v3.txt`.
 const RANDOM_OPENINGS_V3_SHA256: &str =
-    "757f15bd5e66a4e417723adaaf23dd97db8caa125d157808652ae1df6a49726a";
+    "9453763625c83a8a95d31bf5ee62e5ec6db91552d0fe81a604b190067e32f240";
 
 /// What the book must hold, and it is DERIVED rather than chosen: `pairs_v3` is
 /// the smallest cap `sprt_power.rs` measures at power >= 0.90 for the R7
@@ -48,6 +48,106 @@ fn produced() -> String {
     let (book, _) = filter::retain_disjoint(drawn, &excluded, OPENINGS, config.generate.n_openings)
         .expect("the committed n_openings leaves exactly the size asked for");
     document::render(&config, &book)
+}
+
+#[test]
+fn the_filter_rejects_exactly_the_gap_the_header_states() {
+    // THE COUNT THE TOOL PRINTS AND THE HEADER IMPLIES, PINNED. Without this the
+    // `rejected` return is defended by nothing: it reaches only a `println!`, so
+    // a counter that drifted would have the tool announce one number while the
+    // book it wrote in the same run implied another (REVIEW-impl M-5).
+    let config = RandomOpeningsConfig::load(&repo(CONFIG)).expect("the v3 config loads");
+    let mut excluded = keys(BookVersion::V1);
+    excluded.extend(keys(BookVersion::V2));
+    let drawn = random_openings::generate(&config).expect("the v3 config generates");
+    let (_, rejected) =
+        filter::retain_disjoint(drawn, &excluded, OPENINGS, config.generate.n_openings)
+            .expect("the committed n_openings leaves exactly the size asked for");
+    assert_eq!(
+        rejected,
+        config.generate.n_openings - OPENINGS,
+        "the draw minus the book IS the rejection count, which is what the header's two \
+         numbers say and what makes `nothing is truncated` checkable"
+    );
+    assert_eq!(rejected, 38, "the count D-647 states");
+}
+
+/// The shipped `build_book_v3` example, as `cargo test` builds it.
+///
+/// Beside this test binary rather than under a guessed profile directory:
+/// `current_exe()` is `<target>/<profile>/deps/<name>`, so the example sits two
+/// levels up in `examples/`.
+fn shipped_builder() -> PathBuf {
+    let exe = std::env::current_exe().expect("the test binary has a path");
+    let path = exe
+        .parent()
+        .and_then(std::path::Path::parent)
+        .expect("<target>/<profile>/deps/<bin>")
+        .join("examples/build_book_v3");
+    assert!(
+        path.exists(),
+        "{} is missing; `cargo test` builds examples, so this means the example did not compile",
+        path.display()
+    );
+    path
+}
+
+#[test]
+fn the_documented_rebuild_command_writes_the_committed_book() {
+    // THE COMMAND `configs/random_openings_v3.toml` TELLS A READER TO RUN, run.
+    // The library-level test checks the composition; this checks the TOOL that
+    // composes it — the --against union, the --openings value and the output
+    // path are the example's own and nothing else drives them (REVIEW-impl M-4;
+    // D-518 records a real defect in exactly this composition).
+    let out = common::scratch("v3-shipped-builder");
+    let ran = std::process::Command::new(shipped_builder())
+        .args(["--config", &repo(CONFIG).display().to_string()])
+        .args(["--against", &fixture(BookVersion::V1).display().to_string()])
+        .args(["--against", &fixture(BookVersion::V2).display().to_string()])
+        .args(["--openings", &OPENINGS.to_string()])
+        .args(["--out-dir", &out.display().to_string()])
+        .output()
+        .expect("the example runs");
+    assert!(
+        ran.status.success(),
+        "the documented command must succeed: {}{}",
+        String::from_utf8_lossy(&ran.stdout),
+        String::from_utf8_lossy(&ran.stderr)
+    );
+    let written = std::fs::read_to_string(out.join(BookVersion::V3.file_name()))
+        .expect("the run wrote the book under its own version's name");
+    assert_eq!(
+        written,
+        committed(BookVersion::V3),
+        "the committed v3 bytes are the bytes the DOCUMENTED command writes"
+    );
+}
+
+#[test]
+fn the_builder_refuses_a_book_it_was_not_told_to_be_disjoint_from() {
+    // Drop one --against and the tool must refuse rather than write a book that
+    // overlaps v1: the survivor count no longer lands on the size asked for.
+    let out = common::scratch("v3-missing-against");
+    let ran = std::process::Command::new(shipped_builder())
+        .args(["--config", &repo(CONFIG).display().to_string()])
+        .args(["--against", &fixture(BookVersion::V2).display().to_string()])
+        .args(["--openings", &OPENINGS.to_string()])
+        .args(["--out-dir", &out.display().to_string()])
+        .output()
+        .expect("the example runs");
+    assert!(
+        !ran.status.success(),
+        "a filter missing an input must refuse"
+    );
+    let said = String::from_utf8_lossy(&ran.stderr).to_string();
+    assert!(
+        said.contains("survivors") && said.contains("set n_openings to"),
+        "the refusal names the survivor count and the number that would land: {said}"
+    );
+    assert!(
+        !out.join(BookVersion::V3.file_name()).exists(),
+        "a refused run writes no book"
+    );
 }
 
 #[test]
