@@ -1,6 +1,7 @@
 pub mod config;
 pub mod document;
 pub mod error;
+pub mod filter;
 pub mod rng;
 
 use std::collections::BTreeSet;
@@ -36,6 +37,10 @@ pub enum BookVersion {
     V1,
     /// `random_openings_v2.txt` — the successor book.
     V2,
+    /// `random_openings_v3.txt` — the acceptance book. Unlike its predecessors
+    /// it is FILTERED against both of them, so it is not reproducible from its
+    /// own config alone (docs/decisions.md D-647, and D-518 for what that costs).
+    V3,
 }
 
 impl BookVersion {
@@ -44,6 +49,7 @@ impl BookVersion {
         match self {
             BookVersion::V1 => FILE_NAME,
             BookVersion::V2 => "random_openings_v2.txt",
+            BookVersion::V3 => "random_openings_v3.txt",
         }
     }
 
@@ -52,6 +58,7 @@ impl BookVersion {
         match self {
             BookVersion::V1 => "v1",
             BookVersion::V2 => "v2",
+            BookVersion::V3 => "v3",
         }
     }
 }

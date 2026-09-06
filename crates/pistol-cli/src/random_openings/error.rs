@@ -112,6 +112,27 @@ pub enum RandomOpeningsError {
         /// How many words were rejected in a row.
         tries: usize,
     },
+    /// A book the disjointness filter was asked to read states a line it cannot.
+    Unreadable {
+        /// What was being read, for a refusal that can name it.
+        source: String,
+        /// The line number, 1-based.
+        line: usize,
+        /// What went wrong.
+        why: String,
+    },
+    /// The filter left a survivor count that is not the size asked for.
+    ///
+    /// Never truncated to fit: a book silently shortened is a sample size
+    /// nobody chose (CLAUDE.md rule 6).
+    SurvivorCount {
+        /// How many openings the book must hold.
+        wanted: usize,
+        /// How many survived the filter.
+        survived: usize,
+        /// The `n_openings` that would land on `wanted`.
+        suggestion: i64,
+    },
     /// An output could not be written.
     Write {
         /// The path.
@@ -199,6 +220,19 @@ impl fmt::Display for RandomOpeningsError {
                 f,
                 "the index sampler rejected {tries} words in a row under bound {bound}, which the \
                  arithmetic says cannot happen"
+            ),
+            RandomOpeningsError::Unreadable { source, line, why } => {
+                write!(f, "{source}:{line}: {why}")
+            }
+            RandomOpeningsError::SurvivorCount {
+                wanted,
+                survived,
+                suggestion,
+            } => write!(
+                f,
+                "the filter leaves {survived} survivors and the book must hold exactly {wanted}; \
+                 set n_openings to {suggestion} rather than truncating, because a book shortened \
+                 in silence is a sample size nobody chose"
             ),
             RandomOpeningsError::Write { path, why } => {
                 write!(f, "cannot write {}: {why}", path.display())

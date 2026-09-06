@@ -391,3 +391,93 @@ recorded by a superseding line, not by a correction to D-645.
 
 Artifacts are gitignored (`.gitignore:19:/artifacts/`) and are not committed,
 per hard rule 8.
+
+## §12 — R2, the book itself
+
+Built at `84daf0d`+ under D-647's Option D. **The generator is unchanged**: the
+filter runs after generation, which is what keeps this package inside the
+dispatch's "seed and version tag" limit.
+
+### The fixed point, and why there is no truncation
+
+`n_openings = 8538` is chosen so that **exactly** 8500 survive the filter. The
+builder REFUSES any other survivor count and names the `n_openings` that would
+land on it, rather than truncating — a book shortened in silence is a sample size
+nobody chose (rule 6). So the header's two numbers differ by exactly the
+rejection count:
+
+```
+build_book_v3: 6490 distinct canonical forms excluded
+build_book_v3: drew 8538, rejected 38 already held, 8500 survive
+```
+
+6490 is |v1 ∪ v2| = 2000 + 4500 − 10, the 10 being the v1/v2 overlap the
+committed pin records.
+
+### Receipts
+
+**BV3-2 — regeneration from the committed seed reproduces the digest.** Two
+fresh processes, byte-identical:
+`757f15bd5e66a4e417723adaaf23dd97db8caa125d157808652ae1df6a49726a`. Pinned
+out-of-band as `RANDOM_OPENINGS_V3_SHA256` and re-derived in-process by
+`random_openings_v3_is_what_this_build_produces`.
+
+**BV3-4 — disjointness, four counts, both terms named (D-479).** From
+`tools/book_v3_disjointness.sh`, which shares no code with the generator:
+
+```
+book_v3_disjointness: control: corpus5 ^ v2: 3487 of 3487 (the renderings agree)
+book_v3_disjointness: v3 vs v1: 0 of 8500
+book_v3_disjointness: v3 vs v2: 0 of 8500
+book_v3_disjointness: v3 vs corpus: 0 of 8500
+book_v3_disjointness: v3 internal: 0 of 8500
+```
+
+**The control line is not decoration.** This script renders a key and compares it
+against a column the ARENA wrote. Had the two renderings drifted apart, every
+corpus comparison would find nothing and report `0 of 8500` — a pass produced by
+comparing two vocabularies. The control fails the run as a VOID if any five-stone
+corpus key is not a `book_v2` opening.
+
+**BV3-5 — loadability, three artifacts.**
+
+(a) The arena loads v3 and names it by content, from `smoke_report.txt`:
+
+```
+openings_file crates/pistol-cli/tests/fixtures/random_openings_v3.txt
+openings_body_sha256 7df96afb355336c780579067668619d29a5bf709b516ddaa12f3b6f7450acd31
+openings_take 4 of 8500
+```
+
+(b) A four-opening paired smoke match completed, distinct-n reported:
+
+```
+counts n 8 distinct_n 4 wins_a 4 capped 0 losses_a 4 forfeits 0 voids 0 decided 8
+VERDICT inconclusive_degenerate
+```
+
+The verdict is the knowably-correct one for a self-match and is asserted rather
+than admired: two identical deterministic engines score every pair 1-1.
+
+(c) The digest refusal fires on a one-byte-altered copy, and the named error is
+`OpeningsDigest` at exit 2 — **not** a manifest mismatch, because D-647 selected
+the in-band header digest the arena already verifies on every load:
+
+```
+arena: OpeningsDigest: artifacts/book_v3/tampered_v3.txt: the header claims
+body_sha256 7df96afb...450acd31 and the body hashes to ea8e75dd...11064c4;
+the file has been edited since it was pinned
+```
+
+**BV3-7 — generation cost, seat named (D-479).** Generating 8500 openings costs
+**0.036 s** on this workstation, release build. Five timed runs by the red team
+on the same seat: 0.0344–0.0346 s. The handoff's "~4.5 h" is the SPRT RUN cost at
+the 2.046 s/opening instrument seat and is not generation.
+
+### What is NOT claimed
+
+No strength claim, of any kind (hard rule 6). The smoke match's verdict is
+degenerate by construction and measures nothing. No range of `book_v3` is
+consumed: `docs/book_v3_ledger.md` records the book as whole, and records the
+smoke match explicitly as a non-consuming loadability check so that a successor
+may still draw `0..3` for a governed run.

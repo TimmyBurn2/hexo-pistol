@@ -1,0 +1,71 @@
+# pistol — the parameters `random_openings_v3.txt` was generated with.
+#
+# This is the ONLY home of those five values. UNLIKE v1's and v2's documents,
+# this one does not on its own determine the book: v3 is FILTERED against the
+# two committed books, so the bytes are a function of this file AND of
+# `crates/pistol-cli/tests/fixtures/random_openings_v{1,2}.txt`. That is a
+# knowing departure from D-518, which declined exactly this filter for v2, and
+# what buys it is D-644: acceptance openings must be disjoint from every
+# governed book, or an eval trained on the labelled corpus is tested on
+# openings that corpus already holds (docs/decisions.md D-647).
+#
+# Rebuild with:
+#   cargo run -p pistol-cli --example build_book_v3 -- \
+#     --config configs/random_openings_v3.toml \
+#     --against crates/pistol-cli/tests/fixtures/random_openings_v1.txt \
+#     --against crates/pistol-cli/tests/fixtures/random_openings_v2.txt \
+#     --openings 8500 \
+#     --out-dir crates/pistol-cli/tests/fixtures
+#
+# NOT `random-openings`. That binary writes what it draws; it has no rejection
+# hook and gaining one would be a generator behaviour change this package is not
+# licensed to make. The filter therefore runs AFTER generation, which is the
+# dispatch's own default fork.
+#
+# Validate this file with tools/config_check.sh.
+
+# Schema version this document is written against. This is the RANDOM-OPENINGS
+# schema and is unrelated to the engine's, the eval weights' and the arena's:
+# they version different documents that change for different reasons.
+schema_version = 2
+
+[generate]
+# WHICH BOOK. v3 is the ACCEPTANCE book: it exists because R7's question needs
+# power >= 0.90 at elo1 = 10 and no book in hand affords it (docs/decisions.md
+# D-638), and because it must be clean against a corpus-trained eval (D-644).
+book = "v3"
+
+# Stones per opening. A TURN-BOUNDARY count: five is the position after turn 3
+# — P1's opening stone, P2's two, P1's two. UNCHANGED FROM v1 AND v2, and the
+# value is load bearing twice over: D-175's no-balance-filter arithmetic holds
+# only at `k <= 5`, and the proof that the labelled corpus needs no filter term
+# of its own is that a game passes through exactly one five-stone position.
+k_stones = 5
+
+# How many openings to DRAW. This is NOT the size of the book — it is the
+# over-generation, and `openings` in the written header is the smaller number.
+# The gap is exactly the count the filter rejected as already held by v1 or v2.
+# It is chosen so that EXACTLY 8500 survive: the builder refuses any other
+# survivor count rather than truncating, because a book silently shortened is a
+# sample size nobody chose (CLAUDE.md rule 6).
+#
+# 8500 is DERIVED, not chosen: `pairs_v3 = 7800` is the smallest pair cap the
+# shipped `sprt_power.rs` measures at power >= 0.90 for elo0 0 / elo1 10 /
+# alpha = beta = 0.05 on the Phase 1 pentanomial, and
+# `ceil_to_500(7800 + 500) = 8500` applies book_v2_registration.md §4's rule
+# (docs/decisions.md D-643; artifacts/book_v3/POWER_v3.txt).
+n_openings = 8538
+
+# How far from the ORIGIN a sampled stone may land, in hex distance. A
+# GENERATION knob and NOT game rule 5's LEGAL_RADIUS, which is a pinned constant
+# in pistol-core. UNCHANGED FROM v1 AND v2, so all three books are drawn from
+# one population and a slice of one is comparable with a slice of another.
+max_radius = 5
+
+# The PRNG seed. Its only job is to be DIFFERENT from v1's 20260818 and v2's
+# 20260830. The value is the date this package was authored, by the convention
+# both predecessors used, and is recorded rather than chosen for any property of
+# the book it makes — which the FILTER is what makes true here: disjointness is
+# 0 by construction for every seed, so no seed can be selected for it
+# (docs/decisions.md D-647).
+seed = 20260906

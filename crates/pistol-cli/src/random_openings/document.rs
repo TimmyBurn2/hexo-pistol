@@ -84,6 +84,59 @@ const V2_PREAMBLE: &[&str] = &[
     "(docs/decisions.md D-151, D-175). The question reopens if k grows.",
 ];
 
+/// v3's preamble. It states the one thing neither predecessor can: that this
+/// book IS filtered against another file, which is the property v2's own
+/// preamble records as declined, and what that buys and costs.
+const V3_PREAMBLE: &[&str] = &[
+    "pistol random opening book, v3 — the ACCEPTANCE book, and the first filtered one.",
+    "",
+    "Pinned by SHA-256 in crates/pistol-cli/tests/random_openings_document_tests.rs",
+    "(RANDOM_OPENINGS_V3_SHA256), and rebuilt byte for byte from the config named",
+    "below by `random_openings_v3_is_what_this_build_produces` in the same file.",
+    "",
+    "THIS BOOK HAS EXTERNAL INPUT, AND THAT IS THE DIFFERENCE FROM v1 AND v2. Both",
+    "of those state in their own bytes that they have none, and v2's preamble records",
+    "that a filter against v1 was DECLINED because it would make a fixture's bytes",
+    "depend on another file's (docs/decisions.md D-518). This book reverses that,",
+    "knowingly: D-644 requires acceptance openings disjoint under canonical form from",
+    "every governed book, because an eval trained on the labelled corpus and then",
+    "tested on openings that corpus already holds is a self-match. So the property",
+    "here is weaker by exactly one step — not \"reproducible from its own config\" but",
+    "\"reproducible from its config and two committed, digest-pinned files in this",
+    "same repository\" — and it is still checkable on a fresh clone, which is the",
+    "whole reason the filter reads only committed books (docs/decisions.md D-647).",
+    "",
+    "THE CORPUS IS NOT AN INPUT, AND IS NOT NEEDED AS ONE. D-644 also names the",
+    "labelled corpus. It is discharged by PROOF instead of by filtering: a game",
+    "passes through exactly one five-stone position — its own opening, which the book",
+    "chose and no engine did — and the corpus was labelled from book_v2 openings",
+    "13..3499, so its whole five-stone slice IS those openings. MEASURED over all",
+    "89 805 deduped rows: 3 487 five-stone keys, none of them outside book_v2, so",
+    "filtering against book_v2 already removes every one this filter could. Keeping",
+    "the corpus out of the inputs is what lets the rebuild run on a machine that does",
+    "not have it (docs/decisions.md D-647).",
+    "",
+    "One position per line, in the canonical move-list encoding (docs/decisions.md",
+    "D-6) — the exact tail the `position` verb takes. There is NO commentary column:",
+    "these positions have no provenance beyond the parameters below, and a column that",
+    "said nothing would invite a reader to look for meaning in it.",
+    "",
+    "WHY n_openings BELOW EXCEEDS THE OPENING COUNT. The generator is UNCHANGED from",
+    "v2 — it has no rejection hook and gaining one would be a behaviour change this",
+    "package is not licensed to make — so the filter runs AFTER generation: draw",
+    "n_openings, drop every canonical form already in v1 or v2, keep the first",
+    "`openings` survivors in generation order. Both numbers are stated below and the",
+    "gap between them is the rejection count.",
+    "",
+    "NO BALANCE FILTER, and the reason is arithmetic rather than a judgement. A turn",
+    "places two stones, so a mate in one TURN needs four own stones already in a",
+    "six-window and a mate in one PLY needs five; at five stones the largest holding",
+    "is three. No position in this file holds a mate in one for either side, so there",
+    "is nothing for a filter to remove — and NO ENGINE WAS CONSULTED to decide any of",
+    "it, which is what keeps this a fixture under CLAUDE.md rule 7 rather than a book",
+    "under rule 8 even though it is filtered (docs/decisions.md D-151, D-175, D-647).",
+];
+
 /// The whole file, ready to write.
 ///
 /// The preamble is the one part that differs between books, because it names
@@ -94,6 +147,7 @@ pub fn render(config: &RandomOpeningsConfig, book: &Book) -> String {
     let mut fixture = Fixture::new(match config.generate.book {
         BookVersion::V1 => V1_PREAMBLE,
         BookVersion::V2 => V2_PREAMBLE,
+        BookVersion::V3 => V3_PREAMBLE,
     });
     fixture.gap();
     fixture.note("How a position was made:");
