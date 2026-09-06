@@ -313,9 +313,9 @@ those.
    (`[1, 21, 22, 64, 65]`, sha256 `834b4f7f…`), expectation registered: it
    loses, and h0 is the finding that the v0 feature set is the limit.
 2. **R3's seat-swap anchor** — configured, needs a quiet box.
-3. **Phase 2** — not started. Its premise memo should quote D-616: the corpus
-   cannot be fitted by dropping its mate rows, and the censored likelihood is
-   the named successor.
+3. **Phase 2** — not started. Its premise memo quotes **D-621 and R6 (D-622)**,
+   NOT D-616: the top weights are not censored but NOT IDENTIFIABLE, and the
+   successor is the quiet/tactical split rather than a better likelihood.
 
 ## §11 HANDOFF — the state a successor starts from
 
@@ -346,8 +346,10 @@ and must be re-dispatched.
    feature set is the limit.
 3. **R3's seat-swap anchor** (D-612) — `local/sealbot_anchor_v6_seatswap.toml`,
    byte-identical to v5 but for the slot. Needs a quiet box; report only.
-4. **Phase 2** — not started. Its premise memo must quote D-616 and treat the
-   censored likelihood as the named successor, not the sigmoid link.
+4. **Phase 2** — not started. Its premise memo must quote **D-621 and R6
+   (D-622)**. D-616's censored likelihood is RETIRED unbuilt (D-625): adding the
+   mate rows back adds no sign variation, so the successor is the quiet/tactical
+   split and not a likelihood at all.
 
 ### Hazards a successor will otherwise rediscover
 

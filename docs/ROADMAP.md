@@ -462,21 +462,28 @@ distilled from mantis self-play + human corpora. Acceptance bar
 handcrafted stays and the eval budget moves to search.
 
 **WP-2.2 PHASE 1 HAS RUN ITS FIT AND THE RESULT IS A CONSTRAINT ON THE CORPUS,
-NOT A WEIGHT TABLE (D-616).** The v0 eval is linear in its five weights — an
-oracle says so against the engine, 0 of 500 positions disagreeing — so the fit
-is exact and hyperparameter-free. Fitted to the sweep corpus's search scores it
-wants a table that is FLAT at the top: one-from-a-win at 65 against
-two-from-a-win's 64, where the committed table says 1500 against 300. The cause is measured, and
-**D-621 corrects D-616 on what it is**: not censoring but NON-IDENTIFIABILITY.
-All 3 882 positions holding a five-stone window have it owned by the side NOT to
-move — rule 4 completes a win the instant a stone forms six, so a mover holding
-a live five-window would already have played it — and the side-to-move-relative
-feature therefore takes ONE SIGN ONLY across 2 009 rows. A regressor with no
-sign variation cannot report what a five-window is worth to its owner. **Every offline diagnostic improves while this is
-true**, which is what D-614 exists to forbid reading as progress. The censored
-likelihood — a mate row as *"value at or beyond the band"* rather than as
-missing data — is the named successor, and it is named before the SPRT rather
-than after it.
+NOT A WEIGHT TABLE (D-621, superseding D-616).** The v0 eval is linear in its
+five weights — an oracle says so against the engine — so the fit is exact and
+hyperparameter-free. Fitted to the sweep corpus's search scores it wants a table
+that is FLAT at the top, valuing one-from-a-win barely above two-from-a-win where
+the committed table separates them by a factor of five. **The cause is
+NON-IDENTIFIABILITY and not censoring**: every position holding a five-stone
+window has it owned by the side NOT to move — rule 4 completes a win the instant
+a stone forms six, so a mover holding a live five-window would already have
+played it — and the side-to-move-relative feature therefore takes ONE SIGN ONLY.
+A regressor with no sign variation cannot report what a five-window is worth to
+its owner. **Every offline diagnostic improves while this is true**, which is
+what D-614 exists to forbid reading as progress.
+
+**THE SUCCESSOR IS THE SPLIT, NOT A BETTER LIKELIHOOD (R6, D-622).** D-616's
+censored likelihood is RETIRED BEFORE IT WAS BUILT: adding the mate rows back
+adds no sign variation, only more of one orientation, and the review measured
+that it drives the top weight further negative. What replaces it is a division of
+labour — the terms naming classes the search resolves inside its own window are
+pinned and never fitted from search labels, and only the quiet terms are fitted,
+on rows where neither side holds an in-window forced win. Phase 2 inherits the
+split: the learned family evaluates quiet structure and the search evaluates
+tactics.
 
 ## Stage 3 — Forcing search
 
