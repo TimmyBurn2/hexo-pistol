@@ -58,7 +58,12 @@ def corpus_rows(manifest=MANIFEST, tranche=TRANCHE):
             if rec[KEY_FULL] != key_full:
                 raise OracleError(
                     f"oracle: corpus {index} record {record_number} key_full mismatch")
-            yield rec[KEY_FULL], rec[MOVES], rec[TO_MOVE], rec[SCORE_KIND]
+            if rec[TO_MOVE] not in ("p1", "p2"):
+                raise OracleError(
+                    f"oracle: corpus {index} record {record_number} has to_move "
+                    f"{rec[TO_MOVE]!r}; reading anything but p1 or p2 as p2 silently "
+                    "negates the position's value")
+            yield index, rec[KEY_FULL], rec[MOVES], rec[TO_MOVE], rec[SCORE_KIND]
 
 
 def sample(rows, stride=DEFAULT_STRIDE):
@@ -70,12 +75,46 @@ def sample(rows, stride=DEFAULT_STRIDE):
     walks.
     """
     chosen = []
-    for position, (key, moves, to_move, kind) in enumerate(rows):
+    for position, (tranche, key, moves, to_move, kind) in enumerate(rows):
         a, b = F.per_side_counts(F.stones_of(moves))
         tactical = any(a[k] or b[k] for k in (4, 5, 6))
         if tactical or position % stride == 0:
-            chosen.append((key, moves, to_move, kind, tactical))
+            chosen.append((key, moves, to_move, kind, tactical, tranche))
     return chosen
+
+
+def coverage(chosen):
+    """What the drawn sample actually spans, as the registered rule names it."""
+    return {
+        "sampled": len(chosen),
+        "tactical": sum(1 for c in chosen if c[4]),
+        "tranches": sorted({c[5] for c in chosen}),
+        "kinds": sorted({c[3] for c in chosen}),
+    }
+
+
+def check_sample_rule(chosen, tranches, kinds):
+    """REFUSE a sample that does not meet design section 5's registered rule.
+
+    Reporting the counts is not enough: the rule's two clauses -- the whole
+    tactical stratum, and a stride draw across every tranche and every score
+    kind -- are both inert on a small sample, so a mutation that dropped either
+    left every check green. This is what makes them fire.
+    """
+    span = coverage(chosen)
+    if len(span["tranches"]) != tranches:
+        raise OracleError(
+            f"oracle: the sample spans {len(span['tranches'])} tranche(s), "
+            f"and the registered rule names {tranches}")
+    if sorted(kinds) != span["kinds"]:
+        raise OracleError(
+            f"oracle: the sample spans score kinds {span['kinds']}, "
+            f"and the registered rule names {sorted(kinds)}")
+    if not span["tactical"]:
+        raise OracleError(
+            "oracle: the sample holds no position from the tactical stratum, which "
+            "is the stratum the phase's own finding is about")
+    return span
 
 
 def write_weights(path, table):
@@ -91,7 +130,7 @@ def engine_values(binary, weights_path, chosen, work):
     # it as no turns at all, and a lone "-" is a stone token it refuses.
     fixture.write_text("".join(
         "start moves\n" if moves == "-" else f"start moves {moves}\n"
-        for _, moves, _, _, _ in chosen))
+        for _, moves, _, _, _, _ in chosen))
     done = subprocess.run([binary, weights_path, str(fixture)],
                           capture_output=True, text=True, check=False)
     if done.returncode != 0:
@@ -104,17 +143,23 @@ def engine_values(binary, weights_path, chosen, work):
     return values
 
 
-def run(binary, stride=DEFAULT_STRIDE, rows=None):
+def run(binary, stride=DEFAULT_STRIDE, rows=None, tranches=None, kinds=None):
     chosen = sample(rows if rows is not None else corpus_rows(), stride)
-    tactical = sum(1 for c in chosen if c[4])
-    report = {"sampled": len(chosen), "tactical_stratum": tactical, "tables": {}}
+    span = coverage(chosen)
+    if tranches is not None:
+        check_sample_rule(chosen, tranches, kinds)
+    tactical = span["tactical"]
+    print(f"oracle: draw = the whole tactical stratum plus every {stride}th position; "
+          f"tranches {len(span['tranches'])}, score kinds {','.join(span['kinds'])}")
+    report = {"sampled": len(chosen), "tactical_stratum": tactical,
+              "coverage": span, "tables": {}}
     with tempfile.TemporaryDirectory() as work:
         for name, table in TABLES.items():
             weights_path = f"{work}/{name}.toml"
             write_weights(weights_path, table)
             answered = engine_values(binary, weights_path, chosen, work)
             disagreements, saturating = 0, 0
-            for (key, moves, to_move, _kind, _t), got in zip(chosen, answered):
+            for (key, moves, to_move, _kind, _t, _n), got in zip(chosen, answered):
                 stones = F.stones_of(moves)
                 f = F.features(stones)
                 mine = F.value(f, table, 0 if to_move == "p1" else 1)
@@ -130,12 +175,26 @@ def run(binary, stride=DEFAULT_STRIDE, rows=None):
                   f"saturating {saturating:>6} disagreements {disagreements}")
             if disagreements:
                 raise OracleError(f"oracle: {disagreements} disagreement(s), first {first}")
+    # THE THIRD CLAUSE OF THE REGISTERED RULE, checked rather than assumed: at
+    # least one table must drive the value onto the band edge, or the clamp --
+    # the one place the offline path and the engine could differ without either
+    # being obviously wrong -- is never exercised at all.
+    saturating = [name for name, seen in report["tables"].items() if seen["saturating"]]
+    if not saturating:
+        raise OracleError(
+            "oracle: no registered table saturated the eval band on any sampled "
+            "position, so the clamp was never exercised and the run checks less "
+            "than the rule registers")
     print(f"oracle: {len(chosen)} position(s), {tactical} in the tactical stratum, "
-          f"{len(TABLES)} weight tables, 0 disagreements")
+          f"{len(TABLES)} weight tables, {len(saturating)} of them saturating, "
+          "0 disagreements")
     return report
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise SystemExit("usage: verify_against_engine.py <static_eval binary> [stride]")
-    run(sys.argv[1], int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_STRIDE)
+    # The registered rule, enforced on the corpus path: all sixteen tranches and
+    # all three score kinds (docs/experiments/wp22_phase1_design.md section 5).
+    run(sys.argv[1], int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_STRIDE,
+        tranches=16, kinds=("eval", "mate_in", "mated_in"))

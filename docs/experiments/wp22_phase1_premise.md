@@ -170,9 +170,13 @@ three-key agreement with the deeper label winning.
 
 Two holdouts, and they are different kinds.
 
-- **The human corpus** (HF `timmyburn/hexo-bootstrap-corpus`, ARTIFACT-GRADE) —
-  never trained on. It is a DISTRIBUTION holdout: human games, not engine
-  self-play, so it answers whether a fit to engine labels transfers.
+- **The human corpus is NOT a holdout here, and revision 1's claim that it was
+  is withdrawn.** `docs/ROADMAP.md` blocks D-434's Stage-2 calibration holdout
+  until a population-grade corpus supersedes the artifact-grade one, and D-453
+  licenses statements about the artifact and nothing *"generalizing to the
+  platform's players"*. *"Whether a fit to engine labels transfers to human
+  play"* is exactly that generalisation. The design deleted its own paragraph
+  saying so; this one said the opposite in the same commit.
 - **A registered split of the sweep corpus** — the same distribution, so it
   answers overfitting alone.
 

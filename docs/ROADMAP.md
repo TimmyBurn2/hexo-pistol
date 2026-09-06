@@ -481,7 +481,9 @@ adds no sign variation, only more of one orientation, and the review measured
 that it drives the top weight further negative. What replaces it is a division of
 labour — the terms naming classes the search resolves inside its own window are
 pinned and never fitted from search labels, and only the quiet terms are fitted,
-on rows where neither side holds an in-window forced win. Phase 2 inherits the
+on the rows where neither tactical regressor is non-zero — a predicate that removes
+nothing FORCED and is kept on the ground that does hold, that both tactical
+regressors take one sign (D-626, scoped by D-629). Phase 2 inherits the
 split: the learned family evaluates quiet structure and the search evaluates
 tactics.
 

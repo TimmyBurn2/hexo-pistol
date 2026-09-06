@@ -106,16 +106,25 @@ def test_per_side_counts_name_the_owner_the_signed_vector_cannot():
 
 
 def test_the_filter_is_a_predicate_on_ownership():
-    """Design section 3 clause 2: EITHER side holding a live four is enough."""
+    """Design section 3 clause 2: EITHER side holding a live four is enough.
+
+    It is a predicate on OWNERSHIP, not on forcedness -- D-626 measured that
+    nothing it drops is forced.
+    """
     row = {"a": [0] * 7, "b": [0] * 7, "kind": "eval", "label": 0}
-    check("an empty board holds no forced win", not FIT.holds_forced_win(row))
+    check("an empty board holds no one-sided tactical window",
+          not FIT.has_one_sided_tactical_window(row))
     row["b"][4] = 1
-    check("a live four owned by the NON-mover is a forced win the search sees",
-          FIT.holds_forced_win(row))
+    check("a live four owned by the NON-mover is one, and it is the case that "
+          "actually occurs: the mover owns one in 0 of the corpus's eval rows",
+          FIT.has_one_sided_tactical_window(row))
     row["b"][4], row["a"][5] = 0, 1
-    check("so is a live five owned by the mover", FIT.holds_forced_win(row))
+    check("the predicate is on either side, so a mover-owned five is one too — "
+          "a configuration rule 4 makes impossible at a turn boundary, which is "
+          "why the predicate and not the corpus is what this pins",
+          FIT.has_one_sided_tactical_window(row))
     row["a"][5], row["a"][3] = 0, 9
-    check("nine live threes are not one", not FIT.holds_forced_win(row))
+    check("nine live threes are not one", not FIT.has_one_sided_tactical_window(row))
 
 
 def test_the_filter_reports_every_clause_it_applies():
@@ -128,15 +137,18 @@ def test_the_filter_reports_every_clause_it_applies():
         rows[1]["a"][4] = 0
         fitted, counts = FIT.select(rows)
         check("the score_kind clause is counted", counts["dropped_score_kind"] == 1, counts)
-        check("the forced-win clause is counted", counts["dropped_forced_win"] > 0, counts)
+        check("the one-sided-window clause is counted",
+              counts["dropped_one_sided_window"] > 0, counts)
         check("the saturated-label clause is counted",
               counts["dropped_saturated_label"] == 1, counts)
         check("the populations add up to the whole",
               counts["fitted"] + counts["dropped_score_kind"]
-              + counts["dropped_forced_win"] + counts["dropped_saturated_label"]
+              + counts["dropped_one_sided_window"] + counts["dropped_saturated_label"]
               == counts["all"], counts)
-        check("no fitted row holds a forced win",
-              not any(FIT.holds_forced_win(r) for r in fitted))
+        check("no fitted row carries a non-zero tactical regressor — which is what "
+              "the clause delivers, and NOT that the population is free of forced "
+              "wins: 5 339 mate rows pass it and clause 1 is what removes them",
+              not any(FIT.has_one_sided_tactical_window(r) for r in fitted))
 
 
 def test_an_empty_filtered_population_is_refused_not_defaulted():
@@ -331,7 +343,15 @@ for line in pathlib.Path(sys.argv[2]).read_text().splitlines():
 
 
 def _oracle_rows():
-    return [("kA", "-", "p1", "eval"), ("kB", "0,0", "p2", "eval")]
+    """(tranche, key, moves, to_move, score_kind), as `corpus_rows` yields.
+
+    Two positions only, and both trivial, because the stub that plays the engine
+    computes its answer from a formula sharing no code with `features.py` — the
+    whole point of it — and that formula is only defined for an empty board and
+    a lone stone. The registered sample RULE is exercised on synthetic tuples
+    below, where no engine is needed.
+    """
+    return [(1, "kA", "-", "p1", "eval"), (2, "kB", "0,0", "p2", "mate_in")]
 
 
 def test_the_oracle_drives_the_engine_and_agrees():
@@ -342,11 +362,64 @@ def test_the_oracle_drives_the_engine_and_agrees():
         binary.write_text(f'#!/bin/sh\nexec {sys.executable} {stub} "$@"\n')
         binary.chmod(0o755)
         report = ORACLE.run(str(binary), stride=1, rows=_oracle_rows())
-        check("the oracle sampled both positions", report["sampled"] == 2, report)
+        check("the oracle sampled every position", report["sampled"] == 2, report)
+        check("and it REPORTS what the draw spans, which the run receipt did not",
+              report["coverage"]["tranches"] == [1, 2]
+              and report["coverage"]["kinds"] == ["eval", "mate_in"],
+              report["coverage"])
         check("no table disagrees",
               all(t["disagreements"] == 0 for t in report["tables"].values()), report)
         check("at least one registered table saturates the band",
               any(t["saturating"] > 0 for t in report["tables"].values()), report)
+
+
+def test_the_sample_takes_the_WHOLE_tactical_stratum_whatever_the_stride():
+    """`sample()` is pure, so the clause that matters most needs no engine.
+
+    The registered rule's first clause is EVERY position holding a four- or
+    five-window, not a stride draw that happens to include some: an unstratified
+    draw exercises the top table entries in a handful of positions, which is the
+    defect design section 5 exists to close.
+    """
+    # p1 takes 0,0 1,0 2,0 3,0 4,0 while p2 plays far away: a live five-window.
+    tactical = "0,0 -20,0/-20,1 1,0/2,0 -19,0/-19,1 3,0/4,0"
+    a, b = F.per_side_counts(F.stones_of(tactical))
+    check("the fixture really does hold a live five-window", a[5] > 0, (a, b))
+    rows = [(1, f"k{i}", "-", "p1", "eval") for i in range(9)]
+    rows.insert(5, (1, "kT", tactical, "p2", "eval"))     # index 5, not on the stride
+    chosen = ORACLE.sample(rows, stride=4)
+    check("the tactical position is taken even though its index is off the stride",
+          any(c[0] == "kT" for c in chosen), [c[0] for c in chosen])
+    check("and it is marked as the tactical stratum",
+          [c[4] for c in chosen if c[0] == "kT"] == [True], chosen)
+    check("while the stride still draws the quiet ones",
+          sum(1 for c in chosen if not c[4]) == 3, [c[0] for c in chosen])
+
+
+def test_the_oracle_REFUSES_a_sample_that_misses_the_registered_rule():
+    """The rule's clauses are inert on a small draw, so a mutation that dropped
+    the tactical stratum or a tranche left every check green. These fire."""
+    # Synthetic tuples: the rule is about the DRAW, and needs no engine.
+    chosen = [("k1", "-", "p1", "eval", True, 1), ("k2", "-", "p2", "mate_in", False, 2),
+              ("k3", "-", "p1", "mated_in", False, 2)]
+    check("the rule passes the draw it is written for",
+          ORACLE.check_sample_rule(chosen, 2, ("eval", "mate_in", "mated_in"))["sampled"] == 3)
+    for name, args, token in (
+            ("a missing tranche", (3, ("eval", "mate_in", "mated_in")), "tranche"),
+            ("a missing score kind", (2, ("eval", "mate_in", "mated_in", "other")), "score kinds"),
+    ):
+        try:
+            ORACLE.check_sample_rule(chosen, *args)
+            check(f"{name} is refused", False, "no exception raised")
+        except ORACLE.OracleError as why:
+            check(f"{name} is refused by name", token in str(why), str(why))
+    flat = [(k, m, tm, s, False, n) for (k, m, tm, s, _, n) in chosen]
+    try:
+        ORACLE.check_sample_rule(flat, 2, ("eval", "mate_in", "mated_in"))
+        check("an empty tactical stratum is refused", False, "no exception raised")
+    except ORACLE.OracleError as why:
+        check("an empty tactical stratum is refused by name",
+              "tactical stratum" in str(why), str(why))
 
 
 def test_the_oracle_FAILS_on_a_disagreeing_engine():
@@ -373,16 +446,38 @@ def test_the_solve_is_invariant_under_the_labels_units():
     every active set once the objective was scaled up, which is a wrong answer
     dressed as a singular one.
     """
-    a = [[2.284e7, 1.0e5, 1.0e4], [1.0e5, 1.8e6, 5.0e3], [1.0e4, 5.0e3, 2.5e5]]
-    b = [3.0e7, 4.0e7, 2.0e6]
+    a = [[7.0, 2.0, 1.0], [2.0, 9.0, 3.0], [1.0, 3.0, 11.0]]
+    b = [40.0, 300.0, 700.0]
     cons = FIT.schema_constraints(3, 300)
     base, _ = FIT.constrained_min(a, b, cons)
-    for factor in (1e3, 1e4, 1e6):
-        scaled, _ = FIT.constrained_min([[x * factor for x in row] for row in a],
-                                        [x * factor for x in b], cons)
-        check(f"scaling the objective by {factor:.0e} leaves the minimiser alone",
+    # BOTH A AND b, because that is the only scaling that leaves the minimiser
+    # where it was: scaling either alone is a different problem with a different
+    # answer, and testing it would pin nothing.
+    #
+    # 1e9 IS THE POINT OF THE TEST. An absolute pivot threshold survives 1e3
+    # through 1e6 and REFUSES a feasible problem at 1e9, so a test that stopped
+    # below it passed on the routine it was written to convict.
+    for factor in (1e3, 1e6, 1e9):
+        try:
+            scaled, _ = FIT.constrained_min([[x * factor for x in row] for row in a],
+                                            [x * factor for x in b], cons)
+        except FIT.FitError as why:
+            check(f"scaling A and b together by {factor:.0e} leaves the minimiser alone",
+                  False, f"refused a feasible problem: {why}")
+            continue
+        check(f"scaling A and b together by {factor:.0e} leaves the minimiser alone",
               all(abs(scaled[i] - base[i]) < 1e-6 * max(1.0, abs(base[i]))
                   for i in range(3)), (base, scaled))
+    # AND THE LIMIT IS STATED RATHER THAN IMPLIED: at 1e12 the constraint rows
+    # are cancelled away in double precision and the routine REFUSES. That is a
+    # loud refusal, not a wrong answer, and it is what the claim is scoped to.
+    try:
+        FIT.constrained_min([[x * 1e12 for x in row] for row in a],
+                            [x * 1e12 for x in b], cons)
+        check("the invariance has a measured upper limit", False, "1e12 did not refuse")
+    except FIT.FitError as why:
+        check("beyond the measured range the routine REFUSES rather than answering",
+              "no feasible point" in str(why), str(why))
 
 
 def test_a_ONE_SIDED_regressor_is_refused_and_a_rank_test_would_not_see_it():
@@ -451,6 +546,85 @@ def test_the_tempo_term_is_fitted_so_it_is_not_absorbed_into_the_weights():
               any(abs(plain[k] - truth[k]) > 1.0 for k in range(3)), plain)
 
 
+CORPUS_HEADER = "# param label_go go nodes 400000\n"
+
+
+def _corpus_record(game, turns, moves, key_full, to_move, kind, value):
+    """One record in `labels_file.rs`'s column order, which is what extract reads."""
+    return "\t".join([
+        str(game), str(turns), moves, "-", "kp", key_full, to_move, kind, str(value),
+        "-", "4", "400384", "0", "yes", "p1_win", "normal",
+    ]) + "\n"
+
+
+def _scratch_corpus(root):
+    """A two-tranche corpus and the manifest that indexes it."""
+    rows = [
+        _corpus_record(0, 1, "0,0", "0,0:p1", "p2", "eval", 300),
+        _corpus_record(0, 2, "0,0 1,0/2,0", "0,0:p1 1,0:p2 2,0:p2", "p1", "mate_in", 5),
+        _corpus_record(0, 3, "0,0 1,0/2,0 0,1/0,2", "K3", "p2", "eval", -120),
+    ]
+    for index in (1, 2):
+        path = pathlib.Path(root) / f"tranche-{index}"
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "corpus.txt").write_text(CORPUS_HEADER + "".join(rows))
+    manifest = pathlib.Path(root) / "manifest.txt"
+    lines = ["# scratch manifest\n"]
+    for index in (1, 2):
+        for record, key in ((1, "0,0:p1"), (2, "0,0:p1 1,0:p2 2,0:p2"), (3, "K3")):
+            lines.append(f"{index}\t{record}\t-\tkp\t{key}\t4\tp1_win\tnormal\n")
+    manifest.write_text("".join(lines))
+    return str(manifest), str(pathlib.Path(root) / "tranche-{}" / "corpus.txt")
+
+
+def test_extract_is_driven_and_keeps_what_the_design_says_it_keeps():
+    """`extract.py` writes the row file every other number here rests on, and
+    nothing drove it. Its two load-bearing properties are the per-row join check
+    and that mate rows are KEPT -- design section 4, stage 2."""
+    import extract as EX
+    with tempfile.TemporaryDirectory() as tmp:
+        manifest, tranche = _scratch_corpus(tmp)
+        out = f"{tmp}/rows.txt"
+        written = EX.main(out, manifest, tranche)
+        check("extract writes one row per manifest entry", written == 6, written)
+        body = [l.rstrip("\n").split("\t") for l in open(out) if not l.startswith("#")]
+        kinds = [r[14] for r in body]
+        check("MATE ROWS ARE KEPT, which is the property the design registers",
+              kinds.count("mate_in") == 2, kinds)
+        check("and the score kinds come from the corpus, not from a default",
+              set(kinds) == {"eval", "mate_in"}, set(kinds))
+        one_stone = [r for r in body if r[12] == "300"][0]
+        check("a lone stone's own-side one-window count reaches the row file",
+              one_stone[0] == "18", one_stone[:6])
+        # THE WHOLE COLUMN MAP, not the columns that happen to be looked at:
+        # extract reads the corpus by INDEX, so an off-by-one anywhere in that
+        # map writes a well-formed row carrying another column's value.
+        check("every non-feature column is the corpus's own",
+              one_stone[13:18] == ["p2", "eval", "4", "yes", "p1_win"], one_stone[13:18])
+        check("and the key column is a digest of key_full, not key_full",
+              len(one_stone[18]) == 64 and all(c in "0123456789abcdef" for c in one_stone[18]),
+              one_stone[18])
+        check("the header names every corpus digest it read",
+              sum(1 for l in open(out) if l.startswith("# corpus ")) == 2)
+
+
+def test_extract_REFUSES_a_join_that_addresses_the_wrong_record():
+    """The mutant that must die: a join to the wrong record produces well-formed
+    rows whose features belong to another position, and nothing downstream could
+    tell."""
+    import extract as EX
+    with tempfile.TemporaryDirectory() as tmp:
+        manifest, tranche = _scratch_corpus(tmp)
+        text = pathlib.Path(manifest).read_text().replace("\tK3\t", "\tNOT-THE-KEY\t", 1)
+        pathlib.Path(manifest).write_text(text)
+        try:
+            EX.main(f"{tmp}/rows.txt", manifest, tranche)
+            check("a mismatched key_full is refused", False, "no exception raised")
+        except SystemExit as why:
+            check("a mismatched key_full is refused by name",
+                  "key_full" in str(why) and "manifest says" in str(why), str(why))
+
+
 def test_shipped_script_runs():
     """Drive fit.py as a program, the way a run does."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -460,7 +634,7 @@ def test_shipped_script_runs():
                               capture_output=True, text=True)
         check("fit.py exits 0", done.returncode == 0, done.stderr[-300:])
         check("fit.py reports the population of every filter clause",
-              "dropped: score_kind" in done.stdout and "forced_win" in done.stdout,
+              "dropped: score_kind" in done.stdout and "one_sided_window" in done.stdout,
               done.stdout[-400:])
         check("fit.py reports whether a gap constraint binds",
               "BINDING" in done.stdout, done.stdout[-300:])
@@ -489,7 +663,11 @@ for test in (test_one_stone_features, test_turn_structure,
              test_the_solve_is_invariant_under_the_labels_units,
              test_a_ONE_SIDED_regressor_is_refused_and_a_rank_test_would_not_see_it,
              test_the_tempo_term_is_fitted_so_it_is_not_absorbed_into_the_weights,
+             test_extract_is_driven_and_keeps_what_the_design_says_it_keeps,
+             test_extract_REFUSES_a_join_that_addresses_the_wrong_record,
              test_the_oracle_drives_the_engine_and_agrees,
+             test_the_sample_takes_the_WHOLE_tactical_stratum_whatever_the_stride,
+             test_the_oracle_REFUSES_a_sample_that_misses_the_registered_rule,
              test_the_oracle_FAILS_on_a_disagreeing_engine,
              test_shipped_script_runs):
     print(test.__name__)

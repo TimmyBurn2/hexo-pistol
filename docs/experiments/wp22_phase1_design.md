@@ -1,5 +1,25 @@
 # WP-2.2 Phase 1 — the quiet-term fit of eval v0: design and run registration, revision 3.
 
+> **STOPPED, AND NOT PATCHED INTO LOOKING PASSED.** This revision FAILED its
+> fresh REVIEW-design with five MAJOR (`wp22_phase1_design_rev3_REVIEW.md`), and
+> the option matrix that supplies its §4 selection FAILED the third and last
+> round of its grant. **The registered SPRT in §9 may not launch**, and no
+> revision 4 is written here: the loop grant forbids a self-granted round, and
+> the corrections below are recorded in the append-only log rather than folded
+> into the text that failed.
+>
+> - **§9's bounds cannot return §9's own registered outcome.** At `elo0 0` /
+>   `elo1 10` the test needs **3 554 pairs** in expectation and §9 caps it at
+>   400; `h0` has probability at most 0.001 at every effect simulated (**D-628**).
+> - **§2's "no sign variation anywhere in the corpus" is false for `g4`** by
+>   1 593 rows, all of them `mate_in` rows clause 1 removes. The two tactical
+>   entries are pinned for two different reasons (**D-629**).
+> - **§3's retired "forced win" ground had survived in the instrument**, its
+>   printed receipt and its tests; that is corrected in the code at this
+>   revision, and the predicate is now named for what it tests.
+> - What is owed, what stands, and what the operator decides: **D-630** and
+>   `wp22_phase1_STOP.md`.
+
 Governing revision: the commit that carries this file. **The four instruments §4
 and §5 name do not exist before it** — they land in it, which is what
 `docs/process.md`'s *Instrument governing revision* asks for and what revision 2

@@ -2,10 +2,13 @@
 
 Operator ruling R6 (docs/decisions.md D-622) splits the table: `w4` and `w5`
 name classes the search resolves inside its own window and are NOT fitted from
-search labels, and the quiet entries are fitted on rows where neither side holds
-an in-window forced win. On those rows the tactical regressors are identically
-zero, so the fit is a three-parameter linear one with a closed form: no seed, no
-learning rate and no stopping rule enters the answer.
+search labels, and the quiet entries are fitted on the rows where neither
+tactical regressor is non-zero. D-626 measured that this predicate removes
+nothing FORCED -- every dropped row's threats die to the two stones the turn
+provides -- and kept it on the ground that does hold: both tactical regressors
+take ONE SIGN, so neither can report what such a window is worth to its owner.
+On the kept rows they are identically zero, so the fit is a three-parameter
+linear one with a closed form: no seed, no learning rate, no stopping rule.
 
 The constraint set is handled by EXACT active-set enumeration with the bounds as
 members. A projection onto the set is not the constrained optimum — a projected
@@ -38,10 +41,16 @@ def read_rows(path):
     """Rows as `extract.py` writes them: per-side counts, every score_kind."""
     rows = []
     with open(path) as handle:
-        for line in handle:
+        for number, line in enumerate(handle, start=1):
             if line.startswith("#"):
                 continue
             w = line.rstrip("\n").split("\t")
+            if w[13] not in ("p1", "p2"):
+                raise FitError(
+                    f"fit: {path} line {number} has to_move {w[13]!r}; the only tokens "
+                    "the corpus schema defines are p1 and p2, and reading anything else "
+                    "as p2 silently negates the row's features"
+                )
             rows.append({
                 "a": [0] + [int(x) for x in w[0:6]],
                 "b": [0] + [int(x) for x in w[6:12]],
@@ -58,12 +67,15 @@ def read_rows(path):
     return rows
 
 
-def holds_forced_win(row):
+def has_one_sided_tactical_window(row):
     """Either side holds a live window of four or more (design §3 clause 2).
 
-    A four-window has two empty cells and a turn places TWO stones (game rule
-    3), so its owner completes it in one turn; a five-window completes in one
-    stone. Both are decided by the search before any eval is consulted.
+    NOT "holds a forced win", which is what this was called and is measurably
+    false of it: D-626 found the mover owns such a window in 0 of the 29 401
+    rows this drops, and that every one of them dies to the two stones the turn
+    provides. What it removes is the rows on which `g4` or `g5` is non-zero --
+    regressors that take one sign across the whole corpus and so could only ever
+    be fitted backwards.
     """
     return any(row["a"][k] or row["b"][k] for k in (4, 5, 6))
 
@@ -73,8 +85,8 @@ def select(rows):
     counts = {"all": len(rows)}
     kept = [r for r in rows if r["kind"] == "eval"]
     counts["dropped_score_kind"] = len(rows) - len(kept)
-    quiet = [r for r in kept if not holds_forced_win(r)]
-    counts["dropped_forced_win"] = len(kept) - len(quiet)
+    quiet = [r for r in kept if not has_one_sided_tactical_window(r)]
+    counts["dropped_one_sided_window"] = len(kept) - len(quiet)
     fitted = [r for r in quiet if abs(r["label"]) < EVAL_MAX]
     counts["dropped_saturated_label"] = len(quiet) - len(fitted)
     counts["fitted"] = len(fitted)
@@ -141,15 +153,25 @@ def solve(m, rhs):
     """
     n = len(rhs)
     aug = [list(row) + [rhs[i]] for i, row in enumerate(m)]
-    scale = [max((abs(x) for x in row[:n]), default=0.0) for row in aug]
-    if any(s == 0.0 for s in scale):
-        return None
+    # ROW EQUILIBRATION FIRST, and it is what makes the pivot test invariant.
+    # Scaling a row of [M | rhs] by a constant cannot move the solution, so
+    # dividing each row by its own largest coefficient is free -- and after it
+    # every row is O(1), so a plain relative pivot test means the same thing on
+    # a system whose blocks originally differed by seven orders of magnitude.
+    # Carrying a scale vector computed ONCE does not work: elimination cancels
+    # the constraint rows against the normal rows and the vector goes stale,
+    # which made an earlier version refuse feasible problems at large scales.
+    for row in aug:
+        largest = max((abs(x) for x in row[:n]), default=0.0)
+        if largest == 0.0:
+            return None
+        for index in range(n + 1):
+            row[index] /= largest
     for col in range(n):
-        pivot = max(range(col, n), key=lambda r: abs(aug[r][col]) / scale[r])
-        if abs(aug[pivot][col]) / scale[pivot] < 1e-12:
+        pivot = max(range(col, n), key=lambda r: abs(aug[r][col]))
+        if abs(aug[pivot][col]) < 1e-12:
             return None
         aug[col], aug[pivot] = aug[pivot], aug[col]
-        scale[col], scale[pivot] = scale[pivot], scale[col]
         for r in range(n):
             if r == col:
                 continue
@@ -243,12 +265,21 @@ def round_to_schema(w, ceiling):
             f"fit: the real-valued answer {['%.4f' % x for x in w]} is not schema-feasible; "
             "rounding an infeasible point is the projection this module exists without"
         )
-    # NO CLAMP AND NO GUARD AGAINST ONE. Rounding to nearest is monotone and
-    # carries a gap of at least one across, so a feasible real answer rounds to a
-    # feasible integer one and the clamp `max(floor, ...)` this used to apply
-    # could never have fired. A guard that cannot fire is the defect the ceiling
-    # guard below is kept honest about, and the test pins the property instead.
+    # THE OUTPUT IS CHECKED, because the theorem that made this unnecessary is
+    # FALSE. Python rounds half to EVEN, so a feasible pair exactly one apart on
+    # a half-integer -- 1.5 and 2.5 -- rounds to 2 and 2 and comes out flat where
+    # the schema needs a strict increase. An earlier revision asserted the
+    # opposite in a design document and pinned it with a draw that could not
+    # produce a .5 tie: a guard that cannot fire standing in for a property that
+    # does not hold.
     out = [int(round(value)) for value in w]
+    for index in range(len(out) - 1):
+        if out[index + 1] <= out[index]:
+            raise FitError(
+                f"fit: the feasible answer {['%.4f' % x for x in w]} rounds to {out}, "
+                f"flat at entries {index + 1} and {index + 2}; rounding to nearest is "
+                "half-to-even and does not preserve a unit gap"
+            )
     if out[-1] >= ceiling:
         raise FitError(
             f"fit: rounded table {out} reaches the pinned ceiling {ceiling}; "
@@ -382,7 +413,7 @@ def main(rows_path):
 
     print(f"filter: rows {counts['all']} -> fitted {counts['fitted']}"
           f"  dropped: score_kind {counts['dropped_score_kind']}"
-          f"  forced_win {counts['dropped_forced_win']}"
+          f"  one_sided_window {counts['dropped_one_sided_window']}"
           f"  saturated_label {counts['dropped_saturated_label']}")
     print(f"fit: train {len(train)} val {len(val)}")
     print(f"fit: no-intercept free-scale solve {['%.4f' % x for x in answer['no_intercept']]}"

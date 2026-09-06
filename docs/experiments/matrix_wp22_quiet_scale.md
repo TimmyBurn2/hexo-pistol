@@ -202,8 +202,12 @@ uninformative.
 
 ## §7 Instruments, receipts, and what is ESTIMATED
 
-- `tools/texel/{features,extract,fit,verify_against_engine,test_texel}.py` **at
-  this document's own commit**, which carries them. Round 2's M-1 found revision
+- `tools/texel/features.py`, `tools/texel/extract.py`, `tools/texel/fit.py`,
+  `tools/texel/verify_against_engine.py` and `tools/texel/test_texel.py` **at
+  this document's own commit**, which carries them. Written out rather than
+  brace-expanded: the citation gate does not recognise `{a,b}.py` as a path, so
+  the brace form put this document on the GOVERNING list with **zero citations
+  checked** — an addition that looked like coverage and was inert. Round 2's M-1 found revision
   2 claiming this of a commit that did not exist; it is true of this one.
 - **The play-change probe's exact command and draw** (round 2's M-5), which
   revision 2 recorded as an output only:

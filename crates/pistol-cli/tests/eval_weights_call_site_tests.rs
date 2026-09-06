@@ -101,20 +101,52 @@ fn one_perturbed_table_entry_changes_search_output() {
     assert_ne!(answers_with(&base), answers_with(&perturbed));
 }
 
-/// The table this phase's fit produced, driven at the call site: it is a legal
-/// document and it CHANGES PLAY, which is what makes an SPRT against it a
-/// measurement rather than a self-match.
+/// The two documents the registered SPRT's seats actually name, read from the
+/// tree rather than rebuilt as literals.
+///
+/// REBUILDING THEM IS WHAT THIS REPLACES. A previous revision constructed both
+/// tables in code, so editing the shipped candidate to the committed table left
+/// this test — and `config_check`, and the offline suite, and the citation gate —
+/// all green while the SPRT it registers became a self-match. The seats are
+/// pinned by the DOCUMENTS, so the documents are what is read.
+const COMMITTED_DOCUMENT: &str = "configs/eval_v0_weights.toml";
+const CANDIDATE_DOCUMENT: &str = "configs/eval_v0_quiet_fit_weights.toml";
+
+/// The `[table]` entries of a committed weights document, as written.
+fn stated_table(relative: &str) -> Vec<String> {
+    let path = common::repo(relative);
+    let text = std::fs::read_to_string(&path)
+        .unwrap_or_else(|error| panic!("cannot read {}: {error}", path.display()));
+    text.lines()
+        .map(str::trim)
+        .filter(|line| line.starts_with(|c: char| c.is_ascii_digit()))
+        .map(str::to_string)
+        .collect()
+}
+
 #[test]
-fn the_quiet_fit_table_is_loadable_and_changes_the_search() {
-    let committed_weights = scratch_file(
-        "weights-committed",
-        "eval_v0_weights.toml",
-        &weights_document([2, 12, 60, 300, 1500], ""),
+fn the_committed_candidate_differs_from_the_committed_table_and_changes_the_search() {
+    let committed = stated_table(COMMITTED_DOCUMENT);
+    let candidate = stated_table(CANDIDATE_DOCUMENT);
+    assert_eq!(
+        committed.len(),
+        5,
+        "the schema states five entries: {committed:?}"
     );
-    let fitted = scratch_file(
-        "weights-quiet-fit",
-        "eval_v0_weights.toml",
-        &weights_document([5, 34, 60, 300, 1500], ""),
+    assert_eq!(
+        candidate.len(),
+        5,
+        "the schema states five entries: {candidate:?}"
     );
-    assert_ne!(answers_with(&committed_weights), answers_with(&fitted));
+    assert_ne!(
+        committed, candidate,
+        "the SPRT's two seats would evaluate with the same table, which is a \
+         self-match: no likelihood ratio is defined and the verdict says nothing"
+    );
+    assert_ne!(
+        answers_with(&common::repo(COMMITTED_DOCUMENT)),
+        answers_with(&common::repo(CANDIDATE_DOCUMENT)),
+        "the two committed documents choose the same moves, so an SPRT between \
+         them would measure nothing"
+    );
 }
