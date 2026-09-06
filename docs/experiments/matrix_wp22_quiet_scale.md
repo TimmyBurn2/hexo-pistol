@@ -224,7 +224,7 @@ comparison holds the un-evidenced rates fixed, and only T holds both.
 - **`tools/texel/options.py` prints §4's table in full**, is driven by
   `test_texel.py`, and reports a pin whose answer the schema cannot hold as
   `INFEASIBLE` rather than crashing. Its output is
-  `artifacts/wp22_phase1_quiet/OPTIONS.txt`, sha256 `b33ce0ec1a790201…`.
+  `artifacts/wp22_phase1_quiet/OPTIONS.txt`, sha256 `32d815924de2897e…`.
 - **The play-change figures** are
   `artifacts/wp22_phase1_quiet/PLAYCHANGE_intercept.txt`, sha256
   `89de3b17afa959ed…`, produced by

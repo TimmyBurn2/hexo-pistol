@@ -247,12 +247,13 @@ def constrained_min(a, b, constraints, tol=1e-7):
 def round_to_schema(w, ceiling):
     """Integers the document can hold, REFUSING rather than clamping.
 
-    THE INPUT IS CHECKED, NOT THE OUTPUT. An infeasible real-valued answer is
-    refused here rather than rounded into feasibility, which is the projection
-    this module exists without; and a feasible one cannot round out of the schema,
-    so there is no clamp and no guard pretending to catch one. The remaining
-    refusal is the ceiling, which on the registered path sits far above the quiet
-    entries and is kept for a caller that pins a smaller one.
+    BOTH THE INPUT AND THE OUTPUT ARE CHECKED. An infeasible real-valued answer
+    is refused rather than rounded into feasibility, which is the projection this
+    module exists without. And a feasible one CAN round out of the schema —
+    Python rounds half to even, so 1.5 and 2.5 both become 2 — which an earlier
+    revision asserted was impossible; the output loop below is the guard for it.
+    The third refusal is the ceiling, which on the registered path sits far above
+    the quiet entries and is kept for a caller that pins a smaller one.
     """
     if w[0] < 1.0 - 1e-9 or any(w[k + 1] < w[k] + 1 - 1e-9 for k in range(len(w) - 1)):
         raise FitError(
