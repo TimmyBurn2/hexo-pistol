@@ -259,6 +259,77 @@ def test_constrained_fit_respects_the_schema():
               FIT.objective(a, b, w) >= FIT.objective(a, b, exact) - 1e-6)
 
 
+def _schema_triples(bound):
+    """Every quiet triple the schema admits with entries at most `bound`."""
+    return [(w1, w2, w3)
+            for w1 in range(1, bound + 1)
+            for w2 in range(w1 + 1, bound + 1)
+            for w3 in range(w2 + 1, bound + 1)]
+
+
+def _solved_under(constraints, top, total):
+    """`fit()`'s own composition at `fit.py:394-397`, on a stated quadratic.
+
+    The quadratic is the identity with a zero right-hand side, so its
+    unconstrained minimiser is `w1 = 0` — below every lower bound the schema can
+    state, which is what puts the answer ON the binding constraint and makes the
+    missing relation decide the outcome. Rows would do the same job only where
+    the corpus happens to want a low `w1`; a stated system wants it at every pin.
+    """
+    answer, _ = FIT.constrained_min([[1.0, 0.0], [0.0, 1.0]], [0.0, 0.0], constraints)
+    quiet = [answer[0], total - top - answer[0], top]
+    return FIT.round_to_schema(quiet, 300)
+
+
+def test_the_constraint_set_IS_the_schema_and_the_third_relation_is_what_binds():
+    """`tempo_constraints` omitted `w3 >= w2 + 1`, so `round_to_schema`'s INPUT
+    refusal was the only thing between the solve and an infeasible answer —
+    docs/decisions.md D-658, and feasibility does not live in a refusal.
+
+    THE NEGATIVE CONTROL IS THE OLD CONSTRAINT SET, built here rather than
+    described: over the 1140 triples with entries at most 20, the two-constraint
+    set reaches `fit.py:255` on exactly the 525 whose third relation can bind,
+    and the shipped three-constraint set reaches it on none. 525 is not a
+    transcribed number — it is `w1 + w2 > w3` counted independently below, which
+    is the condition for the missing bound to exceed the bound that was there.
+    """
+    triples = _schema_triples(20)
+    check("the enumeration is the schema's own", len(triples) == 1140, len(triples))
+    can_bind = [t for t in triples if t[0] + t[1] > t[2]]
+    check("and the third relation can bind on a stated fraction of it",
+          len(can_bind) == 525, len(can_bind))
+
+    refused_old, refused_new = [], []
+    for w1, w2, w3 in triples:
+        top, total = float(w3), float(w1 + w2 + w3)
+        two = [([1.0, 0.0], 1.0), ([-2.0, 0.0], 1.0 - (total - top))]
+        for constraints, sink in ((two, refused_old),
+                                  (FIT.tempo_constraints(top, total), refused_new)):
+            try:
+                _solved_under(constraints, top, total)
+            except FIT.FitError as why:
+                if "not schema-feasible" in str(why):
+                    sink.append((w1, w2, w3))
+    check("the two-constraint set reaches the refusal, or this proves nothing",
+          sorted(refused_old) == sorted(can_bind),
+          (len(refused_old), len(can_bind)))
+    check("and the shipped constraint set reaches it on none of them",
+          refused_new == [], refused_new[:5])
+
+
+def test_the_third_relation_cannot_bind_at_the_REGISTERED_pins():
+    """Which is why the registered fit is unaffected and the fix is not a
+    correction to any number this project has published."""
+    committed = FIT.committed_table()
+    top = float(committed[FIT.QUIET_COUNTS - 1])
+    total = float(sum(committed[:FIT.QUIET_COUNTS]))
+    constraints = FIT.tempo_constraints(top, total)
+    check("the schema is three relations", len(constraints) == 3, constraints)
+    third = constraints[2][1]
+    check("and at the registered pins the third one bounds w1 below 1, so the "
+          "first relation dominates it", third < 1.0, (top, total, third))
+
+
 def test_a_BOUND_is_an_active_set_member_and_not_a_clamp():
     """The design review's M-4 reproducer, pinned.
 
@@ -921,6 +992,8 @@ for test in (test_one_stone_features, test_turn_structure,
              test_an_empty_filtered_population_is_refused_not_defaulted,
              test_fit_recovers_known_quiet_weights,
              test_constrained_fit_respects_the_schema,
+             test_the_constraint_set_IS_the_schema_and_the_third_relation_is_what_binds,
+             test_the_third_relation_cannot_bind_at_the_REGISTERED_pins,
              test_a_BOUND_is_an_active_set_member_and_not_a_clamp,
              test_rounding_refuses_at_BOTH_ends_and_the_floor_is_the_one_that_fires,
              test_the_active_set_enumeration_agrees_with_a_brute_force_grid,

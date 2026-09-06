@@ -374,10 +374,20 @@ def tempo_normal_equations(rows, top, total):
 def tempo_constraints(top, total):
     """The schema, on the one free weight `w1`, with `w2 = total - top - w1`.
 
-    `w1 >= 1` and `w2 >= w1 + 1`, the latter being `total - top - 2*w1 >= 1`.
+    ALL THREE RELATIONS. `w1 >= 1`; `w2 >= w1 + 1`, which is
+    `total - top - 2*w1 >= 1`; and `w3 >= w2 + 1`, which is
+    `w1 >= total - 2*top + 1`. The third was omitted, and then
+    `round_to_schema`'s input refusal was the only thing standing between the
+    solve and an infeasible answer -- feasibility does not live in a downstream
+    refusal (docs/decisions.md D-658). It cannot bind at the registered pins
+    (`top = 60`, `total = 74` put its bound at -45) and it binds at others.
+
+    Two rows share the normal `[1, 0]`, so an active set holding both is
+    singular; `constrained_min` counts that skip rather than swallowing it.
     """
     return [([1.0, 0.0], 1.0),
-            ([-2.0, 0.0], 1.0 - (float(total) - float(top)))]
+            ([-2.0, 0.0], 1.0 - (float(total) - float(top))),
+            ([1.0, 0.0], float(total) - 2.0 * float(top) + 1.0)]
 
 
 def fit(rows, committed):
