@@ -697,7 +697,7 @@ fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary
     );
     let stdout = out(&ran);
     assert!(
-        stdout.contains("solver_link_check: 10 shipped binaries,"),
+        stdout.contains("solver_link_check: 11 shipped binaries,"),
         // The count is RE-DERIVED at every merge that adds a binary, never
         // carried from either side: six became seven twice over on two open
         // branches (this WP's `solver-cost`, the corpus work's own additions)
@@ -705,8 +705,13 @@ fn the_solver_hit_set_is_exactly_its_own_src_files_reaching_every_shipped_binary
         // a false one — which is what this gate exists to refuse. Nine became
         // TEN when the corpus loader landed (`corpus-check`, autodiscovered
         // from `crates/pistol-arena/src/bin/`), and it reaches the solver by
-        // the same route every other binary does.
-        "this workspace ships ten binaries, machine-invariant across a run: {stdout}"
+        // the same route every other binary does. TEN became ELEVEN with
+        // `build-book-v3`, which moved from `examples/` to `src/bin/` because a
+        // test that reached into `examples/` was green under `cargo test` and
+        // red under `cargo test --test <name>` (docs/decisions.md D-648) — and
+        // this gate is what made that crate-map amendment announce itself
+        // instead of arriving as a silent eleventh binary.
+        "this workspace ships eleven binaries, machine-invariant across a run: {stdout}"
     );
 
     // The externally derived referent: the crate's own `src/` tree,
