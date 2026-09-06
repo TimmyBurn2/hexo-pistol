@@ -180,9 +180,14 @@ Singular active sets are COUNTED and reported rather than swallowed.
 A cheap one passes vacuously wherever the optimum is interior, which is where
 this runs, and reads as verification that did not happen. `test_texel.py` checks
 the enumeration against a **brute-force grid** instead, which is an oracle rather
-than a restatement. For the same reason there is no guard against a rounding
-clamp: rounding a feasible answer cannot break the schema's increase, so a guard
-for it could never fire, and a test pins that property over two thousand draws.
+than a restatement. **The rounding guard, by contrast, EXISTS, and the theorem
+that said it could not fire is FALSE.** Python rounds half to EVEN, so a feasible
+pair one apart on a half-integer rounds to the same integer twice — `[1.5, 2.5]`
+both become 2. `round_to_schema` checks its output, and `test_texel.py` draws in
+half-integer steps so the tie is reachable and asserts the guard fires. An
+earlier revision asserted the opposite in this paragraph and pinned it with a
+draw that could not produce a tie; it is the one finding of D-630's four that
+survived three fix rounds in this document.
 
 **The split is content-derived**: train and validation are separated by the last
 hex digit of the position's `key_full` digest, a **1-in-8** validation slice. No
