@@ -747,10 +747,12 @@ def _corpus_record(game, turns, moves, key_full, to_move, kind, value):
 
 def _scratch_corpus(root):
     """A two-tranche corpus and the manifest that indexes it."""
+    # TWO GAMES, so the emitted key is not constant and a per-tranche index is
+    # visibly not a corpus-wide one: both tranches carry a game 0 and a game 1.
     rows = [
         _corpus_record(0, 1, "0,0", "0,0:p1", "p2", "eval", 300),
         _corpus_record(0, 2, "0,0 1,0/2,0", "0,0:p1 1,0:p2 2,0:p2", "p1", "mate_in", 5),
-        _corpus_record(0, 3, "0,0 1,0/2,0 0,1/0,2", "K3", "p2", "eval", -120),
+        _corpus_record(1, 1, "0,0 1,0/2,0 0,1/0,2", "K3", "p2", "eval", -120),
     ]
     for index in (1, 2):
         path = pathlib.Path(root) / f"tranche-{index}"
@@ -794,6 +796,19 @@ def test_extract_is_driven_and_keeps_what_the_design_says_it_keeps():
               one_stone[18])
         check("the header names every corpus digest it read",
               sum(1 for l in open(out) if l.startswith("# corpus ")) == 2)
+        # THE GROUPING KEY, and it carries the tranche because the corpus
+        # restarts its game index at 0 in every one of them (D-659).
+        keys = [r[19] for r in body]
+        check("every row carries a game key",
+              sorted(set(keys)) == ["1:0", "1:1", "2:0", "2:1"], sorted(set(keys)))
+        check("and the two tranches' game 0 are DIFFERENT groups, which a bare "
+              "index could not say",
+              keys.count("1:0") == 2 and keys.count("2:0") == 2, keys)
+        check("the header names the new column and its spelling",
+              any("tab game" in l for l in open(out))
+              and any("<corpus_index>:<game_index>" in l for l in open(out)))
+        check("and read_rows still reads what extract writes",
+              len(FIT.read_rows(out)) == 6, out)
 
 
 def test_extract_REFUSES_a_join_that_addresses_the_wrong_record():
@@ -973,6 +988,57 @@ def test_the_interior_claim_is_CHECKED_per_row_and_can_answer_no():
               done.stdout[-300:])
 
 
+def test_extract_REFUSES_a_game_column_that_is_not_the_game_index():
+    """The manifest cannot cover `game` — its columns are corpus_index,
+    record_number, key_seq, key_pos, key_full, depth_turns, result, end — so the
+    join check says nothing about which FIELD was read.
+
+    The referent that does is the corpus's own emission order: records come game
+    by game, so `game` never decreases as record numbers rise. `turns_played` is
+    the adjacent field and the likeliest misread, and it restarts at every game,
+    which is the shape this reproduces.
+    """
+    import extract as EX
+    with tempfile.TemporaryDirectory() as tmp:
+        manifest, tranche = _scratch_corpus(tmp)
+        # THE MISREAD, BUILT: every record's game field is set to its own
+        # `turns_played`. The fixture's three records are (game 0, turns 1),
+        # (game 0, turns 2) and (game 1, turns 1), so the column then reads
+        # 1, 2, 1 — which is what reading one column to the right produces.
+        path = pathlib.Path(tmp) / "tranche-1" / "corpus.txt"
+        out = []
+        for line in path.read_text().splitlines(keepends=True):
+            if line.startswith("#"):
+                out.append(line)
+                continue
+            fields = line.rstrip("\n").split("\t")
+            fields[0] = fields[1]
+            out.append("\t".join(fields) + "\n")
+        path.write_text("".join(out))
+        try:
+            EX.main(f"{tmp}/rows.txt", manifest, tranche)
+            check("a decreasing game index is refused", False, "no exception raised")
+        except SystemExit as why:
+            check("a decreasing game index is refused by name",
+                  "game" in str(why) and "below the previous record" in str(why), str(why))
+
+
+def test_extract_REFUSES_a_game_column_that_is_not_a_number():
+    """Hard rule 3: a `game` field the record grammar cannot have is a named
+    refusal, not a `ValueError` from `int()` and not a silent skip."""
+    import extract as EX
+    with tempfile.TemporaryDirectory() as tmp:
+        manifest, tranche = _scratch_corpus(tmp)
+        path = pathlib.Path(tmp) / "tranche-2" / "corpus.txt"
+        path.write_text(path.read_text().replace("0\t1\t0,0\t", "p1_win\t1\t0,0\t", 1))
+        try:
+            EX.main(f"{tmp}/rows.txt", manifest, tranche)
+            check("a non-numeric game field is refused", False, "no exception raised")
+        except SystemExit as why:
+            check("a non-numeric game field is refused by name",
+                  "is not a game index" in str(why), str(why))
+
+
 def test_options_is_driven_and_every_pin_is_a_MINIMISER():
     """`options.py` regenerates the option matrix's own tables, so it produces
     recorded numbers and carries a test driving the shipped script.
@@ -1146,6 +1212,8 @@ for test in (test_one_stone_features, test_turn_structure,
              test_the_tempo_term_is_fitted_so_it_is_not_absorbed_into_the_weights,
              test_extract_is_driven_and_keeps_what_the_design_says_it_keeps,
              test_extract_REFUSES_a_join_that_addresses_the_wrong_record,
+             test_extract_REFUSES_a_game_column_that_is_not_the_game_index,
+             test_extract_REFUSES_a_game_column_that_is_not_a_number,
              test_the_oracle_drives_the_engine_and_agrees,
              test_the_sample_takes_the_WHOLE_tactical_stratum_whatever_the_stride,
              test_the_oracle_REFUSES_an_unknown_to_move_token,
