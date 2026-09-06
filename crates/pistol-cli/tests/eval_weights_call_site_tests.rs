@@ -150,3 +150,27 @@ fn the_committed_candidate_differs_from_the_committed_table_and_changes_the_sear
          them would measure nothing"
     );
 }
+
+/// The SEAT PAIR, not just the two weight documents.
+///
+/// The arena loads CONFIGS, and a previous revision pinned only that the two
+/// weight documents differ — so pointing the candidate seat's `weights_file` at
+/// the committed table passed every gate and made the registered SPRT a
+/// self-match, which is the defect the design's own dry-run criterion is built
+/// to catch after the fact. This catches it before the run.
+#[test]
+fn the_two_seat_configs_resolve_to_different_weight_documents() {
+    let committed = common::committed(INSTRUMENT);
+    let candidate = common::committed("configs/instrument_quiet_fit_v0.toml");
+    assert_ne!(
+        committed.eval.weights_file, candidate.eval.weights_file,
+        "the two seats name the same weights document, so an SPRT between them \
+         would be a self-match: every pair scores alike and no likelihood ratio \
+         is defined (docs/decisions.md D-156)"
+    );
+    assert_ne!(
+        stated_table(COMMITTED_DOCUMENT),
+        stated_table(CANDIDATE_DOCUMENT),
+        "the two seats' documents state the same table"
+    );
+}

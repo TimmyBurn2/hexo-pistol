@@ -139,21 +139,18 @@ def normal_equations(rows, dim=QUIET_COUNTS):
 def solve(m, rhs):
     """Gaussian elimination with partial pivoting on a small dense system.
 
-    THE PIVOT THRESHOLD IS ABSOLUTE AND SMALL, AND THAT IS THE WHOLE MECHANISM.
-    An earlier revision carried a row EQUILIBRATION here and a comment claiming
-    it "is what makes the pivot test invariant". Measured, on the KKT systems
-    `constrained_min` actually builds, it does the opposite: dividing a normal
-    row by its own largest entry drives that row's O(1) constraint coefficients
-    down to O(1e-10), so the smallest column maximum goes from 1.0 WITHOUT
-    equilibration to 1.4e-10 WITH it. The routine tolerated label scaling only
-    because 1e-12 sits far below either. The mechanism claim was false, the code
-    implementing it was worse than nothing, and both are gone rather than
-    refined.
+    THE PIVOT THRESHOLD IS ABSOLUTE AND SMALL, AND THE EQUILIBRATION IS GONE.
+    An earlier revision carried a row equilibration here claiming it "is what
+    makes the pivot test invariant". It does the opposite: dividing a normal row
+    by its own largest entry drives that row's O(1) constraint coefficients DOWN,
+    so the tolerance came from the threshold's headroom and not from the
+    mechanism. The claim and the code are both deleted.
 
-    What is true is a MEASURED range, pinned by `test_texel.py`: the minimiser is
-    unchanged when the objective is scaled by up to 1e9, and beyond about 1e11
-    the constraint rows are cancelled away in double precision and the routine
-    REFUSES rather than answering.
+    The figures a later revision registered in place of the claim are deleted
+    too: they were taken on a synthetic system written for the probe rather than
+    on the one this routine builds, and a scale range measured on
+    `schema_constraints` says nothing about the `tempo_constraints` problem the
+    answer path solves. `test_texel.py` pins what is actually checked.
 
     Returns `None` for a singular system, which for an active set means its
     constraints are linearly dependent — a legitimate skip, counted by the

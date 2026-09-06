@@ -119,3 +119,47 @@ mechanism §2 measures to be false.
 with no ADR.
 **MAJOR 9**: the matrix cites a round-4 report that exists in no commit.
 Plus MAJOR 1, 3, 7 as recorded in D-634 and above.
+
+## Round 5 — REVIEW-impl, round 3
+
+**Eight MAJOR; 73 mutants seeded, 51 killed, 22 survived.**
+
+**MAJOR-1 — a correctness bug the fix round introduced.** The shipped oracle
+**exited 1 on the registered workload**: the fold guard added for round 2's
+MAJOR-4 required distinct keys, where the registered sample deliberately holds
+2 369 duplicates. The test written with it pinned the inversion. Recorded as
+**D-635** and fixed — the guard now compares the draw against what the predicate
+passed, and the oracle returns 41 215 positions / 0 disagreements again.
+
+**MAJOR-2** pointing the candidate seat's `weights_file` at the committed table
+passed **all seven gates**, making the registered SPRT a self-match. Fixed: a
+seat-pair assertion in the Rust suite, mutation-verified.
+
+**MAJOR-3** `tempo_constraints` omits `w3 >= w2 + 1`, so `constrained_min` does
+NOT solve over the whole schema and the implementer's "near-equivalent"
+judgement for the `round_to_schema` skip was wrong: **68 of 268 admissible
+committed triples reach the flatness refusal**, and without it `fit()` would
+print a table `weights.rs` cannot load.
+
+**MAJOR-4** the candidate's digits are pinned by nothing mechanical in three
+directions — the document (four wrong tables pass every gate), the design, and
+the matrix.
+
+**MAJOR-6** two claims added at revision 5 attribute the **superseded** dry
+run's pentanomial to the committed one. Re-measured: the selection rule's
+answers do not move (under 0.005), so no conclusion depends on it. Fixed.
+
+**MAJOR-7** the `1.4e-10` figure does not reproduce: it was measured on a
+synthetic system written for the probe, not on the one `constrained_min` builds
+(whose `max|A|` is 2.0e7, giving 4.9e-08). Deleted from both the design and
+`fit.py` rather than re-measured, with the unscoped range beside it.
+
+**MAJOR-5** (the wrong `OPTIONS.txt` digest) and **MAJOR-8** (the minimiser check
+covering three of six branches) — the first was found independently by this
+session and recorded as D-634(3); the second stands open.
+
+**FOR THE DECIDER, in the reviewer's own summary**: the arithmetic is trustworthy
+and has been reproduced at scopes it never took by three sessions of reviewers;
+what is not trustworthy is the layer of checks above it, *"which is the worst
+shape for something a second fit would inherit, because a second fit will be
+judged by exactly these checks."*

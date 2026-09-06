@@ -148,12 +148,27 @@ places SPSA/Texel in **Stage 4** while carrying this phase in **Stage 2**, and
 `configs/eval_v0_weights.toml`'s own header says *"SPSA/Texel replaces these in
 Stage 4"*. **No ADR moves it.** One of the two is wrong.
 
-**Call 4 — is `tools/texel/` trusted for Phase 2's trainer?** Three impl rounds.
-The arithmetic reproduced every time, at five independent scopes. The defence
-improved each round and was never complete: the last full mutation sweep was 44
-seeded / 23 surviving, and this revision kills the ones that changed the
-registered table. Read `wp22_phase1_impl_REVIEW.md` and
-`wp22_phase1_review_rounds_4_5.md` before building on it.
+**Call 4 — is `tools/texel/` trusted for Phase 2's trainer?** The last reviewer
+answered it precisely: **yes for the arithmetic, no for the instruments, and the
+gap between them is the risk.** Three sessions have reproduced this pipeline's
+numbers at scopes it never took — a different data path, a different window
+algorithm, exact rational arithmetic, an independent minimum-hitting-set, a
+patched engine, a from-scratch extractor reading the axes out of the Rust source
+— and **not one shipped number has ever been wrong**. `features.py` and
+`extract.py` are well defended: 13 of 13 mutants across them die.
+
+**What is not defended is the layer of checks above them.** The final sweep was
+73 seeded / 22 surviving. Two of those were correctness bugs and are fixed here:
+the oracle refused the registered workload because a guard was written from a
+finding's sentence rather than run (**D-635**), and the candidate seat could be
+pointed at the committed table with all seven gates green — a self-match.
+**Three remain open and are named, not hidden**: `tempo_constraints` omits
+`w3 >= w2 + 1` so `round_to_schema`'s refusal is load-bearing rather than
+redundant (68 of 268 committed triples reach it); the candidate's five digits are
+pinned by no mechanism in the document, the design or the matrix; and
+`options.py`'s minimiser check covers three of six branches, missing the
+recommended row's. Read `wp22_phase1_impl_REVIEW.md` and
+`wp22_phase1_review_rounds_4_5.md` before building on this.
 
 ## §7 What a successor must not rediscover
 

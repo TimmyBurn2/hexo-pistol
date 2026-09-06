@@ -149,17 +149,17 @@ every entry strictly below the decided window's value.
   The minimiser is now found by enumerating subsets of the whole constraint set,
   solving each equality-constrained KKT system exactly, and keeping the feasible
   minimiser; for a convex quadratic that is the exact optimum.
-- **The pivot threshold is absolute and small, and the scale tolerance is a
-  MEASURED RANGE rather than a mechanism.** Revision 4 carried a row
-  equilibration here and claimed it *"is what makes the pivot test invariant"*.
-  Measured on the KKT systems the routine actually builds, it does the opposite:
-  dividing a normal row by its own largest entry drives that row's O(1)
-  constraint coefficients to O(1e-10), so the smallest column maximum goes from
-  1.0 WITHOUT equilibration to 1.4e-10 WITH it. **The claim was false and the
-  code implementing it was worse than nothing; both are deleted.** What is
-  registered instead is what a test pins: the minimiser is unchanged for
-  objective scalings up to 1e9, and beyond about 1e11 the routine REFUSES rather
-  than answering.
+- **The pivot threshold is absolute and small, and the equilibration that used
+  to sit here is DELETED.** Revision 4 claimed row equilibration *"is what makes
+  the pivot test invariant"*; it does the opposite, driving the constraint
+  columns down rather than up, and the routine's scale tolerance came from the
+  threshold's headroom instead. **The two figures revision 5 registered in its
+  place are also deleted**: they were measured on a synthetic system written for
+  the probe, not on the one `constrained_min` builds, and a range measured on
+  `schema_constraints` does not describe the `tempo_constraints` problem the
+  answer path actually solves. What remains is what a test pins and nothing
+  more — the minimiser is unchanged under the scalings the test applies, and
+  beyond them the routine refuses rather than answering.
 
 **Nothing is projected and no skip is silent.** `fit.py` REFUSES by named error
 when the filtered population is empty; when a regressor takes ONE SIGN on the
@@ -318,9 +318,13 @@ with the workload is real and unmodelled.
 ### §9.2 The power, MEASURED — and why the run is not launched
 
 **Instrument**: `crates/pistol-arena/examples/sprt_power.rs`, invoked as
-`--buckets 2,3,8,7,4 --runs 20000 --seed 1` — the dry run's own pentanomial, and
-the invocation recorded because revision 4 gave none and its numbers could not be
-reproduced from the document. Receipted at
+`--buckets 2,3,8,7,4 --runs 20000 --seed 1`. **Those buckets are the SUPERSEDED
+dry run's, not the registered one's** — `dry_60.txt` ran the withdrawn
+`[5, 34, 60]`; the committed dry run at the registered candidate returns
+`3, 4, 13, 1, 3` and leans **−28.12 nelo**. Re-measured on the correct shape the
+table moves by under 0.005 and **the selection rule returns the same answers**
+(50 at 400 pairs, 8 000 for `elo1 = 10`), so no conclusion here depends on it —
+but the provenance was wrong and is recorded rather than quietly re-run. Receipted at
 `artifacts/wp22_phase1_quiet/POWER.txt`.
 
 | pairs | `elo1` | power at `truth = elo1` | alpha at `truth = 0` | inconclusive |
@@ -398,7 +402,7 @@ taken here** because the reservation is shared and the ruling is the operator's.
 - **Why the pentanomial does work, and it is already receipted**: the self-match
   of §9.1 returns `p0 0 p1 0 p2 24 p3 0 p4 0` and
   `verdict inconclusive_degenerate`; the two-table dry run returns
-  `p0 2 p1 3 p2 8 p3 7 p4 4` and `inconclusive_at_game_cap`. It discriminates
+  `p0 3 p1 4 p2 13 p3 1 p4 3` and `inconclusive_at_game_cap`. It discriminates
   perfectly and costs nothing.
 - **Result: the criterion is MET.** Receipted in
   `artifacts/wp22_phase1_quiet/DRYRUN.md`.

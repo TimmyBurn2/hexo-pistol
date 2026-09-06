@@ -454,7 +454,7 @@ def test_the_sample_takes_the_WHOLE_tactical_stratum_whatever_the_stride():
     check("the fixture really does hold a live five-window", a[5] > 0, (a, b))
     rows = [(1, f"k{i}", "-", "p1", "eval") for i in range(9)]
     rows.insert(5, (1, "kT", tactical, "p2", "eval"))     # index 5, not on the stride
-    chosen = ORACLE.sample(rows, stride=4)
+    chosen, _passing = ORACLE.sample(rows, stride=4)
     check("the tactical position is taken even though its index is off the stride",
           any(c[0] == "kT" for c in chosen), [c[0] for c in chosen])
     check("and it is marked as the tactical stratum",
@@ -466,7 +466,7 @@ def test_the_sample_takes_the_WHOLE_tactical_stratum_whatever_the_stride():
     # survive.
     shared = [(1, "same", tactical, "p2", "eval"), (1, "same", tactical, "p1", "eval")]
     check("two positions sharing a key_full are BOTH kept",
-          len(ORACLE.sample(shared, stride=1)) == 2, ORACLE.sample(shared, stride=1))
+          len(ORACLE.sample(shared, stride=1)[0]) == 2, ORACLE.sample(shared, stride=1)[0])
 
 
 def _refuses(call):
@@ -518,10 +518,17 @@ def test_the_oracle_REFUSES_a_sample_that_misses_the_registered_rule():
           _refuses(lambda: ORACLE.check_sample_rule(
               chosen, 2, ("eval", "mate_in", "mated_in"),
               {"committed": [], "clamp_high": []})) is not None)
-    check("a sample folded on key_full is refused",
+    # A FOLD IS FEWER ROWS THAN THE PREDICATE PASSED, not a draw whose keys
+    # happen to repeat: the registered sample DELIBERATELY holds duplicate keys.
+    # An earlier guard asserted the opposite and refused the real corpus.
+    check("a draw that dropped rows the predicate passed is refused",
           _refuses(lambda: ORACLE.check_sample_rule(
-              [chosen[0], chosen[0], chosen[1], chosen[2]], 2,
-              ("eval", "mate_in", "mated_in"))) is not None)
+              chosen[:2], 2, ("eval", "mate_in", "mated_in"), None, len(chosen)))
+          is not None)
+    check("and a draw that kept them all is NOT refused, duplicate keys and all",
+          ORACLE.check_sample_rule(
+              chosen + [chosen[0]], 2, ("eval", "mate_in", "mated_in"),
+              None, len(chosen) + 1)["sampled"] == len(chosen) + 1)
     flat = [(k, m, tm, s, False, n) for (k, m, tm, s, _, n) in chosen]
     try:
         ORACLE.check_sample_rule(flat, 2, ("eval", "mate_in", "mated_in"))

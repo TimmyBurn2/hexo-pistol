@@ -74,13 +74,14 @@ def sample(rows, stride=DEFAULT_STRIDE):
     the sample is over corpus RECORDS, which is the population the extractor
     walks.
     """
-    chosen = []
+    chosen, passing = [], 0
     for position, (tranche, key, moves, to_move, kind) in enumerate(rows):
         a, b = F.per_side_counts(F.stones_of(moves))
         tactical = any(a[k] or b[k] for k in (4, 5, 6))
         if tactical or position % stride == 0:
+            passing += 1
             chosen.append((key, moves, to_move, kind, tactical, tranche))
-    return chosen
+    return chosen, passing
 
 
 def coverage(chosen):
@@ -93,7 +94,7 @@ def coverage(chosen):
     }
 
 
-def check_sample_rule(chosen, tranches, kinds, tables=None):
+def check_sample_rule(chosen, tranches, kinds, tables=None, passing=None):
     """REFUSE a sample that does not meet design section 5's registered rule.
 
     Reporting the counts is not enough: the rule's two clauses -- the whole
@@ -121,11 +122,14 @@ def check_sample_rule(chosen, tranches, kinds, tables=None):
                 f"oracle: the registered rule names a table saturating the band on "
                 f"EACH side and {len(clamps)} clamp table(s) are present; dropping "
                 "one removes a saturation regime the other does not reach")
-    if len(set(c[0] for c in chosen)) != len(chosen):
+    if passing is not None and len(chosen) != passing:
         raise OracleError(
-            "oracle: the sample holds fewer distinct keys than positions, so it has "
-            "been folded on `key_full` — 2 369 corpus rows share one, and section 5 "
-            "registers that nothing is deduped by it")
+            f"oracle: {passing} position(s) satisfy the registered predicate and "
+            f"{len(chosen)} were taken, so the draw was folded. **A FOLD IS DETECTED "
+            "AGAINST THE SOURCE, NOT AGAINST THE DRAW**: 2 369 corpus rows share a "
+            "`key_full` and section 5 registers that nothing is deduped by it, so "
+            "requiring the draw's keys to be DISTINCT asserts the opposite of the "
+            "rule and refuses the registered workload — which is what it did")
     return span
 
 
@@ -156,10 +160,10 @@ def engine_values(binary, weights_path, chosen, work):
 
 
 def run(binary, stride=DEFAULT_STRIDE, rows=None, tranches=None, kinds=None):
-    chosen = sample(rows if rows is not None else corpus_rows(), stride)
+    chosen, passing = sample(rows if rows is not None else corpus_rows(), stride)
     span = coverage(chosen)
     if tranches is not None:
-        check_sample_rule(chosen, tranches, kinds, TABLES)
+        check_sample_rule(chosen, tranches, kinds, TABLES, passing)
     tactical = span["tactical"]
     print(f"oracle: draw = the whole tactical stratum plus every {stride}th position; "
           f"tranches {len(span['tranches'])}, score kinds {','.join(span['kinds'])}")
