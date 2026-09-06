@@ -487,6 +487,15 @@ regressors take one sign (D-626, scoped by D-629). Phase 2 inherits the
 split: the learned family evaluates quiet structure and the search evaluates
 tactics.
 
+**SPSA/TEXEL TUNING MOVES HERE FROM STAGE 4 (D-640).** It sat under Stage 4
+because it was once simply "after the eval exists". D-621 is why it moves: label
+fitting cannot see the tactical terms, and the split above PINS those terms
+rather than fitting them — so the only instrument left that can move a pinned
+term is one that plays games. SPSA therefore enters Phase 2's matrix as a row,
+not a Stage 4 scheduling slot. What would push it back out is its game budget:
+if SPSA needs more paired games than D-568-class books can supply, the row fails
+on affordability rather than on principle.
+
 ## Stage 3 — Forcing search
 
 Full TSS/DBS with independent-region decomposition; CTSS conservative defense;
@@ -497,13 +506,12 @@ never imported from square-board Connect6.
 Exit: decisive forcing lines of 15-30 turns in sharp positions at negligible
 node cost, SPRT-confirmed strength gain.
 
-## Stage 4 — Parallelism + tuning
+## Stage 4 — Parallelism
 
 Lazy SMP (shared TT, staggered depths), ABDADA fallback if efficiency < 0.4 at
-16 cores; SPSA/Texel tuning of eval weights and search margins; PROTOTYPE
-gauntlet per the report's verdict table (guarded/verified null-move, LMR,
-futility/razoring) — each kept only if SPRT-positive. Deterministic instrument
-mode stays single-threaded and untouched.
+16 cores; PROTOTYPE gauntlet per the report's verdict table (guarded/verified
+null-move, LMR, futility/razoring) — each kept only if SPRT-positive.
+Deterministic instrument mode stays single-threaded and untouched.
 
 **THE GAUNTLET'S LMR ROW IS ANSWERED EARLY, AND SO IS THE PREMISE UNDER IT
 (D-607, D-609).** The optimization arc ran LMR against this engine at its own
@@ -519,10 +527,10 @@ is the evaluation (D-428).
 guarded/verified null-move, futility, razoring — are all eval-margin techniques
 resting on the same evaluation, and running them here would be a fifth
 measurement of the same thing. They wait for Stage 2's eval, not for a
-scheduling slot. Lazy SMP and SPSA/Texel tuning are untouched by this and remain
-Stage 4's own work. **Every mechanism the arc built ships gated off rather than
-deleted**, so the eval that can use them arrives to find them tested and one
-config key from live.
+scheduling slot. Lazy SMP is untouched by this and remains Stage 4's own work;
+SPSA/Texel tuning is no longer Stage 4's at all (D-640). **Every mechanism the
+arc built ships gated off rather than deleted**, so the eval that can use them
+arrives to find them tested and one config key from live.
 
 ## Stage 5 — Opening book + full harness
 
