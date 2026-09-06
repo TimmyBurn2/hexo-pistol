@@ -1132,6 +1132,63 @@ def test_fit_END_TO_END_ships_the_pinned_model_and_not_the_contrast():
               answer["counts"])
 
 
+# The three committed documents D-657 and D-662 retire, as a chain: each named
+# the next, so none of them can come back alone.
+RETIRED = (
+    "configs/eval_v0_quiet_fit_weights.toml",
+    "configs/instrument_quiet_fit_v0.toml",
+    "configs/arena_wp22_phase1_quiet_dryrun.toml",
+)
+
+# Where a retired name may still stand: the ruling, and the reports that
+# adjudicated the phase. A record's citations were true when written and
+# demanding they match today's tree is demanding history be falsified
+# (docs/process.md, the citation gate's own reasoning). This file is on the list
+# because the check has to spell what it looks for.
+RETIRED_MAY_NAME = (
+    "docs/decisions.md",
+    "docs/experiments/texel_gaps_CLOSURE.md",
+    "docs/experiments/wp22_phase1_design_rev3_REVIEW.md",
+    "docs/experiments/wp22_phase1_impl_REVIEW.md",
+    "docs/research/training_pipeline_2026-09.md",
+    "tools/texel/test_texel.py",
+)
+
+
+def _tracked_naming(text):
+    """Tracked working-tree files naming `text`, by git rather than by a walk.
+
+    Not `--cached`: this is a test over the tree being edited, and the index-vs-
+    worktree distinction tools/SHELL_CHECKLIST.md item 5 is about belongs to a
+    gate adjudicating what is ABOUT to be committed. Gate 18 runs this on the
+    worktree, which is where a re-added reference appears first.
+    """
+    done = subprocess.run(["git", "grep", "-l", "-F", "--", text],
+                          capture_output=True, text=True)
+    if done.returncode not in (0, 1):
+        raise AssertionError(f"git grep failed: {done.stderr[-200:]}")
+    return sorted(line for line in done.stdout.splitlines() if line)
+
+
+def test_the_retired_candidate_chain_is_named_by_RECORDS_and_by_nothing_live():
+    """D-657 retires the Phase 1 candidate and D-662 the two configs that named
+    it. A retirement nothing defends is a retirement that comes back.
+
+    THE CONTROL IS THAT THE RULING IS FOUND: a search that matched nothing would
+    pass this test while looking for the wrong string, which is the shape
+    tools/SHELL_CHECKLIST.md item 10 asks every gate to rule out.
+    """
+    for path in RETIRED:
+        check(f"{path} is not a tracked file",
+              subprocess.run(["git", "ls-files", "--error-unmatch", "--", path],
+                             capture_output=True).returncode != 0, path)
+        naming = _tracked_naming(path)
+        check(f"the ruling still names {path}, or this search found nothing",
+              "docs/decisions.md" in naming, naming)
+        stray = [f for f in naming if f not in RETIRED_MAY_NAME]
+        check(f"and only RECORDS name {path}", stray == [], stray)
+
+
 FIT_FIXTURE = HERE / "fixtures" / "fit_rows_v1.txt"
 
 # THE PIN, and it is the whole mechanism (docs/decisions.md D-657). Re-derive it
@@ -1304,6 +1361,7 @@ for test in (test_one_stone_features, test_turn_structure,
              test_the_oracle_REFUSES_a_sample_that_misses_the_registered_rule,
              test_the_oracle_FAILS_on_a_disagreeing_engine,
              test_fit_END_TO_END_ships_the_pinned_model_and_not_the_contrast,
+             test_the_retired_candidate_chain_is_named_by_RECORDS_and_by_nothing_live,
              test_the_committed_fixture_is_what_the_stated_generator_writes,
              test_a_fitted_table_is_pinned_by_its_RECEIPT_and_not_by_its_digits,
              test_the_receipt_digest_MOVES_when_the_input_does,
