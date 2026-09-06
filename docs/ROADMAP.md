@@ -498,7 +498,7 @@ on affordability rather than on principle.
 
 ## Stage 3 — Forcing search
 
-Full TSS/DBS with independent-region decomposition; CTSS conservative defense;
+Full TSS/DBS with independent-region decomposition; conservative defence (Allis 1994 §5.3.3);
 RZOP relevance zones wired into online search for VCDT/VCST detection. Every
 threat count, zone radius, and win-density number RE-DERIVED for 3 axes —
 never imported from square-board Connect6.

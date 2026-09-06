@@ -85,7 +85,7 @@ loses") measured in the wild, and it is what Stage 1 exists to fix.
 | Sealbot idea | Verdict | Where |
 |---|---|---|
 | Top-K candidates by incremental eval delta, staged/widening rather than hard-capped | PROTOTYPE as a CandidatePolicy variant, SPRT vs radius | Stage 1, first candidate-policy experiment after r2-vs-r3 |
-| Must-block filter from window-count threat tables | BUILD — this is conservative-defense-lite, the cousin of CTSS the report already mandates | Stage 1 threat generator |
+| Must-block filter from window-count threat tables | BUILD — this is conservative-defence-lite, the cousin of the conservative defence (Allis 1994 §5.3.3) the report already mandates | Stage 1 threat generator |
 | Window-count + hot-window threat tables | BUILD — the Stage-1 threat generator's natural data structure; pistol-eval's incremental window map is already 80% of it (keep rules truth in core, threat semantics in solver/search per Hard Rule 2) | Stage 1 |
 | Unblockable-double-threat early mate | BUILD — one-step VCDT, near-free once hot windows exist | Stage 1 |
 | Threat-only quiescence with stand-pat | Already BUILD in the plan; sealbot is working evidence it holds up in this exact game | Stage 1 |

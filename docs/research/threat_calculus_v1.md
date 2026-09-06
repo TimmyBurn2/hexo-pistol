@@ -169,6 +169,8 @@ transposition handled by the phase bit).
 |---|---|---|---|
 | ADOPT-RZOP | relevance zones, order ≤3 | Wu & Lin 2010 | ZONE-R; all proofs |
 | ADOPT-DFPN | df-pn + 1+ε / Deep df-pn | Nagai 02; Pawlewicz & Lew 06; Deep df-pn 16/17 | proof engine |
+| ADOPT-VC | VCDT / VCST forcing-proof forms, cited by DOI rather than by acronym | VCDT: Wu & Lin 2010, IEEE TCIAIG 2(3):191-207, Fig. 6; Zhang, Huang, Zhang & Liu, 2018 CCDC, DOI `10.1109/ccdc.2018.8408300`. VCST: Wu, Su, Li, Zhang & Zhou, 2021 33rd CCDC, DOI `10.1109/ccdc52312.2021.9601901` | §7 PROOF-ENGINE; §4 LAW-RIPOSTE's operational analogue |
+| ADOPT-CONSERV | conservative defence: a search may reject a real win but must never accept a false one | Allis 1994 §5.3.3 — the PROPERTY, in place of the acronym "CTSS", which no paper defines (docs/decisions.md D-661) | names the source of the soundness direction §7's ZONE-R and unsoundness-perimeter paragraphs already require; adopts nothing new |
 | ADOPT-RAPFI | pattern-codebook incremental eval under α-β | arXiv:2503.13178 | Stage-2 eval template |
 | ADOPT-DBS | dependency decomposition where stars disjoint | Allis 94; Wu et al. 2014 | LAW-DECOMP application; hex independence rate unknown |
 | ADOPT-SPRT | GSPRT + pentanomial, paired openings | Fishtest practice | all strength claims (arena already implements) |
