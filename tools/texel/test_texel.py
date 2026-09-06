@@ -813,6 +813,166 @@ def test_extract_REFUSES_a_join_that_addresses_the_wrong_record():
                   "key_full" in str(why) and "manifest says" in str(why), str(why))
 
 
+def _free_directions(kind, index):
+    """The quiet directions a row's pin leaves free, derived from `options.PINS`'s
+    own meaning rather than from the code under test.
+
+    A least-squares answer's residual is orthogonal to every free direction —
+    that is what makes it a minimiser — and HOLDING THE PIN IS WHAT A RESCALE
+    DOES TOO, so the pin cannot tell the two apart. `options.py`'s `both` row is
+    the one the matrix leans on and it is the one that was unchecked (D-658).
+    """
+    unit = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+    if kind == "free":
+        return unit
+    if kind == "index":
+        return [unit[k] for k in range(3) if k != index]
+    if kind == "sum":
+        return [[1.0, 0.0, -1.0], [0.0, 1.0, -1.0]]
+    if kind == "both":
+        return [[1.0, -1.0, 0.0]]
+    raise AssertionError(f"no free directions stated for kind {kind!r}")
+
+
+def _is_minimiser(train, quiet, tempo, directions):
+    """Residual orthogonal to every free direction AND to the intercept."""
+    residuals = [row["label"] - tempo - sum(FIT.signed(row)[k] * quiet[k] for k in range(3))
+                 for row in train]
+    scale = sum(abs(r) for r in residuals) + 1.0
+    for d in directions:
+        gradient = sum(r * sum(d[k] * FIT.signed(row)[k] for k in range(3))
+                       for r, row in zip(residuals, train))
+        if abs(gradient) > 1e-6 * scale:
+            return False
+    return abs(sum(residuals)) < 1e-6 * scale
+
+
+def _rescaled_free_solve(kind, index, value, quiet_free, tempo_free, committed):
+    """The construction the matrix was corrected for: the FREE solve scaled to
+    hold the row's pin. A single scale can hold one pin; the `both` row has two,
+    so the scale is followed by the only pin-preserving correction there is —
+    moving the difference into `w1`, which leaves the sum alone."""
+    if kind == "free":
+        scale = 2.0
+    elif kind == "index":
+        scale = value / quiet_free[index]
+    elif kind == "sum":
+        scale = value / sum(quiet_free)
+    else:
+        scale = float(sum(committed[:3])) / sum(quiet_free)
+    quiet = [scale * x for x in quiet_free]
+    if kind == "both":
+        quiet[0] += quiet[2] - float(committed[2])
+        quiet[2] = float(committed[2])
+    return quiet, scale * tempo_free
+
+
+def _holds_the_pin(kind, index, value, quiet, committed):
+    if kind == "free":
+        return True
+    if kind == "index":
+        return abs(quiet[index] - value) < 1e-6
+    if kind == "sum":
+        return abs(sum(quiet) - value) < 1e-6
+    return (abs(quiet[2] - committed[2]) < 1e-6
+            and abs(sum(quiet) - sum(committed[:3])) < 1e-6)
+
+
+def _noisy_matrix_rows(tmp):
+    """The matrix's own construction, with a DETERMINISTIC residual added.
+
+    Noiseless rows make every residual zero at the unpinned answer, and an
+    orthogonality test over a zero residual passes whatever the answer is. The
+    perturbation is a fixed function of the row index — no seed, no clock — so
+    the check is a real constraint in all six rows and the suite stays
+    reproducible (CLAUDE.md rule 4).
+    """
+    path = f"{tmp}/rows.txt"
+    synth_rows(path, [3, 20, 90, 400, 2000], n=4000)
+    rows = FIT.read_rows(path)
+    for number, row in enumerate(rows):
+        behind = row["b"] if row["to_move"] == "p1" else row["a"]
+        for k in (1, 2, 3):
+            behind[k] += 6
+        g = FIT.signed(row)
+        row["label"] = (sum(g[k] * [3, 20, 90][k] for k in range(3)) + 500
+                        + (number * 7919) % 401 - 200)
+    return rows
+
+
+def test_every_options_row_is_a_MINIMISER_and_a_rescale_of_the_free_solve_is_not():
+    """All six rows, not the three the `kind == "index"` guard reached.
+
+    The orthogonality test is the only one of the checks that can tell a
+    constrained minimiser from a rescale, and it ran in 3 of `options.PINS`'s 6
+    rows — missing `T`, the two-pin row the matrix recommends. Each row is now
+    checked against the directions its own pin leaves free, and a RESCALED FREE
+    SOLVE that holds the same pin must fail that check, or the check is passing
+    on a property a rescale has too.
+    """
+    import options as OPT
+    with tempfile.TemporaryDirectory() as tmp:
+        rows = _noisy_matrix_rows(tmp)
+        fitted, _ = FIT.select(rows)
+        train, _ = FIT.split(fitted)
+        committed = FIT.committed_table()
+        quiet_free, tempo_free = OPT.solve_pinned(train, "free", None, None, committed)
+        check("the six rows are the six this covers", len(OPT.PINS) == 6, len(OPT.PINS))
+        for label, kind, index, value in OPT.PINS:
+            name = label.strip()
+            quiet, tempo = OPT.solve_pinned(train, kind, index, value, committed)
+            directions = _free_directions(kind, index)
+            check(f"row '{name}' holds its pin",
+                  _holds_the_pin(kind, index, value, quiet, committed), (name, quiet))
+            check(f"row '{name}' is a MINIMISER over the directions its pin leaves free",
+                  _is_minimiser(train, quiet, tempo, directions), (name, quiet))
+            control, control_tempo = _rescaled_free_solve(
+                kind, index, value, quiet_free, tempo_free, committed)
+            check(f"the negative control for '{name}' holds the same pin",
+                  _holds_the_pin(kind, index, value, control, committed), (name, control))
+            check(f"and the rescaled free solve FAILS the check for '{name}', or the "
+                  f"check is not telling a minimiser from a rescale",
+                  not _is_minimiser(train, control, control_tempo, directions),
+                  (name, control))
+
+
+def test_the_interior_claim_is_CHECKED_per_row_and_can_answer_no():
+    """`options.py` asserted "Every row this prints is strictly interior" in a
+    docstring and nothing measured it. It is a property now, and a property that
+    cannot answer `no` is not one — so the `no` branch is driven too."""
+    import options as OPT
+    check("a comfortably interior answer is interior",
+          OPT.interior([2.0, 12.0, 60.0]), OPT.schema_slacks([2.0, 12.0, 60.0]))
+    check("and its slacks are the schema's three relations",
+          OPT.schema_slacks([2.0, 12.0, 60.0]) == [1.0, 9.0, 47.0],
+          OPT.schema_slacks([2.0, 12.0, 60.0]))
+    check("a point ON the w1 bound is NOT interior", not OPT.interior([1.0, 12.0, 60.0]))
+    check("a point with w2 exactly one above w1 is NOT interior",
+          not OPT.interior([2.0, 3.0, 60.0]))
+    check("a point with w3 exactly one above w2 is NOT interior",
+          not OPT.interior([2.0, 12.0, 13.0]))
+    with tempfile.TemporaryDirectory() as tmp:
+        rows = _noisy_matrix_rows(tmp)
+        fitted, _ = FIT.select(rows)
+        train, _ = FIT.split(fitted)
+        committed = FIT.committed_table()
+        # A PIN THE SCRIPT DOES NOT SHIP, driven through the SHIPPED solve: it
+        # lands the answer exactly on the `w1 >= 1` bound, which is the case the
+        # retired docstring said could not arise and never checked.
+        on_the_bound, _tempo = OPT.solve_pinned(train, "index", 0, 1.0, committed)
+        check("a pin on the bound gives a non-interior answer through the shipped solve",
+              not OPT.interior(on_the_bound), on_the_bound)
+        path = f"{tmp}/driven.txt"
+        synth_rows(path, [3, 20, 90, 400, 2000], n=4000)
+        done = subprocess.run([sys.executable, str(HERE / "options.py"), path],
+                              capture_output=True, text=True)
+        check("options.py exits 0 with the verdict column", done.returncode == 0,
+              done.stderr[-300:])
+        check("and prints an interiority verdict per solved row",
+              "interior" in done.stdout and "solved row(s) strictly interior" in done.stdout,
+              done.stdout[-300:])
+
+
 def test_options_is_driven_and_every_pin_is_a_MINIMISER():
     """`options.py` regenerates the option matrix's own tables, so it produces
     recorded numbers and carries a test driving the shipped script.
@@ -840,25 +1000,6 @@ def test_options_is_driven_and_every_pin_is_a_MINIMISER():
             if kind == "index":
                 check(f"pin '{label.strip()}' holds its entry exactly",
                       abs(quiet[index] - value) < 1e-9, (label, quiet))
-                # HOLDING THE PIN IS WHAT A RESCALE DOES TOO, so it cannot tell a
-                # minimiser from one — and a rescale of the free solve is exactly
-                # the construction the matrix was corrected for. The defining
-                # property of a least-squares answer is that its RESIDUAL is
-                # orthogonal to every free direction, which a rescale violates.
-                free = [k for k in range(3) if k != index]
-                residuals = []
-                for row in train:
-                    g = FIT.signed(row)
-                    residuals.append(row["label"] - tempo
-                                     - sum(g[k] * quiet[k] for k in range(3)))
-                scale = sum(abs(r) for r in residuals) + 1.0
-                worse = all(
-                    abs(sum(r * FIT.signed(row)[k]
-                            for r, row in zip(residuals, train))) < 1e-6 * scale
-                    for k in free
-                ) and abs(sum(residuals)) < 1e-6 * scale
-                check(f"pin '{label.strip()}' is a MINIMISER and not a rescale",
-                      worse, (label, quiet))
             elif kind == "sum":
                 check(f"pin '{label.strip()}' holds the sum exactly",
                       abs(sum(quiet) - value) < 1e-9, (label, quiet))
@@ -1014,6 +1155,8 @@ for test in (test_one_stone_features, test_turn_structure,
              test_the_committed_candidate_satisfies_the_pins_it_is_registered_under,
              test_read_rows_REFUSES_an_unknown_to_move_token,
              test_options_is_driven_and_every_pin_is_a_MINIMISER,
+             test_every_options_row_is_a_MINIMISER_and_a_rescale_of_the_free_solve_is_not,
+             test_the_interior_claim_is_CHECKED_per_row_and_can_answer_no,
              test_shipped_script_runs):
     print(test.__name__)
     test()

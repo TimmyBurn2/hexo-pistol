@@ -40,8 +40,10 @@ def solve_pinned(train, kind, index, value, committed):
     constrained optimum and the schema's inequalities are checked afterwards by
     `round_to_schema`, so a pin whose optimum lies outside the schema is
     reported INFEASIBLE where `fit.py`'s `constrained_min` would return a
-    boundary point. Every row this prints is strictly interior, so the two agree
-    here; a caller adding a pin that binds should use `constrained_min`.
+    boundary point. Whether a row is far enough from those inequalities for the
+    two to agree is CHECKED per row by `schema_slacks` and printed by `main`; an
+    earlier revision asserted it here and nothing measured it (D-658). A caller
+    whose row prints `interior no` should use `constrained_min`.
     """
     if kind == "free":
         rows_a = [[0.0] * 4 for _ in range(4)]
@@ -104,6 +106,24 @@ def solve_pinned(train, kind, index, value, committed):
     return quiet, answer[2]
 
 
+def schema_slacks(quiet):
+    """The room the schema's three relations have at a REAL-VALUED answer.
+
+    `w1 >= 1`, `w2 >= w1 + 1`, `w3 >= w2 + 1`. All three strictly positive is
+    what "interior" means, and it is the condition under which this module's
+    equality-constrained answer is also the inequality-constrained one
+    `fit.py`'s `constrained_min` would return.
+    """
+    return [quiet[0] - 1.0,
+            quiet[1] - quiet[0] - 1.0,
+            quiet[2] - quiet[1] - 1.0]
+
+
+def interior(quiet, tol=1e-9):
+    """Whether every schema relation has strictly positive room at `quiet`."""
+    return all(slack > tol for slack in schema_slacks(quiet))
+
+
 def diagnostics(rows, table):
     """What the matrix reports, and every one of them GATES NOTHING (D-614)."""
     errors = [FIT.predict(FIT.signed(r), table) - r["label"] for r in rows]
@@ -123,10 +143,11 @@ def main(rows_path):
 
     header = (f"{'option':<16}{'table':<26}{'val_MSE':>11}{'bias':>9}"
               f"{'resid var':>12}{'quiet rho':>11}{'ALL rho':>9}"
-              f"{'w3/w4':>8}{'sum/w4':>8}{'w4>sum':>9}{'w5>sum':>9}")
+              f"{'w3/w4':>8}{'sum/w4':>8}{'w4>sum':>9}{'w5>sum':>9}{'interior':>10}")
     print(header)
     print("-" * len(header))
     rows_out = [("--  committed", committed, None)]
+    tight = []
     for label, kind, index, value in PINS:
         quiet, tempo = solve_pinned(train, kind, index, value, committed)
         try:
@@ -137,15 +158,31 @@ def main(rows_path):
             # answer the weights document cannot hold is not an option.
             print(f"{label:<16}{'INFEASIBLE':<26}{str(why).split(';')[0][5:]}")
             continue
-        rows_out.append((label, table + committed[FIT.QUIET_COUNTS:], tempo))
-    for label, table, tempo in rows_out:
+        if not interior(quiet):
+            tight.append((label, quiet, schema_slacks(quiet)))
+        rows_out.append((label, table + committed[FIT.QUIET_COUNTS:], tempo, quiet))
+    for entry in rows_out:
+        label, table = entry[0], entry[1]
+        # The committed row is the REFERENCE and not a solve, so it makes no
+        # claim about the two minimisers agreeing and prints none.
+        verdict = "-" if len(entry) < 4 else ("yes" if interior(entry[3]) else "NO")
         mse, bias, variance, rho = diagnostics(val, table)
         _m, _b, _v, all_rho = diagnostics(all_val, table)
         four, five = FIT.dominance(table)
         print(f"{label:<16}{str(table):<26}{mse:>11.1f}{bias:>9.1f}{variance:>12.1f}"
               f"{rho:>11.4f}{all_rho:>9.4f}"
               f"{table[2] / table[3]:>8.4f}{sum(table[:3]) / table[3]:>8.4f}"
-              f"{str(four):>9}{str(five):>9}")
+              f"{str(four):>9}{str(five):>9}{verdict:>10}")
+    print()
+    print(f"options: {sum(1 for e in rows_out if len(e) == 4 and interior(e[3]))} of "
+          f"{sum(1 for e in rows_out if len(e) == 4)} solved row(s) strictly interior")
+    for label, quiet, slacks in tight:
+        # NOT A FAILURE: a row on a schema boundary is a result about the option.
+        # What it costs is the agreement this module's equality solve leans on,
+        # so the row is named and the reader is sent to `constrained_min`.
+        print(f"options: row '{label.strip()}' is NOT interior — quiet "
+              f"{['%.4f' % x for x in quiet]}, slacks {['%.4f' % s for s in slacks]}; "
+              f"fit.py's constrained_min is the tool for it")
     print()
     print("The `w3/w4` and `sum/w4` columns are the point: the filtered rows carry")
     print("no evidence about ANY quiet-to-tactical exchange rate. Each single pin")
