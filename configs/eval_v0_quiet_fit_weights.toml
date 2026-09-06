@@ -1,0 +1,18 @@
+# WP-2.2 Phase 1 — the quiet-term fit candidate. Committed configuration and
+# not an artifact: a handful of integers an operator can read and edit
+# (docs/decisions.md D-11), which is what the committed table says of itself.
+#
+# Produced by tools/texel/fit.py from the sweep corpus under the row filter of
+# docs/experiments/wp22_phase1_design.md. Entries 4 and 5 are carried VERBATIM
+# from configs/eval_v0_weights.toml (R6, docs/decisions.md D-622): the filtered
+# rows carry no evidence about them at all.
+
+schema_version = 1
+backend = "handcrafted_v0"
+
+[table]
+1 = 5
+2 = 34
+3 = 60
+4 = 300
+5 = 1500

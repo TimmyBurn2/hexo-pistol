@@ -1,0 +1,50 @@
+# WP-2.2 Phase 1 — THE REGISTERED DRY RUN: the quiet-term fit against the committed
+# table. Authored FROM the pre-registration docs/experiments/wp22_phase1_design.md
+# section 9, which fixes every value below.
+#
+# ONE BINARY, TWO CONFIGS DIFFERING IN EXACTLY ONE KEY: `eval.weights_file`. The
+# arena's handshake carries each seat's `weights_sha256`, so which table each seat
+# evaluated with is pinned by content in the report rather than by this file's
+# say-so. Two seats naming DIFFERENT weight tables is not refused — a capture's
+# two seats must attest one engine, an SPRT's two need not, and the registered
+# dry run confirms it by running.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v1.txt"
+
+# AN INPUT OF THE SAME KIND AS THE REGISTERED WORKLOAD, DIFFERING ONLY IN
+# IDENTITY, and never the registered slice (docs/process.md, Dry-run discipline).
+# book_v1 is retired for GOVERNED use (docs/decisions.md D-505) and a dry run is
+# not a governed use.
+openings_take = 24
+openings_skip = 0
+
+turn_cap = 60
+n_workers = 4
+hang_timeout_ms = 120000
+
+[budget]
+kind = "nodes"
+value = 50000
+
+[sprt]
+elo0 = 0.0
+elo1 = 10.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+label = "quiet_fit"
+binary = "target/release/pistol"
+binary_sha256 = "d1d9465cf327de7cdf4d70fb4852ae80edd6fb54a5009929e38d619f1bfd53ae"
+config = "configs/instrument_quiet_fit_v0.toml"
+
+[engine_b]
+label = "committed"
+binary = "target/release/pistol"
+binary_sha256 = "d1d9465cf327de7cdf4d70fb4852ae80edd6fb54a5009929e38d619f1bfd53ae"
+config = "configs/instrument_v0.toml"

@@ -2,7 +2,7 @@
 
 The v0 score is LINEAR in the five table entries, so a position reduces to five
 integers. This module replicates `crates/pistol-eval/src/handcrafted.rs`'s
-window bookkeeping exactly; `verify_against_engine` is what says so, and
+window bookkeeping exactly; `verify_against_engine.py` is what says so, and
 nothing here is trusted until that has run.
 """
 
@@ -40,20 +40,32 @@ def window_counts(stones):
     return counts
 
 
+def per_side_counts(stones):
+    """`(a, b)` indexed 0..=6, where `a[k]` is P1's live k-stone windows.
+
+    A window holding both players is dead and belongs to neither, which is
+    `contribution`'s `_ => 0` arm. The SIGNED difference `features` returns
+    cannot answer whether a given side holds a window, so the row filter of
+    docs/experiments/wp22_phase1_design.md §3 is stated on these instead.
+    """
+    a = [0] * (WINDOW_LEN + 1)
+    b = [0] * (WINDOW_LEN + 1)
+    for p1, p2 in window_counts(stones).values():
+        if p2 == 0:
+            a[p1] += 1
+        elif p1 == 0:
+            b[p2] += 1
+    return a, b
+
+
 def features(stones):
     """The six-vector `f`, indexed by own-stone count 1..=6.
 
     `f[k]` is (windows holding exactly k P1 stones and no P2 stone) minus the
-    same for P2. A window holding both players is dead and contributes to
-    neither, which is `contribution`'s `_ => 0` arm.
+    same for P2.
     """
-    f = [0] * (WINDOW_LEN + 1)
-    for p1, p2 in window_counts(stones).values():
-        if p2 == 0:
-            f[p1] += 1
-        elif p1 == 0:
-            f[p2] -= 1
-    return f
+    a, b = per_side_counts(stones)
+    return [a[k] - b[k] for k in range(WINDOW_LEN + 1)]
 
 
 def score_p1(f, table):

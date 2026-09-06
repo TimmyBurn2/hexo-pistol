@@ -40,7 +40,8 @@ registered from a measurement rather than chosen — `docs/experiments/book_v2_r
 |---|---|---|---|---|
 | 0 | 13 | `0..12` | the WP-2.0 label-pipeline PILOT, `configs/arena_wp20_label_pilot.toml` | `docs/experiments/wp20_pilot_prereg.md` revision 4 |
 | 13 | 3487 | `13..3499` | the WP-2.1 PRODUCTION LABEL SWEEP, sixteen tranches from `tools/wp21_tranche_config.py` | `docs/experiments/wp21_prereg.md` revision 7 |
-| 3500 | 1000 | `3500..4499` | **RESERVED FOR GOVERNED RUNS — NEVER LABELLED.** Not consumed by anything yet; held back so a governed run has an unseen slice | `docs/decisions.md` D-568 |
+| 3500 | 400 | `3500..3899` | the WP-2.2 PHASE 1 quiet-fit SPRT, `configs/arena_wp22_phase1_quiet.toml` | `docs/experiments/wp22_phase1_design.md` revision 3 |
+| 3900 | 600 | `3900..4499` | **STILL RESERVED FOR GOVERNED RUNS — NEVER LABELLED.** What is left of D-568's holdout after the row above | `docs/decisions.md` D-568 |
 
 **THE SECOND ROW IS THE SWEEP AND ITS CONFIG IS NOT ONE FILE.** The sweep is
 sixteen tranches of one shape, and this table's rule — *"adds its row here in the
@@ -53,9 +54,20 @@ contiguous, disjoint, exhaustive over `13..3499` — is what that test asserts.
 voids does not give its openings back, because a second run over them would be a
 second reading of a sample this registration chose.
 
-**THE THIRD ROW IS A HOLDOUT AND IT IS A DIFFERENT KIND OF ROW.** Every other
+**THE THIRD ROW IS THE FIRST DRAW FROM THE HOLDOUT, AND WHAT IT LEAVES IS THE
+FOURTH.** D-568 reserved the last 1,000 openings for governed runs; WP-2.2's
+Phase 1 SPRT is the first governed run to take from it and takes **400**, leaving
+**600** for the two standing claimants below. Four hundred is the registered
+MAXIMUM and not a prediction: an SPRT that crosses a bound earlier stops earlier,
+and the range is spent either way, because a range reserved by a committed
+pre-registration is spent whether or not its run finishes. **Why 400 and not
+more**: the dry run measures 2.04 s per opening at the registered `turn_cap 60`,
+so 400 is fourteen minutes — the clock is not what bounds this, the holdout is,
+and the two claimants below have prior standing on it.
+
+**THE FOURTH ROW IS A HOLDOUT AND IT IS A DIFFERENT KIND OF ROW.** Every other
 row here records a range something SPENT. This one records a range nothing may
-spend: D-568 reserves the LAST 1,000 openings for governed runs, and the rule
+spend: D-568 reserves the LAST 1,000 openings for governed runs, of which 600 remain, and the rule
 fixing it — the last 1,000, by position and by nothing observable — is stated
 before the sweep starts, because a holdout chosen after seeing which openings
 label well is not a holdout. **It is enforced mechanically and not by this

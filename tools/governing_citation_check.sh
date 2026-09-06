@@ -56,7 +56,9 @@ GOVERNING=(
 	docs/experiments/wp21_throughput_prereg.md
 	docs/experiments/wp22_cap_prereg.md
 	docs/experiments/wp22_census_prereg.md
+	docs/experiments/matrix_wp22_quiet_scale.md
 	docs/experiments/wp22_phase1_design.md
+	docs/experiments/wp22_phase1_premise.md
 	docs/experiments/wp22_phase2_premise.md
 )
 

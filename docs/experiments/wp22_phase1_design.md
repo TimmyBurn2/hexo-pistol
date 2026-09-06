@@ -1,153 +1,360 @@
-# WP-2.2 Phase 1 — Texel tuning of eval v0: design, revision 2.
+# WP-2.2 Phase 1 — the quiet-term fit of eval v0: design and run registration, revision 3.
 
-Governing revision: `71fa6f1` (`dev`). This revision amends §2's
-constraint handling (projection replaced by an exact constrained solve) and §8's
-named successor, both forced by
-`docs/experiments/wp22_phase1_fit_finding.md`; the amendment reopens this
-document's review however small the diff. Premise:
-`docs/experiments/wp22_phase1_premise.md`, whose §3 and §4 are two findings this
-design is built around rather than a summary of the tree.
+Governing revision: the commit that carries this file. **The four instruments §4
+and §5 name do not exist before it** — they land in it, which is what
+`docs/process.md`'s *Instrument governing revision* asks for and what revision 2
+promised instead. Revision 2 FAILED its first fresh review with 8 MAJOR
+(`wp22_phase1_design_REVIEW.md`); this revision closes those and re-poses the
+phase on operator ruling R6 (D-622, corrected by D-626), which narrows what is
+fitted.
+
+**This document is two kinds at once and the difference matters for D-483.**
+§1-§8 are DESIGN: mechanisms, invariants and tests, carrying no measured
+numbers — those live in `matrix_wp22_quiet_scale.md` and in
+`artifacts/wp22_phase1_quiet/`. **§9 is a RUN REGISTRATION**, and a registration
+states its bounds, its cost and its dry run on its own face
+(`docs/process.md`, *Cost, replication, and the second instrument*).
+
+Premise: `wp22_phase1_premise.md`. Selection: `matrix_wp22_quiet_scale.md`,
+attacked by a fresh DECISION-RED-TEAM before selection.
 
 ## §1 What this phase changes, and what it does not
 
-**It may change exactly five integers** in `configs/eval_v0_weights.toml`, and
-only on h1. It changes no code on the search path, no config key, no schema, no
-protocol line and no gate. **The loader it would otherwise have had to build
-already exists** (premise §4), so this phase is smaller than the dispatch
-assumed and its risk is concentrated in the trainer, which is offline, and in
-the SPRT, which is the only voice (D-614).
+**It may change at most three integers** in the committed weight table, and only
+on h1. It changes no code on the search path, no config key, no schema and no
+protocol line. It adds offline tooling under `tools/texel/`, which **gate 18
+already runs**; two behaviour-named Rust tests; one candidate weight document;
+and two arena configs with the ledger row that spends their openings.
 
-## §2 The trainer, and why it has no seed
+**The loader it would otherwise have had to build already exists** (premise §4),
+so this phase is smaller than the dispatch assumed and its risk sits in the
+trainer, which is offline, and in the SPRT, which is the only voice (D-614).
 
-**The model is linear in the five weights** (premise §2), so the squared-error
-fit has a CLOSED FORM: form `A = Σ g gᵀ` and `b = Σ g y` over rows, solve the
-5×5 system. **No seed, no learning rate, no initialisation, no stopping rule
-enters the answer** — which is a stronger determinism claim than "seeded and
-deterministic given seed + corpus digest" and is the reason to prefer this
-objective over an iterative one.
+## §2 The split R6 fixes, and why it is a division of labour
 
-**Stages, each a pure function of the one before:**
+D-621 measured that the top table entry is **not identifiable** from this
+corpus: game rule 4 completes a win the instant a stone forms six and a corpus
+position is recorded at a turn boundary, so the mover never holds a live
+five-window and the mover-relative regressor takes one sign only. R6 (D-622)
+generalises that into a rule.
 
-1. `tools/texel/features.py` — a position's six-vector. Replicates
-   `windows_through` (`crates/pistol-core/src/window.rs:112`) and
-   `contribution` (`crates/pistol-eval/src/handcrafted.rs:179`).
+- **TACTICAL — `w4`, `w5`.** A window holding four own stones and no opponent
+  stone has two empty cells, and game rule 3 gives the mover TWO stones a turn.
+  **Both regressors have no sign variation anywhere in the corpus** (D-626), so
+  neither can report what such a window is worth to its OWNER, and a fit to them
+  could only ever run backwards.
+- **QUIET — `w1`, `w2`, `w3`.** What the search cannot resolve inside its own
+  window and must ask the evaluation about.
+
+**The tactical entries are carried VERBATIM from the committed table, and the
+reason is a measurement rather than a preference**: under §3's filter the
+tactical regressors are identically zero on every fitted row, so the objective's
+curvature in `w4` and `w5` is exactly zero and no feasible point is preferred to
+any other. R6's alternative — dominance constraints — BOUNDS those entries and
+cannot choose among the points it admits, so it survives here as a registered
+CHECK on the assembled table: `w4 > w1 + w2 + w3` and `w5 > w1 + w2 + w3 + w4`.
+
+## §3 The row filter, as a predicate on the schema
+
+For a corpus record, let `a_k` be the number of length-6 windows holding exactly
+`k` P1 stones and no P2 stone, and `b_k` the same for P2. A row is **fitted**
+when all of:
+
+1. `score_kind == "eval"`. A mate score is the search's band and is not a number
+   this table can produce (premise §6). **This clause is what makes the fitted
+   population free of decided positions**, and D-626 measures that it is the
+   only clause that does.
+2. `a_4 == b_4 == a_5 == b_5 == a_6 == b_6 == 0`. **What this removes is the
+   rows on which the tactical regressors are non-zero** — and D-626 measures
+   that it removes nothing FORCED: every dropped row's threats are killable
+   within the two stones the turn provides. R6's own words are *"neither side
+   holds an in-window forced win"*; that description is wrong about this
+   predicate and the predicate is kept on the one-sidedness ground instead.
+3. `|label| >= EVAL_MAX` excludes the row: the prediction is the band edge
+   whatever the weights do. **Whether this clause ever fires is reported**,
+   because a rule that never fires is not doing the work its presence claims.
+
+**The populations of every clause are printed by the shipped fit** and receipted;
+per D-483 they are not repeated here. **The fit refuses**, by named error, if the
+filtered population is empty.
+
+## §4 The trainer: the tempo term is fitted so that it cannot hide in the weights
+
+**The model is linear in the weights** on the filtered rows (premise §2), so the
+squared-error fit has a closed form. No seed, no learning rate, no
+initialisation and no stopping rule enters the answer.
+
+**The model that produces the answer**, and both of its departures from revision
+2 are forced by measurement recorded in the matrix's §3:
+
+```
+label  =  c  +  w1·g1  +  w2·g2  +  PIN·g3            free in (w1, w2, c)
+```
+
+- **`c` is a mover-relative TEMPO term the v0 schema has no entry for.** On the
+  fitted population the mover is systematically behind in window count and ahead
+  in label — it is about to place two stones — and a model with no constant can
+  absorb that only by moving the weights. Fitting `c` and then DISCARDING it is
+  what stops the weights paying for it. **A mover-relative constant is added to
+  every sibling at a ply and negated at the next, so under negamax at a fixed
+  depth it cancels exactly between the moves being compared**; the committed
+  instrument config carries `q_depth_turns = 0`, `extension_budget = 0` and
+  `lmr_min_depth_turns = 0`, so an iteration's leaves sit at one ply. A term that
+  cannot change a move is the worst thing to spend the weight vector on.
+- **`PIN` holds `w3` at its committed value.** The filtered rows carry no
+  evidence whatever about the quiet-to-tactical balance, and an unpinned
+  absolute scale sets that balance anyway — from labels whose unit is the
+  committed table's own (the matrix's §3(a), verified by digest).
+
+**The no-intercept free-scale solve is computed and REPORTED anyway**, as the
+contrast: the difference between the two is the phase's finding, and a
+successor who reads only the answer would not see it.
+
+**Stages, each a pure function of the one before**, each an instrument whose
+governing revision is this document's commit:
+
+1. `tools/texel/features.py` — the engine's window bookkeeping, replicated.
+   **Gains `per_side_counts`**, without which §3's clause 2 cannot be stated.
 2. `tools/texel/extract.py` — walks the deduped manifest, joins to the corpus
-   records, writes one row per position: `f1..f6`, label, `to_move`, depth,
-   book, result, and the `sha256` of `key_full`. **Every corpus digest it read
-   is written into the row file's own header**, so a fit names its inputs by
-   content.
-3. `tools/texel/fit.py` — the closed-form solve, the projection onto the
-   schema's constraint set, and the diagnostics.
+   records, verifies `key_full` on EVERY row, and writes per-side counts with
+   **mate rows KEPT and labelled by kind**, so every clause of §3 is applied
+   downstream and can be counted. Every corpus digest it read goes in the row
+   file's header.
+3. `tools/texel/fit.py` — the exact constrained solve, the pin, the dominance
+   check and the diagnostics.
+4. `tools/texel/verify_against_engine.py` — §5's oracle.
 
-**Rows the fit excludes, each by a property of the row and never by its
-residual:**
+**The constraint set, and the two corrections this revision makes.**
+`crates/pistol-eval/src/weights.rs` requires `w1 >= 1`, strict increase, and
+every entry strictly below the decided window's value.
 
-- `score_kind != eval`. A mate score is the search's mate band and is not a
-  number this table can produce (premise §6).
-- `|label| >= EVAL_MAX`. The prediction is the band edge whatever the weights
-  do, so the row carries no gradient in `w` and including it fits the clamp
-  rather than the position.
+- **Every constraint is an active-set MEMBER, bounds included** (review M-4).
+  Revision 2 enumerated the gap constraints and then CLAMPED at the bounds
+  before the feasibility test — the same defect its own paragraph called fatal.
+  The minimiser is now found by enumerating subsets of the whole constraint set,
+  solving each equality-constrained KKT system exactly, and keeping the feasible
+  minimiser; for a convex quadratic that is the exact optimum.
+- **The pivot test is scale-relative.** An absolute threshold against a KKT
+  system that mixes the normal matrix with constraint rows of order one reads
+  the small rows as singular, and whether it does so depends on the labels'
+  units rather than on the problem. A test pins that the minimiser is invariant
+  when the objective is scaled.
+
+**Nothing is projected and no skip is silent.** `fit.py` REFUSES by named error
+when the filtered population is empty; when a regressor takes ONE SIGN on the
+fitted rows — which is D-621's condition as a machine check, and it is on the
+SIGNS because one-sidedness leaves the normal matrix well conditioned and a rank
+test cannot see it; when the real-valued answer it is about to round is not
+schema-feasible; and when rounding would carry an entry onto the pinned ceiling.
+Singular active sets are COUNTED and reported rather than swallowed.
+
+**There is no post-hoc optimality check beside the enumeration, deliberately.**
+A cheap one passes vacuously wherever the optimum is interior, which is where
+this runs, and reads as verification that did not happen. `test_texel.py` checks
+the enumeration against a **brute-force grid** instead, which is an oracle rather
+than a restatement. For the same reason there is no guard against a rounding
+clamp: rounding a feasible answer cannot break the schema's increase, so a guard
+for it could never fire, and a test pins that property over two thousand draws.
 
 **The split is content-derived**: train and validation are separated by the last
-hex digit of the position's `key_full` digest, a 1-in-8 validation slice. No
-seed, and the split moves with the corpus rather than with the row order.
+hex digit of the position's `key_full` digest, a **1-in-8** validation slice. No
+seed. It is per-POSITION and not per-game; with three parameters and a
+five-figure row count overfitting cannot arise, and that — not "it answers
+overfitting" — is what the split is worth here (review m-10).
 
-**The constraint set, and the correction revision 1 needed.**
-`weights.rs:141-177` requires `w1 >= 1`, strict increase, and every entry below
-`EVAL_MAX`. Revision 1 PROJECTED the unconstrained solution onto that set;
-**that is not the constrained optimum** — a projected point can sit on a face
-the true optimum never touches — and on this corpus the two answers differ
-(`[1,22,23,69,70]` against `[1,21,22,64,65]`). It is replaced by **exhaustive
-enumeration of the sixteen active sets** of the four gap constraints, each a
-reduced least-squares problem solved exactly. Still no step size, tolerance or
-seed. **Whether any constraint BINDS is reported**, because a solution the
-constraint set had to hold back is a different claim from one it did not — and
-on this corpus two of the four do bind
-(`docs/experiments/wp22_phase1_fit_finding.md`).
+## §5 The correctness gate the fit rests on
 
-## §3 The engine side: nothing is built, and two tests say so
+`features.py` re-implements the engine's window bookkeeping in another language,
+and a re-implementation that silently disagrees would produce a confident fit to
+the wrong features.
 
-Premise §4 records that `weights_file`, the digest in the identity line, and the
-arena's refusal of a mismatch all already ship. **The dispatch's "byte-identity
-when the key is absent" cannot be built**: hard rule 1 makes an absent key a
-named error and there are no code-side literals to fall back to. The two tests
-that carry the property the dispatch was reaching for:
+**The oracle ships as `tools/texel/verify_against_engine.py`** — the name
+`features.py`'s docstring has promised since revision 1 while no such file
+existed (review M-5). It is driven by `test_texel.py` and its run is receipted.
 
-1. **Inert to presentation.** A weights file differing from the committed one
-   only in comments and whitespace gives **byte-identical** engine output at a
-   fixed instrument budget.
-2. **Not inert to values** — the mutant that must die. One table entry
-   perturbed gives DIFFERENT output. A test that cannot fail this way tests
-   nothing, and this is the call-site mutant D-55y asks for before review.
+**The sample is REGISTERED rather than drawn at run time**, because the default
+draw is nearly blind to the entries the phase is about. It is the union of:
 
-## §4 The correctness gate the fit rests on
+1. **every** corpus position holding a four- or five-stone window, mate rows
+   included — the stratum the finding is about;
+2. a **stride draw** across all sixteen tranches and all three score kinds;
+3. the same positions re-run under weight tables that **saturate the clamp** on
+   both sides.
 
-**The extractor is not trusted because it looks right.** `tools/texel/features.py`
-re-implements the engine's window bookkeeping in another language, and a
-re-implementation that silently disagrees would produce a confident fit to the
-wrong features.
+**Nothing is deduped by `key_full`**: rows sharing one are not rare, and folding
+on it would silently shrink the registered sample.
 
-**The oracle**: for a registered sample of corpus positions, the value computed
-as `clamp(Σ f_k w_k + f_6 · EVAL_MAX)`, signed for the side to move, must equal
-the engine's own `HandcraftedV0::value` on the same position, **exactly, for
-every position in the sample**. The engine side is a second instrument that does
-not share the Python enumeration; it reads the board the search reads.
+**The criterion**: the offline value equals the engine's own
+`HandcraftedV0::value` on the same position, exactly, for every position and
+every table. **The defect class it excludes** is a Python/Rust bookkeeping
+divergence, and the engine side is an externally derived referent that does not
+share the Python enumeration. **The mutant that must die**: a disagreeing engine
+stops the oracle by name, which `test_texel.py` drives with a stub whose value
+is computed by a formula sharing no code with `features.py`.
 
-**A single mismatch stops the phase** — it falsifies premise §2, on which
-everything else here rests.
+**A single mismatch stops the phase.** It falsifies premise §2.
 
-## §5 Diagnostics, which gate nothing (D-614)
+## §6 The engine side: nothing is built, and two TESTS say so
 
-Train and validation MSE, Spearman rank correlation on validation, the fitted
-ratios against the committed ones, the count of saturated and mate rows
-excluded, and the by-depth breakdown. **They live in artifacts, never in a
-document** (D-483). They answer whether the trainer is broken, not whether the
-engine is stronger.
+The dispatch's "byte-identity when the key is absent" **cannot be built**: hard
+rule 1 makes an absent key a named error and there are no code-side literals to
+fall back to. Revision 2 called the two replacement properties "tests" while
+nothing in the tree re-ran them (review m-4). They land here as behaviour-named
+Rust tests driving the call site (D-553):
 
-**The human corpus** (`b2fe61eb…`, D-453 ARTIFACT-GRADE, present locally at
-`/home/tom/Projects/hexo-bootstrap-corpus/hexo_human_corpus.jsonl`) carries
-**outcome labels only** — no search scores — so it cannot report a label MSE and
-is used for outcome correlation alone. That limit is the corpus's, not this
-design's.
+1. **Inert to presentation.** A weights document differing only in comments and
+   whitespace gives byte-identical engine output at a fixed instrument budget,
+   with the two documents asserted to differ as BYTES first — or the test
+   compares a file with itself.
+2. **Not inert to values** — the call-site mutant that must die. One perturbed
+   entry gives different output.
+3. **The candidate table loads and changes the search**, so an SPRT against it
+   is a measurement rather than a self-match.
 
-## §6 Bench
+## §7 Diagnostics, which gate nothing (D-614)
+
+Train and validation MSE, rank correlation with **tied ranks averaged** (review
+m-9), the fitted ratios against the committed ones, the population of every §3
+clause, the **saturation rate** premise §3 registered and revision 2 dropped,
+and a **by-depth breakdown**, which revision 2 promised while `fit.py` read the
+depth column and discarded it. **They live in artifacts, never in a document**
+(D-483). They answer whether the trainer is broken, not whether the engine is
+stronger.
+
+**The human corpus is not a holdout here and revision 2's paragraph claiming it
+was is DELETED** (review M-6). `docs/ROADMAP.md` blocks D-434's Stage-2
+calibration holdout until a population-grade corpus supersedes the
+artifact-grade one, and D-453 licenses statements about the artifact and not
+about the platform's players. Deleted rather than restated (D-424).
+
+## §8 Bench
 
 The eval's cost is unchanged **by construction**: the same terms, the same
-windows, the same table lookup, five different integers in the table. A
-registered spot-check runs anyway, because "by construction" is an argument and
-the bench is a measurement. Expected bracket: **no change outside noise**; a
-measured change is a finding that something other than the five integers moved.
+windows, the same table lookup, different integers in the table. A registered
+spot-check runs anyway, because "by construction" is an argument and the bench
+is a measurement. Expected bracket: **no change outside noise**; a measured
+change is a finding that something other than the table moved.
 
-## §7 SPRT — the only voice
+## §9 THE RUN REGISTRATION — SPRT, the only voice
 
-- **Seats**: the committed weights against the fitted weights, everything else
-  identical, both seats at the same revision and the same config but for
-  `weights_file`.
-- **Instrument**: 50 000 nodes, fixed-node so the comparison is node-matched.
-- **Openings**: the holdout openings ledger; if the holdout is thin, a
-  `book_v3` slice is registered and generated first under `book_v2`'s
-  discipline, with consumed ranges receipted.
-- **Reported**: n, distinct_n, pentanomial, llr_pair, per-side compute.
+**Seats.** One binary, two configs differing in exactly one key, `weights_file`:
+`configs/instrument_v0.toml` against `configs/instrument_quiet_fit_v0.toml`. The
+arena's handshake carries each seat's `weights_sha256`, so the two tables are
+pinned by content in the report.
+
+**The candidate is `[5, 34, 60, 300, 1500]`** — what the shipped instrument
+prints, which is the constrained minimiser with `w3` pinned inside the
+regression rather than a rescaling of a free solve. **It is COMMITTED
+CONFIGURATION, not an artifact**, at `configs/eval_v0_quiet_fit_weights.toml`. D-11 says so of a table of this kind
+in the committed table's own words — *"a handful of integers an operator can
+read and edit"* — and `tools/config_check.sh` refuses an engine config whose
+weights document it cannot read, so a gitignored candidate would fail gate 6 in
+a clean checkout and make the run unreproducible from the tree.
+
+**Arena config**: `configs/arena_wp22_phase1_quiet.toml`.
+
+| key | value | why |
+|---|---|---|
+| `budget` | `nodes`, 50 000 | the standing instrument budget; node-matched |
+| `openings_file` | `random_openings_v2.txt` | the successor book |
+| `openings_skip` / `openings_take` | **3500 / 400** | the reserved holdout's first 400. The fit's corpus was drawn from `13..3499`, so this slice is unseen BY CONSTRUCTION |
+| `turn_cap` | **60** | an evaluation horizon, never a game rule (rule 6). **Registered from the dry run below**, which measures that 40 leaves nearly half the games undecided and 60 leaves a quarter, for 45 % more wall time — the holdout is the scarce resource, not the clock |
+| `n_workers` | 4 | as every prior governed arena run |
+| `hang_timeout_ms` | 120 000 | the liveness watchdog; it can end a run and can never produce a result (D-159) |
+| `elo0` / `elo1` | 0.0 / 10.0 | the bounds the optimization arc's null-expected runs carried |
+| `alpha` / `beta` | 0.05 / 0.05 | as every prior SPRT in this project |
+| maximum pairs | **400**, the take | a cap the registration fixes, not the run |
+
+**The ledger row lands in the same commit as this config** —
+`docs/book_v2_ledger.md`'s own rule, which revision 2 did not meet (review M-2).
+The row records `3500..3899` as consumed. **The "if the holdout is thin" clause
+is DELETED**: it named no threshold and so left the openings source to be chosen
+at run time.
+
+**Reported**: n, distinct_n, pentanomial, llr_pair, verdict, per-side compute.
+
+**A THIRD OUTCOME IS REGISTERED, because two are not enough.** An SPRT at these
+bounds need not cross either within 400 pairs, and both dry runs returned
+`inconclusive_at_game_cap`. **That outcome is neither h0 nor h1 and licenses
+neither**: it says the run was too small to separate a ±10 Elo effect from
+nothing, and it is recorded as such rather than read as a null. It is registered
+here so that reading it as h0 after the fact is foreclosed. **What bounds the run
+at 400 is the HOLDOUT and not the clock** — fourteen minutes of machine time
+against 400 of the 1 000 openings D-568 reserved, on which two other packages
+have standing claims. **What it does not block**: Phase 2, which proceeds on any
+of the three outcomes (R7, D-623).
+
+**COST, measured rather than remembered.** The dry run below took 49.0 s of wall
+for 24 openings at 4 workers with `turn_cap 60`, so the registered 400 openings
+is **ESTIMATED at 14 minutes** from a MEASURED 2.04 s per opening. If the
+governed run exceeds one hour it is stopped and the registration is amended,
+which reopens this review.
+
+**THE DRY RUN**, on an input of the same kind that is not the registered
+workload (`docs/process.md`): 24 openings of `random_openings_v1.txt` at
+`openings_skip = 0`, every other key identical. `book_v1` is retired for GOVERNED
+use (D-505) and a dry run is not a governed use.
+
+- **The criterion**: the report's two seats carry **different** `weights_sha256`
+  values, each equal to the sha256 of the document its config names; both seats'
+  compute is non-zero; and a verdict line is written.
+- **The defect class it excludes**: both seats silently evaluating with the same
+  weight table, which would make the SPRT a self-match — every pair scoring
+  alike, no likelihood ratio defined, and a null that looks like a finding
+  (D-156).
+- **Why the criterion is not vacuous**: the digests come from the engines' own
+  identity lines, not from the configs the arena read, so they are an externally
+  derived referent that the named defect would falsify.
+- **The registered consequence of failure**: the run does not launch and the
+  phase returns to this document.
+- **Result: the criterion is MET.** Receipted in
+  `artifacts/wp22_phase1_quiet/DRYRUN.md`.
 
 **The honest expectation, registered before the run.** The v0 feature set is
-five numbers describing how many windows hold how many stones. It cannot see
-shape, cannot see whose turn it is beyond the sign, and cannot see a threat.
-Re-fitting five integers to search scores is expected to move Elo **little**,
-and the ROADMAP's Stage-2 bar of +150 Elo is written for the codebook net, not
-for this (D-614).
+three numbers describing how many windows hold how few stones, with the two that
+describe threats pinned. It cannot see shape, cannot see whose turn it is beyond
+the sign, and cannot see a threat. **The expectation is null-to-small in EITHER
+direction.** Two things are registered rather than left to be explained
+afterwards: the ROADMAP's Stage-2 bar of +150 Elo is written for the codebook
+net and not for this (D-614); and **the dry run leaned POSITIVE for the
+candidate**, which is recorded here so that a positive governed result is not
+presented as a surprise and a negative one is not presented as expected. The dry
+run is 24 openings of a different book and is not evidence.
 
-**h0 is a FINDING and not a failure**: it says the v0 FEATURE SET is the limit
-rather than its weights, which is exactly Phase 2's premise — and Phase 2
-proceeds on it either way. **h1 moves the committed weights** as an artifact
-digest, with the pin re-recorded and R4's cap re-test scheduled (D-613).
+**There is no pre-named second arm.** The matrix's revision 2 named one on a
+diagnostic that round 2 measured to be a scale statistic, and naming a second arm
+on such a number is D-614's own case one arm later. If J returns h0, that is the
+finding.
 
-## §8 What this design does not decide
+**h0 is a FINDING and not a failure** (R7, D-623 as amended by D-627): it says the v0 FEATURE SET is
+the limit rather than its weights, which is Phase 2's premise — and Phase 2
+proceeds on it either way. **h1 moves the committed weights**, with the pin
+re-recorded and R4's cap re-test scheduled (D-613).
 
-**The named successor if h0 is the CENSORING fix, not the link function.**
-`wp22_phase1_fit_finding.md` measures that excluding `mate_in` / `mated_in` rows
-by kind drops 48 % of every position in the corpus holding a five-stone window,
-and drops them on one side of the question — so `w5` is fitted to lines that
-did not convert. A mate row is not missing data; it is the observation *"this
-position's value is at or beyond the band"*, which a censored likelihood uses.
-**The sigmoid-link variant moves behind it.** Both are named HERE, before the
-SPRT, which is what keeps the later choice from being a post-hoc one.
+**Why the labels are 400 000-node searches and the verdict is at 50 000**
+(review Q-3): the label is a TARGET and the seat is an INSTRUMENT. The target is
+the best estimate of a position's value the project can afford; the seat is the
+standing budget every other strength claim in this project was taken at, so a
+verdict here is comparable with those. The gap is registered as a limit: a table
+fitted to deep scores may suit a deeper seat better than the one it is judged
+at, and this design does not measure that.
+
+## §10 What this design does not decide
+
+**The censored-likelihood successor revision 2 named is RETIRED before it was
+built** (D-621, review M-3). Revision 2 said the exclusion drops the rows where a
+five-window CONVERTED; measured, the direction is inverted. Adding those rows
+back adds no sign variation, so a censored likelihood cannot repair a regressor
+that has nothing to identify. **What replaces it is the split of §2.**
+
+**Nothing here decides Phase 2**, whose premise memo is
+`wp22_phase2_premise.md` and whose measured finding is that the ROADMAP's
+length-11 codebook is not supported by this corpus.
+
+**Nothing here decides the quiet-to-tactical balance.** §4 pins it because the
+filtered rows carry no evidence about it; that is a choice no evidence in this
+corpus can make, and it is registered as a limit rather than argued away.
+
+**Nothing here licenses reading the discarded tempo term as a finding about the
+game.** It is a nuisance parameter estimated from labels whose unit is the
+committed table's own.

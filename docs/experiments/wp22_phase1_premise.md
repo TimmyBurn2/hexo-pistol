@@ -1,4 +1,4 @@
-# WP-2.2 Phase 1 — premise memo (D-477)
+# WP-2.2 Phase 1 — premise memo (D-477), revision 2.
 
 Quoted at `71fa6f1`. Every claim below is a quotation or a file:line, and the
 two findings are marked as such.
@@ -85,9 +85,21 @@ the key is absent"*.
 
 | dispatch clause | where it already lives |
 |---|---|
-| weights loaded from an artifact behind a config key | `config.eval.weights_file`, read at `crates/pistol-cli/src/bin/pistol.rs:88`; loader `crates/pistol-eval/src/weights.rs:45-63` |
-| artifact digest in the identity line | `crates/pistol-cli/src/bin/pistol.rs:97` emits `weights_sha256 <digest>`; the arena REFUSES a mismatch (`crates/pistol-arena/src/handshake.rs:116-157`) |
+| weights loaded from an artifact behind a config key | `config.eval.weights_file`, read at `crates/pistol-cli/src/bin/pistol.rs:90`; loader `crates/pistol-eval/src/weights.rs:45-63` |
+| artifact digest in the identity line | `crates/pistol-cli/src/bin/pistol.rs:97` emits `weights_sha256 <digest>` |
 | every committed config already points at the file | 21 configs carry `weights_file = "configs/eval_v0_weights.toml"` |
+
+**WHAT REFUSES A MISMATCH, corrected in revision 2 because revision 1 named the
+wrong code and the error pointed the wrong way.** `handshake.rs:116-164` refuses
+a DUPLICATED or malformed weights line and compares nothing across seats. The
+refusals of a cross-seat MISMATCH are `crates/pistol-arena/src/capture.rs:151`
+(a capture's two seats must attest one engine) and
+`crates/pistol-arena/src/replay.rs:239-246` (a replay against its source report).
+**This is good news for the SPRT and not bad**: two SPRT seats carrying DIFFERENT
+weight tables are not refused, which the design's registered dry run confirms by
+running — its report carries a different `weights_sha256` on each seat and a
+verdict line. Revision 1's text would have told a successor the run was
+impossible.
 
 **The clause that cannot be built as written is "when the key is absent".**
 Hard rule 1 forbids a code-side default and makes a missing key a named error,

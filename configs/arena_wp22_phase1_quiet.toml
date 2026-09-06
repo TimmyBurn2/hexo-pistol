@@ -1,0 +1,63 @@
+# WP-2.2 Phase 1 — THE GOVERNED SPRT: the quiet-term fit against the committed
+# table. Authored FROM the pre-registration docs/experiments/wp22_phase1_design.md
+# section 9, which fixes every value below.
+#
+# ONE BINARY, TWO CONFIGS DIFFERING IN EXACTLY ONE KEY: `eval.weights_file`. The
+# arena's handshake carries each seat's `weights_sha256`, so which table each seat
+# evaluated with is pinned by content in the report rather than by this file's
+# say-so. Two seats naming DIFFERENT weight tables is not refused — a capture's
+# two seats must attest one engine, an SPRT's two need not, and the registered
+# dry run confirms it by running.
+#
+# Validate this file with tools/config_check.sh.
+
+schema_version = 2
+
+[run]
+openings_file = "crates/pistol-cli/tests/fixtures/random_openings_v2.txt"
+
+# THE RESERVED HOLDOUT'S FIRST 400, recorded in docs/book_v2_ledger.md in this
+# same commit. The fit's corpus was drawn from 13..3499, so this slice is unseen
+# BY CONSTRUCTION rather than by anybody's care — which is what makes it a
+# holdout for a table fitted to that corpus.
+openings_take = 400
+openings_skip = 3500
+
+# An evaluation horizon, never a game rule (game rule 6). REGISTERED FROM A
+# MEASUREMENT: the dry run leaves 45.8 % of games undecided at 40 and 25.0 % at
+# 60, for 45 % more wall time. A capped game carries no signal, and the reserved
+# holdout is the scarce resource here, not the clock.
+turn_cap = 60
+
+n_workers = 4
+
+# The liveness watchdog. It can end a run and it can never produce a game result
+# (docs/decisions.md D-159).
+hang_timeout_ms = 120000
+
+[budget]
+# The standing instrument budget: every other strength claim in this project was
+# taken at it, which is what makes this verdict comparable with those.
+kind = "nodes"
+value = 50000
+
+[sprt]
+elo0 = 0.0
+# +10, the bound the optimization arc's null-expected runs carried. The
+# registered expectation is null-to-small in either direction, so the bound is
+# set where a small true effect is still detectable.
+elo1 = 10.0
+alpha = 0.05
+beta = 0.05
+
+[engine_a]
+label = "quiet_fit"
+binary = "target/release/pistol"
+binary_sha256 = "d1d9465cf327de7cdf4d70fb4852ae80edd6fb54a5009929e38d619f1bfd53ae"
+config = "configs/instrument_quiet_fit_v0.toml"
+
+[engine_b]
+label = "committed"
+binary = "target/release/pistol"
+binary_sha256 = "d1d9465cf327de7cdf4d70fb4852ae80edd6fb54a5009929e38d619f1bfd53ae"
+config = "configs/instrument_v0.toml"
