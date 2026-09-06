@@ -849,17 +849,23 @@ def _free_directions(kind, index):
     raise AssertionError(f"no free directions stated for kind {kind!r}")
 
 
-def _is_minimiser(train, quiet, tempo, directions):
-    """Residual orthogonal to every free direction AND to the intercept."""
+def _minimiser_conditions(train, quiet, tempo, directions):
+    """The two KKT conditions, REPORTED SEPARATELY and not folded into one bool.
+
+    Folded, the intercept condition alone rejects a rescale, and a row whose
+    FREE-DIRECTION list had gone empty would still look defended — measured, a
+    mutant that emptied the `both` row's directions survived exactly that way.
+    The free-direction condition is the one that carries the pin's meaning, so
+    the negative control is held against it by name.
+    """
     residuals = [row["label"] - tempo - sum(FIT.signed(row)[k] * quiet[k] for k in range(3))
                  for row in train]
     scale = sum(abs(r) for r in residuals) + 1.0
-    for d in directions:
-        gradient = sum(r * sum(d[k] * FIT.signed(row)[k] for k in range(3))
-                       for r, row in zip(residuals, train))
-        if abs(gradient) > 1e-6 * scale:
-            return False
-    return abs(sum(residuals)) < 1e-6 * scale
+    gradients = [sum(r * sum(d[k] * FIT.signed(row)[k] for k in range(3))
+                     for r, row in zip(residuals, train))
+                 for d in directions]
+    free_ok = bool(directions) and all(abs(g) <= 1e-6 * scale for g in gradients)
+    return free_ok, abs(sum(residuals)) < 1e-6 * scale
 
 
 def _rescaled_free_solve(kind, index, value, quiet_free, tempo_free, committed):
@@ -939,16 +945,18 @@ def test_every_options_row_is_a_MINIMISER_and_a_rescale_of_the_free_solve_is_not
             directions = _free_directions(kind, index)
             check(f"row '{name}' holds its pin",
                   _holds_the_pin(kind, index, value, quiet, committed), (name, quiet))
+            free_ok, intercept_ok = _minimiser_conditions(train, quiet, tempo, directions)
             check(f"row '{name}' is a MINIMISER over the directions its pin leaves free",
-                  _is_minimiser(train, quiet, tempo, directions), (name, quiet))
+                  free_ok and intercept_ok, (name, quiet, free_ok, intercept_ok))
             control, control_tempo = _rescaled_free_solve(
                 kind, index, value, quiet_free, tempo_free, committed)
             check(f"the negative control for '{name}' holds the same pin",
                   _holds_the_pin(kind, index, value, control, committed), (name, control))
-            check(f"and the rescaled free solve FAILS the check for '{name}', or the "
-                  f"check is not telling a minimiser from a rescale",
-                  not _is_minimiser(train, control, control_tempo, directions),
-                  (name, control))
+            control_free, _control_intercept = _minimiser_conditions(
+                train, control, control_tempo, directions)
+            check(f"and the rescaled free solve FAILS the FREE-DIRECTION condition for "
+                  f"'{name}', which is the one the pin's own geometry decides",
+                  not control_free, (name, control))
 
 
 def test_the_interior_claim_is_CHECKED_per_row_and_can_answer_no():
