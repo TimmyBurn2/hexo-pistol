@@ -44,8 +44,12 @@ pub struct Openings {
 /// Read `take` openings from `path`, starting after `skip`, refusing anything
 /// that is not a fixture.
 ///
-/// A contiguous window: the book is emitted in content-hash order, so any
-/// window is as much a sample as a prefix is (docs/decisions.md D-143), and
+/// A contiguous window, and the reason is the emission order each book states
+/// in its OWN header rather than one order for all of them: `game_hash_asc` for
+/// the corpus fixture (docs/decisions.md D-143) and `generation_order` for the
+/// random books, whose draws are independent so that a prefix is already a
+/// sample. Neither order can correlate with an opening's strength, which is
+/// what makes any window as much a sample as a prefix is. And
 /// `skip t, take t` is disjoint from `skip 0, take t` by construction — which
 /// is what a confirmatory run on the SAME book needs (docs/decisions.md D-202;
 /// WP-1.3's confirmation had to move to the other book for want of this knob).
