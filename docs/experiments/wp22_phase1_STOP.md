@@ -1,5 +1,26 @@
 # WP-2.2 Phase 1 — STOP: three gates, three failures, and the one division nobody did
 
+> **REOPENED BY THE OPERATOR (D-631), AND THIS DOCUMENT IS NOW THE RECORD OF THE
+> STOP RATHER THAN THE STATE.** The operator granted at most two further rounds
+> on the condition that the next be clean. Revision 4 of the design and of the
+> matrix answer the findings below by running things rather than arguing:
+>
+> - **The power is MEASURED** with the project's own shipped simulator, which
+>   was in the tree the whole time. The registered test had power **0.0015**;
+>   the alternative and the turn cap now come from rules stated before their
+>   readings, and the cap's measurement is taken on a self-match carrying no arm
+>   information (design §9.1, §9.2).
+> - **The matrix's uniqueness claim is DELETED**, and `tools/texel/options.py`
+>   now prints the table that refutes it — no pin holds every exchange rate.
+> - **D-627's sharper ground is withdrawn** (D-632): the row it said the deleted
+>   clause would have selected was missing from the matrix.
+> - **The committed dry-run config has been run**, and its report's own
+>   `config_sha256` is the committed file's.
+>
+> The two rulings this document asks for are **still open**, and the second one —
+> what a run at these bounds is for — is now answerable with numbers it did not
+> have.
+
 ## ONE LINE FOR THE MORNING
 
 **There is no Stage-2 Elo number, and what replaces it is that the SPRT which

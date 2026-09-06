@@ -1,49 +1,29 @@
-# WP-2.2 Phase 1 — the quiet-term fit of eval v0: design and run registration, revision 3.
+# WP-2.2 Phase 1 — the quiet-term fit of eval v0: design and run registration, revision 4.
 
-> **STOPPED, AND NOT PATCHED INTO LOOKING PASSED.** This revision FAILED its
-> fresh REVIEW-design with five MAJOR (`wp22_phase1_design_rev3_REVIEW.md`), and
-> the option matrix that supplies its §4 selection FAILED the third and last
-> round of its grant. **The registered SPRT in §9 may not launch**, and no
-> revision 4 is written here: the loop grant forbids a self-granted round, and
-> the corrections below are recorded in the append-only log rather than folded
-> into the text that failed.
+> **REVISION 4 UNDER THE OPERATOR'S GRANT (D-631), AND EVERY FIX HERE WAS RUN
+> RATHER THAN ARGUED.** Revision 3 FAILED its fresh REVIEW-design with five
+> MAJOR (`wp22_phase1_design_rev3_REVIEW.md`) and D-630 recorded the STOP; the
+> operator granted at most two further rounds on the condition that the next be
+> clean. The three failed rounds share one shape — a fix that discharges a
+> finding's SENTENCE and re-creates its PROPERTY one step to the left — so
+> nothing below is asserted about an instrument that has not been executed.
 >
-> - **§9's bounds cannot return §9's own registered outcome.** At `elo0 0` /
->   `elo1 10` the test needs **3 554 pairs** in expectation and §9 caps it at
->   400; `h0` has probability at most 0.001 at every effect simulated (**D-628**).
-> - **§2's "no sign variation anywhere in the corpus" is false for `g4`** by
->   1 593 rows, all of them `mate_in` rows clause 1 removes. The two tactical
->   entries are pinned for two different reasons (**D-629**).
-> - **§3's retired "forced win" ground had survived in the instrument**, its
->   printed receipt and its tests; that is corrected in the code at this
->   revision, and the predicate is now named for what it tests.
-> - What is owed, what stands, and what the operator decides: **D-630** and
->   `wp22_phase1_STOP.md`.
-
-Governing revision: the commit that carries this file. **The four instruments §4
-and §5 name do not exist before it** — they land in it, which is what
-`docs/process.md`'s *Instrument governing revision* asks for and what revision 2
-promised instead. Revision 2 FAILED its first fresh review with 8 MAJOR
-(`wp22_phase1_design_REVIEW.md`); this revision closes those and re-poses the
-phase on operator ruling R6 (D-622, corrected by D-626), which narrows what is
-fitted.
-
-**This document is two kinds at once and the difference matters for D-483.**
-§1-§8 are DESIGN: mechanisms, invariants and tests, carrying no measured
-numbers — those live in `matrix_wp22_quiet_scale.md` and in
-`artifacts/wp22_phase1_quiet/`. **§9 is a RUN REGISTRATION**, and a registration
-states its bounds, its cost and its dry run on its own face
-(`docs/process.md`, *Cost, replication, and the second instrument*).
-
-Premise: `wp22_phase1_premise.md`. Selection: `matrix_wp22_quiet_scale.md`,
-attacked by a fresh DECISION-RED-TEAM before selection.
+> - **§9's power is MEASURED**, with the project's own shipped simulator, which
+>   existed in the tree the whole time and which revision 3 never ran. The
+>   registered 400-pair / `elo1 10` test had power **0.0015**.
+> - **§9's alternative and its turn cap now come from RULES stated before the
+>   readings**, and the cap's measurement is taken on a SELF-MATCH carrying no
+>   arm information.
+> - **§2 separates the two grounds** for pinning `w4` and `w5` (D-629).
+> - **The committed dry-run config has actually been run** and its report
+>   replaces the scratchpad ones.
 
 ## §1 What this phase changes, and what it does not
 
-**It may change at most three integers** in the committed weight table, and only
-on h1. It changes no code on the search path, no config key, no schema and no
+**It may change at most TWO integers** in the committed weight table, and only
+on h1: §4 pins the third at its committed value. It changes no code on the search path, no config key, no schema and no
 protocol line. It adds offline tooling under `tools/texel/`, which **gate 18
-already runs**; two behaviour-named Rust tests; one candidate weight document;
+already runs**; three behaviour-named Rust tests; one candidate weight document;
 and two arena configs with the ledger row that spends their openings.
 
 **The loader it would otherwise have had to build already exists** (premise §4),
@@ -58,11 +38,17 @@ position is recorded at a turn boundary, so the mover never holds a live
 five-window and the mover-relative regressor takes one sign only. R6 (D-622)
 generalises that into a rule.
 
-- **TACTICAL — `w4`, `w5`.** A window holding four own stones and no opponent
-  stone has two empty cells, and game rule 3 gives the mover TWO stones a turn.
-  **Both regressors have no sign variation anywhere in the corpus** (D-626), so
-  neither can report what such a window is worth to its OWNER, and a fit to them
-  could only ever run backwards.
+- **TACTICAL — `w4`, `w5`, and they are pinned for TWO DIFFERENT REASONS**
+  (D-629, correcting a sentence this section stated for both). **`g5` has no
+  sign variation anywhere in the corpus**, and the reason is structural: game
+  rule 4 completes a win the instant a stone forms six, so a mover holding a
+  live five-window cannot be recorded at a turn boundary at all. **`g4` has no
+  sign variation in the FITTED POPULATION**, which is a weaker and different
+  fact: it is positive in 1 593 positions of the corpus, every one of them a
+  `mate_in` row that §3's clause 1 removes. So the positive evidence for `w4`
+  exists and this phase's own exclusion is what drops it. **What pins both is
+  the same measurement**: on the fitted rows their regressors are identically
+  zero, so the objective's curvature in them is exactly zero.
 - **QUIET — `w1`, `w2`, `w3`.** What the search cannot resolve inside its own
   window and must ask the evaluation about.
 
@@ -164,8 +150,15 @@ every entry strictly below the decided window's value.
 when the filtered population is empty; when a regressor takes ONE SIGN on the
 fitted rows — which is D-621's condition as a machine check, and it is on the
 SIGNS because one-sidedness leaves the normal matrix well conditioned and a rank
-test cannot see it; when the real-valued answer it is about to round is not
-schema-feasible; and when rounding would carry an entry onto the pinned ceiling.
+test cannot see it. **That guard sits on the CONTRAST solve and not on the
+answer path**, which computes the pinned-intercept model instead; it is reached
+on every run because the contrast is always computed, and a successor who
+deleted the contrast would remove the guard with every test still green; when the real-valued answer it is about to round is not
+schema-feasible; and when rounding would carry an entry onto the pinned ceiling — the last of
+which is UNREACHABLE on the registered path, where the ceiling is the pinned
+tactical entry and the quiet entries sit far below it. It is kept for a caller
+that pins a smaller one, and it is named as unreachable here rather than left to
+look like coverage.
 Singular active sets are COUNTED and reported rather than swallowed.
 
 **There is no post-hoc optimality check beside the enumeration, deliberately.**
@@ -278,12 +271,13 @@ a clean checkout and make the run unreproducible from the tree.
 | `budget` | `nodes`, 50 000 | the standing instrument budget; node-matched |
 | `openings_file` | `random_openings_v2.txt` | the successor book |
 | `openings_skip` / `openings_take` | **3500 / 400** | the reserved holdout's first 400. The fit's corpus was drawn from `13..3499`, so this slice is unseen BY CONSTRUCTION |
-| `turn_cap` | **60** | an evaluation horizon, never a game rule (rule 6). **Registered from the dry run below**, which measures that 40 leaves nearly half the games undecided and 60 leaves a quarter, for 45 % more wall time — the holdout is the scarce resource, not the clock |
+| `turn_cap` | **60** | an evaluation horizon, never a game rule (rule 6). Fixed by the RULE and the SELF-MATCH of §9.1, not by a reading of the arm comparison |
 | `n_workers` | 4 | as every prior governed arena run |
 | `hang_timeout_ms` | 120 000 | the liveness watchdog; it can end a run and can never produce a result (D-159) |
-| `elo0` / `elo1` | 0.0 / 10.0 | the bounds the optimization arc's null-expected runs carried |
+| `elo0` / `elo1` | **0.0 / 50.0** | fixed by the RULE and the measured power of §9.2. NORMALIZED Elo, which is not the unit of the ROADMAP's +150 Elo bar |
 | `alpha` / `beta` | 0.05 / 0.05 | as every prior SPRT in this project |
 | maximum pairs | **400**, the take | a cap the registration fixes, not the run |
+| measured power | **0.9335** at `truth = elo1`; alpha **0.0656** at `truth = elo0` | §9.2, and both are on this document's face because a registration that states its cost and not what it can conclude is incomplete (D-628) |
 
 **The ledger row lands in the same commit as this config** —
 `docs/book_v2_ledger.md`'s own rule, which revision 2 did not meet (review M-2).
@@ -294,15 +288,82 @@ at run time.
 **Reported**: n, distinct_n, pentanomial, llr_pair, verdict, per-side compute.
 
 **A THIRD OUTCOME IS REGISTERED, because two are not enough.** An SPRT at these
-bounds need not cross either within 400 pairs, and both dry runs returned
-`inconclusive_at_game_cap`. **That outcome is neither h0 nor h1 and licenses
-neither**: it says the run was too small to separate a ±10 Elo effect from
-nothing, and it is recorded as such rather than read as a null. It is registered
-here so that reading it as h0 after the fact is foreclosed. **What bounds the run
-at 400 is the HOLDOUT and not the clock** — fourteen minutes of machine time
-against 400 of the 1 000 openings D-568 reserved, on which two other packages
-have standing claims. **What it does not block**: Phase 2, which proceeds on any
-of the three outcomes (R7, D-623).
+bounds need not cross either within 400 pairs. **That outcome is neither h0 nor
+h1 and licenses neither**, and its measured probability is in §9.2. What bounds
+the run at 400 is the HOLDOUT and not the clock. **What it does not block**:
+Phase 2, which proceeds on any of the three outcomes (R7, D-623).
+
+### §9.1 The turn cap, by a rule stated before its reading
+
+Revision 3 chose `turn_cap 60` from the dry run's capped fractions — a reading
+taken after the numbers existed, in the same two runs that showed which cap
+favoured the candidate. That is the post-hoc threshold move the Process section
+forbids, whether or not it biased anything, and it is replaced.
+
+**THE RULE, stated first**: the cap is the smallest value in the grid
+`{40, 60, 80}` whose capped fraction is at most **0.30**.
+
+**THE MEASUREMENT, on a SELF-MATCH that carries no arm information**: the
+committed engine in BOTH seats, 24 openings of `random_openings_v1.txt` at
+`openings_skip = 100` — a different slice from the dry run's — so the run cannot
+prefer a cap on the arms' behalf.
+
+| `turn_cap` | capped fraction | wall, 24 openings |
+|---|---|---|
+| 40 | 0.375 | 35.9 s |
+| **60** | **0.250** | 46.1 s |
+| 80 | 0.208 | 56.2 s |
+
+The rule returns **60**. **It is the same value revision 3 chose, and saying so
+is the point**: what changed is the ground, not the answer, and a rule that
+happens to confirm a previous reading is still the only thing that makes the
+reading defensible.
+
+### §9.2 The power, MEASURED — and what this run cannot answer
+
+**Revision 3 registered bounds, a cap, a cost and a dry run, and never computed
+what the test could return.** `crates/pistol-arena/examples/sprt_power.rs` is a
+shipped instrument that has been in the tree since the book_v2 registration and
+was not run. It is run here, on the DRY RUN'S OWN PENTANOMIAL `2, 3, 8, 7, 4`,
+which is this engine pair's own pair-outcome shape rather than a coin's.
+
+| pairs | `elo1` | power at `truth = elo1` | alpha at `truth = 0` | inconclusive |
+|---|---|---|---|---|
+| **400** | **10** | **0.0015** | — | 0.9985 |
+| 1 000 | 10 | 0.0866 | — | 0.9091 |
+| 4 000 | 10 | 0.6970 | 0.0360 | 0.2670 |
+| 8 000 | 10 | **0.9045** | 0.0471 | 0.0484 |
+| 400 | 40 | 0.8625 | 0.0558 | 0.0954 |
+| **400** | **50** | **0.9335** | **0.0656** | 0.0211 |
+| 1 000 | 30 | 0.9189 | 0.0518 | 0.0328 |
+
+**THE RULE, stated before the reading**: the alternative is the smallest value
+in the grid `{10, 20, 30, 40, 50, 60}` whose measured power at the registered
+pair cap is at least **0.90**; if no value reaches it, the run is not
+registered. At 400 pairs the rule returns **50**.
+
+**WHAT THIS RUN CAN AND CANNOT CONCLUDE, registered so that neither is read
+after the fact.** h1 says the candidate is at least 50 normalized Elo better,
+which would be a large effect and a real finding. **h0 says only that it is not
+50 normalized Elo better.** It does **NOT** answer R7's *"does this corpus move
+Elo at all"*: that question is `elo1 = 10`, and at 400 pairs its power is
+**0.0015**. A reader who takes h0 here for R7's h0 has taken a much weaker
+statement for a much stronger one.
+
+**The alpha at the registered point is 0.0656 against a nominal 0.05**, because
+a capped sequential test truncates. It is stated rather than left to be found.
+
+**THE SUCCESSOR THAT WOULD ANSWER R7, sized rather than gestured at.** `elo1 = 10`
+reaches power 0.90 at **8 000 pairs** — measured, not extrapolated. That is
+about **4.5 hours** at the dry run's measured 2.04 s per opening, which is
+affordable; what is not available is the openings. `docs/book_v2_ledger.md`
+holds 600 unspent after this run, and the sweep's `13..3499` are the fit's own
+training openings. So it needs a **`book_v3` of about 8 500 openings** —
+`ceil_to_500(8000 + 500)` by `book_v2_registration.md` §4's own rule — and that
+is a PACKAGE and not a paragraph: `BookVersion` in
+`crates/pistol-cli/src/random_openings/mod.rs` has no `V3` variant, so it needs
+a code change, a registration under book_v2's discipline, and a committed
+fixture.
 
 **COST, measured rather than remembered.** The dry run below took 49.0 s of wall
 for 24 openings at 4 workers with `turn_cap 60`, so the registered 400 openings
@@ -334,22 +395,45 @@ use (D-505) and a dry run is not a governed use.
 three numbers describing how many windows hold how few stones, with the two that
 describe threats pinned. It cannot see shape, cannot see whose turn it is beyond
 the sign, and cannot see a threat. **The expectation is null-to-small in EITHER
-direction.** Two things are registered rather than left to be explained
-afterwards: the ROADMAP's Stage-2 bar of +150 Elo is written for the codebook
-net and not for this (D-614); and **the dry run leaned POSITIVE for the
-candidate**, which is recorded here so that a positive governed result is not
-presented as a surprise and a negative one is not presented as expected. The dry
-run is 24 openings of a different book and is not evidence.
+direction**, and against an alternative of 50 normalized Elo that makes h0 the
+likely outcome. Three things are registered rather than left to be explained
+afterwards:
+
+- the ROADMAP's Stage-2 bar of **+150 Elo is a different unit** from this
+  registration's `elo1 = 50` normalized Elo, and the two are not comparable;
+- **the dry run leaned POSITIVE for the candidate** (`nelo_pair +71.67`,
+  `ci95 ±98.29` at 24 pairs), so a positive governed result is not a surprise;
+- and **a third receipted run leaned NEGATIVE** — `dryrun_report.txt`, four
+  openings at `turn_cap 40`, `nelo_pair −41.53`. Recording only the two that
+  agreed with each other would be the selection this paragraph exists to
+  prevent. All three are inconclusive and none is evidence.
 
 **There is no pre-named second arm.** The matrix's revision 2 named one on a
 diagnostic that round 2 measured to be a scale statistic, and naming a second arm
-on such a number is D-614's own case one arm later. If J returns h0, that is the
-finding.
+on such a number is D-614's own case one arm later.
 
-**h0 is a FINDING and not a failure** (R7, D-623 as amended by D-627): it says the v0 FEATURE SET is
-the limit rather than its weights, which is Phase 2's premise — and Phase 2
-proceeds on it either way. **h1 moves the committed weights**, with the pin
-re-recorded and R4's cap re-test scheduled (D-613).
+**WHAT EACH OUTCOME LICENSES, and h0 here is WEAKER than R7's h0.** This is the
+correction §9.2 forces and it is the one a reader is most likely to get wrong:
+
+- **h1** — the candidate is at least 50 normalized Elo better. A large effect,
+  and a real finding: the corpus moved Elo. **h1 moves the committed weights**,
+  with the pin re-recorded and R4's cap re-test scheduled (D-613).
+- **h0** — the candidate is **not** 50 normalized Elo better. **It does NOT say
+  the v0 feature set is the limit**, which is R7's h0 and needs `elo1 = 10` and
+  8 000 pairs. Reading this h0 as that one takes a weak statement for a strong
+  one.
+- **inconclusive at the cap** — neither, and its measured probability is 0.0211.
+
+**Phase 2 proceeds on all three** (R7, D-623 as amended by D-627 and D-632), so
+none of them gates anything downstream; the run's value is evidential.
+
+**WHAT BECOMES OF THE TWO COMMITTED CONFIGS ON A NON-h1 VERDICT**, because
+otherwise the tree keeps a gate-validated engine config pointing at an
+unaccepted table with no document saying so: `configs/eval_v0_quiet_fit_weights.toml`
+and `configs/instrument_quiet_fit_v0.toml` STAY, and the verdict is recorded in
+this document's own closure section. They are the pin of a run that happened,
+which is the same reason `configs/instrument_r2_v0.toml` outlived the policy it
+lost to (D-194).
 
 **Why the labels are 400 000-node searches and the verdict is at 50 000**
 (review Q-3): the label is a TARGET and the seat is an INSTRUMENT. The target is

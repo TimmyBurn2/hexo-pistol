@@ -8,6 +8,7 @@ and the census tallies, so all three are driven.
 
 import hashlib
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -92,6 +93,62 @@ def test_dead_window_scores_zero():
     lone = F.features(mixed + [((0, 5), 0)])
     check("a third stone adds only windows no opponent stone touches",
           lone[1] > 0, lone)
+
+
+def test_each_axis_is_pinned_separately():
+    """An axis changed in `AXES` moves the window bookkeeping on that axis only.
+
+    A count of eighteen windows through a lone stone survives any permutation of
+    three directions, so it cannot see the change; two stones adjacent ALONG a
+    given axis sharing exactly five windows can, once per axis.
+    """
+    # THE REFERENT IS THE ENGINE'S OWN SOURCE, not a second copy here and not
+    # `F.AXES` itself: a fixture built from the thing under test moves with it,
+    # which is how an axis mutant survived a version of this test.
+    source = pathlib.Path("crates/pistol-core/src/axis.rs").read_text()
+    body = source.split("pub const fn direction(self) -> Coord {", 1)[1].split("}", 1)[0]
+    engine = tuple(
+        (int(a), int(b))
+        for a, b in re.findall(r"Coord::new\((-?\d+),\s*(-?\d+)\)", body)
+    )
+    check("the engine's own source states three directions", len(engine) == 3, engine)
+    check("and features.py's AXES are those three, in that order",
+          tuple(F.AXES) == engine, (F.AXES, engine))
+    for index, (dq, dr) in enumerate(engine):
+        pair = [((0, 0), 0), ((dq, dr), 0)]
+        shared = [w for w, (a, b) in F.window_counts(pair).items() if a == 2]
+        check(f"two stones one step apart along axis {index} share exactly five windows",
+              len(shared) == 5, (index, (dq, dr), len(shared)))
+        far = [((0, 0), 0), ((6 * dq, 6 * dr), 0)]
+        check(f"and six steps apart along axis {index} they share none",
+              not [w for w, (a, b) in F.window_counts(far).items() if a == 2], index)
+
+
+def test_the_six_stone_window_is_spliced_at_the_decided_value():
+    """`weights.rs` splices index 6 as the decided window's value, and the
+    offline path must too. Dropping the splice scores a win as a pile of fives,
+    which no table entry can express and no smaller fixture reveals."""
+    # p1 takes 0,0 1,0 2,0 3,0 4,0 5,0 over four of its own turns; p2 plays far.
+    six = "0,0 -30,1/-30,0 1,0/2,0 -29,1/-29,0 3,0/4,0 -28,1/-28,0 -40,0/5,0"
+    f = F.features(F.stones_of(six))
+    check("the fixture really does hold a six-stone window", f[6] >= 1, f)
+    check("and the value saturates the band, which is what the splice delivers",
+          F.score_p1(f, [2, 12, 60, 300, 1500]) == F.EVAL_MAX, f)
+    check("without the splice the same position would score far below it",
+          sum(f[k] * [2, 12, 60, 300, 1500][k - 1] for k in range(1, 6)) < F.EVAL_MAX)
+
+
+def test_the_mover_alternates_per_TURN_and_three_turns_is_what_shows_it():
+    """Two turns cannot tell per-turn from per-stone: both give [p1, p2, p2].
+    The third turn is where they part."""
+    two = [player for _, player in F.stones_of("0,0 1,0/2,0")]
+    check("two turns cannot distinguish the two rules", two == [0, 1, 1], two)
+    three = [player for _, player in F.stones_of("0,0 1,0/2,0 3,0/4,0")]
+    check("three turns do: the third turn is the FIRST player's again",
+          three == [0, 1, 1, 0, 0], three)
+    four = [player for _, player in F.stones_of("0,0 1,0/2,0 3,0/4,0 5,0/6,0")]
+    check("and the fourth is the second player's",
+          four == [0, 1, 1, 0, 0, 1, 1], four)
 
 
 def test_per_side_counts_name_the_owner_the_signed_vector_cannot():
@@ -625,6 +682,47 @@ def test_extract_REFUSES_a_join_that_addresses_the_wrong_record():
                   "key_full" in str(why) and "manifest says" in str(why), str(why))
 
 
+def test_options_is_driven_and_every_pin_is_a_MINIMISER():
+    """`options.py` regenerates the option matrix's own tables, so it produces
+    recorded numbers and carries a test driving the shipped script.
+
+    The property that matters is that each row is a constrained MINIMISER under
+    its pin and not a rescale of a free solve — the defect the matrix was
+    corrected for — so the pin is checked to hold EXACTLY in the real answer.
+    """
+    import options as OPT
+    with tempfile.TemporaryDirectory() as tmp:
+        path = f"{tmp}/rows.txt"
+        synth_rows(path, [3, 20, 90, 400, 2000], n=4000)
+        rows = FIT.read_rows(path)
+        for row in rows:
+            behind = row["b"] if row["to_move"] == "p1" else row["a"]
+            for k in (1, 2, 3):
+                behind[k] += 6
+            g = FIT.signed(row)
+            row["label"] = sum(g[k] * [3, 20, 90][k] for k in range(3)) + 500
+        fitted, _ = FIT.select(rows)
+        train, _ = FIT.split(fitted)
+        committed = FIT.committed_table()
+        for label, kind, index, value in OPT.PINS:
+            quiet, tempo = OPT.solve_pinned(train, kind, index, value, committed)
+            if kind == "index":
+                check(f"pin '{label.strip()}' holds its entry exactly",
+                      abs(quiet[index] - value) < 1e-9, (label, quiet))
+            elif kind == "sum":
+                check(f"pin '{label.strip()}' holds the sum exactly",
+                      abs(sum(quiet) - value) < 1e-9, (label, quiet))
+            else:
+                check("the unpinned solve recovers the generating weights",
+                      all(abs(quiet[k] - [3, 20, 90][k]) < 1e-6 for k in range(3)), quiet)
+                check("and recovers the offset it was given", abs(tempo - 500) < 1e-6, tempo)
+        done = subprocess.run([sys.executable, str(HERE / "options.py"), path],
+                              capture_output=True, text=True)
+        check("options.py exits 0", done.returncode == 0, done.stderr[-300:])
+        check("and prints the exchange-rate columns the matrix turns on",
+              "w3/w4" in done.stdout and "sum/w4" in done.stdout, done.stdout[-200:])
+
+
 def test_shipped_script_runs():
     """Drive fit.py as a program, the way a run does."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -648,6 +746,9 @@ def test_shipped_script_runs():
 
 for test in (test_one_stone_features, test_turn_structure,
              test_dead_window_scores_zero,
+             test_each_axis_is_pinned_separately,
+             test_the_six_stone_window_is_spliced_at_the_decided_value,
+             test_the_mover_alternates_per_TURN_and_three_turns_is_what_shows_it,
              test_per_side_counts_name_the_owner_the_signed_vector_cannot,
              test_the_filter_is_a_predicate_on_ownership,
              test_the_filter_reports_every_clause_it_applies,
@@ -669,6 +770,7 @@ for test in (test_one_stone_features, test_turn_structure,
              test_the_sample_takes_the_WHOLE_tactical_stratum_whatever_the_stride,
              test_the_oracle_REFUSES_a_sample_that_misses_the_registered_rule,
              test_the_oracle_FAILS_on_a_disagreeing_engine,
+             test_options_is_driven_and_every_pin_is_a_MINIMISER,
              test_shipped_script_runs):
     print(test.__name__)
     test()

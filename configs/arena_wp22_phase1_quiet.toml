@@ -43,10 +43,18 @@ value = 50000
 
 [sprt]
 elo0 = 0.0
-# +10, the bound the optimization arc's null-expected runs carried. The
-# registered expectation is null-to-small in either direction, so the bound is
-# set where a small true effect is still detectable.
-elo1 = 10.0
+# NORMALIZED Elo, and NOT the unit of the ROADMAP's +150 Elo bar.
+#
+# 50 is RETURNED BY A RULE, not chosen: the pre-registration's section 9.2 fixes
+# the alternative as the smallest value in the grid {10, 20, 30, 40, 50, 60}
+# whose power at the registered pair cap is at least 0.90, measured by
+# `crates/pistol-arena/examples/sprt_power.rs` on this engine pair's own
+# pentanomial. At 400 pairs, 40 gives 0.8625 and 50 gives 0.9335.
+#
+# WHAT THIS COSTS, and the registration says so on its face: h0 here means only
+# "not 50 normalized Elo better", NOT R7's "does this corpus move Elo at all",
+# which is elo1 = 10 and has power 0.0015 at this cap.
+elo1 = 50.0
 alpha = 0.05
 beta = 0.05
 

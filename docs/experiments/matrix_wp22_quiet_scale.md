@@ -1,22 +1,17 @@
-# WP-2.2 Phase 1 — OPTION MATRIX: how the quiet terms are fixed, revision 3.
+# WP-2.2 Phase 1 — OPTION MATRIX: how the quiet terms are fixed, revision 4.
 
-Governing revision: the commit that carries this file, **which also carries the
-instruments §7 names and the design's §9** — revision 2 said that of a commit
-that did not yet exist, which was round 2's M-1 and is the reason this line
-reads as it does.
+Governing revision: the commit that carries this file, which also carries
+`tools/texel/options.py` — the instrument that PRINTS every table below and that
+`test_texel.py` drives. Revision 3's §7 named two scratchpad harnesses that had
+been left unrunnable by a signature change, one of them still computing a table
+this document had withdrawn.
 
-**Round 1 FAILED this matrix with eight MAJOR; round 2 FAILED revision 2 with
-six.** Round 2 found six of round 1's eight genuinely discharged and two
-RE-CREATED one step to the left, plus two new defects: the registered table was
-not what the registered instrument computes, and the ADR line governing what may
-be registered forbade the selected option. **This is the third and last round of
-the grant, and it is REMEDIES ONLY**: every change below discharges a numbered
-finding and introduces no new argument.
+**Rounds 1, 2 and 3 all FAILED** (13 findings, then 6, then 3 MAJOR). Under the
+operator's grant (D-631) this is a fourth revision, and its condition is that it
+be clean: **every number below is printed by a committed instrument, and the
+claim round 3 killed is DELETED rather than refined.**
 
-Reports: `matrix_wp22_quiet_scale_REDTEAM.md` (round 1),
-`matrix_wp22_quiet_scale_REDTEAM_round2.md` (round 2). Measured numbers are
-receipted in `artifacts/wp22_phase1_quiet/` and cited by digest in §7 (round 2's
-m-9). Diagnostics GATE NOTHING (D-614).
+Reports: `matrix_wp22_quiet_scale_REDTEAM.md`, `_round2.md`, `_round3.md`.
 
 ## §1 The decision
 
@@ -97,98 +92,88 @@ razoring or null-move margin, and `MATE_THRESHOLD` 29 000 against `EVAL_MAX`
 
 ## §4 The options
 
-Each table is the exact constrained minimiser of its own model, rounded.
-**The play-change column decides whether an SPRT can measure anything at all**:
-two tables choosing the same move everywhere make a self-match, where no
-likelihood ratio is defined (D-156). Its draw is recorded in §7.
+**§3(b) supersedes the no-intercept family.** Revision 3's table scored six
+tables fitted WITHOUT the tempo term; §3(b) measures that such a fit absorbs a
++247-unit offset into the weights, so every one of them is contaminated in the
+way that section describes. They are not re-scored here. What remains is the
+family §4's model admits: the intercept model under one pin, each row a
+constrained MINIMISER under its own pin rather than a rescale of a free solve.
 
-| # | how the quiet entries are fixed | table | play-change | quiet ρ | `w4 > Σ` |
-|---|---|---|---|---|---|
-| — | *committed, not fitted* | `[2, 12, 60, 300, 1500]` | — | 0.3873 | 300 > 74 |
-| A | free absolute scale, no intercept | `[1, 19, 20, 300, 1500]` | 49.6 % | 0.3850 | 300 > 40 |
-| B | normalise `w3 = 60`, no intercept | `[1, 12, 60, 300, 1500]` | 9.3 % | 0.3773 | 300 > 73 |
-| C | normalise `Σw = 74`, no intercept | `[1, 21, 52, 300, 1500]` | 32.7 % | 0.3972 | 300 > 74 |
-| F | committed SHAPE, one fitted scalar | `[1, 8, 38, 300, 1500]` | 14.1 % | 0.3857 | 300 > 47 |
-| H | free-scale shape re-expressed at `w3 = 60` | `[4, 57, 60, 300, 1500]` | 65.7 % | 0.3868 | 300 > 121 |
-| **J** | **intercept fitted and discarded, `w3` pinned INSIDE the solve** | **`[5, 34, 60, 300, 1500]`** | **48.0 %** | 0.4015 | 300 > 99 |
-| S | no SPRT; report the fit as a finding | — | — | — | — |
+Printed by `tools/texel/options.py`; diagnostics are validation-slice and GATE
+NOTHING (D-614); play-change is 248 corpus positions at `go nodes 50000`,
+drawn every 300th `eval` row so the draw spans all sixteen tranches.
 
-**J's table is corrected from revision 2's `[4, 29, 60, 300, 1500]`** (round 2's
-M-2). Revision 2 registered a table obtained by fitting all three quiet weights
-freely beside the intercept and then RESCALING the result to `w3 = 60`. That
-rescale is the minimiser of nothing, which is the defect §4's own header
-forbids; **the shipped instrument pins `w3` inside the regression and prints
-`[5, 34, 60, 300, 1500]`**, and the two differ on 14.4 % of positions at the
-registered seat. The registered table is now the one the instrument computes.
+| # | the pin | table | play-change | val MSE | resid var | quiet ρ | ALL ρ | **`w3/w4`** | **`Σ/w4`** |
+|---|---|---|---|---|---|---|---|---|---|
+| — | *committed, not fitted* | `[2, 12, 60, 300, 1500]` | — | 724 743 | 663 078 | 0.3873 | 0.2088 | **0.2000** | **0.2467** |
+| **J** | **`w3 = 60`** | **`[5, 34, 60, 300, 1500]`** | **48.0 %** | 762 720 | 635 707 | 0.4015 | 0.2666 | **0.2000** | 0.3300 |
+| P1 | `w1 = 2` | `[2, 35, 64, 300, 1500]` | 46.8 % | 755 424 | 640 639 | 0.4006 | 0.2575 | 0.2133 | 0.3367 |
+| P2 | `w2 = 12` | `[6, 12, 82, 300, 1500]` | 42.7 % | 761 711 | 654 532 | 0.3669 | 0.2343 | 0.2733 | 0.3333 |
+| S | `Σ = 74` | `[4, 32, 38, 300, 1500]` | 52.4 % | 729 303 | 640 056 | 0.3890 | 0.2455 | 0.1267 | **0.2467** |
+| K | *unpinned* | `[5, 33, 67, 300, 1500]` | 45.2 % | 769 834 | 636 034 | 0.4045 | 0.2691 | 0.2233 | 0.3500 |
+| — | no SPRT | — | — | — | — | — | — | — | — |
 
-**Option D — fit the tactical entries under dominance constraints — is not a
+**The two right-hand columns are what the decision is about, and they are why
+revision 3 failed.** The filtered rows carry **no evidence about ANY**
+quiet-to-tactical exchange rate — the tactical regressors are identically zero
+on all 45 271 of them — so every pin holds one rate and moves the others.
+**J holds `w3/w4` at the committed 0.2000 and moves `Σ/w4` from 0.2467 to
+0.3300; S does exactly the reverse.** No row holds both, and the only table that
+holds every rate is the committed one.
+
+**Option D — fitting the tactical entries under dominance constraints — is not a
 row**: its gradient is measured at exactly zero.
 
-**Rounding, all options** (round 2's m-5 added B and C):
+## §5 Recommendation — J, AS A CHOICE AND NOT A DERIVATION
 
-| | real solve | rounded | `w2/w1` real → integer |
-|---|---|---|---|
-| A | `[1.2538, 18.9098, 19.9098]` | `[1, 19, 20]` | 15.08 → 19.00 (+26 %) |
-| B | `[1.0000, 11.7850, 60.0000]` | `[1, 12, 60]` | 11.79 → 12.00 (+2 %) |
-| C | `[1.0000, 20.7671, 52.2329]` | `[1, 21, 52]` | 20.77 → 21.00 (+1 %) |
-| F | `[1.2608, 7.5646, 37.8231]` | `[1, 8, 38]` | 6.00 → 8.00 (**+33 %**) |
-| H | `[3.7785, 56.9864, 60.0000]` | `[4, 57, 60]` | 15.08 → 14.25 (−5 %) |
-| **J** | `[4.8530, 33.6615, 60.0000]` | `[5, 34, 60]` | 6.93 → 6.80 (−2 %) |
+**Revision 3 claimed the pin was the ONLY normalisation holding the
+quiet-to-tactical balance, and that the run would contrast "the shape and
+nothing else". Both are DELETED.** Round 3 measured that J moves `w1/w4` by
+×2.5, `w2/w4` by ×2.8 and `Σ/w4` by 34 %, and supplied the rival row S, absent
+from revision 3's table, that holds the aggregate exactly. The claim was false
+against a column this document itself now prints. **It is deleted rather than
+refined, which is D-424's own remedy, and nothing is put in its place that
+claims more.**
 
-F's real solve carries the committed shape exactly by construction and the table
-that would ship does not, so "committed shape, one fitted scalar" is false of
-what F would run.
+**What is true, and it is a limit rather than a ground**: the pin has to go
+somewhere; every place it can go moves a quantity the corpus is silent about;
+and no measurement here separates the candidates. The diagnostics do not —
+quiet ρ spans 0.3669 to 0.4045 across the family and §5's own bullets below
+measure two of the three columns to be scale statistics. Play-change does not —
+every row changes 42.7 % to 52.4 % of moves, so every row is equally far from a
+self-match. **The selection is underdetermined by the data, and saying so is the
+finding this section carries.**
 
-## §5 Recommendation — J, on the only ground that survives round 2
+**Why J is chosen anyway, stated as a reason for a choice.** R6's split runs
+between the quiet entries and the tactical ones, and `w3` is the entry on the
+quiet side of that boundary. `w3/w4` is therefore the exchange rate the division
+of labour is *about* — how much quiet structure a four outweighs — and holding
+it at the committed value is what makes a J-vs-committed comparison a contrast
+in the quiet SHAPE at the boundary the split names. **This is an argument from
+R6's structure, not from the data, and the data does not support it or refute
+it.**
 
-**Revision 2 claimed steps 1-4 admitted exactly one table. They do not**
-(round 2's M-3), and the claim is withdrawn. Applying the same steps under other
-normalisations of the same intercept model gives, measured:
+**The strongest rival is S, and its reason is recorded so a successor knows the
+choice was contested.** `Σ(quiet)/w4` is what a position's TOTAL quiet value
+trades against a tactical term, which is at least as natural a reading of "the
+balance" as the marginal one. S also has the lowest validation MSE of the family
+and the bias closest to the committed table's. **It is not selected, and the
+honest reason is that one of the two had to be and the boundary argument is the
+one tied to R6's own text.**
 
-| normalisation | table | **`w3/w4`** | quiet ρ |
-|---|---|---|---|
-| **`w3 = 60`** | **`[5, 34, 60, 300, 1500]`** | **0.200** | 0.4015 |
-| `w1 = 2` | `[2, 35, 64, 300, 1500]` | 0.213 | 0.4006 |
-| `w2 = 12` | `[6, 12, 82, 300, 1500]` | 0.273 | 0.3669 |
-| *committed* | `[2, 12, 60, 300, 1500]` | **0.200** | 0.3873 |
+**No second arm is pre-named.** Revision 2 named one on a diagnostic that round
+2 measured to be a scale statistic; naming another on a diagnostic would be the
+same move again, and naming one on a reason would need its own openings, which
+`docs/book_v2_ledger.md` does not have to spare.
 
-**The ground is the `w3/w4` column and nothing else.** `w3` is the coordinate
-ADJACENT to the pinned tactical block, so pinning it at the committed value is
-the only normalisation of the family that leaves the quiet-to-tactical ratio
-exactly where the committed table has it. Under any other pin the top quiet
-entry moves against a pinned `w4 = 300`, so the run would vary **the one
-quantity the filtered rows are measured to be silent about** — the tactical
-regressors are identically zero there — and a verdict could not say whether it
-had measured the shape or the balance. **J-vs-committed is a contrast in the
-shape the corpus determined and in nothing else.** No diagnostic enters this.
-
-**Revision 2's "the two components a scale choice cannot manufacture" is
-DELETED** (round 2's M-4), because it is measurably backwards:
-
-- **Quiet ρ is scale-free but flat across the family** — 0.3873 at every rescale
-  of the committed shape from ×0.5 to ×6.0, and 0.3669-0.4015 across the
-  normalisations above. It separates nothing.
-- **Residual variance and ALL-rows ρ are SCALE statistics.** Rescaling the
-  committed shape with no fit at all moves residual variance 719 668 → 651 200 →
-  713 891 across ×0.05, ×1.75, ×3.0, and ALL-ρ rises monotonically with scale,
-  0.1236 → 0.2905. A pure ×1.75 rescale reaches ALL-ρ 0.2573 and changes play on
-  31.2 %, with nothing fitted.
-
-So the diagnostics support no option over another and are reported here only
-because a matrix with no measured content is the estimate D-291 calls a finding.
-
-**The pre-named second arm is DELETED** (round 2's Q-1). Revision 2 named H on
-ALL-rows ρ, which is the scale statistic above; naming a second arm on it is the
-move D-614 forbids, one arm later. **If J returns h0, that is the finding R7
-registers and Phase 2 proceeds on it.**
-
-**Why not the others.** A: §3(b) measures its whole gain as offset absorption,
-and D-627 removes the clause that would have preferred it. B: one integer from
-the committed table. C and F: their pins move `w3/w4` or their shipped table
-does not carry the shape they are described by. H: the same rescale-of-nothing
-defect J's own row was corrected for. S: R7 makes the SPRT what turns the
-expectation into a measurement, and nothing measured says the run is
-uninformative.
+**On the diagnostics, stated because §4 prints them.** Quiet ρ is scale-free but
+flat: 0.3873 for the committed shape at every rescale from ×0.5 to ×6.0, and
+0.3669-0.4045 across this family. Residual variance and ALL-rows ρ are SCALE
+statistics — rescaling the committed shape with no fit at all moves residual
+variance 719 668 → 651 200 → 713 891 across ×0.05, ×1.75 and ×3.0, and ALL-ρ
+rises monotonically with scale. **They support no option over another**, and
+revision 2's claim that two of them are "components a scale choice cannot
+manufacture" stays deleted.
 
 ## §6 Costs and failure modes
 
@@ -203,11 +188,16 @@ uninformative.
 ## §7 Instruments, receipts, and what is ESTIMATED
 
 - `tools/texel/features.py`, `tools/texel/extract.py`, `tools/texel/fit.py`,
-  `tools/texel/verify_against_engine.py` and `tools/texel/test_texel.py` **at
-  this document's own commit**, which carries them. Written out rather than
-  brace-expanded: the citation gate does not recognise `{a,b}.py` as a path, so
-  the brace form put this document on the GOVERNING list with **zero citations
-  checked** — an addition that looked like coverage and was inert. Round 2's M-1 found revision
+  `tools/texel/options.py`, `tools/texel/verify_against_engine.py` and
+  `tools/texel/test_texel.py` **at this document's own commit**. Written out
+  rather than brace-expanded: the citation gate does not recognise `{a,b}.py` as
+  a path, so the brace form put this document on the GOVERNING list with **zero
+  citations checked** — an addition that looked like coverage and was inert.
+- **`tools/texel/options.py` prints §4's table**, is driven by `test_texel.py`,
+  and reports a pin whose answer the schema cannot hold as `INFEASIBLE` rather
+  than crashing. Revision 3 named two harnesses for these tables that **abort**
+  against the shipped `fit.py`, one of them computing a WITHDRAWN table — the
+  third consecutive revision of that class, and this is what closes it. Round 2's M-1 found revision
   2 claiming this of a commit that did not exist; it is true of this one.
 - **The play-change probe's exact command and draw** (round 2's M-5), which
   revision 2 recorded as an output only:

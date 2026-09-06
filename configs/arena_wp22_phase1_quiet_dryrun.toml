@@ -33,7 +33,10 @@ value = 50000
 
 [sprt]
 elo0 = 0.0
-elo1 = 10.0
+# The GOVERNED run's registered alternative (its section 9.2 rule returns 50 at
+# 400 pairs). A dry run exercises the literal commands, so it carries the same
+# bounds even though it crosses neither: its job is the weights-digest criterion.
+elo1 = 50.0
 alpha = 0.05
 beta = 0.05
 
