@@ -23,7 +23,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import features as F
 
 MANIFEST = "artifacts/arc3r_sweep_deduped_manifest.txt"
-TRANCHE = "/home/tom/pistol-runs/arc3r-sweep/tranche-{}/corpus.txt"
+TRANCHE = "/home/tom/Projects/pistol-corpus/arc3r-sweep/tranche-{}/corpus.txt"
 MOVES, KEY_FULL, TO_MOVE, SCORE_KIND = 2, 5, 6, 7
 DEFAULT_STRIDE = 25
 

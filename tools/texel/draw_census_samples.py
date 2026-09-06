@@ -17,7 +17,7 @@ import pathlib
 import sys
 
 MANIFEST = "artifacts/arc3r_sweep_deduped_manifest.txt"
-TRANCHE = "/home/tom/pistol-runs/arc3r-sweep/tranche-{}/corpus.txt"
+TRANCHE = "/home/tom/Projects/pistol-corpus/arc3r-sweep/tranche-{}/corpus.txt"
 COLUMNS = ("# columns: corpus_index, record_number, key_seq, key_pos, key_full, "
            "depth_turns, result, end")
 BODY_ROWS = 89805

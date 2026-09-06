@@ -206,6 +206,7 @@ m-5 named that gap and it stayed open until closure; this section closes it.
 |---|---|---|
 | `artifacts/wp22_phase1_quiet/` | 23, `-c` 23 of 23 OK | `7d376e314e4d05366f081c70453dabd0efaf43d193474684780d81bb960eef6e` |
 | `artifacts/wp22_review3_export/` | 15, `-c` 15 of 15 OK | `a6a6b96db00ab06656532ab1c1d873578138852fdf20bba681709502bd7608e3` |
+| `artifacts/scratch_export_20260906/` | 415, `-c` 415 of 415 OK | `55929e0a9390a0e1aaf1b343f84f5a3aaced883d08b5241977638afab85745e0` |
 
 The second directory is the round-3 reviewer's own working evidence — its independent
 fit, both oracle runs, the 73-mutant seeding and the re-mutation pass — exported out of
@@ -217,3 +218,12 @@ once already**: `/home/tom/pistol-review-wt` was removed unexported earlier in t
 package and its gate lines survive only transcribed into a report. The rule those two
 episodes are instances of is in CLAUDE.md's Process section; it has now been broken and
 then honoured inside one work package.
+
+**The corpus is no longer where every frozen report says it is.** D-636 moved it to
+`/home/tom/Projects/pistol-corpus/arc3r-sweep/`, because three committed tools read it
+by absolute path and it was sitting in `$HOME` beside eight directories of pure residue
+with nothing in the tree distinguishing them. The three constants are updated and the
+shipped oracle reproduces `ORACLE.txt` line for line at the new path. Reports written
+before 2026-09-06 cite `/home/tom/pistol-runs/…`; they are records of what was run and
+were deliberately not rewritten. The third directory in the table above is those eight
+residue directories, exported before removal.

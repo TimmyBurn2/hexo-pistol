@@ -18,7 +18,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import features as F
 
 MANIFEST = "artifacts/arc3r_sweep_deduped_manifest.txt"
-TRANCHE = "/home/tom/pistol-runs/arc3r-sweep/tranche-{}/corpus.txt"
+TRANCHE = "/home/tom/Projects/pistol-corpus/arc3r-sweep/tranche-{}/corpus.txt"
 
 # labels_file.rs:17-50 — the column order, by name so a reader can check it.
 MOVES, KEY_FULL, TO_MOVE = 2, 5, 6
