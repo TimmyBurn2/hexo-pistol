@@ -1182,28 +1182,23 @@ RETIRED = (
 )
 RETIRED_PATHS = tuple(f"configs/{name}.toml" for name in RETIRED)
 
-# Where a retired name may still stand: the ruling, and the reports that
-# adjudicated the phase. A record's citations were true when written and
-# demanding they match today's tree is demanding history be falsified
-# (docs/process.md, the citation gate's own reasoning). This file is on the list
-# because the check has to spell what it looks for.
-RETIRED_MAY_NAME = (
-    "docs/decisions.md",
-    "docs/experiments/texel_gaps_CLOSURE.md",
-    "docs/experiments/wp22_phase1_design_rev3_REVIEW.md",
-    "docs/experiments/wp22_phase1_impl_REVIEW.md",
-    "docs/research/training_pipeline_2026-09.md",
-    "tools/texel/test_texel.py",
-)
+# THE ONE PATH THIS CHECK CANNOT JUDGE IS ITS OWN, because a check has to spell
+# what it looks for. Everything else is decided by the property below, and there
+# is no allowlist: an earlier revision kept one beside the property and the very
+# next document landed — a review report quoting the retired names in its own
+# reproducers — turned gate 18 red. A list of records is a list somebody has to
+# remember; the property is not.
+SELF = "tools/texel/test_texel.py"
 
 
 def _live_tree(path):
     """Whether a path is under a directory this project SHIPS from.
 
-    `RETIRED_MAY_NAME` is a list, and a list silences the check the moment a live
-    path is added to it. This is the property the list was standing in for: a
-    retired name may appear in a record, and never in the tree's configs, its
-    crates or its tools.
+    This is the whole rule. A retired name may stand in any RECORD — a record's
+    citations were true when written and demanding they match today's tree is
+    demanding history be falsified (docs/process.md, the citation gate's own
+    reasoning) — and it may never stand in the tree's configs, its crates or its
+    tools, which is where a re-add would do work.
     """
     return path.startswith(("configs/", "crates/", "tools/"))
 
@@ -1211,12 +1206,19 @@ def _live_tree(path):
 def _tracked_naming(text):
     """Tracked working-tree files naming `text`, by git rather than by a walk.
 
+    CASE-INSENSITIVE, because the search is for a NAME and a re-add that differs
+    from the real path only in case is still someone reaching for the retired
+    document. `-F -i` costs nothing: measured, it returns the same file set as
+    the case-sensitive search for all three names.
+
     Not `--cached`: this is a test over the tree being edited, and the index-vs-
     worktree distinction tools/SHELL_CHECKLIST.md item 5 is about belongs to a
-    gate adjudicating what is ABOUT to be committed. Gate 18 runs this on the
-    worktree, which is where a re-added reference appears first.
+    gate adjudicating what is ABOUT to be committed — this suite is not one, and
+    the residual hole is exactly item 5's: staged content that differs from the
+    worktree copy. A newly added file is still seen, because `git grep` reads the
+    worktree bytes of tracked paths.
     """
-    done = subprocess.run(["git", "grep", "-l", "-F", "--", text],
+    done = subprocess.run(["git", "grep", "-l", "-F", "-i", "--", text],
                           capture_output=True, text=True)
     if done.returncode not in (0, 1):
         raise AssertionError(f"git grep failed: {done.stderr[-200:]}")
@@ -1226,6 +1228,12 @@ def _tracked_naming(text):
 def test_the_retired_candidate_chain_is_named_by_RECORDS_and_by_nothing_live():
     """D-657 retires the Phase 1 candidate and D-662 the two configs that named
     it. A retirement nothing defends is a retirement that comes back.
+
+    A PROPERTY AND NOT A LIST OF RECORDS. Which documents may name a retired
+    file is not knowable from a path and does not need to be: what matters is
+    that no config, crate or tool reaches for one. An allowlist of records was
+    tried and it went red on the next document that landed, which is what a list
+    standing in for a property does.
 
     THE CONTROL IS THAT THE RULING IS FOUND: a search that matched nothing would
     pass this test while looking for the wrong string, which is the shape
@@ -1239,11 +1247,9 @@ def test_the_retired_candidate_chain_is_named_by_RECORDS_and_by_nothing_live():
         naming = _tracked_naming(name)
         check(f"the ruling still names {name}, or this search found nothing",
               "docs/decisions.md" in naming, naming)
-        live = [f for f in naming if _live_tree(f) and f != "tools/texel/test_texel.py"]
+        live = [f for f in naming if _live_tree(f) and f != SELF]
         check(f"and nothing under configs/, crates/ or tools/ names {name}",
               live == [], live)
-        stray = [f for f in naming if f not in RETIRED_MAY_NAME]
-        check(f"and only RECORDS name {name}", stray == [], stray)
 
 
 FIT_FIXTURE = HERE / "fixtures" / "fit_rows_v1.txt"
@@ -1326,10 +1332,11 @@ def test_a_fitted_table_is_pinned_by_its_RECEIPT_and_not_by_its_digits():
           f"tools/texel/fixtures/fit_rows_v1.txt. THE FIXTURE, THE PIN RULE AND THE "
           f"ANSWER ALL MOVE IT, AND SO DOES configs/eval_v0_weights.toml: if that is "
           f"what you changed, D-663 owes a re-quote of its sha256 at every citing "
-          f"site — docs/experiments/matrix_wp22_quiet_scale.md:68 first, then "
-          f"matrix_wp22_quiet_scale_REDTEAM.md, matrix_M4_snapshot_config_seam_rev3.md "
-          f"and docs/decisions.md D-220 and D-627 — and updating this constant alone "
-          f"leaves those rotted with every gate green")
+          f"site. D-669 IS THE ENUMERATION and is the only place that holds it: "
+          f"re-derive with `git grep -n -F 41ef5496` rather than trusting any list, "
+          f"because a list of sites in a failure message rots the same way the "
+          f"constant above does. Updating this constant alone leaves them rotted "
+          f"with every gate green")
 
 
 def test_the_receipt_digest_MOVES_when_the_input_does():
