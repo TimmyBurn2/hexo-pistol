@@ -293,7 +293,7 @@ both are exercised in §3.
 | item | state | commit |
 |---|---|---|
 | A tempo_constraints = the schema | **CLOSED** | `0587616` |
-| B TX-1 candidate retired / TX-2 fit receipt | **CLOSED** | `77d6f98`, `fed26ee`, `d48174f`, `6b85681` |
+| B TX-1 candidate retired / TX-2 fit receipt | **CLOSED** | `77d6f98`, `fed26ee`, `d48174f`, `6b85681`, `19d565a` |
 | C minimiser check in all six rows | **CLOSED** | `25f4e61`, `8e7fdf0`, `6b85681` |
 | D `game` kept and per-row verified | **CLOSED** | `bd9c8c4`, `6b85681` |
 | E toml header | **CLOSED as DEFERRED** (D-663) | ruling only |
@@ -423,9 +423,13 @@ constant.
 **And the retirement is defended.**
 `test_the_retired_candidate_chain_is_named_by_RECORDS_and_by_nothing_live` reads
 the tracked working tree with `git grep -l -F` and refuses a live reference to any
-of the three, with an allowlist of the records that may go on naming them and a
-CONTROL — the ruling must be found — so a pass cannot come from a search that
-matched nothing.
+of the three — case-insensitively, and by BASENAME because that is what the
+measurement that found the references used — with a CONTROL, the ruling must be
+found, so a pass cannot come from a search that matched nothing. **There is no
+allowlist**: which documents may name a retired file is not knowable from a path
+and does not need to be, so the rule is the property `_live_tree` states — a
+retired name may stand in any record and in no config, crate or tool. An
+allowlist of records was tried first and §7 records what it cost.
 
 ### Item C — six rows, and the two KKT conditions kept apart
 
@@ -581,14 +585,15 @@ touched.
 
 ## §3 Mutation evidence (R2, D-55y)
 
-Worktree `/home/tom/pistol-wt/texel-gaps`, harness
-`artifacts/texel_gaps/mutants_texel.py`. **THREE RUNS ARE KEPT AND THE CLOSING
-ONE IS THE LAST**: `mutants_texel_d48174f_M2ALIVE.log` (six mutants, M2 alive),
-`mutants_texel_8e7fdf0.log` (six, M2 dead elsewhere, harness exit 1) and
-`mutants_texel_6b85681.log` — **ten mutants, all dead at their registered check,
-harness exit 0**, which is the run this package closes on. The first two are the
-evidence for the two item-C findings and are kept for that reason, not as
-verdicts.
+Harness `artifacts/texel_gaps/mutants_texel.py`. **FOUR RUNS ARE KEPT AND THE
+CLOSING ONE IS THE LAST**: `mutants_texel_d48174f_M2ALIVE.log` (six mutants, M2
+ALIVE), `mutants_texel_8e7fdf0.log` (six, M2 dead elsewhere, harness exit 1),
+`mutants_texel_6b85681.log` (ten, all dead, exit 0) and
+**`mutants_texel_5ab5152.log` — eleven mutants at the closing revision, all dead
+at their registered check, harness exit 0**, taken in `/home/tom/pistol-wt/texel-mut`
+because a `tools/ci.sh` run was in progress in the other worktree. The first
+three are the evidence for the item-C findings and for the confirmation's own
+verdicts, and are kept for that reason rather than as the closing answer.
 
 **D-650 IN ITS PYTHON FORM, and it is why the harness purges.** D-650's defect was
 a restore whose mtime let cargo keep a mutant compiled. CPython validates a
@@ -600,11 +605,12 @@ landed with `git diff --quiet` — aborting the whole run if it did not, because
 restore nobody checked is the trust the original defect exploited.
 
 ```
-worktree /home/tom/pistol-wt/texel-gaps  revision 6b85681ca6dbac3be258be31dfcebbc4d3afd802
+worktree /home/tom/pistol-wt/texel-mut  revision 5ab515293630f0f531ee0b5997a136fef47c4963
 baseline GREEN from a purged cache: exit 0
 DEAD    M1 item A: the third schema relation dropped from tempo_constraints
 DEAD    M2 item C: orthogonality replaced by pin-holds in the `both` branch
 DEAD    M7 item B: the retirement guard escaped by spelling the BASENAME
+DEAD    M11 item B: the retirement guard escaped by CASE, which a literal search misses
 DEAD    M8 item D: the distinct-game count taken on the bare index
 DEAD    M9 item B: the receipt drops the weights digest, so the tripwire stops firing
 DEAD    M10 item B: the committed fixture drifts one column from its stated generator
@@ -612,9 +618,15 @@ DEAD    M3 item C: the interior check disabled -- everything reports interior
 DEAD    M4 item B: the receipt digest computed over the PINS line alone
 DEAD    M5 item D: the `game` column written without its per-row verification
 DEAD    M6 item B: a reference to the retired candidate re-added to a live config
-10 of 10 dead at their registered check; 0 died elsewhere; 0 alive
+11 of 11 dead at their registered check; 0 died elsewhere; 0 alive
 post-run suite: exit 0
 ```
+
+**Five of the eleven are findings from the two review rounds turned into
+call-site mutants** — M7 and M11 the retirement guard's two escapes, M8 the
+undefended count, M9 the tripwire, M10 the fixture-generator drift — which is
+what makes them evidence rather than decoration: each one is a defect that was
+actually in the tree, not a break invented to be caught.
 
 **AND THE HARNESS ITSELF WAS A REVIEW FINDING TWICE OVER.** It spelled four
 outcomes as exit 1, three of which are "no answer was taken" — a reader could not
@@ -647,14 +659,24 @@ NAME, when MAJOR-9's fix renamed M6's target, and the harness followed the renam
 here per hard rule 8 and D-469):
 
 ```
-4b8adefd19fd7756568e2971ab265493ac29939e1cf83834a5d33beaa233453d  mutants_texel.py
+e05c13b0bf442ad66d85a68f4a316947d6dcff37818660b8cf235f90e1dc5547  ci_5ab5152.txt
+898f5328189fd096149c0219572c6ad1dd5719856f745bb24fe791717c2bac56  ci_f73539e.txt
+96c66fcf266fbb9dd6fb33b707d95c8859a955b0eb134e14697ef1372501a5cb  ci_VOID_tree_changed_under_it.txt
+a9fce935c29faa033d2102fe85a91ccc25e04e7f7dc04b22bc04b0b1cfce8c9b  mutants_texel.py
+95112117b06119b740278f59241e4395df149f7cc41ce65f862728c54d1ba0d6  mutants_texel_5ab5152.log
 2e2ad06c48f86bc2f97c528a78e2992220a4422745bdc92f30b014920d9a03e3  mutants_texel_6b85681.log
 be50a7130f2dbc07bef0c1f94e4f1866f7c49a5f5b681eba2bdbfc2f83723e7f  mutants_texel_8e7fdf0.log
 181f1c3320f945dad3125555c218fbbe797712c7d98989871ccb36c7d862ed7b  mutants_texel_d48174f_M2ALIVE.log
-96c66fcf266fbb9dd6fb33b707d95c8859a955b0eb134e14697ef1372501a5cb  ci_VOID_tree_changed_under_it.txt
 b3c21e1687ac0665cb865714e1d88d96d5c06031227e2cfc0f7312c27b75e968  extract_real.log
 eb4264a945e9147d6fdfcfc46ef670457bbee52bb97f403c10d31bdd08552d26  rows_real.txt
 ```
+
+**Two CI logs are kept beside the closing one and both are non-verdicts.**
+`ci_VOID_tree_changed_under_it.txt` is the run this session voided by moving the
+worktree under it; `ci_f73539e.txt` is the run that went red at gate 3 under an
+exported `CARGO_TARGET_DIR` and produced D-672's reproducer. Neither adjudicates
+anything, and they are kept because a finding's evidence is worth more than a
+tidy directory.
 
 **A CI RUN WAS VOIDED BY THIS SESSION AND IS RECORDED RATHER THAN QUIETLY
 RE-TAKEN.** A first `tools/ci.sh` was started in the mutation worktree at
@@ -723,7 +745,7 @@ second failure on any item STOPs that item.
 | **MAJOR-6** | D-662's *"MEASURED … at `6749754`: 8 references in 6 files"* is **9 in 7** there; 8-in-6 is `beb91b1`'s | D-665; P2 above corrected and the ninth line listed |
 | **MAJOR-7** | D-662's *"FALSE of three committed documents"* is false of **eighteen** on its own reading (one weight table is committed), and D-664 had corrected the OTHER reading | D-665, superseding D-664 |
 | **MAJOR-8** | `read_rows` was width-blind — 19, 20 and 21 columns all accepted, 18 an unnamed `IndexError` | `COLUMNS = 20` and a named `FitError`, with a test driving both directions |
-| **MAJOR-9** | the retirement guard searched the full path where the measurement used the basename, so a basename re-add escaped it; and `RETIRED_MAY_NAME` was a bare list that silences the check when a live path is added | the search is by basename and the allowlist is backed by a PROPERTY — nothing under `configs/`, `crates/` or `tools/`; mutant **M7** |
+| **MAJOR-9** | the retirement guard searched the full path where the measurement used the basename, so a basename re-add escaped it; and `RETIRED_MAY_NAME` was a bare list that silences the check when a live path is added | the search is by basename; the list was backed by a property and then, after §7's finding, **replaced** by it; mutants **M7** and **M11** |
 | **MAJOR-10** | the D-663 tripwire's message named the constant and not the obligation, so a Phase 2 session would re-pin, go green, and rot the provenance link | the message names the re-quote and the citing sites; **D-669** enumerates them; mutant **M9** |
 | MINOR-1 | the CLOSURE's own CTSS count was 9 where its own command returns 12 | corrected in P6 |
 | MINOR-2 | gate 21 FORCED the §9 amendment where D-662 called it precedent | D-665 |
@@ -733,7 +755,7 @@ second failure on any item STOPs that item.
 | MINOR-6 | rule 9's gate is `.rs`/`.sh` only, so these Python files are outside it | **D-670**, recorded as owed |
 | MINOR-7 | the docstring said two normals are parallel; all three are, and `skipped` goes 1 → 3 | corrected |
 | MINOR-8 | the receipt excluded the rows PATH for machine-independence and emitted the weights PATH | the docstring says why the two differ |
-| MINOR-9 | D-663 named one citing site for the digest and never enumerated | **D-669**: nine lines in six files |
+| MINOR-9 | D-663 named one citing site for the digest and never enumerated | **D-669** enumerated them, and miscounted its own list — corrected and retired by **D-671**, §7 |
 | MINOR-10 | `search_next` §3.3's premise about `threat_calculus_v1.md` §9 is FALSE, and `ADOPT-VC` is an addition made under a correction ruling | **D-668** |
 
 **What the reviewer could not break, and it is worth as much as the findings.**
@@ -810,9 +832,15 @@ parse rather than the `grep -A 4` window that caused the original miscount.
 
 **Two sub-claims of D-666 are recorded as NOT independently re-derived** — the
 "204 of 1140" flatness count and the set equality between the 525 that can bind
-and the 525 the two-constraint set refuses. Both are asserted here and pinned by
-the shipped suite; neither was re-taken by a second party, and the confirmation
-says so rather than passing them silently.
+and the 525 the two-constraint set refuses — and the honest disposition differs
+for the two. **The set equality is not a measurement at all: it is what the
+shipped test asserts**, `sorted(refused_old) == sorted(can_bind)`, so it is
+pinned by gate 18 on every run and M1 dies at it. **The 204 is a supporting
+figure and it was re-taken, by this session and not by a second party**, which is
+weaker evidence and is labelled as such: the row-driven probe over the same 1140
+triples answers `old {OK: 936, FLAT: 204}` and `new {OK: 936, FLAT: 204}` — the
+same under both constraint sets, with the INPUT refusal at zero throughout, which
+is the whole point the figure makes.
 
 ### A finding this package walked into and is recording rather than fixing
 
@@ -828,3 +856,77 @@ stream, and `crates/pistol-cli/tests/solver_determinism_gate_tests.rs:18` assert
 `tools/SHELL_CHECKLIST.md` item 12 obligation 3, and D-281/D-285's reading
 exactly. **D-672** records both halves with the reproducer; neither is fixed
 here, because a fix round is not where an unrelated gate is re-plumbed.
+
+## §8 The gates, cited from their own output
+
+**A gate claim cites the gate's own log, never a wrapper's exit status**
+(CLAUDE.md, Closure). The run below is `tools/ci.sh` at **`5ab5152`**, taken in
+`/home/tom/pistol-wt/texel-gaps`, a worktree nobody edited while it ran and with
+**no `CARGO_TARGET_DIR` export** — the export is what voided the first attempt
+(§7, D-672). Log: `artifacts/texel_gaps/ci_5ab5152.txt`.
+
+`5ab5152` is the revision immediately before this section: a log cannot quote
+itself, so what the closing run adjudicates is every line of this package except
+this section and the receipt line that names it. Nothing under `crates/`,
+`configs/` or `tools/` differs between them.
+
+```
+=== gate 1/21: cargo fmt --all --check
+=== gate 2/21: build from the git-tracked file set
+=== gate 3/21: cargo test --workspace --locked
+=== gate 4/21: cargo clippy --workspace --all-targets -- -D clippy::all
+=== gate 5/21: artifact rejection
+=== gate 6/21: config validation
+=== gate 7/21: perft oracle
+=== gate 8/21: tactical fixture at its pre-registered threshold
+=== gate 9/21: cross-process determinism
+=== gate 10/21: differential search oracle
+=== gate 11/21: staged generator soundness (four parts)
+=== gate 12/21: solver oracle (four gates)
+=== gate 13/21: solver determinism
+=== gate 14/21: movetime ceiling on the D-95 reproducer class
+=== gate 15/21: arena self-match smoke
+=== gate 16/21: sealbot anchor platform suite
+=== gate 17/21: file-justification check
+=== gate 18/21: offline texel and census tooling
+=== gate 19/21: decision-key uniqueness
+=== gate 20/21: carve-document label consistency
+=== gate 21/21: governing-document citations
+
+ci: all gates passed
+```
+
+The four gates this package can move, in their own words:
+
+```
+config_check: 21 engine config(s), 1 weight table(s), 18 arena config(s), 3 book config(s), 2 solver config(s)
+test_texel: all checks passed (including census_classes)
+decision_key_check: 674 decision keys in docs/decisions.md, no repeat outside the exemption
+governing_citation_check: 15 governing document(s), 0 proposed path(s)
+docs/experiments/wp22_phase1_design.md: 16 citation(s) checked, 0 unreproduced
+```
+
+**And gate 13 passed here, which is the point of D-672.** `solver_determinism`
+is green in this run and was RUN VOID in the first attempt, from the same tree at
+a neighbouring revision — the difference was the environment, not the subject.
+That is the whole content of the finding: the gate could not say so in a way its
+own test could hear.
+
+## §9 What a successor needs
+
+- **The package is CLOSED on all seven items.** Nothing STOPped. Every state is
+  in §2's table; every ADR line this package wrote or corrected is D-651 … D-672.
+- **Three things are recorded as OWED and nothing in the tree will remind
+  anyone**: the seat-pair guard, which has no committed subject and belongs to
+  the next registered SPRT (D-662, D-665); rule 9's cap, which the gate does not
+  reach for `.py` (D-670); and the solver-determinism seam, which reads its own
+  void as a failure (D-672).
+- **One deferral is mechanical rather than remembered.** `FIT_RECEIPT_SHA256`
+  goes red on any edit to `configs/eval_v0_weights.toml`, and its message says
+  what that owes (D-663, D-669, D-671). Phase 2 will meet it.
+- **The lesson this package paid for twice, stated once.** A fix that adds a
+  property beside a list has not replaced the list, and the list is what breaks.
+  Three counts in this package's own rulings were wrong because they were read
+  off a list by eye instead of derived by a command, and one gate went red
+  because an allowlist was one document stale. Where a property is available,
+  the list is the defect — not a belt beside a brace.
