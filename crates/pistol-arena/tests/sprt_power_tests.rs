@@ -19,9 +19,19 @@ use pistol_arena::sprt::{PAIR_SCORES, Unit};
 ///
 /// `CARGO_BIN_EXE_` exists for `[[bin]]` targets and this is an EXAMPLE — which
 /// is the right target kind for it, because an instrument that shipped in
-/// `src/bin/` would be a program this project distributes. `cargo test` builds
-/// examples, so the path below exists whenever this test can run; if it does
-/// not, the test says which command makes it rather than skipping (rule 3).
+/// `src/bin/` would be a program this project distributes.
+///
+/// **`cargo test` DOES NOT ALWAYS BUILD EXAMPLES, and an earlier revision of this
+/// comment said it did.** A bare `cargo test` does; `cargo test --test
+/// sprt_power_tests` does not, because narrowing the target selection excludes
+/// example targets. So all six tests here FAIL under the narrow invocation while
+/// every CI gate stays green, since `tools/ci.sh` runs the bare form. Measured,
+/// and it is the defect class D-281 and D-285 record — an environmental absence
+/// wearing a regression's clothes. It is left as a FAIL rather than an ignore
+/// because rule 3 forbids skipping with a default, and a test cannot spell item
+/// 12's VOID; the assertion below names the command that fixes it. A reader who
+/// sees these six red should build the example before believing them
+/// (docs/decisions.md D-648).
 fn instrument() -> PathBuf {
     let mut path = std::env::current_exe().expect("the test binary knows its own path");
     path.pop();

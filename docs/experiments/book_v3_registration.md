@@ -409,8 +409,8 @@ nobody chose (rule 6). So the header's two numbers differ by exactly the
 rejection count:
 
 ```
-build_book_v3: 6490 distinct canonical forms excluded
-build_book_v3: drew 8538, rejected 38 already held, 8500 survive
+build-book-v3: 6490 distinct canonical forms excluded
+build-book-v3: drew 8538, rejected 38 already held, 8500 survive
 ```
 
 6490 is |v1 ∪ v2| = 2000 + 4500 − 10, the 10 being the v1/v2 overlap the

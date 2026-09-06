@@ -38,7 +38,7 @@ fn keys(book: BookVersion) -> BTreeSet<filter::Key> {
 /// The v3 book this build produces, through the whole shipped pipeline.
 ///
 /// Generate, filter against the two committed books, render — the same library
-/// calls `examples/build_book_v3.rs` makes, so this checks the pipeline rather
+/// calls `src/bin/build-book-v3.rs` makes, so this checks the pipeline rather
 /// than a copy of it.
 fn produced() -> String {
     let config = RandomOpeningsConfig::load(&repo(CONFIG)).expect("the v3 config loads");
@@ -72,24 +72,17 @@ fn the_filter_rejects_exactly_the_gap_the_header_states() {
     assert_eq!(rejected, 38, "the count D-647 states");
 }
 
-/// The shipped `build_book_v3` example, as `cargo test` builds it.
+/// The shipped `build-book-v3` binary, located the way cargo guarantees.
 ///
-/// Beside this test binary rather than under a guessed profile directory:
-/// `current_exe()` is `<target>/<profile>/deps/<name>`, so the example sits two
-/// levels up in `examples/`.
+/// A BINARY and not an example, and the difference is not cosmetic: cargo sets
+/// `CARGO_BIN_EXE_*` and builds every bin target for an integration test, but it
+/// builds EXAMPLES only when target selection includes them. As an example this
+/// tool was present under a bare `cargo test` and absent under
+/// `cargo test --test random_openings_v3_tests`, so these two tests passed in CI
+/// and failed under a narrower invocation — which voided a whole mutation run
+/// while every gate stayed green.
 fn shipped_builder() -> PathBuf {
-    let exe = std::env::current_exe().expect("the test binary has a path");
-    let path = exe
-        .parent()
-        .and_then(std::path::Path::parent)
-        .expect("<target>/<profile>/deps/<bin>")
-        .join("examples/build_book_v3");
-    assert!(
-        path.exists(),
-        "{} is missing; `cargo test` builds examples, so this means the example did not compile",
-        path.display()
-    );
-    path
+    PathBuf::from(env!("CARGO_BIN_EXE_build-book-v3"))
 }
 
 #[test]

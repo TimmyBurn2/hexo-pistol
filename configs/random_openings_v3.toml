@@ -15,7 +15,7 @@
 # openings that corpus already holds (docs/decisions.md D-647).
 #
 # Rebuild with:
-#   cargo run -p pistol-cli --example build_book_v3 -- \
+#   cargo run -p pistol-cli --bin build-book-v3 -- \
 #     --config configs/random_openings_v3.toml \
 #     --against crates/pistol-cli/tests/fixtures/random_openings_v1.txt \
 #     --against crates/pistol-cli/tests/fixtures/random_openings_v2.txt \

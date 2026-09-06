@@ -7,10 +7,10 @@ use pistol_cli::random_openings::{
 };
 
 const USAGE: &str = "\
-build_book_v3 — generate book_v3 and filter it against the two committed books
+build-book-v3 — generate book_v3 and filter it against the two committed books
 
 usage:
-  build_book_v3 --config <path> --against <book> [--against <book>] \\
+  build-book-v3 --config <path> --against <book> [--against <book>] \\
                 --openings <n> --out-dir <dir>
 
   --config    the v3 generator config. Its n_openings is the OVER-generation:
@@ -71,14 +71,14 @@ fn run(words: &[String]) -> Result<(), String> {
         let keys = filter::keys_of_document(&book.display().to_string(), &text)
             .map_err(|why| why.to_string())?;
         println!(
-            "build_book_v3: {} states {} canonical forms",
+            "build-book-v3: {} states {} canonical forms",
             book.display(),
             keys.len()
         );
         excluded.extend(keys);
     }
     println!(
-        "build_book_v3: {} distinct canonical forms excluded",
+        "build-book-v3: {} distinct canonical forms excluded",
         excluded.len()
     );
 
@@ -88,14 +88,14 @@ fn run(words: &[String]) -> Result<(), String> {
         filter::retain_disjoint(drawn, &excluded, wanted, config.generate.n_openings)
             .map_err(|why| why.to_string())?;
     println!(
-        "build_book_v3: drew {before}, rejected {rejected} already held, {} survive",
+        "build-book-v3: drew {before}, rejected {rejected} already held, {} survive",
         book.openings.len()
     );
 
     let path = out_dir.join(config.generate.book.file_name());
     std::fs::write(&path, document::render(&config, &book).as_bytes())
         .map_err(|io| format!("{}: {io}", path.display()))?;
-    println!("build_book_v3: wrote {}", path.display());
+    println!("build-book-v3: wrote {}", path.display());
     Ok(())
 }
 
@@ -104,7 +104,7 @@ fn main() -> ExitCode {
     match run(&words) {
         Ok(()) => ExitCode::SUCCESS,
         Err(why) => {
-            eprintln!("build_book_v3: FAIL: {why}");
+            eprintln!("build-book-v3: FAIL: {why}");
             ExitCode::from(1)
         }
     }
