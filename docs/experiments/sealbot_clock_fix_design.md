@@ -1,114 +1,207 @@
-# Design — make the sealbot seat's measured wall mean its search time
+# Design — make the sealbot seat's measured wall mean its search time. Revision 2.
 
-**The precondition D-699 names**, and it is the thing that stopped the v7 budget
-decision. Two changes to files this repository owns, in
+**Revision 1 is `sealbot_clock_fix_design_rev1_SUPERSEDED.md`** and its
+REVIEW-design returned **FAIL**, 7 MAJOR and 10 MINOR. Where a finding changed
+this document, it is named at the place it changed it.
+
+**The precondition D-699 names.** Two changes to files this repository owns, in
 `tools/sealbot/matchserver/` and `tools/sealbot/sealbot_shim.py`. **No change to
-sealbot.** No change to any engine. No match is run by this package.
+sealbot, to any engine, or to pistol.** No match is run by this package.
 
-**Revision** `1b89034`. Numbers below are **MEASURED** or **ESTIMATED** (D-291).
+**Revision** `8138c3e`. Numbers are **MEASURED** or **ESTIMATED** (D-291).
 
-## §1 The before-state, measured rather than bounded
+---
 
-`docs/decisions.md` D-699 records the gap as a BOUND — 4.50 % of sealbot's wall
-in v5, 3.50 % in v6 — because `engine_time_ms` is null for **1050 of 1050** and
-**986 of 986** sealbot answers, so an answer's non-search time can only be
-bounded by its whole wall. **The bound is loose by roughly sixty times, and this
-is the measurement that says so.**
+## §1 The before-state: the gap is a BOUND, and the bound is loose
 
-A copy of the shim instrumented to time `bot.get_move` separately from the
-Python game replay, driven directly at a 300 ms limit on the v5 anchor's own
-opening and on mid-game positions (**MEASURED**, this workstation, warm process,
-no match running):
+D-699 records the gap as 4.50 % of sealbot's wall in v5 and 3.50 % in v6,
+because `engine_time_ms` is null for **1050 of 1050** and **986 of 986** sealbot
+answers, so an answer's non-search time can only be bounded by its whole wall.
 
-| stones | server-observed wall | sealbot's search | Python replay | **non-search** |
+**MEASURED**, with a copy of the shim instrumented to time `bot.get_move`
+separately, driven at a 300 ms limit on real positions, warm process:
+
+| case | wall | `get_move` | Python replay | **non-search** |
 |---|---|---|---|---|
-| 5 | 300.49 ms | 300.30 | 0.10 | **0.19 ms** |
-| 7 | 300.70 ms | 300.50 | 0.00 | **0.20 ms** |
-| 9 | 300.42 ms | 300.20 | 0.10 | **0.22 ms** |
-| 13 | 301.6 ms | 301.4 | 0.1 | **0.2 ms** |
-| 21 | 301.0 ms | 300.8 | 0.1 | **0.2 ms** |
+| 5 stones, budget-consuming | 300.49 ms | 300.30 | 0.10 | **0.19 ms** |
+| 9 stones, budget-consuming | 300.42 ms | 300.20 | 0.10 | **0.22 ms** |
+| 21 stones, budget-consuming | 301.0 ms | 300.8 | 0.1 | **0.2 ms** |
+| **win-in-one, EARLY RETURN** | **0.43 ms** | **0.30** | 0.00 | **0.13 ms** |
+| **win-in-one, EARLY RETURN** | **0.12 ms** | **0.00** | 0.00 | **0.12 ms** |
 
-**On a warm process the server's wall IS sealbot's search time, to about
-0.2 ms** — 0.07 % of a 300 ms budget — and the figure does not grow with the
-stone count, so the Python replay that revision 2 of the budget matrix worried
-about is not a term worth naming. Everything else is the **26 ms** of per-game
-process start-up already measured twice (`matrix_anchor_v7_budget.md` §2.1).
+**THE EARLY-RETURN ROWS ARE THE ONES THAT MATTER AND REVISION 1 DID NOT HAVE
+THEM** (MAJOR/PREMISES). About 31 % of v5's sealbot answers return before the
+deadline — **MEASURED, 321 of 1050 under 250 ms, and 196 of 1050 at 0 ms** — and
+that is the branch the bound is loosest on, because it bounds such an answer's
+non-search time by its entire wall. The reviewer re-took the measurement over
+**51 genuinely early-returning real positions** and got a median non-search of
+**0.147 ms** and a max of **0.305 ms**. The term does not depend on whether the
+answer used its budget.
 
-**SO THE WHOLE OBSERVABLE GAP IS ONE PER-GAME CONSTANT PLUS A TENTH OF A
-MILLISECOND**, and the reason the project could not say so is that the harness
-throws away the one number that would prove it. That is what this package fixes:
-it does not make sealbot faster, it makes the measurement honest.
+**HOW LOOSE, DERIVED RATHER THAN ASSERTED (MAJOR-5).** Revision 1 said "roughly
+sixty times" by dividing an aggregate fraction-of-total-wall by a per-answer
+fraction-of-a-300 ms-budget — different denominators, and it credited the fix
+with removing the start-up charge that the same section calls real. Against a
+model of true non-search of `0.2 ms x answers + 26 ms x games`:
+
+| | v5 | v6 |
+|---|---|---|
+| bound today | 10 226 ms (4.50 %) | 7 230 ms (3.50 %) |
+| model of true non-search | 2 810 ms (1.24 %) | 2 797 ms (1.36 %) |
+| **bound is loose by** | **3.6x** | **2.6x** |
+| residual bound after Change A | 8 018 ms (3.53 %) | 6 586 ms (3.19 %) |
+| model after Change A | 210 ms (0.09 %) | 197 ms (0.10 %) |
+| **residual bound is loose by** | **38x** | **33x** |
+
+**So the honest statement is two sentences, not one.** The start-up charge —
+0.97 pp in v5, 0.31 pp in v6 — is REAL and Change A removes it. What remains
+after that is a bound loose by 33–38x, and only Change B can collapse it to a
+measurement.
+
+**TWO CORRECTIONS TO REVISION 1's OWN READING.** The non-search term **does**
+grow with the stone count — MEASURED by the reviewer, median 0.177 ms at 0–19
+stones rising to **0.287 ms** at 60–79, where revision 1's table stopped at 21
+stones and this harness's games reach **110** (MINOR-1). And the 0.2 ms was
+measured through a **Python driver standing in for `SealbotClient`**, so the
+Rust-side `serde_json` encode of up to 110 coordinate pairs, the pipe write, the
+reader-thread channel hop and the reply decode are **not in it** (MINOR-2). The
+in-harness referent is the pistol seat, which reports engine time on these same
+runs: `wall_ms - engine_time_ms` is **median 1 ms, p95 5 ms, max 15 ms**. That,
+and not 0.2 ms, is what a sealbot seat should be held to.
 
 ## §2 Change A — the seat is not charged for starting up
 
 `tools/sealbot/sealbot_shim.py` imports the extension, imports `game` and
 constructs `MinimaxBot` before writing `sealbot_shim: ready` to **stderr**;
-`tools/sealbot/matchserver/src/sealbot_client.rs` `new_game` spawns the process
-and returns without reading anything, and `LineProcess::spawn` redirects stderr
-to a FILE. So the readiness signal is not on any pipe the client reads, and the
-whole start-up prefix lands inside the first measured answer of every game.
+`SealbotClient::new_game` spawns and returns without reading anything, and
+`LineProcess::spawn` redirects stderr to a file. **MEASURED**: 25.8 ms spawn to
+`ready`, of which 13.4 ms is interpreter start before `main()` runs — so the
+whole prefix lands inside the first measured answer of every game.
 
-**The seat that does this right is in the same crate**: `PistolClient` completes
-its handshake inside `new_game`, outside the measurement.
-
-### The one real decision, and the options
+### The decision, and the options
 
 | | how the client learns the shim is ready | verdict |
 |---|---|---|
-| **A1** | the shim writes `sealbot_shim: ready` to **stdout**; `new_game` reads exactly that line before returning | **SELECTED** — it is `PistolClient`'s own shape, it is synchronous, and it needs no new file, poll or timeout policy |
-| A2 | the client polls the stderr file until the line appears | rejected: a poll needs an interval and a timeout, and a file written by a redirect has no flush guarantee the reader can rely on |
-| A3 | `new_game` sends a throwaway request and discards the reply | rejected: it costs a real search per game — **ESTIMATED** 300 ms × 100 games — to measure nothing |
-| A4 | keep one shim process for the whole match | **rejected on correctness**: sealbot's TT is never cleared (`bot.h:33,149`), so one process across paired games would leak search results between colours, and the per-game respawn is what prevents it — confirmed by the item-S confirmation, which found exactly one `sealbot_shim: ready` in each of 100 stderr files |
+| **A1** | the shim writes `sealbot_shim: ready` to **stdout as well as stderr**; `new_game` reads exactly that line before returning | **SELECTED** |
+| A2 | poll the stderr file until the line appears | rejected: a file written through a redirect gives the reader no flush guarantee |
+| A3 | `new_game` sends a throwaway SEARCH request and discards the reply | rejected: **ESTIMATED** 300 ms x 100 games to measure nothing |
+| A5 | `new_game` sends a `ping` request and reads a `ping` reply | rejected, narrowly: it preserves the one-reply-per-request invariant, which A1 breaks with a preamble — but it adds a request KIND to the contract for a guarantee A1 already gives, since the shim cannot print `ready` before the bot is constructed |
+| A4 | keep one shim process for the whole match | **rejected on correctness**: `_tt` is sized in the constructor (`current/engine/bot.h:33`) and **nothing in `current/` ever clears it** — only `_history` and the killers are reset, at `current/engine/search.h:46` — so one process across paired games would leak search results between colours. The per-game respawn is what prevents it. |
 
-A1 moves the line from stderr to stdout, so the reply grammar gains a preamble
-line. That is the same shape `PistolClient` already reads and the contract is
-documented in `sealbot_client.rs`'s module doc, which this change amends.
+**A1 WRITES TO BOTH STREAMS, WHICH REVISION 1 DID NOT SAY (MINOR-6).** The 100
+`*_engine_b.stderr` files of a run today contain the `ready` line **and nothing
+else**, and the item-S confirmation used exactly that to prove one shim process
+per game. Moving the line would empty those files and destroy the artifact; it
+costs nothing to write it to both.
 
-## §3 Change B — the seat reports its own search time
+**A1 NEEDS A TIMEOUT AND REVISION 1 CLAIMED IT DID NOT (MAJOR-6).**
+`LineProcess::read_line` takes a deadline and has no timeout-free form, so the
+choice is load-bearing under hard rule 1. **A1 reuses `turn_timeout_seconds`,
+exactly as `pistol_client.rs:97` already does for its own handshake** — no new
+literal, no new config key. A2's rejection is therefore narrowed to the flush
+ground alone, since half of revision 1's objection to it applied to A1 too.
+
+**SCOPE, AND REVISION 1 OMITTED IT (MAJOR-4).**
+`tools/sealbot/tests/stub_sealbot.py` is the sealbot seat in **every** matchserver
+test — `run_tests.sh` builds 19 configs from that template — and it writes
+nothing until it receives a request. Under A1 unamended, `new_game` would block
+on a line that never comes until `turn_timeout_seconds`, and every one of those
+19 configs would take a pregame forfeit. **The stub emits the same preamble.**
+
+## §3 Change B — the seat reports its own elapsed time
 
 The shim times `bot.get_move(game)` and returns `engine_time_ms` beside `moves`;
-the client requires it and fills `EngineReply::engine_time_ms`.
+`SealbotClient` requires it and fills `EngineReply::engine_time_ms`, which is
+already plumbed to the transcript (`referee.rs:291`, `transcript.rs:44`).
 
-**REQUIRED, NOT OPTIONAL** (hard rule 3). A shim that stopped reporting it would
-otherwise put the seat back in exactly today's state — a null column nobody
-notices — so its absence is a named `Protocol` failure. Both producers this
-repository owns (`sealbot_shim.py` and `tools/sealbot/tests/stub_sealbot.py`)
-send it.
+**REQUIRED, NOT OPTIONAL** (hard rule 3): a shim that stopped reporting it would
+put the seat back in today's state, a null column nobody notices, so its absence
+is a named `Protocol` failure. Both producers this repository owns send it.
 
-**What it buys, and it is the whole point**: the transcripts stop carrying a
-bound and start carrying a measurement, so "equal measured movetime per side" —
-which D-695 pins and `sealbot_anchor_v7_protocol.md` §A1 registers — becomes a
-statement a run can check instead of a statement about two config keys.
+**THE WIRE TYPE IS PINNED (MINOR-7)**: a JSON **integer** number of
+milliseconds. `EngineReply::engine_time_ms` is `Option<u64>` and a float would
+make `as_u64()` return `None`, firing the "required" refusal on every answer —
+loud, but for the wrong reason.
 
-## §4 The criterion, registered before the change is made
+**AND IT IS NOT "PURE SEARCH", WHICH REVISION 1 IMPLIED (MINOR-9).**
+`bot.get_move` carries protocol §A2's **term (2)** — sealbot's untimed setup, its
+≤1024-node overrun past the deadline and the `memcpy` rollback, MEASURED here as
+the 0.3–1.4 ms by which `get_move` exceeds its own limit. So the field is **the
+engine's own elapsed time for the answer**, and the design says so rather than
+calling it search time.
 
-D-699's third resume item. **The precondition is discharged when, on a run of at
-least 20 games:**
+## §4 The criteria, rebuilt — revision 1's did not work
 
-1. sealbot's **first-of-game** wall-excess distribution is indistinguishable from
-   its **later-answer** distribution — concretely, first-of-game median excess
-   ≤ later-answer median excess + **2 ms**, against the v5 gap of 15 ms against
-   0 ms and the isolated spawn charge of **26 ms**; and
-2. `engine_time_ms` is non-null for **every** sealbot answer; and
-3. per answer, `wall_ms − engine_time_ms` ≤ **5 ms**, which is 25x the 0.2 ms
-   measured above and still 20x below the 106 ms this is fixing.
+`docs/process.md`: *"A criterion that is a property the named defect class
+PRESERVES … passes vacuously and is not a criterion."* Revision 1's three did
+exactly that, and the rebuild is verified against the defective data itself.
 
-**THE DEFECT CLASS EACH EXCLUDES.** (1) excludes the start-up charge surviving
-the handshake — a defect that would leave the first answer of each game inflated
-and is invisible in any aggregate. (2) excludes a shim that silently drops the
-field. (3) excludes a handshake that returns before the process is actually warm,
-which would move the charge from the first answer into the second rather than
-removing it, and which neither (1) nor (2) would catch.
+**WHY (1) HAD TO BE REPLACED, MEASURED (MAJOR-1).** `main.rs:105` sets
+`a_is_p1 = game % 2 == 1`, so exactly half of each run's first-of-game answers
+follow sealbot's own spawn and half follow pistol's ~500 ms answer, which absorbs
+it. The pooled median describes neither mode. Applied to **v6's own pre-fix
+transcripts, where the defect is 100 % present**, revision 1's criterion (1)
+**PASSES at every odd game count** — 21, 23, 25 … 39 — and fails only at even
+ones. Ten of the twenty-one admissible counts declared the precondition
+discharged with the defect intact.
 
-**The instrument is `tools/anchor_overshoot.py`**, which already prints the
-first-of-game and later-answer split and the `engine_time_ms` reported count, at
-the revision this design ships in. It needs one addition for (3), the
-wall-minus-engine-time column, and that addition carries its own test.
+The precondition is discharged when, on a run of **at least 20 games**:
 
-## §5 What this does NOT do
+1. **On the ASKED-FIRST sub-population** — the games in which sealbot answers
+   before pistol has answered at all — sealbot's first-of-game median wall excess
+   is within **2 ms** of its later-answer median.
+   **POWER, MEASURED against the pre-fix data**: this fails at **every** game
+   count from 20 to 60, in **both** v5 and v6. Pre-fix the asked-first median
+   excess is **42 ms (v5)** and **13 ms (v6)** against later-answer medians of
+   ~0 ms; post-`ready` the residual is **MEASURED at ~1.1 ms**, so 2 ms is about
+   twice the measured residual and an order of magnitude below the defect.
+2. `engine_time_ms` is a **non-null integer for every sealbot answer**.
+3. **Two-sided**, per side: `0 <= wall_ms - engine_time_ms`, with **p95 <= 5 ms
+   and max <= 25 ms**. **DERIVED from the in-harness referent**, not from 25x a
+   Python-driver number: the working pistol seat on these same runs is median 1,
+   p95 5–8, max 15, with **~5 % of answers over 5 ms** — so revision 1's
+   "per answer <= 5 ms" was failed by the seat that already works (MAJOR-2).
+4. **THE EXTERNAL REFERENT, and revision 1 had none (MAJOR-3).** The fraction of
+   sealbot answers with `engine_time_ms < 250` must be within **5 percentage
+   points** of the fraction with `wall_ms < 250` — **MEASURED at 30.6 % (v5) and
+   32.3 % (v6)**. `wall_ms` is taken by the Rust client and does not share the
+   shim's timer, so this is a value computed by something that does not share the
+   suspect input.
 
-It does not select an option in `matrix_anchor_v7_budget.md`; that matrix has
-fallen twice and a revision 3 selecting the surviving option (O7) must cite and
-amend D-695, which is a separate act. It does not run an anchor. It does not
-touch pistol. **It removes the reason the budget decision could not be settled on
-measured ground, and stops there.**
+**THE DEFECT CLASS EACH EXCLUDES.** (1) the start-up charge surviving the
+handshake — invisible in any aggregate. (2) a shim silently dropping the field.
+(3) a handshake that returns before the process is warm, moving the charge into
+the second answer rather than removing it. **(4) A SHIM THAT REPORTS ITS
+CONFIGURED BUDGET INSTEAD OF ITS ELAPSED TIME** — a one-token slip,
+`int(bot.time_limit * 1000)` — which passes (2) and passes (3) trivially on the
+**18.7 % of v5 answers whose wall is 0 ms**, and would launder the configured
+500/300 ratio as a measured one. That is the single thing D-699's surviving
+option exists to prevent, and no criterion in revision 1 could see it.
+
+## §5 What this delivers, and what it does not
+
+**MEASURED, not claimed (MAJOR-7).** `report.rs` carries no `engine_time_ms` at
+all — only `a_answer_wall_ms`, `a_wall_ms_total` and `b_wall_ms_total` — so after
+these two changes the transcripts carry the field and **no summary reports it**.
+Revision 1 said this fix "removes the reason the budget decision could not be
+settled" and that overstates: of D-699's three resume items it delivers **two**
+(the shim change, and a criterion), and explicitly defers the third, the ADR
+amending D-695.
+
+**THE INSTRUMENT ADDITION IS THEREFORE THREE THINGS, NOT ONE**:
+`tools/anchor_overshoot.py` gains (a) the asked-first / later split criterion (1)
+needs, (b) a `wall_ms - engine_time_ms` column with the p95 and max criterion (3)
+needs, and (c) **per-engine `engine_time_ms` totals and their ratio**, which is
+the headline number D-699's O7 asks for and which nothing currently computes.
+Each carries a test, and criterion (2)'s reported-count column must be driven by
+a fixture with a **non-null** value — every fixture in
+`anchor_overshoot_tests.rs` writes `null` today, so that branch has never been
+exercised (MINOR-8, `docs/process.md`'s tools/ coverage rule).
+
+**ADR DEBT, OWED AND NAMED (MINOR-10).** §2's option matrix is settled by the
+REVIEW-design that attacked this document; the ADR line recording it carries the
+strongest surviving attack. It is written when the implementation lands, not
+before.
+
+**This does not select an option in `matrix_anchor_v7_budget.md`**, does not run
+an anchor, and does not touch pistol.
