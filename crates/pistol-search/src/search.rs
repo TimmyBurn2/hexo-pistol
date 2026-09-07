@@ -931,3 +931,59 @@ fn aspiration_window(previous: Option<i32>, delta: i32) -> Option<(i32, i32)> {
         previous.saturating_add(delta),
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `solver_proof_outcome`'s own invariant, driven at the CALL SITE.
+    ///
+    /// Audit row A-21 lists this refusal as one whose text appears in no test,
+    /// and this package's own closure first recorded it as UNDRIVABLE — the
+    /// function is private and reachable only from a path that hands it
+    /// OR-rooted trees. That is true of the shipped path and not of the
+    /// function: an in-crate test constructs the one input for which
+    /// [`proof_first_move`] answers `None`, an AND-rooted proof, and the guard
+    /// fires. `docs/decisions.md` D-553 asks for a test that drives the CALL
+    /// SITE rather than the guarded function, and the call site is here — the
+    /// `unwrap_or_else` on `proof_first_move`'s answer.
+    #[test]
+    fn an_and_rooted_proof_reaching_the_outcome_names_its_invariant() {
+        let state = GameState::new_game();
+        let tree = pistol_solver::ProofTree {
+            root: state.key(),
+            nodes: vec![pistol_solver::EmittedNode {
+                key: state.key(),
+                kind: pistol_solver::ProofKind::AndOverloadLeaf,
+                zone: pistol_solver::ZoneP::new(),
+                children: Vec::new(),
+            }],
+        };
+
+        let panicked = std::panic::catch_unwind(|| {
+            solver_proof_outcome(
+                &state,
+                &tree,
+                0,
+                0,
+                crate::info::SolverCallCounters::default(),
+                Instant::now(),
+            )
+        })
+        .expect_err("an AND-rooted proof carries no first move of the mover's");
+
+        let message = panicked
+            .downcast_ref::<String>()
+            .cloned()
+            .unwrap_or_else(|| "a panic payload this test cannot read".to_owned());
+        assert!(
+            message.contains(SOLVER_PROOF_WITHOUT_A_MOVE),
+            "the named invariant, which was an anonymous literal until D-675's \
+             sibling round: {message}"
+        );
+        assert!(
+            message.contains("an OR-rooted proof always carries one"),
+            "and what it expected, which is the half a reader acts on: {message}"
+        );
+    }
+}

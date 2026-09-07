@@ -200,7 +200,7 @@ same subject, RUN VOID in the texel package's first attempt because
 |---|---|
 | T1 | **CLOSED** — `86a7dc7` |
 | T2 | **CLOSED** — `b60c3d3` |
-| T3 | **PARTIAL**: the `mktemp -d` preflight half and one of the five driving tests CLOSED; the `command -v` sweep and the remaining four driving tests **STOP**, with reasons below |
+| T3 | **CLOSED**, in two passes. The `mktemp -d` preflight half and `config_check.sh`'s driving test closed first; the `command -v` sweep (D-683) and the driving tests for `determinism.sh` and `movetime_check.sh` (D-684) closed after the reasons they had stopped on were answered — see §7. `perft_check.sh` and `search_oracle_check.sh` are not bound by item 10's letter, a line the group-T review attacked and upheld |
 | T4 | see below |
 | T5 | see below |
 
@@ -460,7 +460,7 @@ grammar.
 | E1 | **CLOSED** | `1f6e388` |
 | E2 | **CLOSED** | `c586837` |
 | E3 | **CLOSED** | `c586837` |
-| E4 | **PARTIAL** — three of five refusal texts pinned; two are unreachable, recorded below | `c586837` |
+| E4 | **CLOSED at four of five, with the fifth's attempted reproducer MEASURED and recorded at the guard** — see below; the closure's earlier "two are unreachable" was one part wrong and one part unproven | `c586837` |
 | E5 | **CLOSED** | `c586837` |
 
 **THE GUARD, TAKEN BEFORE THE COMMITS AND NOT ASSERTED.** Two engines built in
@@ -567,19 +567,33 @@ pins the error at both call sites" rather than asserting it.
 | `quiescence.rs` `NO_COMPLETION_STONE` | **NOT PINNED** |
 | `search.rs` `SOLVER_PROOF WITHOUT A MOVE` | **NOT PINNED**, but now NAMED |
 
-**The two that are not pinned cannot be, and the attempted reproducers are the
-record.** `NO_COMPLETION_STONE` fires when neither the live-window-support union
-nor the mover's six neighbours offer a legal cell, inside a private quiescence
-path; `SOLVER_PROOF_WITHOUT_A_MOVE` fires inside the private
-`solver_proof_outcome`, which is called only on OR-rooted trees, and
-`proof_first_move` returns `None` only for AND-rooted ones. Neither has a
-reachable driver, and D-553's rule is explicitly about *"a test that drives the
-call site with reachable input"* — a test that cannot is not a weaker test, it
-is no test. **What was done instead, for the second**: it was the only
-`pistol-search invariant` in the crate spelled as a bare literal with spaces
-rather than a named constant, so it becomes `SOLVER_PROOF_WITHOUT_A_MOVE`
-beside its thirteen siblings — greppable, and one edit away from a test if a
-driver is ever found.
+**THIS PARAGRAPH USED TO SAY BOTH WERE UNDRIVABLE AND IT WAS WRONG ABOUT ONE
+AND UNPROVEN ABOUT THE OTHER.** Corrected here rather than left standing.
+
+**`SOLVER_PROOF_WITHOUT_A_MOVE` IS DRIVEN.** The reasoning that retired it —
+`solver_proof_outcome` is private and reached only from a path handing it
+OR-rooted trees — is true of the SHIPPED PATH and not of the FUNCTION. An
+in-crate `#[cfg(test)]` test in `search.rs` constructs the one input for which
+`proof_first_move` answers `None`, an AND-rooted proof, and calls
+`solver_proof_outcome` directly: the guard fires and the test reads its message.
+D-553 asks for a test driving the CALL SITE rather than the guarded function,
+and the call site is the `unwrap_or_else` — which is exactly what this drives.
+**"No reachable driver" had meant "no driver on the path I looked at".**
+
+**`NO_COMPLETION_STONE` IS STILL NOT DRIVEN, AND THE ATTEMPT IS NOW MEASURED
+INSTEAD OF ASSERTED.** Reaching it needs the ply-1 stone's six neighbours all
+occupied AND tier 1 empty. A probe swept **all sixty-four colourings of the
+minimal enclosure** — the origin plus its six neighbours, the only seven-stone
+shape that encloses anything — and **none has an empty tier 1**: every
+arrangement leaves some live window for one side. That is evidence, not proof; a
+larger board was not swept. The result is recorded at the guard itself so the
+next reader inherits the attempt rather than repeating it, and the guard stays a
+`panic!` rather than becoming an `unreachable!`, because a measured sixty-four
+is not a proof over the board.
+
+**And the second was renamed on the way**: it was the only `pistol-search
+invariant` in the crate spelled as a bare literal with spaces, so it is now
+`SOLVER_PROOF_WITHOUT_A_MOVE` beside its thirteen siblings.
 
 #### E5 — the orphaned doc block (A-18)
 
@@ -943,22 +957,50 @@ revision is the one its cited CI ran at; the run above is that, and §2's H1 ent
 
 ## §7 What a successor needs
 
-- **The package is CLOSED on group H, group E and group C. T3 is the only
-  PARTIAL**, and it is partial by measurement rather than by cost: `perft_check.sh`
-  and `search_oracle_check.sh` produce no recorded number, so item 10's letter
-  does not bind them; `determinism.sh` and `movetime_check.sh` do, and neither can
-  take a COMPLIANT test without a seeded-violation seam, which is a named
-  decision on two CI gates and wants an OPTION MATRIX this package had no grant
-  for. The `command -v` sweep stops for a second reason the ROADMAP supplies
-  itself: item 8's own text is scheduled to change, and a 36-site sweep against a
-  rule about to move is the sweep written twice.
+- **THE PACKAGE IS CLOSED ON EVERY ITEM. T3 WAS THE LAST PARTIAL AND IT IS
+  CLOSED TOO** — both halves it had stopped on are done, and each stopped for a
+  reason that turned out to be answerable rather than structural.
 
-- **THREE THINGS ARE RECORDED AS OWED AND NOTHING IN THE TREE WILL REMIND
-  ANYONE.** (1) The seam decision above. (2) `tools/wp16_warm_attribution_check.py`
+  **The `command -v` sweep (D-683).** It had stopped because the ROADMAP
+  scheduled an amendment to `tools/SHELL_CHECKLIST.md` item 8 "for the fourth
+  case bash admits", and sweeping 36 sites against a rule about to move is
+  writing the sweep twice. The open case was MEASURED — and it is two, not one:
+  `command -v` ACCEPTS a file with no execute bit (exec then answers 126) and
+  ACCEPTS a function, alias or builtin, handing back the NAME rather than a
+  path. Both are EXIT-0-WRONG-ANSWER at the point a gate is most sure of itself.
+  Item 8 now carries the six-outcome table; `tools/require_tool.sh` gives five
+  distinct refusals with a test driving every one; all 24 sites are converted
+  and each keeps its own `fail`/`void` class.
+
+  **The driving tests (D-684).** They had stopped on a named decision needing an
+  OPTION MATRIX. The matrix was written, attacked by a fresh-context
+  DECISION-RED-TEAM, and **FELL** — 9 of 10 attacks landing, its load-bearing
+  premise false, and the option selected one the matrix never listed. Both gates
+  are now driven end to end with a seeded violation each and item 10's control,
+  and **not one byte of either gate changed**.
+
+- **The sustainability fix the recurrence earned (D-685).** Twice in this package
+  a `tools/` script gained a sibling and broke every harness that copies it —
+  eight harnesses, three discovery passes, and a hand-written detector that
+  missed two of them through its own scope defect. `common::seed_tool` now
+  COMPUTES the closure and a guard test refuses any hand-written copy, so the
+  class cannot return. That guard's own first draft was window-based and flagged
+  two already-converted harnesses: the wrong-population defect, committed inside
+  the check written to prevent it, and caught by running it.
+
+- **What survives of T3's original stop, and it is one line**: `perft_check.sh`
+  and `search_oracle_check.sh` produce no recorded number of their own — each is
+  a `cargo test` sequencer — so item 10's letter does not bind them. The group-T
+  reviewer attacked that line specifically (ATTACK 9) and it held. The risk they
+  DO carry is different and is recorded rather than closed: a dropped
+  `--include-ignored` would leave the expensive half unrun with the gate green.
+
+- **TWO THINGS ARE RECORDED AS OWED AND NOTHING IN THE TREE WILL REMIND
+  ANYONE.** (1) `tools/wp16_warm_attribution_check.py`
   still carries an in-file `RULE9-JUSTIFICATION` marker whose parenthetical is now
   FALSE — it says the gate reaches only `.rs` and `.sh` — and it is left because
   deleting it edits an instrument a pre-registration names with its revision,
-  which is the precise coupling D-415 declined. (3) A release-profile lint pass,
+  which is the precise coupling D-415 declined. (2) A release-profile lint pass,
   or the cheaper `[workspace.lints.rust]` route the group-T reviewer measured,
   for the class gate 4's dev profile cannot see.
 
