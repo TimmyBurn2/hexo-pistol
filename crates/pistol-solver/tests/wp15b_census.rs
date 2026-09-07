@@ -514,9 +514,10 @@ fn report(label: &str, rows: &[Row]) {
     );
     // THE COLUMN IS A MIXTURE, and the two populations are reported apart.
     // A `Minimal` or win-now node emits a forced set of two or three cells; the
-    // batched nodes are the ones `quiet_top_k` and `widen_schedule` are sized
-    // against, and quoting only the blended mean overstates the reduction on the
-    // population the knobs actually govern (a REVIEW-design finding).
+    // batched nodes are the ones stage Q's width knobs would be sized against
+    // (they left the schema at docs/decisions.md D-675, unread by any code), and
+    // quoting only the blended mean overstates the reduction on the population
+    // such a knob would govern (a REVIEW-design finding).
     let open: Vec<&Row> = rows.iter().filter(|r| !r.filtered && !r.win_now).collect();
     let open_ball = if open.is_empty() {
         0.0

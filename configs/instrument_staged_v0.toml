@@ -34,8 +34,6 @@ kind = "staged"
 # configs/instrument_v0.toml's radius, so the two seats reach the same cells
 # in the one place they still agree by construction.
 quiet_radius = 2
-# Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
-# Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
 # The safety-net cap (docs/decisions.md D-478, D-482): cells of the quiet ball a
 # safety-net row may emit, at every node but the root turn's. 0 disables it, and
 # 0 is the committed value everywhere until an SPRT says otherwise.

@@ -863,7 +863,7 @@ fn root_census_site(
         // The root's own firing sits at turn 0 from itself, and that is the
         // WHOLE of what this site varies from the in-tree one (A-05, D-675's
         // sibling ruling on one constructor).
-        crate::census::TriggerColumns::at(state, threats, 0),
+        crate::census::TriggerColumns::at(state, threats, 0, "root"),
     )
 }
 

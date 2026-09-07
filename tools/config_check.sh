@@ -26,12 +26,17 @@
 # nobody committed gets caught.
 #
 # Usage: tools/config_check.sh [path ...]   (default: every .toml under configs/)
-# Exit:  0 all valid, 1 one or more rejected or nothing to check.
-#        THERE IS NO VOID CLASS, stated rather than left to be inferred from
-#        silence (tools/SHELL_CHECKLIST.md item 12 obligation 1). This gate
-#        writes no scratch and reads only committed documents, so it has no
-#        way to be short of anything: every non-zero answer is a document
-#        that did not load.
+# Exit:  0 all valid
+#        1 one or more documents were rejected, or there was nothing to check
+#        2 THE RUN IS VOID — a validator could not be BUILT, so no document was
+#          adjudicated (tools/SHELL_CHECKLIST.md item 12)
+#
+# THE VOID IS REAL HERE AND AN EARLIER REVISION SAID IT WAS NOT. This gate is
+# not a pure reader: it BUILDS five validators, and `cargo run` conflates "the
+# document is bad" with "the binary would not compile" in one exit 1. On a full
+# disk that read as a broken config — cargo's vocabulary answering a question
+# about a document. The builds are therefore separated out below and a build
+# failure is a void.
 
 set -euo pipefail
 
@@ -102,29 +107,49 @@ if [ "$explicit" -eq 0 ]; then
 	fi
 fi
 
+void() {
+	printf 'config_check: RUN VOID: %s\n' "$*" >&2
+	exit 2
+}
+
+# THE BUILD IS SEPARATED FROM THE RUN so the two answers stay apart. Only the
+# validators a non-empty bucket needs are built, so an explicit-path run pays
+# for one and not five.
+build_validator() {
+	local package="$1" example="$2"
+	cargo build --quiet --locked --package "$package" --example "$example" ||
+		void "the $example validator does not build; nothing was adjudicated and no \
+document is implicated"
+}
+
 status=0
 
 if [ "${#configs[@]}" -gt 0 ]; then
+	build_validator pistol-engine validate_config
 	cargo run --quiet --locked --package pistol-engine --example validate_config -- \
 		--check-weights-file "${configs[@]}" || status=1
 fi
 
 if [ "${#weights[@]}" -gt 0 ]; then
+	build_validator pistol-eval validate_weights
 	cargo run --quiet --locked --package pistol-eval --example validate_weights -- \
 		"${weights[@]}" || status=1
 fi
 
 if [ "${#arenas[@]}" -gt 0 ]; then
+	build_validator pistol-arena validate_arena_config
 	cargo run --quiet --locked --package pistol-arena --example validate_arena_config -- \
 		"${arenas[@]}" || status=1
 fi
 
 if [ "${#solvers[@]}" -gt 0 ]; then
+	build_validator pistol-solver validate_solver_config
 	cargo run --quiet --locked --package pistol-solver --example validate_solver_config -- \
 		"${solvers[@]}" || status=1
 fi
 
 if [ "${#books[@]}" -gt 0 ]; then
+	build_validator pistol-cli validate_random_openings_config
 	cargo run --quiet --locked --package pistol-cli --example validate_random_openings_config -- \
 		"${books[@]}" || status=1
 fi

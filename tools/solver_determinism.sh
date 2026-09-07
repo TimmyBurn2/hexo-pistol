@@ -29,6 +29,25 @@ CONFIG="configs/solver_v0.toml"
 [ -f "$FIXTURE" ] || void "no fixture at $FIXTURE"
 [ -f "$CONFIG" ] || void "no config at $CONFIG"
 
+# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
+# obligation 2, docs/decisions.md D-285). BOTH filesystems, because they are
+# two: the transcripts go under `$TMPDIR` and the build goes to this
+# repository's target tree, and on this machine those are a RAM-backed tmpfs and
+# an nvme partition. A shortage on either otherwise reaches the log in `mktemp`'s
+# or `cargo`'s vocabulary, which describes those tools rather than this gate.
+#
+# BEFORE THE BUILD AND NOT AFTER IT. This block sat below the build until a
+# reviewer measured the order: a full filesystem then voided with "the build
+# failed — cargo's own words are above", which is cargo's vocabulary and the
+# exact D-281 reading item 12 exists to close. Every sibling gate preflights
+# first; this one now does too.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -x "$PREFLIGHT" ] || void "the scratch preflight is missing beside this script: $PREFLIGHT"
+for SCRATCH_FS in "${TMPDIR:-/tmp}" "$ROOT"; do
+	"$PREFLIGHT" "$SCRATCH_FS" ||
+		void "no scratch room; the lines above name the filesystem"
+done
+
 # THE BINARY IS THE ONE CARGO JUST NAMED, never a path this script spells
 # (docs/decisions.md D-250, D-672). A literal `target/release/solver-selftest`
 # has two failure modes and this gate was reproduced in BOTH: under a
@@ -72,21 +91,11 @@ BIN="${BUILT[0]}"
 [ -f "$BIN" ] || void "cargo named \`$BIN\` for --bin solver-selftest and it is not a regular file"
 [ -x "$BIN" ] || void "cargo named \`$BIN\` for --bin solver-selftest and it is not executable"
 
-# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
-# obligation 2, docs/decisions.md D-285). BOTH filesystems, because they are
-# two: the scratch files go under `$TMPDIR` and the build goes to this
-# repository's target tree, and on this machine those are a RAM-backed tmpfs and
-# an nvme partition. A shortage on either otherwise reaches the log in `mktemp`'s
-# or `cargo`'s vocabulary, which describes those tools rather than this gate.
-PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
-[ -x "$PREFLIGHT" ] || void "the scratch preflight is missing beside this script: $PREFLIGHT"
-for SCRATCH_FS in "${TMPDIR:-/tmp}" "$ROOT"; do
-	"$PREFLIGHT" "$SCRATCH_FS" ||
-		void "no scratch room; the lines above name the filesystem"
-done
-
 OUT="$(mktemp -d)" || void "mktemp refused"
-trap 'rm -rf "$OUT"' EXIT
+# Item 7: the trap's LAST command decides the status, so a scratch directory
+# that will not remove would turn a chosen void (2) into a fail (1) — the exact
+# reading item 12 exists to prevent.
+trap 'rc=$?; rm -rf "$OUT"; exit "$rc"' EXIT
 
 # Two SEPARATE processes, the gate proper (D-7's own form).
 "$BIN" "$FIXTURE" "$CONFIG" >"$OUT/run-a" 2>"$OUT/err-a" || fail "run A refused: $(cat "$OUT/err-a")"

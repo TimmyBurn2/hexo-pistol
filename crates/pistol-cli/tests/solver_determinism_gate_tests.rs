@@ -153,18 +153,41 @@ fn a_green_build_that_names_no_executable_is_a_void_naming_that() {
     );
 }
 
-/// The gate ASKS FOR ITS SCRATCH SPACE BEFORE IT WRITES ANY, and says so.
+/// The gate ASKS FOR ITS SCRATCH SPACE BEFORE THE BUILD, and the ORDER is what
+/// this asserts.
 ///
-/// `tools/SHELL_CHECKLIST.md` item 12 obligation 2. Without this the preflight
-/// CALL is invisible — deleting it leaves the gate passing, because a preflight
-/// that passes is a no-op (docs/decisions.md D-553's call-removed mutant).
+/// `tools/SHELL_CHECKLIST.md` item 12 obligation 2. Two things are needed and
+/// the first version of this test had only one. PRESENCE: without an assertion
+/// the preflight CALL is invisible, because a preflight that passes is a no-op
+/// and deleting it leaves the gate green (docs/decisions.md D-553's
+/// call-removed mutant). ORDER: this gate's preflight sat BELOW the build, so
+/// on a full filesystem it voided with cargo's words rather than its own — the
+/// D-281 reading item 12 exists to close — and a test that reads only presence
+/// cannot see that. It is checked by OFFSET in the gate's own output, so the
+/// block cannot drift back down without this going red.
 #[test]
-fn the_gate_asks_for_its_scratch_before_it_writes_any() {
+fn the_gate_asks_for_its_scratch_before_it_builds_anything() {
     let ran = run_gate(None, None);
     let out = String::from_utf8_lossy(&ran.stdout);
+    let combined = format!("{out}{}", String::from_utf8_lossy(&ran.stderr));
+    let preflight = combined
+        .find("scratch_preflight:")
+        .unwrap_or_else(|| panic!("the gate must ask for room at all:\n{combined}"));
     assert!(
-        out.contains("scratch_preflight:") && out.contains("KiB available"),
-        "the gate must ask for room before it writes transcripts, and name what \
-         it found:\n{out}"
+        combined.contains("KiB available"),
+        "and name what it found:\n{combined}"
     );
+    // `Compiling`/`Finished` is cargo's first word about the build. On a warm
+    // tree only `Finished` appears, so both are searched and the earliest wins.
+    let build = ["Compiling", "Finished", "Blocking"]
+        .iter()
+        .filter_map(|word| combined.find(word))
+        .min();
+    if let Some(build) = build {
+        assert!(
+            preflight < build,
+            "the preflight must come BEFORE the build it protects, or a full \
+             filesystem answers in cargo's vocabulary:\n{combined}"
+        );
+    }
 }

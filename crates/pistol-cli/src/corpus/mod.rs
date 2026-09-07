@@ -36,6 +36,8 @@ pub const NO_GAMES: &str = "this corpus holds no games: an empty document is ref
 /// A corpus this tool refuses to read, and where it gave up.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CorpusError {
+    /// The document that was refused, quoted back so a refusal names a file
+    /// the operator can open.
     pub path: PathBuf,
     /// The 1-based line, where the problem is on one.
     pub line: Option<usize>,

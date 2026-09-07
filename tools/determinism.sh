@@ -100,9 +100,7 @@ SOLVER_LAYOUT_BUDGET="nodes 10000"
 SOLVER_LAYOUT_BUDGET="nodes 10000"
 
 fail() { printf 'determinism: FAIL: %s\n' "$*" >&2; exit 1; }
-# THE VOID, NAMED (tools/SHELL_CHECKLIST.md item 12 obligation 1): a run this
-# gate could not take is not two runs that disagreed, and `tools/ci.sh`'s `gate`
-# wrapper carries the difference across the seam.
+# THE VOID (item 12 obligation 1): a run not taken is not a disagreement.
 void() { printf 'determinism: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
 command -v cargo >/dev/null || fail "cargo is not on PATH"
@@ -113,12 +111,7 @@ for seat in "${SEATS[@]}"; do
 	[ -f "$seat_fixture" ] || fail "no fixture at $seat_fixture"
 done
 
-# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
-# obligation 2, docs/decisions.md D-285). BOTH filesystems, because they are
-# two: the scratch files go under `$TMPDIR` and the build goes to this
-# repository's target tree, and on this machine those are a RAM-backed tmpfs and
-# an nvme partition. A shortage on either otherwise reaches the log in `mktemp`'s
-# or `cargo`'s vocabulary, which describes those tools rather than this gate.
+# SCRATCH, BEFORE THE WORK (item 12 obligation 2, D-285): both filesystems.
 PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
 [ -x "$PREFLIGHT" ] || void "the scratch preflight is missing beside this script: $PREFLIGHT"
 for SCRATCH_FS in "${TMPDIR:-/tmp}" "$ROOT"; do
@@ -129,7 +122,10 @@ done
 # Never under the repository: transcripts are artifacts and artifacts are not
 # committed (CLAUDE.md rule 8).
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+# Item 7: the trap's LAST command decides the status, so a scratch directory
+# that will not remove would turn a chosen void (2) into a fail (1) — the exact
+# reading item 12 exists to prevent.
+trap 'rc=$?; rm -rf "$WORK"; exit "$rc"' EXIT
 
 echo "determinism: building the engine (release, locked)"
 # THE BINARY THIS GATE RUNS IS THE BINARY CARGO BUILT: the path comes from cargo's

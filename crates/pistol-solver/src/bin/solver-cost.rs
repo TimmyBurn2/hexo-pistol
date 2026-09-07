@@ -1,19 +1,12 @@
 //! `solver-cost`: the per-visit wall instrument (WP-1.8c design §2, §6).
 //!
-//! Solves every case of a fixture through the SHIPPED `Solver::solve` at a
-//! stated cap and prints, per case, the value, the node and seesaw counts, the
-//! wall in microseconds and the wall per visit — plus one `TOTAL` line. It is
-//! the unit §6's REPRODUCTION bracket is written in: node counts are held
-//! identical across the change being measured, so microseconds per visit is a
-//! clean per-leg reading where an nps ratio over a changing node mix is not.
-//!
-//! It asserts NO expectation. A fixture whose `expect` is a placeholder must
-//! not fail the run, exactly as `wp18b_probe.rs` does not — learning the cost
-//! is the whole job, and `solver-selftest` is the gate that adjudicates values.
-//!
-//! Wall time is the one thing here that is not reproducible, and it is the one
-//! thing being measured; the VALUES printed beside it are deterministic (D-7),
-//! so two runs differ in the microsecond columns and in nothing else.
+//! Microseconds per visit rather than nps, because node counts are held
+//! identical across the change being measured and an nps ratio over a changing
+//! node mix is not a clean per-leg reading. It asserts NO expectation —
+//! learning the cost is the job, and `solver-selftest` is the gate that
+//! adjudicates values. Wall time is the one thing here that is not
+//! reproducible and the one thing being measured; every value beside it is
+//! deterministic (docs/decisions.md D-7).
 
 use std::env;
 use std::process::ExitCode;

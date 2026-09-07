@@ -21,6 +21,9 @@ pub struct Symmetry {
 }
 
 impl Symmetry {
+    /// The symmetry that fixes every cell. It is in [`Symmetry::ALL`] like
+    /// any other, so a canonical form is a minimum over twelve and never over
+    /// eleven plus a special case.
     pub const IDENTITY: Symmetry = Symmetry {
         sixths: 0,
         reflected: false,

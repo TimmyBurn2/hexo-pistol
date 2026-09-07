@@ -7,10 +7,17 @@
 /// — the identity column carrying `GameState::key`, the option the design's F2
 /// rules out — left **seventy tests green**, including the one written to catch
 /// it. Deriving both here removes the DUPLICATED derivation and not the
-/// exchange: each firing site still names the two fields when it builds its
-/// row, so each is attacked by a registered mutant of its own, and the test
-/// that kills them reads an IN-TREE row's identity against a referent replayed
-/// outside the search (`docs/experiments/wp20b_B1_remedy.md`).
+/// exchange, and the test that kills an exchange reads an IN-TREE row's
+/// identity against a referent replayed outside the search
+/// (`docs/experiments/wp20b_B1_remedy.md`).
+///
+/// **THE SECOND HALF OF THAT ARGUMENT NO LONGER HOLDS AND IS WITHDRAWN.** It
+/// used to say "each firing site still names the two fields when it builds its
+/// row, so each is attacked by a registered mutant of its own" — true when the
+/// root and the in-tree site were two constructions. Audit row A-05 was that
+/// they were two, and `TriggerColumns::at` made them one, so there is one
+/// site to attack and one mutant reaches it (D-675's sibling ruling). What
+/// defends the exchange is now the referent test alone.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CensusKeys {
     /// The position up to transposition AND symmetry — the identity D-537's
@@ -135,11 +142,13 @@ impl TriggerColumns {
     /// # Panics
     ///
     /// [`crate::staged::OVERLOAD_ON_A_DECIDED_POSITION`] if the trigger fired
-    /// on a decided position, which `cover` cannot be asked about.
+    /// on a decided position, which `cover` cannot be asked about. `site` is
+    /// the only thing that separates the two firings in that message.
     pub(crate) fn at(
         state: &pistol_core::GameState,
         threats: &pistol_solver::ThreatState,
         turns_from_root: u32,
+        site: &'static str,
     ) -> TriggerColumns {
         let mover = state.to_move();
         let opponent = mover.opponent();
@@ -158,9 +167,13 @@ impl TriggerColumns {
         // under a census — a run that collects none never reaches this
         // function — so the cost the matrix's row (b) owes a bench is neither
         // paid nor measured here.
+        // `site` EARNS ITS PARAMETER HERE AND NOWHERE ELSE. Merging the two
+        // constructions took the in-tree wording, so the root's panic lost the
+        // word "root" and a crash report could no longer tell the two firings
+        // apart from the message. One constructor, still two named sites.
         let left = pistol_solver::StonesLeft::from_state(state).unwrap_or_else(|| {
             panic!(
-                "pistol-search invariant {}: the trigger fired on a decided position",
+                "pistol-search invariant {}: the {site} trigger fired on a decided position",
                 crate::staged::OVERLOAD_ON_A_DECIDED_POSITION
             )
         });

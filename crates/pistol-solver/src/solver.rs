@@ -33,6 +33,9 @@ pub enum SolveOutcome {
 /// Everything one solve produced.
 #[derive(Debug, Clone)]
 pub struct SolveResult {
+    /// What was proved, or that nothing was within the budget —
+    /// [`SolveOutcome::Unknown`] is an answer about the SEARCH and never about
+    /// the position.
     pub outcome: SolveOutcome,
     /// df-pn node visits.
     pub nodes: u64,

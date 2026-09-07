@@ -57,6 +57,8 @@ pub struct BenchPosition {
     /// How many stones it actually has — not always the centre, so each entry
     /// states its own.
     pub stones: usize,
+    /// Stated as a ply list, so a reader replays it through the rules rather
+    /// than trusting a board this document drew.
     pub position: PositionSpec,
     /// The game it came from.
     pub game_hash: String,

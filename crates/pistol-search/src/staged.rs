@@ -238,8 +238,8 @@ fn batched(
         // window anywhere has reached a live count, so Tier T is provably
         // empty too, and this is the branch that keeps the search from
         // reporting no move at all. The same ball `candidate_cells`'s `Staged`
-        // arm answers with, uncapped — `quiet_top_k` is stage Q's own knob and
-        // this D-scope does not arm stage Q.
+        // arm answers with, uncapped: stage Q's width knob left the schema with
+        // D-675, and this D-scope does not arm stage Q.
         tier_t = within_radius(board, params.quiet_radius);
         out.quiet_len = tier_t.len();
         out.used_quiet_safety_net = true;

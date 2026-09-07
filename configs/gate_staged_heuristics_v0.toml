@@ -22,8 +22,6 @@ tt_bytes = 16777216
 
 [search.candidate_policy]
 kind = "staged"
-# Matches configs/gate_staged_v0.toml: same quiet ball, same cut, so the
-# third seat differs from the staged seat on the heuristics alone.
 quiet_radius = 1
 # The safety-net cap (docs/decisions.md D-478, D-482): cells of the quiet ball a
 # safety-net row may emit, at every node but the root turn's. 0 disables it, and

@@ -102,7 +102,13 @@ cargo test --workspace --locked || fail "tests"
 # is live here and dead in release — this gate would not have caught the warning
 # it is being hardened for. The release-profile pass that would is priced and
 # not taken in docs/experiments/pre_phase2_sweep_CLOSURE.md.
-step "gate 4/$GATE_TOTAL: cargo clippy --workspace --all-targets -- -D clippy::all -D warnings"
+#
+# AND `-D warnings` EXPOSES THIS GATE TO THE TOOLCHAIN: no `rust-toolchain` file
+# is pinned, so a rustc upgrade that adds a warning turns this red on unchanged
+# code. Accepted: `[workspace.lints.clippy] all = "deny"` already gave the tree
+# that exposure for clippy's lints, this widens it rather than creating it, and
+# a lint break on a toolchain bump is loud and local.
+step "gate 4/$GATE_TOTAL: cargo clippy --workspace --all-targets --locked -- -D clippy::all -D warnings"
 cargo clippy --workspace --all-targets --locked -- -D clippy::all -D warnings || fail "clippy"
 
 step "gate 5/$GATE_TOTAL: artifact rejection"

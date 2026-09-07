@@ -75,7 +75,7 @@ impl Position {
 
     /// The authority. Everything else this type holds — the eval's running
     /// sum, the threat state — is a cache maintained against it, so a reader
-    /// deciding what is true asks here (docs/decisions.md D-42).
+    /// deciding what is true asks here.
     pub fn state(&self) -> &GameState {
         &self.state
     }

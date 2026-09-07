@@ -172,3 +172,59 @@ fn panic_message(payload: Box<dyn std::any::Any + Send>) -> String {
                 .unwrap_or_else(|| "a panic payload this test cannot read".to_owned())
         })
 }
+
+/// The turn the degeneration RETURNS, at both call sites — not only the turn it
+/// refuses to return.
+///
+/// The group-E reviewer mutated `one_ply_turn`'s partner choice to the
+/// lexicographically GREATEST other legal cell instead of the least and the
+/// mutant SURVIVED the whole of `pistol-search`: twenty targets green, including
+/// every oracle suite and the one committed test that drives a real root proof
+/// (which reaches a `Pair` witness, never a `OnePly` one). The refusal was
+/// pinned and the answer was not.
+///
+/// The expectation is derived by `min()` over the filtered set, which is the
+/// PROPERTY "lexicographically least" rather than a restatement of the
+/// implementation's `find()` over an ordered vector — so a mutant that reverses
+/// the iteration order dies here.
+#[test]
+fn a_one_ply_witness_pairs_the_completing_stone_with_the_least_other_legal_cell() {
+    let state = GameState::from_plies(&[
+        Coord::new(0, 0),
+        Coord::new(1, 0),
+        Coord::new(2, 0),
+        Coord::new(0, 1),
+        Coord::new(0, 2),
+    ])
+    .expect("five plies make a legal position");
+
+    let at = Coord::new(3, 0);
+    let expected_partner = pistol_core::legal_placements(state.board())
+        .into_iter()
+        .filter(|cell| *cell != at)
+        .min()
+        .expect("this board offers many legal cells");
+    assert_ne!(
+        expected_partner,
+        pistol_core::legal_placements(state.board())
+            .into_iter()
+            .filter(|cell| *cell != at)
+            .max()
+            .expect("this board offers many legal cells"),
+        "the control: a board whose least and greatest legal cell coincide would          make this test pass under either choice"
+    );
+
+    let tree = one_ply_tree_at(at);
+    let expected = pistol_core::Turn::pair(at, expected_partner).expect("two distinct cells");
+
+    assert_eq!(
+        pistol_search::proof_first_move(&tree, &state),
+        Some(expected),
+        "proof_first_move pairs the completing stone with the LEAST other legal cell"
+    );
+    assert_eq!(
+        pistol_search::proof_line(&tree, &state, 1),
+        vec![expected],
+        "and proof_line answers with the same turn, which is what one helper buys"
+    );
+}

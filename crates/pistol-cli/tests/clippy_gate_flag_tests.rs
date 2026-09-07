@@ -29,6 +29,22 @@ fn gate_four_flags() -> Vec<String> {
         !flags.is_empty(),
         "gate 4 must pass at least one lint flag: {line}"
     );
+    // THE FLAGS ARE NOT THE WHOLE GATE, and a reviewer found the two edits that
+    // prove it: dropping `--all-targets` stops the lint reaching tests and
+    // examples, and replacing `|| fail "clippy"` with `|| true` makes the gate
+    // decorative — both leave every assertion below green, because both live
+    // OUTSIDE the post-`--` string. Neither is a lint flag, so neither belongs
+    // in `flags`; they are checked here, on the same line, read once.
+    assert!(
+        line.contains(" --all-targets "),
+        "gate 4 must lint tests and examples too, or the flags below reach less \
+         than this gate claims: {line}"
+    );
+    assert!(
+        line.contains("|| fail "),
+        "gate 4 must FAIL the run when clippy refuses; a gate whose refusal is \
+         swallowed is a gate that does not exist: {line}"
+    );
     flags
 }
 

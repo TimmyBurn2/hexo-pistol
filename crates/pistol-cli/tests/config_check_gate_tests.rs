@@ -8,10 +8,9 @@ use common::{repo, repo_root, scratch};
 /// Assert the gate's exit code, in a message that says what the other code
 /// would have meant (`tools/SHELL_CHECKLIST.md` item 12 obligation 3).
 ///
-/// This gate has NO void class, which its own usage block states rather than
-/// leaving to be inferred: it builds no scratch and runs nothing that can be
-/// short of room, so every non-zero answer here is a document that did not
-/// load.
+/// This gate DOES have a void class, and an earlier revision of this file said
+/// it did not: it builds five validators, and `cargo run` conflates "the
+/// document is bad" with "the binary would not compile" in one exit 1.
 fn assert_code(ran: &Output, want: i32, what: &str) {
     let got = ran.status.code();
     if got == Some(want) {
@@ -20,6 +19,7 @@ fn assert_code(ran: &Output, want: i32, what: &str) {
     let meaning = match got {
         Some(0) => "0 — every document named parsed and validated",
         Some(1) => "1 — one or more were rejected, or there was nothing to check",
+        Some(2) => "2 — RUN VOID: a validator would not build, so no document was judged",
         _ => "a code this gate does not define, or a signal",
     };
     panic!(
@@ -182,5 +182,52 @@ fn an_engine_config_naming_a_weights_file_that_is_not_there_is_refused() {
     assert!(
         said.contains("eval_v0_weights_that_nothing_tracks.toml"),
         "and the refusal quotes the path it could not read:\n{said}"
+    );
+}
+
+/// A validator that will not BUILD is a void, not a rejected document.
+///
+/// `cargo run` returns one exit code for both, so before the builds were split
+/// out a full disk answered this gate's question in cargo's vocabulary and a
+/// reader went looking for a broken config (tools/SHELL_CHECKLIST.md item 12,
+/// docs/decisions.md D-281).
+#[test]
+fn a_validator_that_will_not_build_is_a_void_and_not_a_rejected_document() {
+    let bin = scratch("config_check_stub_cargo").join("bin");
+    std::fs::create_dir_all(&bin).expect("the stub directory");
+    let stub = bin.join("cargo");
+    std::fs::write(
+        &stub,
+        "#!/bin/sh\necho 'error: could not compile `pistol-engine`' >&2\nexit 101\n",
+    )
+    .expect("the stub is written");
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut mode = std::fs::metadata(&stub)
+            .expect("the stub exists")
+            .permissions();
+        mode.set_mode(0o755);
+        std::fs::set_permissions(&stub, mode).expect("the stub is executable");
+    }
+    let inherited = std::env::var("PATH").unwrap_or_default();
+    let ran = Command::new("bash")
+        .arg(repo("tools/config_check.sh"))
+        .arg(repo("configs/instrument_v0.toml"))
+        .env("PATH", format!("{}:{inherited}", bin.display()))
+        .output()
+        .expect("the shipped script starts");
+    assert_code(
+        &ran,
+        2,
+        "a validator that will not build judges no document",
+    );
+    let said = String::from_utf8_lossy(&ran.stderr);
+    assert!(
+        said.contains("config_check: RUN VOID"),
+        "and the gate names it as a void in its own words:\n{said}"
+    );
+    assert!(
+        said.contains("no document is implicated"),
+        "and says the document is not what failed:\n{said}"
     );
 }

@@ -32,17 +32,13 @@ pub enum CandidatePolicy {
 
 /// The parameters `CandidatePolicy::Staged` carries.
 ///
-/// Deliberately narrower than the config document's `[search.candidate_policy]`
-/// table (`U3_tier_t.md` §10), which also states `quiet_top_k` and
-/// `widen_schedule` — those two govern stage Q's widening schedule, which this
-/// D-scope does not implement (§1 above; `WPQ_seed.md`). Carrying them here
-/// unused would be dead weight on the search's own hot-path type for a
-/// mechanism that does not run; they are validated at the config layer
-/// (`pistol-engine`) for schema completeness and go no further. **This is an
-/// IMPL-time reading of an OPEN question the design left the architect's**
-/// (`U3_tier_t.md` §U3-Z: "whether the D-scope shipped surface keeps those two
-/// keys at all is OPEN") — WP-1.5c is where stage Q, and therefore where these
-/// two keys' consumption, is arms.
+/// This carries exactly what the search reads. `U3_tier_t.md` §10's table also
+/// stated `quiet_top_k` and `widen_schedule`, which govern stage Q's widening
+/// schedule; nothing implemented them, so they were validated for schema
+/// completeness and read by nobody. §U3-Z left it OPEN "whether the D-scope
+/// shipped surface keeps those two keys at all", and D-675 answered it: they are
+/// gone from the document too, and WP-1.5c re-adds whichever it consumes with
+/// the code that consumes it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StagedParams {
     /// Hex distance the fallback's quiet ball reaches (docs/decisions.md

@@ -48,12 +48,16 @@ pub enum RandomOpeningsError {
     RadiusPastCeiling {
         /// The radius asked for.
         max_radius: u32,
+        /// The typo bound this refuses against — not a rule, and not the
+        /// radius-8 legal region (docs/decisions.md D-20).
         ceiling: u32,
     },
     /// A book size past the typo ceiling, or of no openings at all.
     CountPastCeiling {
         /// The count asked for.
         n_openings: usize,
+        /// The typo bound this refuses against: a book nobody meant to ask for
+        /// costs hours before it looks wrong.
         ceiling: usize,
     },
     /// The pool of distinct openings ran dry before the book was full.
@@ -137,6 +141,8 @@ pub enum RandomOpeningsError {
     },
     /// An output could not be written.
     Write {
+        /// Where the write was attempted, resolved against the directory the
+        /// CALLER stood in (tools/SHELL_CHECKLIST.md item 11's own class).
         path: PathBuf,
         /// The operating system's reason.
         why: String,

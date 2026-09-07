@@ -858,7 +858,7 @@ impl<'a> Run<'a> {
             self.census_folds = self.census_folds.saturating_add(1);
             (
                 crate::census::CensusKeys::at(state),
-                crate::census::TriggerColumns::at(state, threats, from_root),
+                crate::census::TriggerColumns::at(state, threats, from_root, "in-tree"),
             )
         });
         // One clone serves both calls (the solver never mutates its input).

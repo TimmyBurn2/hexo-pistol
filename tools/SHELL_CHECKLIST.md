@@ -216,11 +216,22 @@ match it because drivers parse what they emit:
 `crates/pistol-arena/src/bin/stub_engine.rs:631` and
 `tools/sealbot/tests/stub_pistol.py:86`.
 
-**THE CONSUMERS**, re-enumerated at `b60c3d3` (`git grep -n "info totals\|
-' totals '\|\" totals \""` over `crates` and `tools`, then read and classified —
-a site that FOLDS already-parsed numbers, such as
+**THE CONSUMERS.** The enumeration is
+
+```
+git grep -n " totals " -- 'tools/*.sh' 'tools/**/*.sh' 'tools/*.py' 'crates/*/src'
+```
+
+read and classified by hand — a site that FOLDS already-parsed numbers, such as
 `crates/pistol-arena/src/record.rs:113`, is not a consumer of the grammar and is
-not listed):
+not listed. **AN EARLIER REVISION OF THIS APPENDIX CITED A DIFFERENT COMMAND
+THAT COULD NOT HAVE PRODUCED ITS OWN TABLE**: it searched for `info totals` and
+for `' totals '` in quotes, and an `awk '/ totals /{` puts the discriminator
+between SLASHES, so it matched neither of the two `awk` consumers — including
+the row it advertised as the one the audit had missed. That is
+`docs/process.md`'s named class, a claim checked against the wrong population,
+inside the register whose closing line demands re-derivation. The command above
+finds all eleven.
 
 | # | site | what it keys on |
 |---|---|---|
@@ -234,9 +245,12 @@ not listed):
 | 8 | `tools/bench_delta.sh:379-390` | `awk '/ totals /'` |
 | 9 | `tools/determinism.sh:188` | `grep -c '^info totals depth_turns [1-9][0-9]* '` |
 | 10 | `tools/movetime_check.sh:125` | `sed -n 's/^info totals .* time \([0-9]\+\) .*/\1/p'` |
+| 11 | `tools/staged_cover_bench.sh:147-157` | `awk '/ totals /'`, `nodes` and `time` by field name — the same reader as row 8 |
 
-**TEN SITES IN NINE FILES, WHERE A-08 SAID EIGHT — and the difference is the
-point of writing them down.** Two are new to this register:
+**ELEVEN SITES IN TEN FILES, WHERE A-08 SAID EIGHT — and the difference is the
+point of writing them down.** Three are new to this register:
+`tools/staged_cover_bench.sh` (found by the review of the round that wrote this
+appendix, and missed by that round's own command),
 `crates/pistol-arena/src/capture.rs` (A-08 named `exchange.rs` and not the
 capture pass's own normalisation, which parses the same line for a different
 reason) and `tools/bench_delta.sh` (A-08 missed it; it produces this project's
@@ -244,7 +258,14 @@ OFFICIAL perf verdict, D-220). One of A-08's is gone rather than fixed:
 `artifacts/wp20b_perf_guard.sh` was uncommitted and `artifacts/` is not tracked
 (CLAUDE.md rule 8), so it took its reader with it.
 
+**AND THE PER-DEPTH FORM IS THE SAME GRAMMAR.** `tools/baseline_snapshot.sh`
+parses `^info depth_turns ` at `:739` and `:780` as well as the totals line at
+`:501` and `:648`, so a change following this table alone would check two of
+that file's four sites. The rows above are the CLOSING line's consumers; a
+grammar change is not finished at them.
+
 **WHAT A CHANGE TO THE GRAMMAR OWES.** Every row above, checked; the three
-producers, checked against each other; and this table re-derived, because a
-register that is not re-derived is a list, and D-671 is this project's own
-record of what a list does when the population moves under it.
+producers, checked against each other; the per-depth sites; and this table
+re-derived with the command above, because a register that is not re-derived is
+a list, and D-671 is this project's own record of what a list does when the
+population moves under it.

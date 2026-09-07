@@ -5,25 +5,18 @@
 # `docs/rule9_justifications.md` (docs/decisions.md D-131 amending D-118; D-234
 # for the `.sh` widening; D-467 for the registry; D-679 for the `.py` one).
 #
-# WHY `.py` COULD NOT BE ADDED BEFORE, AND WHY IT CAN NOW. D-414 found the gap
-# and D-415 ruled the widening right in principle and wrong to couple to its
-# cost: at the time a why was a MARKER COMMENT IN THE FILE, so widening the set
-# meant EDITING two frozen instruments — `tools/wp15b_attribution_check.py` and
-# `tools/wp16_warm_attribution_check.py`, each named with its revision by a
-# pre-registration, where an edit reopens that document's review. D-467 moved
-# every why into the registry below, and that is what dissolved the coupling:
-# the gate now reads a document, so a Python instrument can come under the cap
-# without a single byte of it changing. The ruling's objection was to the price,
-# and the price is gone.
+# WHY `.py` COULD NOT BE ADDED BEFORE, AND WHY IT CAN NOW. D-415 ruled the
+# widening right in principle and wrong to couple to its cost: a why was then a
+# MARKER COMMENT IN THE FILE, so widening meant EDITING two frozen instruments
+# named with their revisions by pre-registrations. D-467 moved every why into
+# the registry, which dissolved the coupling — the gate reads a document now, so
+# a Python instrument comes under the cap without a byte of it changing.
 #
 # THE WHY LIVES IN ONE PLACE, AND IT IS NOT THE FILE. It used to be a marker
-# comment in the file's own header, which put the justification inside the
-# blocks D-443's sweep was deleting: the sweep took 30 of them out along with
-# the headers, because the marker match was `//` and `//!` begins with it, and
-# this gate went red on 30 files whose argument nobody had withdrawn. A why kept
-# beside the code it argues about is a why that a comment-only sweep can delete
-# by accident; a why kept in a registry the gate reads is one that can only go
-# by being edited out on purpose.
+# comment in the file's own header, inside the blocks D-443's sweep was
+# deleting: the sweep took 30 of them out and this gate went red on 30 files
+# whose argument nobody had withdrawn. A why kept beside the code it argues
+# about is one a comment-only sweep can delete by accident.
 #
 # The four things this gate is, precisely:
 #
@@ -74,9 +67,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 fail() { printf 'file_justification_check: FAIL: %s\n' "$*" >&2; exit 1; }
-# THE VOID, NAMED (tools/SHELL_CHECKLIST.md item 12 obligation 1): this gate
-# seeds a scratch tree before it reads the tracked one, and a filesystem with
-# no room for the seed is not a rule-9 finding.
+# THE VOID, NAMED (item 12 obligation 1): a filesystem with no room for the
+# seed tree is not a rule-9 finding.
 void() { printf 'file_justification_check: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
 command -v git >/dev/null || fail "git is not on PATH"
@@ -131,7 +123,9 @@ verdict() {
 		echo "missing"
 		return
 	fi
-	lines="$(wc -l <"$bytes")"
+	# `awk END{NR}` and not `wc -l`: newlines are not lines, so an unterminated
+	# last line would read one short (the registry parser below already knows).
+	lines="$(awk 'END { print NR }' <"$bytes")"
 	if [ "$lines" -le "$SOFT_CAP" ]; then
 		echo "under"
 		return
@@ -165,7 +159,10 @@ PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight
 	void "no scratch room; the lines above name the filesystem"
 
 SEED="$(mktemp -d)"
-trap 'rm -rf "$SEED"' EXIT
+# Item 7: the trap's LAST command decides the status, so a scratch directory
+# that will not remove would turn a chosen void (2) into a fail (1) — the exact
+# reading item 12 exists to prevent.
+trap 'rc=$?; rm -rf "$SEED"; exit "$rc"' EXIT
 
 seed() {
 	local name="$1" filler="${2:-// filler}"

@@ -83,6 +83,11 @@
 # Usage: tools/bench_delta.sh SIDE_A SIDE_B [REPS]
 #        SIDE is a path to an executable, or rev:<commit-ish>.
 # Exit:  0 measured and verdict printed, 1 a precondition or the run failed.
+#        THERE IS NO VOID CLASS, stated rather than left to be inferred from
+#        silence (tools/SHELL_CHECKLIST.md item 12 obligation 1). This is an
+#        instrument and not a gate: it adjudicates nothing, and every way of
+#        not printing a verdict — a missing side, a build that would not
+#        finish, no scratch room — is a 1 with a named reason on stderr.
 
 set -euo pipefail
 

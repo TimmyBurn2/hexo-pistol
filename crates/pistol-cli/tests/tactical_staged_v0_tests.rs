@@ -14,8 +14,16 @@ const TACTICAL_STAGED_V0_FILE: &str = "tactical_staged_v0.txt";
 
 /// The fixture's digest. Editing the fixture without updating this is a red
 /// test, which is the point.
+///
+/// Moved once, at D-675, for a COMMENT and no case: the header derived the
+/// `require 20` threshold from two config keys that no code read, so the
+/// derivation named a mechanism that did not exist while its conclusion — the
+/// quiet cut is disabled — stayed true for a better reason. Not one `case`,
+/// `position`, `budget` or `expect` line differs (`git diff` on the fixture is
+/// six comment lines), which is what makes this a listed edit rather than a
+/// regenerated fixture.
 const TACTICAL_STAGED_V0_SHA256: &str =
-    "fbd9be4cf7fa845e0ee65894c333db63e7fbb5de0a54088857c6e5401da9f53e";
+    "272c9b772aab49c7c6e1b4d9bc79d2f9b1937fc2937bc1cbe7caf09b9d991fe2";
 
 /// CLAUDE.md rule 7's ceiling on a fixture file.
 const FIXTURE_MAX_BYTES: usize = 10 * 1024 * 1024;

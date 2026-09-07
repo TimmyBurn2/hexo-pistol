@@ -413,10 +413,6 @@ Recorded rather than left silent.
 [search.candidate_policy]
 kind = "staged"
 quiet_radius = 2
-quiet_top_k = 16
-# Batch boundaries after the first. The LAST ENTRY IS FINITE: "all remaining"
-# is what makes a widening schedule a rename of full width (WPQ_seed.md §7).
-widen_schedule = [32]
 # LAW-SUPPORT qualification, THRESHOLD reading: >= 2 for the mover, >= 3 for
 # the opponent (§6).
 tier_t_own_count = 2
@@ -427,19 +423,30 @@ tier_t_opponent_count = 3
 q_depth_turns = 0
 ```
 
-Six keys, not five, since WP-1.6 landed: this document's own count moves with
-the field, per that WP's own config checklist (docs/wp16_quiescence_design.md
-§5).
+Four keys. It was six until **D-675**, which removed `quiet_top_k` and
+`widen_schedule` from the schema entirely: audit row A-17 measured that no code
+path read either — two documents differing only in `quiet_top_k` produced
+byte-identical searches while the handshake called them different instruments —
+and §U3-Z's own OPEN question ("whether the D-scope shipped surface keeps those
+two keys at all") is what that answered. **The template above is what an
+operator writes today; a document carrying either key is now REFUSED by name,
+`deny_unknown_fields` giving the full key path.** WP-1.5c re-adds whichever of
+the two stage Q consumes, with the code that consumes it. This document's own
+count moves with the field, per WP-1.6's config checklist
+(docs/wp16_quiescence_design.md §5).
 
 Validation, in `pistol-engine`'s validator and again in `Searcher::new` (a
 `SearchParams` can be built in code and never passes through a document):
-`quiet_radius` in `1..=MAX_CANDIDATE_RADIUS` and representable as `i16`;
-`quiet_top_k >= 1`; `widen_schedule` non-empty, strictly increasing, **every entry
-greater than `quiet_top_k`**, and **no sentinel admitted**; `tier_t_own_count` and `tier_t_opponent_count` in `{2, 3}`; and **every
-`widen_schedule` entry strictly greater than `quiet_top_k`**, which revision 3's
-validator did not check — `quiet_top_k = 64` with `[32]` passed "non-empty and
-strictly increasing" and described a widening that NARROWS. The cross-field rule
-is the last bullet's and carries the same status the lead-in gives it: it
+`quiet_radius` in `1..=MAX_CANDIDATE_RADIUS` and representable as `i16`; and
+`tier_t_own_count` and `tier_t_opponent_count` in `{2, 3}`.
+
+**THE TWO STAGE-Q RULES THIS PARAGRAPH USED TO REGISTER WENT WITH THEIR KEYS AT
+D-675** — `quiet_top_k >= 1`, and `widen_schedule` non-empty, strictly
+increasing, every entry greater than `quiet_top_k`. The cross-field rule was
+real and was worth having: revision 3's validator did not check it, so
+`quiet_top_k = 64` with `[32]` passed "non-empty and strictly increasing" and
+described a widening that NARROWS. It is recorded here as what WP-1.5c owes if
+it re-adds the schedule, and not as a rule this engine applies, because it
 validates two keys whose D-scope is OPEN, against semantics that are the seed's
 unselected text (MAJOR 7, U3-Z). `q_depth_turns` in
 `0..=MAX_Q_DEPTH_TURNS` (`pistol-engine`'s config-level sanity ceiling, 8) and,

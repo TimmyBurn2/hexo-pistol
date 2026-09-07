@@ -3,7 +3,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{repo, scratch};
+use common::{repo, repo_root, scratch};
 
 /// The cap the gate enforces, restated rather than imported: this file is an
 /// INPUT to the script, and agreeing with it by construction proves nothing.
@@ -419,5 +419,37 @@ fn the_justification_gate_asks_for_its_scratch_before_it_seeds_any() {
         out.contains("scratch_preflight:") && out.contains("KiB available"),
         "the gate must ask for room before it writes any, and name what it \
          found:\n{out}"
+    );
+}
+
+/// THE CONTROL THIS SUITE LACKED: the gate accepts THE TREE IT SHIPS IN.
+///
+/// Every other case here builds a scratch git repository, so all eleven passed
+/// while the shipped gate exited 1 on the real repository — four tracked files
+/// over the cap with no entry, three of them pushed over by the very commit
+/// that added the preflight blocks. Its two siblings carry this control
+/// (`config_check_gate_tests::every_committed_document_loads_and_the_summary_counts_them_all`,
+/// `solver_determinism_gate_tests::the_shipped_solver_determinism_script_passes_and_says_so`)
+/// and this one did not, which is the whole reason a reviewer found it rather
+/// than `cargo test`.
+///
+/// Item 10's control is that a gate does not refuse everything. This is the
+/// other half: that it does not refuse the thing it is shipped to adjudicate.
+#[test]
+fn the_shipped_gate_accepts_this_repository() {
+    let ran = Command::new("bash")
+        .arg(repo("tools/file_justification_check.sh"))
+        .current_dir(repo_root())
+        .output()
+        .expect("the shipped gate runs");
+    let out = text(&ran);
+    assert!(
+        ran.status.success(),
+        "the gate must accept the tree it ships in — every file over rule 9's cap \
+         carries an entry:\n{out}"
+    );
+    assert!(
+        out.contains("all registered in"),
+        "and it says so in its own summary line:\n{out}"
     );
 }

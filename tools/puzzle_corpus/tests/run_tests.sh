@@ -29,14 +29,10 @@ cd "$ROOT"
 status=0
 fail() { printf 'puzzle-corpus-tests: FAIL: %s\n' "$*" >&2; status=1; }
 
-printf '== T1/T2/NEG: extractor unit, load, negative controls ==\n'
-python3 tools/puzzle_corpus/tests/test_extract.py | grep -v '^  ok' || fail "extractor tests"
-
-printf '\n== T4: determinism, two runs from cache ==\n'
-# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
-# obligation 2). A void and not a `fail`: `fail` here records a TEST as failed
-# and keeps going, and a filesystem with no room is not a test result. This
-# runner has no other void, so it exits directly and says which class it is.
+# SCRATCH SPACE, ASKED FOR BEFORE ANY WORK (tools/SHELL_CHECKLIST.md item 12
+# obligation 2). A void and not a `fail`: `fail` records a TEST as failed and
+# keeps going, and a filesystem with no room is not a test result. This runner
+# has no other void, so it exits directly and says which class it is.
 PREFLIGHT="$ROOT/tools/scratch_preflight.sh"
 [ -x "$PREFLIGHT" ] || {
   printf 'puzzle-corpus-tests: RUN VOID: no scratch preflight at %s\n' "$PREFLIGHT" >&2
@@ -47,7 +43,22 @@ PREFLIGHT="$ROOT/tools/scratch_preflight.sh"
   exit 2
 }
 SCRATCH="$(mktemp -d)"
-trap 'rm -rf -- "$SCRATCH"' EXIT
+# Item 7: the trap's LAST command decides the status, so it must not replace one.
+trap 'rc=$?; rm -rf -- "$SCRATCH"; exit "$rc"' EXIT
+SCRATCH_LOG="$SCRATCH/extract-tests.log"
+
+printf '== T1/T2/NEG: extractor unit, load, negative controls ==\n'
+# `grep -v` exits 1 when it filters EVERYTHING out — which is what a fully
+# passing run looks like (item 3). The python exit status is the answer; the
+# grep only trims the noise, so its own status is discarded by `|| true`.
+if python3 tools/puzzle_corpus/tests/test_extract.py > "$SCRATCH_LOG" 2>&1; then
+  grep -v '^  ok' "$SCRATCH_LOG" || true
+else
+  cat "$SCRATCH_LOG"
+  fail "extractor tests"
+fi
+
+printf '\n== T4: determinism, two runs from cache ==\n'
 python3 tools/puzzle_corpus/extract.py --offline --out "$SCRATCH/a.jsonl" >/dev/null || fail "run 1"
 python3 tools/puzzle_corpus/extract.py --offline --out "$SCRATCH/b.jsonl" >/dev/null || fail "run 2"
 if cmp -s "$SCRATCH/a.jsonl" "$SCRATCH/b.jsonl"; then

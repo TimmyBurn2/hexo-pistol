@@ -80,7 +80,10 @@ const fn slot(side: Player) -> usize {
 /// form does not repair it: this toolchain accepts `compile_fail,E0999` on code
 /// whose real error is `E0603`. What makes the second example non-vacuous is
 /// the FIRST: every line of it appears there and compiles, so the only line it
-/// can fail on is the one that differs. WHAT THIS DOES NOT COVER: a re-export
+/// can fail on is the one that differs. The THIRD is one line reaching
+/// `line::unpack`, which is `pub(crate)` behind a private `mod line`, so E0603
+/// is the only error it can produce and a type error is its only other outcome.
+/// WHAT THIS DOES NOT COVER: a re-export
 /// of the same item under another path leaves both examples failing, so that
 /// door is judged at the `pub use` list and is not mechanized (D-261).
 #[derive(Debug, Clone, Default)]

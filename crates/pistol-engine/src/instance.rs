@@ -298,6 +298,9 @@ fn stop_for(budget: Budget) -> Result<Stop, EngineError> {
         Budget::DepthTurns(turns) => Stop::DepthTurns(turns),
         Budget::Nodes(nodes) => Stop::Nodes(nodes),
         Budget::MovetimeMs(millis) => {
+            // THE ONLY CLOCK THIS CRATE READS, and instrument mode refuses to be
+            // given a budget that needs one (docs/decisions.md D-22, D-73). Nothing
+            // else here holds nondeterministic state (CLAUDE.md rule 4).
             let deadline = Instant::now()
                 .checked_add(Duration::from_millis(millis))
                 .ok_or_else(|| {

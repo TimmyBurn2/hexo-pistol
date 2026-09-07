@@ -12,11 +12,10 @@
 #
 # WHY THE SAME 100% THRESHOLD HOLDS UNDER A DIFFERENT GENERATOR. A case here
 # states only what the game decides (tactical_v0.txt's own rule), and with
-# the quiet cut DISABLED — configs/tactical_staged_v0.toml and
-# configs/gate_staged_v0.toml both set quiet_top_k above the whole candidate
-# pool a position this size can reach — Staged and Radius can differ at a
-# node in exactly three ways, each a [PROVEN] law and not a heuristic
-# (U4_soundness_instrument.md §8.3):
+# the quiet cut DISABLED — no code path arms it, which is why the two knobs
+# that used to name it left the schema in docs/decisions.md D-675 — Staged and
+# Radius can differ at a node in exactly three ways, each a [PROVEN] law and
+# not a heuristic (U4_soundness_instrument.md §8.3):
 #
 #   0. the !is_pv OVERLOAD RETURN — generates nothing, returns a mate score
 #      that is exact when its premises hold, so it can only SHORTEN a mate

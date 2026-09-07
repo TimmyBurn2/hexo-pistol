@@ -31,8 +31,6 @@ kind = "staged"
 # configs/instrument_v0.toml's radius, so the two seats reach the same cells
 # in the one place they still agree by construction.
 quiet_radius = 2
-# Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
-# Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
 # THE CAP ARMED. K = 16 is not a choice made in this file: it is what the
 # registered calibration selected, by the rule stated before the run and applied
 # inside the instrument itself — `CAL/SELECTED K=16` in

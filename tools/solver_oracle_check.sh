@@ -29,6 +29,16 @@ void() { echo "solver_oracle_check: RUN VOID: $*" >&2; exit 2; }
 
 command -v cargo >/dev/null || void "cargo is not on PATH"
 
+# SCRATCH, BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12 obligation 2). A
+# scratch FILE is scratch: the `mktemp -d` sweep that preflighted this gate's
+# siblings was keyed on `-d` and did not reach here.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -x "$PREFLIGHT" ] || void "the scratch preflight is missing beside this script: $PREFLIGHT"
+for SCRATCH_FS in "${TMPDIR:-/tmp}" "$ROOT"; do
+	"$PREFLIGHT" "$SCRATCH_FS" ||
+		void "no scratch room; the lines above name the filesystem"
+done
+
 OUT="$(mktemp)" || void "mktemp refused"
 trap 'rm -f "$OUT"' EXIT
 

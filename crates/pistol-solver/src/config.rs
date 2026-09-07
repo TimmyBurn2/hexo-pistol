@@ -87,8 +87,9 @@ impl SolverSection {
     ///
     /// # Errors
     ///
-    /// [`SolverConfigError::Epsilon`], [`SolverConfigError::ZoneOrders`], or
-    /// whichever bound refuses first.
+    /// [`SolverConfigError::Epsilon`], [`SolverConfigError::ZoneOrders`],
+    /// [`SolverConfigError::FreeStoneRadius`] or [`SolverConfigError::TtEntries`],
+    /// whichever refuses first.
     pub fn validate(&self) -> Result<SolverParams, SolverConfigError> {
         let epsilon =
             Epsilon::new(self.epsilon_num, self.epsilon_den).ok_or(SolverConfigError::Epsilon {

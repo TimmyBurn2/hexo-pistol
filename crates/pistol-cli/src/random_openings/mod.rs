@@ -154,8 +154,7 @@ pub(crate) fn ball(max_radius: u32) -> Vec<Coord> {
 /// # Errors
 ///
 /// Whatever [`RandomOpeningsConfig::validate`] refuses, and
-/// [`RandomOpeningsError`] if the draw cannot fill the book within its own
-/// bounded attempts.
+/// [`RandomOpeningsError::Exhausted`] if the draw runs dry.
 pub fn generate(config: &RandomOpeningsConfig) -> Result<Book, RandomOpeningsError> {
     // Revalidated, not trusted. This is `pub` and every field of the config is
     // `pub`, so the struct-literal door exists whether or not anyone uses it

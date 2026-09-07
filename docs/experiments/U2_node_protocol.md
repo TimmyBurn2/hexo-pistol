@@ -639,9 +639,14 @@ readable alone; it is a condition, not a datum.)
    destructures the policy to emit `id candidate_policy radius <n>`, which
    `tools/bench_delta.sh` guards and `baseline_snapshot_tests.rs` requires, and
    **U4** §9's `--config` puts it inside the snapshot's INVARIANT block. Under `Staged`
-   it emits `id candidate_policy staged quiet_radius <n> quiet_top_k <k>` — one
+   it emits `id candidate_policy staged quiet_radius <n>` — one
    line, whitespace-delimited, multi-token value, which is the form D-230 records
-   the record already tolerating (`id budgets depth_turns nodes`). `SearchInfo` has THREE construction sites in
+   the record already tolerating (`id budgets depth_turns nodes`). **The
+   `quiet_top_k <k>` token rode this line until D-675 and is GONE**: the key was
+   read by no code, so the field advertised a difference between two engines
+   that ran the same search, which is the opposite of what provenance is for. A
+   driver written against this item before that ruling looks for a token that
+   never arrives. `SearchInfo` has THREE construction sites in
    `search.rs` — the completed-depth report, the `PartialRoot` salvage and the
    `Fallback` answer — and the last two zero most fields today. The counters are
    WHOLE-SEARCH totals like `nodes`, so they are written from the `Run` at the
