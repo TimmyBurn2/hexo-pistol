@@ -223,7 +223,7 @@ fix landed, and the fix is one commit, `e5f4364` (D-688).
 | MINOR-1,2 | an unreadable sibling silently truncated the closure; the execute bit was dropped silently | read | both panic by name (hard rule 3) |
 | MINOR-3 | the destination tail came from file text and was joined unguarded | `lexically_normal` returns `None` above the root | containment guard, with its own test and control |
 | MINOR-5 | the arena copy had no closure test | `git grep` over `crates/pistol-arena/tests` | `crates/pistol-arena/tests/tool_seeding_tests.rs`, 4 tests |
-| MINOR-6 | the dedupe key was the raw string, so `tools//x.sh` counted twice | the `determinism.sh` closure was 27 names / 25 files | normalization |
+| MINOR-6 | the dedupe key was the raw string, so a doubled separator made one file two closure entries | the `determinism.sh` closure was 27 names / 25 files | normalization |
 
 **THE ALPHABET WAS CHOSEN BY MEASUREMENT, NOT BY TASTE.** Following `.md` as well
 makes every closure **42 files from any starting point** — against **1** for
