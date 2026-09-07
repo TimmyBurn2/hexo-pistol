@@ -1,6 +1,6 @@
 # `matrix_wp22_phase2_eval.md` — the arithmetic, re-derived
 
-**Governing revision**: `0c2f519` (`dev`) — matrix revision 3.
+**Governing revision**: matrix revision 4. *(Two rows of the revision-1 table below carried the PRE-correction values for SPSA's openings — 7.176x and 34.67 h at 61 000 — after the matrix had moved to 60 500. Corrected; the second red team found them.)*
 
 **Why this file exists.** `docs/process.md`'s re-derivation clause is addressed
 to the REVIEWER, and its reason is that *"the author is reaching for a label for
@@ -56,8 +56,8 @@ eye to a number that needed no rounding.
 | scored cells per position, L7 | 111.14 | 111.1 |
 | A2 positions per generator parameter | 3.197 | 3.2 |
 | SPSA pairs from 120 000 games | 60 000 | 60 000 |
-| SPSA openings against `book_v3` | 7.176x | 7.1x |
-| SPSA wall at 2.046 s/opening | 34.67 h | 34.4 h (at the corrected 60 500) |
+| SPSA openings against `book_v3` | **7.118x** (at the corrected 60 500) | 7.1x |
+| SPSA wall at 2.046 s/opening | **34.38 h** (at the corrected 60 500) | 34.4 h |
 | `book_v3` wall at 2.046 s/opening | 4.831 h | 4.83 h |
 | L11 T4 `ω²` as a share of the raw ceiling | 0.6225 | 62 % |
 | L11 nps bracket, low | 341 617.3 | 341 617 |
