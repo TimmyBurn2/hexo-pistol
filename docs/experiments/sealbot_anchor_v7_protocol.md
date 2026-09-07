@@ -49,56 +49,123 @@ is the wall at which the harness declares a forfeit — but it is unequal by a
 factor of 24, and it interacts with §A2's overshoot: a pistol answer that ran
 long is recorded, where a sealbot answer that ran long is a loss.
 
-**THE RE-LABELLING THIS FINDING OWES.** `anchor_v5_finding.md` and
-`anchor_v6_seatswap_finding.md`, and every later citation of the v5/v6 numbers,
-are **"unequal movetime (pistol 500 ms / sealbot 300 ms)"** anchors. The
-finding does not overturn either result — v6's seat-swap conclusion is about
-which COLOUR an asymmetry follows, and an equal handicap on both slots cannot
-produce that — but "pistol won 40 % of decided games" is a sentence about a
-run in which pistol had 1.67× the clock, and it may not be quoted without the
-qualifier.
+**v7 REGISTERS IT AS A MULTIPLE OF EACH SIDE'S OWN BUDGET RATHER THAN INHERITING
+120/5.** Both seats get `turn_timeout_seconds` = **16x that seat's budget**,
+which is 8.0 s against a 500 ms budget and 4.8 s against a 300 ms one. D-534
+explains pistol's 120 s — *"its wall cap was raised from a registered timing
+probe precisely so the overshoot would be RECORDED rather than converted into a
+loss"* — and that is a good reason for a generous threshold on BOTH seats, and no
+reason at all for the ratio between them. 16x is generous against a MEASURED
+worst case of 106 ms of excess (§A2) and still bounded, so a genuinely hung
+engine is caught rather than waited on for two minutes. **v5 and v6 recorded 0
+forfeits at 120/5, so nothing in the series turns on this**; it is registered so
+that v7 does not carry an asymmetry it has just spent a section naming.
+
+**THE RE-LABELLING IS DONE, NOT OWED** (D-697): `anchor_v5_finding.md` and
+`anchor_v6_seatswap_finding.md` carry the label in their own headers, and the
+three downstream records that quoted the numbers unqualified —
+`opt_arc_CLOSURE.md`, `opt_arc_ledger.md`, `opt_arc_perf_finding.md` — carry it
+beside the number. D-608 and D-612 are append-only and are amended by D-697
+naming them, which is the log's own mechanism.
+
+**AND THE FINDING IS NARROWER THAN A FIRST READING OF IT.** The inequality was
+REGISTERED all along — `sealbot_anchor_v2_prereg.md:29,31` and
+`sealbot_anchor_v3_prereg.md:36,38` put both budgets in adjacent rows of the same
+table, and v6's own text states both. Nothing was concealed; what never happened
+is that the inequality reached the SENTENCE the results are quoted in.
+
+**WHY v6's SEAT-SWAP CONCLUSION STANDS, and the reason is not the one an earlier
+revision gave.** It is not that the handicap is equal — it is not equal anywhere
+in v5 or v6. It is that the handicap TRAVELS WITH THE ENGINE and is therefore
+INVARIANT across the slot exchange, which is exactly what makes D-612's
+slot-versus-colour test survive it. **The exemption is drawn at that conclusion
+by name**, and not at "either result": v6's other claim — that both engines are
+worse as p1, and the 38/62 colour split — is a statement about play at these
+budgets and is labelled with them like any other.
 
 **v7 PINS EQUAL MEASURED MOVETIME PER SIDE.** Equal CONFIGURED movetime is not
 enough and is not what is registered: §A2's two overshoot terms differ between
 the engines, so equality is registered on what the log MEASURES, and the run's
 receipt is the per-answer distribution of both sides.
 
-## §A2 — The two overshoot terms, both named, both measured per move
+## §A2 — The overshoot terms, MEASURED — and there are three, not two
 
-**Sealbot's** (`docs/audit/sealbot_study_2026-09.md` §4, CODE-derived at
-`current/` `c94749c`): the deadline is `now + time_limit` set **AFTER the
-untimed setup**, `_check_time` fires every 1024 nodes and throws, and the catch
-restores five flat arrays by `memcpy`. So its overshoot is
+**A REVISION OF THIS SECTION CLAIMED TWO TERMS AND WAS WRONG. The measurement is
+below and it is the section's whole content**, derived from the 200 per-game
+transcripts of v5 and v6 by a script written for this protocol — not from
+`report.txt`, which publishes only slot A (see the gap named at the end):
 
-> "≤ 1024 nodes of search past the deadline + the untimed setup + the rollback"
+| per-answer wall minus the configured budget | v5 | v6 |
+|---|---|---|
+| pistol: answers over budget / max excess | 87 of 1040 / **15 ms** | 50 of 978 / **14 ms** |
+| sealbot: answers over budget / max excess | 406 of 1050 / **106 ms** | 300 of 986 / **15 ms** |
+| sealbot, FIRST answer of each game | median **15 ms**, max **106 ms** | median 6 ms, max 15 ms |
+| sealbot, every later answer | median 0 ms, max **11 ms** | median 0 ms, max 4 ms |
 
-and the untimed setup prefix is charged to the wall clock the server measures
-but not to the budget the engine was given.
+**THE OVERSHOOT IS CONCENTRATED IN THE FIRST ANSWER OF EACH GAME AND DIFFERS 7x
+BETWEEN TWO RUNS OF A BYTE-IDENTICAL CONFIG.** Neither fact is explained by the
+two terms an earlier revision named. The third term, and it is the largest:
 
-**Pistol's** (D-534, citing D-520's measurement): gates off, at a 500 ms budget,
-**8 ms maximum overshoot** — MEASURED, and the figure v5's own 515 ms maximum
-against 500 ms is consistent with. With `[solver] on_search_path = true` the
-same instrument measured a **725 ms median overshoot**; **v7 runs the gates-off
-seat**, and a solver-armed seat is a different protocol and not this one.
+**(1) Process start-up and the Python replay, charged to sealbot and not to
+pistol.** `tools/sealbot/matchserver/src/sealbot_client.rs:112-121` respawns the
+shim per game and returns WITHOUT consuming its `sealbot_shim: ready` line, so
+interpreter start-up, the extension import and the bot's construction all land
+inside the first measured answer; `tools/sealbot/sealbot_shim.py` then rebuilds
+the game in Python on every request. `tools/sealbot/matchserver/src/pistol_client.rs`
+completes its handshake inside `new_game`, outside the measurement. **This is a
+one-line asymmetry in a file this repository owns**, and closing it — consuming
+the `ready` line before the clock starts — is registered as OWED below.
 
-**HOW BOTH ARE MEASURED PER MOVE IN THE v7 LOG — and the gap that has to be
-closed first.** `tools/sealbot/matchserver/src/referee.rs:58-68` records a
-`TurnRecord` per turn carrying `wall_ms` (the server's own measurement) and
-`engine_time_ms` (what the engine reported), and
-`tools/sealbot/matchserver/src/transcript.rs:37-45` writes both into every
-per-game transcript for **both** engines. **The summary report does not**:
+**(2) Sealbot's own untimed setup and abort granularity**
+(`docs/audit/sealbot_study_2026-09.md` §4, CODE-derived at `c94749c`): the
+deadline is `now + time_limit` set **after** the untimed setup, `_check_time`
+fires every 1024 nodes, and the catch restores five flat arrays by `memcpy` —
+"≤ 1024 nodes of search past the deadline + the untimed setup + the rollback".
+
+**(3) Pistol's own**, gates off: **8 ms** maximum overshoot at a 500 ms budget —
+**D-519**, seat 1 of anchor v2, 320 answers, median 500 ms, max 508 ms. *(An
+earlier revision credited this to D-520, which is the SOLVER-ON seat and its
+725 ms median overshoot; D-608 makes the same substitution.)* **It is not this
+series' figure and is not substituted for one**: v5 and v6 measured pistol at
+15 ms and 14 ms in their own runs, and D-479 binds a measured number to the run
+that produced it.
+
+**EQUAL WALL IS NOT EQUAL SEARCH, and the protocol says so on its own face.**
+Sealbot's measured wall carries terms (1) and (2); pistol's carries (3) and about
+a millisecond of IPC. Nothing separates sealbot's search from its overhead:
+`engine_time_ms` is **null for all 2036 sealbot answers** across v5 and v6, and
+non-null for **all 2018 pistol answers** — MEASURED. Any equalisation of the
+wall therefore hands pistol strictly more SEARCH time, by an amount this harness
+cannot currently report.
+
+**THE INSTRUMENT, NAMED WITH ITS REVISION** (`docs/process.md`, "Instrument
+governing revision"): `tools/anchor_overshoot.py`, which reads a run's
+`g*.jsonl` transcripts and prints, per engine, `n`, median, p95, max, the count
+over budget, the max excess, and that excess split into the first answer of each
+game and every later one. It is pinned by the revision the v7 run is taken at,
+and a change to it reopens this review. It produced the table above; that run is
+its DRY RUN, on runs of the same kind as v7 and not on v7 itself.
+
+**THE SECOND INSTRUMENT** (`docs/process.md`, "Cost, replication, and the second
+instrument"), which v2 and v3 both registered and an earlier revision of this
+document dropped: `tools/sealbot/matchserver/src/bin/replay_check.rs`, run over
+v7's transcripts. **Registered agreement criterion**: it replays every game to
+its recorded outcome and exits 0. **Registered consequence of disagreement**: the
+run is VOID and reported as void — not re-interpreted, and not reported with the
+disagreement as a caveat. It does not share the stage under doubt, which is the
+CLOCK: it re-drives recorded moves and checks outcomes, so it is blind to timing
+and cannot corroborate the overshoot table. **It corroborates the GAMES, not the
+budget**, and this document says so rather than letting a green replay read as a
+fair-clock certificate.
+
+**THE REPORT'S OWN GAP, and it is why the transcripts are the instrument.**
 `tools/sealbot/matchserver/src/report.rs:101` declares `a_answer_wall_ms` and
-there is no `b_answer_wall_ms` — so `report.txt`'s per-answer distribution is
-**slot A's alone**. That is why v5 reports pistol's distribution and v6
-reports sealbot's: each was in slot A for its own run, and no single run has
-ever reported both.
-
-**v7's registered instrument for this is the TRANSCRIPTS, not the report.** The
-per-answer distributions of both sides are derived from the per-game transcript
-files, which already carry every turn of both engines. No harness change is
-required and none is registered here. The v7 log states, for each side:
-`n` answers, median, 95th percentile, maximum, and the maximum minus the
-configured budget as **overshoot**, with the two terms above named beside them.
+there is no `b_answer_wall_ms`, so `report.txt` publishes slot A's distribution
+alone. That is why v5 published pistol's and v6 published sealbot's, and why no
+single run has ever reported both. The transcripts
+(`tools/sealbot/matchserver/src/transcript.rs:37-45`) carry `wall_ms` for every
+turn of both engines, which is enough; `engine_time_ms` they carry for the pistol
+seat only.
 
 ## §A3 — The turn cap, and **sealbot does not search it**
 
@@ -138,13 +205,19 @@ phase. Sealbot has no cap term at all: its iterative deepening runs
 `depth 1..max_depth = 200` and stops on a mate score
 (`sealbot_study_2026-09.md` §4).
 
-**NEITHER ENGINE IS TOLD THE CAP.** `git grep -n turn_cap --
-tools/sealbot/matchserver/src/` at `235b6db` returns `config.rs`, `main.rs`,
-`openings.rs`, `referee.rs` and `report.rs` — and **neither `pistol_client.rs`
-nor `sealbot_client.rs`**. The cap is the referee's alone. So there is no cap
+**NEITHER ENGINE IS TOLD THE CAP.** `git grep -n turn_cap -- tools/sealbot/`
+at `235b6db` — the whole subtree, tests included, not just `src/` — returns
+`matchserver/src/{config,main,openings,referee,report}.rs` and
+`tools/sealbot/tests/run_tests.sh`, and **neither `pistol_client.rs` nor
+`sealbot_client.rs`**. The cap is the referee's alone. So there is no cap
 asymmetry to state, both engines search cap-blind, and v7 reports capped games
 as their own cell because that is what the harness already does, not because
 one engine knows something the other does not.
+
+**D-698 AMENDS D-695 FOR THIS.** D-695 registers that this protocol pins "the
+cap asymmetry"; there is none to pin, so the ADR moves to meet the code rather
+than leaving the log saying the protocol does something it declines to do
+(CLAUDE.md hard rule 10).
 
 **This corrects the deep dive's standing entry** rather than citing it as
 UNVERIFIED: `docs/research/sealbot_deep_dive.md:1365` describes the TT key as
@@ -155,14 +228,29 @@ section records that nothing in `current/` supplies one.
 
 ## §A4 — Hardware and execution: one process at a time, sequential, single thread
 
-- **Sequential by construction, not by configuration.**
-  `tools/sealbot/matchserver/src/main.rs:105-131` is a plain `for game in …`
-  loop calling `run_game` and writing the transcript before the next game; the
-  crate's `Cargo.toml` has no thread or task dependency (`pistol-core`, `serde`,
-  `serde_json`, `toml`). There is no worker count in `MatchConfig`
-  (`config.rs:21-38`) to set wrong. **v7 registers nothing here except that no
-  second engine process runs beside the match**, which is an operator act and
-  is checked with `ps` before the run and quoted in the log.
+- **Games are sequential by construction.**
+  `tools/sealbot/matchserver/src/main.rs:104-132` is a plain `for game in …`
+  loop calling `run_game` and writing the transcript before the next game, and
+  `referee.rs` asks one engine at a time inside it. There is no worker count in
+  `MatchConfig` (`config.rs:21-38`) to set wrong.
+- **AND THE MATCHSERVER IS NOT SINGLE-THREADED, WHICH AN EARLIER REVISION SAID
+  IT WAS ON EVIDENCE THAT COULD NOT ESTABLISH IT.** That revision cited the
+  crate's dependency list — but `std::thread` needs no dependency, and
+  `git grep -nE "std::thread|thread::spawn" -- tools/sealbot/matchserver/src/`
+  returns `client.rs:10,113,129`: `LineProcess::spawn` starts two reader threads
+  per engine process, so at least five threads are live while either engine
+  searches, in the very module that produces `wall_ms`. The conclusion the
+  evidence was offered for survives — those threads block on I/O and the game
+  loop is sequential — but the argument is the loop, not the manifest. **This is
+  `docs/process.md`'s own named class, a claim checked against the wrong
+  population, committed inside a document whose §A1 is a finding about an
+  unchecked reading.**
+- **v7 registers nothing about the machine except that no second engine process
+  runs beside the match.** `ps` is quoted BEFORE and AFTER the run, with a load
+  average sampled at each: a check taken only at the start bounds nothing over
+  the ~10 minutes the run takes, and under a wall-clock budget background load
+  does not change the wall — it changes the nodes each engine gets inside it,
+  which is the quantity being compared.
 - **Single thread each.** pistol's instrument mode is single-threaded (hard
   rule 4); sealbot's `current/` has no threading on any search path.
 - **The receipt.** Per side, in the v7 log: total nodes where the engine
@@ -180,7 +268,7 @@ section records that nothing in `current/` supplies one.
 ("Split engine.h into engine/ directory and move vendor header"), the same
 revision `docs/audit/sealbot_study_2026-09.md` was written against.
 
-**Build flags, quoted** from `current/setup.py:13-14`:
+**Build flags, quoted** from `current/setup.py:12-15`:
 
 ```python
 Pybind11Extension("minimax_cpp", ["minimax_bot.cpp"],
@@ -188,8 +276,19 @@ Pybind11Extension("minimax_cpp", ["minimax_bot.cpp"],
                   extra_compile_args=["-O3", "-march=native", "-DNDEBUG"],
 ```
 
-`-march=native` makes the binary a fact about this workstation; the v7 log
-records the machine.
+**BUT `git rev-parse` DOES NOT REACH THE ARTEFACT THAT PLAYS, and the pin is
+not discharged by it.** `-march=native` makes the binary a fact about this
+workstation, and the compiled extension is not in git: `current/*.so` is
+gitignored, so a stale build from before the pin, a rebuild under a different
+compiler, and a rebuild on different hardware all pass a `git rev-parse` check
+identically. The interpreter is unpinned too — the config's command is
+`["python3", …]`, which on this machine resolves through a moving `mise`
+symlink, and the shim's Python replay is inside the measured wall (§A2 term 1).
+
+**SO THE RUN PINS THE ARTEFACT, NOT ONLY THE SOURCE**: the v7 log records the
+`.so`'s `sha256`, the output of `python3 -VV`, and the compiler version, and the
+extension is REBUILT FROM THE PINNED SOURCE as a step of the run rather than
+trusted from an mtime.
 
 **A STRONGER BRANCH IS A SECOND SERIES, NEVER A REPLACEMENT.** `best/` exists
 in the same checkout and disagrees with `current/` on 7 of 10 positions at
@@ -210,13 +309,19 @@ spent opening set into one.
 50 distinct openings). A run whose distinct-n falls below n reports both numbers
 and the shortfall is a finding about the run, not a footnote.
 
-**Empty-board memorisation is neutralised by the pairing** — every opening is
-played from both seats, so an engine that has memorised a first move plays it
-into both colours and the pair cancels it. This rests on **SB-26, which is
-UNVERIFIED** (`docs/research/sealbot_deep_dive.md:449`, the champions'
-configurations entry) and is cited as such: the neutralisation argument is
-sound on its own terms, and the premise that sealbot has such memorisation at
-all has never been verified here.
+**THE EMPTY BOARD NEVER ARISES UNDER THIS OPENING POLICY, so there is nothing
+for memorisation to reach.** `book_v1` seeds five stones — v5's own transcripts
+record `"opening":"server: 5-stone book opening 0,0 -4,3 -1,-1 0,-4 1,3"` and the
+first engine answer at turn 4 — so neither engine is ever asked from an empty
+board in a book run. An earlier revision spent this paragraph on a mechanism its
+own `[openings] kind = "book"` forecloses, and cited **SB-26, which is
+UNVERIFIED** (`docs/research/sealbot_deep_dive.md:449`) to do it.
+
+**What the pairing does buy is narrower and is stated at its width**: each engine
+plays each colour equally often, so an opening's own first-player advantage
+cancels in the AGGREGATE. It does not neutralise a colour-specific asymmetry in
+either engine — and §A7's registered output reports W/L **by colour**, which is
+exactly where such an asymmetry would show.
 
 ## §A7 — Verdict vocabulary: **NONE**
 

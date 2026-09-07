@@ -33,7 +33,7 @@
 
 | — | **the COMBINATION** (W1+W2+S3) | **REFUSED**, SPRT h0 | **8 turns against 6 on 5.6 % fewer nodes**, and 315 W / 391 L, normalized Elo −34.2 |
 | — | **where perf stands** | — | **1.28–1.40x** faster for identical node counts; **median depth 2 turns at 0.5 s**, sealbot's **5 at 0.3 s** |
-| — | **sealbot anchor v5** | direction only | **40 W / 60 L** over **50 paired openings**, 100 distinct games — overturning v4's 0 W / 100 L on one opening |
+| — | **sealbot anchor v5** | direction only | **40 W / 60 L** over **50 paired openings**, 100 distinct games — overturning v4's 0 W / 100 L on one opening. **Unequal movetime: pistol 500 ms, sealbot 300 ms (D-697, recorded after this document).** |
 
 **Committed config state after the arc**: `tier_t_top_k = 0`, `root_reorder =
 false`, `aspiration_delta = 0`, `extension_budget = 0`, `lmr_min_depth_turns =

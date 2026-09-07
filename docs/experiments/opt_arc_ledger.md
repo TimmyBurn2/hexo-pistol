@@ -495,7 +495,7 @@ branching factor is large, so a third more nodes moved the median depth only at
 Anchor v4 on the platform's single opening read **0 W / 100 L** with an honest
 denominator of 2 (D-606). The openings reader — designed, red-teamed three
 rounds, never built — was built here, and anchor v5 over **50 paired openings**
-reads **40 W / 60 L**, 100 distinct games (D-608). Building it exposed three
+reads **40 W / 60 L**, 100 distinct games (D-608). *(unequal movetime: pistol 500 ms, sealbot 300 ms — D-697, recorded after this document)* Building it exposed three
 harness defects a single opening hides, including a `distinct_games` that
 ignored the opening, and four of the reader's own tests that were vacuous
 because the body digest masked every refusal they meant to prove.

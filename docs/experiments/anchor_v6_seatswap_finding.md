@@ -1,5 +1,7 @@
 # Sealbot anchor v6 — the R3 seat swap: the asymmetry is the COLOUR's, and D-612's flip clause fires. Revision 1.
 
+**UNEQUAL MOVETIME (D-697).** This run gave pistol **500 ms** per turn and sealbot **300 ms** (`movetime_ms = 500` against `time_limit_seconds = 0.3`), and the forfeit thresholds were 120 s against 5 s. Every number below is a number from a run in which pistol had 1.67x the clock, and may not be quoted without that qualifier. **The seat-swap conclusion stands**: the handicap travels with the engine, so it is INVARIANT across the slot exchange, which is what makes the slot-versus-colour test survive it.
+
 **Run revision** `93df506` (`dev`), config `local/sealbot_anchor_v6_seatswap.toml`,
 engine config `configs/play_staged_v0.toml` as committed, budget `movetime 500`,
 turn cap 60, **the same 50 openings of `book_v1`, each played from both seats**.

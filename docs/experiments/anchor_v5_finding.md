@@ -1,5 +1,7 @@
 # Sealbot anchor v5 — the first anchor this project has run with a real denominator, and it overturns v4.
 
+**UNEQUAL MOVETIME (D-697).** This run gave pistol **500 ms** per turn and sealbot **300 ms** (`movetime_ms = 500` against `time_limit_seconds = 0.3`), and the forfeit thresholds were 120 s against 5 s. Every number below is a number from a run in which pistol had 1.67x the clock, and may not be quoted without that qualifier.
+
 **Run revision** `03aedd3` plus the openings reader, engine sha256
 `7faefd6ff8d0fb3f04a8c93a120ab988a3d42ca5f950f78c7bdaddf84caff0df`, config
 `configs/play_staged_v0.toml` **as committed**, budget `movetime 500`, turn cap

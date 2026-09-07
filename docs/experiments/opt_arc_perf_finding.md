@@ -64,7 +64,7 @@ every move reproducing the governed transcripts):
 
 **Sealbot searches about three turns deeper, on four times the nodes, in less
 than two thirds of the wall.** A 1.29x speedup does not close a gap of that
-shape, and the arc's own anchor agrees: 40 W / 59 L over 50 paired openings
+shape, and the arc's own anchor agrees: 40 W / 59 L over 50 paired openings *(unequal movetime: pistol 500 ms, sealbot 300 ms — D-697, recorded after this document)*
 (anchor v5) — competitive, and behind.
 
 **The two candidates this points at, in order:**
