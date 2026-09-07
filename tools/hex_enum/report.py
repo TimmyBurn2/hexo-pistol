@@ -14,7 +14,7 @@ import hexenum as E
 # Replicates of the matched random-quotient referent: a single draw of a random
 # partition is one sample of a noisy statistic, and a referent reported without
 # a spread cannot say whether the enum beat it or beat one draw of it.
-NULL_REPLICATES = 3
+NULL_REPLICATES = 3  # overridable by census.py's --null-replicates
 
 
 class Moments:

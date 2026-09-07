@@ -546,7 +546,7 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 | **seed budget** (MEASURED, §3) | **1 fit, ≥ 8 splits** for any validation number; ±3.5 % on a single split. No training seed. |
 | **books, BOTH arms** | node-matched Δ = 10: **8 000 pairs on `book_v3`, power 0.9045, the whole book**. Time-matched: **not runnable** (§1.4) — no arena movetime, no named play seat, no play-seat pentanomial. |
 | **kill condition — AND IT NO LONGER PUTS THE ROW OUT** | Two criteria have been registered against this row and §2.5 carries both. *(An earlier revision cited "§2.5 measures a value-free quotient passes it at 1.77x"; that 1.77x is `hex_threat_enum_v1.md` §6.5's figure against the WITHDRAWN random-permutation criterion, and §2.5 contains no such number. The cross-reference is corrected.)* The row's own §7.1 arithmetic separately kills **T4 and T3 at `L = 11`** on density (1.07 and 27 observations per nominal parameter), which leaves T2 and T1 — and those are the rungs the criterion was the only positive evidence for. |
-| **strongest known attack, and it landed** | **The `t = 1` / `t = 2` merge** (enum memo §5.5): classes contain patterns whose exact `DEF-T` after a stone at the cell differs, and `RULE-EXACT` (`threat_calculus_v1.md:64-66`) makes `t` the truth. **The confirmation measured the count to be 32 classes / 6 099 patterns under the definition the memo prints**, not the 27 / 5 348 it published, and measured that the memo's reason for not repairing it — *"not something a single-axis class can hold"* — is **false**: adding single-axis `t` as a seventh component removes the merge entirely for 36 extra classes (`k` 357 → 393, parameters +33 %). So the row's known defect is bigger than stated and is repairable at a price nobody has quoted. |
+| **strongest known attack, and it landed** | **The `t = 1` / `t = 2` merge** (enum memo §5.5): classes contain patterns whose exact `DEF-T` after a stone at the cell differs, and `RULE-EXACT` (`threat_calculus_v1.md:64-66`) makes `t` the truth. **The count depends on the population and the memo now prints both**: over patterns where a stone at the cell does NOT complete a six (rule 4 ends the turn, so no threat question survives), **27 of the 335 classes present and 5 348 of 57 996 patterns**; without that exclusion, **32 of 357 and 6 099 of 59 049**. The memo's earlier reason for not repairing it — *"not something a single-axis class can hold"* — is **false**, and the price IS quoted: adding single-axis `t` as a seventh component removes the merge entirely at **`k` 357 → 384** under the rule-4-excluded reading (the confirming reviewer's 393 is the same computation without that exclusion, and the two differ by exactly the completing patterns). At the rung a matrix would use, T2, the repair is `k` 47 → 58 and **+86 % parameters**. |
 
 ### R-A5-TOPK — top-K folded codes plus one rare bucket
 
@@ -562,6 +562,24 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 | **kill condition** | `eval_families` §A5: *"the rare tail is where novel structure lives and one bucket scores all of it alike"* — unmeasured, and this matrix does not measure it either. |
 | **strongest known attack** | **The row's headline parameter count is a different number at each unit, and `eval_families` §7 states only one of them.** 811 is §0.2's window census; 143 is the same 90 % rule at the unit `R-A4-CLASS` must use. A field that prices A4 per cell and A5 per window is pricing two rows on two instruments (D-477's own class), and the row is not well posed until the architect names the evaluator's summand. |
 
+### R-A1-L7F — free folded table at length 7, window-indexed. **THE SECOND ROW THE FIELD WAS MISSING**
+
+The third red team found it, and it was quoted on this matrix's own page before
+it was priced: `R-A3`'s factor cell calls length-7 folded *"the natural dense
+factor"* and prices nothing on it as a row.
+
+| column | value |
+|---|---|
+| **parameters** (MEASURED, `eval_families` §0.2) | **1 029** folded L7 cells, 90.8 % of the 1 133 ceiling |
+| **observations per parameter** (MEASURED, window observations) | **median 1 282**, and **NOT ONE CELL under ten observations** — the only free table in the field of which that is true. 190 cells cover 90 %. |
+| **window touches / stone** (DERIVED) | `3L` = **21**, **1.17x** — the cheapest codebook traffic in the field |
+| **nodes/sec floor** (ESTIMATED, §1.8's arithmetic) | `nps ∈ [396 371, 650 390]` = [0.75x, 1.23x]. **FLOOR 396 371 (0.75x)** — the highest floor of any codebook row, hence the least throughput risk |
+| **determinism and quantization** | closed form, no seed, trivial determinism, low risk |
+| **seed budget** (MEASURED, §3) | 1 fit, ≥ 8 splits |
+| **books** | one node-matched arm, as every learned row |
+| **kill condition** | the same as R-A1-L8F's and it bites harder: at `L = 7` the code sees `c ± 3` where `eval_families` §0.1 derives `L ≥ 11` as the length at which one centred window contains every 6-window through a cell. `THM-WINDOW` (`threat_calculus_v1.md:152-155`) says a four needs 8 cells of context and a five needs 7. |
+| **strongest known attack — against its own kill** | the same unrun enumeration: `eval_families` §8 still lists it as *"Minutes of compute, **not run** (D-291)"*. **AND ONE MEASUREMENT THIS PACKAGE DID TAKE CUTS AGAINST THE ROW**: `hex_threat_enum_v1.md` §7.4 measures that at `L = 7` a quotient knowing only stone counts explains as much as the threat tuple does, which is evidence — on one tuple, one statistic, one unit — that seven cells is where structure stops being visible on this corpus. |
+
 ### R-A1-L8F — free folded table at length 8, window-indexed. **THE ROW REVISION 2's FIELD WAS MISSING**
 
 The red team found it and it is added rather than argued about: `eval_families`
@@ -571,7 +589,7 @@ then priced no row against.
 | column | value |
 |---|---|
 | **parameters** (MEASURED, `eval_families` §0.2) | **2 920** folded L8 cells, 88.0 % of the `(3^8 + 3^4)/2 − 1 = 3 320` ceiling |
-| **observations per parameter** (MEASURED) | **median 273**, only **24 cells (0.8 %) under ten observations**, 293 cells covering 90 %. Against A1-L11's 1.2 and A3's 1.2, this is the densest free table the corpus supports. |
+| **observations per parameter** (MEASURED) | **median 273**, only **24 cells (0.8 %) under ten observations**, 293 cells covering 90 %. Denser than A1-L11 and A3 by two orders of magnitude — **and NOT the densest free table in the field**, which is `R-A1-L7F` above at median 1 282 with no cell under ten. |
 | **window touches / stone** (DERIVED) | `3L` = **24**, **1.33x** — the cheapest codebook traffic in the field |
 | **nodes/sec floor** (ESTIMATED, §1.8's arithmetic) | `nps ∈ [365 760, 621 921]` = [0.69x, 1.18x]. **FLOOR 365 760 (0.69x)** |
 | **determinism and quantization** | closed form, no seed, trivial determinism, low risk |
@@ -666,8 +684,9 @@ floor for the bench bracket — flips if the play seat is redefined."*
 
 | row | node-matched arm | time-matched arm | nodes/sec floor registered |
 |---|---|---|---|
-| R-A4-CLASS | Δ = 10, 8 000 pairs, `book_v3` whole — as every learned row | not runnable | **296 959** (0.56x) at `L = 11`; **396 371** (0.75x) at `L = 7`, the highest floor in the field |
+| R-A4-CLASS | Δ = 10, 8 000 pairs, `book_v3` whole — as every learned row | not runnable | **296 959** (0.56x) at `L = 11`; **396 371** (0.75x) at `L = 7` — the highest floor of any CODEBOOK row, tied with `R-A1-L7F`, and below `R-H-EXT`'s 0.95x |
 | R-A5-TOPK | as above | not runnable | **296 959** (0.56x) |
+| R-A1-L7F | as above | not runnable | **396 371** (0.75x) |
 | R-A1-L8F | as above | not runnable | **365 760** (0.69x) |
 | R-A2-L11F | as above, and it needs **≥ 4 nets** for one arm (§3) | not runnable | **296 959** (0.56x) |
 | R-A3-L11F+F7 | as above | not runnable | **296 959** (0.56x) |
@@ -738,9 +757,13 @@ Revision 2 ranked by "cost before it can be run at all" and then priced
 EQUAL across every live row** — one `book_v3` arm — so it cannot rank them, and
 what remains is build cost, on which the rows genuinely differ.
 
-1. **R-H-EXT.** Nothing to build: no fit, no artifact, no digest discipline, no
-   shape check, no seed, no quantization, no new dependency, and 18 touches per
-   stone against every codebook row's 24 or 33. Its terms are ones
+1. **R-H-EXT.** No fit, no artifact, no digest discipline, no shape check, no
+   seed, no quantization, no new dependency, and 18 touches per stone against
+   every codebook row's 21, 24 or 33. **Its build cost is NOT nil and §4 says
+   so**: 3 to 6 integers with no procedure and no metric to choose their values,
+   which is R-A2's structure at a smaller scale — bounded by the calculus's τ
+   table and D-622's dominance constraints where a net's weights are bounded by
+   nothing, but a real cost against one funded run. Its terms are ones
    `threat_calculus_v1.md` has listed as SPRT-gated candidates since v1.0 and
    nobody has gated. And if it wins, D-614's bar — *"vs handcrafted_v0"* —
    moves, and every learned row was otherwise measured against the wrong
@@ -757,12 +780,20 @@ what remains is build cost, on which the rows genuinely differ.
    unrun enumeration** (§4).
 4. **R-A4-CLASS at `L = 7`, rung T4.** It re-enters the field at the one cell
    that is affordable — 2 925 nominal parameters at 1 720 observations each, 856
-   codes observed at median 174 — with the **cheapest traffic of any codebook
-   row** (`3L = 21`, 1.17x) and therefore the **highest floor**, 396 371
-   (0.75x), which is the least throughput risk in the field. It ranks below
+   codes observed at median 174 — at the cheapest codebook traffic
+   (`3L = 21`, 1.17x, tied with `R-A1-L7F`) and therefore the highest codebook
+   floor, 396 371 (0.75x) — the least throughput risk among the learned rows,
+   though not in the field, since `R-H-EXT` registers 0.95x. It ranks below
    R-A1-L8F because §2.5's nested test says the enum adds nothing over stone
-   counts at exactly this cell, and above R-A3 because its density is three
-   orders of magnitude better. **It is the only row in the field carrying a
+   counts at exactly this cell, and above R-A3 in ONE currency, which is what
+   §4's table exists to force: **positions per parameter**, where R-A4 at
+   `L = 7` T4 is `45 271 / 2 925 = 15.5` and R-A3 is `45 271 / 38 983 = 1.16`,
+   a factor of **13.3**. *(An earlier revision said "three orders of magnitude"
+   by setting scored-cell observations against window observations — the
+   cross-currency comparison §4 promises never to make. Even corrected to one
+   observation unit the two are not comparable, because R-A4 is priced per
+   scored CELL and R-A3 per `(axis, start)` WINDOW; positions is the only unit
+   both rows share.)* **It is the only row in the field carrying a
    criterion that was registered before its run, could fail, and was run** — and
    the honest reading of that criterion is that it disagrees with itself.
 5. **R-A3-L11F+F7.** Zero inference cost over A1 and the documented remedy for
@@ -813,6 +844,7 @@ is out of scope removes rank 1 entirely.
 | R-H-EXT | no fit, no artifact, no seed — **but 3 to 6 integers with no procedure and no metric to choose their values** (§4) | it loses, and the incumbent stands — which is a finding and not a waste, because the calculus has been calling these terms candidates since v1.0 |
 | R-A4-CLASS | a fit and a backend, as any codebook row | **UNDECIDED (§2.5)**: two criteria disagree and no cell is both affordable and supported by both. Its known defect is the `t` merge, bigger than first published and repairable at a price nobody has quoted (T2: `k` 47 → 58) |
 | R-A5-TOPK | a fit and a backend | the rare bucket scores all novel structure alike, and the tail is where novel structure is |
+| R-A1-L7F | a fit and a backend | it is furthest below the covering minimum, and §2.5 measures that at `L = 7` stone counts explain as much as threat structure |
 | R-A1-L8F | a fit and a backend | it is below the covering minimum — and the enumeration that would settle whether that matters has never been run |
 | R-A3-L11F+F7 | a fit with virtual features and a coalescing step | the factor regresses, which its own source warns of, and 1.2 observations per real parameter is the density that killed A1 |
 | R-A2-L11F | a trainer, a dependency, ≥ 4 nets, a digest discipline, a shape check | the α-β width optimum sits below the accuracy optimum, measured in three games |
@@ -875,7 +907,9 @@ as tracked files in the same commit as the revision they attack.**
 |---|---|---|
 | `tools/hex_enum/{hexenum,census,report}.py`, CI gate 19 | §2's `k`, codes, observations, growth curves, and §2.5's criterion table | `artifacts/wp22_phase2a/census_r3/`, `9bb8fc6f2e0500bcf10f48e493dd9e3615897d935b73b63d8a8f47bf179e9c39` |
 | the same, at round 2, without the stone-count referent | the replication: 200 shared cells, 0 differences | `artifacts/wp22_phase2a/census/`, `aab7f4f6a8d450fac5609dce4635a21ea86ec658e4c42c11c9d89b98835e14a8` |
-| four mutants of `report.py`, scratch copy of `tools/`, live tree untouched | that gate 19 can now see a constant `ω²` — all four DEAD | `artifacts/wp22_phase2a/n6_mutants/`, `d7e33861129a51bcd492a271dec468cc54056f2e384dd0076e785124102016d7` |
+| four mutants of `report.py`, scratch copy of `tools/`, live tree untouched | that gate 19 can now see a constant `ω²` — all four DEAD | `artifacts/wp22_phase2a/n6_mutants/`, `36b4c999ba780800e40369cff20641db4982b05d3a3497bf84a88e4c40607d2e` |
+| the same instrument at 3 null replicates, then at 24 | §2.5's NESTED test, and the referent's own spread | `artifacts/wp22_phase2a/census_r4/`, `aa88c298ac422a87df6505afcc33fcb1e2cb156783e81ec525b13dc4681bbdd1` |
+| `tools/receipt_digest_check.py` | **that every digest THIS table prints matches a receipt that verifies** — the class that recurred three times | run, not receipted: it reads `artifacts/` and cannot be a CI gate for the reason `book_v3_ledger.md` gives about its own disjointness script |
 | `tools/hex_enum/seed_pilot.py` at `54eb3ba`, CI gate 19 | §3's seed spread, and §1.1's independent re-derivation of the corpus counts | `artifacts/wp22_phase2a/seed_pilot/`, `f3518ad221413a042a616d3c6348458afc089fba6f30382734c802540592c7bd` |
 | `measure_nps.sh` / `measure_play.sh`, detached worktree at `c5123c1` | §1.2's and §1.3's throughputs, replicated | `artifacts/wp22_phase2a/nps_seat/`, `211b6e1002f32ee89baace6ed4ff510302b2aad7817094e109dcac121d51ca9e` |
 | `crates/pistol-arena/examples/sprt_power.rs`, release at `54eb3ba` | §1.6's and §5's power figures, cross-checked digit for digit against the committed `book_v3` figure | `artifacts/wp22_phase2a/sprt_power/`, `d82fce37add53453423e264a6220e2b47636302c7f2980c4a60f6c600005709b` |

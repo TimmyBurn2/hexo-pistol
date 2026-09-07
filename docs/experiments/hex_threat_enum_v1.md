@@ -782,7 +782,8 @@ out of a scratch script no review binds. Whether that fanout costs anything is
     `total = within + between`, which made self-check 3 compare a number to
     itself; the four mutants that survived that arrangement (`between` always
     zero, `ω²` always 1.0, both ratios 0.5, the mean correction dropped) are now
-    DEAD (`artifacts/wp22_phase2a/n6_mutants/`).
+    DEAD (`artifacts/wp22_phase2a/n6_mutants/`, digest
+    `36b4c999ba780800e40369cff20641db4982b05d3a3497bf84a88e4c40607d2e`).
 11. **A partition that separates nothing earns nothing**: a two-class `Moments`
     whose class means are equal must report `between = 0`, `η² = 0` and
     `ω² ≤ 0`, and one whose means differ must report the hand-derived values.
@@ -807,7 +808,8 @@ receipt digest
 
 **REPLICATED, because the run is cheap and `docs/process.md` says to replicate
 rather than derive a margin.** Round 2 ran the same census without the
-stone-count referent (`artifacts/wp22_phase2a/census/`). MEASURED: over the
+stone-count referent (`artifacts/wp22_phase2a/census/`, digest
+`aab7f4f6a8d450fac5609dce4635a21ea86ec658e4c42c11c9d89b98835e14a8`). MEASURED: over the
 **200 cells the two runs share** — every `k`, every observations row, every
 purity row at both units, and the walked-position and scored-cell totals —
 **0 differences**. So adding the referent changed nothing else, and every number

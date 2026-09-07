@@ -35,7 +35,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "texel"))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import features as F
 import hexenum as E
-from report import NULL_REPLICATES, Moments, report
+import report as R
+from report import Moments, report
 
 MANIFEST = "artifacts/arc3r_sweep_deduped_manifest.txt"
 TRANCHE = "/home/tom/Projects/pistol-corpus/arc3r-sweep/tranche-{}/corpus.txt"
@@ -99,7 +100,7 @@ class Length:
         self.folded = [min(code, self.reverse[code]) for code in range(self.size)]
         self.empty = {rung: self.classes[rung][0] for rung in E.LADDER}
         self.nulls = {rung: [self.permuted(rung, seed + length + 1000 * r)
-                             for r in range(NULL_REPLICATES)]
+                             for r in range(R.NULL_REPLICATES)]
                       for rung in E.LADDER}
         self.counts = array.array("i", (self.count_key(code) for code in range(self.size)))
 
@@ -180,6 +181,14 @@ def main(argv):
             limit = int(args.pop(0))
         elif token == "--seed":
             seed = int(args.pop(0))
+        elif token == "--null-replicates":
+            # THE REFERENT'S OWN SPREAD IS A MEASUREMENT, NOT A RULE. Three
+            # replicates left the widest cell unresolved — its ratio was 0.93
+            # against the worst draw and 1.11 against their mean — and choosing
+            # between those two summaries after seeing them is the post-hoc move
+            # the process forbids. Raising the count characterises the null
+            # distribution instead, so the increment can be placed IN it.
+            R.NULL_REPLICATES = int(args.pop(0))
         elif token == "--legal-stride":
             legal_stride = int(args.pop(0))
         elif token == "--manifest":
@@ -199,9 +208,9 @@ def main(argv):
     window_moments = {rung: Moments() for rung in E.LADDER}
     code_moments = {rung: Moments() for rung in E.LADDER}
     window_null = {(rung, r): Moments() for rung in E.LADDER
-                   for r in range(NULL_REPLICATES)}
+                   for r in range(R.NULL_REPLICATES)}
     code_null = {(rung, r): Moments() for rung in E.LADDER
-                 for r in range(NULL_REPLICATES)}
+                 for r in range(R.NULL_REPLICATES)}
     window_raw = Moments()
     code_raw = Moments()
     window_count = Moments()
@@ -212,7 +221,7 @@ def main(argv):
     # class-count monotonicity that makes an unnested ratio reward padding.
     window_join = {rung: Moments() for rung in E.LADDER}
     window_join_null = {(rung, r): Moments() for rung in E.LADDER
-                        for r in range(NULL_REPLICATES)}
+                        for r in range(R.NULL_REPLICATES)}
     curve = collections.defaultdict(list)
     scored_cells = 0
     legal_sample = []

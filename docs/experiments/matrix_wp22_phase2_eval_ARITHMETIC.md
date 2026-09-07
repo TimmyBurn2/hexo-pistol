@@ -1,6 +1,6 @@
 # `matrix_wp22_phase2_eval.md` — the arithmetic, re-derived
 
-**Governing revision**: matrix revision 4. *(Two rows of the revision-1 table below carried the PRE-correction values for SPSA's openings — 7.176x and 34.67 h at 61 000 — after the matrix had moved to 60 500. Corrected; the second red team found them.)*
+**Governing revision**: matrix revision 5, and **this file's tables check revisions 1 and 3 only** — every number revision 4 and 5 introduced (the nested test, the L7 and L8 rows, the corrected currencies, the 0.95x floor) is checked in the matrix's own §12 and §13 against the receipts, not here. *(The third red team pointed out that an earlier header claimed a revision this file did not check.)* *(Two rows of the revision-1 table below carried the PRE-correction values for SPSA's openings — 7.176x and 34.67 h at 61 000 — after the matrix had moved to 60 500. Corrected; the second red team found them.)*
 
 **Why this file exists.** `docs/process.md`'s re-derivation clause is addressed
 to the REVIEWER, and its reason is that *"the author is reaching for a label for
@@ -97,7 +97,7 @@ two different rows. **Both are named on the matrix's own face**; neither is
 discharged by this file.
 
 
-## Revision 3's checks, after the red team
+## Revision 3's checks, after the FIRST red team
 
 | claim | re-derived | matrix |
 |---|---|---|
