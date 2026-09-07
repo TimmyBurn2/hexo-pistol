@@ -10,7 +10,9 @@
 > at eval v0** — measured four independent ways, not assumed. Every mechanism
 > ships built, tested and one config key from live, for the eval that can use
 > them. The arc also built the anchor's openings book, which **overturns its own
-> earlier 0 W / 100 L reading to 40 W / 60 L over fifty paired openings**, and
+> earlier 0 W / 100 L reading to 40 W / 60 L over fifty paired openings**
+> *(unequal movetime: pistol 500 ms, sealbot 300 ms — D-697, recorded after this
+> document)*, and
 > leaves the next package named by measurement: sealbot searches **5 turns to
 > this engine's 2**, and the width that is actually there is the quiet ball's
 > median of **76**, not Tier T's 12.

@@ -1,5 +1,26 @@
 # OPTION MATRIX — what v7 does about the unequal budget. Revision 2.
 
+> **FELL. THIS MATRIX HAS NOT SETTLED ITS DECISION AND NO OPTION IS SELECTED
+> (D-699).** Its round-2 DECISION-RED-TEAM landed **16 of 18**. The three that
+> decide it: it never cites **D-695**, the ADR that governs this run and pins
+> "equal measured movetime per side", so its recommendation is forbidden by
+> standing law it did not name; §4 claim 4 is wrong **in kind** — the
+> precondition takes the non-search bound from 4.50 % to **3.53 %**, not to zero,
+> because `engine_time_ms` is null for every sealbot answer; and §2.1's "load,
+> not mystery" is the wrong explanation, the right one being **42 ms against
+> 1 ms** by whether sealbot's first answer follows its own spawn or pistol's,
+> measured inside one run at one load.
+>
+> **The surviving option is the round-2 reviewer's O7** — the series budgets
+> 500/300 unchanged, after BOTH halves of the harness fix (revision 2 folded in
+> the `ready` line and silently dropped "have the shim report its own elapsed
+> time", which is the larger half), with the handicap reported as a MEASURED
+> search-time ratio. **A revision 3 selecting it must cite and amend D-695.**
+>
+> Read the rest for its measured ground, which BOTH red-team rounds re-derived
+> independently and every row of which reproduced — and not for its reasoning,
+> which is what fell.
+
 **Revision 1 is `matrix_anchor_v7_budget_rev1_SUPERSEDED.md`.** Its
 DECISION-RED-TEAM landed **14 of 15** attacks and its recommendation FELL. This
 revision is written against those attacks; where one of them changed the answer,

@@ -1,5 +1,14 @@
 # Sealbot anchor v7 — protocol. Written, not run.
 
+> **THE BUDGET DECISION THIS PROTOCOL DEPENDS ON IS NOT SETTLED (D-699).** Its
+> OPTION MATRIX — `matrix_anchor_v7_budget.md` — has had two DECISION-RED-TEAM
+> rounds and both recommendations fell. §A1's "v7 PINS EQUAL MEASURED MOVETIME
+> PER SIDE" is therefore a REGISTERED INTENTION AND NOT A SELECTED OPTION, and it
+> is in unresolved conflict with the series budgets that D-697 records. **This
+> protocol may not be run until that matrix survives its red team.** Everything
+> else in it — the cap ruling (§A3, D-698), the overshoot terms (§A2), the
+> opponent pin (§A5) and the openings (§A6) — is settled and stands.
+
 **No run date. No verdict. Direction only.** This document is a
 pre-registration for the NEXT anchor in the v3–v6 series, and it is landed
 before the run it governs so the run cannot be shaped by its own numbers
@@ -83,10 +92,20 @@ by name**, and not at "either result": v6's other claim — that both engines ar
 worse as p1, and the 38/62 colour split — is a statement about play at these
 budgets and is labelled with them like any other.
 
-**v7 PINS EQUAL MEASURED MOVETIME PER SIDE.** Equal CONFIGURED movetime is not
-enough and is not what is registered: §A2's two overshoot terms differ between
-the engines, so equality is registered on what the log MEASURES, and the run's
-receipt is the per-answer distribution of both sides.
+**WHAT v7 DOES ABOUT THE INEQUALITY IS NOT SETTLED HERE, AND THE MATRIX THAT
+WOULD SETTLE IT HAS FALLEN TWICE (D-699).** An earlier revision of this section
+registered "v7 PINS EQUAL MEASURED MOVETIME PER SIDE" as though it were decided.
+It is not. Two things a resume inherits rather than re-derives:
+
+- **Equal WALL is not equal SEARCH**, and the gap is not small in the way it
+  looked: the harness cannot report sealbot's own search time at all
+  (`engine_time_ms` null for **1050 of 1050** and **986 of 986** answers), so an
+  early-returning answer's non-search time is bounded only by its whole wall.
+  Consuming the shim's `ready` line takes the bound from **4.50 % to 3.53 %**,
+  not to zero.
+- **D-695 pins "equal measured movetime per side" and the series budgets are
+  unequal.** One of those has to move, by an ADR line that names the other.
+  Neither has moved here.
 
 ## §A2 — The overshoot terms, MEASURED — and there are three, not two
 
@@ -102,9 +121,22 @@ transcripts of v5 and v6 by a script written for this protocol — not from
 | sealbot, FIRST answer of each game | median **15 ms**, max **106 ms** | median 6 ms, max 15 ms |
 | sealbot, every later answer | median 0 ms, max **11 ms** | median 0 ms, max 4 ms |
 
-**THE OVERSHOOT IS CONCENTRATED IN THE FIRST ANSWER OF EACH GAME AND DIFFERS 7x
-BETWEEN TWO RUNS OF A BYTE-IDENTICAL CONFIG.** Neither fact is explained by the
-two terms an earlier revision named. The third term, and it is the largest:
+**THE OVERSHOOT IS CONCENTRATED IN THE FIRST ANSWER OF EACH GAME, AND WHAT
+VARIES IT IS NOT LOAD BUT WHICH SEAT MOVES FIRST.** Split by whether sealbot's
+first answer of a game comes straight after its process is spawned or after
+pistol has burned ~500 ms — **MEASURED**, and within a single run, so load is
+held:
+
+| sealbot's first answer arrives | v5 median excess | v6 median excess |
+|---|---|---|
+| immediately after the spawn (n=50) | **42 ms** | 13 ms |
+| after pistol's answer (n=50) | **1 ms** | 0 ms |
+
+**A 40x split inside one run at one load**, and the run-to-run difference is the
+seat swap mixing those two modes in different proportions — v6 is v5's config
+with the two engines' harness SLOTS exchanged, not a byte-identical rerun. The
+reported medians of 15 ms and 6 ms are medians over a 50/50 mixture and describe
+neither mode. The third term, and it is the largest:
 
 **(1) Process start-up and the Python replay, charged to sealbot and not to
 pistol.** `tools/sealbot/matchserver/src/sealbot_client.rs:112-121` respawns the
