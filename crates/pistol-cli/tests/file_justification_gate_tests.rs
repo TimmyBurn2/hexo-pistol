@@ -229,32 +229,41 @@ fn a_registry_the_index_does_not_carry_is_a_named_refusal() {
 }
 
 #[test]
-fn the_justification_gate_counts_the_shell_scripts_its_summary_says_it_counts() {
+fn the_justification_gate_counts_every_suffix_its_summary_says_it_counts() {
     // `.sh` joined the file set in D-234 because the only two files over the cap
-    // were shell scripts. Nothing checked that the ENUMERATION reached them: a
-    // mutant dropping `*.sh` from it left the summary still saying `.rs/.sh`
-    // while counting only `.rs`, and every over-cap script went unseen.
-    let root = scratch_repo("justification-shell");
+    // were shell scripts, and `.py` in D-679. Nothing checked that the
+    // ENUMERATION reached them: a mutant dropping `*.sh` from it left the
+    // summary still saying `.rs/.sh` while counting only `.rs`, and every
+    // over-cap script went unseen. The same mutant is available for `*.py`, and
+    // it is the one that matters most — the Python instruments were outside
+    // this gate for their whole lives, so nothing downstream would look wrong.
+    let root = scratch_repo("justification-suffixes");
 
-    over_cap(&root, "big.sh", "#");
-    git(&root, &["add", "big.sh"]);
-    let ran = gate(&root);
-    let out = text(&ran);
-    assert!(
-        !ran.status.success(),
-        "an over-cap shell script is inside this gate's file set:\n{out}"
-    );
-    assert!(
-        out.contains(&format!("big.sh: over the cap with no entry in {REGISTRY}")),
-        "and the gate names it:\n{out}"
-    );
+    for (name, comment) in [("big.sh", "#"), ("big.py", "#")] {
+        over_cap(&root, name, comment);
+        git(&root, &["add", name]);
+        let ran = gate(&root);
+        let out = text(&ran);
+        assert!(
+            !ran.status.success(),
+            "an over-cap {name} is inside this gate's file set:\n{out}"
+        );
+        assert!(
+            out.contains(&format!("{name}: over the cap with no entry in {REGISTRY}")),
+            "and the gate names it:\n{out}"
+        );
+        git(&root, &["rm", "-qf", "--cached", name]);
+    }
 
-    // And the summary's count is the loop's own, over both extensions.
-    git(&root, &["rm", "-qf", "--cached", "big.sh"]);
+    // And the summary's count is the loop's own, over all three extensions.
     std::fs::write(root.join("small.rs"), "fn main() {}\n").expect("a small file writes");
     std::fs::write(root.join("small.sh"), "#!/usr/bin/env bash\n").expect("a small file writes");
+    std::fs::write(root.join("small.py"), "#!/usr/bin/env python3\n").expect("a small file writes");
     std::fs::write(root.join("notes.txt"), "not in the file set\n").expect("a decoy writes");
-    git(&root, &["add", "small.rs", "small.sh", "notes.txt"]);
+    git(
+        &root,
+        &["add", "small.rs", "small.sh", "small.py", "notes.txt"],
+    );
     let clean = gate(&root);
     let out = text(&clean);
     assert!(
@@ -262,8 +271,37 @@ fn the_justification_gate_counts_the_shell_scripts_its_summary_says_it_counts() 
         "nothing here is over the cap:\n{out}"
     );
     assert!(
-        out.contains("file_justification_check: 2 tracked .rs/.sh files, 0 over the cap"),
-        "the summary counts one `.rs` and one `.sh` and not the `.txt`:\n{out}"
+        out.contains("file_justification_check: 3 tracked .rs/.sh/.py files, 0 over the cap"),
+        "the summary counts one of each spelling and not the `.txt`:\n{out}"
+    );
+}
+
+/// A `.py` file over the cap is CLEARED by a registry entry, which is the half
+/// a refusal test cannot reach.
+///
+/// Without this the suffix could be added to the enumeration and to no other
+/// arm, and every Python file over the cap would be permanently unjustifiable —
+/// a gate that refuses everything, `tools/SHELL_CHECKLIST.md` item 10's own
+/// named failure mode.
+#[test]
+fn a_python_file_over_the_cap_is_cleared_by_its_entry() {
+    let root = scratch_repo("justification-python-cleared");
+
+    over_cap(&root, "instrument.py", "#");
+    registry(
+        &root,
+        "- `instrument.py`: one instrument, and its refusals are its argument\n",
+    );
+    git(&root, &["add", "instrument.py", REGISTRY]);
+    let ran = gate(&root);
+    let out = text(&ran);
+    assert!(
+        ran.status.success(),
+        "a registered over-cap Python file passes:\n{out}"
+    );
+    assert!(
+        out.contains("over the cap and registered: instrument.py"),
+        "and the gate says which file its entry cleared:\n{out}"
     );
 }
 

@@ -5,11 +5,6 @@ Reports; never repairs. A position that fails validation keeps its record with
 `valid: false` and a populated `findings` list (WP-P1 step 4).
 """
 
-# RULE9-JUSTIFICATION: the WP-P1 dispatch pins the extractor to one script, and
-# the fetch, the parse and the V-checks share the record shape they build and
-# annotate; splitting them would put that shape in a fourth file read by three.
-# The gate reads .rs and .sh, so this marker is prose rule 9 still binds.
-
 from __future__ import annotations
 
 import argparse

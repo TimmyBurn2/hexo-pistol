@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 #
-# CLAUDE.md rule 9's soft cap, mechanized: a tracked `.rs` or `.sh` file over the
-# cap has to say WHY, and that why lives in `docs/rule9_justifications.md`
-# (docs/decisions.md D-131 amending D-118; D-234 for the `.sh` widening; D-467
-# for the registry).
+# CLAUDE.md rule 9's soft cap, mechanized: a tracked `.rs`, `.sh` or `.py` file
+# over the cap has to say WHY, and that why lives in
+# `docs/rule9_justifications.md` (docs/decisions.md D-131 amending D-118; D-234
+# for the `.sh` widening; D-467 for the registry; D-679 for the `.py` one).
+#
+# WHY `.py` COULD NOT BE ADDED BEFORE, AND WHY IT CAN NOW. D-414 found the gap
+# and D-415 ruled the widening right in principle and wrong to couple to its
+# cost: at the time a why was a MARKER COMMENT IN THE FILE, so widening the set
+# meant EDITING two frozen instruments — `tools/wp15b_attribution_check.py` and
+# `tools/wp16_warm_attribution_check.py`, each named with its revision by a
+# pre-registration, where an edit reopens that document's review. D-467 moved
+# every why into the registry below, and that is what dissolved the coupling:
+# the gate now reads a document, so a Python instrument can come under the cap
+# without a single byte of it changing. The ruling's objection was to the price,
+# and the price is gone.
 #
 # THE WHY LIVES IN ONE PLACE, AND IT IS NOT THE FILE. It used to be a marker
 # comment in the file's own header, which put the justification inside the
@@ -18,7 +29,10 @@
 #
 #   1. A cap. 300 lines, which is what rule 9's "~300-line soft cap" is worth as
 #      a number a script can compare against. Over it is not a failure — rule 9
-#      calls the cap soft and means it — it is a demand for a sentence.
+#      calls the cap soft and means it — it is a demand for a sentence. The cap
+#      is one number for all three suffixes: rule 9 says "Files", and a
+#      per-language cap would be this gate deciding a question rule 9 did not
+#      ask it.
 #   2. A registry. One `- ``path``: why` entry per over-cap file, and those
 #      entries are the only top-level `- ` lines the document has. A checker has
 #      to RECOGNIZE a justification, and prose cannot be recognized, so the
@@ -50,7 +64,8 @@
 # writes it.
 #
 # Usage: tools/file_justification_check.sh
-# Exit:  0 every tracked .rs/.sh file is under the cap or registered, 1 otherwise.
+# Exit:  0 every tracked .rs/.sh/.py file is under the cap or registered,
+#        1 otherwise.
 
 set -euo pipefail
 
@@ -152,6 +167,10 @@ printf 'fn main() {}\n' >"$SEED/under.rs"
 # is only worth having if the checker has been watched accept and refuse a file
 # named with it (docs/decisions.md D-234).
 seed over_justified.sh "# filler"
+# And the Python spelling, seeded for exactly the reason the shell one is
+# (docs/decisions.md D-234, D-679): a suffix this gate has never been watched
+# accept and refuse is a suffix it is trusted about rather than tested about.
+seed over_justified.py "# filler"
 
 cat >"$SEED/registry.md" <<'SEEDED'
 Prose the parser walks past, including a line that opens like an entry
@@ -165,6 +184,7 @@ grep -v '^- but is not one' "$SEED/registry.md" >"$SEED/registry-clean.md"
 	echo '- `over_empty.rs`: '
 	echo '- `over_counted.rs`: it is 348 lines and every one earns its place'
 	echo '- `over_justified.sh`: one measurement over one pre-registration'
+	echo '- `over_justified.py`: one instrument, and its refusals are its argument'
 } >>"$SEED/registry-clean.md"
 
 parse_registry "$SEED/registry-clean.md"
@@ -183,8 +203,9 @@ expect over_counted.rs counted
 expect under.rs under
 expect no_such_file.rs missing
 expect over_justified.sh justified
-[ "$REGISTERED" -eq 4 ] ||
-	fail "self-test: the seeded registry has four entries and the parser found $REGISTERED"
+expect over_justified.py justified
+[ "$REGISTERED" -eq 5 ] ||
+	fail "self-test: the seeded registry has five entries and the parser found $REGISTERED"
 
 # The parser's own two refusals, in a subshell because each one exits.
 ( parse_registry "$SEED/registry.md" ) 2>/dev/null &&
@@ -196,7 +217,7 @@ expect over_justified.sh justified
 ( parse_registry "$SEED/registry-doubled.md" ) 2>/dev/null &&
 	fail "self-test: two entries for one path were not refused"
 
-echo "file_justification_check: self-test passed on 7 seeded verdicts and 2 seeded registry refusals (cap $SOFT_CAP)"
+echo "file_justification_check: self-test passed on 8 seeded verdicts and 2 seeded registry refusals (cap $SOFT_CAP)"
 
 # --- the tracked file set -------------------------------------------------
 
@@ -242,7 +263,7 @@ while IFS= read -r -d '' entry; do
 	missing) BAD+=("$file: its tracked blob unpacked to nothing this gate could read") ;;
 	*) fail "$file: verdict said something this gate has no arm for, and an unread verdict is not a pass" ;;
 	esac
-done < <(git ls-files -s -z '*.rs' '*.sh')
+done < <(git ls-files -s -z '*.rs' '*.sh' '*.py')
 
 # An entry nothing above claimed argues about a file this gate never weighs.
 for path in "${!WHY[@]}"; do
@@ -252,7 +273,7 @@ for path in "${!WHY[@]}"; do
 	# would carry the wrong reason (rule 3). Literal pathspecs so an entry
 	# containing a glob character cannot match some other file either.
 	if [ -n "$(GIT_LITERAL_PATHSPECS=1 git ls-files -z -- "$path" 2>/dev/null)" ]; then
-		BAD+=("$REGISTRY: an entry for $path, which is under the cap or outside the .rs/.sh set this gate weighs")
+		BAD+=("$REGISTRY: an entry for $path, which is under the cap or outside the .rs/.sh/.py set this gate weighs")
 	else
 		BAD+=("$REGISTRY: an entry for $path, which nothing tracks")
 	fi
@@ -263,4 +284,4 @@ if [ "${#BAD[@]}" -gt 0 ]; then
 	fail "${#BAD[@]} finding(s) against CLAUDE.md rule 9's soft cap"
 fi
 
-echo "file_justification_check: $TRACKED tracked .rs/.sh files, $OVER over the cap, all registered in $REGISTRY ($REGISTERED entries)"
+echo "file_justification_check: $TRACKED tracked .rs/.sh/.py files, $OVER over the cap, all registered in $REGISTRY ($REGISTERED entries)"
