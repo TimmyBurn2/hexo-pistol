@@ -1,13 +1,19 @@
 # Sealbot anchor v7 — protocol. Written, not run.
 
-> **THE BUDGET DECISION THIS PROTOCOL DEPENDS ON IS NOT SETTLED (D-699).** Its
-> OPTION MATRIX — `matrix_anchor_v7_budget.md` — has had two DECISION-RED-TEAM
-> rounds and both recommendations fell. §A1's "v7 PINS EQUAL MEASURED MOVETIME
-> PER SIDE" is therefore a REGISTERED INTENTION AND NOT A SELECTED OPTION, and it
-> is in unresolved conflict with the series budgets that D-697 records. **This
-> protocol may not be run until that matrix survives its red team.** Everything
-> else in it — the cap ruling (§A3, D-698), the overshoot terms (§A2), the
-> opponent pin (§A5) and the openings (§A6) — is settled and stands.
+> **THE BUDGET DECISION IS SETTLED BY OPERATOR RULING (D-702) AND THIS PROTOCOL
+> IS RUNNABLE AT ITS TRIGGER.** D-699 stopped it after two DECISION-RED-TEAM
+> rounds on `matrix_anchor_v7_budget.md` both fell; the ruling supersedes that
+> matrix rather than reviving it, and no third round is run. **v7 IS TWO ARMS**
+> — a LEGACY arm at 500/300 with the old forfeit thresholds, labelled UNEQUAL
+> and closing the v5/v6 series, and an EQUAL arm at 500/500 nominal with equal
+> thresholds and per-side measured wall and overshoot, series `v7-eq`, the base
+> from here. §A1 carries the ruling verbatim. The other two of D-699's three
+> resume items were discharged by D-700. Everything else — the cap ruling
+> (§A3, D-698), the overshoot terms (§A2), the opponent pin (§A5) and the
+> openings (§A6) — was already settled and does not move (D-54y).
+>
+> **THE TRIGGER IS UNCHANGED AND IS NOT MET**: the first Phase 2 `h1` (§A7).
+> Phase 2a produces no SPRT and no `h1`, so this document is still inert.
 
 **No run date. No verdict. Direction only.** This document is a
 pre-registration for the NEXT anchor in the v3–v6 series, and it is landed
@@ -16,7 +22,11 @@ before the run it governs so the run cannot be shaped by its own numbers
 
 **Governing revision of this document**: `235b6db`, the revision every file
 and line quoted below was read at. A citation re-quoted at a later revision
-carries that revision beside it (D-692). Nothing here is measured; every
+carries that revision beside it (D-692). **AMENDED ONCE SINCE**: the banner and
+§A1's budget paragraphs carry D-702's ruling, transcribed at `0585e25`, which is
+a docs-only change confined to the section D-699 STOPPED — §A2 through §A7 had
+passed and do not move (D-54y), so this amendment reopens the stopped section
+and nothing else. Nothing here is measured; every
 number below is a CONFIGURED value read out of a committed file, or a
 MEASURED value cited from the artifact that produced it, and each is labelled.
 
@@ -58,9 +68,13 @@ is the wall at which the harness declares a forfeit — but it is unequal by a
 factor of 24, and it interacts with §A2's overshoot: a pistol answer that ran
 long is recorded, where a sealbot answer that ran long is a loss.
 
-**v7 REGISTERS IT AS A MULTIPLE OF EACH SIDE'S OWN BUDGET RATHER THAN INHERITING
-120/5.** Both seats get `turn_timeout_seconds` = **16x that seat's budget**,
-which is 8.0 s against a 500 ms budget and 4.8 s against a 300 ms one. D-534
+**THE EQUAL ARM REGISTERS IT AS A MULTIPLE OF EACH SIDE'S OWN BUDGET RATHER
+THAN INHERITING 120/5; THE LEGACY ARM INHERITS 120/5 BY THE RULING (D-702).**
+On the equal arm both seats get `turn_timeout_seconds` = **16x that seat's
+budget**, which at 500/500 is **8.0 s on both seats** — the 4.8 s an earlier
+revision derived was for a 300 ms seat, which only the legacy arm now has, and
+the legacy arm keeps 5.0 s there because keeping the series comparable is what
+that arm is for. D-534
 explains pistol's 120 s — *"its wall cap was raised from a registered timing
 probe precisely so the overshoot would be RECORDED rather than converted into a
 loss"* — and that is a good reason for a generous threshold on BOTH seats, and no
@@ -92,20 +106,57 @@ by name**, and not at "either result": v6's other claim — that both engines ar
 worse as p1, and the 38/62 colour split — is a statement about play at these
 budgets and is labelled with them like any other.
 
-**WHAT v7 DOES ABOUT THE INEQUALITY IS NOT SETTLED HERE, AND THE MATRIX THAT
-WOULD SETTLE IT HAS FALLEN TWICE (D-699).** An earlier revision of this section
-registered "v7 PINS EQUAL MEASURED MOVETIME PER SIDE" as though it were decided.
-It is not. Two things a resume inherits rather than re-derives:
+**WHAT v7 DOES ABOUT THE INEQUALITY IS SETTLED BY OPERATOR RULING (D-702), AND
+NOT BY THE MATRIX, WHICH STAYS FALLEN.** An earlier revision of this section
+registered "v7 PINS EQUAL MEASURED MOVETIME PER SIDE" as though it were decided;
+it was not, `matrix_anchor_v7_budget.md` fell twice (D-699), and no third round
+is run. The ruling is transcribed here verbatim, and it is what this section now
+registers:
 
-- **Equal WALL is not equal SEARCH**, and the gap is not small in the way it
-  looked: the harness cannot report sealbot's own search time at all
-  (`engine_time_ms` null for **1050 of 1050** and **986 of 986** answers), so an
-  early-returning answer's non-search time is bounded only by its whole wall.
-  Consuming the shim's `ready` line takes the bound from **4.50 % to 3.53 %**,
-  not to zero.
-- **D-695 pins "equal measured movetime per side" and the series budgets are
-  unequal.** One of those has to move, by an ADR line that names the other.
-  Neither has moved here.
+> anchor v7 runs a legacy arm (500/300, old forfeit thresholds, labelled
+> UNEQUAL, last point of the v5/v6 series) and an equal arm (500/500 nominal,
+> equal thresholds, measured wall and overshoot per side, series v7-eq, the base
+> from here); D-695's "equal measured movetime" reads "equal nominal, measured
+> reported, legacy arm exempt"; trigger unchanged, first Phase 2 h1 — flips if
+> the arms disagree in direction at the overlap, then both series continue to
+> the second h1.
+
+**SO v7 IS TWO RUNS AND NOT ONE, AND EACH ANSWERS A DIFFERENT QUESTION.** The
+LEGACY arm keeps the series comparable — 500 ms to pistol, 300 ms to sealbot,
+`turn_timeout_seconds` 120.0 and 5.0 as v5 and v6 had them, reported under the
+label D-697 attaches to every earlier point, and it is the last point of that
+series. The EQUAL arm is the base from here: 500 ms nominal to each side, each
+seat's `turn_timeout_seconds` at 16x its own budget (§A1's rule, which is now
+the EQUAL arm's rule and reads 8.0 s on both seats at 500/500), and both seats'
+wall and overshoot MEASURED per side rather than configured. The series name is
+`v7-eq`.
+
+**WHAT THE RULING DOES TO D-695, in its own words**: the clause *"equal measured
+movetime per side"* reads **"equal nominal, measured reported, legacy arm
+exempt"**. D-702 is the amending line D-699 named as the first of its three
+resume items; the other two are discharged by D-700.
+
+**AND THE OVERLAP IS THE POINT.** Two arms of the same run against the same
+opponent at the same revision give a direction each; if they agree, the
+handicap was not carrying the direction and the legacy series retires into
+`v7-eq`. If they DISAGREE IN DIRECTION, the flip clause fires and both series
+continue to the second Phase 2 h1 — which is the only reading under which the
+v5/v6 points keep saying anything.
+
+**TWO THINGS THE RULING DOES NOT MAKE TRUE, and they are inherited rather than
+re-derived:**
+
+- **Equal NOMINAL movetime is not equal SEARCH time.** Sealbot's untimed setup
+  sits outside its own clock and its abort granularity is 1024 nodes (§A2 term
+  2), and pistol's own overshoot at a 500 ms budget was 15 ms and 14 ms in v5
+  and v6. The equal arm's equality is a CONFIGURED equality with a MEASURED
+  residual printed beside it, and the residual is reported, never corrected for.
+- **The measurement the equal arm rests on did not exist when the arms were
+  proposed.** In v5 and v6 `engine_time_ms` was null for **1050 of 1050** and
+  **986 of 986** sealbot answers, so "measured reported" was not something a run
+  could do; D-700 landed the shim change and the handshake that make it one, and
+  MEASURED end to end on the real shim the first answer of a game against a
+  300 ms budget went from 325.8-326.9 ms to 300.4-300.9 ms.
 
 ## §A2 — The overshoot terms, MEASURED — and there are three, not two
 
