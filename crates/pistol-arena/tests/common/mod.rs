@@ -320,7 +320,8 @@ pub fn seed_tool(root: &Path, script: &str) {
 /// A path this seeder will copy: under `tools/`, and a SCRIPT.
 ///
 /// `.md` is deliberately not a script — see `pistol-cli`'s twin for the
-/// measurement that settles it.
+/// measurement that settles it, and this crate's `tool_seeding_tests.rs`
+/// control for the test that fails if this alphabet ever sweeps.
 fn is_tool_script(path: &str) -> bool {
     path.starts_with("tools/") && (path.ends_with(".sh") || path.ends_with(".py"))
 }
