@@ -215,6 +215,45 @@ def the_variance_terms_are_computed_and_not_asserted():
           f"within {within}, total {total}")
 
 
+def the_merge_curve_comes_out_of_the_instrument():
+    """`refinement` reports the fanout, so no scratch script owns a published number."""
+    k_short, k_long, joint, fan, back = E.refinement(11, 2, "T4")
+    check("at the covering length the join is one-to-one in both directions",
+          (k_short, k_long, joint) == (357, 357, 357) and fan == (1, 1, 1.0)
+          and back == (1, 1, 1.0), f"{k_short} {k_long} {joint} {fan} {back}")
+    _ks, _kl, _j, fan7, back7 = E.refinement(7, 4, "T4")
+    check("below it the join fans out in both directions",
+          fan7[0] > 1 and fan7[1] > fan7[0] and back7[1] > 1,
+          f"fanout {fan7}, backout {back7}")
+
+
+def the_count_only_baseline_is_blind_to_everything_the_tuple_carries():
+    """The referent the criterion is stated against must be structure-free.
+
+    A referent that could see completion cost would not be a test of whether
+    threat structure adds anything over stone counting, which is the one
+    comparison a random partition of the enum's own shape cannot make.
+    """
+    sys.path.insert(0, str(HERE))
+    from census import Length
+
+    unit = Length(11, 1)
+    same_counts = ("xxxxx." + ".....", "x.x.x." + "x.x..")
+    codes = []
+    for text in same_counts:
+        pat = pattern(text)
+        code = 0
+        for power, index in zip(unit.powers, unit.slots):
+            code += pat[index] * power
+        codes.append(code)
+    a, b = (E.tuple_of(pattern(t), 11) for t in same_counts)
+    check("two patterns the tuple separates share one count-only key",
+          unit.counts[codes[0]] == unit.counts[codes[1]] and a != b,
+          f"keys {unit.counts[codes[0]]} and {unit.counts[codes[1]]}, tuples {a} {b}")
+    check("one of them completes a six with a single stone and the other does not",
+          a[0][0] == 1 and b[0][0] > 1, f"{a} {b}")
+
+
 def main():
     for test in (a_five_run_beside_the_cell_costs_one_stone,
                  an_opponent_stone_in_every_window_kills_the_side,
@@ -227,7 +266,9 @@ def main():
                  the_ladders_bottom_rung_states_law_supports_two_boundaries,
                  a_rung_carries_no_component_that_refines_nothing,
                  the_solver_predicates_are_constant_on_a_class,
-                 the_variance_terms_are_computed_and_not_asserted):
+                 the_variance_terms_are_computed_and_not_asserted,
+                 the_merge_curve_comes_out_of_the_instrument,
+                 the_count_only_baseline_is_blind_to_everything_the_tuple_carries):
         print(test.__name__)
         test()
     if FAILURES:

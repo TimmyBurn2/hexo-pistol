@@ -4,9 +4,12 @@ Walks the R6 quiet population of the deduped corpus and reports, for ONE window
 length and every ladder rung: distinct codes observed, observations per code,
 the counts under Buro's three published floors, and CLASS PURITY as the two
 terms of the law of total variance (docs/experiments/hex_threat_enum_v1.md
-§6.5). Two referents sit beside every purity number, because a purity number
-alone passes vacuously: the un-quotiented raw folded code, and a random
-quotient of the same size at a recorded seed.
+§6.5). THREE referents sit beside every purity number, because a purity number
+alone passes vacuously: the un-quotiented raw folded code (a CEILING, and an
+identity rather than a test); a random quotient of the enum's own shape at a
+recorded seed (a FLOOR — it says only that the enum is not noise); and the
+STONE-COUNT quotient, which is the one that can fail, because it is the
+strongest partition that knows nothing the calculus names.
 
 One length per run, because the per-cell work is linear in the rungs and the
 lengths are independent — five processes finish in the time one does.
@@ -98,6 +101,25 @@ class Length:
         self.nulls = {rung: [self.permuted(rung, seed + length + 1000 * r)
                              for r in range(NULL_REPLICATES)]
                       for rung in E.LADDER}
+        self.counts = array.array("i", (self.count_key(code) for code in range(self.size)))
+
+    def count_key(self, code):
+        """`(own stones, opp stones)` in the pattern, packed — the STRUCTURE-FREE baseline.
+
+        The strongest partition that knows nothing the calculus names: no window,
+        no openness, no completion cost, no rule-4 relevance, no position along
+        the line. It is what the enum has to beat for "threat structure carries
+        value" to mean anything, and a matched random referent cannot stand in
+        for it — a random partition of the same shape is weaker than stone
+        counting, so clearing the random one says only that the enum is not
+        noise.
+        """
+        cell = [0] * self.length
+        rest = code
+        for index in self.slots:
+            cell[index] = rest % 3
+            rest //= 3
+        return cell.count(1) * (self.length + 1) + cell.count(2)
 
     def permuted(self, rung, seed):
         """A random partition with the enum's own SHAPE — the matched referent.
@@ -182,6 +204,8 @@ def main(argv):
                  for r in range(NULL_REPLICATES)}
     window_raw = Moments()
     code_raw = Moments()
+    window_count = Moments()
+    code_count = Moments()
     curve = collections.defaultdict(list)
     scored_cells = 0
     legal_sample = []
@@ -214,6 +238,7 @@ def main(argv):
                 for position, code in unit.codes_along(occupied):
                     per_cell[cell_of(axis, line_id, position)][axis] = code
                     window_raw.add(unit.folded[code], label)
+                    window_count.add(unit.counts[code], label)
                     for rung in E.LADDER:
                         window_moments[rung].add(unit.classes[rung][code], label)
                         for r, null in enumerate(unit.nulls[rung]):
@@ -232,6 +257,8 @@ def main(argv):
                                          for c in present)), label)
                 code_raw.add(tuple(sorted(0 if c is None else unit.folded[c]
                                           for c in present)), label)
+                code_count.add(tuple(sorted(unit.counts[0] if c is None else unit.counts[c]
+                                            for c in present)), label)
             if kept % CURVE_STEP == 0:
                 for rung in E.LADDER:
                     curve[rung].append((kept, len(code_moments[rung].n)))
@@ -243,7 +270,7 @@ def main(argv):
 
     report(out_path, unit, kept, seed, scored_cells, legal_sample, legal_stride,
            window_moments, code_moments, window_null, code_null,
-           window_raw, code_raw, curve)
+           window_raw, code_raw, window_count, code_count, curve)
     return 0
 
 

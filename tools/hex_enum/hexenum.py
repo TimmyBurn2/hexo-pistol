@@ -11,7 +11,9 @@ Encoding: a pattern is a tuple of L values, 0 empty, 1 own, 2 opponent, read
 mover-relative. The centre cell is empty by construction and is not encoded, so
 a pattern's CODE is the base-3 value of its L-1 non-centre positions.
 
-Usage: hexenum.py <L> [<L> ...]   prints k and the ladder for each length.
+Usage: hexenum.py <L> [<L> ...]              k and the ladder per length
+       hexenum.py --refine <L> [<L> ...]     the L -> L+2 join and its merge curve
+       hexenum.py --curve <long> <short>...  the join at an arbitrary step
 """
 
 import sys
@@ -169,7 +171,10 @@ def reverse_code(length, code):
 def refinement(length, step=2, rung="T4"):
     """How the length-L partition and the length-(L+step) one relate.
 
-    Returns `(k_short, k_long, joint)`. `joint == k_short` says the longer
+    Returns `(k_short, k_long, joint, fanout, backout)`, where the last two are
+    `(min, max, mean)` partner counts in each direction — the MERGE CURVE, which
+    an earlier revision reported from a scratch script no named instrument
+    could produce. `joint == k_short` says the longer
     partition is a FUNCTION of the shorter one — the extra cells changed no
     class, which is what THM-WINDOW's owed enumeration asks for. `joint ==
     k_long` says the shorter one is a function of the longer. Neither means the
@@ -184,8 +189,8 @@ def refinement(length, step=2, rung="T4"):
     short_slots = [i for i in range(length) if i not in centres(length)]
     short_powers = [3 ** j for j in range(len(short_slots))]
     pairs = set()
-    shorts = set()
-    longs = set()
+    fanout = {}
+    backout = {}
     for code, pattern in patterns(long_length):
         core = pattern[offset:offset + length]
         core_code = 0
@@ -193,23 +198,50 @@ def refinement(length, step=2, rung="T4"):
             core_code += core[index] * power
         pair = (short[core_code], long_codes[code])
         pairs.add(pair)
-        shorts.add(pair[0])
-        longs.add(pair[1])
-    return (len(shorts), len(longs), len(pairs))
+        fanout.setdefault(pair[0], set()).add(pair[1])
+        backout.setdefault(pair[1], set()).add(pair[0])
+    return (len(fanout), len(backout), len(pairs), spread(fanout), spread(backout))
+
+
+def spread(mapping):
+    """`(min, max, mean)` of how many partners each key has — the merge curve."""
+    sizes = sorted(len(v) for v in mapping.values())
+    return (sizes[0], sizes[-1], sum(sizes) / len(sizes))
 
 
 def main(argv):
+    if argv and argv[0] == "--curve":
+        # The join at an arbitrary step, so the 7<->11 and 9<->11 merge curves a
+        # matrix quotes are produced by this instrument rather than by a scratch
+        # script (docs/process.md, "Instrument governing revision").
+        long_length = int(argv[1])
+        for text in argv[2:]:
+            short_length = int(text)
+            for rung in LADDER:
+                k_short, k_long, joint, fan, back = refinement(
+                    short_length, long_length - short_length, rung)
+                print(f"L {short_length} <-> {long_length}  {rung}  "
+                      f"k {k_short} / {k_long}  joint {joint}  "
+                      f"| one L{short_length} class meets {fan[0]}-{fan[1]} "
+                      f"(mean {fan[2]:.1f}) L{long_length} classes; "
+                      f"one L{long_length} class meets {back[0]}-{back[1]} "
+                      f"(mean {back[2]:.1f})", flush=True)
+        return 0
     if argv and argv[0] == "--refine":
         for text in argv[1:]:
             length = int(text)
             for rung in LADDER:
-                k_short, k_long, joint = refinement(length, 2, rung)
+                k_short, k_long, joint, fan, back = refinement(length, 2, rung)
                 verdict = ("the longer partition is a function of the shorter"
                            if joint == k_short else
                            "the shorter is a function of the longer"
                            if joint == k_long else "neither refines the other")
                 print(f"L {length} -> {length + 2}  {rung}  k {k_short} -> {k_long}  "
-                      f"joint {joint}  {verdict}", flush=True)
+                      f"joint {joint}  {verdict}  "
+                      f"| one L{length} class meets {fan[0]}-{fan[1]} "
+                      f"(mean {fan[2]:.1f}) L{length + 2} classes; "
+                      f"one L{length + 2} class meets {back[0]}-{back[1]} "
+                      f"(mean {back[2]:.1f})", flush=True)
         return 0
     for text in argv:
         length = int(text)

@@ -1,39 +1,24 @@
-# The hex threat enum — derivation memo, revision 2. **STOPPED.**
+# The hex threat enum — derivation memo, revision 3.
 
-> **STAGE E IS STOPPED AND NOTHING MAY BE PRICED ON THIS DOCUMENT.** Revision 1
-> FAILED its REVIEW-design (`hex_threat_enum_v1_REVIEW.md`: 3 BLOCKING, 7 MAJOR,
-> 8 MINOR); revision 2 was the ONE granted fix round and its scoped confirmation
-> also FAILED (`hex_threat_enum_v1_CONFIRM.md`: 1 new BLOCKING, 5 new MAJOR,
-> with B-3 still landing). **Two failures is the cap, so the dispatch's default
-> fork applies: `matrix_wp22_phase2_eval.md` runs WITHOUT `R-A4-CLASS`**, and
-> `wp22_phase2a_STOP_E.md` is the record.
+> **ROUND 3 OF FOUR, UNDER THE OPERATOR GRANT D-709, AND THE STOP IS
+> SUPERSEDED.** Revision 1 FAILED its REVIEW-design
+> (`hex_threat_enum_v1_REVIEW.md`: 3 BLOCKING, 7 MAJOR, 8 MINOR); revision 2
+> FAILED its scoped confirmation (`hex_threat_enum_v1_CONFIRM.md`: 1 new
+> BLOCKING, 5 new MAJOR, B-3 still landing), and at the dispatch's one-fix-round
+> cap that was STOP E (`wp22_phase2a_STOP_E.md`). The operator then granted *"up
+> to 4 rounds"*, which D-709 reads as four per review gate, so **rounds 3 and 4
+> are available and this is round 3. It is REMEDIES-ONLY (D-709), and it adds no
+> scope.**
 >
-> **THE BODY OF THIS DOCUMENT IS NOT REVISED AGAIN** — the fix-round cap is
-> spent, and a third revision is exactly the argument-instead-of-measurement
-> pattern D-630 named. **What is wrong with it is listed in the STOP summary,
-> not repaired here**, and the five findings that name a wrong answer are:
-> §6.5's criterion is passed at 1.77x by a value-free quotient (N-1); §5.5's
-> merge count is 27/5 348 under one reading of `DEF-PLAN` and 32/6 099 under the
-> one it prints (N-2); §5.5's *"not something a single-axis class can hold"* is
-> false and the repair costs 36 classes (N-3); §6.4's T1 *"only if"* is false and
-> the coarsest clip its own law licenses is `k = 16`, `C(18,3) = 816` (N-4); and
-> T3's clip merges more `t`-inconsistent patterns than the tuple it coarsens
-> (N-5).
+> **THE ONE REMEDY THAT IS NOT A CORRECTION OF WORDS**: §6.5's criterion was
+> passed at 1.77x by a value-free quotient of stone counts, so it is REPLACED
+> rather than reworded. The stone-count quotient is now the registered referent —
+> the strongest partition that knows nothing the calculus names — the random
+> permutation is demoted to a floor, and the raw code is labelled the identity it
+> always was. **The criterion can now fail, and §7.4 reports whether it does.**
 >
-> **WHAT SURVIVES AND IS NOT WITHDRAWN**: the enum's ARITHMETIC. The confirming
-> reviewer wrote its own tuple, its own `DEF-T` and its own even-`L` readings and
-> found *"no arithmetic error anywhere in the enum"* — `k = 25 / 98 / 357 / 357`,
-> the ladder, the reversal and swap invariances, `|W_L|`, the ceilings, the merge
-> curve, the max-`t` distribution and both `t` witnesses all reproduce exactly.
-> §7's census numbers are measurements and stand as measurements; what does not
-> stand is any CONCLUSION drawn from §6.5's criterion.
->
-> **ONE CODE DEFECT WAS FIXED RATHER THAN RECORDED** (N-6), because a finding
-> that names a way the code produces a wrong answer is never overruled: gate 19
-> could not see a constant `ω²`, and four mutants of `report.py` survived it.
-> `report.py` now computes the total WITHOUT the partition and refuses a
-> disagreement by name, and the four mutants are DEAD
-> (`artifacts/wp22_phase2a/n6_mutants/`).
+> `wp22_phase2a_STOP_E.md` is not deleted: it is the record of what two rounds
+> found, and its finding list is this revision's input.
 
 **Governing revision**: `c5123c1` (`dev`), the revision every file, line and count
 quoted below was read at (D-692). **REVISION 2 IS THE ONE FIX ROUND** granted
@@ -416,11 +401,17 @@ defers those.
 
 ### 5.5 WHAT THE TUPLE GETS WRONG, ON THE PAGE BEFORE §7 RUNS
 
-`RULE-EXACT` (`:64-66`) says *"only exact `t` decides truth"*. **MEASURED**: for
-every length-11 pattern, the exact `DEF-T` over own's plan family after placing
-one own stone at `c` — a minimum hitting set over `DEF-PLAN`'s open windows at 4
-or 5 own stones — **differs within 27 of the 357 classes, covering 5 348 of the
-59 049 patterns.** Two witnesses, `.` empty, `X` own, `c` at index 5:
+`RULE-EXACT` (`:64-66`) says *"only exact `t` decides truth"*. **MEASURED, and
+the POPULATION is stated first because an earlier revision published the count
+without it**: over the length-11 patterns for which a stone at `c` does NOT
+complete a six — game rule 4 ends the turn there, so no threat question survives
+the placement — the exact `DEF-T` over own's plan family after placing one own
+stone at `c`, a minimum hitting set over `DEF-PLAN`'s open windows at 4 or 5 own
+stones, **differs within 27 of the 335 classes those patterns present, covering
+5 348 of the 57 996 patterns.** **Without the rule-4 exclusion it is 32 classes
+of 357 and 6 099 of 59 049**, and both numbers are printed here because the
+confirming reviewer found the first published alone. Two witnesses, `.` empty,
+`X` own, `c` at index 5:
 
 ```
 class (min_own=3, open_own=6, r4_own=0, min_opp=6, open_opp=1, r4_opp=0)
@@ -440,11 +431,27 @@ buys an unhittable pair of them, in the simplest four-shapes the game has.**
 Since a cell's code is built from per-axis classes, the merge survives to the
 code.
 
-**THIS IS RECORDED AND NOT REPAIRED, AND THE REASON IS STATED.** Repairing it
-means carrying exact `t` in the tuple, which is a per-POSITION quantity over a
-plan family that spans axes (`LAW-OVERLOAD`'s addition floor is a cross-axis
-statement) — not a property of one line's neighbourhood, and not something a
-single-axis class can hold. What a single axis CAN see is bounded: **MEASURED,
+**THIS IS RECORDED AND NOT REPAIRED, AND THE REASON IS A PRICE RATHER THAN AN
+IMPOSSIBILITY.** An earlier revision said the merge was *"not something a
+single-axis class can hold"*, and that is FALSE: single-axis exact `t` is a
+function of the eleven cells, as the next paragraph's enumeration over all
+`3^11` lines demonstrates by computing it. **MEASURED, the price of carrying it
+as a seventh component**, at `L = 11` under the reading above:
+
+| rung | `k` without | `k` with | `C(k+2,3)` without | with | classes merging different `t` before |
+|---|---|---|---|---|---|
+| T4 | 357 | **384** | 7 647 059 | 9 511 040 | 27 |
+| T3 | 121 | 132 | 302 621 | 392 084 | 11 |
+| **T2** | **47** | **58** | **18 424** | **34 220** | 11 |
+| T1 | 36 | 45 | 8 436 | 16 215 | 9 |
+
+**The repair removes the merge entirely, and at T2 it costs 11 classes and 86 %
+more parameters.** This memo does not adopt it — §9 defers evaluator decisions
+and the choice belongs to whoever prices the row — but it states the price
+instead of an impossibility. **What genuinely cannot be held single-axis is the
+POSITION's `t`**, whose `LAW-OVERLOAD` addition floor is a cross-axis statement,
+and that is a true claim about a different object. What a single axis CAN see is
+bounded: **MEASURED,
 the maximum exact `DEF-T` over all `3^11 = 177 147` length-11 single-axis lines
 is 2**, realised at `.....XXXX..`, with the distribution `t=0: 319 606, t=1:
 32 002, t=2: 2 686` over the 354 294 (line, side) pairs. `LAW-OVERLOAD`'s `t ≥ 3`
@@ -515,19 +522,52 @@ function of the one above it, and none of them a hand-written class list:
 | rung | the equivalence | the boundary, and whose it is |
 |---|---|---|
 | **T4** | the full tuple | none — full resolution |
-| **T3** | `(min_own, min(open_own, 2), min_opp, min(open_opp, 2))` | `open` at 0 / 1 / ≥2. **MEASURED**: the maximum exact `DEF-T` a single axis can carry is 2 (§5.5), so `{dead, one surviving completion, more than one}` is the whole resolution `open` supports on one line. |
+| **T3** | `(min_own, min(open_own, 2), min_opp, min(open_opp, 2))` | **A CHOICE, not a derivation.** `open` counts WINDOWS, and `DEF-T` counts hitting-set cells; the max-`t = 2` fact (§5.5) is about the second and licenses nothing about the first, which an earlier revision claimed it did. The clip is `{dead, one surviving completion, more than one}` because that is the coarsest split `DEF-WINDOW`'s own predicate can make on a count, and its cost is measured below. |
 | **T2** | `(min_own, min_opp)` | none beyond dropping `open`; the alive-or-dead boolean revision 1 carried here refines nothing (§5.1). |
-| **T1** | `(clip(min_own), clip(min_opp))`, `clip(x) = x` for `x ≤ 4`, `5` for `5 ≤ x < ∞`, `∞` for dead | `LAW-SUPPORT` (`:69`) reads `own ≥ 6−2k`, so `k = 1 ⟺ cost ≤ 2` and `k = 2 ⟺ cost ≤ 4`. Both boundaries are expressible only if 1, 2, 3 and 4 stay apart and everything above them merges; `DEF-WINDOW`'s dead stays apart from an expensive live window. |
+| **T1** | `(clip(min_own), clip(min_opp))`, `clip(x) = x` for `x ≤ 4`, `5` for `5 ≤ x < ∞`, `∞` for dead | **A CHOICE inside a constraint.** `LAW-SUPPORT` (`:69`) reads `own ≥ 6−2k`, so `k = 1 ⟺ cost ≤ 2` and `k = 2 ⟺ cost ≤ 4`; the law CONSTRAINS the clip to refine `{≤2 \| 3–4 \| ≥5 \| dead}` and does not determine it. The shipped clip keeps four cost values apart because the finer resolution is cheap at this rung, and that is a choice this memo makes, not one the law makes. |
 
-**T1's clip point is the finding revision 1 earned, and it is fixed rather than
-argued about.** Revision 1 clipped at `min(cost, 4)`, which leaves four values a
-side and therefore `k ≤ 16` and `C(18,3) = 816` — the imported figure, arriving
-by a chosen clip (§1.1). It also merged `cost = 4`, a `LAW-SUPPORT` `k = 2`
-candidate, with `cost = 5` and `6`, so the rung could not state the boundary it
-cited. **MEASURED at `L = 11`, the three readings**: the clip folding `∞` in
-gives `k = 16` and `C(18,3) = 816`; `min(cost, 4)` with `∞` apart gives `k = 25`
-and 2 925; the clip above gives **`k = 36` and `C(38,3) = 8 436`**. Only the
-third states both `LAW-SUPPORT` boundaries, and it is the one shipped.
+**THE CLIP LADDER, EXHAUSTIVELY, BECAUSE TWO REVISIONS GOT ITS LICENCE WRONG.**
+Revision 1 clipped at `min(cost, 4)`, which merged `cost = 4` — a `LAW-SUPPORT`
+`k = 2` candidate — with 5 and 6, and folded `∞` in, so it could not state
+either boundary and landed on `k = 16`. Revision 2 fixed the clip and claimed
+the boundaries were *"expressible only if 1, 2, 3 and 4 stay apart"*, **and that
+"only if" is false**. MEASURED at `L = 11`, every clip that expresses both
+boundaries:
+
+| clip | `k` | `C(k+2,3)` |
+|---|---|---|
+| **`{≤2 \| 3–4 \| ≥5 \| dead}` — the COARSEST faithful one** | **16** | **816** |
+| `{1 \| 2 \| 3–4 \| ≥5 \| dead}` | 25 | 2 925 |
+| `{≤2 \| 3 \| 4 \| ≥5 \| dead}` | 25 | 2 925 |
+| `{1 \| 2 \| 3 \| 4 \| ≥5 \| dead}` — shipped | 36 | 8 436 |
+
+**AND THE COARSEST FAITHFUL CLIP GIVES 816, WHICH IS THE FIGURE §1.1 CALLS AN
+IMPORT — SO THE COINCIDENCE IS NAMED HERE RATHER THAN AVOIDED.** It arrives by a
+route that has nothing to do with Rapfi: `LAW-SUPPORT`'s two readings plus
+`DEF-WINDOW`'s dead give four cost buckets a side, `4² = 16` joint classes, and
+`C(18,3) = 816`. That it equals `C(16+2,3)` for Rapfi's hand-designed 16-member
+enum is a fact about the arithmetic of small multisets and not evidence that
+either derivation informed the other. **D-706 forbids importing a number; it
+does not forbid deriving one that coincides with an imported one**, and the
+defence is that the derivation is printed above and can be checked without
+reading a word about a 4-axis game.
+
+**WHAT EACH RUNG COSTS IN `t`-CONSISTENCY, MEASURED**, since the clips are
+choices and a choice should be priced. Over the 57 996 patterns whose placement
+does not complete a six (§5.5's population):
+
+| rung | classes merging different single-axis `t` | patterns in them |
+|---|---|---|
+| T4 | 27 | 5 348 |
+| T3 | 11 | **7 056** |
+| T2 | 11 | **11 164** |
+| T1 | 9 | 11 164 |
+
+**A coarser rung merges fewer CLASSES and more PATTERNS**, which is what
+coarsening does and is the honest cost of the ladder. It is not an argument
+against the coarse rungs — §7 measures that they are the only ones the corpus
+supports — and it is the number a matrix should carry beside their parameter
+counts.
 
 **The ladder is not a selection**: §7 reports `k`, codes, observations and purity
 at each rung and recommends nothing.
@@ -552,8 +592,8 @@ Over all observations, with classes `C`:
 Reported at the WINDOW unit — one observation per `(position, cell, axis)` — and
 at the CODE unit — one per `(position, cell)`.
 
-**THE TWO REFERENTS, AND WHAT EACH ONE CAN AND CANNOT FALSIFY.** The named
-defect class is *the quotient throws away a distinction that carries value*.
+**THREE REFERENTS, AND ONLY ONE OF THEM CAN FAIL.** The named defect class is
+*the quotient throws away a distinction that carries value*.
 
 1. **The un-quotiented folded raw code at the same `L` is an IDENTITY, not a
    test, and is labelled as one.** The tuple is a function of the pattern and is
@@ -563,25 +603,51 @@ defect class is *the quotient throws away a distinction that carries value*.
    of value was lost. It is reported as the CEILING the quotient is measured
    against, and its gap tracks the class-count ratio rather than the loss.
    It cannot fail and it is not offered as a criterion.
-2. **The matched random quotient is the externally derived referent**
-   (`docs/process.md`, *"Criterion and defect class"*), and it is matched on the
-   enum's own SHAPE: the classes are re-assigned by permuting which codes belong
-   to which class, so the class count and the number of codes per class are
-   exactly the enum's and the only thing that changes is which codes share a
-   class. Three replicates at a recorded seed, so the referent carries a spread.
+2. **The matched random quotient is a FLOOR and is reported as one.** It is
+   matched on the enum's own SHAPE — the classes are re-assigned by permuting
+   which codes belong to which class, so the class count and the number of codes
+   per class are exactly the enum's and only the grouping changes. Three
+   replicates at a recorded seed. **Clearing it says the enum is not noise and
+   nothing more**, and revision 2 registered it as the criterion, which was the
+   BLOCKING error the confirmation found: a quotient of stone counts alone,
+   blind to openness, completion cost and game rule 4, cleared it at 1.77x and
+   reached 96 % of the full tuple's `ω²` (`hex_threat_enum_v1_CONFIRM.md` N-1).
 
-**AND THE CRITERION, REGISTERED HERE BEFORE THE RUN, because a recording without
-one is a dry run nothing can fail.** At the WINDOW unit — the unit at which the
-observed class counts of the enum and its matched null are comparable — **the
-enum's `ω²` must exceed every one of the three null replicates at every ladder
-rung.** If it does not at a rung, that rung has separated nothing the corpus can
-see beyond what a partition of its own shape earns by chance, and **the matrix
-prices `R-A4-CLASS` at that rung as if its classes were arbitrary**, which is a
-different row from the one `eval_families` §7 proposes. This is a criterion the
-named defect could falsify: a quotient that discarded the value-carrying
-distinctions would leave `ω²` at the null's level, and the null shares the
-corpus, the class count and the class-size distribution, so it is invariant
-under everything except which codes were grouped.
+3. **THE STONE-COUNT QUOTIENT IS THE REFERENT THE CRITERION IS NOW STATED
+   AGAINST**, and it is the one that can fail. Its key is
+   `(own stones in the pattern, opp stones in the pattern)` and nothing else: no
+   window, no openness, no completion cost, no rule-4 relevance, no position
+   along the line. It is the strongest partition of the same code space that
+   knows nothing the calculus names, so the gap between it and the enum is
+   exactly what threat structure buys on this corpus. It shares the corpus, the
+   walk and the moments code with the enum arm; `tools/hex_enum/census.py`'s
+   `Length.count_key` computes it and `test_hex_enum.py` pins that it merges two
+   patterns the tuple separates, one of which completes a six with a single
+   stone.
+
+**THE CRITERION, REGISTERED BEFORE THE RUN THAT GOVERNS IT, AND IT HAS NO FREE
+PARAMETER.** At the WINDOW unit: **the enum's `ω²` must EXCEED the stone-count
+quotient's, at the rung and length a matrix prices the row at.** No margin, no
+threshold, no number that could be tuned after the fact — a direction, which is
+the only form that cannot be moved post hoc.
+
+**WHAT FAILING MEANS, registered too**: if the enum does not exceed the
+stone-count quotient at a rung, then on this corpus, through this statistic, at
+this unit, **threat structure adds nothing over counting stones**, and
+`R-A4-CLASS` is UNPRICED at that rung — not merely ranked lower. A matrix may
+then say what the census measured and may not rank the row on it.
+
+**AND THE DISCLOSURE THAT MAKES THIS A REGISTRATION RATHER THAN A PREDICTION.**
+The confirming reviewer already ran this comparison once, at `L = 7` over 3 000
+positions, and got enum T4 `ω² = 0.005031` against the stone-count quotient's
+**0.004840** — the enum ahead by **1.04x**. This session reproduced it at the
+same scope with the shipped instrument before registering the criterion. **So
+the criterion is registered knowing it is close to failing**, which is stated
+here because a criterion registered in ignorance of the pilot and one registered
+in knowledge of it are different objects, and a reader is entitled to know which
+this is. What is NOT known at registration is whether the direction survives the
+full 45 271-row population, the covering length, or the coarse rungs — and that
+is what §7.4 reports.
 
 **WHAT THIS CRITERION IS NOT.** It is not a strength gate — D-614 stands, no
 offline number moves a config — and it does not select a rung, a length or a
@@ -617,16 +683,24 @@ because every component of a cell-centred tuple reads a window that may start at
 `c−5`. **§7 therefore does not close `THM-WINDOW`**; it answers a cell-centred
 sufficiency question and says which one.
 
-**THE MEASURED CONTENT IS THE MERGE CURVE BELOW 11, AND IT IS NOT A COARSENING.**
-Neither `class_L` nor `class_11` refines the other for `L < 11` — the shipped
-`--refine` mode prints *"neither refines the other"* at `7 → 9` and `9 → 11` at
-every rung — because a short window asks about fewer windows rather than asking
-more coarsely about the same ones. What §7 reports instead is the two-way fanout
-of the joint partition, DERIVED at the full tuple: one `L = 7` class meets 3 to
-104 of the `L = 11` classes (mean 32.4) and one `L = 11` class meets 1 to 8
-`L = 7` classes (mean 2.3); at `L = 9` the numbers are 2 to 36 (mean 9.4) and 1
-to 9 (mean 2.6). Whether that fanout costs anything is §6.5's question, not
-§6.6's.
+**THE MEASURED CONTENT IS THE MERGE CURVE BELOW 11, IT IS NOT A COARSENING, AND
+IT IS MEASURED AND NOT DERIVED.** Neither `class_L` nor `class_11` refines the
+other for `L < 11` — the shipped `--refine` mode prints *"neither refines the
+other"* at `7 → 9` and `9 → 11` at every rung — because a short window asks about
+fewer windows rather than asking more coarsely about the same ones. What §7
+reports instead is the two-way fanout of the joint partition, and it is
+**MEASURED by exhaustive enumeration**, not derived: an earlier revision tagged
+it `DERIVED`, which in this document's own header means *"with its arithmetic on
+the page"* and in §6.6's preceding paragraph means *"the enumeration can take no
+other value"*. Neither is true of a fanout; the numbers are contingent facts
+about hex.
+
+**AND THE NAMED INSTRUMENT NOW PRODUCES THEM.** `refinement()` returns the
+two-way `(min, max, mean)` partner counts, and `hexenum.py --curve <long>
+<short>…` prints the join at an arbitrary step, so the `7 ↔ 11` and `9 ↔ 11`
+curves a matrix quotes come out of the instrument this memo names rather than
+out of a scratch script no review binds. Whether that fanout costs anything is
+§6.5's question, not §6.6's.
 
 ### 6.7 Instrument self-checks, run before any reported number
 
@@ -651,19 +725,33 @@ to 9 (mean 2.6). Whether that fanout costs anything is §6.5's question, not
    (§6.4).
 9. **A rung carries no component that refines nothing** — the `T2` boolean check
    (§5.1).
+10. **The two variance terms are computed and not asserted.** `terms()` computes
+    the total WITHOUT the partition — `Σx² − N·grand²` — and raises by name when
+    the decomposition disagrees with it. An earlier revision defined
+    `total = within + between`, which made self-check 3 compare a number to
+    itself; the four mutants that survived that arrangement (`between` always
+    zero, `ω²` always 1.0, both ratios 0.5, the mean correction dropped) are now
+    DEAD (`artifacts/wp22_phase2a/n6_mutants/`).
+11. **A partition that separates nothing earns nothing**: a two-class `Moments`
+    whose class means are equal must report `between = 0`, `η² = 0` and
+    `ω² ≤ 0`, and one whose means differ must report the hand-derived values.
+12. **The stone-count referent is blind to what the tuple carries**: two
+    patterns the tuple separates — one completing a six with a single stone,
+    one three stones short — must share one count-only key.
+13. **The merge curve comes out of `refinement()`**, one-to-one in both
+    directions at `11 → 13` and fanning out at `7 ↔ 11`.
 
 ---
 
 ## §7 Outputs
 
-**RUN.** Instrument `tools/hex_enum/{hexenum,census,report}.py` at `54eb3ba`,
-four processes, one per length, over the whole 45 271-row quiet population — no
-sampling and no seed except the random-quotient referent's, which is recorded.
-Receipt `artifacts/wp22_phase2a/census/`, `sha256sum -c` clean, receipt digest
-`aab7f4f6a8d450fac5609dce4635a21ea86ec658e4c42c11c9d89b98835e14a8` (D-483).
-**NO SELECTION** (D-708): what follows is what the enum IS and what it measured.
+**RUN, at round 3, with the stone-count referent §6.5 now registers.** Instrument
+`tools/hex_enum/{hexenum,census,report}.py` at the revision that carries this
+memo, four processes, one per length, over the whole 45 271-row quiet
+population — no sampling, no seed except the random referent's, which is
+recorded. Receipt `artifacts/wp22_phase2a/census_r3/`. **NO SELECTION** (D-708).
 
-### 7.1 `k` and the code count — the enum is COMPUTED and it is not 816
+### 7.1 `k` and the code count — the enum is COMPUTED and no cell of it is 816
 
 Exhaustive over `3^(L−1)` patterns at each length.
 
@@ -674,42 +762,41 @@ Exhaustive over `3^(L−1)` patterns at each length.
 | 11 | **357** / **7 647 059** | 121 / 302 621 | 47 / 18 424 | 36 / 8 436 |
 | 13 | **357** / 7 647 059 | 121 / 302 621 | 47 / 18 424 | 36 / 8 436 |
 
-**No cell is 816.** `T3 = T4` at `L = 7` because `|W_7| = 2` and `min(open, 2)`
-is the identity there — a consistency signal, not a coincidence.
+`T3 = T4` at `L = 7` because `|W_7| = 2` and `min(open, 2)` is the identity
+there — a consistency signal, not a coincidence. §6.4's coarsest faithful clip
+would give `k = 16` and 816, and is not shipped.
 
-**AND THE FULL TUPLE AT THE COVERING LENGTH IS NOT AFFORDABLE.** `C(359,3) =
+**THE FULL TUPLE AT THE COVERING LENGTH IS NOT AFFORDABLE.** `C(359,3) =
 7 647 059` nominal parameters against 8 174 025 scored-cell observations is
 **1.07 observations per nominal parameter**, where `eval_families_2026-09.md`
-§A1 already kills `R-A1-L11` at 1.2 and Buro's safe-fit line is ≥ 20.
+§A1 already kills `R-A1-L11` at 1.2 and Buro's safe-fit line is ≥ 20. **That
+matters more than it looks**, because §7.4 measures that T4 is the only rung
+worth having.
 
 ### 7.2 `THM-WINDOW`'s enumeration — the stabilisation is CONFIRMED, not measured
 
 `k(13) = k(11) = 357` at every rung, and the joint partition of the two equals
 both: `hexenum.py --refine 11` prints *"the longer partition is a function of the
-shorter"* at all four rungs. Below the covering length the relation does not hold
-in either direction — `--refine 7` and `--refine 9` print *"neither refines the
-other"* at every rung — because a short window asks about fewer windows rather
-than asking more coarsely about the same ones.
+shorter"* at all four rungs, with the fanout `1-1 (mean 1.0)` in both
+directions. Below the covering length the relation holds in neither direction —
+`--refine 7` and `--refine 9` print *"neither refines the other"* at every rung.
 
-**This is the CONFIRMATION §6.6 registered it as.** The answer is 11 by §5's
-one-line reach argument and the enumeration can take no other value; the corpus
-agrees from the other side, and it is the sharper statement: over the quiet
-population `L = 13` sees **232 distinct T4 classes against `L = 11`'s 231, and
-108 075 distinct codes against 108 074** — one class and one code, for 18 % more
-window traffic per stone (39 against 33, `eval_families` §A6).
+**This is the CONFIRMATION §6.6 registered it as**: the answer is 11 by §5's
+one-line reach argument and the enumeration can take no other value. The corpus
+agrees from the other side and more sharply: at `L = 13` the walk sees **232
+distinct T4 classes against `L = 11`'s 231 and 108 075 distinct codes against
+108 074** — one class and one code — for 18 % more window traffic per stone.
 
-**The measured content is the merge curve below 11**, DERIVED at T4: one `L = 7`
-class meets 3 to 104 of the `L = 11` classes (mean 32.4) while one `L = 11` class
-meets 1 to 8 `L = 7` classes (mean 2.3); at `L = 9`, 2 to 36 (mean 9.4) and 1 to
-9 (mean 2.6). Neither length's partition refines the other's.
+**THE MERGE CURVE BELOW 11, MEASURED** by `hexenum.py --curve 11 7 9` (§6.6):
+one `L = 7` class meets 3 to 104 of the `L = 11` classes (mean 32.4) and one
+`L = 11` class meets 1 to 8 `L = 7` classes (mean 2.3); at `L = 9`, 2 to 36
+(mean 9.4) and 1 to 9 (mean 2.6).
 
 ### 7.3 Observations, at both population units
 
 Scored cells per position: **111.1** at `L = 7`, **180.6** at `L = 11` and
 `L = 13`. Rule 5's legal empty region, sampled every 500th position (n = 90):
-**mean 459.2, median 451** — so the scored set is roughly a quarter to two fifths
-of the legal region, and §4 says why the two are not two populations for one
-object.
+**mean 459.2, median 451**.
 
 **CODE unit** (one observation per scored cell), the row's own parameter unit:
 
@@ -721,12 +808,6 @@ object.
 | 11 | T3 | 302 621 | 9 408 | 8 174 025 | 869 | 7 | 3 977 | 6 350 | 118 |
 | 11 | **T2** | **18 424** | **1 533** | 8 174 025 | 5 332 | **41** | 322 | 620 | **32** |
 | 11 | T1 | 8 436 | 535 | 8 174 025 | 15 279 | 53 | 118 | 204 | 4 |
-| 13 | T2 | 18 424 | 1 534 | 9 979 912 | 6 506 | 41 | 322 | 620 | 24 |
-
-**WINDOW unit** (one per scored cell per axis), for comparison with the shipped
-eval's own summand: at `L = 11`, T4 sees **231** of its 357 classes over
-12 980 519 observations (median 2 421, none under 20 at T2 or T1); the raw folded
-window code sees 11 909 distinct with **142 covering 90 %**.
 
 **The growth curves separate the rungs cleanly** at `L = 11`, distinct codes
 every 5 000 positions:
@@ -738,59 +819,86 @@ T2   1132  1285  1359  1406  1439  1463  1491   1511   1530   +35 % over 9x the 
 T1    409   455   470   486   499   511   520    527    535   flat from 15 000 on
 ```
 
-`T4` has no flat stretch at all, so its 108 074 is a count of distinct things
-accumulated and the true support is larger (D-619's class). `T1` and `T2` are
-saturated on this corpus.
+**Buro's floors, tagged as §6.3 tags them**: at `L = 11` T2, 322 of the 1 533
+observed codes sit at or below his `≤ 4` line (**ARCH**) and 620 below his
+`≥ 20` line (**ARCH**); at T4 those are 67 227 and 93 617 of 108 074.
 
-**Buro's floors are reported and tagged** (§6.3): at `L = 11` T2, **322 of the
-1 533 observed codes sit at or below his ≤ 4 line and 620 below his ≥ 20 line**;
-at T4 those are 67 227 and 93 617 of 108 074.
+### 7.4 THE REGISTERED CRITERION FIRES, AND IT FIRES ON EVERY AFFORDABLE RUNG
 
-### 7.4 CLASS PURITY, and §6.5's registered criterion is MET at every rung
+The criterion (§6.5): **the enum's `ω²` must EXCEED the stone-count quotient's,
+at the WINDOW unit, at the rung and length a matrix prices the row at.** No
+margin, no free parameter.
 
-The criterion registered before the run: *at the WINDOW unit the enum's `ω²`
-must exceed every one of the three matched-null replicates at every ladder
-rung.*
+| L | rung | enum classes | enum `ω²` | count-only classes | count-only `ω²` | ratio | criterion |
+|---|---|---|---|---|---|---|---|
+| 7 | **T4** | 16 | 0.003573 | 23 | 0.003525 | **1.014** | MET |
+| 7 | **T3** | 16 | 0.003573 | 23 | 0.003525 | **1.014** | MET |
+| 7 | T2 | 10 | 0.002796 | 23 | 0.003525 | 0.793 | **FAILS** |
+| 7 | T1 | 8 | 0.002417 | 23 | 0.003525 | 0.686 | **FAILS** |
+| 9 | **T4** | 78 | 0.004606 | 38 | 0.004158 | **1.108** | MET |
+| 9 | T3 | 45 | 0.003161 | 38 | 0.004158 | 0.760 | **FAILS** |
+| 9 | T2 | 21 | 0.002799 | 38 | 0.004158 | 0.673 | **FAILS** |
+| 9 | T1 | 15 | 0.002215 | 38 | 0.004158 | 0.533 | **FAILS** |
+| 11 | **T4** | 231 | 0.005504 | 52 | 0.004894 | **1.125** | MET |
+| 11 | T3 | 61 | 0.003187 | 52 | 0.004894 | 0.651 | **FAILS** |
+| 11 | **T2** | 22 | 0.003119 | 52 | 0.004894 | **0.637** | **FAILS** |
+| 11 | T1 | 16 | 0.002495 | 52 | 0.004894 | 0.510 | **FAILS** |
+| 13 | T4 | 232 | 0.004668 | 69 | 0.005600 | 0.834 | **FAILS** |
+| 13 | T3 | 62 | 0.002704 | 69 | 0.005600 | 0.483 | **FAILS** |
+| 13 | T2 | 23 | 0.002646 | 69 | 0.005600 | 0.472 | **FAILS** |
+| 13 | T1 | 16 | 0.002115 | 69 | 0.005600 | 0.378 | **FAILS** |
 
-| L | rung | classes | enum `ω²` | worst null `ω²` of 3 | ratio | criterion |
-|---|---|---|---|---|---|---|
-| 7 | T4 | 16 | 0.003573 | 0.001124 | **3.18x** | MET |
-| 7 | T2 | 10 | 0.002796 | 0.000843 | 3.32x | MET |
-| 7 | T1 | 8 | 0.002417 | 0.000840 | 2.88x | MET |
-| 9 | T4 | 78 | 0.004606 | 0.001316 | **3.50x** | MET |
-| 9 | T2 | 21 | 0.002799 | 0.000780 | 3.59x | MET |
-| 11 | T4 | 231 | **0.005504** | 0.001986 | 2.77x | MET |
-| 11 | T3 | 61 | 0.003187 | 0.001163 | 2.74x | MET |
-| 11 | T2 | 22 | 0.003119 | 0.000871 | **3.58x** | MET |
-| 11 | T1 | 16 | 0.002495 | 0.000842 | 2.96x | MET |
-| 13 | T4 | 232 | 0.004668 | 0.002082 | 2.24x | MET |
-| 13 | T2 | 23 | 0.002646 | 0.000814 | 3.25x | MET |
+**MET IN 4 OF 16 CELLS. THE ONLY RUNG THAT EVER BEATS STONE COUNTING IS T4, THE
+FULL TUPLE, AND ONLY BY 1.4 % TO 12.5 % — AND T4 IS THE RUNG §7.1 PRICES AT
+1.07 OBSERVATIONS PER NOMINAL PARAMETER.** Every coarsening loses, and it loses
+by a lot: `L = 11` T2, the densest affordable rung, sits at **0.637** of a
+quotient that cannot see a window, an open window, a completion cost, or game
+rule 4.
 
-**MET at all sixteen cells, by 2.0x to 3.6x.** So the tuple groups codes that
-share label value beyond what a partition of its own class count and its own
-class-size distribution earns by chance, at every length and every rung.
+**SO THE CRITERION LEAVES `R-A4-CLASS` UNPRICED, AND THAT IS THE CRITERION
+WORKING.** §6.5 registered what failing means before the run — *"threat
+structure adds nothing over counting stones, and `R-A4-CLASS` is UNPRICED at
+that rung — not merely ranked lower"* — and that is what the measurement says at
+every rung a corpus of this size could fit.
 
-**The ceiling, reported as the identity §6.5 says it is** and not as a test. The
-un-quotiented folded window code's `ω²` is 0.005171 at `L = 7` (347 observed
-codes), 0.006837 at `L = 9` (2 810), **0.008842 at `L = 11` (11 909)** and
-0.010542 at `L = 13` (24 837). So at `L = 11` the quotient **retains 62 % of the
-ceiling's `ω²` while collapsing 11 909 observed codes to 231** — and the gap
-tracks the class-count ratio, which is exactly why it is a ceiling and not a
-criterion: it cannot fall below the tuple's and its size says nothing about what
-was discarded.
+**THREE THINGS THIS DOES NOT SAY, because the temptation to over-read a
+decisive-looking table is the whole reason §6.5 was rewritten.**
 
-**AND THE ONE PLACE THE NUMBERS FALL RATHER THAN RISE IS `L = 13`**: every rung's
-`ω²` is LOWER at 13 than at 11 (T4 0.004668 against 0.005504, T2 0.002646 against
-0.003119) on one extra class and one extra code. `L = 13` costs 18 % more window
-traffic per stone and buys nothing this corpus can see.
+1. **It does not say the enum is wrong.** Its arithmetic survived two
+   independent re-derivations. It says the enum's classes do not separate this
+   corpus's labels better than stone counts do, at this statistic and this unit.
+2. **It does not say a threat-class eval cannot work.** `ω²` over
+   position-level labels is a weak instrument: every observation of one position
+   carries that position's single label, the effective `n` is nearer 3 487 games
+   than 8 million cells, and a partition can carry decision-relevant structure
+   that a marginal variance decomposition cannot see. What it does say is that
+   **this corpus, through this instrument, cannot license the row**, and D-483
+   forbids pricing on a number that is not there.
+3. **It does not transfer to the WINDOW-indexed rows.** `R-A5-TOPK`,
+   `R-A2-L11F` and `R-A3-L11F+F7` are not quotients of this tuple and are not
+   measured here.
+
+**AND THE FLOOR AND THE CEILING, reported as §6.5 labels them.** The matched
+random quotient — the FLOOR — is cleared everywhere by 2.0x to 3.6x, which now
+says only that the enum is not noise. The un-quotiented folded window code — the
+CEILING, an identity — is 0.005171 at `L = 7`, 0.006837 at `L = 9`, 0.008842 at
+`L = 11` and 0.010542 at `L = 13`.
+
+**One cell is reported because it looks like the opposite and is not.** At the
+CODE unit at `L = 11`, T4's `ω²` is 0.020985 against the count-only quotient's
+0.009248 — 2.27x. **That comparison is between 108 074 observed classes and
+6 856**, and `ω²`'s degrees-of-freedom correction does not make partitions two
+orders of magnitude apart in class count comparable. The criterion binds the
+window unit for exactly this reason, and at the window unit the class counts are
+16-to-23, 78-to-38, 231-to-52 — the same order. The code-unit number is not
+evidence for the row and is printed so that nobody finds it later and thinks it
+was hidden.
 
 ### 7.5 What §7 does NOT report
 
-No selection, no recommended rung, no recommended length, and no strength claim.
-`ω²` gates nothing (D-614). The criterion in §6.5 constrains what the matrix may
-CONCLUDE and nothing else.
-
----
+No selection, no recommended rung, no recommended length, no strength claim.
+`ω²` gates nothing (D-614). The criterion constrains what a matrix may CONCLUDE
+about `R-A4-CLASS` and nothing else.
 
 ## §8 The standing limitation, recorded rather than buried
 
@@ -826,33 +934,52 @@ arriving one level down, inside a single axis.
 
 ---
 
-## §10 What the first review changed
+## §10 What the two review rounds changed
 
-`hex_threat_enum_v1_REVIEW.md`, fresh context, at stash `ecfc2d8e`: **FAIL**,
-3 BLOCKING, 7 MAJOR, 8 MINOR, with an independent implementation of §5's tuple
-that agreed with the shipped one on all 66 339 patterns at `L ∈ {7, 9, 11}`.
-Every remedy below was derived and RUN before this revision was written (D-591).
+Round 1: `hex_threat_enum_v1_REVIEW.md`, fresh context — **FAIL**, 3 BLOCKING,
+7 MAJOR, 8 MINOR. Round 2: `hex_threat_enum_v1_CONFIRM.md`, a scoped
+confirmation BY BEHAVIOUR of revision 2's fix round — **FAIL**, 1 new BLOCKING
+and 5 new MAJOR, with B-3 still landing. Both reviewers wrote their own
+implementation of the tuple and enumerated exhaustively; **neither found an
+arithmetic error anywhere in the enum**. This revision is round 3 under D-709
+and it is remedies-only.
 
-| finding | what it said | what changed, and what was run |
-|---|---|---|
-| **B-1** | the stabilisation length cannot take a second value | §6.6 states it as DERIVED, withdraws *"discharges"*, and reports the merge curve as the measured content. RUN: `hexenum.py --refine 7 9 11`. |
-| **B-2** | §3's even-`L` convention is under-specified and `3^(L−1)` matches no reading | even `L` is REFUSED by name (§3.1); the two readings were enumerated and disagree at 6, 8 and 10. RUN: `derive_fixes.py`. |
-| **B-3** | `T1`'s clip fixes `k` at 16 and lands on the imported 816, and destroys the boundary it cites | `T1`'s clip is re-derived from `LAW-SUPPORT`'s two readings; `k = 36`, `C(38,3) = 8 436`. RUN: three clip variants enumerated at `L = 11`. |
-| **M-1** | the tuple merges `t = 1` and `t = 2` | §5.5, with both witnesses recomputed from scratch and the population — 27 of 357 classes, 5 348 of 59 049 patterns. |
-| **M-2** | the cubic is never applied to the memo's own bound | §5.2 carries `C(1371,3) = 428 558 605`. |
-| **M-3** | §6.5 registers no criterion and its first referent is an identity | §6.5 registers a criterion the defect can falsify, and labels referent 1 as the identity it is. |
-| **M-4** | `T2`'s boolean refines nothing | deleted; §5.1 states the rule and the measurement. |
-| **M-5** | `T3`'s justification names the wrong quantity and an unreachable threshold | replaced by the DERIVED fact that single-axis `DEF-T` never exceeds 2. RUN over all `3^11` lines. |
-| **M-6** | D-706 and the memo are one act | §1.5 says so and names what the kill condition actually rests on. |
-| **M-7** | *"discharges"* closes `THM-WINDOW` on a different question | §6.6's second paragraph. |
-| **m-1** | the containment convention is vacuous at the headline lengths | §4 says so, with the count per length. |
-| **m-2** | self-check 5's `Completed` arm cannot fail | dropped, with the reason on the page (§6.7). |
-| **m-3** | Buro's floors carry no transferability tag | §6.3 tags all three. |
-| **m-4** | the rungs' clip points are hand-written | §5.4 and §6.4: a projection has boundaries, and each one is now the calculus's, cited. |
-| **m-5** | the scored-cell restriction is a well-definedness requirement | §4's second and third paragraphs. |
-| **m-6** | code-unit `η²` will be ≈1 by memorisation | `ω²` is the primary statistic (§6.5). |
-| **m-7** | two citation slips | `extract.py:24-26`; the length set is stated here, not by reference to a dispatch. |
-| **m-8** | own/opp equivariance unclaimed | §5.3, measured: 0 mismatches, 17 fixed classes, 187 orbits. |
+### Round 1's findings, and where revision 2 left them
+
+| finding | round 2's verdict on the fix |
+|---|---|
+| B-1 stabilisation length is not a measurement | CLOSED BUT MOVED → N-7 |
+| B-2 even `L` under-specified | **CLOSED**, at the code, all seven entry points |
+| B-3 T1's clip lands on 816 | **STILL LANDS** → N-4 |
+| M-1 the `t = 1` / `t = 2` merge | CLOSED BUT MOVED → N-2, N-3 |
+| M-2 the cubic at the memo's own bound | **CLOSED** |
+| M-3 §6.5 registers no criterion | **STILL LANDS** → N-1 (BLOCKING) |
+| M-4 T2's boolean refines nothing | **CLOSED** |
+| M-5 T3's justification | CLOSED BUT MOVED → N-5 |
+| M-6 D-706 and the memo are one act | **CLOSED** |
+| M-7 *"discharges"* | **CLOSED** |
+| m-1 … m-8 | all eight **CLOSED** |
+
+### Round 3's remedies, each derived and RUN before this revision was written (D-591)
+
+| finding | what changed, and what was run |
+|---|---|
+| **N-1** (BLOCKING) — the criterion is passed at 1.77x by a value-free quotient | **§6.5's criterion is REPLACED, not reworded.** The stone-count quotient is now the registered referent, the random permutation is demoted to a floor and labelled one, the raw code is labelled the identity it always was, and the criterion is a DIRECTION with no free parameter. RUN: `Length.count_key` added to the shipped census; four full-corpus runs; **§7.4 reports the criterion FIRING at 12 of 16 cells.** |
+| **N-2** — the merge count's population was not stated | §5.5 states it — rule-4 completions excluded, **27 of 335 classes and 5 348 of 57 996 patterns** — and prints the number without the exclusion beside it, **32 of 357 and 6 099 of 59 049**. RUN: both populations enumerated. |
+| **N-3** — *"not something a single-axis class can hold"* is false | deleted, and replaced by the MEASURED price per rung: T4 `k` 357 → 384, T2 47 → 58 (+86 % parameters). RUN: the seventh component enumerated at every rung. |
+| **N-4** (B-3 still landing) — T1's *"only if"* is false | deleted. All four clips expressing both `LAW-SUPPORT` boundaries are enumerated, the coarsest gives `k = 16` and `C(18,3) = 816`, and §6.4 **names the coincidence with the imported figure and shows the derivation that makes it independent** rather than avoiding the number. |
+| **N-5** — T3's clip is not licensed by max-`t = 2` | the justification is deleted and the clip is stated as a choice, with its MEASURED cost: T4 27 classes / 5 348 patterns `t`-inconsistent, T3 11 / 7 056, T2 11 / 11 164. |
+| **N-6** (MAJOR) — gate 19 could not see a constant `ω²` | **fixed at the code**: `terms()` computes the total WITHOUT the partition and raises by name on a disagreement; the suite gains a unit test of the statistic with a control. **MEASURED: all four surviving mutants are now DEAD** (`artifacts/wp22_phase2a/n6_mutants/`). |
+| **N-7** — the merge curve is tagged DERIVED and no named instrument produces it | retagged MEASURED, with the two tag meanings distinguished on the page; `refinement()` now returns the two-way fanout and `hexenum.py --curve` prints the join at an arbitrary step, so the published curve comes out of the named instrument. |
+| **N-8** — the null is matched on the code space, not the observed population | conceded: §6.5 now demotes it to a FLOOR whose only claim is *"the enum is not noise"*, which is exactly as much as a shape-matched permutation can support. |
+| **N-9 … N-12** | D-706's residual mentions do no work and stay (D-424); the criterion's unit is named in the criterion itself and §7.4 prints the code-unit cell with its caveat; stale even-`L` prose gone; §7 now lands with the round that ran it. |
+
+**THE ONE FINDING THAT IS NOT CLOSED AND IS NOT CLOSEABLE HERE.** N-1's remedy
+does not rescue the row — it kills it. §7.4 is the measurement the criterion was
+rewritten to make possible, and it says the affordable rungs are worse than
+counting stones. **That is the finding this package delivers**, and it is worth
+more than the row would have been.
 
 **Q1** is answered in §4's last paragraph, **Q2** in §6.6's last, **Q3** by
-§6.5's registered criterion, **Q4** by §5.2, **Q5** by §5's `open_X` bullet.
+§6.5's registered criterion and §7.4's verdict, **Q4** by §5.2, **Q5** by §5's
+`open_X` bullet.

@@ -73,7 +73,7 @@ class Moments:
 
 def report(path, unit, kept, seed, scored_cells, legal_sample, legal_stride,
            window_moments, code_moments, window_null, code_null,
-           window_raw, code_raw, curve):
+           window_raw, code_raw, window_count, code_count, curve):
     lines = []
 
     def say(text=""):
@@ -100,12 +100,14 @@ def report(path, unit, kept, seed, scored_cells, legal_sample, legal_stride,
     for rung in E.LADDER:
         rows.append(("window", f"enum {rung}", window_moments[rung]))
     rows.append(("window", "raw folded", window_raw))
+    rows.append(("window", "COUNT-ONLY", window_count))
     for rung in E.LADDER:
         for r in range(NULL_REPLICATES):
             rows.append(("window", f"null {rung} r{r}", window_null[(rung, r)]))
     for rung in E.LADDER:
         rows.append(("code", f"enum {rung}", code_moments[rung]))
     rows.append(("code", "raw folded", code_raw))
+    rows.append(("code", "COUNT-ONLY", code_count))
     for rung in E.LADDER:
         for r in range(NULL_REPLICATES):
             rows.append(("code", f"null {rung} r{r}", code_null[(rung, r)]))
