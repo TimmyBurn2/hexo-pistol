@@ -757,6 +757,18 @@ a byte-identity claim taken once, earlier, stops being evidence.
 The `identity_*` triples differ from their `before` in one line each, and it is
 the licensed `id candidate_policy staged …` line in every case.
 
+**THE GROUP-E REVIEWER'S OWN EVIDENCE IS EXPORTED WITH THE REST**, under
+`artifacts/pre_phase2_sweep/e_review_evidence/` — its position generator, its
+driver, and both sides' transcripts, 53 files. It was written into
+`/home/tom/pistol-wt/e-review/`, which a worktree removal would have taken with
+it: that is D-469's own motivating loss (WP-1.8c's four review reports, which
+survive only in a transcript), and this package's strongest single piece of
+evidence — ~2,100 searches per side by an instrument sharing nothing with the
+closure's — would have gone the same way.
+
+The receipt over the whole export, 74 files, digests to
+`1da736cfb480b48894c2d46abaad53098c4696ee04f02b4bbff0d72b1a8cb362`.
+
 ## §5 The three reviews, and the fix round each forced
 
 Three fresh-context REVIEW-impl subagents, dispatched at the pinned revision
