@@ -749,7 +749,10 @@ out of a scratch script no review binds. Whether that fanout costs anything is
 `tools/hex_enum/{hexenum,census,report}.py` at the revision that carries this
 memo, four processes, one per length, over the whole 45 271-row quiet
 population — no sampling, no seed except the random referent's, which is
-recorded. Receipt `artifacts/wp22_phase2a/census_r3/`. **NO SELECTION** (D-708).
+recorded. Receipt `artifacts/wp22_phase2a/census_r3/`, `sha256sum -c` clean,
+receipt digest
+`9bb8fc6f2e0500bcf10f48e493dd9e3615897d935b73b63d8a8f47bf179e9c39` (D-483).
+**NO SELECTION** (D-708).
 
 ### 7.1 `k` and the code count — the enum is COMPUTED and no cell of it is 816
 

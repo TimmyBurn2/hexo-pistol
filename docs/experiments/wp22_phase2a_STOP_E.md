@@ -1,4 +1,18 @@
-# STAGE E STOPS. The default fork is applied and `R-A4-CLASS` leaves the priced field.
+# STAGE E's TWO-ROUND STOP — the record, superseded as a disposition.
+
+> **SUPERSEDED BY D-709 AND BY ROUND 3's RESULT — READ THIS AS A RECORD, NOT AS
+> A DISPOSITION.** This document was written when the dispatch's one-fix-round
+> cap fired at two failures. The operator then granted *"up to 4 rounds"*
+> (D-709), Stage E reopened at round 3, and **N-1's remedy was built and run**:
+> §6.5's criterion is now stated against a STONE-COUNT quotient rather than a
+> random permutation, and `hex_threat_enum_v1.md` §7.4 reports it **FIRING at 12
+> of 16 cells — every affordable rung at every length**.
+>
+> **THE OUTCOME IS THE SAME AND ITS STANDING IS NOT.** `R-A4-CLASS` is still
+> unpriced, but now because a criterion that COULD fail DID, on the full corpus,
+> rather than because a round cap ran out. Everything below stands as the record
+> of what two rounds found; its "what a resume needs" list is what round 3
+> executed.
 
 **Which stage stopped**: E, the hex threat enum, at its confirmation gate.
 **Governing revision of this record**: `0f0cb44` plus the commits it names.
