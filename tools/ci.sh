@@ -88,8 +88,22 @@ cargo test --workspace --locked || fail "tests"
 
 # --all-targets so tests and examples are linted too, which is strictly more
 # than CLAUDE.md asks for and costs nothing.
-step "gate 4/$GATE_TOTAL: cargo clippy --workspace --all-targets -- -D clippy::all"
-cargo clippy --workspace --all-targets --locked -- -D clippy::all || fail "clippy"
+#
+# `-D warnings` BESIDE `-D clippy::all` (docs/decisions.md D-677): the clippy
+# flag denies clippy's own lints and nothing rustc emits, so an unused import
+# survived every gate here and was found by an audit instead (A-19). The two
+# flags are a set, and `crates/pistol-cli/tests/clippy_gate_flag_tests.rs` READS
+# THIS LINE rather than restating it, so dropping either flag makes that test
+# accept a planted warning and go red.
+#
+# WHAT THIS GATE STILL CANNOT SEE, said here because a reader will assume
+# otherwise: no profile flag means the DEV profile, where `debug_assertions` is
+# on. A-19's own import was used only inside `#[cfg(debug_assertions)]`, so it
+# is live here and dead in release — this gate would not have caught the warning
+# it is being hardened for. The release-profile pass that would is priced and
+# not taken in docs/experiments/pre_phase2_sweep_CLOSURE.md.
+step "gate 4/$GATE_TOTAL: cargo clippy --workspace --all-targets -- -D clippy::all -D warnings"
+cargo clippy --workspace --all-targets --locked -- -D clippy::all -D warnings || fail "clippy"
 
 step "gate 5/$GATE_TOTAL: artifact rejection"
 gate "artifact check" tools/artifact_check.sh

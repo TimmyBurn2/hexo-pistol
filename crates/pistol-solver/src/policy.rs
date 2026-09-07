@@ -1,4 +1,4 @@
-use pistol_core::{GameState, Player, Turn, generate_turns};
+use pistol_core::{GameState, Player, Turn};
 
 use crate::config::AttackerPolicy;
 
@@ -261,6 +261,12 @@ pub fn blocking_pairs(
     // pins it permanently.
     #[cfg(debug_assertions)]
     {
+        // Imported HERE and not at the top: the only use is inside this block,
+        // so a crate-level import is unused in every build with debug
+        // assertions off — a release-only rustc warning that gate 4's dev
+        // profile cannot see (docs/decisions.md D-677).
+        use pistol_core::generate_turns;
+
         let mut spec = Vec::new();
         for turn in
             generate_turns(state).expect("an AND node is an undecided position at Phase::First")
