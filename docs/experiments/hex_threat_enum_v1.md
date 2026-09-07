@@ -1,21 +1,25 @@
-# The hex threat enum — derivation memo, revision 1. Written before any compute.
+# The hex threat enum — derivation memo, revision 2. Written before any compute.
 
-**Governing revision**: `0585e25` (`dev`), the revision every file, line and
-count quoted below was read at (D-692). **NOTHING HERE IS MEASURED.** Every
-number in this document is either a quotation from a receipted artifact, a
-DERIVED count with its arithmetic on the page, or a bound. The class count `k`,
-the code count, the observation census, the purity terms and the stabilisation
-length are OUTPUTS of §6's instrument and appear in §7 only after it has run —
-a derivation memo that already knew its answer would be the shape D-483 exists
-to forbid.
+**Governing revision**: `c5123c1` (`dev`), the revision every file, line and count
+quoted below was read at (D-692). **REVISION 2 IS THE ONE FIX ROUND** granted
+against `hex_threat_enum_v1_REVIEW.md`'s FAIL (3 BLOCKING, 7 MAJOR, 8 MINOR at
+stash `ecfc2d8e`); §10 records what each finding changed, and every remedy was
+DERIVED and RUN before this revision was written (D-591), never transcribed from
+the reviewer's sentence.
+
+**NOTHING IN §7 IS MEASURED YET.** Every number in §1 through §6 is a quotation,
+a DERIVED count with its arithmetic on the page, or a bound — except where a
+paragraph is explicitly marked MEASURED because a finding could only be answered
+by running something. The class count `k`, the observation census, the purity
+terms and the merge curve land in §7 only after §6's instrument has run.
 
 **What this document is for.** `docs/research/eval_families_2026-09.md` §7 lists
 `R-A4-CLASS` as *"the only row that is covering (§0.1) and densely evidenced at
 once"* and states its kill in the same breath: *"the hex enum cannot be derived
 without importing 4-axis thresholds, which `threat_calculus_v1.md`'s scope rule
 forbids."* §8 of the same document records that the enum *"does not exist"*.
-This memo defines it so that it can be COMPUTED rather than written, and D-706
-is the standing line that binds the definition.
+This memo defines it so that it can be COMPUTED rather than written; D-706 binds
+the definition, and §1.5 records what that ADR's provenance is and is not.
 
 ---
 
@@ -46,73 +50,93 @@ MEMO SAYS ON ITS OWN FACE.** `eval_families_2026-09.md` §A4 derives *"The hex
 analogue is `C(18,3) = 816` codes"*, and `C(18,3) = C(16+2,3)` — the 816 is
 Rapfi's `k = 16` carried across the axis count. It is a DERIVED consequence of
 an imported `k` and it is not a premise of this memo. The row's parameter count
-is `C(k+2, 3)` at the `k` §6 computes, whatever that turns out to be, and if
-that number is not 816 then §7 says so and the matrix prices the row on it.
+is `C(k+2, 3)` at the `k` §6 computes, whatever that turns out to be.
+
+**THE FIRST REVIEW MEASURED THAT AN EARLIER REVISION RE-DERIVED 816 BY ANOTHER
+ROUTE, AND THAT IS WHY §6.4's BOUNDARIES ARE NOW STATED AS THE CALCULUS'S OWN.**
+Revision 1's coarsest ladder rung clipped the completion cost at "≥ 4", which
+leaves four values a side and therefore **`k ≤ 16` and `C(18,3) = 816` before any
+enumeration** — the imported figure arriving as a consequence of a chosen clip.
+§6.4's rungs now take their boundaries from `LAW-SUPPORT`'s own `k = 1` and
+`k = 2` readings and from `DEF-WINDOW`'s dead predicate, and from nothing else;
+§5.5 records that a PROJECTION has boundaries where the TUPLE has none, so the
+two claims do not collide.
 
 ### 1.2 The calculus definitions the tuple is built from
 
-All at `docs/research/threat_calculus_v1.md`, revision v1.0, read at `0585e25`.
+All at `docs/research/threat_calculus_v1.md`, revision v1.0, read at `c5123c1`.
 
 | ID | line | what the tuple takes from it |
 |---|---|---|
 | `DEF-WINDOW` | `:28` | *"6 consecutive cells on one axis. **Open** for side X iff no opponent stone in it. Overline monotonicity ⇒ 6-windows suffice for all theory."* The unit the tuple counts over, and the live/dead predicate. |
+| `DEF-PLAN` | `:29` | *"the empty-cell set (size ≤2) of an open window with ≥4 own stones"* — the object §5.5's `t` witness is computed over. |
+| `DEF-T` | `:30` | *"exact **minimum hitting set** over plan family F"* — the quantity §5.5 measures the tuple against. |
 | `LEM-AXES` | `:37` | *"3 axes/cell (vs 4 square)"* — why a cell's code is a 3-multiset and not a 4-tuple. |
-| `LEM-MONO` | `:40` | *"stones are never removed; an own extra stone never hurts"* — why the completion cost is monotone and why a class boundary cannot be crossed by removing a stone. |
-| `LAW-SUPPORT` | `:68-71` | *"A forced win in k own turns requires an open window already holding ≥ 6−2k own stones."* The stones-still-needed arithmetic, read per STONE rather than per turn. |
-| `RULE-EXACT` | `:64-66` | *"t is computed exactly … never read from a pattern table and never derived by weight algebra. Patterns may order moves; only exact t decides truth."* The discipline: every component is computed from the position, none is looked up. |
-| `LAW-DECOMP` | `:87-90` | *"Regions with disjoint stars: t is additive … **The same additivity is FALSE for static evaluation — never sum regional eval as if independent.**"* Recorded in §8 as the standing limitation of the whole additive-codebook family, NOT as support for it. |
-| `THM-WINDOW` | `:152-155` | *"length-6 occupancy tables cannot classify live vs dead fours (needs 8-cell context; fives need 7) … The 'length-11' Gomoku convention is k=5 lore — **re-derive the minimal sufficient hex length by enumeration.**"* The owed enumeration §6 discharges. |
-| `E-PHASE` | `:156-157` | *"win threshold differs by intra-turn phase (phase 2: plan ≤1 wins); tempo terms condition on (side, phase)."* Why rule-4 relevance is a named component and why phase conditioning is left OUT of scope (§9). |
+| `LEM-CROSS` | `:38` | *"two lines on distinct axes meet in ≤1 cell"* — why the three axes meet only at the cell. |
+| `LEM-MONO` | `:40` | *"stones are never removed; an own extra stone never hurts"* — why the completion cost is monotone. |
+| `LAW-HIT` | `:45-46` | *"One defender stone in any empty cell of a window kills that window permanently."* Why a non-open window can never be completed, hence why `open_X` counts surviving completions. |
+| `RULE-EXACT` | `:64-66` | *"t is computed exactly … never read from a pattern table and never derived by weight algebra. Patterns may order moves; only exact t decides truth."* The discipline every component obeys — and, in §5.5, the standard the tuple is measured against and does not meet. |
+| `LAW-SUPPORT` | `:68-71` | *"A forced win in k own turns requires an open window already holding ≥ 6−2k own stones."* The stones-still-needed arithmetic, and §6.4's two boundaries. |
+| `LAW-OVERLOAD` | `:55-62` | *"t ≥ 3 for the attacker + defender cannot win this turn ⇒ defender lost"*, with its addition floor. §5.5 records that `t ≥ 3` is not reachable on one axis. |
+| `LAW-DECOMP` | `:87-90` | *"Regions with disjoint stars: t is additive … **The same additivity is FALSE for static evaluation — never sum regional eval as if independent.**"* §8's standing limitation of the whole additive family, NOT support for it. |
+| `THM-WINDOW` | `:152-155` | *"length-6 occupancy tables cannot classify live vs dead fours (needs 8-cell context; fives need 7) … **re-derive the minimal sufficient hex length by enumeration.**"* §6.6 states exactly which half of this the construction can answer and which it cannot. |
+| `E-PHASE` | `:156-157` | *"win threshold differs by intra-turn phase (phase 2: plan ≤1 wins)"* — why rule-4 relevance is named and why phase conditioning is out of scope (§9). |
 | `PROTO-NODE` step 1 | `:128` | *"**Win-now check.** A completing stone ends the turn instantly (second stone unplayed)."* Game rule 4, in the calculus's own words. |
 
 ### 1.3 The query sites, quoted at `d83ac01` and re-quoted at HEAD
 
-`crates/pistol-solver/src/query.rs:81-142`. **MEASURED at `0585e25`**:
+`crates/pistol-solver/src/query.rs:80-142`. **MEASURED at `c5123c1`**:
 `diff <(git show d83ac01:crates/pistol-solver/src/query.rs) crates/pistol-solver/src/query.rs`
 returns nothing — the file is BYTE-IDENTICAL at `d83ac01` and at HEAD, so the
-re-quotation is the same quotation and the range still means what it meant.
-Line 81 is `pub enum LiveCount {` and line 142 is
-`    pub fn live_windows_at_count(&self, side: Player, count: LiveCount) -> &[Window] {`
+re-quotation is the same quotation. Line 81 is `pub enum LiveCount {` and line
+142 is `    pub fn live_windows_at_count(&self, side: Player, count: LiveCount) -> &[Window] {`
 at both revisions.
 
 What the range holds, and it is exactly the vocabulary the tuple re-uses:
 
 - `LiveCount` (`:80-86`) — *"Exactly two own stones, no opponent stone"* /
   *"Exactly three own stones, no opponent stone"*: a LIVE window at an exact own
-  count. The tuple's `open` component is the same live predicate, counted rather
-  than classified.
+  count.
 - `NearHot` (`:88-99`) — *"Hot is `own >= 4`, so exactly one count — three — is
-  one stone away from it"*: the one-stone-short reading. The tuple's `min`
-  component generalises it to any distance.
+  one stone away from it"*: the one-stone-short reading.
 - `WinWitness` (`:101-123`) — `OnePly` *"One stone completes a window already
   holding five. Valid at either budget."* and `Pair` *"Two stones complete a
   window holding four. Valid ONLY at `StonesLeft::Two`"*. The tuple's rule-4
   component is `OnePly`'s condition, and `Pair`'s is `min = 2`.
-- `hot_windows` / `win_in_one_ply_windows` / `completed_windows` (`:127`, `:132`, `:137`) —
-  the three shipped classes, all of them thresholds on the same two quantities
-  the tuple carries continuously.
+- `hot_windows` / `win_in_one_ply_windows` / `completed_windows` (`:127`, `:132`,
+  `:137`) — the three shipped classes, all thresholds on the same two quantities
+  the tuple carries continuously. `HOT_MIN = 4` is asserted at
+  `crates/pistol-solver/src/sets.rs:27-31` and not in `query.rs`, which is where
+  a reader checking the threshold has to go.
 
 **THE POINT OF QUOTING THE SITE IS THAT THE TUPLE IMPORTS NOTHING FROM IT
 EITHER.** `Class::Hot`'s `own >= 4` is a THRESHOLD, and a threshold is what
 D-706 forbids taking on faith; the tuple carries `min` and `open` at full
-resolution and lets the equivalence do the classifying. That the shipped
-solver's three classes are recoverable as unions of tuple classes is a property
-§6 reports (§6.5), not an assumption.
+resolution. That the shipped solver's own window predicates are unions of tuple
+classes is §6.7 self-check 5, run rather than assumed.
 
 ### 1.4 The corpus, and the receipts that hold its counts
 
-- **89 805 deduped positions.** MEASURED at `0585e25`:
+- **89 805 deduped positions.** MEASURED at `c5123c1`:
   `/usr/bin/grep -vc "^#" artifacts/arc3r_sweep_deduped_manifest.txt` → `89805`;
   `sha256sum` of that manifest is
   `00f61780cc1654958696786051dbd8de7d1bbab3f5d49153b1694770caf35968`, which is
-  the digest `docs/book_v3_ledger.md` quotes in its disjointness receipt.
+  the digest `docs/book_v3_ledger.md:50` quotes in its disjointness receipt.
 - **74 672 `eval` rows; 45 271 quiet (60.63 %)** — `wp22_phase2_premise.md` §2,
   under R6's filter (D-622): *"no length-6 window holds four or more stones of
   one side and none of the other"*.
 - **3 487 distinct games, 25.75 positions each, median 23** —
   `training_pipeline_2026-09.md` §1, instrument
-  `artifacts/research_2026-09/game_count.txt`.
-- **The research receipt verifies.** MEASURED at `0585e25`: `sha256sum -c
+  `artifacts/research_2026-09/game_count.txt`; independently confirmed by
+  `docs/book_v3_ledger.md:51`'s disjointness control line, `control: corpus5 ^
+  v2: 3487 of 3487`.
+- **AND ALL THREE ARE RE-DERIVED BY THIS PACKAGE'S OWN WALK.**
+  `tools/hex_enum/seed_pilot.py`, written from scratch against the record
+  grammar and sharing no code with the census, reports over the same manifest:
+  *"walked 45271 quiet rows over 3487 games, 38983 distinct folded L11 codes"* —
+  the premise memo's 45 271, the pipeline's 3 487, and `eval_families` §0.2's
+  38 983 folded L11 cells, from one independent pass.
+- **The research receipt verifies.** MEASURED at `c5123c1`: `sha256sum -c
   artifacts/research_2026-09/RECEIPT_research_2026-09.sha256` → **7 of 7 OK**,
   and the receipt's own digest is
   `13fe5712dafa94e2916267800f7b4162db380e27b03a16e00fd97f0981916dab`, equal to
@@ -123,15 +147,29 @@ solver's three classes are recoverable as unions of tuple classes is a property
   | L | folded cells | median obs/cell | cells < 10 obs | cells covering 90 % |
   |---|---|---|---|---|
   | 7 | 1 029 | 1 282 | 0 (0.0 %) | 190 |
-  | 8 | 2 920 | 273 | 24 (0.8 %) | 293 |
   | 9 | 8 374 | 56 | 1 079 (12.9 %) | 434 |
   | 11 | 38 983 | 7 | 22 142 (56.8 %) | 810 |
 
   **That census counts WINDOWS by `(axis, start)`. This memo's does not** — §4
   explains why a class enum is indexed by CELL, and §6.3 records that the two
-  populations are different and are not compared cell for cell.
+  populations are different and are not compared cell for cell. §0.2's `L = 8`
+  row is omitted here because §3 refuses even lengths and a row nothing in this
+  document can use would only invite the comparison §6.3 forbids.
 
-### 1.5 The game rules the tuple depends on, quoted from CLAUDE.md
+### 1.5 D-706 and this memo are ONE ACT, and the memo says so rather than citing itself
+
+D-706 was appended in the same session that wrote revision 1 and landed at
+`d73deba`, one commit before the memo's own `c5123c1`. **It is therefore not an
+external premise**, and this memo's conformity to it is not evidence of
+anything: the ADR contains this document's own conclusions, including
+*"reversal invariance is by construction"* and the receipt list §6 produces.
+What IS external, and what the kill condition actually rests on, is
+`threat_calculus_v1.md:12-13` (§1.1) and `eval_families_2026-09.md` §7's stated
+kill — both of which predate this package. D-706 records the ruling; it does not
+license it. The first review found this and it is fixed by saying it, not by
+moving a citation.
+
+### 1.6 The game rules the tuple depends on, quoted from CLAUDE.md
 
 > 2. Win: ≥6 own stones contiguous along one axis. Overlines (7+) win.
 > 4. A win completes the instant any single placed stone forms ≥6; the turn's
@@ -152,12 +190,12 @@ PROPERTY TUPLE. The tuple's components are counts and minima over the set of
 6-windows through one cell, each computed from `DEF-WINDOW`'s own open/dead
 predicate. Two patterns are in the same class iff their tuples are equal. The
 enum is therefore the QUOTIENT of the pattern space by the tuple, its members
-have no names, and `k(L)` — the number of classes at length `L` — is an output
-of enumerating the tuple over every pattern, never a number this memo chooses.
+have no names, and `k(L)` is an output of enumerating the tuple over every
+pattern, never a number this memo chooses.
 
 ---
 
-## §3 The pattern space
+## §3 The pattern space, and it is defined at ODD lengths only
 
 Fix a cell `c` and an axis `a ∈ {(0,1), (1,0), (1,−1)}` — the three directions
 `Axis::ALL` fixes, mirrored at `tools/texel/features.py:14` as
@@ -172,23 +210,43 @@ NOT RAPFI'S.** Only EMPTY cells are classified. The tuple asks *what a stone
 placed at `c` buys*, which is the only question a cell-indexed table can ask,
 and rule 4's component is literally *"does one placed stone complete a six"* —
 a question with no meaning at an occupied cell. So `c`'s own reading is a
-constant (`empty`) and carries no information, and the code has `L − 1` ternary
-positions rather than `L`. `eval_families_2026-09.md` §A4 records that Rapfi
-does the same — *"the centre cell is never encoded, being the candidate
-placement"* — and that is a CONFIRMATION read off a 4-axis engine, not the
-ground: the ground is that an occupied cell has no completion question.
+constant and the code has `L − 1` ternary positions, `3^(L−1)` in all.
+`eval_families_2026-09.md` §A4 records that Rapfi does the same — *"the centre
+cell is never encoded, being the candidate placement"* — and that is a
+CONFIRMATION read off a 4-axis engine, not the ground.
 
-**EVEN `L` HAS NO CENTRE AND IS DEFINED AS A PAIR.** For even `L` there is no
-cell at the middle, so `P_L(c, a)` is taken as the unordered PAIR of the two
-alignments — `c` at index `L/2 − 1` and `c` at index `L/2` — and the class is
-the multiset of the two tuples. This is stated rather than avoided because §6
-computes `L = 8` and because a single alignment would break §5.4's reversal
-invariance, which is the one property the fold in
-`eval_families_2026-09.md` §0.4 rests on.
+### 3.1 EVEN `L` IS REFUSED BY NAME, and the ground is a measurement
+
+Revision 1 defined an even-`L` class as the unordered pair of the two
+alignments. **MEASURED, and this is why the convention is deleted rather than
+repaired**: two faithful readings of that one sentence give different enums at
+every even length, because the two alignments are two different sets of board
+cells whose union is `L+1` cells, while a single fixed `L`-cell window with both
+middle cells empty is a space of `3^(L−2)`.
+
+| even `L` | both centre cells empty, `L` cells | the two alignments' union, `L+1` cells |
+|---|---|---|
+| 6 | **k = 10** | **k = 33** |
+| 8 | **k = 43** | **k = 177** |
+| 10 | **k = 182** | **k = 920** |
+
+Instrument: the enumeration in
+`/tmp/…/scratchpad/derive_fixes.py`, whose two functions are the two readings
+side by side; the shipped `tools/hex_enum/hexenum.py` implemented the first and
+the first review's independent implementation the second. Neither matches the
+`3^(L−1)` an earlier revision claimed for every `L`.
+
+**So `centres()` now raises a named error at even `L`** (CLAUDE.md rule 3), the
+enum is defined at odd lengths only, and §6.1 enumerates `L ∈ {7, 9, 11, 13}`.
+**THIS IS A DEPARTURE FROM THE DISPATCH'S LITERAL LENGTH SET, WHICH NAMED 8, AND
+IT IS RECORDED AS ONE**: `L = 8` is not a length at which a CELL-centred class
+exists, and reporting one under a convention two readers read two ways is the
+under-specification hard rule 3 forbids. `eval_families` §0.2's `L = 8` window
+census is a different object and §6.3 says so.
 
 ---
 
-## §4 Why the index is a CELL and not a window
+## §4 Why the index is a CELL, which cells, and what that does not settle
 
 `R-A4-CLASS` is scored *"on the 3-axis multiset"* with `C(k+2, 3)` parameters,
 and `C(k+2, 3)` is the count of size-3 multisets over `k` classes. A cell has
@@ -196,49 +254,65 @@ exactly one length-`L` pattern per axis and therefore exactly three classes; a
 window has one axis and one class. **`C(k+2, 3)` is a per-CELL object and the
 row is only well posed per cell.**
 
-**Which cells.** A cell is SCORED iff it is empty and at least one of its three
-length-`L` patterns holds a stone. Cells outside that set take the single
-all-empty code on all three axes, which is a constant and carries no
-information. This mirrors the committed census's own *"holding at least one
-stone"* rule transposed from windows to cells. §6.3 reports the size of the
-alternative population — every empty cell inside rule 5's radius-8 legal region
-— beside it, because a deployed evaluator has to choose one and the matrix
-should see both counts.
+**Which cells, and the restriction is a WELL-DEFINEDNESS requirement rather than
+a convenience.** A cell is SCORED iff it is empty and at least one of its three
+length-`L` patterns holds a stone. On an unbounded board (rule 1) the cells
+outside that set are infinite in number and all take the same all-empty code, so
+an additive per-cell sum over them converges only if that code's weight is
+exactly zero — the restriction is what makes the sum a number at all, and it is
+also the census's own *"holding at least one stone"* rule transposed from
+windows to cells.
 
-**AND A WINDOW NOT CONTAINING `c` IS NOT `c`'s BUSINESS.** The tuple ranges over
-6-windows THROUGH `c` only. A 6-window lying inside `P_L(c, a)` but missing `c`
-is scored at its own cells' codes, and counting it here would make one
-structure's weight depend on how many cells happen to see it. This is a
-containment convention and it is stated as one; it is not licensed by
-`LAW-DECOMP`, which says the opposite thing about eval and is recorded in §8.
+**§6.3 reports the size of rule 5's legal region beside it, and the two are NOT
+two populations for one object.** The legal region is a 2-D disc of 217 cells
+per stone; the scored set is a union of three length-`L` segments, 3(L−1) cells
+per stone before overlap. Scoring the disc would make the evaluation depend on
+the size of the legal region, which carries no line content at all. The second
+count is reported so a matrix can see what the scored set excludes, and for
+nothing else.
+
+**AND A WINDOW NOT CONTAINING `c` IS NOT `c`'s BUSINESS — a convention that
+BINDS NOTHING at every length this memo headlines.** DERIVED: 6-windows lying
+inside a length-`L` pattern but missing the centre number `L − 5 − min(6, L−5)`,
+which is **0 at `L = 7`, `9` and `11`** and first becomes non-zero at `L = 13`
+(2 of 8). The convention is stated because it is load-bearing at `L = 13`; at
+`L = 11` it forbids nothing, and revision 1 presented it as a substantive choice
+where it was not.
+
+**WHAT §4 DOES NOT SETTLE, and the first review was right to ask.** The scored
+CELL is the census's unit and the enum's index. It is **not** a claim about what
+a deployed evaluator sums over: `handcrafted_v0` sums 18 window contributions
+per STONE (`eval_families` §A6), and whether a codebook backend sums over empty
+cells, over stones, or over windows is Phase 2b's, behind the `Eval` trait the
+premise memo §4 already fixes. **The matrix must name the summand per row**, and
+must not compare a row priced per cell against one priced per window as though
+the observation counts were the same currency.
 
 ---
 
 ## §5 The tuple
 
 Let `W_L(c, a)` be the set of 6-windows that contain `c` and lie wholly inside
-`P_L(c, a)`. **DERIVED**, by counting starts: `|W_L| = min(6, L − 5)` for
-`L ≥ 6`, so `|W_7| = 2`, `|W_8| = 3`, `|W_9| = 4`, `|W_11| = 6`, and
-`|W_L| = 6` for every `L ≥ 11` — the six windows `c−5…c` through `c…c+5`. A
-window through `c` spans at most `c−5 … c+5`, which is `2·6 − 1 = 11` cells;
-that is `eval_families_2026-09.md` §0.1's covering bound, re-derived here from
-`DEF-WINDOW` alone.
+`P_L(c, a)`. **DERIVED**, by counting starts: `|W_L| = min(6, L − 5)`, so
+`|W_7| = 2`, `|W_9| = 4`, `|W_11| = 6`, and `|W_L| = 6` for every `L ≥ 11` — the
+six windows `c−5…c` through `c…c+5`. A window through `c` spans at most
+`c−5 … c+5`, which is `2·6 − 1 = 11` cells; that is `eval_families_2026-09.md`
+§0.1's covering bound, re-derived here from `DEF-WINDOW` alone.
 
 For each side `X ∈ {own, opp}` (mover-relative):
 
-- **`open_X`** = `|{w ∈ W_L(c, a) : w holds no stone of the other side}|`.
-  `DEF-WINDOW`'s *"Open for side X iff no opponent stone in it"*, counted. Range
-  `0 … |W_L|`. **This is the "count of distinct completing windows, live vs
-  dead" component**: a window that is not open for `X` can never be completed by
-  `X` (`LAW-HIT`, `:45-46`: *"One defender stone in any empty cell of a window kills
-  that window permanently"*), so `open_X` is exactly the count of `X`'s surviving
-  completions through `c`.
-- **`min_X`** = `min over open w of (6 − |X's stones in w|)`, and `∞` when
+- **`open_X`** = `|{w ∈ W_L(c, a) : w holds no stone of the OTHER side}|`.
+  `DEF-WINDOW`'s *"Open for side X iff no opponent stone in it"*, counted, and
+  it is the same predicate for both sides: `open_opp` counts the windows through
+  `c` holding no OWN stone. Range `0 … |W_L|`. This is the "count of distinct
+  completing windows, live vs dead" component: a window that is not open for `X`
+  can never be completed by `X` (`LAW-HIT`), so `open_X` is exactly the count of
+  `X`'s surviving completions through `c`.
+- **`min_X`** = `min over w open for X of (6 − |X's stones in w|)`, and `∞` when
   `open_X = 0`. The exact number of further `X` stones needed to fill some
-  window through `c`, `c` itself among them since `c` is empty. Range
-  `1 … 6`, or `∞`. This is `LAW-SUPPORT`'s *"≥ 6−2k own stones"* read at one
-  stone per unit instead of two per turn, and `RULE-EXACT` is why it is computed
-  over the window set rather than read from a shape table.
+  window through `c`, `c` itself among them since `c` is empty and is a cell
+  either side may take. Range `1 … 6`, or `∞`. This is `LAW-SUPPORT`'s
+  *"≥ 6−2k own stones"* read at one stone per unit instead of two per turn.
 - **`r4_X`** = `[min_X = 1]`. Game rule 4 / `PROTO-NODE` step 1: one placed
   stone completes six and the turn ends with its second stone unplayed.
 
@@ -248,33 +322,32 @@ For each side `X ∈ {own, opp}` (mover-relative):
 ### 5.1 `r4` IS REDUNDANT AND IS KEPT ANYWAY, AND THIS MEMO SAYS SO FIRST
 
 `r4_X ⟺ min_X = 1` by definition, so the component induces **no refinement at
-all**: the classes of the 6-tuple and of the 4-tuple without `r4` are the same
-classes. §6 MEASURES that (it computes `k` both ways and they must be equal — a
-disagreement is an instrument fault, not a finding). It is named in the tuple
-because `E-PHASE` conditions the win threshold on the intra-turn phase and
-`min = 1` is the only cost a phase-2 mover can pay; writing it down keeps the
-rule-4 reading visible where a reader would otherwise have to re-derive it. **A
-component that changes no class may not be used to claim the tuple is richer
-than it is**, and §7 reports `k` once.
+all**. §6.7 self-check 2 computes `k` both ways and the sets — not merely the
+counts — must be identical. It is named in the tuple because `E-PHASE`
+conditions the win threshold on the intra-turn phase and `min = 1` is the only
+cost a phase-2 mover can pay. **A component that changes no class may not be
+used to claim the tuple is richer than it is**, and §6.4's rungs are held to the
+same rule: revision 1's `T2` carried an alive-or-dead boolean beside `min`, and
+since `open_X = 0 ⟺ min_X = ∞` that boolean refined nothing — MEASURED, `k = 47`
+at `L = 11` with it and without it — so it is deleted.
 
-### 5.2 The tuple's range, DERIVED
+### 5.2 The tuple's range, DERIVED, and the cubic AT that range
 
 `min_X ∈ {1,…,6, ∞}` — 7 values; `min_X = 6` is an all-empty open window and
 `min_X ≥ 1` because `c` is empty and must itself be filled; `|X| = 6` cannot
 occur in a window containing the empty `c`. `open_X ∈ {0,…,|W_L|}`. The two are
 linked: `open_X = 0 ⟺ min_X = ∞`. So per side at `L ≥ 11` there are at most
-`1 + 6·6 = 37` combinations, and at most `37² = 1369` joint ones. **That is a
-BOUND and not a prediction**: most joint combinations are unrealisable, and
-`k(11)` is whatever §6 enumerates.
+`1 + 6·6 = 37` combinations, and at most **`37² = 1 369`** joint ones.
 
-### 5.3 `k` is an output, and `C(k+2, 3)` is CUBIC in it
+**AND THE CUBIC APPLIED AT THIS DOCUMENT'S OWN BOUND, which revision 1 omitted
+and which is the number a reader most needs**: `C(1369+2, 3) =
+1371·1370·1369/6 = **428 558 605**`. Beside it, `C(k+2,3)` at 16 is 816, at 40
+is 11 480, at 100 is 171 700. **The bound is three orders of magnitude past the
+largest exemplar**, so a reader who carries only the exemplars away carries the
+imported figure. `k` is an output and `C(k+2,3)` is cubic in it; nothing else
+about the row's affordability is derivable before §6.1 runs.
 
-`C(k+2, 3) = (k+2)(k+1)k / 6`. At `k = 16` it is 816; at `k = 40`, 11 480; at
-`k = 100`, 171 700 (DERIVED, arithmetic above). **The row's parameter count is therefore extremely sensitive
-to a quantity this memo deliberately does not choose**, which is why §6.4
-computes a COARSENING LADDER beside the full tuple.
-
-### 5.4 Reversal invariance, BY CONSTRUCTION
+### 5.3 Reversal invariance, BY CONSTRUCTION
 
 Reversing `P_L(c, a)` about `c` permutes `W_L(c, a)` and maps each window to a
 window with the same per-side stone counts. Every component of the tuple is a
@@ -282,182 +355,276 @@ count or a minimum over that set, so the tuple is invariant and the class is
 invariant. **This is a priori and needs no measurement** — where
 `eval_families_2026-09.md` §0.4 had to MEASURE fold-invariance for raw codes
 (0 of 2 200 folded images differ, 1 760 of 2 200 unfolded do), a class enum
-inherits it from the tuple's shape. §6 nonetheless checks it as an instrument
-self-check, because an invariance that is claimed and not checked is a claim.
+inherits it from the tuple's shape. §6.7 checks it anyway, because an invariance
+claimed and not checked is a claim.
 
-### 5.5 What the tuple deliberately does NOT carry
+**The tuple is EQUIVARIANT under the own/opp swap as well**, which revision 1
+neither claimed nor used: swapping the two sides' readings swaps the tuple's two
+halves. MEASURED at `L = 11`, 0 mismatches over all 59 049 patterns, **17 of the
+357 classes swap-fixed and 187 orbits**. A mover-antisymmetric evaluator ties
+`w(class) = −w(swap(class))` and would halve the free parameters at zero
+inference cost. It is recorded, not adopted: it is an evaluator decision and §9
+defers those.
+
+### 5.4 What the tuple deliberately does NOT carry
 
 - **A threshold.** `Class::Hot`'s `own >= 4`, `WinInOnePly`'s `= 5`, Rapfi's 16,
-  the survey's 13: none appears. §6.5 reports which unions of tuple classes the
-  three shipped solver classes are, as a check that the enum is at least as fine
-  as the code the engine already runs.
+  the survey's 13: none appears in the tuple. §6.4's PROJECTIONS do have
+  boundaries — a projection is a choice of resolution and cannot not have them —
+  and every one of them is `LAW-SUPPORT`'s or `DEF-WINDOW`'s, cited at the rung.
 - **A name.** No class is called a four, a three, a gap trap or a rhombus.
   `PAT-GAP` (`threat_calculus_v1.md:104`) is the reason: *"Absent from named-shape
-  taxonomies; tables mis-score it"* — a name is where a taxonomy's blind spot
-  lives, and the quotient has none.
-- **The intra-turn phase**, and **the side-to-move's stone budget.** See §9.
+  taxonomies; tables mis-score it"*.
+- **The intra-turn phase**, and the mover's stone budget. See §9.
 - **Anything off the axis.** The tuple is single-axis by construction; the three
-  axes meet only in the cell's multiset. `LEM-CROSS` (`:38`, *"two lines on distinct
-  axes meet in ≤1 cell"*) is why that is the only place they can meet at a cell,
-  and `LAW-DECOMP`'s eval warning (§8) is why the multiset is a limitation.
+  axes meet only in the cell's multiset (`LEM-CROSS`, `:38`).
+
+### 5.5 WHAT THE TUPLE GETS WRONG, ON THE PAGE BEFORE §7 RUNS
+
+`RULE-EXACT` (`:64-66`) says *"only exact `t` decides truth"*. **MEASURED**: for
+every length-11 pattern, the exact `DEF-T` over own's plan family after placing
+one own stone at `c` — a minimum hitting set over `DEF-PLAN`'s open windows at 4
+or 5 own stones — **differs within 27 of the 357 classes, covering 5 348 of the
+59 049 patterns.** Two witnesses, `.` empty, `X` own, `c` at index 5:
+
+```
+class (min_own=3, open_own=6, r4_own=0, min_opp=6, open_opp=1, r4_opp=0)
+   ......X..XX   place X at c ->  .....XX..XX   t = 1
+   ......XXX..   place X at c ->  .....XXXX..   t = 2
+
+class (min_own=2, open_own=6, r4_own=0, min_opp=6, open_opp=1, r4_opp=0)
+   ......X.XXX   place X at c ->  .....XX.XXX   t = 1
+   ......XXX.X   place X at c ->  .....XXXX.X   t = 2
+```
+
+`t = 1` against `t = 2` is exactly the calculus §5 table's own split — `PAT-C4`
+*"single plan"* at `t = 1` against `PAT-O4`, `PAT-O5` and `PAT-GAP` at `t = 2` —
+and `LAW-OVERLOAD` makes `t` the criterion for a forced win. **So the tuple
+assigns one weight to a cell that buys a hittable single plan and to a cell that
+buys an unhittable pair of them, in the simplest four-shapes the game has.**
+Since a cell's code is built from per-axis classes, the merge survives to the
+code.
+
+**THIS IS RECORDED AND NOT REPAIRED, AND THE REASON IS STATED.** Repairing it
+means carrying exact `t` in the tuple, which is a per-POSITION quantity over a
+plan family that spans axes (`LAW-OVERLOAD`'s addition floor is a cross-axis
+statement) — not a property of one line's neighbourhood, and not something a
+single-axis class can hold. What a single axis CAN see is bounded: **MEASURED,
+the maximum exact `DEF-T` over all `3^11 = 177 147` length-11 single-axis lines
+is 2**, realised at `.....XXXX..`, with the distribution `t=0: 319 606, t=1:
+32 002, t=2: 2 686` over the 354 294 (line, side) pairs. `LAW-OVERLOAD`'s `t ≥ 3`
+is unreachable on one axis. **The matrix prices `R-A4-CLASS` knowing this**, and
+§8's `LAW-DECOMP` limitation is the same fact from the other side.
 
 ---
 
 ## §6 What the instrument computes, and the instrument is named with its revision
 
-**Instrument**: `tools/hex_enum/enum.py` (the tuple, the class table, the
-derivation checks) and `tools/hex_enum/census.py` (the corpus walk), driven by
-`tools/hex_enum/test_hex_enum.py` through `tools/hex_enum_tests.sh`, at the
-revision that lands them. `docs/process.md`'s *"Instrument governing revision"*
-binds: a change to either reopens this memo's review.
+**Instrument**: `tools/hex_enum/hexenum.py` (the tuple, the class table, the
+ladder, the refinement analysis), `tools/hex_enum/census.py` and
+`tools/hex_enum/report.py` (the corpus walk and its report), driven by
+`tools/hex_enum/test_hex_enum.py` and `test_census.py` through
+`tools/hex_enum_tests.sh`, which is CI gate 19. `docs/process.md`'s *"Instrument
+governing revision"* binds: a change to any of them reopens this memo's review.
 
-### 6.1 `k(L)`, by exhaustive enumeration
+### 6.1 `k(L)`, by exhaustive enumeration, at odd lengths
 
-For each `L`, enumerate all `3^(L−1)` patterns, compute the tuple, count
-distinct tuples. `3^6 = 729` at `L = 7` through `3^12 = 531 441` at `L = 13`:
-exhaustive, no sampling, no seed. Reported for `L ∈ {7, 8, 9, 11, 13}` as the
-dispatch's headline set, and for the contiguous range `L = 6 … 14` because §6.6's
-refinement test needs `k(L+1)` beside `k(L)`.
+For each `L ∈ {7, 9, 11, 13}`, enumerate all `3^(L−1)` patterns, compute the
+tuple, count distinct tuples. `3^6 = 729` at `L = 7` through `3^12 = 531 441` at
+`L = 13`: exhaustive, no sampling, no seed. §3.1 says why the set is odd-only.
 
 ### 6.2 The code count
 
-`C(k(L) + 2, 3)`, the size-3 multiset over the classes, DERIVED. Reported beside
-the raw-code ceiling for the folded single-axis code with the centre dropped,
-`(3^(L−1) + 3^⌈(L−1)/2⌉)/2` — `eval_families_2026-09.md` §0.2's form at `L−1`
-ternary positions, without its `−1`, because that document's `−1` excludes the
-all-empty WINDOW and a single axis of a scored CELL may legitimately be empty
-(§4). So the compression the quotient buys is visible as a ratio.
+`C(k(L) + 2, 3)`, DERIVED. Reported beside the raw-code ceiling for the folded
+single-axis code with the centre dropped, `(3^(L−1) + 3^⌈(L−1)/2⌉)/2` —
+`eval_families_2026-09.md` §0.2's form at `L−1` ternary positions, without its
+`−1`, because that document's `−1` excludes the all-empty WINDOW and a single
+axis of a scored CELL may legitimately be empty (§4). Exact at odd `L` by
+enumeration: 378, 3 321, 29 646 at `L = 7, 9, 11`.
 
 ### 6.3 Observations per code, on the quiet population
 
 The R6 population — 45 271 quiet `eval` rows — walked position by position. For
 each position: the scored cell set of §4, each cell's three axis classes, the
-sorted triple as one code, one observation per (position, cell). Reported: total
-observations, distinct codes seen, mean and median observations per code, the
-count of codes covering 90 % of observations, and **cells under Buro's floors**
-at all three of his published figures (`eval_families_2026-09.md` §A1):
-`≤ 4` (*"the weight is set to 0"*), `< 20` (*"sufficiently high (say ≥ 20)"* for
-a safe fit), and `< 75` (his generator's own keep rule). A growth curve every
-5 000 positions, as the committed census prints one, so saturation is visible
-rather than asserted.
+sorted triple as one code, one observation per (position, cell). Reported at
+BOTH population units — per (cell, axis) window class and per cell code — with
+total observations, distinct codes, mean and median per code, the count covering
+90 % of observations, and the counts under three published density floors.
 
-**AND THE ALTERNATIVE POPULATION IS COUNTED BESIDE IT**: the number of empty
-cells inside rule 5's radius-8 legal region, per position, so the matrix can see
-what the scored set excludes. **These counts are NOT comparable cell-for-cell
-with `eval_families_2026-09.md` §0.2**, whose unit is a window at `(axis, start)`
-and whose population is windows holding a stone; the document already warns that
-*"a centred-window codebook indexes the same space differently, so these counts
-are indicative rather than exact for that variant"*, and this memo does not
-compare them.
+**THE FLOORS ARE BURO'S AND THEY CARRY HIS TAG.** `eval_families_2026-09.md`
+§A1 quotes them: *"If the count is small (say ≤ 4)… the weight is set to 0"* and
+*"sufficiently high (say ≥ 20)"* are rules of thumb, **ARCH**; *"keeps only
+configurations seen in ≥ 75 of ~11 M positions"* is a figure from a
+square-board engine's own generator and is **EMP, NON-TRANSFERABLE** in its own
+source's scheme. All three are reported because a reader wants the shape of the
+distribution; the third is a landmark, not a criterion, and the scope rule
+(`:12-13`) is why it is tagged rather than used.
 
-### 6.4 The coarsening ladder
+A growth curve every 5 000 positions, as the committed census prints one, so
+saturation is visible rather than asserted. And the size of rule 5's legal empty
+region, sampled by a stated stride — §4 says what that second count is and is
+not for.
 
-Because `C(k+2, 3)` is cubic in `k` (§5.3), the instrument reports the same
-statistics for four PROJECTIONS of the same tuple, each a strictly coarser
-equivalence and none of them hand-written:
+**These counts are NOT comparable cell-for-cell with `eval_families_2026-09.md`
+§0.2**, whose unit is a window at `(axis, start)` and whose population is windows
+holding a stone. That document already warns that *"a centred-window codebook
+indexes the same space differently, so these counts are indicative rather than
+exact for that variant"*, and this memo does not compare them.
 
-| rung | the equivalence | why it is a projection and not a new enum |
+### 6.4 The coarsening ladder, with the calculus's own boundaries
+
+Because `C(k+2, 3)` is cubic in `k` (§5.2), the instrument reports the same
+statistics for four PROJECTIONS of the same tuple, each strictly coarser, each a
+function of the one above it, and none of them a hand-written class list:
+
+| rung | the equivalence | the boundary, and whose it is |
 |---|---|---|
-| **T4** | the full tuple | — |
-| **T3** | `(min_own, open_own, min_opp, open_opp)` with `open` clipped to `{0, 1, ≥2}` | the live-count distinction `LiveCount` makes, at the resolution `LAW-OVERLOAD`'s `t ≥ 3` needs |
-| **T2** | `(min_own, min_opp, [open_own ≥ 1], [open_opp ≥ 1])` | completion cost plus alive-or-dead — `DEF-WINDOW`'s predicate and `LAW-SUPPORT`'s arithmetic and nothing else |
-| **T1** | `(min_own, min_opp)` with both clipped at `≥ 4` | the cost alone, at the resolution `LAW-SUPPORT` gives for `k ≤ 2` own turns |
+| **T4** | the full tuple | none — full resolution |
+| **T3** | `(min_own, min(open_own, 2), min_opp, min(open_opp, 2))` | `open` at 0 / 1 / ≥2. **MEASURED**: the maximum exact `DEF-T` a single axis can carry is 2 (§5.5), so `{dead, one surviving completion, more than one}` is the whole resolution `open` supports on one line. |
+| **T2** | `(min_own, min_opp)` | none beyond dropping `open`; the alive-or-dead boolean revision 1 carried here refines nothing (§5.1). |
+| **T1** | `(clip(min_own), clip(min_opp))`, `clip(x) = x` for `x ≤ 4`, `5` for `5 ≤ x < ∞`, `∞` for dead | `LAW-SUPPORT` (`:69`) reads `own ≥ 6−2k`, so `k = 1 ⟺ cost ≤ 2` and `k = 2 ⟺ cost ≤ 4`. Both boundaries are expressible only if 1, 2, 3 and 4 stay apart and everything above them merges; `DEF-WINDOW`'s dead stays apart from an expensive live window. |
 
-Each rung is a function of T4, so the ladder is a chain of quotients and every
-rung inherits §5.4's reversal invariance. **The ladder is not a selection**: §7
-reports `k`, codes, observations and purity at each rung and recommends nothing.
+**T1's clip point is the finding revision 1 earned, and it is fixed rather than
+argued about.** Revision 1 clipped at `min(cost, 4)`, which leaves four values a
+side and therefore `k ≤ 16` and `C(18,3) = 816` — the imported figure, arriving
+by a chosen clip (§1.1). It also merged `cost = 4`, a `LAW-SUPPORT` `k = 2`
+candidate, with `cost = 5` and `6`, so the rung could not state the boundary it
+cited. **MEASURED at `L = 11`, the three readings**: the clip folding `∞` in
+gives `k = 16` and `C(18,3) = 816`; `min(cost, 4)` with `∞` apart gives `k = 25`
+and 2 925; the clip above gives **`k = 36` and `C(38,3) = 8 436`**. Only the
+third states both `LAW-SUPPORT` boundaries, and it is the one shipped.
+
+**The ladder is not a selection**: §7 reports `k`, codes, observations and purity
+at each rung and recommends nothing.
 
 ### 6.5 CLASS PURITY, and both terms are named (D-479)
 
 The label is the corpus row's `score_value` at `SCORE_KIND = eval`
-(`tools/texel/extract.py:24-27` names the columns). For each observation the
-label is its POSITION's label. Over all observations, with classes `C`:
+(`tools/texel/extract.py:24-26` names the columns), and it is MOVER-RELATIVE, as
+`tools/texel/fit.py:119`'s `signed()` shows by swapping the per-side counts and
+leaving the label alone. For each observation the label is its POSITION's label.
+Over all observations, with classes `C`:
 
-- **WITHIN-class variance** `= Σ_C (n_C / N) · Var(label | C)` — the mean of the
-  per-class variances, weighted by class size.
-- **BETWEEN-class variance** `= Σ_C (n_C / N) · (mean_C − mean)²` — the variance
-  of the class means, weighted by class size.
-- Their sum is the total label variance (the law of total variance), which the
-  instrument checks to machine precision as a self-check.
-- `η² = between / total` is reported as a ratio, and it is **not** a fit quality
-  and gates nothing (D-614).
+- **WITHIN-class variance** `= Σ_C (n_C / N) · Var(label | C)`.
+- **BETWEEN-class variance** `= Σ_C (n_C / N) · (mean_C − mean)²`.
+- Their sum is the total label variance, checked to machine precision.
+- **`ω²` is the primary statistic and `η²` is printed beside it.**
+  `η² = between/total` rises with the class count whatever the classes mean, and
+  at `T4`'s code unit the class count is in the millions, so `η²` there would be
+  near 1 by memorisation and would say nothing. `ω²` subtracts the between-group
+  sum of squares a partition of that many groups earns from noise alone.
 
-Reported at the WINDOW unit — one observation per `(position, cell, axis)`,
-classed by that axis's class — and at the CODE unit — one per `(position,
-cell)`, classed by the 3-multiset — because the enum's own purity and the row's
-purity are different questions.
+Reported at the WINDOW unit — one observation per `(position, cell, axis)` — and
+at the CODE unit — one per `(position, cell)`.
 
-**AND TWO REFERENTS, BECAUSE A PURITY NUMBER ALONE PASSES VACUOUSLY**
-(`docs/process.md`, *"Criterion and defect class"*): a criterion the named
-defect preserves is not a criterion. The named defect is *the quotient throws
-away a distinction that carries value*. Two things it does not preserve:
+**THE TWO REFERENTS, AND WHAT EACH ONE CAN AND CANNOT FALSIFY.** The named
+defect class is *the quotient throws away a distinction that carries value*.
 
-1. **The un-quotiented ceiling** — `η²` for the RAW folded single-axis code at
-   the same `L`. The quotient can only lose `η²`; the gap is what it costs.
-2. **A random quotient of the same size** — every raw code assigned to one of
-   `k` buckets by a fixed-seed hash, seed recorded. This is the externally
-   derived referent: it shares the corpus and the `k` and shares nothing of the
-   calculus, so a tuple whose `η²` does not beat it has separated nothing the
-   corpus can see.
+1. **The un-quotiented folded raw code at the same `L` is an IDENTITY, not a
+   test, and is labelled as one.** The tuple is a function of the pattern and is
+   reversal-invariant, so the folded-code partition REFINES the class partition,
+   and between-class variance is monotone under refinement — therefore
+   `η²(raw) ≥ η²(tuple)` for every corpus, every tuple, whether or not anything
+   of value was lost. It is reported as the CEILING the quotient is measured
+   against, and its gap tracks the class-count ratio rather than the loss.
+   It cannot fail and it is not offered as a criterion.
+2. **The matched random quotient is the externally derived referent**
+   (`docs/process.md`, *"Criterion and defect class"*), and it is matched on the
+   enum's own SHAPE: the classes are re-assigned by permuting which codes belong
+   to which class, so the class count and the number of codes per class are
+   exactly the enum's and the only thing that changes is which codes share a
+   class. Three replicates at a recorded seed, so the referent carries a spread.
+
+**AND THE CRITERION, REGISTERED HERE BEFORE THE RUN, because a recording without
+one is a dry run nothing can fail.** At the WINDOW unit — the unit at which the
+observed class counts of the enum and its matched null are comparable — **the
+enum's `ω²` must exceed every one of the three null replicates at every ladder
+rung.** If it does not at a rung, that rung has separated nothing the corpus can
+see beyond what a partition of its own shape earns by chance, and **the matrix
+prices `R-A4-CLASS` at that rung as if its classes were arbitrary**, which is a
+different row from the one `eval_families` §7 proposes. This is a criterion the
+named defect could falsify: a quotient that discarded the value-carrying
+distinctions would leave `ω²` at the null's level, and the null shares the
+corpus, the class count and the class-size distribution, so it is invariant
+under everything except which codes were grouped.
+
+**WHAT THIS CRITERION IS NOT.** It is not a strength gate — D-614 stands, no
+offline number moves a config — and it does not select a rung, a length or a
+row. It constrains what the matrix may CONCLUDE from §7, which is what a
+criterion is for.
 
 **THE HONEST CAVEAT, stated before the number exists.** Every observation of one
 position carries that position's single label, so observations are massively
-non-independent and `η²` is a statement about how much of the LABEL variance the
-class marginal explains on this corpus — not a fit, not a bound on a fit, and
-not comparable to a per-position `R²`. The effective `n` is closer to the 3 487
-games than to the observation count (`training_pipeline_2026-09.md` §1). The
-random-quotient referent is what makes the comparison readable in spite of that,
-because it carries the same dependence structure.
+non-independent and `ω²` is a statement about how much of the LABEL variance the
+class marginal explains on this corpus — not a fit, not a bound on a fit. The
+effective `n` is nearer the 3 487 games than the observation count
+(`training_pipeline_2026-09.md` §1). The matched referent is what makes the
+comparison readable in spite of that, because it carries the same dependence.
 
-### 6.6 `THM-WINDOW`'s owed enumeration, and what is DERIVED in it
+### 6.6 `THM-WINDOW`: what the construction can answer, and what it cannot
 
-The stabilisation length is the smallest `L` at which `k(L+1)` refines no class
-of `k(L)` — that is, at which every pair of length-`(L+1)` patterns whose
-`L`-cores are in one `L`-class are themselves in one `(L+1)`-class.
+**THE STABILISATION LENGTH IS DERIVED, NOT MEASURED, AND REVISION 1's
+"discharges" IS WITHDRAWN.** §5's `|W_L| = min(6, L − 5)` fixes the tuple's reach
+at exactly `c ± 5`. Below `L = 11` an odd length always omits at least one window
+through `c`, so `L → L+2` always splits; at `L ≥ 11` no further cell can enter
+any component, so it never splits. **The answer is 11 by a one-line argument, and
+the enumeration can take no other value.** It is reported as a CONFIRMATION of
+the derivation — `k(11) = k(13)` and the joint partition equal to both, at every
+rung — and a matrix that read "stabilisation length = 11, MEASURED" would be
+reading the definition back to itself.
 
-**THE ANSWER IS PARTLY DERIVED AND THE MEMO SAYS WHICH PART, BEFORE THE RUN.**
-§5's `|W_L| = min(6, L − 5)` means the tuple's reach is exactly `c ± 5`: at
-`L ≥ 11` the window set is complete and no further cell can enter any component,
-so `k(L) = k(11)` for all `L ≥ 11` **by derivation**. The instrument's report at
-`L = 12, 13, 14` is therefore a CONFIRMATION of the derivation and an instrument
-self-check, not an independent measurement, and §7 will label it so.
+**AND IT IS NOT THE QUESTION `THM-WINDOW` ASKED.** That result is
+window-relative: a run of `n` own stones needs `n + 2(6−n)` cells to decide live
+against dead — 8 for a four, 7 for a five — and `eval_families` §8 restates the
+owed question as *"whether a shorter window still separates structures of
+different value once summed over overlaps"*. Neither 7 nor 8 can appear in §7,
+because every component of a cell-centred tuple reads a window that may start at
+`c−5`. **§7 therefore does not close `THM-WINDOW`**; it answers a cell-centred
+sufficiency question and says which one.
 
-**THE MEASURED HALF IS BELOW 11**, and it is the half that carries content: how
-many `k(11)` classes each `k(L)` class merges for `L < 11`, and — the question
-that actually decides a length — whether the merging costs `η²` on the corpus.
-A short window is cheap and covering-deficient; the ladder in §6.4 and the
-curve in `L` are the two axes the matrix prices `R-A4-CLASS` on.
-
-**THE TUPLE'S LONGEST-RANGE PROPERTY NEEDS 11 CELLS AND NOTHING IS TRUNCATED
-SILENTLY.** At `L < 11` the tuple is computed over the windows that FIT, which
-is a different question from the one at `L = 11`, and the instrument reports the
-two as different rows rather than as one row at two resolutions.
+**THE MEASURED CONTENT IS THE MERGE CURVE BELOW 11, AND IT IS NOT A COARSENING.**
+Neither `class_L` nor `class_11` refines the other for `L < 11` — the shipped
+`--refine` mode prints *"neither refines the other"* at `7 → 9` and `9 → 11` at
+every rung — because a short window asks about fewer windows rather than asking
+more coarsely about the same ones. What §7 reports instead is the two-way fanout
+of the joint partition, DERIVED at the full tuple: one `L = 7` class meets 3 to
+104 of the `L = 11` classes (mean 32.4) and one `L = 11` class meets 1 to 8
+`L = 7` classes (mean 2.3); at `L = 9` the numbers are 2 to 36 (mean 9.4) and 1
+to 9 (mean 2.6). Whether that fanout costs anything is §6.5's question, not
+§6.6's.
 
 ### 6.7 Instrument self-checks, run before any reported number
 
 1. **Reversal.** Every pattern's class equals its reverse's class, at every `L`
-   enumerated. §5.4 says this is a priori; the check is what makes it a fact
-   about the code.
-2. **`r4` redundancy.** `k` with and without the two `r4` components is equal
-   (§5.1). A disagreement is an instrument fault.
-3. **Law of total variance.** `within + between = total`, to machine precision
-   (§6.5).
-4. **Window count.** `|W_L| = min(6, L − 5)` as enumerated equals the DERIVED
-   value (§5).
-5. **Solver agreement.** For each shipped solver class — `Hot` (`own ≥ 4`
-   live), `WinInOnePly` (`own = 5` live), `Completed` — the set of length-11
-   patterns satisfying it is a union of tuple classes (§6.5's promise). A
-   pattern-level counterexample is a finding against the tuple.
+   enumerated (§5.3).
+2. **`r4` redundancy.** The class SET with and without the two `r4` components is
+   identical, not merely the same size (§5.1). A disagreement is an instrument
+   fault.
+3. **Law of total variance.** `within + between = total`, to the reported
+   precision (§6.5).
+4. **Window count.** `|W_L|` as enumerated equals the DERIVED `min(6, L − 5)`.
+5. **Solver agreement, on a predicate that CAN fail.** `Hot` (a live window at
+   `≥ 4` own) and `WinInOnePly` (a live window at exactly 5 own) are recomputed
+   from the windows themselves and must be constant on every tuple class. The
+   third shipped class, `Completed`, is NOT checked: every window through `c`
+   contains `c`, which §3 fixes empty, so no pattern satisfies it at any `L ≤ 11`
+   and the check would pass vacuously — §5.1's own standard, applied to §6.7.
+6. **Even lengths refuse by name**, at 6, 8, 10 and 12 (§3.1).
+7. **The ladder is a chain**: each rung is a function of the one above it, so
+   `T1` cannot separate what `T2` merges.
+8. **T1's clip states both `LAW-SUPPORT` boundaries** and does not land on 816
+   (§6.4).
+9. **A rung carries no component that refines nothing** — the `T2` boolean check
+   (§5.1).
 
 ---
 
 ## §7 Outputs
 
 **EMPTY UNTIL §6's INSTRUMENT HAS RUN.** Every number named in §6 lands here
-with the digest of the artifact that produced it (D-483, D-483's *"cited from
-that run's artifact by digest"*). **NO SELECTION.** This memo says what the enum
-IS and what it measured; which row wins is the matrix's, and the matrix does not
-select either (D-708).
+with the digest of the artifact that produced it (D-483). **NO SELECTION.** This
+memo says what the enum IS and what it measured; which row wins is the matrix's,
+and the matrix does not select either (D-708).
 
 ---
 
@@ -470,10 +637,8 @@ cells is exactly regional eval summed as if independent. This is not an argument
 against `R-A4-CLASS` specifically — it binds `R-A1`, `R-A2`, `R-A3` and `R-A5`
 identically, and `handcrafted_v0` too, which sums 18 window contributions per
 stone — but it is the calculus's own statement that the family's functional form
-is known-wrong, and a memo that cited `LAW-DECOMP` only for the part that helps
-would be quoting selectively. `eval_families_2026-09.md` §2 records the same
-thing from the other side: family B buys the interactions an additive table
-cannot express, and pays incrementality for them.
+is known-wrong. §5.5's `t = 1` against `t = 2` merge is the same limitation
+arriving one level down, inside a single axis.
 
 ---
 
@@ -481,16 +646,49 @@ cannot express, and pays incrementality for them.
 
 - **Nothing about which row wins**, which length is chosen, or which ladder rung
   is used. §7 reports; D-708 says selection is the architect's.
-- **Nothing about the evaluator.** How a code's weight enters a score, whether
-  the sum is over cells or windows, and what the accumulator's type is are
-  Phase 2b's, behind the `Eval` trait the premise memo §4 already fixes.
+- **Nothing about the evaluator.** How a code's weight enters a score, what the
+  summand is (§4), and what the accumulator's type is are Phase 2b's, behind the
+  `Eval` trait the premise memo §4 already fixes.
 - **Nothing about the intra-turn phase.** `E-PHASE` conditions win thresholds on
   the phase; conditioning the CODE on the phase would double `C(k+2, 3)`, and
   every corpus position is recorded at a turn boundary (D-621), so the corpus
-  cannot price the conditioned variant at all. Named as out of scope, not as
-  settled.
+  cannot price the conditioned variant at all.
+- **Nothing about the own/opp antisymmetry** beyond §5.3's measurement of it.
+- **`THM-WINDOW` is not closed** (§6.6).
 - **Nothing about tactical value.** D-621 and D-622 foreclose learning it from
-  these labels; the enum is a QUIET-structure representation and the tactical
-  terms stay pinned.
+  these labels.
 - **No strength claim, no Elo, no committed file.** Nothing here touches
   `configs/`.
+
+---
+
+## §10 What the first review changed
+
+`hex_threat_enum_v1_REVIEW.md`, fresh context, at stash `ecfc2d8e`: **FAIL**,
+3 BLOCKING, 7 MAJOR, 8 MINOR, with an independent implementation of §5's tuple
+that agreed with the shipped one on all 66 339 patterns at `L ∈ {7, 9, 11}`.
+Every remedy below was derived and RUN before this revision was written (D-591).
+
+| finding | what it said | what changed, and what was run |
+|---|---|---|
+| **B-1** | the stabilisation length cannot take a second value | §6.6 states it as DERIVED, withdraws *"discharges"*, and reports the merge curve as the measured content. RUN: `hexenum.py --refine 7 9 11`. |
+| **B-2** | §3's even-`L` convention is under-specified and `3^(L−1)` matches no reading | even `L` is REFUSED by name (§3.1); the two readings were enumerated and disagree at 6, 8 and 10. RUN: `derive_fixes.py`. |
+| **B-3** | `T1`'s clip fixes `k` at 16 and lands on the imported 816, and destroys the boundary it cites | `T1`'s clip is re-derived from `LAW-SUPPORT`'s two readings; `k = 36`, `C(38,3) = 8 436`. RUN: three clip variants enumerated at `L = 11`. |
+| **M-1** | the tuple merges `t = 1` and `t = 2` | §5.5, with both witnesses recomputed from scratch and the population — 27 of 357 classes, 5 348 of 59 049 patterns. |
+| **M-2** | the cubic is never applied to the memo's own bound | §5.2 carries `C(1371,3) = 428 558 605`. |
+| **M-3** | §6.5 registers no criterion and its first referent is an identity | §6.5 registers a criterion the defect can falsify, and labels referent 1 as the identity it is. |
+| **M-4** | `T2`'s boolean refines nothing | deleted; §5.1 states the rule and the measurement. |
+| **M-5** | `T3`'s justification names the wrong quantity and an unreachable threshold | replaced by the DERIVED fact that single-axis `DEF-T` never exceeds 2. RUN over all `3^11` lines. |
+| **M-6** | D-706 and the memo are one act | §1.5 says so and names what the kill condition actually rests on. |
+| **M-7** | *"discharges"* closes `THM-WINDOW` on a different question | §6.6's second paragraph. |
+| **m-1** | the containment convention is vacuous at the headline lengths | §4 says so, with the count per length. |
+| **m-2** | self-check 5's `Completed` arm cannot fail | dropped, with the reason on the page (§6.7). |
+| **m-3** | Buro's floors carry no transferability tag | §6.3 tags all three. |
+| **m-4** | the rungs' clip points are hand-written | §5.4 and §6.4: a projection has boundaries, and each one is now the calculus's, cited. |
+| **m-5** | the scored-cell restriction is a well-definedness requirement | §4's second and third paragraphs. |
+| **m-6** | code-unit `η²` will be ≈1 by memorisation | `ω²` is the primary statistic (§6.5). |
+| **m-7** | two citation slips | `extract.py:24-26`; the length set is stated here, not by reference to a dispatch. |
+| **m-8** | own/opp equivariance unclaimed | §5.3, measured: 0 mismatches, 17 fixed classes, 187 orbits. |
+
+**Q1** is answered in §4's last paragraph, **Q2** in §6.6's last, **Q3** by
+§6.5's registered criterion, **Q4** by §5.2, **Q5** by §5's `open_X` bullet.
