@@ -57,6 +57,7 @@ GOVERNING=(
 	docs/experiments/anchor_v3_openings_design.md
 	docs/experiments/matrix_label_cache_key.md
 	docs/experiments/sealbot_anchor_v3_prereg.md
+	docs/experiments/sealbot_anchor_v7_protocol.md
 	docs/experiments/wp21_label_cache_design.md
 	docs/experiments/wp21_prereg.md
 	docs/experiments/wp21_throughput_prereg.md
