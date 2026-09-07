@@ -191,3 +191,60 @@ NUMBER in `docs/decisions.md`, in `docs/experiments/` and in several scripts'
 own comments; renumbering to put this beside the exit-status items would
 silently retarget every one of those citations. That is item 11's own reasoning,
 applied to the item that follows it.
+
+---
+
+## APPENDIX — THE `info totals` CONSUMER REGISTER
+
+**Not an item, and deliberately unnumbered.** Items 1-12 are cited BY NUMBER in
+`docs/decisions.md`, in `docs/experiments/` and in several scripts' own
+comments, and this is a register rather than a rule a reviewer answers — item
+11's reasoning about renumbering, applied to something that is not an item at
+all.
+
+**WHY IT EXISTS.** `docs/audit/repo_audit_2026-09.md` row A-08 found the
+`info totals` grammar parsed in eight homes, each keying on its own literal, and
+priced a shared reader as a `tools/` package of its own. **A shared reader is
+NOT built here.** What the register buys instead is the thing an audit had to
+re-derive: a change to the grammar has a list of everything that reads it, so
+the next `git grep` is not the only way anyone finds out.
+
+**THE PRODUCER OF RECORD** is `crates/pistol-cli/src/report.rs:33-39` —
+`TOTALS_MARKER`, D-80's marker discipline, and the reason the closing line is
+distinguishable from a per-depth one at all. Two more producers exist and must
+match it because drivers parse what they emit:
+`crates/pistol-arena/src/bin/stub_engine.rs:631` and
+`tools/sealbot/tests/stub_pistol.py:86`.
+
+**THE CONSUMERS**, re-enumerated at `b60c3d3` (`git grep -n "info totals\|
+' totals '\|\" totals \""` over `crates` and `tools`, then read and classified —
+a site that FOLDS already-parsed numbers, such as
+`crates/pistol-arena/src/record.rs:113`, is not a consumer of the grammar and is
+not listed):
+
+| # | site | what it keys on |
+|---|---|---|
+| 1 | `crates/pistol-arena/src/exchange.rs:66-69` | `words.contains(&"totals")` — the per-depth/closing discriminator, negated |
+| 2 | `crates/pistol-arena/src/exchange.rs:242-251` | `fields_of` plus `nodes`, `TIME_FIELD` and `depth_turns` by name |
+| 3 | `crates/pistol-arena/src/capture.rs:59-90` | finds `nps` and requires `time` to follow it, to strip the two wall-clock fields |
+| 4 | `tools/sealbot/matchserver/src/pistol_client.rs:41,241` | the substring `" totals "` |
+| 5 | `tools/cold_label_check.py:234,241` | `line.startswith("info totals ")`, with a named refusal when none was written |
+| 6 | `tools/baseline_snapshot.sh:501,648` | `grep ' totals '`, then one field by name |
+| 7 | `tools/bench_block.sh:260,264` | `grep -c '^info totals '`, then `sed -n 's/^info totals //p'` |
+| 8 | `tools/bench_delta.sh:379-390` | `awk '/ totals /'` |
+| 9 | `tools/determinism.sh:188` | `grep -c '^info totals depth_turns [1-9][0-9]* '` |
+| 10 | `tools/movetime_check.sh:125` | `sed -n 's/^info totals .* time \([0-9]\+\) .*/\1/p'` |
+
+**TEN SITES IN NINE FILES, WHERE A-08 SAID EIGHT — and the difference is the
+point of writing them down.** Two are new to this register:
+`crates/pistol-arena/src/capture.rs` (A-08 named `exchange.rs` and not the
+capture pass's own normalisation, which parses the same line for a different
+reason) and `tools/bench_delta.sh` (A-08 missed it; it produces this project's
+OFFICIAL perf verdict, D-220). One of A-08's is gone rather than fixed:
+`artifacts/wp20b_perf_guard.sh` was uncommitted and `artifacts/` is not tracked
+(CLAUDE.md rule 8), so it took its reader with it.
+
+**WHAT A CHANGE TO THE GRAMMAR OWES.** Every row above, checked; the three
+producers, checked against each other; and this table re-derived, because a
+register that is not re-derived is a list, and D-671 is this project's own
+record of what a list does when the population moves under it.
