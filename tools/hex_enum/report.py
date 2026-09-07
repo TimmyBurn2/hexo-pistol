@@ -50,7 +50,18 @@ class Moments:
             within += self.square[key] - n * mean * mean
             between += n * (mean - grand) ** 2
         classes = len(self.n)
-        total = within + between
+        # THE TOTAL IS COMPUTED WITHOUT THE PARTITION, and that is the whole
+        # point of computing it twice. Defining `total = within + between` makes
+        # the law-of-total-variance check compare a number to itself, which is
+        # the same empty check the enum memo deleted from its solver arm. This
+        # form shares no term with the loop above, so a defect in either half of
+        # the decomposition shows up as a disagreement.
+        partition_free = sum(self.square.values()) - count * grand * grand
+        if abs(within + between - partition_free) > 1e-6 * max(1.0, abs(partition_free)):
+            raise ValueError(
+                f"the two variance terms sum to {within + between} where the "
+                f"partition-free total is {partition_free}")
+        total = partition_free
         eta2 = between / total if total else 0.0
         omega2 = 0.0
         if count > classes and total:

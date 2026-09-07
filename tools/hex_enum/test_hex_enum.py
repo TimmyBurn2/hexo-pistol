@@ -170,6 +170,51 @@ def the_solver_predicates_are_constant_on_a_class():
           bad is None, f"{bad} shares a class with a pattern of the other kind")
 
 
+def the_variance_terms_are_computed_and_not_asserted():
+    """A unit test of the statistic the census's own criterion is written in.
+
+    The suite drove the census end to end and never read `omega2` at all, so a
+    routine printing a constant would have passed it — measured, four mutants of
+    `report.py` survived the whole gate. These cases pin the numbers against
+    arithmetic done here, and the equal-means case is the control: a partition
+    that separates nothing must earn nothing.
+    """
+    sys.path.insert(0, str(HERE))
+    from report import Moments
+
+    # Two classes, means 10 and 20, four observations each. Hand-derived:
+    # grand 15, between = 25, within = (1 + 1) / 2 ... computed below in full.
+    split = Moments()
+    for value in (9, 11, 9, 11):
+        split.add("a", value)
+    for value in (19, 21, 19, 21):
+        split.add("b", value)
+    within, between, total, classes, count, eta2, omega2 = split.terms()
+    check("a separating partition earns a positive between term",
+          abs(between - 25.0) < 1e-9 and abs(within - 1.0) < 1e-9,
+          f"within {within}, between {between}")
+    check("its total is the population variance, computed without the partition",
+          abs(total - 26.0) < 1e-9 and count == 8 and classes == 2, f"total {total}")
+    check("eta2 and omega2 are not constants",
+          abs(eta2 - 25.0 / 26.0) < 1e-9 and 0.0 < omega2 < eta2,
+          f"eta2 {eta2}, omega2 {omega2}")
+
+    # THE CONTROL: two classes with identical means. A partition that separates
+    # nothing must earn nothing, and omega2 must not be positive.
+    flat = Moments()
+    for value in (9, 11, 19, 21):
+        flat.add("a", value)
+    for value in (9, 11, 19, 21):
+        flat.add("b", value)
+    within, between, total, _classes, _count, eta2, omega2 = flat.terms()
+    check("a partition that separates nothing earns nothing",
+          abs(between) < 1e-9 and abs(eta2) < 1e-9 and omega2 <= 0.0,
+          f"between {between}, eta2 {eta2}, omega2 {omega2}")
+    check("the flat partition's within term is the whole variance",
+          abs(within - total) < 1e-9 and abs(total - 26.0) < 1e-9,
+          f"within {within}, total {total}")
+
+
 def main():
     for test in (a_five_run_beside_the_cell_costs_one_stone,
                  an_opponent_stone_in_every_window_kills_the_side,
@@ -181,7 +226,8 @@ def main():
                  the_ladder_is_a_chain_of_quotients,
                  the_ladders_bottom_rung_states_law_supports_two_boundaries,
                  a_rung_carries_no_component_that_refines_nothing,
-                 the_solver_predicates_are_constant_on_a_class):
+                 the_solver_predicates_are_constant_on_a_class,
+                 the_variance_terms_are_computed_and_not_asserted):
         print(test.__name__)
         test()
     if FAILURES:

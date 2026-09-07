@@ -1,4 +1,39 @@
-# The hex threat enum — derivation memo, revision 2. Written before any compute.
+# The hex threat enum — derivation memo, revision 2. **STOPPED.**
+
+> **STAGE E IS STOPPED AND NOTHING MAY BE PRICED ON THIS DOCUMENT.** Revision 1
+> FAILED its REVIEW-design (`hex_threat_enum_v1_REVIEW.md`: 3 BLOCKING, 7 MAJOR,
+> 8 MINOR); revision 2 was the ONE granted fix round and its scoped confirmation
+> also FAILED (`hex_threat_enum_v1_CONFIRM.md`: 1 new BLOCKING, 5 new MAJOR,
+> with B-3 still landing). **Two failures is the cap, so the dispatch's default
+> fork applies: `matrix_wp22_phase2_eval.md` runs WITHOUT `R-A4-CLASS`**, and
+> `wp22_phase2a_STOP_E.md` is the record.
+>
+> **THE BODY OF THIS DOCUMENT IS NOT REVISED AGAIN** — the fix-round cap is
+> spent, and a third revision is exactly the argument-instead-of-measurement
+> pattern D-630 named. **What is wrong with it is listed in the STOP summary,
+> not repaired here**, and the five findings that name a wrong answer are:
+> §6.5's criterion is passed at 1.77x by a value-free quotient (N-1); §5.5's
+> merge count is 27/5 348 under one reading of `DEF-PLAN` and 32/6 099 under the
+> one it prints (N-2); §5.5's *"not something a single-axis class can hold"* is
+> false and the repair costs 36 classes (N-3); §6.4's T1 *"only if"* is false and
+> the coarsest clip its own law licenses is `k = 16`, `C(18,3) = 816` (N-4); and
+> T3's clip merges more `t`-inconsistent patterns than the tuple it coarsens
+> (N-5).
+>
+> **WHAT SURVIVES AND IS NOT WITHDRAWN**: the enum's ARITHMETIC. The confirming
+> reviewer wrote its own tuple, its own `DEF-T` and its own even-`L` readings and
+> found *"no arithmetic error anywhere in the enum"* — `k = 25 / 98 / 357 / 357`,
+> the ladder, the reversal and swap invariances, `|W_L|`, the ceilings, the merge
+> curve, the max-`t` distribution and both `t` witnesses all reproduce exactly.
+> §7's census numbers are measurements and stand as measurements; what does not
+> stand is any CONCLUSION drawn from §6.5's criterion.
+>
+> **ONE CODE DEFECT WAS FIXED RATHER THAN RECORDED** (N-6), because a finding
+> that names a way the code produces a wrong answer is never overruled: gate 19
+> could not see a constant `ω²`, and four mutants of `report.py` survived it.
+> `report.py` now computes the total WITHOUT the partition and refuses a
+> disagreement by name, and the four mutants are DEAD
+> (`artifacts/wp22_phase2a/n6_mutants/`).
 
 **Governing revision**: `c5123c1` (`dev`), the revision every file, line and count
 quoted below was read at (D-692). **REVISION 2 IS THE ONE FIX ROUND** granted

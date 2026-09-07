@@ -1,4 +1,21 @@
-# OPTION MATRIX — the quiet-structure eval family for Phase 2, revision 1.
+# OPTION MATRIX — the quiet-structure eval family for Phase 2, revision 2.
+
+> **`R-A4-CLASS` IS OUT OF THE PRICED FIELD, BY THE DISPATCH'S OWN DEFAULT FORK.**
+> Stage E's derivation memo failed its REVIEW-design and then failed the
+> confirmation of its one fix round (`wp22_phase2a_STOP_E.md`), and the dispatch
+> registers the consequence in advance: *"Second FAIL = STOP E, and the matrix
+> runs without A4-CLASS (default fork applied, recorded)."* **The fork is
+> applied here and the row is shown with its stop, not deleted** — §4 keeps it,
+> priced as far as it was priced, so a reader sees a stopped row rather than an
+> omission. §6's order is re-ranked without it.
+>
+> **THE MEASUREMENTS SURVIVE AND ONE CONCLUSION DOES NOT.** The confirming
+> reviewer re-derived the enum independently and found no arithmetic error; §2's
+> counts stand. What does not stand is §6.5's purity CRITERION, which a
+> value-free quotient of stone counts passes at 1.77x — so every sentence in
+> revision 1 that read *"the registered purity criterion is MET"* as evidence
+> FOR the row is withdrawn, and §2.5 records what the criterion actually
+> measured.
 
 **Governing revision**: `54eb3ba` (`dev`) for every file, line and count quoted
 below (D-692), except where a paragraph names a later one.
@@ -255,11 +272,44 @@ projections of that tuple whose boundaries are `LAW-SUPPORT`'s and
    620 below his ≥ 20 line**, and a growth curve that moves 35 % over nine times
    the data.
 4. **The registered purity criterion is MET at all sixteen cells, by 2.0x to
-   3.6x** — the enum's `ω²` beats every matched-null replicate at every length
-   and rung, so the classes group codes that share label value beyond what a
-   partition of the same shape earns by chance. At `L = 11` T4 retains **62 % of
-   the un-quotiented ceiling's `ω²` while collapsing 11 909 observed codes to
-   231**.
+   3.6x — AND §2.5 measures that this says almost nothing.** The enum's `ω²`
+   beats every matched-null replicate at every length and rung, and at `L = 11`
+   T4 retains 62 % of the un-quotiented ceiling's `ω²` while collapsing 11 909
+   observed codes to 231. **Both facts are true and neither is evidence for the
+   row**, for the reason §2.5 gives.
+
+### §2.5 THE CRITERION IS PASSED BY A QUOTIENT THAT KNOWS NOTHING, AND THAT IS THE STOP
+
+MEASURED by the Stage E confirmation, driving the SHIPPED `census.py` with the
+class table replaced by the quotient `(own stones in the pattern, opp stones in
+the pattern)` — no window, no openness, no completion cost, no rule-4 relevance.
+Window unit, `L = 7`, 3 000 positions, both arms sharing the corpus, the walk and
+the matched-null machinery:
+
+| partition | classes | `ω²` | worst of 3 matched nulls | ratio | the criterion |
+|---|---|---|---|---|---|
+| the enum, T4 | 16 | 0.005031 | 0.001958 | 2.57x | MET |
+| **count-only quotient** | 23 | **0.004840** | 0.002740 | **1.77x** | **MET** |
+
+**The value-free quotient reaches 96 % of the full tuple's `ω²`.** Two readings,
+and the second is why `R-A4-CLASS` leaves the field:
+
+1. **Almost all of the enum's measured purity is stone counting.** Openness,
+   completion cost and game rule 4 together buy **4 %** on this corpus at this
+   unit. That is a fact about the corpus and the statistic, and it is the single
+   most useful thing Stage E produced.
+2. **The criterion cannot separate the enum from a quotient that discarded
+   everything the defect class names**, so by `docs/process.md`'s own clause —
+   *"A criterion that is a property the named defect class PRESERVES … passes
+   vacuously and is not a criterion"* — revision 1's kill condition could not
+   fire rather than declining to. A row whose registered kill cannot fire is not
+   priced; it is unpriced.
+
+**WHAT THIS DOES NOT SAY.** It does not say the enum is wrong — its arithmetic
+survived an independent re-derivation entirely. It does not say a class-quotient
+eval cannot work. It says **this corpus, through this statistic, at this unit,
+cannot tell the difference**, and that a matrix may not rank a row on a number
+that cannot discriminate.
 
 **AND ONE FINDING AGAINST THE ROW AS `eval_families` §7 PROPOSES IT**, recorded
 in the enum memo's §5.5 and not softened here: **the tuple merges patterns whose
@@ -317,7 +367,7 @@ by construction (`C(k+2,3)` is a size-3 multiset over the three axes at one
 cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 `eval_families` states them, which is the shape `handcrafted_v0` already sums in.
 
-### R-A4-CLASS — length-11 windows quotiented through the Stage E enum, scored on the 3-axis multiset
+### R-A4-CLASS — length-11 windows quotiented through the Stage E enum. **STOPPED, shown with its stop**
 
 | column | value |
 |---|---|
@@ -328,8 +378,8 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 | **determinism and quantization** | Closed-form fit, no seed. Integer after bake; one class lookup plus one code lookup per touch. The accumulator is bounded by construction: `3L` active windows times the clamped maximum, `training_pipeline_2026-09.md` §4's *"no combination of possible active features can exceed the maximum value"*. `EVAL_MAX = 16 000` with an i64 intermediate is the shape to keep. |
 | **seed budget** (MEASURED, §3) | **1 fit, ≥ 8 splits** for any validation number; ±3.5 % on a single split. No training seed. |
 | **books, BOTH arms** | node-matched Δ = 10: **8 000 pairs on `book_v3`, power 0.9045, the whole book**. Time-matched: **not runnable** (§1.4) — no arena movetime, no named play seat, no play-seat pentanomial. |
-| **kill condition** | The registered purity criterion failing at the chosen rung — MET at all sixteen cells, so **not fired**. The row's own §7.1 arithmetic kills **T4 and T3 at `L = 11`** on density (1.07 and 27 observations per nominal parameter). |
-| **strongest known attack** | **The `t = 1` / `t = 2` merge** (§2, enum memo §5.5): 27 of 357 classes contain patterns whose exact `DEF-T` after a stone at the cell differs, and `RULE-EXACT` (`threat_calculus_v1.md:64-66`) makes `t` the truth. The row therefore assigns one weight to a cell buying a hittable single plan and to one buying an unhittable pair, in the simplest four-shapes the game has — and it is not repairable within a single-axis class (max single-axis `t` is 2). |
+| **kill condition — AND IT IS WHY THE ROW IS OUT** | The registered purity criterion was the row's kill, and §2.5 measures that **a value-free quotient of stone counts passes it at 1.77x**. It did not decline to fire; it could not. The row's own §7.1 arithmetic separately kills **T4 and T3 at `L = 11`** on density (1.07 and 27 observations per nominal parameter), which leaves T2 and T1 — and those are the rungs the criterion was the only positive evidence for. |
+| **strongest known attack, and it landed** | **The `t = 1` / `t = 2` merge** (enum memo §5.5): classes contain patterns whose exact `DEF-T` after a stone at the cell differs, and `RULE-EXACT` (`threat_calculus_v1.md:64-66`) makes `t` the truth. **The confirmation measured the count to be 32 classes / 6 099 patterns under the definition the memo prints**, not the 27 / 5 348 it published, and measured that the memo's reason for not repairing it — *"not something a single-axis class can hold"* — is **false**: adding single-axis `t` as a seventh component removes the merge entirely for 36 extra classes (`k` 357 → 393, parameters +33 %). So the row's known defect is bigger than stated and is repairable at a price nobody has quoted. |
 
 ### R-A5-TOPK — top-K folded codes plus one rare bucket
 
@@ -431,7 +481,7 @@ floor for the bench bracket — flips if the play seat is redefined."*
 
 | row | node-matched arm | time-matched arm | nodes/sec floor registered |
 |---|---|---|---|
-| R-A4-CLASS | Δ = 10, 8 000 pairs, `book_v3` whole, power **0.9045** | **not runnable** (§1.4) | **341 617** (0.64x) |
+| R-A4-CLASS | **STOPPED (§2.5)** — no arm registered | — | — |
 | R-A5-TOPK | as above | not runnable | 341 617 (0.64x) |
 | R-A2-L11F | as above, and it needs **≥ 4 nets** for one arm (§3) | not runnable | 341 617 (0.64x) |
 | R-A3-L11F+F7 | as above | not runnable | 341 617 (0.64x) |
@@ -484,42 +534,46 @@ The books fund one acceptance run (§1.6). So the field's real question is not
    and a matrix that presented it as a free acceptance would be selling the
    holdout's 0.7430 at `elo1 = 30` as though it were 0.9.
 
-2. **R-A4-CLASS at `L = 11`, rung T2.** 18 424 nominal parameters, 1 533 observed
-   codes at median 41 observations, a growth curve that has flattened, the
-   registered purity criterion met at **3.58x**, a closed-form fit with no
-   training seed, and no dependency this workstation lacks. Its own §7.1
-   arithmetic kills T4 and T3 at this length, so the rung is not a free choice.
-3. **R-A5-TOPK.** The same cost shape and the same throughput bracket, decided
-   against A4 by whichever unit the evaluator's summand turns out to be — which
-   is why it ranks below rather than beside: **its parameter count is 811 or 143
-   depending on a question this matrix cannot answer.**
-4. **R-A3-L11F+F7.** Zero inference cost over A1 and the documented remedy for
+2. **R-A5-TOPK.** The leading learned row now that A4 is out: a closed-form fit,
+   no training seed, no dependency this workstation lacks, the same 33 touches
+   per stone and the same throughput bracket A4 would have had. **Its parameter
+   count is 811 or 143 depending on the evaluator's summand**, and that question
+   is the one §4 says the architect must settle; it does not stop the row being
+   run, because both counts are affordable against 12 980 519 window
+   observations.
+3. **R-A3-L11F+F7.** Zero inference cost over A1 and the documented remedy for
    §0.3, but its source disowns the remedy at 200 000x this corpus's size and
    its real parameter count is A1's killed 1.2 observations each.
-5. **R-A2-L11F.** The strongest published shape and the one this project is
+4. **R-A2-L11F.** The strongest published shape and the one this project is
    furthest from being able to run: a trainer that does not exist here, a
    non-reproducible training run, **≥ 4 nets against one funded acceptance
    arm**, and the paradigm under which three games measure its trade to lose.
-6. **R-A1-L11** — scored and killed (§4). **R-C-SPSA** — killed on cost against
-   the ledger (§4). **R-D-W1** — killed by ruling (D-704).
+5. **R-A1-L11** — scored and killed (§4). **R-C-SPSA** — killed on cost against
+   the ledger (§4). **R-D-W1** — killed by ruling (D-704). **R-A4-CLASS** —
+   STOPPED (§2.5), and it is shown rather than deleted so a reader sees what it
+   cost to find out.
 
 **WHAT WOULD CHANGE THIS ORDER, stated so the architect can overrule it on
 evidence rather than on taste**: a second acceptance book moves R-A2 up, because
 its seed budget stops being a selection problem; a decision that the evaluator
-sums over windows rather than cells swaps 2 and 3; and an ADR moving the arena's
+sums over windows rather than cells settles R-A5's parameter count without
+reordering anything; and an ADR moving the arena's
 movetime refusal makes §5's column real, at which point the throughput brackets
 start discriminating and the row with the lowest floor is no longer indifferent.
 
-**NOTHING IS SELECTED HERE** and no ADR of selection is written. §2's finding
-against R-A4-CLASS — the `t = 1` / `t = 2` merge — stands beside its rank and is
-not netted against it.
+**NOTHING IS SELECTED HERE** and no ADR of selection is written. §2.5's finding
+is not netted against anything either: it is the reason a row left the field, and
+it is also the most transferable thing this package measured — **on this corpus,
+through `ω²`, at the window unit, threat structure beyond stone counting is worth
+4 %**, and any future row that proposes to learn quiet structure from these
+labels is priced against that number.
 
 ## §7 COSTS AND FAILURE MODES, one line each
 
 | row | cost before it can be run | failure mode |
 |---|---|---|
 | R-H-EXT | none beyond writing the terms | it loses, and the incumbent stands — which is a finding and not a waste, because the calculus has been calling these terms candidates since v1.0 |
-| R-A4-CLASS | a fit and a backend | the `t` merge (§2) is invisible to the fit: a wrong class is scored consistently wrong and the loss cannot see it |
+| R-A4-CLASS | **STOPPED** — the row is out of the priced field | its registered kill could not fire (§2.5), and the `t` merge is bigger than published and repairable at an unquoted price |
 | R-A5-TOPK | a fit and a backend | the rare bucket scores all novel structure alike, and the tail is where novel structure is |
 | R-A3-L11F+F7 | a fit with virtual features and a coalescing step | the factor regresses, which its own source warns of, and 1.2 observations per real parameter is the density that killed A1 |
 | R-A2-L11F | a trainer, a dependency, ≥ 4 nets, a digest discipline, a shape check | the α-β width optimum sits below the accuracy optimum, measured in three games |
