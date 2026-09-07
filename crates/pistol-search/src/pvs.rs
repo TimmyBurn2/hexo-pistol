@@ -840,22 +840,10 @@ impl<'a> Run<'a> {
         self.position.state().turn() - self.root_turn
     }
 
-    /// Whether the budget has run out.
-    ///
-    /// A node budget is tested at a fixed node granularity so its stopping
-    /// point is exact and reproducible (docs/decisions.md D-74). A deadline is
-    /// tested at EVERY abortable node: a mask tuned for node budgets would let
-    /// up to [`NODE_CHECK_INTERVAL`] nodes — each with a whole ordering pass —
-    /// run past the clock, which is D-95's magnitude class, and a deadline stop
-    /// is not reproducible anyway, so granularity buys it nothing.
-    ///
-
     /// One trigger evaluation and its calls (design wp18b §2 D1's dispatch,
     /// D2's directions, §4's scores). Returns `Some(score)` when a proof
     /// ends the node, `None` when there is no verdict here. Solver nodes
     /// are absorbed into the budget the moment each call returns.
-    ///
-    #[allow(clippy::empty_line_after_doc_comments)]
     fn solver_verdict(&mut self) -> Option<i32> {
         // The &self reads first, so the position borrow below never has to
         // coexist with them through the receiver.
@@ -885,47 +873,9 @@ impl<'a> Run<'a> {
             // it would be paid by every node of every shipped search, which is
             // the defect test 17's counter exists to exclude.
             self.census_folds = self.census_folds.saturating_add(1);
-            let keys = crate::census::CensusKeys::at(state);
-            let counts = |side: pistol_core::Player| {
-                (
-                    threats.hot_windows(side).len() as u32,
-                    threats.win_in_one_ply_windows(side).len() as u32,
-                    threats
-                        .live_windows_at_count(side, pistol_solver::LiveCount::Three)
-                        .len() as u32,
-                )
-            };
-            let (mover_hot_n, mover_w1, mover_l3) = counts(mover);
-            let (opponent_hot_n, opponent_w1, opponent_l3) = counts(opponent);
-            // The one column that costs more than a slice length. It is paid
-            // ONLY under a census — a run that collects no census never
-            // reaches this closure — so the cost the matrix's row (b) owes a
-            // bench is not paid here and is not measured here either.
-            let left = pistol_solver::StonesLeft::from_state(state).unwrap_or_else(|| {
-                panic!(
-                    "pistol-search invariant {}: the trigger fired on a decided position",
-                    crate::staged::OVERLOAD_ON_A_DECIDED_POSITION
-                )
-            });
-            let cover = match threats.blocking_covers(mover, pistol_solver::HitBudget::from(left)) {
-                pistol_solver::Cover::NothingToBlock => crate::census::CoverClass::NothingToBlock,
-                pistol_solver::Cover::Impossible => crate::census::CoverClass::Impossible,
-                pistol_solver::Cover::Minimal(covers) => {
-                    crate::census::CoverClass::Minimal(covers.len())
-                }
-            };
             (
-                keys,
-                crate::census::TriggerColumns {
-                    turns_from_root: from_root,
-                    mover_hot: mover_hot_n,
-                    opponent_hot: opponent_hot_n,
-                    mover_win_in_one_ply: mover_w1,
-                    opponent_win_in_one_ply: opponent_w1,
-                    mover_live_three: mover_l3,
-                    opponent_live_three: opponent_l3,
-                    cover,
-                },
+                crate::census::CensusKeys::at(state),
+                crate::census::TriggerColumns::at(state, threats, from_root),
             )
         });
         // One clone serves both calls (the solver never mutates its input).
@@ -1008,18 +958,18 @@ impl<'a> Run<'a> {
         attacker: crate::census::TriggerAnswer,
         defender: Option<crate::census::TriggerAnswer>,
     ) {
-        let (Some((keys, columns)), Some(census)) = (observed, self.census.as_mut()) else {
-            return;
-        };
-        census.push(crate::census::TriggerObservation {
-            key: keys.key,
-            key_pos: keys.key_pos,
-            columns,
-            attacker,
-            defender,
-        });
+        crate::census::push(&mut self.census, observed, attacker, defender);
     }
 
+    /// Whether the budget has run out.
+    ///
+    /// A node budget is tested at a fixed node granularity so its stopping
+    /// point is exact and reproducible (docs/decisions.md D-74). A deadline is
+    /// tested at EVERY abortable node: a mask tuned for node budgets would let
+    /// up to [`NODE_CHECK_INTERVAL`] nodes — each with a whole ordering pass —
+    /// run past the clock, which is D-95's magnitude class, and a deadline stop
+    /// is not reproducible anyway, so granularity buys it nothing.
+    ///
     /// `pub(crate)`: `crate::quiescence` calls this SAME method at its own
     /// entry rather than duplicating it (docs/wp16_quiescence_design.md §7).
     pub(crate) fn should_stop(&mut self) -> bool {

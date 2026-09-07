@@ -48,6 +48,13 @@ const _: () = assert!(
 /// Named invariant: a completed iteration that produced no move.
 pub const NO_MOVE_FROM_A_COMPLETED_ITERATION: &str = "NO_MOVE_FROM_A_COMPLETED_ITERATION";
 
+/// Named invariant: a one-ply completing witness on a board with no second
+/// legal cell to pair it with.
+pub const NO_ONE_PLY_PARTNER: &str = "NO_ONE_PLY_PARTNER";
+
+/// Named invariant: an OR-rooted solver proof carrying no first move.
+pub const SOLVER_PROOF_WITHOUT_A_MOVE: &str = "SOLVER_PROOF_WITHOUT_A_MOVE";
+
 /// A search, and everything it keeps between calls.
 ///
 /// The table is kept: successive searches in one game share what they learned,
@@ -374,7 +381,7 @@ impl Searcher {
             if let pistol_solver::SolveOutcome::Win(tree) = attacker.outcome {
                 root_calls.proofs += 1;
                 root_calls.root_nodes = root_solver_nodes;
-                push_root_census(&mut self.census, root_site, attacker_answer, None);
+                crate::census::push(&mut self.census, root_site, attacker_answer, None);
                 return Ok(solver_proof_outcome(
                     state,
                     &tree,
@@ -393,7 +400,7 @@ impl Searcher {
             let defender = solver.solve_defender(state, cap);
             root_solver_nodes += defender.nodes;
             root_calls.invocations += 1;
-            push_root_census(
+            crate::census::push(
                 &mut self.census,
                 root_site,
                 attacker_answer,
@@ -709,8 +716,8 @@ fn root_triggers(position: &mut Position, trigger: crate::params::SolverTrigger)
 /// a PAIR: the completing stone plus the lexicographically-least other
 /// legal placement. Rule 4 ends the turn on the completing stone, so the
 /// partner changes nothing about the proof — it only makes the answer a
-/// legal turn. REFUSES (None) if the board offers no partner, which a
-/// real position cannot do.
+/// legal turn — see `one_ply_turn`, which both this and [`proof_line`] go
+/// through so the degeneration has one behaviour.
 pub fn proof_first_move(tree: &pistol_solver::ProofTree, state: &GameState) -> Option<Turn> {
     let node = tree.nodes.iter().find(|node| node.key == tree.root)?;
     match &node.kind {
@@ -719,17 +726,47 @@ pub fn proof_first_move(tree: &pistol_solver::ProofTree, state: &GameState) -> O
             pistol_solver::WinWitness::Pair { first, second, .. } => {
                 Turn::pair(*first, *second).ok()
             }
-            pistol_solver::WinWitness::OnePly { at, .. } => {
-                let partner = pistol_core::legal_placements(state.board())
-                    .into_iter()
-                    .find(|cell| cell != at)?;
-                Turn::pair(*at, partner).ok()
-            }
+            pistol_solver::WinWitness::OnePly { at, .. } => Some(one_ply_turn(state, at)),
         },
         // An AND-rooted proof (the defender direction) has no single first
         // move of the mover's — the search never asks for one there.
         pistol_solver::ProofKind::AndStep | pistol_solver::ProofKind::AndOverloadLeaf => None,
     }
+}
+
+/// The turn a ONE-PLY completing witness degenerates to: the completing stone
+/// paired with the lexicographically-least other legal placement.
+///
+/// A one-ply witness is a single cell and a turn at `stones_owed == 2` is a
+/// PAIR. Rule 4 ends the turn on the completing stone, so the partner changes
+/// nothing about the proof — it only makes the answer a legal turn.
+///
+/// # Panics
+///
+/// [`NO_ONE_PLY_PARTNER`] when the board offers no second legal cell, and
+/// [`crate::pvs::CANDIDATE_ILLEGAL`]'s sibling reasoning applies: a board
+/// holding a live five holds at least six stones, so the radius-8 legal region
+/// around them is thousands of cells and this cannot happen. It is a panic
+/// rather than a `None` because the two call sites used to answer differently —
+/// `proof_first_move` returned `None` and `proof_line` panicked, on the same
+/// impossible board (docs/decisions.md D-676, audit row A-06), and a
+/// degeneration with two behaviours is a degeneration nobody can reason about.
+fn one_ply_turn(state: &GameState, at: &Coord) -> Turn {
+    let partner = pistol_core::legal_placements(state.board())
+        .into_iter()
+        .find(|cell| cell != at)
+        .unwrap_or_else(|| {
+            panic!(
+                "pistol-search invariant {NO_ONE_PLY_PARTNER}: a one-ply witness at {at} on a \
+                 board whose legal region offers no other cell"
+            )
+        });
+    Turn::pair(*at, partner).unwrap_or_else(|error| {
+        panic!(
+            "pistol-search invariant {NO_ONE_PLY_PARTNER}: {at} and its partner {partner} do not \
+             make a turn: {error}"
+        )
+    })
 }
 
 /// The Z2 zone cells of the proof's root node (design wp18b §2 D3): the
@@ -774,19 +811,11 @@ pub fn proof_line(
                         );
                     }
                     pistol_solver::WinWitness::OnePly { at, .. } => {
-                        // Same degeneration as `proof_first_move`: the
-                        // completing stone paired with the least legal
-                        // partner, so the PV line ends with a legal TURN
-                        // (REVIEW-impl's catch that this arm silently
+                        // The SAME degeneration `proof_first_move` uses, so the
+                        // PV line ends with the legal turn that proof answers
+                        // with (REVIEW-impl's catch that this arm silently
                         // dropped the completing turn).
-                        let partner = pistol_core::legal_placements(state.board())
-                            .into_iter()
-                            .find(|cell| cell != at)
-                            .expect("a live five's board has a partner cell");
-                        line.push(
-                            Turn::pair(*at, partner)
-                                .expect("the completing cell and a partner differ"),
-                        );
+                        line.push(one_ply_turn(state, at));
                     }
                 }
                 break;
@@ -821,64 +850,13 @@ fn root_census_site(
     position: &mut Position,
 ) -> (crate::census::CensusKeys, crate::census::TriggerColumns) {
     let (state, threats, _) = position.staged_context();
-    let keys = crate::census::CensusKeys::at(state);
-    let mover = state.to_move();
-    let opponent = mover.opponent();
-    let counts = |side| {
-        (
-            threats.hot_windows(side).len() as u32,
-            threats.win_in_one_ply_windows(side).len() as u32,
-            threats
-                .live_windows_at_count(side, pistol_solver::LiveCount::Three)
-                .len() as u32,
-        )
-    };
-    let (mover_hot, mover_w1, mover_l3) = counts(mover);
-    let (opponent_hot, opponent_w1, opponent_l3) = counts(opponent);
-    let left = pistol_solver::StonesLeft::from_state(state).unwrap_or_else(|| {
-        panic!(
-            "pistol-search invariant {}: the root trigger fired on a decided position",
-            crate::staged::OVERLOAD_ON_A_DECIDED_POSITION
-        )
-    });
-    let cover = match threats.blocking_covers(mover, pistol_solver::HitBudget::from(left)) {
-        pistol_solver::Cover::NothingToBlock => crate::census::CoverClass::NothingToBlock,
-        pistol_solver::Cover::Impossible => crate::census::CoverClass::Impossible,
-        pistol_solver::Cover::Minimal(covers) => crate::census::CoverClass::Minimal(covers.len()),
-    };
     (
-        keys,
-        crate::census::TriggerColumns {
-            // The root's own firing sits at turn 0 from itself.
-            turns_from_root: 0,
-            mover_hot,
-            opponent_hot,
-            mover_win_in_one_ply: mover_w1,
-            opponent_win_in_one_ply: opponent_w1,
-            mover_live_three: mover_l3,
-            opponent_live_three: opponent_l3,
-            cover,
-        },
+        crate::census::CensusKeys::at(state),
+        // The root's own firing sits at turn 0 from itself, and that is the
+        // WHOLE of what this site varies from the in-tree one (A-05, D-675's
+        // sibling ruling on one constructor).
+        crate::census::TriggerColumns::at(state, threats, 0),
     )
-}
-
-/// Push the ROOT's census row, if a census was asked for.
-fn push_root_census(
-    census: &mut Option<Vec<crate::census::TriggerObservation>>,
-    site: Option<(crate::census::CensusKeys, crate::census::TriggerColumns)>,
-    attacker: crate::census::TriggerAnswer,
-    defender: Option<crate::census::TriggerAnswer>,
-) {
-    let (Some((keys, columns)), Some(rows)) = (site, census.as_mut()) else {
-        return;
-    };
-    rows.push(crate::census::TriggerObservation {
-        key: keys.key,
-        key_pos: keys.key_pos,
-        columns,
-        attacker,
-        defender,
-    });
 }
 
 /// The outcome a root attacker proof answers with (design wp18b §2 D3):
@@ -893,8 +871,12 @@ fn solver_proof_outcome(
     started: Instant,
 ) -> SearchOutcome {
     let depth = tree.win_depth_turns();
-    let best = proof_first_move(tree, state)
-        .unwrap_or_else(|| panic!("pistol-search invariant SOLVER_PROOF WITHOUT A MOVE: an OR-rooted proof always carries one"));
+    let best = proof_first_move(tree, state).unwrap_or_else(|| {
+        panic!(
+            "pistol-search invariant {SOLVER_PROOF_WITHOUT_A_MOVE}: an OR-rooted proof always \
+             carries one"
+        )
+    });
     let pv = proof_line(tree, state, 2 * depth as usize + 1);
     let elapsed = started.elapsed();
     SearchOutcome {

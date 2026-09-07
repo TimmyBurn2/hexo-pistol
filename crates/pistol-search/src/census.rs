@@ -122,6 +122,90 @@ pub struct TriggerColumns {
     pub cover: CoverClass,
 }
 
+impl TriggerColumns {
+    /// Every column of one firing, from ONE state and ONE threat view.
+    ///
+    /// **ONE CONSTRUCTOR, BECAUSE THERE WERE TWO** (audit row A-05): the root's
+    /// site and the in-tree site read the same four queries into the same eight
+    /// fields in the same order, and a column added to one and not the other
+    /// split the census with every gate green. The root's own site exists for a
+    /// borrow reason and not a semantic one, so what it varies is
+    /// `turns_from_root` and nothing else.
+    ///
+    /// # Panics
+    ///
+    /// [`crate::staged::OVERLOAD_ON_A_DECIDED_POSITION`] if the trigger fired
+    /// on a decided position, which `cover` cannot be asked about.
+    pub(crate) fn at(
+        state: &pistol_core::GameState,
+        threats: &pistol_solver::ThreatState,
+        turns_from_root: u32,
+    ) -> TriggerColumns {
+        let mover = state.to_move();
+        let opponent = mover.opponent();
+        let counts = |side| {
+            (
+                threats.hot_windows(side).len() as u32,
+                threats.win_in_one_ply_windows(side).len() as u32,
+                threats
+                    .live_windows_at_count(side, pistol_solver::LiveCount::Three)
+                    .len() as u32,
+            )
+        };
+        let (mover_hot, mover_win_in_one_ply, mover_live_three) = counts(mover);
+        let (opponent_hot, opponent_win_in_one_ply, opponent_live_three) = counts(opponent);
+        // The one column that costs more than a slice length. It is paid ONLY
+        // under a census — a run that collects none never reaches this
+        // function — so the cost the matrix's row (b) owes a bench is neither
+        // paid nor measured here.
+        let left = pistol_solver::StonesLeft::from_state(state).unwrap_or_else(|| {
+            panic!(
+                "pistol-search invariant {}: the trigger fired on a decided position",
+                crate::staged::OVERLOAD_ON_A_DECIDED_POSITION
+            )
+        });
+        let cover = match threats.blocking_covers(mover, pistol_solver::HitBudget::from(left)) {
+            pistol_solver::Cover::NothingToBlock => CoverClass::NothingToBlock,
+            pistol_solver::Cover::Impossible => CoverClass::Impossible,
+            pistol_solver::Cover::Minimal(covers) => CoverClass::Minimal(covers.len()),
+        };
+        TriggerColumns {
+            turns_from_root,
+            mover_hot,
+            opponent_hot,
+            mover_win_in_one_ply,
+            opponent_win_in_one_ply,
+            mover_live_three,
+            opponent_live_three,
+            cover,
+        }
+    }
+}
+
+/// Push one firing's row, if a census was asked for.
+///
+/// **ONE PUSH, BECAUSE THERE WERE TWO** (audit row A-05): the root's and the
+/// in-tree one built the same `TriggerObservation` field for field behind the
+/// same "no site, or no census, so nothing to record" guard. A field added to
+/// one and not the other split the census as silently as a column did.
+pub(crate) fn push(
+    census: &mut Option<Vec<TriggerObservation>>,
+    site: Option<(CensusKeys, TriggerColumns)>,
+    attacker: TriggerAnswer,
+    defender: Option<TriggerAnswer>,
+) {
+    let (Some((keys, columns)), Some(rows)) = (site, census.as_mut()) else {
+        return;
+    };
+    rows.push(TriggerObservation {
+        key: keys.key,
+        key_pos: keys.key_pos,
+        columns,
+        attacker,
+        defender,
+    });
+}
+
 /// What the mover can do about the opponent's hot windows this turn.
 ///
 /// [`pistol_solver::Cover`] carries the covering CELLS; a census row wants the
