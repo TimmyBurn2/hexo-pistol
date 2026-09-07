@@ -720,12 +720,17 @@ after every restore. It was retaken with the literal read out of the source.
 
 Everything this package measured is under `artifacts/pre_phase2_sweep/`,
 gitignored (CLAUDE.md rule 8) and sha-anchored here. `tools/artifact_check.sh`
-at the closing revision: `ok (859 tracked files, none of them artifacts)`.
+at the closing revision: gate 5 green in the run quoted in §6.
 
 ```
 31236b5632c0c1b16f0b6ff2a6a62aee6017321d05f6785b0baec7dd1222bbde  census_after.txt
+31236b5632c0c1b16f0b6ff2a6a62aee6017321d05f6785b0baec7dd1222bbde  census_after_fixes.txt
 31236b5632c0c1b16f0b6ff2a6a62aee6017321d05f6785b0baec7dd1222bbde  census_before.txt
 1d3fbcd03d8dba34c20d08ae89c50b5816f38fed5afca3d68b3893a97956409e  ci_baseline_007f821.txt
+9a175b29b81d7b64055927728e779690eb35576144d92aa1bc914874c6b3f763  ci_closing_9ce9a7c.txt
+1a187f8bf4509672bdf2b5062f2cdd0d622af160d7a7443820329b6d073a66a2  identity_after_fixes_instrument_staged_v0.txt
+2a8d625e221f82db3a64260fb920f713b6e0dbe369ab6ca2381095d1556ab112  identity_after_fixes_instrument_v0.txt
+3562d306254bad8593bce9004b70f2c448352c8c6ae2ed64a112b6ce4e9fa366  identity_after_fixes_play_staged_v0.txt
 1a187f8bf4509672bdf2b5062f2cdd0d622af160d7a7443820329b6d073a66a2  identity_after_instrument_staged_v0.txt
 2a8d625e221f82db3a64260fb920f713b6e0dbe369ab6ca2381095d1556ab112  identity_after_instrument_v0.txt
 3562d306254bad8593bce9004b70f2c448352c8c6ae2ed64a112b6ce4e9fa366  identity_after_play_staged_v0.txt
@@ -738,37 +743,19 @@ c269f81e44b1048763778fe3c8e12fe46f91e6145f5821ed428438267b30fb8a  identity_befor
 e45cd41eed50e1149d5461fbfb31f54b4cb2e0902519c059eea1b99d84ded141  mutation_set.sh
 2585e8c8a597ae109478fa477f3f5a61e7dfadf61109d63187a229aac37eb2e7  t3_gate_costs.txt
 bff65973a7cb480f70ab8ec461577f1cc43a049eeb5e4e970ef04cc2be64ba77  workspace_tests_f4f4a5c.txt
+8a96b93fed66b695ec71ffc8b9049a9708429e37f968d14818fdd8c47ac6582f  workspace_tests_final.txt
 ```
 
-**THE FIRST TWO LINES ARE THE E-GROUP GUARD AND THEY ARE THE SAME DIGEST.** The
-census rows before and after the constructor refactor hash identically —
-`31236b5632c0c1b1…` — which is the claim §2 group E makes, standing on its own
-without a reader having to take the diff on trust. The three `identity_*` pairs
-differ, and the whole of their difference is the one handshake line E1 was ruled
-to shorten.
+**THE CENSUS DIGESTS ARE THE E-GROUP GUARD AND THERE ARE NOW THREE OF THEM.**
+`census_before.txt` (built at `b60c3d3`), `census_after.txt` (after E2's
+constructor merge) and `census_after_fixes.txt` (after all three fix rounds,
+which touched `census.rs` and `search.rs` again) hash IDENTICALLY —
+`31236b5632c0c1b1…`. The claim survives its own repair, which is the only reason
+it is worth re-stating: a fix round that touched the constructor is exactly when
+a byte-identity claim taken once, earlier, stops being evidence.
 
-#### The two counting corrections group C's review forced, stated where they happened
-
-**A-14's "46 without" was a MID-WORK READING PUBLISHED AS AN INITIAL ONE.** The
-row said "100 such functions, 46 without", and the reviewer refuted it with this
-package's own diff: `git show f4f4a5c | grep -c '^+.*# Errors'` is **78**, and a
-population of 46 cannot absorb 78 additions. The diagnosis is not a bad detector
-— the return-type detector is sound — it is that the 46 was taken **after three
-batches of sections had already landed**, and written down as though it were the
-count before any had. The derivable figures are `git grep -h '/// # Errors' <rev>
--- crates | wc -l`: **25 at `c586837`, 103 at `cb6e853`**. The row now carries
-those. The outcome the row asserts — none left — was independently confirmed.
-
-**A-13's "16 → 19, grown" mixed a real change with a DETECTOR SWAP.** The audit
-breaks a run at a bare `//`; this package's detector does not. Measured three
-ways at three revisions, with the audit's own detector: `d83ac01` → **16**,
-which is the audit's published number exactly, so the instrument is calibrated;
-`c586837` → **17**; `cb6e853` → **4**. Under this package's detector the same
-revisions give 15, 19 and 8 — and 15 at `d83ac01` CONTRADICTS the audit at the
-audit's own revision, which is what makes the swap a defect rather than a
-preference. **The row now reports the audit's detector**, under which the item
-closes 17 → 4. `docs/process.md` asks that a re-derived count come from an
-instrument calibrated against the original; this one now is.
+The `identity_*` triples differ from their `before` in one line each, and it is
+the licensed `id candidate_policy staged …` line in every case.
 
 ## §5 The three reviews, and the fix round each forced
 
@@ -878,3 +865,107 @@ what it can: every finding is addressed, the gates and the suites below are gree
 at the closing revision, and E MINOR-3's mutant was re-run and dies. Whether that
 buys a second review is the operator's call and not this session's, because a
 second failure would be D-481's STOP.
+
+## §6 The gates, cited from their own output
+
+`tools/ci.sh` at the closing revision **`9ce9a7c`**, in a detached worktree at
+`/home/tom/pistol-wt/sweep-ci`, with **no `CARGO_TARGET_DIR` export** — the
+export is what voided the texel package's gate 3 (D-672) and what turned this
+package's first mutation baseline red at `solver_link_check_tests`. Log:
+`artifacts/pre_phase2_sweep/ci_closing_9ce9a7c.txt`.
+
+```
+=== gate 1/21: cargo fmt --all --check
+=== gate 2/21: build from the git-tracked file set
+=== gate 3/21: cargo test --workspace --locked
+=== gate 4/21: cargo clippy --workspace --all-targets --locked -- -D clippy::all -D warnings
+=== gate 5/21: artifact rejection
+=== gate 6/21: config validation
+=== gate 7/21: perft oracle
+=== gate 8/21: tactical fixture at its pre-registered threshold
+=== gate 9/21: cross-process determinism
+=== gate 10/21: differential search oracle
+=== gate 11/21: staged generator soundness (four parts)
+=== gate 12/21: solver oracle (four gates)
+=== gate 13/21: solver determinism
+=== gate 14/21: movetime ceiling on the D-95 reproducer class
+=== gate 15/21: arena self-match smoke
+=== gate 16/21: sealbot anchor platform suite
+=== gate 17/21: file-justification check
+=== gate 18/21: offline texel and census tooling
+=== gate 19/21: decision-key uniqueness
+=== gate 20/21: carve-document label consistency
+=== gate 21/21: governing-document citations
+
+ci: all gates passed
+EXIT=0
+```
+
+The gates this package can move, in their own words:
+
+```
+config_check: 21 engine config(s), 1 weight table(s), 18 arena config(s), 3 book config(s), 2 solver config(s)
+determinism: ok — 5 seat(s), no difference outside nps/time in any of them
+solver_determinism: PASS — 61 cases, byte-identical transcripts
+file_justification_check: 409 tracked .rs/.sh/.py files, 85 over the cap, all registered in docs/rule9_justifications.md (85 entries)
+decision_key_check: 684 decision keys in docs/decisions.md, no repeat outside the exemption
+governing_citation_check: 15 governing document(s), 0 proposed path(s)
+```
+
+**GATE 4's LINE IS THE ONE TO READ TWICE.** It now prints `--locked` and
+`-D warnings`, which is T4's change and T MINOR-3's correction in one line — the
+step used to advertise a command it did not run. **And gate 17 is green on the
+tree it ships in**, which is the whole of the BLOCKING finding: it was red from
+`42ab538` to `cb6e853` and nothing in this package looked, because the only CI
+run it cited was taken at `007f821` before any of its own work.
+
+**THIS IS THE GREEN THE PACKAGE NEVER HAD.** D-674 says a package's closing
+revision is the one its cited CI ran at; the run above is that, and §2's H1 entry
+— which quotes a run at `007f821` — is the STARTING green, not this one.
+
+## §7 What a successor needs
+
+- **The package is CLOSED on group H, group E and group C. T3 is the only
+  PARTIAL**, and it is partial by measurement rather than by cost: `perft_check.sh`
+  and `search_oracle_check.sh` produce no recorded number, so item 10's letter
+  does not bind them; `determinism.sh` and `movetime_check.sh` do, and neither can
+  take a COMPLIANT test without a seeded-violation seam, which is a named
+  decision on two CI gates and wants an OPTION MATRIX this package had no grant
+  for. The `command -v` sweep stops for a second reason the ROADMAP supplies
+  itself: item 8's own text is scheduled to change, and a 36-site sweep against a
+  rule about to move is the sweep written twice.
+
+- **THREE THINGS ARE RECORDED AS OWED AND NOTHING IN THE TREE WILL REMIND
+  ANYONE.** (1) The seam decision above. (2) `tools/wp16_warm_attribution_check.py`
+  still carries an in-file `RULE9-JUSTIFICATION` marker whose parenthetical is now
+  FALSE — it says the gate reaches only `.rs` and `.sh` — and it is left because
+  deleting it edits an instrument a pre-registration names with its revision,
+  which is the precise coupling D-415 declined. (3) A release-profile lint pass,
+  or the cheaper `[workspace.lints.rust]` route the group-T reviewer measured,
+  for the class gate 4's dev profile cannot see.
+
+- **THE LESSON THIS PACKAGE PAID FOR, AND IT IS NOT THE ONE IT EXPECTED.** Every
+  BLOCKING and MAJOR finding across three reviews was a CLAIM that had come loose
+  from the code — not one was a wrong answer. Byte identity held under an
+  instrument far stronger than this package's own. What failed was: a register
+  whose stated command could not have produced its own table; a test whose NAME
+  asserted an order it never read; a "there is no void class" written into a gate
+  that builds five binaries; five configs keeping a deleted key's justification;
+  two governing specs left describing a schema the engine now refuses; and a
+  count taken mid-work and published as an initial one. **The package's own
+  commit messages name this class three times and it reproduced it eleven.**
+
+- **AND THE CHEAPEST GUARD WAS THE ONE MISSING.** Gate 17 was red for four
+  commits while `cargo test --workspace` was green six times, because a gate
+  script is not a test and this package never re-ran `tools/ci.sh` after its
+  first item. One control — *does the gate accept the tree it ships in* — turns
+  that from a reviewer's find into a red suite at the commit that causes it. Two
+  of the three gate suites already had it. A successor changing anything under
+  `tools/` runs the gates.
+
+- **WHAT NO ONE HAS READ.** The reviews adjudicated `cb6e853`. The fix round is
+  a later revision and has had no fresh review; each group has now spent its one
+  round under D-481, so a second review returning FAIL is that group's STOP. The
+  evidence offered in its place is in §6 (21 gates from their own output), §4
+  (three census digests agreeing across the repair) and §3 (M8, the group-E
+  reviewer's surviving mutant, re-applied and now dying).
