@@ -127,3 +127,111 @@ fn an_empty_run_is_an_answer_and_an_absent_run_is_a_void() {
         "absent is a void, and the two must not be spelled alike"
     );
 }
+
+/// One game's transcript with full control of every field.
+fn write_raw(scratch: &Scratch, name: &str, lines: &[&str]) -> std::path::PathBuf {
+    let dir = scratch.dir.join(name);
+    std::fs::create_dir_all(&dir).expect("a run directory");
+    std::fs::write(dir.join("g001.jsonl"), format!("{}\n", lines.join("\n")))
+        .expect("a transcript");
+    dir
+}
+
+const ANSWERED: &str = "{\"engine\":\"s\",\"engine_time_ms\":300,\"event\":\"turn\",\
+\"outcome\":{\"kind\":\"continue\"},\"wall_ms\":301}";
+const FORFEIT: &str = "{\"engine\":\"s\",\"engine_time_ms\":null,\"event\":\"turn\",\
+\"outcome\":{\"kind\":\"engine_failure\",\"detail\":\"engine timeout\"},\"wall_ms\":0}";
+
+/// A TURN THE ENGINE NEVER ANSWERED IS NOT AN ANSWER, and it is not silently
+/// dropped either.
+///
+/// The referee writes a record with `wall_ms: 0` and a null engine time on any
+/// engine failure. Counting those poisons every statistic here: with the
+/// forfeit included this fixture reports `1 of 2` engine times and a
+/// first-of-game median excess of **-150 ms**, which reads as a start-up charge
+/// that has been fixed when in fact the seat never started.
+#[test]
+fn a_turn_the_engine_never_answered_is_excluded_and_the_exclusion_is_reported() {
+    let scratch = Scratch::new("overshoot_forfeit");
+    let dir = write_raw(&scratch, "run", &[FORFEIT, ANSWERED]);
+    let out = read(&dir, &["s=300"]);
+    let text = String::from_utf8_lossy(&out.stdout);
+    assert_eq!(
+        out.status.code(),
+        Some(0),
+        "stderr: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert!(
+        text.contains("| s | 300 | 1 |"),
+        "one answered turn, not two; got:\n{text}"
+    );
+    assert!(
+        text.contains("1 of 1"),
+        "and the engine-time count is over answered turns only; got:\n{text}"
+    );
+    assert!(
+        text.contains("| 1 / 1 / 1 / 1 | 0 | 1 |"),
+        "the refusal is REPORTED rather than silently dropped (hard rule 3); got:\n{text}"
+    );
+}
+
+/// THE CONTROL: a run with no forfeits reports none, so the column above is not
+/// simply always 1.
+#[test]
+fn a_run_without_a_forfeit_reports_no_refused_turns() {
+    let scratch = Scratch::new("overshoot_noforfeit");
+    let dir = write_raw(&scratch, "run", &[ANSWERED, ANSWERED]);
+    let text = String::from_utf8_lossy(&read(&dir, &["s=300"]).stdout).into_owned();
+    assert!(
+        text.contains("| 1 / 1 / 1 / 1 | 0 | 0 |"),
+        "no forfeit, so the refused column is 0 and not simply always 1; got:\n{text}"
+    );
+}
+
+/// A SEAT REPORTING SOMETHING OTHER THAN ITS OWN ELAPSED TIME SHOWS AS NEGATIVE.
+///
+/// The defect this makes visible is a shim answering with its CONFIGURED budget
+/// instead of the time it actually spent: on any answer that returned early the
+/// reported time exceeds the wall it was measured over, and `wall - engine`
+/// goes below zero. Nothing else in this reader would notice.
+#[test]
+fn a_seat_reporting_more_than_its_wall_shows_as_a_negative_gap() {
+    let scratch = Scratch::new("overshoot_negative");
+    let budget_reporter = "{\"engine\":\"s\",\"engine_time_ms\":300,\"event\":\"turn\",\
+\"outcome\":{\"kind\":\"continue\"},\"wall_ms\":0}";
+    let dir = write_raw(&scratch, "run", &[budget_reporter, ANSWERED]);
+    let text = String::from_utf8_lossy(&read(&dir, &["s=300"]).stdout).into_owned();
+    assert!(
+        text.contains("| -300 / -150 / 1 / 1 | 1 |"),
+        "the minimum and the negative count are what carry this; got:\n{text}"
+    );
+}
+
+/// The per-side totals and the share of wall the engine accounts for — the
+/// headline number a measured search-time ratio is built from.
+#[test]
+fn the_totals_row_reports_each_seat_s_engine_time_against_its_wall() {
+    let scratch = Scratch::new("overshoot_totals");
+    let dir = write_raw(&scratch, "run", &[ANSWERED, ANSWERED]);
+    let text = String::from_utf8_lossy(&read(&dir, &["s=300"]).stdout).into_owned();
+    assert!(
+        text.contains("| s | 602 ms | 600 ms | 99.67% |"),
+        "two answers of wall 301 and engine 300; got:\n{text}"
+    );
+}
+
+/// A run whose every turn is a forfeit is refused, not answered with an empty
+/// table: there is no answer to take.
+#[test]
+fn a_run_with_no_answered_turn_is_refused_by_name() {
+    let scratch = Scratch::new("overshoot_allforfeit");
+    let dir = write_raw(&scratch, "run", &[FORFEIT, FORFEIT]);
+    let out = read(&dir, &["s=300"]);
+    assert_eq!(out.status.code(), Some(1));
+    assert!(
+        String::from_utf8_lossy(&out.stderr).contains("no answered turns"),
+        "the refusal says what was missing: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+}

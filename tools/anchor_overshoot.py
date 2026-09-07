@@ -44,7 +44,7 @@ def answers(run_dir):
     files = sorted(directory.glob("g*.jsonl"))
     if not files:
         raise Unreadable(f"{run_dir}: no g*.jsonl transcripts")
-    out = []
+    out, refused = [], []
     for path in files:
         for number, line in enumerate(path.read_text().splitlines(), start=1):
             record = json.loads(line)
@@ -53,10 +53,20 @@ def answers(run_dir):
             for field in ("engine", "wall_ms"):
                 if field not in record:
                     raise Unreadable(f"{path}:{number}: turn record has no `{field}`")
+            # A TURN THE ENGINE NEVER ANSWERED IS NOT AN ANSWER. The referee
+            # writes a record with `wall_ms: 0` and a null engine time on any
+            # engine failure, pregame ones included, and counting those as
+            # answers poisons every statistic here: measured, a single timeout
+            # in a two-game run reported `3 of 4` engine times and dragged the
+            # first-of-game median excess to -150 ms, which would read as a
+            # start-up charge that had been fixed.
+            if record.get("outcome", {}).get("kind") == "engine_failure":
+                refused.append((path.name, record["engine"]))
+                continue
             out.append((path.name, record["engine"], record["wall_ms"], record.get("engine_time_ms")))
     if not out:
-        raise Unreadable(f"{run_dir}: transcripts hold no turn records")
-    return out
+        raise Unreadable(f"{run_dir}: transcripts hold no answered turns")
+    return out, refused
 
 
 def distribution(walls, budget_ms):
@@ -73,9 +83,30 @@ def distribution(walls, budget_ms):
     }
 
 
+def gap(rows):
+    """`wall_ms - engine_time_ms` per answer: the seat's non-search overhead.
+
+    Both ends matter. The upper end is the overhead the seat is charged for;
+    the LOWER end is what refuses a seat reporting something other than its own
+    elapsed time — a shim answering with its configured budget reports more than
+    the wall it was measured over, and shows up here as a negative.
+    """
+    values = sorted(w - e for _, _, w, e in rows if e is not None)
+    if not values:
+        return None
+    return {
+        "n": len(values),
+        "min": values[0],
+        "median": statistics.median(values),
+        "p95": values[min(len(values) - 1, int(0.95 * len(values)))],
+        "max": values[-1],
+        "negative": sum(1 for v in values if v < 0),
+    }
+
+
 def summarise(run_dir, budgets):
     """Per engine: the whole distribution, and it split first-of-game vs rest."""
-    rows = answers(run_dir)
+    rows, refused = answers(run_dir)
     per, first, rest, timed = {}, {}, {}, {}
     seen = set()
     for game, engine, wall, engine_ms in rows:
@@ -91,12 +122,18 @@ def summarise(run_dir, budgets):
     out = {}
     for engine, walls in sorted(per.items()):
         budget = budgets.get(engine)
+        mine = [r for r in rows if r[1] == engine]
+        engine_total = sum(e for _, _, _, e in mine if e is not None)
         out[engine] = {
             "budget_ms": budget,
             "all": distribution(walls, budget),
             "first_of_game": distribution(first.get(engine, []), budget),
             "later": distribution(rest.get(engine, []), budget) if rest.get(engine) else None,
             "engine_time_ms_reported": f"{timed[engine][1]} of {timed[engine][0]}",
+            "gap": gap(mine),
+            "wall_ms_total": sum(walls),
+            "engine_time_ms_total": engine_total if timed[engine][1] else None,
+            "refused_turns": sum(1 for _, who in refused if who == engine),
         }
     return out
 
@@ -116,6 +153,23 @@ def render(run_dir, summary):
         fx = "—" if f["max_excess"] is None else f"{f['median'] - (s['budget_ms'] or 0):.0f} / {f['max_excess']}"
         lx = "—" if not l or l["max_excess"] is None else f"{l['median'] - (s['budget_ms'] or 0):.0f} / {l['max_excess']}"
         lines.append(f"| {engine} | {fx} | {lx} |")
+
+    lines += ["", "| engine | wall - engine_time (min / median / p95 / max) | negative | turns refused |", "|---|---|---|---|"]
+    for engine, s in summary.items():
+        g = s["gap"]
+        cell = "— (no engine time reported)" if g is None else (
+            f"{g['min']} / {g['median']:.0f} / {g['p95']} / {g['max']}"
+        )
+        neg = "—" if g is None else g["negative"]
+        lines.append(f"| {engine} | {cell} | {neg} | {s['refused_turns']} |")
+
+    lines += ["", "| engine | wall total | engine-time total | share of wall |", "|---|---|---|---|"]
+    for engine, s in summary.items():
+        et = s["engine_time_ms_total"]
+        share = "—" if et is None or not s["wall_ms_total"] else f"{100 * et / s['wall_ms_total']:.2f}%"
+        lines.append(
+            f"| {engine} | {s['wall_ms_total']} ms | {'—' if et is None else f'{et} ms'} | {share} |"
+        )
     return "\n".join(lines)
 
 
