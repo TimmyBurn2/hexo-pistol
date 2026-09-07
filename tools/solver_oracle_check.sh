@@ -27,7 +27,12 @@ cd "$ROOT"
 fail() { echo "solver_oracle_check: FAIL: $*" >&2; exit 1; }
 void() { echo "solver_oracle_check: RUN VOID: $*" >&2; exit 2; }
 
-command -v cargo >/dev/null || void "cargo is not on PATH"
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || void "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
+"$REQUIRE_TOOL" cargo >/dev/null || void "cargo is not usable"
 
 # SCRATCH, BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12 obligation 2). A
 # scratch FILE is scratch: the `mktemp -d` sweep that preflighted this gate's

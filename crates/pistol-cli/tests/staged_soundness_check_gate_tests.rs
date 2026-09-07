@@ -3,7 +3,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{repo, scratch};
+use common::scratch;
 
 const PASSES: &str = r#"fn main() {
     println!("selftest: 20 of 20 cases solved (required 20), 0 failed to reproduce");
@@ -37,13 +37,7 @@ fn scratch_tree(name: &str) -> PathBuf {
     for dir in ["tools", "src", "crates/pistol-cli/tests/fixtures"] {
         std::fs::create_dir_all(root.join(dir)).expect("the scratch tree is created");
     }
-    for script in ["staged_soundness_check.sh", "scratch_preflight.sh"] {
-        std::fs::copy(
-            repo(&format!("tools/{script}")),
-            root.join("tools").join(script),
-        )
-        .unwrap_or_else(|error| panic!("the shipped {script} copies: {error}"));
-    }
+    common::seed_tool(&root, "tools/staged_soundness_check.sh");
     std::fs::write(
         root.join("crates/pistol-cli/tests/fixtures/tactical_staged_v0.txt"),
         "# the gate stats this path and hands it to the engine; the stub ignores it\n",

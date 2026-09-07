@@ -3,7 +3,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{repo, scratch};
+use common::scratch;
 
 /// Five space-separated tokens, because the script's corpus reader keeps only
 /// the rows whose `key_full` holds exactly five stones.
@@ -16,20 +16,7 @@ fn key(tag: &str) -> String {
 fn tree(name: &str) -> PathBuf {
     let root = scratch(name).join("repo");
     std::fs::create_dir_all(root.join("tools")).expect("a tools directory");
-    std::fs::copy(
-        repo("tools/book_v3_disjointness.sh"),
-        root.join("tools/book_v3_disjointness.sh"),
-    )
-    .expect("the script copies");
-    // The script preflights its scratch filesystem through this sibling
-    // (tools/SHELL_CHECKLIST.md item 12 obligation 2) and resolves it beside
-    // itself, so a tree holding the script alone is one the script correctly
-    // VOIDS in rather than running blind.
-    std::fs::copy(
-        repo("tools/scratch_preflight.sh"),
-        root.join("tools/scratch_preflight.sh"),
-    )
-    .expect("the preflight copies");
+    common::seed_tool(&root, "tools/book_v3_disjointness.sh");
     // A stand-in for `book_keys`: every body line of these fixtures IS its own
     // key, so the script's set arithmetic is exercised without a nested cargo
     // build, which would block on the target directory's lock.

@@ -14,6 +14,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+
 # THE TOTAL LIVES IN ONE PLACE. It used to be a literal repeated in every one of
 # the step strings below, which is docs/decisions.md D-423's "a claim the document
 # makes twice is a defect waiting" at nineteen: adding a gate meant editing
@@ -27,6 +28,11 @@ fail() { printf 'ci: FAIL: %s\n' "$*" >&2; exit 1; }
 # dies here, one call away from the gates that make it. `gate` preserves it:
 # 0 passes, 2 is this run's void, anything else is the gate's own no.
 void() { printf 'ci: RUN VOID: %s\n' "$*" >&2; exit 2; }
+
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || fail "the tool resolver is missing beside this script: $REQUIRE_TOOL"
 gate() {
 	local what="$1"
 	shift
@@ -39,8 +45,8 @@ gate() {
 	esac
 }
 
-command -v cargo >/dev/null || fail "cargo is not on PATH"
-command -v git >/dev/null || fail "git is not on PATH"
+"$REQUIRE_TOOL" cargo >/dev/null || fail "cargo is not usable"
+"$REQUIRE_TOOL" git >/dev/null || fail "git is not usable"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 	fail "not a git repository: one of the gates builds the git-tracked file set"
 

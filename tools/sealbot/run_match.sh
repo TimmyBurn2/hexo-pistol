@@ -24,6 +24,11 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 fail() { printf 'run_match: REFUSED: %s\n' "$*" >&2; exit 2; }
 
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/../require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || fail "the tool resolver is missing: $REQUIRE_TOOL"
+
 [ "$#" -eq 1 ] || fail "usage: tools/sealbot/run_match.sh <config.toml>"
 
 # Item 9: the config path is caller-controlled text that reaches messages and
@@ -42,7 +47,7 @@ esac
 
 cd "$ROOT"
 
-command -v cargo >/dev/null 2>&1 || fail "cargo is not on PATH"
+"$REQUIRE_TOOL" cargo >/dev/null || fail "cargo is not usable"
 MS_DIR=tools/sealbot/matchserver
 [ -f "$MS_DIR/Cargo.lock" ] || fail "no Cargo.lock under $MS_DIR; generate and commit one"
 

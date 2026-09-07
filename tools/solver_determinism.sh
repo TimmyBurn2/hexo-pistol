@@ -22,7 +22,12 @@ cd "$ROOT"
 fail() { echo "solver_determinism: FAIL: $*" >&2; exit 1; }
 void() { echo "solver_determinism: RUN VOID: $*" >&2; exit 2; }
 
-command -v cargo >/dev/null || void "cargo is not on PATH"
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || void "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
+"$REQUIRE_TOOL" cargo >/dev/null || void "cargo is not usable"
 
 FIXTURE="crates/pistol-solver/tests/fixtures/solver_v0.txt"
 CONFIG="configs/solver_v0.toml"

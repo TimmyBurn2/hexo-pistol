@@ -269,3 +269,63 @@ pub fn run(scratch: &Scratch, spec: &ConfigSpec<'_>, tag: &str) -> Ran {
         output,
     }
 }
+
+/// Copy a `tools/` script into a scratch tree together with every `tools/`
+/// sibling it reaches for, transitively.
+///
+/// The same computed closure `pistol-cli`'s `common::seed_tool` provides, and
+/// it exists here for the same reason: a `tools/` script that resolves a
+/// sibling refuses BY NAME when the sibling is absent (hard rule 3), so a
+/// harness copying only the script under test breaks the moment that script
+/// gains a dependency. The closure is COMPUTED so a new dependency needs no
+/// edit here. `crates/pistol-cli/tests/tool_seeding_tests.rs` holds the guard
+/// that stops a harness bypassing it, and it scans both crates.
+///
+/// # Panics
+///
+/// If `script` is not a `tools/` script, or a copy fails.
+pub fn seed_tool(root: &Path, script: &str) {
+    assert!(
+        script.starts_with("tools/") && script.ends_with(".sh"),
+        "seed_tool copies `tools/` scripts; got `{script}`"
+    );
+    let mut pending = vec![script.to_owned()];
+    let mut seeded: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    while let Some(next) = pending.pop() {
+        if !seeded.insert(next.clone()) {
+            continue;
+        }
+        let from = repo().join(&next);
+        let to = root.join(&next);
+        std::fs::create_dir_all(to.parent().expect("a tools directory"))
+            .expect("the scratch tools directory");
+        std::fs::copy(&from, &to).unwrap_or_else(|e| {
+            panic!("cannot seed {} into the scratch tree: {e}", from.display())
+        });
+        {
+            use std::os::unix::fs::PermissionsExt;
+            if let Ok(meta) = std::fs::metadata(&from) {
+                let mode = meta.permissions().mode();
+                let _ = std::fs::set_permissions(&to, std::fs::Permissions::from_mode(mode));
+            }
+        }
+        let text = std::fs::read_to_string(&from).unwrap_or_default();
+        let mut word = String::new();
+        for ch in text.chars().chain(std::iter::once(' ')) {
+            if ch.is_alphanumeric() || matches!(ch, '_' | '-' | '.' | '/') {
+                word.push(ch);
+                continue;
+            }
+            if word.ends_with(".sh") {
+                for candidate in [word.clone(), format!("tools/{word}")] {
+                    let candidate = candidate.trim_start_matches("./").to_owned();
+                    if candidate.starts_with("tools/") && repo().join(&candidate).is_file() {
+                        pending.push(candidate);
+                        break;
+                    }
+                }
+            }
+            word.clear();
+        }
+    }
+}

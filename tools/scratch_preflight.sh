@@ -58,6 +58,11 @@ bug() {
 	exit 1
 }
 
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || void "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
 [ "$#" -eq 1 ] || bug "scratch_preflight.sh <directory>; got $# argument(s): $*"
 DIR="$1"
 
@@ -70,7 +75,7 @@ case "$DIR" in
 esac
 [ -d "$DIR" ] || void "no such directory to preflight: \`$DIR\`"
 
-command -v stat >/dev/null || void "stat is not on PATH, so available space cannot be read"
+"$REQUIRE_TOOL" stat >/dev/null || void "stat is not usable, so available space cannot be read"
 
 # NOT `df`, AND THIS IS THE REASON. `df` answers in COLUMNS, and a mount source
 # containing a space shifts every column left: field 4 stops being Available and

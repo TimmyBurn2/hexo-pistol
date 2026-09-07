@@ -1,6 +1,6 @@
 #![allow(dead_code)] // each test binary uses a subset of these helpers.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use pistol_cli::Session;
 use pistol_engine::{Config, Engine, Pistol};
@@ -165,4 +165,96 @@ pub fn has_line(answers: &[String], word: &str) -> bool {
     answers
         .iter()
         .any(|line| line.split_whitespace().next() == Some(word))
+}
+
+/// Copy a `tools/` script into a scratch tree TOGETHER WITH EVERY `tools/`
+/// SIBLING IT REACHES FOR, transitively.
+///
+/// **THIS EXISTS BECAUSE THE ALTERNATIVE FAILED EIGHT TIMES.** A `tools/` script
+/// that resolves a sibling — `scratch_preflight.sh` for item 12's preflight,
+/// `require_tool.sh` for item 8's resolution — refuses BY NAME when the sibling
+/// is absent, which is right (hard rule 3: no silent skip). A harness that
+/// copies only the script it is testing therefore breaks the moment that script
+/// gains a dependency, and it breaks one harness at a time, discovered one red
+/// test at a time. That happened for the preflight (four harnesses) and again
+/// for the resolver (four more), and a hand-written detector missed two of those
+/// because it matched `repo("tools/x.sh")` and one harness passes `repo(file)`
+/// out of an array — the detector's own scope defect, which is the class
+/// `docs/process.md` names.
+///
+/// **THE CLOSURE IS COMPUTED, NOT LISTED**, which is the whole point: a list of
+/// siblings is a second place the dependency is written down, and it rots
+/// exactly the way the first eight breakages did. A new `tools/` dependency in
+/// any script is picked up here by every harness with no edit anywhere.
+///
+/// The scan DELIBERATELY OVER-APPROXIMATES: any `*.sh` token naming a file that
+/// exists under `tools/` is copied, including one that appears only in a
+/// comment. Copying a file nothing reads costs a few bytes of scratch; missing
+/// one costs a red test in a suite that has nothing to do with the change.
+///
+/// # Panics
+///
+/// If `script` is not under `tools/`, or if a copy fails — a harness that
+/// cannot build its own tree has nothing to say about the gate.
+pub fn seed_tool(root: &Path, script: &str) {
+    assert!(
+        script.starts_with("tools/") && script.ends_with(".sh"),
+        "seed_tool copies `tools/` scripts; got `{script}`"
+    );
+    let mut pending = vec![script.to_owned()];
+    let mut seeded: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    while let Some(next) = pending.pop() {
+        if !seeded.insert(next.clone()) {
+            continue;
+        }
+        let from = repo(&next);
+        let to = root.join(&next);
+        std::fs::create_dir_all(to.parent().expect("a tools directory"))
+            .expect("the scratch tools directory");
+        std::fs::copy(&from, &to).unwrap_or_else(|e| {
+            panic!("cannot seed {} into the scratch tree: {e}", from.display())
+        });
+        copy_mode(&from, &to);
+        for sibling in tools_referenced_by(&from) {
+            pending.push(sibling);
+        }
+    }
+}
+
+/// Every `tools/` script named anywhere in `file`'s text that the repository
+/// actually holds. Bare basenames count: a script reaches its sibling as
+/// `$(dirname "${BASH_SOURCE[0]}")/require_tool.sh`, where the `tools/` prefix
+/// never appears.
+fn tools_referenced_by(file: &Path) -> Vec<String> {
+    let text = match std::fs::read_to_string(file) {
+        Ok(text) => text,
+        Err(_) => return Vec::new(),
+    };
+    let mut found = Vec::new();
+    let mut word = String::new();
+    for ch in text.chars().chain(std::iter::once(' ')) {
+        if ch.is_alphanumeric() || matches!(ch, '_' | '-' | '.' | '/') {
+            word.push(ch);
+            continue;
+        }
+        if word.ends_with(".sh") {
+            for candidate in [word.clone(), format!("tools/{word}")] {
+                let candidate = candidate.trim_start_matches("./").to_owned();
+                if candidate.starts_with("tools/") && repo(&candidate).is_file() {
+                    found.push(candidate);
+                    break;
+                }
+            }
+        }
+        word.clear();
+    }
+    found
+}
+
+fn copy_mode(from: &Path, to: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    if let Ok(meta) = std::fs::metadata(from) {
+        let mode = meta.permissions().mode();
+        let _ = std::fs::set_permissions(to, std::fs::Permissions::from_mode(mode));
+    }
 }

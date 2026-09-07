@@ -29,7 +29,12 @@ void() {
 	exit 2
 }
 
-command -v python3 >/dev/null || void "python3 is not on PATH"
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || void "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
+"$REQUIRE_TOOL" python3 >/dev/null || void "python3 is not usable"
 [ -f tools/texel/test_texel.py ] || void "tools/texel/test_texel.py is missing"
 
 python3 tools/texel/test_texel.py

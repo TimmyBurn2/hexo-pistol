@@ -67,18 +67,24 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+
 DOC="docs/decisions.md"
 
 fail() { printf 'decision_key_check: FAIL: %s\n' "$*" >&2; exit 1; }
 # THE VOID, NAMED. Not `fail`: no answer about the file was taken.
 void() { printf 'decision_key_check: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || void "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
 # ARGUMENTS ARE NOT SILENTLY IGNORED. Four sibling gates read `$@` not at all and
 # exit 0 on a misspelled flag, having run the default (docs/decisions.md D-251,
 # MINOR-3); this one does not join them.
 [ "$#" -eq 0 ] || fail "this gate takes no arguments and was given: $*"
 
-command -v git >/dev/null || void "git is not on PATH, so the tracked bytes cannot be read"
+"$REQUIRE_TOOL" git >/dev/null || void "git is not usable, so the tracked bytes cannot be read"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 	void "not a git repository: this gate reads the TRACKED bytes of $DOC"
 

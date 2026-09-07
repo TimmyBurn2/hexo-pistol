@@ -90,9 +90,36 @@ directory goes inside the first. Order matters where the commands interact
 `[ 010 -ge 1 ]` is true because bash reads octal; the engine then reads decimal
 10 and the record quotes `010`. `+50000` and ` 50000` pass a numeric test and
 land in an invariant line unnormalized. Validate the SPELLING, not just the
-value. And a single combined test gives a wrong diagnosis: `command -v` declines
-a directory and an unfindable name identically, and ACCEPTS a FIFO that then
-blocks every read — three reasons, three refusals.
+value.
+
+**AND A SINGLE COMBINED TEST GIVES A WRONG DIAGNOSIS. `command -v` IS NOT A
+USABILITY TEST AND IT ADMITS FIVE OUTCOMES, ONE OF WHICH IS "you may run this".**
+MEASURED on this machine, bash 5.3.15, each in a clean `env -i` shell:
+
+| what is on PATH | `command -v` | what running it does |
+|---|---|---|
+| a real executable | ACCEPTS, absolute path | runs |
+| an unfindable name | declines | — |
+| a DIRECTORY of that name | declines — **the same answer as unfindable** | — |
+| a FIFO | **ACCEPTS**, absolute path | every read BLOCKS, forever |
+| a file with no `+x` | **ACCEPTS**, absolute path | exec answers **126** |
+| a function, alias or builtin | **ACCEPTS**, and returns the NAME, not a path | runs something that is not the tool |
+
+The last two are the fourth and fifth cases `docs/ROADMAP.md`'s WP-1.10 left
+open as "an amendment to item 8 for the fourth case bash admits". They are the
+worst two: the check says yes and the run does something else, which is this
+file's whole subject. **Six outcomes, five refusals, and each names its own
+reason** — `tools/require_tool.sh` is where they live, and a `tools/` script
+resolves a program through it rather than through `command -v`. The script keeps
+its OWN class: the resolver exits 2 for "this is not a runnable program" and 1
+for "you called me wrong", and the caller decides whether that is its `fail` or
+its `void`.
+
+**THE DIRECTORY ROW IS WHY THIS IS NOT A ONE-LINE FIX.** `type -t` reports
+nothing for it, exactly as for an absent name, so a resolver written on `type`
+alone reproduces the conflation it was written to end — which is what the first
+draft of `require_tool.sh` did, caught by its own test. PATH is walked to tell
+the two apart.
 
 ## 9. What reaches a record is caller-controlled
 

@@ -54,6 +54,11 @@ set -euo pipefail
 
 fail() { echo "solver_edge_check: $*" >&2; exit 2; }
 
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || fail "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
 [ "$#" -eq 2 ] || fail "usage: solver_edge_check.sh <workspace-root> <crate-name>"
 ROOT="$1"
 CRATE="$2"
@@ -67,7 +72,7 @@ case "$CRATE" in
 esac
 [ -d "$ROOT" ] || fail "no such workspace root: $ROOT"
 [ -f "$ROOT/Cargo.toml" ] || fail "no Cargo.toml at the workspace root: $ROOT"
-command -v cargo >/dev/null || fail "cargo is not on PATH"
+"$REQUIRE_TOOL" cargo >/dev/null || fail "cargo is not usable"
 
 # `--color never` ON EVERY `cargo tree` BELOW. `CARGO_TERM_COLOR=always` in the
 # caller's environment puts SGR escapes around the tree glyphs even when the

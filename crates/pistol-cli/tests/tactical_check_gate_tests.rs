@@ -3,7 +3,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{repo, scratch};
+use common::scratch;
 
 /// A stub `pistol` that answers `selftest` the way the gate reads it: the
 /// summary line on stdout, the verdict in the exit status.
@@ -46,11 +46,7 @@ fn scratch_tree(name: &str) -> PathBuf {
     for dir in ["tools", "src", "crates/pistol-cli/tests/fixtures"] {
         std::fs::create_dir_all(root.join(dir)).expect("the scratch tree is created");
     }
-    std::fs::copy(
-        repo("tools/tactical_check.sh"),
-        root.join("tools/tactical_check.sh"),
-    )
-    .expect("the shipped gate copies");
+    common::seed_tool(&root, "tools/tactical_check.sh");
     std::fs::write(root.join("Cargo.toml"), MANIFEST).expect("the stub manifest writes");
     std::fs::write(
         root.join("crates/pistol-cli/tests/fixtures/tactical_v0.txt"),

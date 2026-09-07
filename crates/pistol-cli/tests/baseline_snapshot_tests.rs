@@ -357,14 +357,8 @@ impl ScratchRepo {
         for dir in ["tools", "configs", "crates/pistol-cli/tests/fixtures"] {
             std::fs::create_dir_all(root.join(dir)).expect("the scratch tree is created");
         }
+        common::seed_tool(&root, "tools/baseline_snapshot.sh");
         for file in [
-            "tools/baseline_snapshot.sh",
-            // The script preflights its scratch filesystem through this sibling
-            // (tools/SHELL_CHECKLIST.md item 12 obligation 2), and resolves it
-            // beside itself rather than under `$ROOT` — so a scratch tree that
-            // holds the script and not the preflight is a tree the script
-            // correctly refuses to run in.
-            "tools/scratch_preflight.sh",
             "configs/instrument_v0.toml",
             "configs/eval_v0_weights.toml",
             "crates/pistol-cli/tests/fixtures/openings_v1.txt",

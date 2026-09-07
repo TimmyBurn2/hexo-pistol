@@ -2,7 +2,7 @@ mod common;
 
 use std::process::Command;
 
-use common::{Scratch, repo};
+use common::Scratch;
 
 #[test]
 fn artifact_check_catches_renamed_report() {
@@ -10,9 +10,8 @@ fn artifact_check_catches_renamed_report() {
     // The script roots itself one directory above its own location, so it must
     // sit at <scratch>/tools/ exactly as it sits at <repo>/tools/ — copied to
     // the scratch repo's top level it would check the scratch's PARENT.
-    std::fs::create_dir_all(scratch.path("tools")).expect("a tools directory");
+    common::seed_tool(&scratch.dir, "tools/artifact_check.sh");
     let script = scratch.path("tools/artifact_check.sh");
-    std::fs::copy(repo().join("tools/artifact_check.sh"), &script).expect("the gate copies");
 
     let git = |args: &[&str]| {
         let output = Command::new("git")
@@ -87,9 +86,8 @@ fn artifact_check_catches_renamed_report() {
 #[test]
 fn artifact_check_catches_a_committed_baseline_snapshot() {
     let scratch = Scratch::new("artifact-gate-snapshot");
-    std::fs::create_dir_all(scratch.path("tools")).expect("a tools directory");
+    common::seed_tool(&scratch.dir, "tools/artifact_check.sh");
     let script = scratch.path("tools/artifact_check.sh");
-    std::fs::copy(repo().join("tools/artifact_check.sh"), &script).expect("the gate copies");
 
     let git = |args: &[&str]| {
         let output = Command::new("git")
@@ -184,9 +182,8 @@ fn artifact_check_catches_a_committed_baseline_snapshot() {
 #[test]
 fn artifact_check_reads_the_index_and_not_the_working_tree() {
     let scratch = Scratch::new("artifact-gate-index");
-    std::fs::create_dir_all(scratch.path("tools")).expect("a tools directory");
+    common::seed_tool(&scratch.dir, "tools/artifact_check.sh");
     let script = scratch.path("tools/artifact_check.sh");
-    std::fs::copy(repo().join("tools/artifact_check.sh"), &script).expect("the gate copies");
 
     let git = |args: &[&str]| {
         let output = Command::new("git")

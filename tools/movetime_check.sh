@@ -29,6 +29,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+
 # TWO PLAY SEATS, RADIUS AND STAGED (docs/decisions.md D-370; WP-1.5b Phase 4
 # MINOR 6): under `Staged`, `ordering::order` never runs, and with it the
 # ordering loop's own wall-clock deadline check never runs either — one fewer
@@ -40,7 +41,12 @@ BUDGETS_MS=(500 50 1)
 
 fail() { printf 'movetime: FAIL: %s\n' "$*" >&2; exit 1; }
 
-command -v cargo >/dev/null || fail "cargo is not on PATH"
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || fail "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
+"$REQUIRE_TOOL" cargo >/dev/null || fail "cargo is not usable"
 for seat in "${SEATS[@]}"; do
 	read -r _ seat_config <<<"$seat"
 	[ -f "$seat_config" ] || fail "no config at $seat_config"

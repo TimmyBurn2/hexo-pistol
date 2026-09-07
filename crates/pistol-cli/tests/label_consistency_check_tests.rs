@@ -3,7 +3,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{repo, scratch};
+use common::scratch;
 
 /// The six documents the shipped gate names, restated rather than imported:
 /// this file is a CHECK on the script, and agreeing with it by construction
@@ -29,20 +29,7 @@ fn scratch_repo(name: &str) -> PathBuf {
     let root = scratch(name).join("repo");
     std::fs::create_dir_all(root.join("tools")).expect("a tools directory");
     std::fs::create_dir_all(root.join("docs/experiments")).expect("a docs directory");
-    std::fs::copy(
-        repo("tools/label_consistency_check.sh"),
-        root.join("tools/label_consistency_check.sh"),
-    )
-    .expect("the gate copies");
-    // The gate preflights its scratch filesystem through this sibling
-    // (tools/SHELL_CHECKLIST.md item 12 obligation 2) and resolves it beside
-    // itself, so a scratch tree holding the gate alone is one the gate
-    // correctly VOIDS in rather than running blind.
-    std::fs::copy(
-        repo("tools/scratch_preflight.sh"),
-        root.join("tools/scratch_preflight.sh"),
-    )
-    .expect("the preflight copies");
+    common::seed_tool(&root, "tools/label_consistency_check.sh");
     git(&root, &["init", "-q"]);
     root
 }
@@ -428,20 +415,7 @@ fn a_table_row_that_lost_an_item_is_refused_though_the_arithmetic_still_holds() 
 fn outside_a_git_repository_the_run_is_void_and_not_a_failure() {
     let root = scratch("label-void").join("repo");
     std::fs::create_dir_all(root.join("tools")).expect("a tools directory");
-    std::fs::copy(
-        repo("tools/label_consistency_check.sh"),
-        root.join("tools/label_consistency_check.sh"),
-    )
-    .expect("the gate copies");
-    // The gate preflights its scratch filesystem through this sibling
-    // (tools/SHELL_CHECKLIST.md item 12 obligation 2) and resolves it beside
-    // itself, so a scratch tree holding the gate alone is one the gate
-    // correctly VOIDS in rather than running blind.
-    std::fs::copy(
-        repo("tools/scratch_preflight.sh"),
-        root.join("tools/scratch_preflight.sh"),
-    )
-    .expect("the preflight copies");
+    common::seed_tool(&root, "tools/label_consistency_check.sh");
     // No `git init`: nothing here is a repository.
     let ran = Command::new("bash")
         .arg(root.join("tools/label_consistency_check.sh"))

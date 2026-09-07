@@ -158,18 +158,7 @@ fn scratch_tree(name: &str) -> PathBuf {
     for dir in ["tools", "configs", "engine/src"] {
         std::fs::create_dir_all(root.join(dir)).expect("the scratch tree is created");
     }
-    std::fs::copy(
-        repo("tools/arena_smoke.sh"),
-        root.join("tools/arena_smoke.sh"),
-    )
-    .expect("the shipped gate copies");
-    // The gate preflights its scratch space through a SIBLING script and refuses
-    // by name when it is absent, so the scratch tree carries it too.
-    std::fs::copy(
-        repo("tools/scratch_preflight.sh"),
-        root.join("tools/scratch_preflight.sh"),
-    )
-    .expect("the sibling preflight copies");
+    common::seed_tool(&root, "tools/arena_smoke.sh");
     std::fs::copy(
         repo("configs/arena_smoke_v0.toml"),
         root.join("configs/arena_smoke_v0.toml"),

@@ -87,9 +87,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+
 fail() { printf 'label_consistency_check: FAIL: %s\n' "$*" >&2; exit 1; }
 # THE VOID, NAMED. Not `fail`: no answer about the documents was taken.
 void() { printf 'label_consistency_check: RUN VOID: %s\n' "$*" >&2; exit 2; }
+
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || void "the tool resolver is missing beside this script: $REQUIRE_TOOL"
 
 # ARGUMENTS ARE NOT SILENTLY IGNORED (tools/SHELL_CHECKLIST.md item 8;
 # docs/decisions.md D-251 MINOR-3).
@@ -106,8 +112,8 @@ docs/experiments/U4_soundness_instrument.md
 docs/experiments/WPQ_seed.md
 docs/experiments/section_owner_table.md'
 
-command -v git >/dev/null || void "git is not on PATH, so the tracked bytes cannot be read"
-command -v awk >/dev/null || void "awk is not on PATH, and it is this gate's whole extraction"
+"$REQUIRE_TOOL" git >/dev/null || void "git is not usable, so the tracked bytes cannot be read"
+"$REQUIRE_TOOL" awk >/dev/null || void "awk is not usable, and it is this gate's whole extraction"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 	void "not a git repository: this gate reads the TRACKED bytes of its subject"
 

@@ -75,14 +75,8 @@ fn scratch_tree(name: &str, fixture: &str) -> PathBuf {
     for dir in ["tools", "configs", "crates/pistol-cli/tests/fixtures"] {
         std::fs::create_dir_all(root.join(dir)).expect("the scratch tree is created");
     }
-    for file in [
-        "tools/bench_delta.sh",
-        // The script resolves its preflight beside itself (item 12 obligation
-        // 2), so a tree holding the script alone is one it refuses to run in.
-        "tools/scratch_preflight.sh",
-        "configs/instrument_v0.toml",
-        "configs/eval_v0_weights.toml",
-    ] {
+    common::seed_tool(&root, "tools/bench_delta.sh");
+    for file in ["configs/instrument_v0.toml", "configs/eval_v0_weights.toml"] {
         std::fs::copy(repo(file), root.join(file)).expect("the pinned document copies");
     }
     std::fs::write(

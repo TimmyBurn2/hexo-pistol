@@ -38,7 +38,12 @@ cd "$ROOT"
 
 fail() { printf 'search_oracle_check: FAIL: %s\n' "$*" >&2; exit 1; }
 
-command -v cargo >/dev/null || fail "cargo is not on PATH"
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || fail "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
+"$REQUIRE_TOOL" cargo >/dev/null || fail "cargo is not usable"
 
 echo "search_oracle_check: the always-on tier, in release"
 cargo test --release --locked --package pistol-search --test search_oracle_tests -- --nocapture ||

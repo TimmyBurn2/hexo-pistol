@@ -66,12 +66,18 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+
 fail() { printf 'file_justification_check: FAIL: %s\n' "$*" >&2; exit 1; }
 # THE VOID, NAMED (item 12 obligation 1): a filesystem with no room for the
 # seed tree is not a rule-9 finding.
 void() { printf 'file_justification_check: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
-command -v git >/dev/null || fail "git is not on PATH"
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || fail "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
+"$REQUIRE_TOOL" git >/dev/null || fail "git is not usable"
 
 # The cap, and where every why for a file over it is written down.
 SOFT_CAP=300

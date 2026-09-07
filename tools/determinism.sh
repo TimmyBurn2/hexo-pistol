@@ -41,6 +41,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+
 # The seats this gate runs at, and why each is not the deployment config: at
 # candidate radius 3 a completed depth of 4 turns costs hours per position, which
 # is the measured Stage-0 floor recorded in that file's own comment table
@@ -103,7 +104,12 @@ fail() { printf 'determinism: FAIL: %s\n' "$*" >&2; exit 1; }
 # THE VOID (item 12 obligation 1): a run not taken is not a disagreement.
 void() { printf 'determinism: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
-command -v cargo >/dev/null || fail "cargo is not on PATH"
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || fail "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
+"$REQUIRE_TOOL" cargo >/dev/null || fail "cargo is not usable"
 for seat in "${SEATS[@]}"; do
 	# The trailing `_` absorbs a seat's budget-override words.
 	read -r _ seat_config seat_fixture _ <<<"$seat"

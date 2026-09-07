@@ -19,20 +19,7 @@ fn scratch_repo(name: &str) -> PathBuf {
     let root = scratch(name).join("repo");
     std::fs::create_dir_all(root.join("tools")).expect("a tools directory");
     std::fs::create_dir_all(root.join("docs")).expect("a docs directory");
-    std::fs::copy(
-        repo("tools/decision_key_check.sh"),
-        root.join("tools/decision_key_check.sh"),
-    )
-    .expect("the gate copies");
-    // The gate preflights its scratch filesystem through this sibling
-    // (tools/SHELL_CHECKLIST.md item 12 obligation 2) and resolves it beside
-    // itself, so a scratch tree holding the gate alone is one the gate
-    // correctly VOIDS in rather than running blind.
-    std::fs::copy(
-        repo("tools/scratch_preflight.sh"),
-        root.join("tools/scratch_preflight.sh"),
-    )
-    .expect("the preflight copies");
+    common::seed_tool(&root, "tools/decision_key_check.sh");
     git(&root, &["init", "-q"]);
     root
 }

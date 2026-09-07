@@ -31,8 +31,14 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+
 fail() { printf 'book_v3_disjointness: FAIL: %s\n' "$*" >&2; exit 1; }
 void() { printf 'book_v3_disjointness: RUN VOID: %s\n' "$*" >&2; exit 2; }
+
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || void "the tool resolver is missing beside this script: $REQUIRE_TOOL"
 
 V1=""; V2=""; V3=""; CORPUS=""; KEYS_BIN=""
 while [ "$#" -gt 0 ]; do
@@ -73,7 +79,7 @@ SCRATCH="$(mktemp -d)" || void "mktemp could not make a scratch directory"
 trap 'rc=$?; rm -rf "$SCRATCH"; exit "$rc"' EXIT
 
 if [ -z "$KEYS_BIN" ]; then
-	command -v cargo >/dev/null || void "cargo is not on PATH, so the key tool cannot be built"
+	"$REQUIRE_TOOL" cargo >/dev/null || void "cargo is not usable, so the key tool cannot be built"
 	# Built ONCE, up front: a build failure is an environmental refusal and must
 	# not be discovered halfway through as a wrong count (item 12 obligation 2).
 	cargo build --quiet --locked --manifest-path "$ROOT/Cargo.toml" \
@@ -95,7 +101,7 @@ keys_of() { # $1 = a book
 # of the four are committed and digest-pinned in the tree; the CORPUS is not — it
 # is a 43 MB file outside the repository with no in-tree pin — so `v3 vs corpus`
 # would otherwise name one term and leave the other unidentified.
-command -v sha256sum >/dev/null || void "sha256sum is not on PATH, so no input can be named"
+"$REQUIRE_TOOL" sha256sum >/dev/null || void "sha256sum is not usable, so no input can be named"
 for f in "$V1" "$V2" "$V3" "$CORPUS"; do
 	digest="$(sha256sum -- "$f")" || void "cannot digest $f"
 	printf 'book_v3_disjointness: input %s\n' "${digest%% *}  $f"

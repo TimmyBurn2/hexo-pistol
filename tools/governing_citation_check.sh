@@ -31,6 +31,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+
 VOID=2
 
 void() {
@@ -39,7 +40,12 @@ void() {
 	exit $VOID
 }
 
-command -v python3 >/dev/null || void "python3 is not on PATH"
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || void "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
+"$REQUIRE_TOOL" python3 >/dev/null || void "python3 is not usable"
 [ -f tools/design_citation_check.py ] || void "tools/design_citation_check.py is missing"
 [ -f tools/revision_citation_check.py ] || void "tools/revision_citation_check.py is missing"
 

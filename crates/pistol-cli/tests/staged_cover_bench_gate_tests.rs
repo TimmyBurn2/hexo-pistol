@@ -3,7 +3,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{repo, scratch};
+use common::scratch;
 
 /// A stub that answers the `pistol` handshake with an `id` line and every
 /// `go` command with a well-formed `totals` line — enough for
@@ -81,13 +81,7 @@ fn scratch_tree(name: &str) -> PathBuf {
     ] {
         std::fs::create_dir_all(root.join(dir)).expect("the scratch tree is created");
     }
-    for script in ["staged_cover_bench.sh", "scratch_preflight.sh"] {
-        std::fs::copy(
-            repo(&format!("tools/{script}")),
-            root.join("tools").join(script),
-        )
-        .unwrap_or_else(|error| panic!("the shipped {script} copies: {error}"));
-    }
+    common::seed_tool(&root, "tools/staged_cover_bench.sh");
     std::fs::write(
         root.join("configs/instrument_staged_v0.toml"),
         "# the gate stats this path and hands it to the engine; the stub ignores it\n",

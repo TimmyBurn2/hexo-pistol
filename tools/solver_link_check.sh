@@ -47,6 +47,11 @@ set -euo pipefail
 
 fail() { echo "solver_link_check: $*" >&2; exit 2; }
 
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || fail "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
 [ "$#" -eq 2 ] || fail "usage: solver_link_check.sh <workspace-root> <crate-path>"
 ROOT="$1"
 CRATE_PATH="$2"
@@ -60,9 +65,9 @@ esac
 case "$ROOT" in *[![:print:]]*) fail "the workspace root holds a non-printable character" ;; esac
 [ -d "$ROOT" ] || fail "no such workspace root: $ROOT"
 [ -f "$ROOT/Cargo.toml" ] || fail "no Cargo.toml at the workspace root: $ROOT"
-command -v cargo >/dev/null || fail "cargo is not on PATH"
-command -v realpath >/dev/null || fail "realpath is not on PATH"
-command -v jq >/dev/null || fail "jq is not on PATH; the workspace's target metadata cannot be read"
+"$REQUIRE_TOOL" cargo >/dev/null || fail "cargo is not usable"
+"$REQUIRE_TOOL" realpath >/dev/null || fail "realpath is not usable"
+"$REQUIRE_TOOL" jq >/dev/null || fail "jq is not usable; the workspace's target metadata cannot be read"
 
 ROOT_ABS="$(cd "$ROOT" && pwd -P)" || fail "cannot canonicalise the workspace root"
 # `-ms`, NOT `-m`. Resolving symlinks moves a source OUT of the crate it lives

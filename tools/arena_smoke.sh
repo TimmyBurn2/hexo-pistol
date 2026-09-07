@@ -46,14 +46,20 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+
 CONFIG="configs/arena_smoke_v0.toml"
 
 fail() { printf 'arena_smoke: FAIL: %s\n' "$*" >&2; exit 1; }
 # THE VOID, NAMED. Not `fail`: no answer about the arena was taken.
 void() { printf 'arena_smoke: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
-command -v cargo >/dev/null || fail "cargo is not on PATH"
-command -v sha256sum >/dev/null || fail "sha256sum is not on PATH"
+# Programs are resolved through the resolver, never `command -v` — item 8's
+# table and docs/decisions.md D-683 say why. This script keeps its own class.
+REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.sh"
+[ -x "$REQUIRE_TOOL" ] || fail "the tool resolver is missing beside this script: $REQUIRE_TOOL"
+
+"$REQUIRE_TOOL" cargo >/dev/null || fail "cargo is not usable"
+"$REQUIRE_TOOL" sha256sum >/dev/null || fail "sha256sum is not usable"
 [ -f "$CONFIG" ] || fail "no arena config at $CONFIG"
 
 # Never under the repository: match logs are artifacts and artifacts are not
