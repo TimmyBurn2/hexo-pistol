@@ -889,6 +889,22 @@ mutation baseline red at `solver_link_check_tests`.
 
 The gate list below is `9ce9a7c`'s, and it is identical in all three.
 
+**AND THIS DOCUMENT IS ONE COMMIT PAST THE RUN IT CITES, WHICH IS THE SITUATION
+D-674 EXISTS FOR AND THE ONE THIS PACKAGE OPENED BY WRITING AN ERRATA ABOUT.**
+The closing CI ran at `0fedfa8`; the commit carrying this section is `c2ac972`.
+D-674's second branch applies and the diff is quoted:
+
+```
+$ git diff --name-status 0fedfa8..HEAD
+M	docs/experiments/pre_phase2_sweep_CLOSURE.md
+```
+
+One file, and it is this one. Nothing under `crates/`, `configs/` or `tools/`
+differs, and `docs/decisions.md` is not in it either. **The same shape as
+`texel_gaps_CLOSURE.md`'s ERRATA E-1, which is item H1 of this package** — a
+closure cannot quote a run taken after itself, and the honest move is to say so
+rather than to let a reader assume the cited green covers the citing text.
+
 ```
 === gate 1/21: cargo fmt --all --check
 === gate 2/21: build from the git-tracked file set
