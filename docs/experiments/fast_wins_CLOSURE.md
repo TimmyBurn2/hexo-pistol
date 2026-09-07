@@ -479,3 +479,20 @@ later-answer distribution. For D2, an `arena_report` grammar that writes the
 answering seat's root score beside each turn. Neither is scheduled and neither
 blocks anything: v7's trigger is the first Phase 2 `h1`, and Phase 2 has not
 started.
+
+## §6 The STOP protocol's branch clause, and the follow-on package
+
+**`fast-wins-stopped` WAS NOT CREATED, and D-701 records why.** The stopped item
+is item A's budget decision, whose output lives in `48d9840` beside the closure,
+D-697, D-698 and `tools/anchor_overshoot.py` — all closed work. The protocol's
+unit of stopping is a commit; this package's was a document inside a commit that
+also closed things. D-699 carries the stop instead, in append-only law, and both
+affected documents carry banners at their head.
+
+**A FOLLOW-ON PACKAGE HAS SINCE RUN AGAINST D-699's SECOND RESUME ITEM** and is
+closed at `docs/experiments/sealbot_clock_fix_CLOSURE.md`: the sealbot seat now
+reads a readiness handshake before it starts timing and reports its own elapsed
+time, taking the first answer of a game from **326 ms to 300.4-300.9 ms** against
+a 300 ms budget and turning the seat's non-search overhead from a bound into a
+measurement. **The budget decision is still stopped**: its remaining resume item
+is the ADR amending D-695, and the matrix still carries its FELL banner.
