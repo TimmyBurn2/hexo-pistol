@@ -1,6 +1,6 @@
 # `matrix_wp22_phase2_eval.md` — the arithmetic, re-derived
 
-**Governing revision**: `200542f` (`dev`), plus the one correction below.
+**Governing revision**: `0c2f519` (`dev`) — matrix revision 3.
 
 **Why this file exists.** `docs/process.md`'s re-derivation clause is addressed
 to the REVIEWER, and its reason is that *"the author is reaching for a label for
@@ -11,9 +11,23 @@ different ones.
 
 **Instrument**: one script re-deriving every arithmetic claim in the matrix from
 the census, pilot and power artifacts rather than from the matrix's own text.
-**29 checks, 28 reproduced, 1 MISMATCH — and the mismatch was real.**
 
-## The mismatch, and it is corrected in the matrix
+- **Against revision 1: 29 checks, 28 reproduced, 1 MISMATCH — and it was real.**
+- **Against revision 3, after the red team: 19 checks over every number the
+  corrections touched, 0 mismatches.**
+
+**AND THE PASS ABOVE IS WORTH LESS THAN THE RED TEAM'S FAIL, WHICH IS THE POINT
+OF PUBLISHING BOTH.** This file checked revision 1's ARITHMETIC and found one
+error. The DECISION-RED-TEAM checked what revision 1 and 2 CLAIMED and found four
+BLOCKING and eleven MAJOR — including three numbers this file had happily
+verified as arithmetic while they described the wrong thing: `531 548` (a real
+median of a real run that the receipt did not contain), `31.77 %` (a real line of
+a real profile that was one third of the eval), and the `1.2`-versus-`333`
+density comparison (two correct numbers in two different currencies).
+`docs/process.md` is right that the author and the reviewer are the same kind of
+agent and the difference is not diligence.
+
+## Revision 1's mismatch, and it was corrected then
 
 `R-C-SPSA`'s opening cost. The matrix said `ceil_to_500(60 500) = 61 000`;
 `ceil_to_500` rounds UP to a multiple of 500 and **60 500 already is one**, so
@@ -81,3 +95,24 @@ tilted from an instrument-seat pentanomial and applied to a play-seat question,
 and §4's parameter counts, which are stated at two different population units in
 two different rows. **Both are named on the matrix's own face**; neither is
 discharged by this file.
+
+
+## Revision 3's checks, after the red team
+
+| claim | re-derived | matrix |
+|---|---|---|
+| the eval's profile share | 31.77 + 6.64 + 6.29 = **44.70** | 44.70 % |
+| L8 codebook floor / ceiling | 365 760.2 / 621 921.3 | 365 760 / 621 921 |
+| L11 codebook floor / ceiling | 296 958.9 / 549 732.5 | 296 959 / 549 733 |
+| R-H-EXT floor / ceiling | 365 760.2 / 529 255.0 | 365 760 / 529 255 |
+| SPSA openings, wall | 60 500, 34.38 h | 60 500, 34.4 h |
+| `book_v3` wall | 4.831 h | 4.83 h |
+| criterion ratios, T4, L = 7 / 9 / 11 / 13 | 1.0136 / 1.1077 / 1.1246 / 0.8336 | 1.014 / 1.108 / 1.125 / 0.834 |
+| criterion ratios, T2, L = 7 / 9 / 11 | 0.7932 / 0.6732 / 0.6373 | 0.793 / 0.673 / 0.637 |
+| T4 observations per nominal parameter | 1.0689 | 1.07 |
+| the code-unit cell §2.5 disowns | 2.2691 | 2.27 |
+
+**What this file still does not check** is unchanged and is the reviewer's:
+whether a number was measured on the population it is said to describe. Revision
+3 adds one place that defect could live and did not before — §4's currency
+table, which asserts which unit each row's density is in.
