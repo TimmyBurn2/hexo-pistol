@@ -1,20 +1,24 @@
-# OPTION MATRIX — the quiet-structure eval family for Phase 2, revision 3.
+# OPTION MATRIX — the quiet-structure eval family for Phase 2, revision 4.
 
-> **REVISION 3 IS ROUND 2 OF FOUR UNDER D-709, AND IT IS REMEDIES-ONLY.**
-> Revision 2 FAILED its DECISION-RED-TEAM
-> (`matrix_wp22_phase2_eval_REDTEAM.md`: 4 BLOCKING, 11 MAJOR, 10 MINOR at
-> `0641504`). Every finding was re-derived by this session before it was acted
-> on; §12 is the round table. **Three of the four BLOCKINGs are DELETIONS of
-> false findings this matrix made against standing ADRs**, and they are deleted
-> rather than argued with.
+> **ROUND 3 OF FOUR UNDER D-709, REMEDIES ONLY.** Two DECISION-RED-TEAM rounds
+> have failed this matrix: round 1 at `0641504` (4 BLOCKING, 11 MAJOR, 10 MINOR)
+> and round 2 at `564dc9e` (1 new BLOCKING, 7 new MAJOR, and **all ten of round
+> 1's MINORs still landing**). §12 and §13 are the round tables. Every finding
+> was re-derived here before it was acted on.
 >
-> **`R-A4-CLASS` IS STILL OUT OF THE PRICED FIELD AND THE REASON HAS CHANGED.**
-> Revision 2 dropped it because Stage E's round cap ran out. D-709 reopened
-> Stage E, round 3 replaced the vacuous criterion with a STONE-COUNT referent,
-> and `hex_threat_enum_v1.md` §7.4 reports it **FIRING at 12 of 16 cells on the
-> full corpus** — every affordable rung at every length is WORSE than a quotient
-> that only counts stones. The row is unpriced by a criterion that could fail
-> and did, which is a strictly better standing than a spent cap.
+> **THE FIELD CHANGED TWICE AND `R-A4-CLASS` IS BACK IN IT.** Revision 2 dropped
+> the row on a spent round cap; revision 3 dropped it on a conclusion that was
+> **false on its own receipted census** — `L = 7` T4 is affordable at 1 720
+> observations per nominal parameter and the registered criterion passes there.
+> Two reviewers found that independently, on two documents. **Revision 4 restores
+> it as UNDECIDED at rank 4**, and §2.5 carries both measurements and their
+> disagreement rather than a verdict neither supports.
+>
+> **AND ONE CORRECTION REACHES PAST THIS DOCUMENT**: `eval_families_2026-09.md`
+> §A1's *"1.4 observations per parameter"* for `R-A1-L11` is the RECIPROCAL —
+> 62 370 ÷ 45 271 is parameters per POSITION, and the row's real density is
+> **0.73**. This matrix inherited the mislabel into a table written to fix that
+> exact class of error.
 
 **Governing revision**: `54eb3ba` (`dev`) for every file, line and count quoted
 below (D-692), except where a paragraph names a later one.
