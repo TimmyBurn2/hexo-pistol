@@ -754,6 +754,14 @@ receipt digest
 `9bb8fc6f2e0500bcf10f48e493dd9e3615897d935b73b63d8a8f47bf179e9c39` (D-483).
 **NO SELECTION** (D-708).
 
+**REPLICATED, because the run is cheap and `docs/process.md` says to replicate
+rather than derive a margin.** Round 2 ran the same census without the
+stone-count referent (`artifacts/wp22_phase2a/census/`). MEASURED: over the
+**200 cells the two runs share** — every `k`, every observations row, every
+purity row at both units, and the walked-position and scored-cell totals —
+**0 differences**. So adding the referent changed nothing else, and every number
+in §7.1 through §7.3 is a figure two independent executions agree on.
+
 ### 7.1 `k` and the code count — the enum is COMPUTED and no cell of it is 816
 
 Exhaustive over `3^(L−1)` patterns at each length.
