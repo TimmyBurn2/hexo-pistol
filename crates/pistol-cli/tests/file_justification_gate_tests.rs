@@ -402,3 +402,22 @@ fn an_entry_shaped_like_a_stage_spec_is_refused_for_the_reason_it_deserves() {
         "the refusal names the reason that is true of the path as written:\n{out}"
     );
 }
+
+/// The gate ASKS FOR ITS SCRATCH SPACE BEFORE IT WRITES ANY, and says so.
+///
+/// `tools/SHELL_CHECKLIST.md` item 12 obligation 2. Without this assertion the
+/// preflight CALL is invisible: deleting it leaves every gate passing, because
+/// a preflight that passes is a no-op — which is exactly the call-removed
+/// mutant `docs/decisions.md` D-553 makes standing evidence, and exactly the
+/// shape that let a guard with a direct unit test survive one.
+#[test]
+fn the_justification_gate_asks_for_its_scratch_before_it_seeds_any() {
+    let root = scratch_repo("justification-preflight");
+    let ran = gate(&root);
+    let out = text(&ran);
+    assert!(
+        out.contains("scratch_preflight:") && out.contains("KiB available"),
+        "the gate must ask for room before it writes any, and name what it \
+         found:\n{out}"
+    );
+}

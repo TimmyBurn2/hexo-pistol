@@ -152,3 +152,19 @@ fn a_green_build_that_names_no_executable_is_a_void_naming_that() {
         "the void names what was missing, in this gate's vocabulary: {stderr}"
     );
 }
+
+/// The gate ASKS FOR ITS SCRATCH SPACE BEFORE IT WRITES ANY, and says so.
+///
+/// `tools/SHELL_CHECKLIST.md` item 12 obligation 2. Without this the preflight
+/// CALL is invisible — deleting it leaves the gate passing, because a preflight
+/// that passes is a no-op (docs/decisions.md D-553's call-removed mutant).
+#[test]
+fn the_gate_asks_for_its_scratch_before_it_writes_any() {
+    let ran = run_gate(None, None);
+    let out = String::from_utf8_lossy(&ran.stdout);
+    assert!(
+        out.contains("scratch_preflight:") && out.contains("KiB available"),
+        "the gate must ask for room before it writes transcripts, and name what \
+         it found:\n{out}"
+    );
+}

@@ -453,3 +453,22 @@ fn outside_a_git_repository_the_run_is_void_and_not_a_failure() {
     assert_code(&ran, 2, "no repository is a VOID");
     assert!(out.contains("RUN VOID"), "spelled as one:\n{out}");
 }
+
+/// The gate ASKS FOR ITS SCRATCH SPACE BEFORE IT WRITES ANY, and says so.
+///
+/// `tools/SHELL_CHECKLIST.md` item 12 obligation 2. Without this assertion the
+/// preflight CALL is invisible: deleting it leaves every gate passing, because
+/// a preflight that passes is a no-op — which is exactly the call-removed
+/// mutant `docs/decisions.md` D-553 makes standing evidence, and exactly the
+/// shape that let a guard with a direct unit test survive one.
+#[test]
+fn the_label_gate_asks_for_its_scratch_before_it_seeds_any() {
+    let root = scratch_repo("label-preflight");
+    let ran = gate(&root);
+    let out = said(&ran);
+    assert!(
+        out.contains("scratch_preflight:") && out.contains("KiB available"),
+        "the gate must ask for room before it writes any, and name what it \
+         found:\n{out}"
+    );
+}

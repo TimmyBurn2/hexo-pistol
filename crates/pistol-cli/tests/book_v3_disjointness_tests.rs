@@ -131,6 +131,16 @@ fn a_disjoint_book_answers_yes_and_names_both_terms_on_every_line() {
     ] {
         assert!(text.contains(line), "missing `{line}` in:\n{text}");
     }
+    // AND IT ASKED FOR ITS SCRATCH SPACE FIRST (tools/SHELL_CHECKLIST.md item
+    // 12 obligation 2). Asserted here rather than in a case of its own because
+    // the preflight CALL is otherwise invisible: deleting it leaves this gate
+    // passing, a preflight that passes being a no-op — D-553's call-removed
+    // mutant, in the shape that survives a direct unit test.
+    assert!(
+        text.contains("scratch_preflight:") && text.contains("KiB available"),
+        "the gate must ask for room before it writes any, and name what it \
+         found:\n{text}"
+    );
 }
 
 #[test]
