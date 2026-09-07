@@ -1,21 +1,20 @@
-# OPTION MATRIX — the quiet-structure eval family for Phase 2, revision 2.
+# OPTION MATRIX — the quiet-structure eval family for Phase 2, revision 3.
 
-> **`R-A4-CLASS` IS OUT OF THE PRICED FIELD, BY THE DISPATCH'S OWN DEFAULT FORK.**
-> Stage E's derivation memo failed its REVIEW-design and then failed the
-> confirmation of its one fix round (`wp22_phase2a_STOP_E.md`), and the dispatch
-> registers the consequence in advance: *"Second FAIL = STOP E, and the matrix
-> runs without A4-CLASS (default fork applied, recorded)."* **The fork is
-> applied here and the row is shown with its stop, not deleted** — §4 keeps it,
-> priced as far as it was priced, so a reader sees a stopped row rather than an
-> omission. §6's order is re-ranked without it.
+> **REVISION 3 IS ROUND 2 OF FOUR UNDER D-709, AND IT IS REMEDIES-ONLY.**
+> Revision 2 FAILED its DECISION-RED-TEAM
+> (`matrix_wp22_phase2_eval_REDTEAM.md`: 4 BLOCKING, 11 MAJOR, 10 MINOR at
+> `0641504`). Every finding was re-derived by this session before it was acted
+> on; §12 is the round table. **Three of the four BLOCKINGs are DELETIONS of
+> false findings this matrix made against standing ADRs**, and they are deleted
+> rather than argued with.
 >
-> **THE MEASUREMENTS SURVIVE AND ONE CONCLUSION DOES NOT.** The confirming
-> reviewer re-derived the enum independently and found no arithmetic error; §2's
-> counts stand. What does not stand is §6.5's purity CRITERION, which a
-> value-free quotient of stone counts passes at 1.77x — so every sentence in
-> revision 1 that read *"the registered purity criterion is MET"* as evidence
-> FOR the row is withdrawn, and §2.5 records what the criterion actually
-> measured.
+> **`R-A4-CLASS` IS STILL OUT OF THE PRICED FIELD AND THE REASON HAS CHANGED.**
+> Revision 2 dropped it because Stage E's round cap ran out. D-709 reopened
+> Stage E, round 3 replaced the vacuous criterion with a STONE-COUNT referent,
+> and `hex_threat_enum_v1.md` §7.4 reports it **FIRING at 12 of 16 cells on the
+> full corpus** — every affordable rung at every length is WORSE than a quotient
+> that only counts stones. The row is unpriced by a criterion that could fail
+> and did, which is a strictly better standing than a spent cap.
 
 **Governing revision**: `54eb3ba` (`dev`) for every file, line and count quoted
 below (D-692), except where a paragraph names a later one.
@@ -62,21 +61,29 @@ Instrument: `measure_nps.sh` at `c5123c1` in a detached worktree, the seat
 `crates/pistol-cli/tests/fixtures/bench_positions_v1.txt` (24 positions,
 12 early / 12 late), `go nodes 50000`, five reps, one binary and no verdict.
 
-| seat | band | nps, median of 5 reps | min | max |
+**THE FIGURE IS THE RECEIPTED ONE AND AN EARLIER REVISION PRINTED THE OTHER.**
+The script was executed twice; the receipt
+`artifacts/wp22_phase2a/nps_seat/nps_instrument.txt` holds the SECOND execution
+and revision 2's table printed the FIRST, so its headline was a number the
+receipt did not contain. **Corrected: every figure below is the one in the
+receipt**, and the first execution is reported as the replicate it is.
+
+| seat | band | nps, median of 5 reps (RECEIPTED) | min | max |
 |---|---|---|---|---|
-| `instrument_v0`, `go nodes 50000` | **all** | **531 548** | 531 037 | 532 574 |
-| | early | 570 722 | 566 960 | 571 806 |
-| | late | 491 110 | 489 672 | 495 473 |
-| `instrument_v0`, `go depth_turns 2` | all | 450 233 (73 388 nodes in 163 ms) | | |
+| `instrument_v0`, `go nodes 50000` | **all** | **529 255** | 526 479 | 531 293 |
+| | early | 564 304 | 559 064 | 568 030 |
+| | late | 492 073 | 491 110 | 494 010 |
+| `instrument_v0`, `go depth_turns 2` | all | 453 012 (73 388 nodes in 162 ms) | | |
 
 **REPLICATED, because the run is cheap and the rule says to replicate rather
 than derive a margin** (`docs/process.md`, *"Cost, replication, and the second
-instrument"*): an independent second execution of the same script gives **529 255
-nps** all-bands, 0.43 % from the first. Receipt
-`artifacts/wp22_phase2a/nps_seat/`, `sha256sum -c` clean, receipt digest
+instrument"*): the unreceipted first execution gave **531 548** all-bands,
+**0.43 %** from the receipted one. Receipt `artifacts/wp22_phase2a/nps_seat/`,
+`sha256sum -c` clean, receipt digest
 `211b6e1002f32ee89baace6ed4ff510302b2aad7817094e109dcac121d51ca9e`; the binary
 that produced it is
 `41b2c5df832fb37ee55ddff62901d641e73841cbe22965aadc1b0e3da66e0607`.
+**EVERY nps FLOOR IN §4 IS RECOMPUTED FROM 529 255.**
 
 ### 1.3 THE PLAY SEAT IS NOT ONE SEAT, AND THE TWO DIFFER BY 2.8x
 
@@ -90,10 +97,17 @@ not move"*.
 
 MEASURED, same worktree, same 24 positions, `go movetime 500`, 3 reps:
 
-| config | nps | mean `depth_turns` reached |
+| config | nps, three reps | mean `depth_turns` reached |
 |---|---|---|
 | `configs/play_v0.toml` | **172 627** / 172 665 / 172 211 | **1.21** |
 | `configs/play_staged_v0.toml` | **478 718** / 480 449 / 482 105 | **3.42** |
+
+**THE RECEIPT HOLDS THE SCRIPT AND A SECOND EXECUTION'S OUTPUT, NOT THESE SIX
+NUMBERS**, for the same reason §1.2 records: `measure_play.sh` was re-run into
+`nps_play.txt` after the numbers above were taken, and the two executions are not
+byte-identical because the wall figures are not. **The 2.8x ratio and the depth
+figures reproduce in the receipted run**; the six digits above are the first
+execution's and are labelled so rather than presented as receipted.
 
 **A row's time-matched arm therefore has no defined seat until the architect
 names one**, and the two candidates differ by 2.8x in throughput and 2.8x in
@@ -168,19 +182,25 @@ decision"*, 24 pairs in total. **Instrument cross-check**: `--pairs 8000 --elo1
 |---|---|---|---|
 | node-matched, Δ = 10 | `book_v3`, 8 500 openings | **8 000 pairs** | **0.9045** |
 | node-matched, Δ = 10, half the book | `book_v3` | 4 000 pairs | **0.6970** |
-| time-matched screen, Δ = 30 | `book_v2` holdout, 1 000 openings | **500 pairs** | **0.7430** |
-| the same at 1 000 pairs | needs 1 500 openings | 1 000 pairs | 0.9189 |
+| screen, Δ = 30 | `book_v2` holdout, 1 000 openings | **1 000 pairs** | **0.9189** |
+| the same at a 500-pair cap | half the holdout | 500 pairs | 0.7430 |
+| screen, Δ = 40 | half the holdout | 500 pairs | 0.9067 |
+| screen, Δ = 50 | half the holdout | 500 pairs | 0.9467 |
 
 **THREE THINGS FOLLOW AND NONE OF THEM IS A PREFERENCE.**
 
 1. **`book_v3` funds exactly ONE acceptance arm at Δ = 10.** Splitting it between
    two arms drops each to **0.6970**, below D-653's own floor of 0.9.
-2. **`book_v2`'s holdout cannot fund a time-matched screen at D-653's floor.**
-   The rule `ceil_to_500(P+500) ≤ 1000` caps it at 500 pairs, whose measured
-   power at Δ = 30 is **0.7430**; reaching 0.9189 needs 1 000 pairs and 1 500
-   openings, which the holdout does not have. And the veto's own failure is
-   measured too: at truth = 0 a 500-pair cap returns `h0` in only 0.7385 of runs,
-   so the veto **fails to fire in 26 % of the cases it exists for**.
+2. **`book_v2`'s holdout DOES clear D-653's floor, and revision 2's claim that
+   it does not was a misreading twice over.** D-653 writes `elo1 >= 30`, not
+   `= 30`, so a screen at `elo1 = 40` (power **0.9067**) or 50 (**0.9467**)
+   satisfies both of its clauses — as this matrix's own §5 row already said three
+   lines away. And the 500-pair cap that produced the alleged conflict came from
+   INVERTING `ceil_to_500(P + 500)`, which is a rule for SIZING a book to be
+   built with margin, not a bound on how many pairs an existing book seats: a
+   paired opening is played twice, so **1 000 openings seat 1 000 pairs**. At
+   1 000 pairs the measured power at Δ = 30 is **0.9189** and the veto's failure
+   at truth = 0 is **8 %**, not 26 %. The finding against the ADR is DELETED.
 3. **So the field is priced against ONE acceptance run.** Whichever row the
    architect picks, the books do not fund a second row's acceptance without a new
    book. That is why D-708's separation of matrix from selection matters here
@@ -188,7 +208,9 @@ decision"*, 24 pairs in total. **Instrument cross-check**: `--pairs 8000 --elo1
    books.
 
 Receipt `artifacts/wp22_phase2a/sprt_power/`, digest
-`37a86fe1991ec1c54b5d7e299a92075dc4115d0594cd00f6b34715a1e404030d`.
+`d82fce37add53453423e264a6220e2b47636302c7f2980c4a60f6c600005709b` — the
+digest AFTER `screen_power.txt` joined the directory; revision 2 printed the
+digest from before it, which matched nothing on disk.
 
 **AND THE PENTANOMIAL IS THE INSTRUMENT SEAT'S.** Every power figure above is
 tilted from `2,3,8,7,4`, a 24-pair instrument-seat sample. No play-seat
@@ -214,8 +236,15 @@ today — a third thing §1.4's capability owes.
 
 `docs/audit/repo_audit_2026-09.md` A-02, MEASURED at
 `perf record -F 2000` over 2 105 samples on `bench_positions_v1.txt` line 2 at
-`go nodes 400000`: **`31.77 % HandcraftedV0::delta`**, the top entry, with
-`ThreatState::touch` at 13.45 % behind it.
+`go nodes 400000`. **THE EVAL'S SHARE IS 44.70 %, NOT THE 31.77 % AN EARLIER
+REVISION USED**: the same receipt lists `31.77 % HandcraftedV0::delta`,
+`6.64 % HandcraftedV0::undo` and `6.29 % HandcraftedV0::apply`, and all three are
+the eval — `delta`'s default body IS the apply/undo roundtrip
+(`crates/pistol-eval/src/eval.rs:87-92`) and the two appear separately because
+the search's own seam calls them directly. Taking only the top line understated
+the share by 12.93 points and made **every registered nps floor about 14 % too
+lenient**; §4's floors are recomputed at 44.70 %. `ThreatState::touch` at
+13.45 % is the next entry and is NOT the eval.
 
 `WINDOWS_PER_CELL = Axis::ALL.len() * WINDOW_LEN` = **18**
 (`crates/pistol-core/src/window.rs:9`), touched per stone. A length-`L` codebook
@@ -239,9 +268,12 @@ Offline metrics gate nothing (D-614).
 
 ## §2 STAGE E's RECEIPTS — what the enum turned out to be
 
-`docs/experiments/hex_threat_enum_v1.md` revision 2, §7. Receipt
-`artifacts/wp22_phase2a/census/`, digest
-`aab7f4f6a8d450fac5609dce4635a21ea86ec658e4c42c11c9d89b98835e14a8`.
+`docs/experiments/hex_threat_enum_v1.md` **revision 3**, §7, whose census is
+receipted at `artifacts/wp22_phase2a/census_r3/`, digest
+`9bb8fc6f2e0500bcf10f48e493dd9e3615897d935b73b63d8a8f47bf179e9c39`, and which
+**replicates round 2's run (`artifacts/wp22_phase2a/census/`, digest
+`aab7f4f6a8d450fac5609dce4635a21ea86ec658e4c42c11c9d89b98835e14a8`) on all 200
+cells the two share, 0 differences**.
 
 **`k` is COMPUTED and no cell of it is 816.** The enum is the quotient of a
 property tuple drawn from the calculus's own queries, and the ladder is four
@@ -271,45 +303,63 @@ projections of that tuple whose boundaries are `LAW-SUPPORT`'s and
    observed codes, median 41 observations, 322 at or below Buro's ≤ 4 line and
    620 below his ≥ 20 line**, and a growth curve that moves 35 % over nine times
    the data.
-4. **The registered purity criterion is MET at all sixteen cells, by 2.0x to
-   3.6x — AND §2.5 measures that this says almost nothing.** The enum's `ω²`
-   beats every matched-null replicate at every length and rung, and at `L = 11`
-   T4 retains 62 % of the un-quotiented ceiling's `ω²` while collapsing 11 909
-   observed codes to 231. **Both facts are true and neither is evidence for the
-   row**, for the reason §2.5 gives.
+4. **THE REGISTERED CRITERION FIRES ON EVERY AFFORDABLE RUNG.** Stage E round 3
+   replaced the criterion that could not fail with one stated against a
+   STONE-COUNT quotient, and `hex_threat_enum_v1.md` §7.4 reports it **MET in
+   only 4 of 16 cells — all four of them T4, the full tuple, and by 1.4 % to
+   12.5 %** — while every affordable rung is BELOW a quotient that counts stones
+   and nothing else. `L = 11` T2, the rung revision 1 of this matrix
+   recommended, sits at **0.637**. §2.5 is the finding.
 
-### §2.5 THE CRITERION IS PASSED BY A QUOTIENT THAT KNOWS NOTHING, AND THAT IS THE STOP
+   *(What revision 2 reported here — *"MET at all sixteen cells, by 2.0x to
+   3.6x"* — was the RANDOM-permutation referent at the WINDOW unit. That
+   referent is a FLOOR: clearing it says the enum is not noise. It was not
+   labelled as one, and the instrument prints a second unit whose numbers a
+   reader could take for the same claim. Both are now named.)*
 
-MEASURED by the Stage E confirmation, driving the SHIPPED `census.py` with the
-class table replaced by the quotient `(own stones in the pattern, opp stones in
-the pattern)` — no window, no openness, no completion cost, no rule-4 relevance.
-Window unit, `L = 7`, 3 000 positions, both arms sharing the corpus, the walk and
-the matched-null machinery:
+### §2.5 THE ROW IS UNPRICED BECAUSE A CRITERION THAT COULD FAIL DID
 
-| partition | classes | `ω²` | worst of 3 matched nulls | ratio | the criterion |
+**Stage E round 3, full corpus, four lengths, window unit.** The criterion
+registered before that run: *the enum's `ω²` must EXCEED the stone-count
+quotient's, at the rung and length a matrix prices the row at* — no margin, no
+free parameter. The stone-count quotient's key is `(own stones in the pattern,
+opp stones in the pattern)`: no window, no openness, no completion cost, no
+rule-4 relevance.
+
+| L | rung | enum `ω²` | stone-count `ω²` | ratio | criterion |
 |---|---|---|---|---|---|
-| the enum, T4 | 16 | 0.005031 | 0.001958 | 2.57x | MET |
-| **count-only quotient** | 23 | **0.004840** | 0.002740 | **1.77x** | **MET** |
+| 7 | T4 | 0.003573 | 0.003525 | 1.014 | MET |
+| 7 | **T2** | 0.002796 | 0.003525 | **0.793** | **FAILS** |
+| 9 | T4 | 0.004606 | 0.004158 | 1.108 | MET |
+| 9 | **T2** | 0.002799 | 0.004158 | **0.673** | **FAILS** |
+| 11 | T4 | 0.005504 | 0.004894 | **1.125** | MET |
+| 11 | **T2** | 0.003119 | 0.004894 | **0.637** | **FAILS** |
+| 13 | T4 | 0.004668 | 0.005600 | 0.834 | **FAILS** |
+| 13 | T2 | 0.002646 | 0.005600 | 0.472 | **FAILS** |
 
-**The value-free quotient reaches 96 % of the full tuple's `ω²`.** Two readings,
-and the second is why `R-A4-CLASS` leaves the field:
+**MET IN 4 OF 16 CELLS, ALL FOUR AT T4** — and T4 at `L = 11` costs 7 647 059
+nominal parameters against 8 174 025 observations, **1.07 per parameter**, which
+is below the 1.2 that already kills `R-A1`. **The only rung that beats counting
+stones cannot be fitted, and every rung that can be fitted loses to counting
+stones.** So `R-A4-CLASS` is UNPRICED — §6.5 of the enum memo registered that
+consequence before the run, and this matrix does not rank a row on a number that
+came out the other way.
 
-1. **Almost all of the enum's measured purity is stone counting.** Openness,
-   completion cost and game rule 4 together buy **4 %** on this corpus at this
-   unit. That is a fact about the corpus and the statistic, and it is the single
-   most useful thing Stage E produced.
-2. **The criterion cannot separate the enum from a quotient that discarded
-   everything the defect class names**, so by `docs/process.md`'s own clause —
-   *"A criterion that is a property the named defect class PRESERVES … passes
-   vacuously and is not a criterion"* — revision 1's kill condition could not
-   fire rather than declining to. A row whose registered kill cannot fire is not
-   priced; it is unpriced.
+**THE SCOPE OF THE FINDING, because a decisive-looking table invites
+over-reading.** It is about ONE tuple's quotients, ONE statistic, ONE unit and
+ONE corpus. It does not say a threat-class eval cannot work; `ω²` over
+position-level labels is a weak instrument whose effective `n` is nearer the
+3 487 games than the 8 million scored cells. **It does not transfer to
+`R-A5-TOPK`, `R-A2-L11F` or `R-A3-L11F+F7`**, which are not quotients of this
+tuple and are not measured by it.
 
-**WHAT THIS DOES NOT SAY.** It does not say the enum is wrong — its arithmetic
-survived an independent re-derivation entirely. It does not say a class-quotient
-eval cannot work. It says **this corpus, through this statistic, at this unit,
-cannot tell the difference**, and that a matrix may not rank a row on a number
-that cannot discriminate.
+**AND ONE CELL LOOKS LIKE THE OPPOSITE AND IS NOT**: at the CODE unit at
+`L = 11`, T4's `ω²` is 0.020985 against the stone-count quotient's 0.009248 —
+2.27x — but that compares **108 074 observed classes with 6 856**, and `ω²`'s
+degrees-of-freedom correction does not make partitions two orders of magnitude
+apart comparable. The criterion binds the window unit, where the class counts are
+16-to-23, 78-to-38 and 231-to-52. The cell is printed so nobody finds it later
+and thinks it was hidden.
 
 **AND ONE FINDING AGAINST THE ROW AS `eval_families` §7 PROPOSES IT**, recorded
 in the enum memo's §5.5 and not softened here: **the tuple merges patterns whose
@@ -336,16 +386,40 @@ statistics so that eight splits cost one corpus walk. **45 271 quiet rows over
 | 32 | 33 | 634 392 | 43 863 | **6.91 %** | **61.32 %** |
 | 64 | 65 | 620 985 | 42 952 | **6.92 %** | **64.92 %** |
 
-**THREE READINGS, AND THE THIRD IS THE ONE THAT PRICES THE ROWS.**
+**THREE READINGS, AND THE THIRD IS THE ONE REVISION 2 GOT BACKWARDS.**
 
 1. A single-seed validation number on this corpus is worth **±3.5 %**.
 2. **Individual weights move by up to 65 % of the table's scale between splits**
-   at 33 parameters and above. A fitted table is not a stable object here.
-3. **The gain from 9 parameters to 65 is 5.6 %, and the seed spread is 6.9 %.**
-   So on this corpus **an architecture comparison by offline loss is not
-   separable from split noise at a single seed** — which is D-614 arrived at from
-   a direction D-614 did not take, and it is why the seed column below reads in
-   ACCEPTANCE RUNS rather than in training runs.
+   at 33 parameters and above. A fitted table is not a stable object here, and
+   this reading is untouched.
+3. **THE DESIGN IS PAIRED AND THE COMPARISON MUST BE TOO.**
+   `tools/hex_enum/seed_pilot.py` shuffles the game list with
+   `random.Random(1000 + seed)`, keyed on the seed and nothing else, with the
+   game list fixed before the `K` loop — so **split `s` is the identical
+   train/validation partition at every `K` by construction**, and the 6.9 %
+   spread is COMMON MODE that cancels in a comparison. Revision 2 set a
+   between-condition mean gain (5.6 %) against a within-condition half-range
+   (6.9 %) and concluded the architectures were not separable. **MEASURED,
+   paired, over the pilot's own receipted rows:**
+
+   | comparison | better on | paired mean gain | sd | `t` |
+   |---|---|---|---|---|
+   | K = 8 vs K = 32 | **8 of 8 splits** | 23 472 | 5 168 | **12.85** |
+   | K = 8 vs K = 64 | **8 of 8 splits** | 36 879 | 7 021 | **14.86** |
+   | K = 32 vs K = 64 | **8 of 8 splits** | 13 406 | 3 146 | **12.05** |
+
+   **Offline loss orders these three sizes cleanly** — sign-test `p = 0.0039` on
+   each, at 5.25 sigma for the widest. So the claim that an architecture
+   comparison by offline loss drowns in split noise is FALSE on this instrument's
+   own data and is withdrawn, and with it revision 2's use of it against R-A2's
+   kill condition. **What remains true is reading 2**: the loss separates, the
+   individual weights do not, and those are different facts.
+
+**AND D-614 IS NOT CORROBORATED BY THIS**, which revision 2 also claimed:
+D-614 rules that offline metrics never gate STRENGTH, and the pilot measures that
+offline loss does order table SIZES. The two are compatible and neither supports
+the other; Rapfi Table 2 is the evidence that loss ranks architectures wrongly for
+strength, and it stands alone.
 
 **The closed-form rows have no training seed at all** — `tools/texel/fit.py`'s own
 docstring, *"no seed, no learning rate, no stopping rule"* — so their seed budget
@@ -362,7 +436,23 @@ accepted.
 ## §4 THE ROWS
 
 **Every row is present, killed rows included, and each is priced on its own
-stated unit.** The unit matters and §5 says why: `R-A4-CLASS` is a per-CELL row
+stated unit.**
+
+**AND THE DENSITY COLUMN IS FOUR CURRENCIES, WHICH IS NAMED HERE RATHER THAN
+LEFT FOR A READER TO TRIP OVER.** *"Observations per parameter"* below means one
+of four things depending on the row, and they are not interchangeable:
+
+| currency | which rows | what one observation is |
+|---|---|---|
+| **positions per parameter** | R-A1-L11, R-A3, R-A2 | one of the 45 271 quiet positions |
+| **window observations per parameter** | R-A5-TOPK, R-A1-L8F | one `(axis, start)` window holding a stone — 16 613 729 of them at `L = 11` |
+| **scored-cell observations per parameter** | R-A4-CLASS | one empty cell whose neighbourhood holds a stone — 8 174 025 at `L = 11` |
+| **games per parameter** | the outcome-blended term only | one of the 3 487 games (`training_pipeline_2026-09.md` §1) |
+
+**So `R-A1-L11`'s disqualifying 1.2 and `R-A5-TOPK`'s comfortable density are not
+the same measurement**, and a comparison across the column is not a comparison.
+Each cell below names its own currency; the ranking in §6 does not rest on any
+cross-currency comparison, and where two rows are separated it is stated on what. The unit matters and §5 says why: `R-A4-CLASS` is a per-CELL row
 by construction (`C(k+2,3)` is a size-3 multiset over the three axes at one
 cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 `eval_families` states them, which is the shape `handcrafted_v0` already sums in.
@@ -374,7 +464,7 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 | **parameters** (DERIVED) | at `L = 11`: **T4 7 647 059**, T3 302 621, **T2 18 424**, T1 8 436. At `L = 7`: T4 2 925, T2 680. |
 | **observations per parameter** (MEASURED, per scored cell) | T4 **1.07 per nominal**, 75.6 per observed code, **median 3**; T2 **444 per nominal**, 5 332 per observed code, **median 41**; T1 969 per nominal, median 53. Population 8 174 025 scored cells over 45 271 positions (180.6 per position). |
 | **window touches / stone, and the ratio to 18** (DERIVED) | `3L` = **33**, **1.83x**. `L = 13` is 39 (2.17x) and buys one class and one code. |
-| **nodes/sec floor, PRE-REGISTERED as a bench bracket** (ESTIMATED) | Arithmetic on the page: today 531 548 nps with the eval at 31.77 % of the profile; a codebook at 1.83x the traffic and a per-touch cost ratio `c ∈ [0.5, 1.5]` gives `nps ∈ [341 617, 546 003]` = **[0.64x, 1.03x]**. **FLOOR REGISTERED AT 341 617 nps (0.64x)**; below it the row aborts on cost, per hard rule 5's abort-threshold discipline. |
+| **nodes/sec floor, PRE-REGISTERED as a bench bracket** (ESTIMATED) | Arithmetic on the page: today **529 255** nps (§1.2, receipted) with the eval at **44.70 %** of the profile (§1.8); a codebook at 1.83x the traffic and a per-touch cost ratio `c ∈ [0.5, 1.5]` gives `nps ∈ [296 959, 549 733]` = **[0.56x, 1.04x]**. **FLOOR REGISTERED AT 296 959 nps (0.56x)**; below it the row aborts on cost, per hard rule 5's abort-threshold discipline. *(Revision 2 registered 341 617 from the unreceipted run and the understated share.)* |
 | **determinism and quantization** | Closed-form fit, no seed. Integer after bake; one class lookup plus one code lookup per touch. The accumulator is bounded by construction: `3L` active windows times the clamped maximum, `training_pipeline_2026-09.md` §4's *"no combination of possible active features can exceed the maximum value"*. `EVAL_MAX = 16 000` with an i64 intermediate is the shape to keep. |
 | **seed budget** (MEASURED, §3) | **1 fit, ≥ 8 splits** for any validation number; ±3.5 % on a single split. No training seed. |
 | **books, BOTH arms** | node-matched Δ = 10: **8 000 pairs on `book_v3`, power 0.9045, the whole book**. Time-matched: **not runnable** (§1.4) — no arena movetime, no named play seat, no play-seat pentanomial. |
@@ -388,12 +478,30 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 | **parameters** (DERIVED) | **`K + 1`, and `K` DEPENDS ON THE UNIT** — see the attack. At `eval_families` §0.2's `(axis, start)` window unit, **811** (810 folded L11 codes cover 90 %). At the cell-centred window unit this package measures, **143** (142 codes cover 90 % of 12 980 519 observations). |
 | **observations per parameter** (MEASURED) | at §0.2's unit, 16 613 729 window observations over 38 983 codes; at the cell-centred unit, 12 980 519 over 11 909 codes, median 7, **4 730 codes at or below Buro's ≤ 4 line**. The top-`K` head is dense either way; the rare bucket absorbs the tail. |
 | **window touches / stone** (DERIVED) | `3L` = **33**, **1.83x**. |
-| **nodes/sec floor** (ESTIMATED) | same traffic as A4, **[341 617, 546 003]**, floor **341 617 (0.64x)**. Cheaper per touch than A4 in principle (one table lookup, no class indirection), so the bracket is the same and the row should land nearer its top. |
+| **nodes/sec floor** (ESTIMATED) | same traffic as A4, **[296 959, 549 733]**, floor **296 959 (0.56x)**. Cheaper per touch than A4 in principle (one table lookup, no class indirection), so the bracket is the same and the row should land nearer its top. |
 | **determinism and quantization** | closed form, no seed; trivial determinism; low quantization risk. |
 | **seed budget** (MEASURED, §3) | **this row IS the pilot's shape**: 1 fit, ≥ 8 splits, ±3.5 % on one. At `K = 64` the worst weight moved **64.92 %** of the table scale between splits. |
 | **books** | as A4: one node-matched arm, whole book. |
 | **kill condition** | `eval_families` §A5: *"the rare tail is where novel structure lives and one bucket scores all of it alike"* — unmeasured, and this matrix does not measure it either. |
 | **strongest known attack** | **The row's headline parameter count is a different number at each unit, and `eval_families` §7 states only one of them.** 811 is §0.2's window census; 143 is the same 90 % rule at the unit `R-A4-CLASS` must use. A field that prices A4 per cell and A5 per window is pricing two rows on two instruments (D-477's own class), and the row is not well posed until the architect names the evaluator's summand. |
+
+### R-A1-L8F — free folded table at length 8, window-indexed. **THE ROW REVISION 2's FIELD WAS MISSING**
+
+The red team found it and it is added rather than argued about: `eval_families`
+§0.2 measures a length-8 folded window census this matrix quoted in §1.4 and
+then priced no row against.
+
+| column | value |
+|---|---|
+| **parameters** (MEASURED, `eval_families` §0.2) | **2 920** folded L8 cells, 88.0 % of the `(3^8 + 3^4)/2 − 1 = 3 320` ceiling |
+| **observations per parameter** (MEASURED) | **median 273**, only **24 cells (0.8 %) under ten observations**, 293 cells covering 90 %. Against A1-L11's 1.2 and A3's 1.2, this is the densest free table the corpus supports. |
+| **window touches / stone** (DERIVED) | `3L` = **24**, **1.33x** — the cheapest codebook traffic in the field |
+| **nodes/sec floor** (ESTIMATED, §1.8's arithmetic) | `nps ∈ [365 760, 621 921]` = [0.69x, 1.18x]. **FLOOR 365 760 (0.69x)** |
+| **determinism and quantization** | closed form, no seed, trivial determinism, low risk |
+| **seed budget** (MEASURED, §3) | 1 fit, ≥ 8 splits |
+| **books** | one node-matched arm, as every learned row |
+| **kill condition — and it is the one that keeps it below A5** | **It is below the covering minimum.** `eval_families` §0.1 derives `L ≥ 2·WIN_LEN − 1 = 11` as the length at which one centred window contains every 6-window through a cell; at `L = 8` the code is a partial view of the structure it scores. |
+| **strongest known attack — against its own kill** | **The covering bound is a DERIVATION, not a measurement, and the measurement it asks for has never been taken.** `threat_calculus_v1.md:152-155` (THM-WINDOW) says *"re-derive the minimal sufficient hex length by enumeration"*, and `eval_families` §8 lists that enumeration as *"Minutes of compute, **not run** (D-291)"* — still true at `54eb3ba`. Stage E answered a CELL-CENTRED version of the question and its §6.6 states in terms that it does not close THM-WINDOW. **So the boundary that excludes the densest affordable free table in this field is an unrun theorem**, and that is a finding against the field's completeness rather than against this row. |
 
 ### R-A2-L11F — mapped codebook, shared-weight generator, length 11, folded
 
@@ -402,11 +510,11 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 | **parameters** (DERIVED from the source's ratio, EMP for the sizes) | Rapfi's smallest configuration is **14 160 generator parameters producing a 397 488-entry codebook** (`eval_families` §A2, Table 1). The hex analogue's codebook is the folded L11 code space, **38 983 observed cells** at §0.2's unit; the generator's size is a design choice Phase 2b makes. |
 | **observations per parameter** (DERIVED) | against 14 160 generator parameters and 45 271 positions, **3.2 positions per parameter** — and `training_pipeline_2026-09.md` §6 reports two published sizing rules that disagree by 100x (nodchip's ≥ 10 positions per parameter, which caps this at ~4 500; ChessBench's measured overfit at 0.08), so **the rules do not settle it and both are reported**. |
 | **window touches / stone** (DERIVED) | **33**, 1.83x — the bake makes inference one lookup per window, as A5. |
-| **nodes/sec floor** (ESTIMATED) | **[341 617, 546 003]**, floor **341 617 (0.64x)** — identical to A4/A5 at inference, because the generator is offline. |
-| **determinism and quantization** | **The training run is NOT reproducible** — `training_pipeline_2026-09.md` §3 quotes PyTorch's own page, *"Completely reproducible results are not guaranteed across PyTorch releases, individual commits, or different platforms"* — so **the reproducible artifact is the weight file by digest, never the run**. The engine stays deterministic after the bake (int16 features, int32 accumulation, `eval_families` §A7). **AND THE DEPENDENCY DOES NOT EXIST HERE**: this workstation's `python3` has no `numpy`, let alone torch, so the trainer is a package before it is a row. |
+| **nodes/sec floor** (ESTIMATED) | **[296 959, 549 733]**, floor **296 959 (0.56x)** — identical to A4/A5 at inference, because the generator is offline. |
+| **determinism and quantization** | **The training run is NOT reproducible** — `training_pipeline_2026-09.md` §3 quotes PyTorch's own page, *"Completely reproducible results are not guaranteed across PyTorch releases, individual commits, or different platforms"* — so **the reproducible artifact is the weight file by digest, never the run**. The engine stays deterministic after the bake (int16 features, int32 accumulation, `eval_families` §A7). **AND THE TRAINER IS A PACKAGE BEFORE IT IS A ROW**: nothing in this repository trains anything, and `tools/texel/` is a closed-form solver. *(An earlier revision said this workstation's `python3` has no `numpy`; that is false — `/usr/bin/python3` has numpy 2.5.2 and only the `mise`-managed interpreter on PATH does not. The claim is deleted rather than repaired, because which interpreter is on PATH is not a property of the row.)* |
 | **seed budget** (MEASURED + ARCH) | **≥ 4 trained nets** by the reference trainer's own standard, on top of the ≥ 8 splits §3 measures. **The books fund ONE acceptance run**, so four nets cannot each be accepted and the row must choose one by an offline metric — which Rapfi Table 2 measures ranks nets WRONGLY for strength (*"300-400 ELO… at equal wall clock"* against the loss ordering). |
 | **books** | one node-matched arm, whole book; the seed budget makes that a selection problem the other rows do not have. |
-| **kill condition** | `eval_families` §7: *"it does not beat A3's validation loss, or the nps floor is missed"* — and §3 measures that the first half is not separable from split noise at 65 parameters, so the kill as written cannot fire cleanly. |
+| **kill condition** | `eval_families` §7: *"it does not beat A3's validation loss, or the nps floor is missed"*. **Both halves can fire**: §3's paired analysis measures that validation loss separates table sizes at `t = 12` to `15`, so the first half is a live test, and the floor below is the second. |
 | **strongest known attack** | **Three games agree that the alpha-beta eval-width optimum sits BELOW the accuracy optimum** (`eval_families` §A7): Rapfi's Mixnet Large scores **−82 / −58 / −45 / −38 Elo** against Small under α-β while scoring **+57 to +84** under MCTS; Logistello's three large patterns cost ~45 % speed and *"could not compensate"*; figrid's 1 024-accumulator net lost **23 points** to the 512 one at ~1.1 M samples. A2 is the row that buys accuracy with throughput, under the paradigm where that trade is measured to lose. |
 
 ### R-A3-L11F+F7 — free length-11 folded table with the length-7 folded factor
@@ -416,7 +524,7 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 | **parameters** (DERIVED) | real parameters are A1's: **38 983** folded L11 codes at §0.2's unit. The factor — 1 029 folded L7 cells, none under ten observations — is a **training-time device with zero inference cost**, coalesced into the real weights (`eval_families` §A3). |
 | **observations per parameter** (MEASURED) | **1.2** at §0.2's unit — `eval_families` §A1's own kill figure for A1, unchanged, because the factor does not add observations. The factor's own density is 1 282 median. |
 | **window touches / stone** (DERIVED) | **33**, 1.83x. |
-| **nodes/sec floor** (ESTIMATED) | **[341 617, 546 003]**, floor **341 617 (0.64x)** — identical to A1 by construction, which is the row's selling point. |
+| **nodes/sec floor** (ESTIMATED) | **[296 959, 549 733]**, floor **296 959 (0.56x)** — identical to A1 by construction, which is the row's selling point. |
 | **determinism and quantization** | closed form if the virtual features are fitted by least squares; trivial determinism; risk as A1. |
 | **seed budget** (MEASURED, §3) | 1 fit, ≥ 8 splits. |
 | **books** | one node-matched arm, whole book. |
@@ -453,10 +561,10 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 | **parameters** | v0's five, plus the terms the calculus already names as candidates: a **tempo census** per side (`ADOPT-TEMPO`, `threat_calculus_v1.md:177`, *"tempo census … eval-term candidate"*, audited exact at §6), **exact-`t` counters as eval terms** — `THM-WINDOW`'s own cheapest listed fix, `:153`, *"exact-t counters as eval terms (free from\n  PROTO-NODE)"* spanning `:153-154` — and `E-INIT`'s initiative discount (`:158`). **~3 to 6 more integers.** |
 | **observations per parameter** | not applicable: the terms are hand-set and SPRT-gated, which is what the calculus says they are. |
 | **window touches / stone** (DERIVED) | **18, 1.00x**. The exact-`t` counters are computed by `PROTO-NODE` already; `ThreatState::touch` is 13.45 % of the profile whether or not a node reads a threat query (`repo_audit_2026-09.md` A-03), so the counters are close to free. |
-| **nodes/sec floor** (ESTIMATED) | traffic unchanged, arithmetic per touch up: `c ∈ [1.2, 2.0]` gives `nps ∈ [403 391, 499 791]` = **[0.76x, 0.94x]**. Floor registered at **403 391 (0.76x)**. |
+| **nodes/sec floor** (ESTIMATED) | traffic unchanged at 18 touches, arithmetic per touch up: **`c ∈ [1.0, 2.0]`** — the row keeps `handcrafted_v0`'s per-touch work and adds terms, so `c ≥ 1` by construction, which is the bracket's ground and the reason it differs from the codebook rows' `[0.5, 1.5]` (a table lookup can be cheaper per touch than the arithmetic it replaces, and adding hand terms cannot). That gives `nps ∈ [365 760, 529 255]` = **[0.69x, 1.00x]**. Floor registered at **365 760 (0.69x)**. |
 | **determinism and quantization** | unchanged from v0 — integer, no fit, no artifact, no digest problem, no shape check owed. |
 | **seed budget** | **zero**. There is nothing to seed. |
-| **books** | one arm. **AND IT IS THE ONLY ROW THAT CAN USE THE SCREENING BOOK**: a hand term either moves play a lot or it does not, so it is a large-effect question, and §1.6 measures that `book_v2`'s holdout reaches D-653's 0.9 floor at **elo1 = 40 (0.9067)** and **50 (0.9467)** at a 500-pair cap. |
+| **books — AND IT IS NOT FREE** | Either a `book_v3` arm at Δ = 10 like every other row, **or** a large-effect screen on `book_v2`'s holdout, which §1.6 measures reaches D-653's floor at 1 000 pairs / Δ = 30 (0.9189) and at 500 pairs / Δ = 40 (0.9067). **The screen consumes an irreplaceable slice**: the holdout is 1 000 openings reserved by D-568, never labelled, the only corpus-disjoint `book_v2` sample, and D-628 records two packages with standing claims on it. **Spending it is the architect's ruling and not this matrix's**, and revision 2's *"the only row that can use the screening book"* is deleted — it was asserted, and nothing here measures that another row could not. |
 | **kill condition** | it fails its own SPRT, at which point the incumbent stands and the learned rows are measured against v0 rather than against v0-plus. |
 | **strongest known attack — and it is an attack on the FIELD, not on the row** | **The calculus has called the tempo layer *"a cheap eval-term candidate (SPRT-gated)"* since v1.0 and nothing has SPRT-gated it.** So R-H-EXT is not a Phase-2 alternative at all — it is Stage-0 work nobody did, and pricing it beside a learned family makes an unrun cheap experiment look like a considered rival. The counter is D-614's own bar: the ROADMAP's Stage-2 acceptance is *"vs handcrafted_v0"*, so if v0-plus beats v0 the bar itself moves and every learned row was measured against the wrong incumbent. **That is a reason to run it FIRST, not a reason to leave it out.** |
 
@@ -481,14 +589,23 @@ floor for the bench bracket — flips if the play seat is redefined."*
 
 | row | node-matched arm | time-matched arm | nodes/sec floor registered |
 |---|---|---|---|
-| R-A4-CLASS | **STOPPED (§2.5)** — no arm registered | — | — |
-| R-A5-TOPK | as above | not runnable | 341 617 (0.64x) |
-| R-A2-L11F | as above, and it needs **≥ 4 nets** for one arm (§3) | not runnable | 341 617 (0.64x) |
-| R-A3-L11F+F7 | as above | not runnable | 341 617 (0.64x) |
-| R-A1-L11 | killed before the arm | — | — |
-| R-C-SPSA | needs 60 500 openings of tuning FIRST (§4) | not runnable | no change |
-| R-H-EXT | Δ = 10 on `book_v3`, **or** a large-effect screen on `book_v2`'s holdout at **elo1 = 40, power 0.9067** | not runnable | **403 391** (0.76x) |
-| R-D-W1 | killed by ruling | — | — |
+| R-A4-CLASS | **UNPRICED (§2.5)** — no arm registered, and no floor, because a row nothing prices registers nothing | — | — |
+| R-A5-TOPK | as above | not runnable | **296 959** (0.56x) |
+| R-A1-L8F | as above | not runnable | **365 760** (0.69x) |
+| R-A2-L11F | as above, and it needs **≥ 4 nets** for one arm (§3) | not runnable | **296 959** (0.56x) |
+| R-A3-L11F+F7 | as above | not runnable | **296 959** (0.56x) |
+| R-A1-L11 | killed before the arm | — | — (a killed row registers no floor) |
+| R-C-SPSA | needs 60 500 openings of tuning FIRST (§4) | not runnable | no change registered: the row alters no per-touch work |
+| R-H-EXT | Δ = 10 on `book_v3`, **or** a screen on `book_v2`'s holdout at Δ = 30 / 1 000 pairs (0.9189) or Δ = 40 / 500 pairs (0.9067) — see its books cell for what that spends | not runnable | **365 760** (0.69x) |
+| R-D-W1 | killed by ruling | — | — (a killed row registers no floor) |
+
+**AND ONE DISTINCTION REVISION 2 BLURRED, BECAUSE §6 THEN RANKS ON ONE HALF OF
+IT.** *Window traffic and measured nps* are BENCH quantities — hard rule 5's, and
+this session measured them today without an arena (§1.2, §1.3). *A time-matched
+ARM* is an SPRT at a wall-clock budget, which §1.4 measures the arena refuses.
+**Ranking on the first is legitimate and ranking on the second is not**, and §6
+ranks only on the first. The two were run together in revision 2's sentence and
+are separated here.
 
 **THE COLUMN THAT WAS MEANT TO SEPARATE THE ROWS IS CONSTANT.** The
 time-matched arm is unavailable for every row for the same three reasons — the
@@ -499,74 +616,100 @@ would be presenting a package obligation as a discriminator. It is stated once,
 in §1.4, and its discharge is one of the two questions the HANDUP puts to the
 architect.
 
-**AND ONE THING D-705 DOES NOT SAY IS TRUE OF THE COMMITTED BOOKS.** Its
-acceptance rule needs two arms; §1.6 measures that `book_v3` funds one at
-D-653's power floor and that `book_v2`'s holdout clears that floor only at
-`elo1 ≥ 40`. **D-653 designates the holdout as the screening book at `elo1 ≥ 30`
-and requires computed power ≥ 0.9, and at `elo1 = 30` with the holdout's own
-1 000-opening cap the computed power is 0.7430.** That is D-628's shape — a
-registered test that cannot return its registered outcome — found in a standing
-ADR rather than in a registration, and it is reported here rather than worked
-around.
+**AND §1.6's HEADLINE IS D-705's OWN PREMISE, MEASURED — NOT A GAP IN IT.**
+Revision 2 wrote *"one thing D-705 does not say"* and D-705 says it, verbatim:
+*"AND THE ASYMMETRY IS DELIBERATE: two `h1` bars would double the openings a row
+costs, and D-568's reservation plus `book_v3`'s 8 500 cannot fund that for every
+row."* That is the ADR's stated reason the veto's bar is *"not h0"* rather than
+*"h1"*, and §1.6 confirms it with numbers the ADR did not have. **The false
+finding is deleted; the confirmation is what stands.**
+
+**AND §1.6's SPLIT ARITHMETIC PRICES A DESIGN D-705 REJECTS.** *"Splitting
+`book_v3` between two arms drops each to 0.6970"* models two `h1` arms at
+Δ = 10 — which is exactly the doubling D-705 declines. **The question D-705
+actually poses is unasked here and is owed by whoever runs the arm**: what does a
+*"not h0"* veto cost in openings, and what is its power to FIRE? §1.6 has half of
+it — at a 500-pair cap and truth = 0 the test returns `h0` in 0.7385 of runs and
+at 1 000 pairs in 0.9172 — and the other half needs a play-seat pentanomial that
+does not exist (§1.4).
+
+**AND D-705's LAST CLAUSE BINDS THIS TABLE**: *"a row without one is not testing
+what decides the outcome"*, said of the nodes/sec floor. Every live row below
+registers one; the killed and stopped rows do not, and that is stated in their
+cells rather than left blank.
 
 ## §6 THE RECOMMENDED ORDER — AND IT IS AN ORDER, NOT A SELECTION (D-708)
 
-The books fund one acceptance run (§1.6). So the field's real question is not
-"which row is best" but "which row is run first", and the ranking below is by
-**what a row costs before it can be run at all**, with the measured content of
-§2 and §3 breaking ties.
+The books fund one acceptance run at Δ = 10 (§1.6, and D-705 says so itself). So
+the field's real question is not "which row is best" but "which row is run
+first", and the ranking below is by **what a row costs to BUILD before any book
+is spent** — with §2's densities and §3's paired losses breaking ties.
 
-1. **R-H-EXT.** Zero new capability, zero seeds, zero artifacts, traffic
-   unchanged at 18 touches per stone, and the only row that can be asked at a
-   large effect on the screening book (power 0.9067 at `elo1 = 40`) without
-   spending `book_v3` at all. It also produces the two things every later power
-   computation needs and nobody has: a **play-seat pentanomial** and a
-   **second instrument-seat pentanomial** to replace the 24-pair sample every
-   figure in §1.6 is tilted from. And if it wins, D-614's bar moves and every
-   learned row is measured against the right incumbent.
-   **AND WHAT ITS SCREEN CAN AND CANNOT CONCLUDE, said here rather than left for
-   the attack.** §1.6 measures that the holdout clears D-653's 0.9 floor only at
-   `elo1 = 40`, so a screen there registers *"accept only if three or four hand
-   integers are worth 40 normalized Elo"*, which is a large ask. **A negative
-   screen therefore kills nothing**: it says the effect is under 40 nelo, and the
-   row would still need `book_v3` to be tested at Δ = 10 like every other row.
-   What the screen buys is the two pentanomials and a cheap look, not a verdict —
-   and a matrix that presented it as a free acceptance would be selling the
-   holdout's 0.7430 at `elo1 = 30` as though it were 0.9.
+**THE AXIS IS NARROWER THAN REVISION 2's AND THE NARROWING IS THE POINT.**
+Revision 2 ranked by "cost before it can be run at all" and then priced
+`R-H-EXT`'s book cost at nothing, which was false (§4). **Book cost is now
+EQUAL across every live row** — one `book_v3` arm — so it cannot rank them, and
+what remains is build cost, on which the rows genuinely differ.
 
-2. **R-A5-TOPK.** The leading learned row now that A4 is out: a closed-form fit,
-   no training seed, no dependency this workstation lacks, the same 33 touches
-   per stone and the same throughput bracket A4 would have had. **Its parameter
-   count is 811 or 143 depending on the evaluator's summand**, and that question
-   is the one §4 says the architect must settle; it does not stop the row being
-   run, because both counts are affordable against 12 980 519 window
-   observations.
-3. **R-A3-L11F+F7.** Zero inference cost over A1 and the documented remedy for
+1. **R-H-EXT.** Nothing to build: no fit, no artifact, no digest discipline, no
+   shape check, no seed, no quantization, no new dependency, and 18 touches per
+   stone against every codebook row's 24 or 33. Its terms are ones
+   `threat_calculus_v1.md` has listed as SPRT-gated candidates since v1.0 and
+   nobody has gated. And if it wins, D-614's bar — *"vs handcrafted_v0"* —
+   moves, and every learned row was otherwise measured against the wrong
+   incumbent.
+2. **R-A5-TOPK.** The leading learned row: a closed-form fit, no training seed,
+   the same throughput bracket as every L11 codebook. **Its parameter count is
+   811 or 143 depending on the evaluator's summand** (§4), and that question is
+   the architect's; it does not stop the row being run, because both counts are
+   affordable against 12 980 519 window observations.
+3. **R-A1-L8F.** Denser than any other free table in the field — 2 920
+   parameters at median 273 observations, only 24 cells under ten — and the
+   cheapest codebook traffic at 1.33x. It ranks below R-A5 only because it sits
+   below `eval_families` §0.1's covering minimum, **and that boundary is an
+   unrun enumeration** (§4).
+4. **R-A3-L11F+F7.** Zero inference cost over A1 and the documented remedy for
    §0.3, but its source disowns the remedy at 200 000x this corpus's size and
-   its real parameter count is A1's killed 1.2 observations each.
-4. **R-A2-L11F.** The strongest published shape and the one this project is
-   furthest from being able to run: a trainer that does not exist here, a
-   non-reproducible training run, **≥ 4 nets against one funded acceptance
-   arm**, and the paradigm under which three games measure its trade to lose.
-5. **R-A1-L11** — scored and killed (§4). **R-C-SPSA** — killed on cost against
-   the ledger (§4). **R-D-W1** — killed by ruling (D-704). **R-A4-CLASS** —
-   STOPPED (§2.5), and it is shown rather than deleted so a reader sees what it
-   cost to find out.
+   its real parameter count is A1's killed 1.2 positions each.
+5. **R-A2-L11F.** The strongest published shape and the furthest from runnable
+   here: a trainer that does not exist in this repository, a non-reproducible
+   training run, **≥ 4 nets against one funded acceptance arm**, and the
+   paradigm under which three games measure its trade to lose.
+6. **R-A1-L11** — scored and killed (§4). **R-C-SPSA** — killed on cost against
+   the ledger. **R-D-W1** — killed by ruling (D-704). **R-A4-CLASS** —
+   UNPRICED (§2.5), shown rather than deleted so a reader sees what it cost to
+   find out.
 
-**WHAT WOULD CHANGE THIS ORDER, stated so the architect can overrule it on
-evidence rather than on taste**: a second acceptance book moves R-A2 up, because
-its seed budget stops being a selection problem; a decision that the evaluator
-sums over windows rather than cells settles R-A5's parameter count without
-reordering anything; and an ADR moving the arena's
-movetime refusal makes §5's column real, at which point the throughput brackets
-start discriminating and the row with the lowest floor is no longer indifferent.
+### THE STRONGEST SURVIVING ATTACK ON THIS ORDER, and it is the red team's own
 
-**NOTHING IS SELECTED HERE** and no ADR of selection is written. §2.5's finding
-is not netted against anything either: it is the reason a row left the field, and
-it is also the most transferable thing this package measured — **on this corpus,
-through `ω²`, at the window unit, threat structure beyond stone counting is worth
-4 %**, and any future row that proposes to learn quiet structure from these
-labels is priced against that number.
+The DECISION-RED-TEAM would rank **R-A5-TOPK first and R-H-EXT second, and only
+after the operator rules on the holdout**, on this ground: *"on the matrix's own
+axis, corrected, R-H-EXT is the MOST expensive row"* — because the screen that
+makes it look cheap consumes the whole of `book_v2`'s 1 000-opening holdout,
+which is never labelled, is the only corpus-disjoint v2 sample, and carries two
+standing claims.
+
+**It is recorded and not conceded, and the disagreement is one sentence.** The
+attack prices R-H-EXT as though the screen were compulsory; it is not — the row
+can take a `book_v3` arm at Δ = 10 exactly like every other row, at which point
+its book cost is the field's common cost and its build cost is nil. **What the
+attack does establish, and this matrix now says in §4, is that the screen is not
+free and spending the holdout is the architect's ruling.**
+
+**AND THE SECOND HALF OF THE ATTACK IS NOT ANSWERED AT ALL, so it is carried to
+the HANDUP**: R-H-EXT is arguably not a Phase-2 row. Phase 2's field is the
+QUIET-STRUCTURE LEARNED family, and a package of hand terms is Stage-0 work
+nobody did. Ranking it first may be reading the dispatch's own row list too
+literally. **The architect decides that, not this document.**
+
+**WHAT WOULD REORDER THIS**: a second acceptance book moves R-A2 up, because its
+seed budget stops being a selection problem; running THM-WINDOW's enumeration
+(minutes, never taken) settles whether R-A1-L8F's kill is real and could move it
+above R-A5; an ADR moving the arena's movetime refusal makes §5's column real,
+at which point the throughput brackets discriminate; and a ruling that R-H-EXT
+is out of scope removes rank 1 entirely.
+
+**NOTHING IS SELECTED HERE** and no ADR of selection is written.
 
 ## §7 COSTS AND FAILURE MODES, one line each
 
@@ -575,6 +718,7 @@ labels is priced against that number.
 | R-H-EXT | none beyond writing the terms | it loses, and the incumbent stands — which is a finding and not a waste, because the calculus has been calling these terms candidates since v1.0 |
 | R-A4-CLASS | **STOPPED** — the row is out of the priced field | its registered kill could not fire (§2.5), and the `t` merge is bigger than published and repairable at an unquoted price |
 | R-A5-TOPK | a fit and a backend | the rare bucket scores all novel structure alike, and the tail is where novel structure is |
+| R-A1-L8F | a fit and a backend | it is below the covering minimum — and the enumeration that would settle whether that matters has never been run |
 | R-A3-L11F+F7 | a fit with virtual features and a coalescing step | the factor regresses, which its own source warns of, and 1.2 observations per real parameter is the density that killed A1 |
 | R-A2-L11F | a trainer, a dependency, ≥ 4 nets, a digest discipline, a shape check | the α-β width optimum sits below the accuracy optimum, measured in three games |
 | R-A1-L11 | — | killed: 1.2 observations per parameter, and unfolded it learns twelve answers |
@@ -634,7 +778,9 @@ as tracked files in the same commit as the revision they attack.**
 
 | instrument | what it produced | receipt digest |
 |---|---|---|
-| `tools/hex_enum/{hexenum,census,report}.py` at `54eb3ba`, CI gate 19 | §2's `k`, codes, observations, purity, growth curves | `artifacts/wp22_phase2a/census/`, `aab7f4f6a8d450fac5609dce4635a21ea86ec658e4c42c11c9d89b98835e14a8` |
+| `tools/hex_enum/{hexenum,census,report}.py`, CI gate 19 | §2's `k`, codes, observations, growth curves, and §2.5's criterion table | `artifacts/wp22_phase2a/census_r3/`, `9bb8fc6f2e0500bcf10f48e493dd9e3615897d935b73b63d8a8f47bf179e9c39` |
+| the same, at round 2, without the stone-count referent | the replication: 200 shared cells, 0 differences | `artifacts/wp22_phase2a/census/`, `aab7f4f6a8d450fac5609dce4635a21ea86ec658e4c42c11c9d89b98835e14a8` |
+| four mutants of `report.py`, scratch copy of `tools/`, live tree untouched | that gate 19 can now see a constant `ω²` — all four DEAD | `artifacts/wp22_phase2a/n6_mutants/`, `d7e33861129a51bcd492a271dec468cc54056f2e384dd0076e785124102016d7` |
 | `tools/hex_enum/seed_pilot.py` at `54eb3ba`, CI gate 19 | §3's seed spread, and §1.1's independent re-derivation of the corpus counts | `artifacts/wp22_phase2a/seed_pilot/`, `f3518ad221413a042a616d3c6348458afc089fba6f30382734c802540592c7bd` |
 | `measure_nps.sh` / `measure_play.sh`, detached worktree at `c5123c1` | §1.2's and §1.3's throughputs, replicated | `artifacts/wp22_phase2a/nps_seat/`, `211b6e1002f32ee89baace6ed4ff510302b2aad7817094e109dcac121d51ca9e` |
 | `crates/pistol-arena/examples/sprt_power.rs`, release at `54eb3ba` | §1.6's and §5's power figures, cross-checked digit for digit against the committed `book_v3` figure | `artifacts/wp22_phase2a/sprt_power/`, `d82fce37add53453423e264a6220e2b47636302c7f2980c4a60f6c600005709b` |
@@ -650,3 +796,33 @@ population, 6 to 20 minutes each in parallel; the seed pilot, under 10 minutes;
 two release builds under 20 s each; the nps measurement, under 2 minutes per
 replicate; `sprt_power` at 20 000 runs per cell, seconds. **No governed run was
 taken and no opening was spent.**
+
+---
+
+## §12 WHAT THE RED TEAM CHANGED
+
+`matrix_wp22_phase2_eval_REDTEAM.md`, fresh context, at `0641504` — **FAIL**,
+4 BLOCKING, 11 MAJOR, 10 MINOR, with its own independent corpus walk, its own
+SPRT power simulator, its own purity re-derivation and its own paired
+re-analysis of the seed pilot. **Every finding below was re-derived by this
+session before it was acted on.** Round 2 of four (D-709); remedies only.
+
+| finding | what it said | what changed, and what was run |
+|---|---|---|
+| **B-1** | §5 says *"one thing D-705 does not say"* and D-705 says it | the false finding is **DELETED** and §5 now reports §1.6 as the ADR's own premise measured. RUN: `sed -n '1476p' docs/decisions.md`. |
+| **B-2** | §3's reading 3 is false — the pilot is a PAIRED design | **DELETED and replaced** by the paired table. RUN: re-derived from the receipted `pilot_L11.txt` — K=64 beats K=32 beats K=8 on **8 of 8 splits**, `t` = 12.05 to 14.86. R-A2's kill condition is restored to a live test. |
+| **B-3** | *"D-653's two clauses conflict"* is a misreading | **DELETED.** D-653 writes `elo1 >= 30`; the 500-pair cap came from inverting a book-SIZING rule, and 1 000 openings seat 1 000 pairs, where the measured power is **0.9189**. |
+| **B-4** | the matrix is stale against Stage E round 3 | §2, §2.5 and §6 re-pointed at `hex_threat_enum_v1.md` §7.4, where the replaced criterion **fires at 12 of 16 cells**. |
+| **M-1** | the headline throughputs are not in the receipt they cite | §1.2 and §1.3 now print the RECEIPTED run (**529 255**), with the other execution reported as the replicate. Every floor recomputed. |
+| **M-2** | §1.6's `sprt_power` digest matches nothing | corrected to `d82fce37…`, the digest after `screen_power.txt` joined the directory. |
+| **M-3** | §1.8 understates the eval's share | corrected to **44.70 %** (`delta` + `undo` + `apply`, all `HandcraftedV0`). Every registered floor recomputed: the codebook floor **341 617 → 296 959**, R-H-EXT's **403 391 → 365 760**. |
+| **M-4** | the density column is four currencies | §4 opens with the currency table and names each cell's own. |
+| **M-5** | §5 declares the discriminating column dead, then ranks on it | §5 separates BENCH quantities (measured today) from the time-matched ARM (not runnable); §6 ranks only on the first. |
+| **M-6, M-7** | R-H-EXT's cost is priced at "none", and *"the only row that can use the screening book"* is asserted | both **DELETED**. Its books cell now states what the screen spends and that spending it is the architect's ruling. |
+| **M-8** | *"this workstation's `python3` has no `numpy`"* is false | **DELETED**; `/usr/bin/python3` has numpy 2.5.2. |
+| **M-9** | the transferable "4 %" is an L=7 3 000-position subsample | replaced by the full-corpus margins per length (+1.4 %, +10.8 %, +12.5 %, **−16.6 %**), and the generalisation drawn from it is deleted. |
+| **M-10** | *"MET at all sixteen cells"* is one of two units and one of three referents | §2 item 4 names the referent, the unit, and what clearing a floor does and does not say. |
+| **M-11** | the field is missing a row | **R-A1-L8F is added**, priced, and ranked — with the finding that the boundary excluding it is an enumeration `eval_families` §8 marks *"not run"*. |
+
+**THE ONE THING THE RED TEAM WOULD STILL DO DIFFERENTLY** is §6's rank 1, and it
+is recorded in §6 as the strongest surviving attack rather than settled here.
