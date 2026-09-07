@@ -177,6 +177,7 @@ done
 # whole-millisecond `engine_time_ms` in every reply (docs/decisions.md D-699).
 # Both are hard rule 3 refusals, and a refusal that never fires is not a pin, so
 # each is driven by a stub that breaks exactly one of them.
+READY_LINE='sealbot_shim: ready'
 write_bad_stub() { # $1 = name, $2 = preamble line or "", $3 = reply JSON
   {
     printf 'import sys\n'
@@ -191,15 +192,36 @@ write_bad_stub() { # $1 = name, $2 = preamble line or "", $3 = reply JSON
 }
 GOOD_MOVES='"moves": [[1, 1], [-1, 1]]'
 write_bad_stub silent    ""                      "{$GOOD_MOVES, \"engine_time_ms\": 0}"
-write_bad_stub wrongword "sealbot_shim: rrready"  "{$GOOD_MOVES, \"engine_time_ms\": 0}"
-write_bad_stub notime    "sealbot_shim: ready"    "{$GOOD_MOVES}"
-write_bad_stub floattime "sealbot_shim: ready"    "{$GOOD_MOVES, \"engine_time_ms\": 0.5}"
+# THE WEDGE CASE, and it is not the same as `silent`. A stub that reads stdin
+# exits when the client closes it, so the referee's `close_stdin(); wait()`
+# returns and the run completes even if the client forgot to kill it. A shim
+# that hangs BEFORE its stdin loop -- in an import, or sizing a table -- does
+# not, and then `wait()` blocks for ever and the whole RUN wedges instead of one
+# game forfeiting. Measured, exit 124.
+printf 'import time\nwhile True:\n    time.sleep(3600)\n' > "$SCRATCH/badstub_wedge.py"
+# And the same wedge on the OTHER failure branch: a stub that announces itself
+# with the wrong word and then hangs. Both branches of `await_ready` must kill,
+# and a stub that exits on stdin EOF cannot tell whether either of them does.
+printf 'import sys, time\nsys.stdout.write("%%sX\\n"); sys.stdout.flush()\nwhile True:\n    time.sleep(3600)\n' \
+  "$READY_LINE" > "$SCRATCH/badstub_wedgeword.py"
+# A preamble that is not ASCII at the 200th BYTE. The refusal quotes the line it
+# rejected, and quoting it by a byte index panics the whole match instead of
+# forfeiting one game by name -- measured, exit 101, `end byte index 200 is not
+# a char boundary`.
+printf 'import sys\nsys.stdout.write("A"*199 + "\\u00e9" + "\\n"); sys.stdout.flush()\nfor line in sys.stdin:\n    pass\n' \
+  > "$SCRATCH/badstub_nonascii.py"
+write_bad_stub wrongword "${READY_LINE}X"          "{$GOOD_MOVES, \"engine_time_ms\": 0}"
+write_bad_stub notime    "$READY_LINE"            "{$GOOD_MOVES}"
+write_bad_stub floattime "$READY_LINE"            "{$GOOD_MOVES, \"engine_time_ms\": 0.5}"
 
 # The wanted text is the REFUSAL's own distinctive wording, not the field name:
 # `engine_time_ms` is a key in every transcript record, so grepping for it
 # matches whether or not the contract was enforced. A mutant that dropped the
 # requirement passed an earlier draft of this loop for exactly that reason.
-for CASE in "silent:engine timeout" "wrongword:before the first request" \
+for CASE in "silent:engine timeout" "wedge:engine timeout" \
+            "wedgeword:before the first request" \
+            "nonascii:before the first request" \
+            "wrongword:before the first request" \
             "notime:no whole-millisecond" "floattime:no whole-millisecond"; do
   STUB="${CASE%%:*}"
   WANT="${CASE##*:}"
@@ -209,10 +231,20 @@ for CASE in "silent:engine timeout" "wrongword:before the first request" \
       -e "s#^turn_timeout_seconds = 10.0#turn_timeout_seconds = 1.0#" \
       -e "s#matchserver/m1\"#matchserver/bad_$STUB\"#" \
       "$SCRATCH/m1.toml" > "$SCRATCH/bad_$STUB.toml"
-  tools/sealbot/run_match.sh "$SCRATCH/bad_$STUB.toml" >"$SCRATCH/bad_$STUB.log" 2>&1 || true
-  # The seat cannot answer, so the referee forfeits it -- a POSITIVE fact, and
-  # the record names which half of the contract was broken.
-  BAD_SAID="$(cat "$SCRATCH/bad_$STUB.log" "$SCRATCH/bad_$STUB"/g*.jsonl 2>/dev/null || true)"
+  # `timeout` is the wedge guard the loop above this one names: a seat that
+  # hangs must surface as 124, not as a suite nobody can interrupt.
+  set +e
+  timeout 90 tools/sealbot/run_match.sh "$SCRATCH/bad_$STUB.toml" >"$SCRATCH/bad_$STUB.log" 2>&1
+  BAD_RC=$?
+  set -e
+  # Item 12: these configs are meant to RUN and forfeit, so 0 is the only right
+  # code. `|| true` would accept 124 (wedged) and 2 (refused) alike.
+  [ "$BAD_RC" -eq 0 ] \
+    || fail "the '$STUB' config exited $BAD_RC; it must run to completion and score a forfeit"
+  # THE TRANSCRIPT, not the log: the log carries run_match.sh's build output,
+  # which quotes source text and could satisfy a text check without the refusal
+  # ever firing.
+  BAD_SAID="$(cat "$SCRATCH/bad_$STUB"/g*.jsonl 2>/dev/null || true)"
   case "$BAD_SAID" in
     *"$WANT"*) : ;;
     *) fail "a sealbot stub breaking '$STUB' was not refused naming '$WANT': $(printf '%s' "$BAD_SAID" | head -c 400)" ;;
@@ -230,39 +262,72 @@ done
 # refusals are equally explained by a seat that refuses everything.
 GOOD_TIMES="$(python3 - "$SCRATCH/m1" <<'ENDPYCTRL'
 import json, pathlib, sys
-seen = []
-for f in sorted(pathlib.Path(sys.argv[1]).glob("g*.jsonl")):
-    for line in f.read_text().splitlines():
-        r = json.loads(line)
-        if r.get("event") == "turn" and r["engine"] == "stub-sealbot":
-            seen.append(r["engine_time_ms"])
-print(json.dumps(seen))
+try:
+    seen = []
+    for f in sorted(pathlib.Path(sys.argv[1]).glob("g*.jsonl")):
+        for line in f.read_text().splitlines():
+            r = json.loads(line)
+            if r.get("event") == "turn" and r["engine"] == "stub-sealbot":
+                seen.append(r["engine_time_ms"])
+    # The SHAPE, not merely the presence: a seat reporting a constant is a seat
+    # reporting something that is not its elapsed time, and `is not None` alone
+    # cannot tell the two apart.
+    if seen and not all(isinstance(t, int) and t >= 0 for t in seen):
+        raise ValueError(f"engine_time_ms is not a whole non-negative count: {seen}")
+    print(json.dumps(seen))
+except Exception as error:  # named, because a bare `set -e` death prints nothing
+    print(f"REFUSED: {error}")
 ENDPYCTRL
 )"
 case "$GOOD_TIMES" in
+  REFUSED*) fail "the control could not read m1's transcript: $GOOD_TIMES" ;;
   *null*) fail "the good sealbot stub's engine_time_ms reached the transcript as null: $GOOD_TIMES" ;;
   "[]") fail "no stub-sealbot turns in m1's transcript, so the control asserts nothing" ;;
   *) printf '  ok: the good stub reports engine_time_ms into the transcript: %s\n' "$GOOD_TIMES" ;;
 esac
 
-# --- one spelling of the readiness line, across all three producers ----------
-# CI CANNOT DRIVE THE REAL SHIM: it needs a sealbot checkout this repository
-# does not contain, so every test above runs against the stub. The one thing a
-# gate can check is that the three files agree on the word — if `sealbot_shim.py`
-# and `sealbot_client.rs` ever drift apart, the stub keeps passing and every
-# real anchor forfeits its first turn. Same shape as the `info totals` consumer
-# register in tools/SHELL_CHECKLIST.md: one grammar, several homes.
-READY_LINE='sealbot_shim: ready'
-for HOME_FILE in tools/sealbot/sealbot_shim.py tools/sealbot/tests/stub_sealbot.py \
-                 tools/sealbot/matchserver/src/sealbot_client.rs; do
-  grep -qF -- "$READY_LINE" "$HOME_FILE" \
-    || fail "$HOME_FILE does not spell the readiness line '$READY_LINE'"
-done
-# And the real shim must write it to STDOUT, which is the stream the client
-# reads; writing it only to stderr is the defect this whole change removes.
-grep -q 'for stream in (sys.stdout, sys.stderr)' tools/sealbot/sealbot_shim.py \
-  || fail "sealbot_shim.py no longer writes the readiness line to stdout as well as stderr"
-printf '  ok: all three producers spell the readiness line alike, and the shim writes it to stdout\n'
+# --- the SHIPPED shim, driven end to end --------------------------------------
+# An earlier revision of this suite grepped the three producers for the
+# readiness line and called that coverage. It was not: `sealbot_shim.py` holds
+# the literal TWICE — in its module docstring and in its constant — so mutating
+# the constant left the docstring and the guard still matched, which is item 3's
+# "a substring is not a token" exactly.
+#
+# The shim takes both module directories from ARGV, so the real thing runs here
+# against two fakes and the preamble and the timing are BEHAVIOURAL facts. The
+# fake bot deliberately sleeps a KNOWN FRACTION of its limit: a shim reporting
+# its configured budget instead of its elapsed time would answer 400, not 100,
+# and nothing that compares the reply to the budget could tell the difference.
+FAKE=tools/sealbot/tests/fake_sealbot
+SHIM_OUT="$(printf '%s\n' '{"setup": [[0,0]], "moves": [], "time_limit": 0.4}' \
+  | timeout 60 python3 tools/sealbot/sealbot_shim.py "$FAKE" "$FAKE" 2>/dev/null)" \
+  || fail "the shipped shim did not answer against the test fakes"
+
+SHIM_PREAMBLE="$(printf '%s' "$SHIM_OUT" | sed -n '1p')"
+[ "$SHIM_PREAMBLE" = "$READY_LINE" ] \
+  || fail "the shipped shim's first STDOUT line is not '$READY_LINE': '$SHIM_PREAMBLE'"
+
+SHIM_TIME="$(printf '%s' "$SHIM_OUT" | sed -n '2p' | python3 -c "
+import json, sys
+try:
+    reply = json.load(sys.stdin)
+except Exception as error:
+    print(f'REFUSED: the shim reply line is not JSON: {error}')
+    raise SystemExit(0)
+value = reply.get('engine_time_ms')
+if not isinstance(value, int) or isinstance(value, bool):
+    print(f'REFUSED: engine_time_ms is not a whole count: {value!r}')
+else:
+    print(value)
+")"
+case "$SHIM_TIME" in
+  REFUSED*) fail "$SHIM_TIME" ;;
+esac
+# The fake sleeps a quarter of 0.4 s. Anything near 400 is the CONFIGURED
+# budget being echoed; anything near 0 is a shim not timing the call at all.
+[ "$SHIM_TIME" -ge 60 ] && [ "$SHIM_TIME" -le 250 ] \
+  || fail "the shipped shim reported engine_time_ms $SHIM_TIME for a bot that slept ~100 ms of a 400 ms budget"
+printf '  ok: the shipped shim announces itself on stdout and reports its own elapsed time (%s ms, not the 400 ms budget)\n' "$SHIM_TIME"
 
 # --- the overwrite refusal (item 12: a refusal is exit 2, by name) -----------
 set +e

@@ -32,6 +32,19 @@ use crate::deadline;
 /// The line the shim writes once its bot is constructed, on stdout and stderr.
 const READY: &str = "sealbot_shim: ready";
 
+/// The first 200 CHARACTERS of a line, for a refusal message.
+///
+/// Slicing by `line.len().min(200)` is a BYTE index, and a line is only
+/// guaranteed to be UTF-8, not to have a char boundary at 200 — measured, a
+/// stub writing 199 ASCII bytes then `é` panicked the whole match with
+/// `end byte index 200 is not a char boundary` instead of forfeiting one game
+/// by name (CLAUDE.md hard rule 3).
+fn head(line: &str) -> &str {
+    line.char_indices()
+        .nth(200)
+        .map_or(line, |(at, _)| &line[..at])
+}
+
 /// One configured sealbot seat.
 pub struct SealbotClient {
     label: String,
@@ -123,14 +136,25 @@ impl SealbotClient {
     fn await_ready(&mut self) -> Result<(), EngineFailure> {
         let timeout = self.timeout_seconds;
         let process = self.process.as_mut().expect("spawned");
-        let line = process.read_line(deadline(timeout))?;
+        // KILL ON EITHER FAILURE, which is what `pick_turn` does and what
+        // `LineProcess::kill` exists for. A shim that hangs before its preamble
+        // never reaches its stdin loop, so the `close_stdin(); wait()` the
+        // referee does next blocks for ever and the whole RUN wedges rather
+        // than the game forfeiting: measured, exit 124 under a 25 s cap.
+        let line = match process.read_line(deadline(timeout)) {
+            Ok(line) => line,
+            Err(failure) => {
+                process.kill();
+                return Err(failure);
+            }
+        };
         if line.trim() != READY {
-            return Err(EngineFailure::Protocol {
-                why: format!(
-                    "expected `{READY}` before the first request; got: {}",
-                    &line[..line.len().min(200)]
-                ),
-            });
+            let why = format!(
+                "expected `{READY}` before the first request; got: {}",
+                head(&line)
+            );
+            process.kill();
+            return Err(EngineFailure::Protocol { why });
         }
         Ok(())
     }
@@ -173,15 +197,12 @@ impl EngineClient for SealbotClient {
         };
         let reply: Value =
             serde_json::from_str(&line).map_err(|error| EngineFailure::Protocol {
-                why: format!(
-                    "reply is not JSON ({error}): {}",
-                    &line[..line.len().min(200)]
-                ),
+                why: format!("reply is not JSON ({error}): {}", head(&line)),
             })?;
         let stones_value = reply["moves"]
             .as_array()
             .ok_or_else(|| EngineFailure::Protocol {
-                why: format!("reply has no moves array: {}", &line[..line.len().min(200)]),
+                why: format!("reply has no moves array: {}", head(&line)),
             })?;
         let mut stones = Vec::with_capacity(stones_value.len());
         for stone in stones_value {
@@ -218,7 +239,7 @@ impl EngineClient for SealbotClient {
                 .ok_or_else(|| EngineFailure::Protocol {
                     why: format!(
                         "reply has no whole-millisecond `engine_time_ms`: {}",
-                        &line[..line.len().min(200)]
+                        head(&line)
                     ),
                 })?;
         Ok(EngineReply {

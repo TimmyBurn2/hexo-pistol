@@ -138,15 +138,17 @@ with the two engines' harness SLOTS exchanged, not a byte-identical rerun. The
 reported medians of 15 ms and 6 ms are medians over a 50/50 mixture and describe
 neither mode. The third term, and it is the largest:
 
-**(1) Process start-up and the Python replay, charged to sealbot and not to
-pistol.** `tools/sealbot/matchserver/src/sealbot_client.rs:112-121` respawns the
-shim per game and returns WITHOUT consuming its `sealbot_shim: ready` line, so
-interpreter start-up, the extension import and the bot's construction all land
-inside the first measured answer; `tools/sealbot/sealbot_shim.py` then rebuilds
-the game in Python on every request. `tools/sealbot/matchserver/src/pistol_client.rs`
-completes its handshake inside `new_game`, outside the measurement. **This is a
-one-line asymmetry in a file this repository owns**, and closing it — consuming
-the `ready` line before the clock starts — is registered as OWED below.
+**(1) Process start-up, which was charged to sealbot and is NOT any more —
+CLOSED, and the numbers above are the BEFORE state.** The client respawned the
+shim per game and returned without consuming its `sealbot_shim: ready` line, so
+interpreter start-up, the extension import and the bot's construction all landed
+inside the first measured answer, where `pistol_client.rs` completes its
+handshake inside `new_game`, outside the measurement. **Fixed**: the shim now
+writes the line to stdout as well as stderr and `SealbotClient::new_game` reads
+it before the clock starts (`docs/experiments/sealbot_clock_fix_design.md`).
+MEASURED end to end on the real shim, first answer of a game against a 300 ms
+budget: **325.8–326.9 ms before, 300.4–300.9 ms after**. A v7 run takes the
+after state; the v5/v6 tables in this section are of runs that predate it.
 
 **(2) Sealbot's own untimed setup and abort granularity**
 (`docs/audit/sealbot_study_2026-09.md` §4, CODE-derived at `c94749c`): the
@@ -162,13 +164,13 @@ series' figure and is not substituted for one**: v5 and v6 measured pistol at
 15 ms and 14 ms in their own runs, and D-479 binds a measured number to the run
 that produced it.
 
-**EQUAL WALL IS NOT EQUAL SEARCH, and the protocol says so on its own face.**
-Sealbot's measured wall carries terms (1) and (2); pistol's carries (3) and about
-a millisecond of IPC. Nothing separates sealbot's search from its overhead:
-`engine_time_ms` is **null for all 2036 sealbot answers** across v5 and v6, and
-non-null for **all 2018 pistol answers** — MEASURED. Any equalisation of the
-wall therefore hands pistol strictly more SEARCH time, by an amount this harness
-cannot currently report.
+**EQUAL WALL IS NOT EQUAL SEARCH — and the harness can now report the gap,
+where in v5 and v6 it could not.** `engine_time_ms` was **null for all 2036
+sealbot answers** across v5 and v6 and non-null for **all 2018 pistol answers**
+(MEASURED), so the seat's non-search time could only be BOUNDED by its whole
+wall. The shim now reports it and `SealbotClient` requires it, so a v7 run
+carries the measurement instead: per answer, `wall_ms − engine_time_ms`, with
+its minimum and its negative count, printed by `tools/anchor_overshoot.py`.
 
 **THE INSTRUMENT, NAMED WITH ITS REVISION** (`docs/process.md`, "Instrument
 governing revision"): `tools/anchor_overshoot.py`, which reads a run's
@@ -189,6 +191,11 @@ CLOCK: it re-drives recorded moves and checks outcomes, so it is blind to timing
 and cannot corroborate the overshoot table. **It corroborates the GAMES, not the
 budget**, and this document says so rather than letting a green replay read as a
 fair-clock certificate.
+
+**WHAT IS STILL OWED HERE**: nothing in this section is discharged until an
+anchor is actually run and read against the criteria in
+`sealbot_clock_fix_design.md` §4. The fix is landed and tested; the precondition
+is not discharged by landing it.
 
 **THE REPORT'S OWN GAP, and it is why the transcripts are the instrument.**
 `tools/sealbot/matchserver/src/report.rs:101` declares `a_answer_wall_ms` and
