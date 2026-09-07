@@ -157,15 +157,29 @@ against the working pistol seat and against the shipped shim. And the defect it
 named is already excluded by (3)'s lower bound. Both sides of the distinction
 licensed the same conclusion, so it is deleted.
 
-**WHAT NO CRITERION HERE PINS, stated rather than left implicit**: WHICH SPAN
-`engine_time_ms` wraps. (3) is monotone the wrong way — a shim folding more
-overhead into the reported time scores better. Measured materiality is small (the
-whole foldable span is 0.118–1.270 ms per answer, median 0.541, against an
-integer comparison with a 5 ms allowance), and the test that would pin it is a
-shim driven against a bot whose `get_move` sleeps a known interval. **Recorded as
-a known limit, not scheduled.**
+**WHICH SPAN `engine_time_ms` WRAPS IS NOW PINNED, AND AN EARLIER REVISION
+DEFERRED IT WRONGLY.** Revision 3 recorded it as "a known limit, not scheduled",
+on the ground that the test would need a bot whose `get_move` sleeps a known
+interval — and then the REVIEW-impl pointed out that the shim takes both of its
+module directories from **argv**, so the shipped shim can be driven against
+fixtures in CI for the cost of two small files. `tools/sealbot/tests/fake_sealbot/`
+holds them, and its bot sleeps a KNOWN FRACTION of its limit: the suite asserts
+`engine_time_ms` tracks the sleep and not the budget — **100 ms reported against
+a 400 ms limit** — which is what separates an honest seat from one echoing its
+configured budget. That was a D-291-shaped deferral of something already
+measurable in seconds.
+
+Criterion (3) remains monotone the wrong way in principle — a shim folding more
+overhead into the reported time scores better — but the foldable span is
+0.118–1.270 ms per answer (median 0.541) against an integer comparison with a
+5 ms allowance, so it has no resolution there.
 
 ## §5 What this delivers, and what it does not
+
+**The real shim runs in CI**, against `tools/sealbot/tests/fake_sealbot/`, so
+its stdout preamble and its timing are behavioural facts a gate holds rather
+than source text a `grep` inspects. An earlier revision claimed CI could not
+drive it; that was false.
 
 **The instrument** `tools/anchor_overshoot.py` now carries the asked-first /
 later split, the `wall − engine_time` min/median/p95/max with a negative count,
