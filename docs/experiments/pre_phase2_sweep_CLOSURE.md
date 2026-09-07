@@ -766,8 +766,14 @@ survive only in a transcript), and this package's strongest single piece of
 evidence — ~2,100 searches per side by an instrument sharing nothing with the
 closure's — would have gone the same way.
 
-The receipt over the whole export, 74 files, digests to
-`1da736cfb480b48894c2d46abaad53098c4696ee04f02b4bbff0d72b1a8cb362`.
+The reviewer's two mutant logs — the evidence for MINOR 3, the wrong-partner
+mutant that survived — are exported beside them, and the WORKTREES ARE THEN
+REMOVED: `git worktree list` names only the live tree, and `/home/tom/pistol-wt/`
+is empty.
+
+**The receipt over the whole export is 76 files** and the list of their digests
+itself hashes to
+`8f5b749749c765b202b071e821df9c21c3c597603e99347ef139e7b865c9b600`.
 
 ## §5 The three reviews, and the fix round each forced
 
