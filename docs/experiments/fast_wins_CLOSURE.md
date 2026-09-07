@@ -334,3 +334,148 @@ this confirmation 6 spurious `solver_link_check` failures, which are a RUN VOID
 and not a FAIL. The variable must be unset for the test run itself. The dispatch
 that briefed this confirmation told it to export the variable, so the defect is
 in the brief.
+
+## §4 Item A — protocol WRITTEN; the budget decision **STOPS** (D-699)
+
+**REVIEW-design** at `d099be7`: **FAIL**, 9 MAJOR and 8 MINOR. Every finding was
+verified here before its fix landed; the fix is one commit, `48d9840`.
+
+**WHAT CLOSED.** §A3's cap ruling — verified at the opponent's own source that
+`moves_left` is the intra-turn phase and no cap term exists anywhere in
+`current/`, so the asymmetry the dispatch asked to be stated **does not exist**;
+D-698 amends D-695 for it rather than leaving the ADR claiming a pin the protocol
+declines. D-697's re-labelling, performed in both finding documents and all four
+downstream sites rather than declared. §A2 rewritten on measured ground with
+`tools/anchor_overshoot.py` as its named instrument (4 tests, gate 3) and
+`replay_check` registered as the second instrument with a registered consequence.
+§A4's single-thread evidence corrected — it cited a dependency list, and
+`std::thread` needs no dependency (`client.rs:10,113,129`). §A5's pin extended to
+the `.so` and the interpreter, neither of which `git rev-parse` reaches. §A6's
+empty-board argument deleted: `book_v1` seeds five stones, so the empty board
+never arises. §A8's 24x forfeit asymmetry given a remedy instead of a mention.
+
+**WHAT STOPPED, AND WHY IT IS A STOP AND NOT A CHOICE.** The budget question got
+an OPTION MATRIX and **two** DECISION-RED-TEAM rounds. Round 1 took **14 of 15**
+and revision 1 fell — its recommendation was the union of the two options it had
+just rejected. Revision 2 recommended the opposite, changing nothing, and round 2
+took **16 of 18**. Three of those decide it:
+
+1. **The matrix never cited D-695**, which governs this run and pins "equal
+   measured movetime per side". Its recommendation was forbidden by standing law
+   it did not name — silent drift, in a working tree where D-698 was amending the
+   same ADR by name for a different clause.
+2. **The precondition kept the wrong half.** Revision 1's O4 named two harness
+   changes; revision 2 folded in the `ready` line and silently dropped "have the
+   shim report its own elapsed time". **MEASURED**: the fix moves the non-search
+   bound from 4.50 % to **3.53 %**, not to zero, and the dropped half is the only
+   thing that could ever verify the equality D-695 pins.
+3. **The headline row was explained wrong, and the right explanation was seconds
+   away.** Revision 2 attributed the 7x first-answer difference to machine load.
+   Split by whether sealbot's first answer follows its own spawn or pistol's
+   ~500 ms answer — **within one run, at one load** — the medians are **42 ms and
+   1 ms**. The run-to-run difference is the SEAT SWAP mixing those modes, v6 being
+   v5 with the harness slots exchanged and not the "byte-identical config" the
+   matrix twice called it.
+
+**THE SURVIVING OPTION IS NAMED AND IS NOT SELECTED HERE**: the round-2
+reviewer's **O7** — series budgets 500/300 unchanged, after BOTH halves of the
+harness fix, with the handicap reported as a measured search-time ratio. A
+revision 3 selecting it must cite and amend D-695. `matrix_anchor_v7_budget.md`
+carries a FELL banner, the protocol carries a NOT-RUNNABLE banner at its head and
+at §A1, and **nothing is blocked**: v7's trigger is the first Phase 2 `h1`, and
+Phase 2 has not started.
+
+**WHAT BOTH ROUNDS AGREED ON, so a resume does not re-litigate it**: the measured
+ground reproduced row for row under two independent parsers with scopes their
+authors chose; and D-438 does not forbid a comparison table, which was revision
+1's premise and was false.
+
+**THE DEFECTS THIS SESSION COMMITTED IN ITS OWN DOCUMENTS, recorded because the
+pattern is the point.** Revision 1 rejected an option on a measurement taken
+against a population in which the thing measured did not yet exist — the class
+`docs/process.md` names, committed inside a matrix. Revision 2's rebuttal of that
+finding was itself measured against the wrong population, since v6 did carry both
+budgets on its own page. Revision 2 called an estimate unmeasurable that round 1
+measured in twenty seconds, and cited D-697 as written at a revision that did not
+contain it. **Three fresh contexts found what three prior passes by the author
+did not**, which is the standing argument for the review clause and not an
+argument about diligence.
+
+## §5 Closing state
+
+**Closing revision `48d9840`**, `dev`. **CI green there from the gate's own log**
+(`artifacts/fast_wins/ci_closing.txt`): `ci: all gates passed`, 21 of 21, zero
+failing tests in the whole run. The lines this package moved:
+
+```
+file_justification_check: 419 tracked .rs/.sh/.py files, 89 over the cap, all registered in docs/rule9_justifications.md (89 entries)
+decision_key_check: 701 decision keys in docs/decisions.md, no repeat outside the exemption
+governing_citation_check: 16 governing document(s), 0 proposed path(s)
+determinism: ok — 5 seat(s), no difference outside nps/time in any of them
+solver_determinism: PASS — 61 cases, byte-identical transcripts
+movetime: ok — 2 seat(s), all within their own epsilon
+config_check: 21 engine config(s), 1 weight table(s), 18 arena config(s), 3 book config(s), 2 solver config(s)
+```
+
+**THIS DOCUMENT IS ONE COMMIT PAST THE RUN IT CITES (D-674).** The only change
+after that run is the file you are reading; nothing under `crates/`, `tools/` or
+`configs/` differs. That is the same disposition the pre-Phase-2 sweep's closure
+recorded for itself, and for the same reason: the file count, the gate lines and
+this paragraph are facts ABOUT the run and could not have existed inside it.
+
+**P2 — GOLDENS AND THE CENSUS DIGEST, the gate for anything touching
+`pistol-search`.** Nothing in this package touches it:
+`git diff --name-only 235b6db 48d9840 -- crates/pistol-search crates/pistol-core
+crates/pistol-eval crates/pistol-solver crates/pistol-engine configs` is EMPTY.
+The evidence is mechanical rather than argued:
+
+- `instrument_behavior_byte_identical_pre_post` ran green twice in the closing
+  run — the sha-pinned golden transcript.
+- The census digest was **re-derived here, not re-read**: the position line was
+  rebuilt from `crates/pistol-cli/tests/census_protocol_tests.rs:39-42` under
+  D-5's canonical pair order, run at `configs/gate_staged_solver_v0.toml` with
+  `go nodes 4000 census`, giving **5 rows** hashing to
+  `31236b5632c0c1b16f0b6ff2a6a62aee6017321d05f6785b0baec7dd1222bbde` — the value
+  `pre_phase2_sweep_CLOSURE.md` records. Two consecutive runs differ only in
+  `nps` and `time`. Receipt `artifacts/fast_wins/census_closing_receipt.txt`.
+
+**PER-ITEM STATE.**
+
+| item | state | where |
+|---|---|---|
+| **S** seed_tool review | **CLOSED** — REVIEW-impl FAIL (4 MAJOR, 6 MINOR), one fix round, scoped confirmation **PASS** with no surviving mutant, and its one new MAJOR (a red CI gate) fixed | `e5f4364`, `ed89e6f` |
+| **D1** M7 | **CLOSED** — NOT SUPPORTED under the vocabulary fixed in advance | `7381715` |
+| **D2** M9 | **STOPPED as the default fork directs**, field gap named and the dispatch's parenthetical corrected | `7381715` |
+| **D3** doc | **CLOSED** | `docs/experiments/depth_diagnostics_2026-09.md` |
+| **A** protocol §A2–§A7 | **CLOSED** — REVIEW-design FAIL (9 MAJOR, 8 MINOR), one fix round | `48d9840` |
+| **A** budget decision | **STOPPED** — matrix + two DECISION-RED-TEAM rounds, both fell (D-699) | `matrix_anchor_v7_budget.md` |
+
+**FORKS WHERE A DEFAULT APPLIED.** D2 STOPped rather than adding a `SearchInfo`
+field, as the dispatch directs — and the field it would have added is not the one
+the dispatch named. §A3's default fork (sealbot source unavailable → quote the
+deep dive, mark UNVERIFIED) **did not have to be taken**: the source is present at
+`c94749c` and the ruling is VERIFIED from it.
+
+**NO ENGINE PROCESS, NO WORKTREE.** `ps aux | grep -Ei 'pistol|sealbot|matchserver'`
+empty at close; `git worktree list` shows the main tree alone. The mutation
+worktree was exported before removal with a digest receipt —
+`artifacts/fast_wins_export_receipt.txt`, **33 files**, list hashing to
+`608bac74a131f6d270b6a0f10394313eaec35363b55df7b4d1394de214c033e0` (D-469).
+
+**AND THE MUTATION WORKTREE'S OWN RUN IS RECORDED AS VOID, NOT AS EVIDENCE.** Its
+baseline came back red because `cargo test --tests` does not build the
+`sprt_power` example — a RUN VOID that the driver scored as a FAIL, which is
+exactly the confusion `tools/SHELL_CHECKLIST.md` item 12 exists to prevent,
+committed in an instrument written for a package about that checklist. The run
+was abandoned rather than read. The mutants that count were run in the live tree
+against the FIXED code (`artifacts/fast_wins/item_s_mutants.txt`), which is
+D-691's shape and the better instrument anyway.
+
+**WHAT A RESUME NEEDS.** For item A's budget decision, three things, in D-699:
+an ADR amending D-695's "equal measured movetime" clause; the shim change that
+makes sealbot report its own elapsed time; and a criterion for the precondition —
+sealbot's first-of-game excess distribution becoming indistinguishable from its
+later-answer distribution. For D2, an `arena_report` grammar that writes the
+answering seat's root score beside each turn. Neither is scheduled and neither
+blocks anything: v7's trigger is the first Phase 2 `h1`, and Phase 2 has not
+started.
