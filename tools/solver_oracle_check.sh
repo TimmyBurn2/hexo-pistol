@@ -45,7 +45,7 @@ for SCRATCH_FS in "${TMPDIR:-/tmp}" "$ROOT"; do
 done
 
 OUT="$(mktemp)" || void "mktemp refused"
-trap 'rm -f "$OUT"' EXIT
+trap 'rc=$?; rm -f "$OUT" || echo "warning: scratch not removed: $OUT" >&2; exit "$rc"' EXIT
 
 # Release: the fixture's deep cases and gate (c)'s sigma sweep need it; the
 # debug cost is minutes per gate against seconds here (the tactical gate's

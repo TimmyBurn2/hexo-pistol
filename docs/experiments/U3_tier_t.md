@@ -21,11 +21,12 @@ in the tree: it is retrievable at `6feb40a` and nowhere else.
 
 **WHAT IS NOT HERE.** MATRIX M2 — the widening schedule — and every sentence of
 §7 that is about it are EXCISED to `WPQ_seed.md` with stage Q, per D-310. This
-unit is Tier T only. `quiet_top_k` and `widen_schedule` still appear in §10's
-config documents because a `deny_unknown_fields` document is complete or it is
-nothing; **whether the D-scope shipped surface keeps those two keys at all is
-OPEN and is the architect's, not the carve's** — see U3-Z. **And that OPEN
-question is not confined to the config documents (MAJOR 3):** MATRIX M1's ADOPTED
+unit is Tier T only. `quiet_top_k` and `widen_schedule` were carried by §10's
+config documents while the question of whether the D-scope shipped surface keeps
+them was OPEN; **D-675 ANSWERED it — both keys left the schema entirely, and a
+document carrying either is now REFUSED by name.** §14 owns that record and this
+section does not restate it. **What the answer did NOT settle, and it is not
+confined to the config documents (MAJOR 3):** MATRIX M1's ADOPTED
 option mitigates its own residual with the deferred stage, and the matrix's whole
 cost column is computed with the deferred stage inside it. U3-Z lists what the
 decision moves; the RANKING that selects C is what survives it.
@@ -347,12 +348,18 @@ any value. **This is the one place the count is stated; **U2** (u-rev 5, landed
 `f0ae14c`) §2.2 and U3-Q cite it and do not restate it** (B5, which found it stated
 three different ways across four sites).
 
-| document | mode | `quiet_radius` | `quiet_top_k` | `widen_schedule` | why |
-|---|---|---|---|---|---|
-| `configs/instrument_staged_v0.toml` | instrument | 2 | 16 | `[32]` | **the SPRT seat and the snapshot's AFTER.** The cut BINDS here, because a seat with the cut disabled would make the SPRT measure nothing about the prune (rule 6, `WPQ_seed.md` §7.2) |
-| `configs/tactical_staged_v0.toml` | instrument | 2 | **1024** | `[2048]` | **NEW in revision 7.** The 15 `instrument_v0` tactical cases. The cut is DISABLED, which is what **U4** (u-rev 7, landed `0f49c90`) §8.3's TACTICAL SUITE gate derivation requires and what revision 6 asserted while committing `quiet_top_k = 16` for these cases |
-| `configs/gate_staged_v0.toml` | instrument | 1 | **128** | `[256]` | the five `depth_turns 3` cases, at radius 1. Cut disabled — MEASURED balls 22/22/22/18/15 at 11 stones, bounded by 6 × 17 = 102 three turns deeper |
-| `configs/play_staged_v0.toml` | play | 3 | 16 | `[32]` | the movetime measurement, whose incumbent is `play_v0.toml` at radius 3. Cut binds |
+**`quiet_top_k` and `widen_schedule` ARE NOT IN THIS TABLE AND MUST NOT RETURN
+TO IT**: D-675 removed both from the schema, so a document carrying either is
+refused by name. §14 owns that record, including what WP-1.5c owes if it re-adds
+the schedule; the settings each document used to commit are recoverable from this
+file at `9ce9a7c`. What survives per document is the radius and the reason.
+
+| document | mode | `quiet_radius` | why |
+|---|---|---|---|
+| `configs/instrument_staged_v0.toml` | instrument | 2 | **the SPRT seat and the snapshot's AFTER.** The quiet cut BOUND here while it existed, because a seat with it disabled would make the SPRT measure nothing about the prune (rule 6, `WPQ_seed.md` §7.2) |
+| `configs/tactical_staged_v0.toml` | instrument | 2 | **NEW in revision 7.** The 15 `instrument_v0` tactical cases. The cut was DISABLED here, which is what **U4** (u-rev 7, landed `0f49c90`) §8.3's TACTICAL SUITE gate derivation requires — and what revision 6 asserted while committing a binding cut for these same cases, which is the contradiction the fourth document exists to end |
+| `configs/gate_staged_v0.toml` | instrument | 1 | the five `depth_turns 3` cases, at radius 1. Cut disabled — MEASURED balls 22/22/22/18/15 at 11 stones, bounded by 6 × 17 = 102 three turns deeper |
+| `configs/play_staged_v0.toml` | play | 3 | the movetime measurement, whose incumbent is `play_v0.toml` at radius 3. Cut bound while it existed |
 
 **The fourth document exists because three could not carry the requirement.**
 Revision 6's §8.3 TACTICAL SUITE gate — the SUPERSEDED document at `6feb40a`, NOT **U4** as it now stands — said "all three staged tactical configs disable the quiet cut" while §10
@@ -447,8 +454,8 @@ real and was worth having: revision 3's validator did not check it, so
 `quiet_top_k = 64` with `[32]` passed "non-empty and strictly increasing" and
 described a widening that NARROWS. It is recorded here as what WP-1.5c owes if
 it re-adds the schedule, and not as a rule this engine applies, because it
-validates two keys whose D-scope is OPEN, against semantics that are the seed's
-unselected text (MAJOR 7, U3-Z). `q_depth_turns` in
+validates two keys this engine no longer has (D-675), against semantics that are
+the seed's unselected text (MAJOR 7, U3-Z). `q_depth_turns` in
 `0..=MAX_Q_DEPTH_TURNS` (`pistol-engine`'s config-level sanity ceiling, 8) and,
 independently in `Searcher::new`, at most what `pistol-search`'s own
 `PvTable` sizing can index into (16) — the same two-crate pattern `radius`
@@ -859,15 +866,16 @@ only one of them** (MAJOR 13).
   records that the criterion which WORKED was independent re-derivation by a
   fresh context and the one this document invented was a set-inclusion identity —
   that is a record of what happened, not a registration for next time.
-- **The D-scope of `quiet_top_k` and `widen_schedule`.** **§10's config documents
-  each commit both keys** — §10 is the one place their number is stated and this
-  bullet cites §10 rather than restating it (**B5**; u-rev 2 asserted the
-  cardinality here, which is the same defect as **U2** (u-rev 4, landed `7dfd047`) §2.2's "three" going stale when
-  §10's list grew, and it was introduced by the repair, not inherited — BLOCKING
-  1). D-310 defers the stage those keys govern. Whether the shipped
-  `Staged` surface keeps them (validated, inert, and set wide), narrows to Tier F
-  ∪ Tier T with no quiet tier at all, or something else, changes the config
-  documents, the validator and the SPRT seat. **The carve does not choose.**
+- **The D-scope of `quiet_top_k` and `widen_schedule` — ANSWERED at D-675, and
+  the carve did not choose it.** This bullet asked whether the shipped `Staged`
+  surface keeps them (validated, inert, and set wide), narrows to Tier F ∪ Tier T
+  with no quiet tier at all, or something else. **The architect took the second
+  branch**: audit row A-17 measured that no code path read either key — two
+  documents differing only in `quiet_top_k` produced byte-identical searches while
+  the handshake called them different instruments — and both left the schema, the
+  config documents and the validator together. §14 owns that record; §10 no longer
+  carries the keys. D-310 still defers the stage they governed, and WP-1.5c
+  re-adds whichever of the two stage Q consumes, with the code that consumes it.
 
   **AND THE DECISION REACHES INTO M1 ITSELF, which u-rev 2's bullet did not say
   (MAJOR 3).** The list, so that a reader takes the whole question and not part of

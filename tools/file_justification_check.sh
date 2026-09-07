@@ -168,7 +168,7 @@ SEED="$(mktemp -d)"
 # Item 7: the trap's LAST command decides the status, so a scratch directory
 # that will not remove would turn a chosen void (2) into a fail (1) — the exact
 # reading item 12 exists to prevent.
-trap 'rc=$?; rm -rf "$SEED"; exit "$rc"' EXIT
+trap 'rc=$?; rm -rf "$SEED" || echo "warning: scratch not removed: $SEED" >&2; exit "$rc"' EXIT
 
 seed() {
 	local name="$1" filler="${2:-// filler}"

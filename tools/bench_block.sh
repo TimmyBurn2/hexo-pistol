@@ -160,7 +160,7 @@ WORK="$(mktemp -d "${SCRATCH%/}/pistol-testscratch-bench-block.XXXXXX")" ||
 # run into a failed one.
 cleanup() {
 	local rc=$?
-	rm -rf -- "$WORK"
+	rm -rf -- "$WORK" || echo "bench_block: WARNING: scratch not removed: $WORK" >&2
 	return "$rc"
 }
 trap cleanup EXIT

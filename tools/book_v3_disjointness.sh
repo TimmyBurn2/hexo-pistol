@@ -76,7 +76,7 @@ done
 
 SCRATCH="$(mktemp -d)" || void "mktemp could not make a scratch directory"
 # Preserves the body's status rather than replacing it with `rm`'s (item 7).
-trap 'rc=$?; rm -rf "$SCRATCH"; exit "$rc"' EXIT
+trap 'rc=$?; rm -rf "$SCRATCH" || echo "warning: scratch not removed: $SCRATCH" >&2; exit "$rc"' EXIT
 
 if [ -z "$KEYS_BIN" ]; then
 	"$REQUIRE_TOOL" cargo >/dev/null || void "cargo is not usable, so the key tool cannot be built"

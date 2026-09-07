@@ -40,7 +40,7 @@ where a line moved the move is recorded rather than the old number repeated.
 | A-06 | `search.rs:659-664` vs `search.rs:713-727` | `search.rs:722-726` (`proof_first_move`, `?` → `None`) vs `search.rs:776-789` (`proof_line`, `.expect`) | PRESENT — two behaviours on one impossible board |
 | A-11 | `params.rs:1-19` | `crates/pistol-search/src/params.rs`, the only non-root `//!` in the tree | PRESENT |
 | A-12 | solver 105, core 59, arena 45, eval 41, cli 33, engine 26, search 22 | solver **110**, core 59, arena 45, eval 41, cli 33, engine 26, search 22, **api 8** | PRESENT, and the audit's list omits `pistol-api` |
-| A-13 | 16 blocks of ≥ 8 consecutive `//` lines | **19** blocks | PRESENT, grown |
+| A-13 | 16 blocks of ≥ 8 consecutive `//` lines | **19** blocks under a detector of this package's own; **17** under the audit's, which is the one §2's row uses | PRESENT, grown |
 | A-14 | ≈ 70 `pub fn … -> Result` with no `# Errors` | re-enumerated in §2 | PRESENT |
 | A-15 | 32 trailing inline comments | re-enumerated in §2 | PRESENT |
 | A-16 | `position.rs:73-81`, 2 hits of `/// The <word>.` | **9** hits across six files, `position.rs:76` and `:81` among them | PRESENT, wider than the audit's narrow pattern found |
@@ -533,10 +533,12 @@ the reason the seat measures anything was the false half.
 
 #### E2 — one census row, one constructor, one push (A-05)
 
-`TriggerColumns::at(state, threats, turns_from_root)` and
+`TriggerColumns::at(state, threats, turns_from_root, site)` and
 `census::push(census, site, attacker, defender)` in `crates/pistol-search/src/census.rs`;
 the in-tree site (`pvs.rs`) and the root site (`search.rs`) both go through
-them, and `root_census_site` now varies `turns_from_root` and nothing else. The
+them, and `root_census_site` now varies `turns_from_root` and `site` — the
+fourth parameter is the group-E fix round's own addition (MINOR 2), which is why
+this sentence says two rather than the one it said when it was written. The
 audit's own words for the defect — *"A column added to one and not the other
 splits the census silently"* — is what the shared constructor removes; the
 census tests could not see it while the two sites were separate, which is why
@@ -616,7 +618,7 @@ package's reading of it.
 |---|---|---|
 | A-11 | one non-root `//!` (`params.rs`) | CONFIRMED, and it is the only one. The block is GONE, its two paragraphs MOVED onto the items they are about — the "not a rule" paragraph onto `CandidatePolicy`, the no-`Default` paragraph **with its `compile_fail` doctest** onto `SearchParams`. The doctest is why this is a move and not a deletion: it only runs from a doc comment, and CLAUDE.md's rule is that a module's *public item docs* carry its purpose |
 | A-12 | 7 crate roots, 331 `//!` lines | **8 roots, 344 lines** — the audit's list omits `pistol-api`. All eight cut: **344 → 76**, the largest `pistol-solver` 110 → 15. The BINARY root `crates/pistol-solver/src/bin/solver-cost.rs` is outside both the audit's row and its command, and carried 16; it is cut to 9 in the same spirit rather than left as the one root the package's own standard does not reach |
-| A-13 | 16 blocks of ≥ 8 consecutive `//` | **17 at `c586837` under the AUDIT's OWN detector, 4 now** — see the detector note below |
+| A-13 | 16 blocks of ≥ 8 consecutive `//` | **17 at `c586837` under the AUDIT's OWN detector; 4 at `cb6e853`, and 6 at `90a77a8`, which is the governing revision.** The two the fix round did not foresee are `census.rs:166` (8 lines, added by `9ce9a7c` ITSELF, the group-E `site` comment) and `quiescence.rs:418` (9 lines, added by `0fedfa8`). Re-derived at four revisions with a re-implementation of the audit's own detector, calibrated against its published 16 and its six named blocks at `d83ac01` |
 | A-14 | ≈ 70 `pub fn … -> Result` with no `# Errors` | **25 `# Errors` sections at `c586837`, 103 at `cb6e853` — 78 added, none removed. 0 public `Result`-returning functions now lack one** |
 | A-15 | 32 trailing inline comments | **ONE in non-test code.** See below |
 | A-16 | 2 name-restating docs | **9 at HEAD** by the audit's own pattern; 7 deleted, 2 replaced with something to say |
@@ -720,7 +722,7 @@ file restored and `git diff --quiet` asserted on it. Log:
 POINT.** R2 registers *"a column added to one site only"*. After E2 there is one
 constructor, so that mutation is **no longer expressible** — which is the whole
 content of the item. What is expressible, and what M5 does instead, is the root
-site passing the wrong `turns_from_root`: the one thing the two sites still
+site passing the wrong `turns_from_root`: one of the two things the sites still
 differ in. It kills four tests.
 
 **M7's first attempt did not run.** Its mutation string carried a line
@@ -733,7 +735,12 @@ after every restore. It was retaken with the literal read out of the source.
 ## §4 Receipts (D-469)
 
 Everything this package measured is under `artifacts/pre_phase2_sweep/`,
-gitignored (CLAUDE.md rule 8) and sha-anchored. **78 files**, and the list of
+gitignored (CLAUDE.md rule 8) and sha-anchored — with ONE exception, found by the
+group-E confirmation and fixed rather than footnoted: `0fedfa8`'s sixty-four
+colourings of the minimal enclosure were measured in a session and exported
+nowhere, so the claim was unrepeatable. It is now driven by
+`crates/pistol-search/tests/quiescence_enclosure_tests.rs`, with a control, which
+is a better receipt than a file because it re-runs. **78 files**, and the list of
 their digests itself hashes to
 `8b1e3d30597f7e47fccda5bde11cfa766662538fe449f3a59e2e1fef8da1aa8a`.
 
@@ -860,7 +867,9 @@ gate. `the_shipped_gate_accepts_this_repository` closes it.
 ### What a fix round does NOT discharge
 
 Each group's fix round is its ONE round under D-481. The reviews adjudicated
-`cb6e853`; the fixes are a later revision and **no fresh review has read them**.
+`cb6e853`; the fixes are a later revision. **THEY HAVE NOW BEEN READ — see §8**,
+and the paragraph below is left as written because it is what this document
+claimed before that read, and §8 is the answer to it.
 The group-C reviewer said so unprompted while its own report was being written —
 *"that fix round is a different revision and owes its own review; it discharges
 nothing here"* — and it is right. What this closure claims for the fix round is
@@ -1030,9 +1039,134 @@ revision is the one its cited CI ran at; the run above is that, and §2's H1 ent
   of the three gate suites already had it. A successor changing anything under
   `tools/` runs the gates.
 
-- **WHAT NO ONE HAS READ.** The reviews adjudicated `cb6e853`. The fix round is
-  a later revision and has had no fresh review; each group has now spent its one
-  round under D-481, so a second review returning FAIL is that group's STOP. The
-  evidence offered in its place is in §6 (21 gates from their own output), §4
-  (three census digests agreeing across the repair) and §3 (M8, the group-E
-  reviewer's surviving mutant, re-applied and now dying).
+- **WHAT NO ONE HAD READ, AND NOW HAS.** The reviews adjudicated `cb6e853` and
+  the fix round was a later revision no fresh context had read. Three scoped
+  confirmations have now read it — §8. All three groups returned FAIL, every one
+  of the three on a CLAIM rather than on a wrong answer, and the documents were
+  fixed under D-688 rather than reverted. The evidence that stood in their place
+  — §6's 21 gates, §4's census digests, §3's re-killed mutant — held under the
+  read, and the group-E confirmation added a stronger one of its own: byte
+  identity RE-DERIVED across the fix rounds, 540 searches per side, zero
+  differing lines.
+
+---
+
+## §8 The confirmations, and what they changed
+
+Three fresh-context scoped confirmations, dispatched at `90a77a8`, one per group,
+reports tracked at `docs/experiments/pre_phase2_sweep_{T,E,C}_CONFIRM.md`. Each
+was given its group's finding list and the fix-round diff, and asked for a
+per-finding verdict on whether the fix discharges the finding's PROPERTY — with
+the reproducer re-run — rather than its sentence.
+
+| group | findings | CONFIRMED | FAIL | new findings |
+|---|---|---|---|---|
+| T | 14 | 12 | **MAJOR-5**, and **MINOR-1 overturned** | 1 MAJOR, 1 MINOR |
+| E | 11 | 10 | **MAJOR 4** | 3 MINOR |
+| C | 9 | 8 | **MINOR-2** | 1 MINOR |
+
+**T MINOR-1's row moved after its report closed, and the correction is recorded
+in that report rather than quietly here** (`pre_phase2_sweep_T_CONFIRM.md`
+ERRATUM 1). It was scored CONFIRMED for carrying the form item 7 prescribes; the
+form does not work, so the verdict is a FAIL — a confirmation that read the fix
+against the rule instead of running it, which is the same defect class the group
+it was confirming had committed eleven times.
+
+**ALL THREE FAILED, AND ALL THREE FAILED THE SAME WAY: THE CITED INSTANCES WERE
+PATCHED AND THE CLASS WAS LEFT OPEN.** Not one names a path by which the engine
+answers wrongly, which is why D-688 fixes them instead of reverting.
+
+- **T MAJOR-5 — the register's re-derivation command was wrong on BOTH axes, and
+  the revision that fixed it was the second to be wrong.** `tools/SHELL_CHECKLIST.md`
+  claimed *"The command above finds all eleven"*; run, it reached SEVEN. A git
+  pathspec's `*` does not cross `/`, so `crates/*/src` matched no file at all,
+  and rows 1-3 never contained the padded `" totals "` in the first place — they
+  key on the bare token. Fixing only the pathspec would still have missed three.
+  The command is now `git grep -n totals -- tools 'crates/*/src/*' ':!tools/SHELL_CHECKLIST.md'`,
+  VERIFIED to reach all eleven rows, and two stale line numbers (`determinism.sh`
+  188 → 190, `movetime_check.sh` 125 → 131, both drifted when the fix rounds
+  added preflight blocks) are corrected with them.
+- **E MAJOR 4 — the amended document still contradicted itself, in the section
+  the code cites.** `crates/pistol-engine/src/config.rs:213` names `U3_tier_t.md`
+  §10 as "this document's schema, the one place the count is stated", and §10's
+  table still committed `quiet_top_k` and `widen_schedule` for three configs —
+  keys D-675 removed and the engine now refuses by name — while §14 of the same
+  file already recorded that removal. §1 still called the question OPEN and
+  §U3-Z still said the configs "each commit both keys". Four sites amended to
+  what §14 owns.
+- **C MINOR-2 — the corrected count went stale before it was published.** The
+  A-13 row said "4 now" under the audit's own detector; re-derived at the
+  governing revision it is **6**. The two extra blocks were added by `9ce9a7c`
+  ITSELF (`census.rs`, the group-E `site` comment) and by `0fedfa8`
+  (`quiescence.rs`) — the row was never re-run against the revision it governs,
+  which is this package's own repeated lesson landing on it one more time.
+
+**THE NEW FINDINGS, AND ONE OF THEM OVERTURNED A CONFIRMED VERDICT.** T NEW-2
+observed that `tools/solver_oracle_check.sh` still carried the bare cleanup trap
+MINOR-1 had fixed in three siblings. Measuring it to decide whether it mattered
+showed that **MINOR-1's remedy does not work at all** — under `set -e` a failing
+cleanup kills the shell before the `exit "$rc"` written to preserve the status is
+reached, so the bare and rc-preserving forms are one behaviour. MINOR-1 was
+scored CONFIRMED and should have been a FAIL; item 7's rule was wrong, not just
+its application. All fourteen trap sites and the rule itself are fixed (D-689).
+E NEW-2's remedy reproduced its own defect once before it worked (D-690), and
+E NEW-3's unreceipted "sixty-four colourings" measurement is now a test with a
+control rather than a sentence.
+
+**THE ERRATA, recorded and not acted on**: nothing remains in it. Every MINOR the
+confirmations raised was cheap enough to close, so the list a successor inherits
+is empty rather than deferred.
+
+**THE UNSCOPED MECHANISM, NAMED AS THE DISPATCH ASKS.** `common::seed_tool`
+(D-685) is UNSCOPED AND LANDED: it was not in any group's scope, no review or
+confirmation adjudicated it, and it ships. It is a computed closure with a
+property guard rather than a list, which is why it is recorded as landed rather
+than held — but a successor should know that the one mechanism in this package
+nobody reviewed is the one every gate harness now depends on.
+
+**THE CONFIRMATIONS' OWN RECEIPTS (D-469).** Under `artifacts/pre_phase2_confirm/`,
+gitignored: the three confirmers' evidence (`t_*`, `e_*`, `c_*`), the swap-mutant
+before/after for D-690 (`fix_new2_site_mutant.txt`) and the full `tools/ci.sh` log
+this section cites (`ci_confirm_fixes.txt`) and the CLOSING run this section cites
+(`ci_closing_confirm.txt`). **61 files**, and the list of their digests itself
+hashes to `34343a056e5301434c3e342b4ade70045a69476debcf2baa83520e02b8970693`.
+
+**AND THIS SECTION IS ONE EDIT PAST THE RUN IT CITES, WHICH IS D-674's OWN
+SITUATION AND THE SAME ONE §6 RECORDS.** The closing run was taken at the staged
+tree; the only change after it is the paragraph you are reading — the file count,
+the digest and the citation, all of which are facts ABOUT that run and could not
+have existed inside it. Nothing under `crates/`, `tools/` or `configs/` differs.
+
+**THE GATES, AT THE REVISION THAT CARRIES THE FIXES**, from the run's own output —
+21 of 21, `ci: all gates passed`. The lines this work moved:
+
+```
+file_justification_check: 414 tracked .rs/.sh/.py files, 88 over the cap, all registered in docs/rule9_justifications.md (88 entries)
+decision_key_check: 692 decision keys in docs/decisions.md, no repeat outside the exemption
+determinism: ok — 5 seat(s), no difference outside nps/time in any of them
+solver_determinism: PASS — 61 cases, byte-identical transcripts
+movetime: ok — 2 seat(s), all within their own epsilon
+solver_oracle_check: all four gates passed
+config_check: 21 engine config(s), 1 weight table(s), 18 arena config(s), 3 book config(s), 2 solver config(s)
+```
+
+`file_justification_check`'s 88th entry is `crates/pistol-search/src/census.rs`,
+which the D-690 guard pushed over the cap; the four tests added here
+(`each_trigger_site_names_itself_in_the_decided_position_panic`,
+`the_root_and_in_tree_call_sites_pass_their_own_names`,
+`no_colouring_of_the_minimal_enclosure_leaves_tier_one_empty` and its control)
+all ran green inside that run rather than only beside it.
+
+**P2 RE-VERIFIED AT THE COMMITTED REVISION, AND SAID FOR WHAT IT IS.** The
+dispatch asks for the census digest and the goldens after any change to the tree.
+No revert was taken, so what needed showing is that the fixes are not shipped
+behaviour, and it is shown mechanically rather than argued: `census.rs`'s diff
+against `90a77a8` is **90 lines added, 0 removed, every one of them after the
+`#[cfg(test)]` marker**, and `quiescence.rs`'s diff has **no non-comment line**.
+The behaviour claim itself is carried by the gates rather than by that diff —
+`instrument_behavior_byte_identical_pre_post` (the sha-pinned golden transcript,
+gate 3) and the five `census_protocol_tests` both ran green in the closing run.
+The three census artifacts still hash to `31236b56…`; they are static files, so
+that is a statement about the receipt set and not about the engine, and the
+engine's own re-derivation is the group-E confirmation's 540-search
+byte-identity run at `90a77a8` plus the two gates above at this revision.

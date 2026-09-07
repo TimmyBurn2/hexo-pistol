@@ -44,7 +44,7 @@ PREFLIGHT="$ROOT/tools/scratch_preflight.sh"
 }
 SCRATCH="$(mktemp -d)"
 # Item 7: the trap's LAST command decides the status, so it must not replace one.
-trap 'rc=$?; rm -rf -- "$SCRATCH"; exit "$rc"' EXIT
+trap 'rc=$?; rm -rf -- "$SCRATCH" || echo "warning: scratch not removed: $SCRATCH" >&2; exit "$rc"' EXIT
 SCRATCH_LOG="$SCRATCH/extract-tests.log"
 
 printf '== T1/T2/NEG: extractor unit, load, negative controls ==\n'

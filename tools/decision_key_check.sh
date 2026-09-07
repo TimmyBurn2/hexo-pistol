@@ -115,7 +115,7 @@ PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight
 SEED="$(mktemp -d)" || void "mktemp could not make a scratch directory for the self-test"
 # The trap preserves the body's status rather than replacing it with `rm`'s
 # (item 7): a cleanup that fails must not turn a clean run into a refusal.
-trap 'rc=$?; rm -rf "$SEED"; exit "$rc"' EXIT
+trap 'rc=$?; rm -rf "$SEED" || echo "warning: scratch not removed: $SEED" >&2; exit "$rc"' EXIT
 
 printf 'D-1: a choice — a reason — what flips it\nD-2: another\nprose mentioning D-1 mid-line\n' \
 	>"$SEED/clean.md"

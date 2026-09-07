@@ -130,7 +130,7 @@ PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight
 WORK="$(mktemp -d)" || void "mktemp could not make a scratch directory"
 # The trap preserves the body's status rather than replacing it with `rm`'s
 # (item 7): a cleanup that fails must not turn a clean run into a refusal.
-trap 'rc=$?; rm -rf "$WORK"; exit "$rc"' EXIT
+trap 'rc=$?; rm -rf "$WORK" || echo "warning: scratch not removed: $WORK" >&2; exit "$rc"' EXIT
 
 # --- the extraction ----------------------------------------------------------
 #

@@ -100,7 +100,7 @@ OUT="$(mktemp -d)" || void "mktemp refused"
 # Item 7: the trap's LAST command decides the status, so a scratch directory
 # that will not remove would turn a chosen void (2) into a fail (1) — the exact
 # reading item 12 exists to prevent.
-trap 'rc=$?; rm -rf "$OUT"; exit "$rc"' EXIT
+trap 'rc=$?; rm -rf "$OUT" || echo "warning: scratch not removed: $OUT" >&2; exit "$rc"' EXIT
 
 # Two SEPARATE processes, the gate proper (D-7's own form).
 "$BIN" "$FIXTURE" "$CONFIG" >"$OUT/run-a" 2>"$OUT/err-a" || fail "run A refused: $(cat "$OUT/err-a")"

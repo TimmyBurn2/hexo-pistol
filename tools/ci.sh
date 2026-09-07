@@ -80,7 +80,7 @@ step "gate 2/$GATE_TOTAL: build from the git-tracked file set"
 # and equals the about-to-be-committed tree when work is staged, so the gate
 # gives the same answer before and after a commit (docs/decisions.md D-26).
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+trap 'rc=$?; rm -rf "$WORK" || echo "warning: scratch not removed: $WORK" >&2; exit "$rc"' EXIT
 mkdir -p "$WORK/repo"
 git checkout-index --all --prefix="$WORK/repo/"
 echo "ci: building $(git ls-files | wc -l) tracked files in $WORK/repo"

@@ -415,15 +415,15 @@ impl<'a> Run<'a> {
         // D-5/D-7 use, sorted here rather than assumed from enumeration
         // order.
         tier2.sort_unstable();
-        // NOT DRIVEN BY A TEST, AND THE ATTEMPT IS RECORDED RATHER THAN THE
-        // CLAIM. Reaching this needs the ply-1 stone's six neighbours all
-        // occupied AND tier 1 empty. MEASURED over all sixty-four colourings of
-        // the minimal enclosure — the origin plus its six neighbours, the only
-        // seven-stone shape that encloses anything — **none** has an empty tier
-        // 1: every arrangement leaves some live window for one side. That is
-        // evidence and not a proof (a larger board was not swept), so this stays
-        // a guard rather than becoming an `unreachable!` (audit row A-21,
-        // docs/decisions.md D-553).
+        // Reaching this needs the ply-1 stone's six neighbours all occupied AND
+        // tier 1 empty. All sixty-four colourings of the minimal enclosure —
+        // the origin plus its six neighbours, the only seven-stone shape that
+        // encloses anything — leave tier 1 non-empty, and that sweep is DRIVEN
+        // by `tests/quiescence_enclosure_tests.rs` with its own control rather
+        // than asserted here: a measurement a reader cannot repeat is not
+        // evidence. It is still evidence and not a proof (a larger board is not
+        // swept), so this stays a guard rather than becoming an `unreachable!`
+        // (audit row A-21, docs/decisions.md D-553).
         if tier2.is_empty() {
             panic!(
                 "pistol-search invariant {NO_COMPLETION_STONE}: neither the live-window-support \

@@ -256,3 +256,93 @@ impl CoverClass {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Both firings of the decided-position invariant name their own site.
+    ///
+    /// `site`'s only observable effect is the wording of that panic, so a swap
+    /// of the two call sites' literals is invisible to every other test in the
+    /// workspace — the argument is READ, and read into a message nothing
+    /// asserted on (docs/decisions.md D-553's class, one step along from a
+    /// removed call).
+    #[test]
+    fn each_trigger_site_names_itself_in_the_decided_position_panic() {
+        let state = decided_position();
+        let threats = pistol_solver::ThreatState::new();
+        for site in ["root", "in-tree"] {
+            let panicked =
+                std::panic::catch_unwind(|| TriggerColumns::at(&state, &threats, 0, site))
+                    .expect_err("a decided position owes no stones to cover with");
+            let message = panicked
+                .downcast_ref::<String>()
+                .cloned()
+                .unwrap_or_else(|| "a panic payload this test cannot read".to_owned());
+            assert!(
+                message.contains(&format!("the {site} trigger")),
+                "the message must say WHICH of the two fired: {message}"
+            );
+        }
+    }
+
+    /// Each call site passes its OWN name, which the message alone cannot show.
+    ///
+    /// `site` arrives from the caller, so a test that supplies its own literal
+    /// cannot tell the two firings apart — a swap of the words at the two call
+    /// sites leaves every other test in this workspace green. Provenance is only
+    /// checkable where it is produced, so this reads the sources the way the
+    /// seeding-closure guard does (docs/decisions.md D-685); `include_str!`
+    /// binds them at compile time, so a renamed module fails the build rather
+    /// than silently checking nothing.
+    #[test]
+    fn the_root_and_in_tree_call_sites_pass_their_own_names() {
+        for (source, expected) in [
+            (include_str!("pvs.rs"), "\"in-tree\""),
+            (include_str!("search.rs"), "\"root\""),
+        ] {
+            assert_eq!(
+                source.matches("TriggerColumns::at(").count(),
+                1,
+                "one construction per site is what makes the columns one thing (D-682)"
+            );
+            let args = source
+                .split_once("TriggerColumns::at(")
+                .expect("the call site this test exists for")
+                .1
+                .split_once(')')
+                .expect("a closed argument list")
+                .0;
+            let site = args.rsplit(',').next().expect("a last argument").trim();
+            assert_eq!(site, expected, "the site literal this call site passes");
+        }
+    }
+
+    fn decided_position() -> pistol_core::GameState {
+        let mut state = pistol_core::GameState::new_game();
+        // P1 walks the q-axis; P2 answers well clear of it and SPACED, because
+        // a P2 that is merely elsewhere builds a six of its own and decides the
+        // game first — which is what the first draft of this fixture did.
+        for (q, r) in [
+            (0, 0),
+            (0, 5),
+            (2, 5),
+            (1, 0),
+            (2, 0),
+            (4, 5),
+            (6, 5),
+            (3, 0),
+            (4, 0),
+            (0, 7),
+            (2, 7),
+            (5, 0),
+        ] {
+            state
+                .place(pistol_core::Coord::new(q, r))
+                .expect("a legal ply");
+        }
+        assert_eq!(state.stones_owed(), 0, "the six must have decided the game");
+        state
+    }
+}

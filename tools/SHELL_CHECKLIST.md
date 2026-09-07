@@ -78,12 +78,34 @@ carry `pistol-testscratch-`, both suites spell it, and a test says so.
 
 ## 7. Traps
 
-The EXIT trap's LAST command decides the script's exit status: a housekeeping
-listing that fails turns a completed run into a failure. Take `local rc=$?` as
-the trap's first statement and `return "$rc"` as its last. A second
-`trap … EXIT` REPLACES the first — one trap, one cleanup, and a second temporary
-directory goes inside the first. Order matters where the commands interact
-(`git worktree prune` declines to prune a directory that still exists).
+A housekeeping command that fails turns a completed run into a failure, and a
+deliberate `void` (2) into a `fail` (1) — the misreading item 12 exists to
+prevent. **THE MECHANISM IS `set -e`, NOT "the trap's last command wins", AND AN
+EARLIER REVISION OF THIS ITEM NAMED THE WRONG ONE.** MEASURED, bash 5.3.15, a
+script exiting 2 with a cleanup whose `rm` is refused:
+
+| trap body, under `set -euo pipefail` | cleanup fails | cleanup succeeds |
+|---|---|---|
+| `rm -rf "$W"` | **1** | 2 |
+| `rc=$?; rm -rf "$W"; exit "$rc"` | **1** | 2 |
+| `cleanup() { local rc=$?; rm -rf "$W"; return "$rc"; }` | **1** | 2 |
+| `rc=$?; rm -rf "$W" \|\| echo … >&2; exit "$rc"` | **2** | 2 |
+
+**TAKING `rc` IS NOT ENOUGH AND BUYS NOTHING ON ITS OWN**: under `set -e` the
+failing `rm` terminates the shell where it stands, so the `exit "$rc"` or
+`return "$rc"` written to preserve the status is NEVER REACHED, and the first
+three rows are one behaviour wearing three spellings. Without `set -e` the status
+survives all four (`trap 'false' EXIT; exit 3` exits **3**), which is why reading
+the rule rather than running it kept the wrong mechanism in place.
+
+So: take `rc=$?` first, **give every command in the trap its own `|| …` so none
+of them can fail**, and `exit`/`return "$rc"` last. A cleanup that could not
+clean up says so on stderr — rule 3 wants the reason named — and does not touch
+the verdict, because a leaked scratch directory is not a wrong answer and a
+masked exit code is. A second `trap … EXIT` REPLACES the first — one trap, one
+cleanup, and a second temporary directory goes inside the first. Order matters
+where the commands interact (`git worktree prune` declines to prune a directory
+that still exists).
 
 ## 8. One spelling per number, one refusal per reason
 
@@ -246,19 +268,36 @@ match it because drivers parse what they emit:
 **THE CONSUMERS.** The enumeration is
 
 ```
-git grep -n " totals " -- 'tools/*.sh' 'tools/**/*.sh' 'tools/*.py' 'crates/*/src'
+git grep -n totals -- tools 'crates/*/src/*' ':!tools/SHELL_CHECKLIST.md'
 ```
 
 read and classified by hand — a site that FOLDS already-parsed numbers, such as
 `crates/pistol-arena/src/record.rs:113`, is not a consumer of the grammar and is
-not listed. **AN EARLIER REVISION OF THIS APPENDIX CITED A DIFFERENT COMMAND
-THAT COULD NOT HAVE PRODUCED ITS OWN TABLE**: it searched for `info totals` and
-for `' totals '` in quotes, and an `awk '/ totals /{` puts the discriminator
-between SLASHES, so it matched neither of the two `awk` consumers — including
-the row it advertised as the one the audit had missed. That is
-`docs/process.md`'s named class, a claim checked against the wrong population,
-inside the register whose closing line demands re-derivation. The command above
-finds all eleven.
+not listed. **TWO EARLIER REVISIONS OF THIS APPENDIX CITED COMMANDS THAT COULD
+NOT HAVE PRODUCED THIS TABLE, AND THE SECOND WAS WRITTEN TO FIX THE FIRST.**
+Revision one searched for `info totals` and for `' totals '` in quotes, and an
+`awk '/ totals /{` puts the discriminator between SLASHES, so it matched neither
+`awk` consumer — including the row it advertised as the one the audit had
+missed. Revision two narrowed the pattern to `" totals "` and added the pathspec
+`crates/*/src`, and **it reached SEVEN of the eleven**: a git pathspec's `*` does
+not cross `/`, so `crates/*/src` matches no file at all (`git grep -c "" --
+'crates/*/src'` returns nothing), and rows 1-3 do not contain the padded string
+in the first place — they key on the bare token (`words.contains(&"totals")`,
+`totals_of`, `a totals line`). **THE PATTERN AND THE PATHSPEC WERE BOTH WRONG,
+AND FIXING ONLY THE PATHSPEC WOULD STILL HAVE MISSED THREE ROWS.** That is
+`docs/process.md`'s named class twice over, a claim checked against the wrong
+population, inside the register whose closing line demands re-derivation — the
+lesson being that a re-derivation command is itself an instrument and is RUN
+before it is published, not read.
+
+The command above REACHES every one of the eleven: each row below has at least
+one line in its output. It is deliberately a superset — 148 lines, against 35
+for the revision that reached seven — because a hand-classified register wants
+over-approximation, and the cost of a line that is read and rejected is nothing
+beside the cost of a consumer never seen. Row 4's second site
+(`pistol_client.rs:241`) matches through the const `TOTALS_MARKER` declared at
+`:41`, which is the line the command returns; the classifier reads the file from
+there.
 
 | # | site | what it keys on |
 |---|---|---|
@@ -270,8 +309,8 @@ finds all eleven.
 | 6 | `tools/baseline_snapshot.sh:501,648` | `grep ' totals '`, then one field by name |
 | 7 | `tools/bench_block.sh:260,264` | `grep -c '^info totals '`, then `sed -n 's/^info totals //p'` |
 | 8 | `tools/bench_delta.sh:379-390` | `awk '/ totals /'` |
-| 9 | `tools/determinism.sh:188` | `grep -c '^info totals depth_turns [1-9][0-9]* '` |
-| 10 | `tools/movetime_check.sh:125` | `sed -n 's/^info totals .* time \([0-9]\+\) .*/\1/p'` |
+| 9 | `tools/determinism.sh:190` | `grep -c '^info totals depth_turns [1-9][0-9]* '` |
+| 10 | `tools/movetime_check.sh:131` | `sed -n 's/^info totals .* time \([0-9]\+\) .*/\1/p'` |
 | 11 | `tools/staged_cover_bench.sh:147-157` | `awk '/ totals /'`, `nodes` and `time` by field name — the same reader as row 8 |
 
 **ELEVEN SITES IN TEN FILES, WHERE A-08 SAID EIGHT — and the difference is the

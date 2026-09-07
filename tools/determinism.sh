@@ -131,7 +131,7 @@ WORK="$(mktemp -d)"
 # Item 7: the trap's LAST command decides the status, so a scratch directory
 # that will not remove would turn a chosen void (2) into a fail (1) — the exact
 # reading item 12 exists to prevent.
-trap 'rc=$?; rm -rf "$WORK"; exit "$rc"' EXIT
+trap 'rc=$?; rm -rf "$WORK" || echo "warning: scratch not removed: $WORK" >&2; exit "$rc"' EXIT
 
 echo "determinism: building the engine (release, locked)"
 # THE BINARY THIS GATE RUNS IS THE BINARY CARGO BUILT: the path comes from cargo's

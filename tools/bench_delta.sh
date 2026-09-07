@@ -190,7 +190,7 @@ cleanup() {
 		git worktree remove --force "$wt" >/dev/null 2>&1 ||
 			printf 'bench_delta: WARNING: could not remove the worktree at %s — it is in the listing below\n' "$wt" >&2
 	done
-	rm -rf "$WORK"
+	rm -rf "$WORK" || printf 'bench_delta: WARNING: scratch not removed: %s\n' "$WORK" >&2
 	git worktree prune >/dev/null 2>&1 || true
 	# The invariant D-217 and D-219 close their rounds on, printed rather than
 	# asserted, so a report can cite this script's own output for it. A listing

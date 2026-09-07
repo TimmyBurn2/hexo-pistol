@@ -67,7 +67,7 @@ REQUIRE_TOOL="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/require_tool.s
 WORK="$(mktemp -d)" || void "mktemp could not make a scratch directory for the match"
 # The trap preserves the body's status rather than replacing it with `rm`'s
 # (item 7): a cleanup that fails must not turn a clean run into a refusal.
-trap 'rc=$?; rm -rf "$WORK"; exit "$rc"' EXIT
+trap 'rc=$?; rm -rf "$WORK" || echo "warning: scratch not removed: $WORK" >&2; exit "$rc"' EXIT
 
 # SCRATCH SPACE, BEFORE THE BUILD AND IN THIS GATE'S VOCABULARY (item 12
 # obligation 2, docs/decisions.md D-285). Both filesystems, because they are

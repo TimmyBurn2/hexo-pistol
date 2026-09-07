@@ -489,7 +489,7 @@ PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight
 	fail "no scratch room; the lines above name the filesystem"
 
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+trap 'rc=$?; rm -rf "$WORK" || echo "warning: scratch not removed: $WORK" >&2; exit "$rc"' EXIT
 
 # `|| true` because a corpus with no entries makes both greps exit 1, which
 # under `set -o pipefail` would abort the script with NO diagnostic at all where

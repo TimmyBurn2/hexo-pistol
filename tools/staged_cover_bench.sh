@@ -79,7 +79,7 @@ for SCRATCH in "${TMPDIR:-/tmp}" "$ROOT"; do
 done
 
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+trap 'rc=$?; rm -rf "$WORK" || echo "warning: scratch not removed: $WORK" >&2; exit "$rc"' EXIT
 
 digest() { # path what -> prints "path sha"
 	local line
