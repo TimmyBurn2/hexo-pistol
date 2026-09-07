@@ -621,10 +621,139 @@ to 9 (mean 2.6). Whether that fanout costs anything is §6.5's question, not
 
 ## §7 Outputs
 
-**EMPTY UNTIL §6's INSTRUMENT HAS RUN.** Every number named in §6 lands here
-with the digest of the artifact that produced it (D-483). **NO SELECTION.** This
-memo says what the enum IS and what it measured; which row wins is the matrix's,
-and the matrix does not select either (D-708).
+**RUN.** Instrument `tools/hex_enum/{hexenum,census,report}.py` at `54eb3ba`,
+four processes, one per length, over the whole 45 271-row quiet population — no
+sampling and no seed except the random-quotient referent's, which is recorded.
+Receipt `artifacts/wp22_phase2a/census/`, `sha256sum -c` clean, receipt digest
+`aab7f4f6a8d450fac5609dce4635a21ea86ec658e4c42c11c9d89b98835e14a8` (D-483).
+**NO SELECTION** (D-708): what follows is what the enum IS and what it measured.
+
+### 7.1 `k` and the code count — the enum is COMPUTED and it is not 816
+
+Exhaustive over `3^(L−1)` patterns at each length.
+
+| L | T4 `k` / `C(k+2,3)` | T3 | T2 | T1 |
+|---|---|---|---|---|
+| 7 | **25** / 2 925 | 25 / 2 925 | 15 / 680 | 12 / 364 |
+| 9 | **98** / 161 700 | 57 / 32 509 | 27 / 3 654 | 20 / 1 540 |
+| 11 | **357** / **7 647 059** | 121 / 302 621 | 47 / 18 424 | 36 / 8 436 |
+| 13 | **357** / 7 647 059 | 121 / 302 621 | 47 / 18 424 | 36 / 8 436 |
+
+**No cell is 816.** `T3 = T4` at `L = 7` because `|W_7| = 2` and `min(open, 2)`
+is the identity there — a consistency signal, not a coincidence.
+
+**AND THE FULL TUPLE AT THE COVERING LENGTH IS NOT AFFORDABLE.** `C(359,3) =
+7 647 059` nominal parameters against 8 174 025 scored-cell observations is
+**1.07 observations per nominal parameter**, where `eval_families_2026-09.md`
+§A1 already kills `R-A1-L11` at 1.2 and Buro's safe-fit line is ≥ 20.
+
+### 7.2 `THM-WINDOW`'s enumeration — the stabilisation is CONFIRMED, not measured
+
+`k(13) = k(11) = 357` at every rung, and the joint partition of the two equals
+both: `hexenum.py --refine 11` prints *"the longer partition is a function of the
+shorter"* at all four rungs. Below the covering length the relation does not hold
+in either direction — `--refine 7` and `--refine 9` print *"neither refines the
+other"* at every rung — because a short window asks about fewer windows rather
+than asking more coarsely about the same ones.
+
+**This is the CONFIRMATION §6.6 registered it as.** The answer is 11 by §5's
+one-line reach argument and the enumeration can take no other value; the corpus
+agrees from the other side, and it is the sharper statement: over the quiet
+population `L = 13` sees **232 distinct T4 classes against `L = 11`'s 231, and
+108 075 distinct codes against 108 074** — one class and one code, for 18 % more
+window traffic per stone (39 against 33, `eval_families` §A6).
+
+**The measured content is the merge curve below 11**, DERIVED at T4: one `L = 7`
+class meets 3 to 104 of the `L = 11` classes (mean 32.4) while one `L = 11` class
+meets 1 to 8 `L = 7` classes (mean 2.3); at `L = 9`, 2 to 36 (mean 9.4) and 1 to
+9 (mean 2.6). Neither length's partition refines the other's.
+
+### 7.3 Observations, at both population units
+
+Scored cells per position: **111.1** at `L = 7`, **180.6** at `L = 11` and
+`L = 13`. Rule 5's legal empty region, sampled every 500th position (n = 90):
+**mean 459.2, median 451** — so the scored set is roughly a quarter to two fifths
+of the legal region, and §4 says why the two are not two populations for one
+object.
+
+**CODE unit** (one observation per scored cell), the row's own parameter unit:
+
+| L | rung | nominal `C(k+2,3)` | codes OBSERVED | observations | mean | median | ≤4 | <20 | cover 90 % |
+|---|---|---|---|---|---|---|---|---|---|
+| 7 | T4 | 2 925 | 856 | 5 031 327 | 5 878 | 174 | 84 | 197 | 88 |
+| 7 | T2 | 680 | 266 | 5 031 327 | 18 915 | 1 079 | 11 | 30 | 44 |
+| 11 | T4 | 7 647 059 | **108 074** | 8 174 025 | 75.6 | **3** | 67 227 | 93 617 | 3 843 |
+| 11 | T3 | 302 621 | 9 408 | 8 174 025 | 869 | 7 | 3 977 | 6 350 | 118 |
+| 11 | **T2** | **18 424** | **1 533** | 8 174 025 | 5 332 | **41** | 322 | 620 | **32** |
+| 11 | T1 | 8 436 | 535 | 8 174 025 | 15 279 | 53 | 118 | 204 | 4 |
+| 13 | T2 | 18 424 | 1 534 | 9 979 912 | 6 506 | 41 | 322 | 620 | 24 |
+
+**WINDOW unit** (one per scored cell per axis), for comparison with the shipped
+eval's own summand: at `L = 11`, T4 sees **231** of its 357 classes over
+12 980 519 observations (median 2 421, none under 20 at T2 or T1); the raw folded
+window code sees 11 909 distinct with **142 covering 90 %**.
+
+**The growth curves separate the rungs cleanly** at `L = 11`, distinct codes
+every 5 000 positions:
+
+```
+T4  34596 50952 63110 72652 81120 88713 95739 101982 107645   still climbing, steeply
+T3   4803  6091  6918  7564  8024  8420  8781   9090   9377   still climbing
+T2   1132  1285  1359  1406  1439  1463  1491   1511   1530   +35 % over 9x the data
+T1    409   455   470   486   499   511   520    527    535   flat from 15 000 on
+```
+
+`T4` has no flat stretch at all, so its 108 074 is a count of distinct things
+accumulated and the true support is larger (D-619's class). `T1` and `T2` are
+saturated on this corpus.
+
+**Buro's floors are reported and tagged** (§6.3): at `L = 11` T2, **322 of the
+1 533 observed codes sit at or below his ≤ 4 line and 620 below his ≥ 20 line**;
+at T4 those are 67 227 and 93 617 of 108 074.
+
+### 7.4 CLASS PURITY, and §6.5's registered criterion is MET at every rung
+
+The criterion registered before the run: *at the WINDOW unit the enum's `ω²`
+must exceed every one of the three matched-null replicates at every ladder
+rung.*
+
+| L | rung | classes | enum `ω²` | worst null `ω²` of 3 | ratio | criterion |
+|---|---|---|---|---|---|---|
+| 7 | T4 | 16 | 0.003573 | 0.001124 | **3.18x** | MET |
+| 7 | T2 | 10 | 0.002796 | 0.000843 | 3.32x | MET |
+| 7 | T1 | 8 | 0.002417 | 0.000840 | 2.88x | MET |
+| 9 | T4 | 78 | 0.004606 | 0.001316 | **3.50x** | MET |
+| 9 | T2 | 21 | 0.002799 | 0.000780 | 3.59x | MET |
+| 11 | T4 | 231 | **0.005504** | 0.001986 | 2.77x | MET |
+| 11 | T3 | 61 | 0.003187 | 0.001163 | 2.74x | MET |
+| 11 | T2 | 22 | 0.003119 | 0.000871 | **3.58x** | MET |
+| 11 | T1 | 16 | 0.002495 | 0.000842 | 2.96x | MET |
+| 13 | T4 | 232 | 0.004668 | 0.002082 | 2.24x | MET |
+| 13 | T2 | 23 | 0.002646 | 0.000814 | 3.25x | MET |
+
+**MET at all sixteen cells, by 2.0x to 3.6x.** So the tuple groups codes that
+share label value beyond what a partition of its own class count and its own
+class-size distribution earns by chance, at every length and every rung.
+
+**The ceiling, reported as the identity §6.5 says it is** and not as a test. The
+un-quotiented folded window code's `ω²` is 0.005171 at `L = 7` (347 observed
+codes), 0.006837 at `L = 9` (2 810), **0.008842 at `L = 11` (11 909)** and
+0.010542 at `L = 13` (24 837). So at `L = 11` the quotient **retains 62 % of the
+ceiling's `ω²` while collapsing 11 909 observed codes to 231** — and the gap
+tracks the class-count ratio, which is exactly why it is a ceiling and not a
+criterion: it cannot fall below the tuple's and its size says nothing about what
+was discarded.
+
+**AND THE ONE PLACE THE NUMBERS FALL RATHER THAN RISE IS `L = 13`**: every rung's
+`ω²` is LOWER at 13 than at 11 (T4 0.004668 against 0.005504, T2 0.002646 against
+0.003119) on one extra class and one extra code. `L = 13` costs 18 % more window
+traffic per stone and buys nothing this corpus can see.
+
+### 7.5 What §7 does NOT report
+
+No selection, no recommended rung, no recommended length, and no strength claim.
+`ω²` gates nothing (D-614). The criterion in §6.5 constrains what the matrix may
+CONCLUDE and nothing else.
 
 ---
 
