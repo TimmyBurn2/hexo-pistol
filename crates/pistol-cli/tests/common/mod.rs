@@ -198,7 +198,7 @@ pub fn has_line(answers: &[String], word: &str) -> bool {
 /// cannot build its own tree has nothing to say about the gate.
 pub fn seed_tool(root: &Path, script: &str) {
     assert!(
-        script.starts_with("tools/") && script.ends_with(".sh"),
+        is_tool_script(script),
         "seed_tool copies `tools/` scripts; got `{script}`"
     );
     let mut pending = vec![script.to_owned()];
@@ -215,21 +215,67 @@ pub fn seed_tool(root: &Path, script: &str) {
             panic!("cannot seed {} into the scratch tree: {e}", from.display())
         });
         copy_mode(&from, &to);
-        for sibling in tools_referenced_by(&from) {
+        for sibling in tools_referenced_by(&next) {
             pending.push(sibling);
         }
     }
 }
 
-/// Every `tools/` script named anywhere in `file`'s text that the repository
-/// actually holds. Bare basenames count: a script reaches its sibling as
-/// `$(dirname "${BASH_SOURCE[0]}")/require_tool.sh`, where the `tools/` prefix
-/// never appears.
-fn tools_referenced_by(file: &Path) -> Vec<String> {
-    let text = match std::fs::read_to_string(file) {
-        Ok(text) => text,
-        Err(_) => return Vec::new(),
-    };
+/// A path this seeder will copy: under `tools/`, and a SCRIPT.
+///
+/// `.md` is deliberately not a script. MEASURED at `235b6db`: following `.md`
+/// too makes every closure the whole directory — 42 files from any starting
+/// point, against 1 for `require_tool.sh` — because a prose document names
+/// scripts it does not depend on, and `tools/SHELL_CHECKLIST.md` names a dozen.
+/// A closure that sweeps is what the control test exists to forbid.
+fn is_tool_script(path: &str) -> bool {
+    path.starts_with("tools/") && (path.ends_with(".sh") || path.ends_with(".py"))
+}
+
+/// `a/b/../c` as `a/c`, with `.` and empty segments dropped.
+///
+/// `None` when the path climbs above its own root, which is the containment
+/// guard: `next` is joined onto the caller's scratch directory, and it is
+/// lifted out of a FILE'S TEXT, so an unguarded `..` writes outside the tree
+/// the harness asked for (tools/SHELL_CHECKLIST.md item 11).
+pub fn lexically_normal(path: &str) -> Option<String> {
+    let mut parts: Vec<&str> = Vec::new();
+    for part in path.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop()?;
+            }
+            other => parts.push(other),
+        }
+    }
+    Some(parts.join("/"))
+}
+
+/// Every `tools/` script named anywhere in `rel`'s text that the repository
+/// actually holds, as normalized `tools/…` paths.
+///
+/// THREE SPELLINGS ARE TRIED, IN ORDER, and the first that names a file wins:
+/// the token as written, the token relative to the READING SCRIPT'S OWN
+/// DIRECTORY, and the token under `tools/`. The middle one is what a script in
+/// a `tools/` subdirectory needs — it must reach a flat sibling as
+/// `.../sealbot/../require_tool.sh`, where neither of the other two spellings
+/// resolves — and the normalization is what turns that into `tools/require_tool.sh`.
+///
+/// # Panics
+///
+/// If `rel` cannot be read. A closure silently truncated by an unreadable file
+/// is a tree that looks complete and refuses later, in another suite, for a
+/// sibling nobody removed (CLAUDE.md hard rule 3).
+fn tools_referenced_by(rel: &str) -> Vec<String> {
+    let path = repo(rel);
+    let text = std::fs::read_to_string(&path).unwrap_or_else(|e| {
+        panic!(
+            "cannot read {} while computing the tools closure: {e}",
+            path.display()
+        )
+    });
+    let dir = rel.rsplit_once('/').map_or("", |(dir, _)| dir);
     let mut found = Vec::new();
     let mut word = String::new();
     for ch in text.chars().chain(std::iter::once(' ')) {
@@ -237,10 +283,18 @@ fn tools_referenced_by(file: &Path) -> Vec<String> {
             word.push(ch);
             continue;
         }
-        if word.ends_with(".sh") {
-            for candidate in [word.clone(), format!("tools/{word}")] {
-                let candidate = candidate.trim_start_matches("./").to_owned();
-                if candidate.starts_with("tools/") && repo(&candidate).is_file() {
+        if word.ends_with(".sh") || word.ends_with(".py") {
+            for spelling in [
+                word.clone(),
+                format!("{dir}/{word}"),
+                format!("tools/{word}"),
+            ] {
+                let Some(candidate) = lexically_normal(&spelling) else {
+                    continue;
+                };
+                // The worktree file, deliberately, not the tracked blob: a
+                // harness seeds what a developer is about to run.
+                if is_tool_script(&candidate) && repo(&candidate).is_file() {
                     found.push(candidate);
                     break;
                 }
@@ -251,10 +305,19 @@ fn tools_referenced_by(file: &Path) -> Vec<String> {
     found
 }
 
+/// Give the copy the source's mode.
+///
+/// LOUD, because the execute bit is load-bearing and its loss is not:
+/// `tools/determinism.sh` refuses with a `fail` when its resolver is not
+/// executable and `tools/decision_key_check.sh` VOIDS on the same condition, so
+/// a silently dropped mode turns one gate red and another void with nothing
+/// pointing back here (CLAUDE.md hard rule 3).
 fn copy_mode(from: &Path, to: &Path) {
     use std::os::unix::fs::PermissionsExt;
-    if let Ok(meta) = std::fs::metadata(from) {
-        let mode = meta.permissions().mode();
-        let _ = std::fs::set_permissions(to, std::fs::Permissions::from_mode(mode));
-    }
+    let mode = std::fs::metadata(from)
+        .unwrap_or_else(|e| panic!("cannot read the mode of {}: {e}", from.display()))
+        .permissions()
+        .mode();
+    std::fs::set_permissions(to, std::fs::Permissions::from_mode(mode))
+        .unwrap_or_else(|e| panic!("cannot set the mode of {}: {e}", to.display()));
 }

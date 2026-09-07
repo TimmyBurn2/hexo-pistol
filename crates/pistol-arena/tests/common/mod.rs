@@ -286,7 +286,7 @@ pub fn run(scratch: &Scratch, spec: &ConfigSpec<'_>, tag: &str) -> Ran {
 /// If `script` is not a `tools/` script, or a copy fails.
 pub fn seed_tool(root: &Path, script: &str) {
     assert!(
-        script.starts_with("tools/") && script.ends_with(".sh"),
+        is_tool_script(script),
         "seed_tool copies `tools/` scripts; got `{script}`"
     );
     let mut pending = vec![script.to_owned()];
@@ -304,28 +304,85 @@ pub fn seed_tool(root: &Path, script: &str) {
         });
         {
             use std::os::unix::fs::PermissionsExt;
-            if let Ok(meta) = std::fs::metadata(&from) {
-                let mode = meta.permissions().mode();
-                let _ = std::fs::set_permissions(&to, std::fs::Permissions::from_mode(mode));
-            }
+            let mode = std::fs::metadata(&from)
+                .unwrap_or_else(|e| panic!("cannot read the mode of {}: {e}", from.display()))
+                .permissions()
+                .mode();
+            std::fs::set_permissions(&to, std::fs::Permissions::from_mode(mode))
+                .unwrap_or_else(|e| panic!("cannot set the mode of {}: {e}", to.display()));
         }
-        let text = std::fs::read_to_string(&from).unwrap_or_default();
-        let mut word = String::new();
-        for ch in text.chars().chain(std::iter::once(' ')) {
-            if ch.is_alphanumeric() || matches!(ch, '_' | '-' | '.' | '/') {
-                word.push(ch);
-                continue;
-            }
-            if word.ends_with(".sh") {
-                for candidate in [word.clone(), format!("tools/{word}")] {
-                    let candidate = candidate.trim_start_matches("./").to_owned();
-                    if candidate.starts_with("tools/") && repo().join(&candidate).is_file() {
-                        pending.push(candidate);
-                        break;
-                    }
-                }
-            }
-            word.clear();
+        for sibling in tools_referenced_by(&next) {
+            pending.push(sibling);
         }
     }
+}
+
+/// A path this seeder will copy: under `tools/`, and a SCRIPT.
+///
+/// `.md` is deliberately not a script — see `pistol-cli`'s twin for the
+/// measurement that settles it.
+fn is_tool_script(path: &str) -> bool {
+    path.starts_with("tools/") && (path.ends_with(".sh") || path.ends_with(".py"))
+}
+
+/// `a/b/../c` as `a/c`; `None` when the path climbs above its own root, which
+/// is the containment guard on a value lifted out of a file's text.
+pub fn lexically_normal(path: &str) -> Option<String> {
+    let mut parts: Vec<&str> = Vec::new();
+    for part in path.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop()?;
+            }
+            other => parts.push(other),
+        }
+    }
+    Some(parts.join("/"))
+}
+
+/// Every `tools/` script `rel`'s text names that the repository holds.
+///
+/// The twin of `pistol-cli`'s, deliberately: two test crates cannot share a
+/// helper without a crate to put it in, and
+/// `crates/pistol-arena/tests/tool_seeding_tests.rs` pins THIS copy's closure
+/// so the two cannot drift unobserved.
+///
+/// # Panics
+///
+/// If `rel` cannot be read (CLAUDE.md hard rule 3).
+fn tools_referenced_by(rel: &str) -> Vec<String> {
+    let path = repo().join(rel);
+    let text = std::fs::read_to_string(&path).unwrap_or_else(|e| {
+        panic!(
+            "cannot read {} while computing the tools closure: {e}",
+            path.display()
+        )
+    });
+    let dir = rel.rsplit_once('/').map_or("", |(dir, _)| dir);
+    let mut found = Vec::new();
+    let mut word = String::new();
+    for ch in text.chars().chain(std::iter::once(' ')) {
+        if ch.is_alphanumeric() || matches!(ch, '_' | '-' | '.' | '/') {
+            word.push(ch);
+            continue;
+        }
+        if word.ends_with(".sh") || word.ends_with(".py") {
+            for spelling in [
+                word.clone(),
+                format!("{dir}/{word}"),
+                format!("tools/{word}"),
+            ] {
+                let Some(candidate) = lexically_normal(&spelling) else {
+                    continue;
+                };
+                if is_tool_script(&candidate) && repo().join(&candidate).is_file() {
+                    found.push(candidate);
+                    break;
+                }
+            }
+        }
+        word.clear();
+    }
+    found
 }

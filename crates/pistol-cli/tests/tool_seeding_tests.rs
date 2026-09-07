@@ -1,6 +1,6 @@
 mod common;
 
-use common::{repo, repo_root, scratch};
+use common::{repo_root, scratch};
 
 /// The seeder brings a script's SIBLINGS, and the closure is transitive.
 ///
@@ -79,9 +79,134 @@ fn a_seeded_script_is_still_executable() {
 /// re-opening the class.
 #[test]
 fn no_test_copies_a_tools_script_outside_the_seeder() {
-    let tests = repo_root().join("crates");
     let mut offenders = Vec::new();
-    let mut stack = vec![tests];
+    let mut stack = vec![repo_root().join("crates")];
+    while let Some(dir) = stack.pop() {
+        for entry in std::fs::read_dir(&dir).expect("a readable directory") {
+            let path = entry.expect("a directory entry").path();
+            if path.is_dir() {
+                stack.push(path);
+                continue;
+            }
+            if path.extension().is_none_or(|e| e != "rs") {
+                continue;
+            }
+            if !path.components().any(|c| c.as_os_str() == "tests") {
+                continue;
+            }
+            // The seeder itself, and this test, name the paths legitimately.
+            if path.ends_with("common/mod.rs") || path.ends_with("tool_seeding_tests.rs") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&path).expect("a readable test");
+            for (line, _) in hand_written_copies(&text) {
+                offenders.push(format!(
+                    "{}:{line}",
+                    path.strip_prefix(repo_root()).unwrap_or(&path).display()
+                ));
+            }
+        }
+    }
+    offenders.sort();
+    offenders.dedup();
+    assert!(
+        offenders.is_empty(),
+        "these copy a `tools/` script by hand instead of through \
+         `common::seed_tool`, which is what re-opens the missing-sibling class:\n  {}",
+        offenders.join("\n  ")
+    );
+}
+
+/// The line of every `fs::copy` whose SOURCE argument names a `tools/` path.
+///
+/// **THE SOURCE ARGUMENT, PARSED — not a window.** A window-based version of
+/// this flagged two already-converted harnesses, because a `seed_tool` call and
+/// an unrelated config copy sat within six lines of each other: the same
+/// wrong-population defect the guard exists to prevent, committed inside the
+/// guard.
+///
+/// **AND THE OFFSET IS A CHARACTER OFFSET, WHICH IT WAS NOT.** `str::find`
+/// answers in BYTES and this walks `char`s; every test file in this repository
+/// holds non-ASCII prose, so the two disagree by the skew accumulated before
+/// the site — 26 characters at `decision_key_check_tests.rs`'s own copy — and
+/// the scan read out of the middle of a later token. It extracted `ion_key_check.sh")`
+/// where the source argument is `repo("tools/decision_key_check.sh")`, which
+/// does not contain `tools/`, so the guard reported no offender while one was
+/// live in the tree it had just walked.
+fn hand_written_copies(text: &str) -> Vec<(usize, String)> {
+    let mut found = Vec::new();
+    let mut at = 0usize;
+    while let Some(offset) = text[at..].find("fs::copy(") {
+        let open = at + offset + "fs::copy(".len();
+        let mut depth = 1usize;
+        let mut source = String::new();
+        for ch in text[open..].chars() {
+            match ch {
+                '(' => depth += 1,
+                ')' => depth -= 1,
+                ',' if depth == 1 => break,
+                _ => {}
+            }
+            if depth == 0 {
+                break;
+            }
+            source.push(ch);
+        }
+        if source.contains("tools/") {
+            found.push((text[..open].lines().count(), source.trim().to_owned()));
+        }
+        at = open;
+    }
+    found
+}
+
+/// THE CONTROL for the test above, and it DRIVES THE SCAN.
+///
+/// The control this replaces asserted that a string literal it had just written
+/// contained substrings of itself. It never called the parser, it would have
+/// passed with the parser deleted, and it was green throughout the whole period
+/// the parser was extracting `ion_key_check.sh")` — which is the definition of
+/// a control that controls nothing (docs/decisions.md D-690, D-691).
+#[test]
+fn the_seeder_guard_sees_a_hand_written_copy_and_leaves_a_seeded_one_alone() {
+    // The non-ASCII prose is the point: it is what made the shipped scan read
+    // from the wrong offset, so a control without it cannot fail that way.
+    let offender = "\
+/// A comment with an em dash — and a quotation mark ‘like this’.
+fn seeds() {
+    std::fs::copy(repo(\"tools/determinism.sh\"), root.join(\"x\")).unwrap();
+}
+";
+    // THE PARSED ARGUMENT, not just the count. A count-only assertion passes
+    // under an offset error whose skew happens to land back inside the token —
+    // MEASURED: the shipped byte-indexed scan read this very sample from six
+    // characters late, which is exactly `repo("`, and still saw `tools/`.
+    assert_eq!(
+        hand_written_copies(offender),
+        vec![(3usize, "repo(\"tools/determinism.sh\")".to_owned())],
+        "the scan must extract the SOURCE ARGUMENT, at the right offset, \
+         through non-ASCII prose"
+    );
+
+    let innocent = "\
+/// A comment with an em dash — and a quotation mark ‘like this’.
+fn seeds() {
+    common::seed_tool(&root, \"tools/determinism.sh\");
+    std::fs::copy(scratch.path(\"a.toml\"), root.join(\"b.toml\")).unwrap();
+}
+";
+    assert!(
+        hand_written_copies(innocent).is_empty(),
+        "and it must leave a seeded harness alone: a guard that flags everything \
+         is a guard nobody can keep green"
+    );
+}
+
+/// The guard's exemptions do not swallow the crates it is supposed to walk.
+#[test]
+fn the_guard_walks_both_crates_that_seed_tools_scripts() {
+    let mut crates = std::collections::BTreeSet::new();
+    let mut stack = vec![repo_root().join("crates")];
     while let Some(dir) = stack.pop() {
         for entry in std::fs::read_dir(&dir).expect("a readable directory") {
             let path = entry.expect("a directory entry").path();
@@ -96,66 +221,49 @@ fn no_test_copies_a_tools_script_outside_the_seeder() {
                 continue;
             }
             let text = std::fs::read_to_string(&path).expect("a readable test");
-            // The seeder itself, and this test, name the paths legitimately.
-            if path.ends_with("common/mod.rs") || path.ends_with("tool_seeding_tests.rs") {
-                continue;
-            }
-            // THE SOURCE ARGUMENT, PARSED — not a window. A window-based
-            // version of this guard flagged two ALREADY-CONVERTED harnesses,
-            // because a `seed_tool` call and an unrelated config copy sat
-            // within six lines of each other: the same wrong-population defect
-            // the guard exists to prevent, committed inside the guard.
-            let bytes: Vec<char> = text.chars().collect();
-            let mut at = 0usize;
-            while let Some(found) = text[at..].find("fs::copy(") {
-                let open = at + found + "fs::copy(".len();
-                let mut depth = 1usize;
-                let mut i = open;
-                let mut source = String::new();
-                while i < bytes.len() && depth > 0 {
-                    match bytes[i] {
-                        '(' => depth += 1,
-                        ')' => depth -= 1,
-                        ',' if depth == 1 => break,
-                        _ => {}
-                    }
-                    if depth > 0 {
-                        source.push(bytes[i]);
-                    }
-                    i += 1;
-                }
-                if source.contains("tools/") {
-                    let line = text[..open].lines().count();
-                    offenders.push(format!(
-                        "{}:{line}",
-                        path.strip_prefix(repo_root()).unwrap_or(&path).display()
-                    ));
-                }
-                at = open;
+            if text.contains("seed_tool(") {
+                let rel = path.strip_prefix(repo_root()).unwrap_or(&path);
+                let name = rel.components().nth(1).expect("crates/<name>/…");
+                crates.insert(name.as_os_str().to_string_lossy().into_owned());
             }
         }
     }
-    offenders.sort();
-    offenders.dedup();
     assert!(
-        offenders.is_empty(),
-        "these copy a `tools/` script by hand instead of through \
-         `common::seed_tool`, which is what re-opens the missing-sibling class:\n  {}",
-        offenders.join("\n  ")
+        crates.contains("pistol-cli") && crates.contains("pistol-arena"),
+        "the seeder is used in both crates and the guard must reach both; saw {crates:?}"
     );
 }
 
-/// THE CONTROL for the test above: it can actually see an offender.
+/// THE CONTAINMENT GUARD: a candidate that climbs above `tools/` is refused.
+///
+/// `next` is joined onto the caller's scratch root and it is lifted out of a
+/// FILE'S TEXT, so an unguarded `..` writes outside the tree the harness asked
+/// for — tools/SHELL_CHECKLIST.md item 11, whose whole point is that a `cd` (or
+/// here a `join`) constrains relative paths and nothing else.
 #[test]
-fn the_seeder_guard_would_notice_a_hand_written_copy() {
-    let sample = "std::fs::copy(repo(\"tools/determinism.sh\"), root.join(\"x\")).unwrap();";
-    assert!(
-        sample.contains("fs::copy") && sample.contains("\"tools/"),
-        "the shape the guard keys on is the shape a hand-written copy has; if \
-         this ever stops being true the guard above is green for the wrong reason"
+fn a_reference_that_climbs_above_the_root_is_refused_rather_than_joined() {
+    for escaping in ["tools/../../victim.sh", "../victim.sh", "tools/../.."] {
+        assert_eq!(
+            common::lexically_normal(escaping),
+            None,
+            "`{escaping}` leaves the root and must not become a destination"
+        );
+    }
+}
+
+/// THE CONTROL for it: an ordinary `..` INSIDE the tree still resolves.
+///
+/// A guard that refused every `..` would pass the test above and break the
+/// subdirectory case the seeder needs (`tools/sealbot/../require_tool.sh`).
+#[test]
+fn a_reference_that_stays_inside_the_root_still_resolves() {
+    assert_eq!(
+        common::lexically_normal("tools/sealbot/../require_tool.sh").as_deref(),
+        Some("tools/require_tool.sh")
     );
-    assert!(
-        repo("tools/require_tool.sh").is_file(),
-        "and the repository still holds the sibling the class is about"
+    assert_eq!(
+        common::lexically_normal("tools//require_tool.sh").as_deref(),
+        Some("tools/require_tool.sh"),
+        "and a doubled separator is one path, not two closure entries"
     );
 }

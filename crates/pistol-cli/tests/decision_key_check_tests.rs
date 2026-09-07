@@ -3,7 +3,7 @@ mod common;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use common::{repo, scratch};
+use common::scratch;
 
 /// The two keys the shipped gate exempts, restated rather than imported: this
 /// file is a CHECK on the script, and agreeing with it by construction proves
@@ -285,14 +285,13 @@ fn a_third_text_under_a_grandfathered_key_is_refused_rather_than_absorbed() {
 #[test]
 fn a_directory_that_is_not_a_repository_is_a_run_void_and_not_a_refusal() {
     let root = scratch("keys-not-a-repo");
-    std::fs::create_dir_all(root.join("tools")).expect("a tools directory");
     std::fs::create_dir_all(root.join("docs")).expect("a docs directory");
     std::fs::write(root.join("docs/decisions.md"), "D-1: a choice\n").expect("a log to not read");
-    std::fs::copy(
-        repo("tools/decision_key_check.sh"),
-        root.join("tools/decision_key_check.sh"),
-    )
-    .expect("the shipped script copies");
+    // THROUGH THE SEEDER, because a hand-written copy lands the gate without
+    // its resolver and the gate then voids on the RESOLVER, seven lines before
+    // the condition this test is named for — a void spelled exactly like the
+    // one asserted below (docs/decisions.md D-685, D-691).
+    common::seed_tool(&root, "tools/decision_key_check.sh");
 
     let ran = Command::new("bash")
         .arg(root.join("tools/decision_key_check.sh"))
@@ -300,8 +299,9 @@ fn a_directory_that_is_not_a_repository_is_a_run_void_and_not_a_refusal() {
         .expect("bash runs the shipped script");
     assert_code(&ran, 2, "no git repository means no answer was taken");
     assert!(
-        said(&ran).contains("RUN VOID"),
-        "and the log says so in the gate's own vocabulary:\n{}",
+        said(&ran).contains("not a git repository"),
+        "and it voids for THE REASON this test is named for, not for a missing \
+         sibling that never let it reach the git check:\n{}",
         said(&ran)
     );
 }
