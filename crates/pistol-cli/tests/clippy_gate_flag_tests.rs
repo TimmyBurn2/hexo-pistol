@@ -33,13 +33,23 @@ fn gate_four_flags() -> Vec<String> {
 }
 
 /// A standalone crate, outside this workspace, holding `body`.
+///
+/// The package is named after the case, and `clippy` below pins the target
+/// directory INSIDE it. Both matter and neither is tidiness: three crates all
+/// called `subject` at one version are one cache entry to cargo, so under an
+/// exported `CARGO_TARGET_DIR` — which is how mutation and verification work
+/// runs — the first case's artifact answered for the other two and they passed
+/// on code that was never compiled (REPRODUCED in this package's own mutation
+/// baseline, which is what a purged baseline is for).
 fn crate_with(name: &str, body: &str) -> std::path::PathBuf {
     let root = scratch(name).join("subject");
     std::fs::create_dir_all(root.join("src")).expect("the scratch crate tree");
     std::fs::write(
         root.join("Cargo.toml"),
         // `[workspace]` so cargo does not walk upward looking for one.
-        "[package]\nname = \"subject\"\nversion = \"0.0.1\"\nedition = \"2021\"\n\n[workspace]\n",
+        format!(
+            "[package]\nname = \"{name}\"\nversion = \"0.0.1\"\nedition = \"2021\"\n\n[workspace]\n"
+        ),
     )
     .expect("the manifest writes");
     std::fs::write(root.join("src/lib.rs"), body).expect("the source writes");
@@ -53,6 +63,8 @@ fn clippy(root: &Path, flags: &[String]) -> std::process::Output {
         .arg("--")
         .args(flags)
         .current_dir(root)
+        // Never the ambient one: see `crate_with`.
+        .env("CARGO_TARGET_DIR", root.join("target"))
         .output()
         .expect("cargo clippy runs")
 }
