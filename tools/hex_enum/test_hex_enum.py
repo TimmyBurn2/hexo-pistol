@@ -253,6 +253,29 @@ def the_count_only_baseline_is_blind_to_everything_the_tuple_carries():
     check("one of them completes a six with a single stone and the other does not",
           a[0][0] == 1 and b[0][0] > 1, f"{a} {b}")
 
+    # AND IT MUST SEPARATE, NOT ONLY MERGE. A referent stuck at a constant would
+    # pass every merging check ever written and would make the criterion it is
+    # stated against report a wrong PASS; the suite could not see that until
+    # this half was added.
+    differing = ("xxxxx." + ".....", "xxxx.." + ".....")
+    keys = []
+    for text in differing:
+        pat = pattern(text)
+        code = 0
+        for power, index in zip(unit.powers, unit.slots):
+            code += pat[index] * power
+        keys.append(unit.counts[code])
+    check("two patterns with different stone counts get different referent keys",
+          keys[0] != keys[1], f"both {keys[0]}")
+    distinct = len(set(unit.counts))
+    check("the referent is not a constant and not the whole code space",
+          1 < distinct < unit.size, f"{distinct} distinct keys over {unit.size} codes")
+    check("the referent's key count matches the (own, opp) pairs a pattern admits",
+          distinct == sum(1 for own in range(unit.length)
+                          for opp in range(unit.length)
+                          if own + opp <= unit.length - 1),
+          f"{distinct} keys")
+
 
 def main():
     for test in (a_five_run_beside_the_cell_costs_one_stone,

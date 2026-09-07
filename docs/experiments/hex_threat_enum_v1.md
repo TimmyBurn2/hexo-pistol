@@ -1,24 +1,34 @@
-# The hex threat enum — derivation memo, revision 3.
+# The hex threat enum — derivation memo, revision 4.
 
-> **ROUND 3 OF FOUR, UNDER THE OPERATOR GRANT D-709, AND THE STOP IS
-> SUPERSEDED.** Revision 1 FAILED its REVIEW-design
-> (`hex_threat_enum_v1_REVIEW.md`: 3 BLOCKING, 7 MAJOR, 8 MINOR); revision 2
-> FAILED its scoped confirmation (`hex_threat_enum_v1_CONFIRM.md`: 1 new
-> BLOCKING, 5 new MAJOR, B-3 still landing), and at the dispatch's one-fix-round
-> cap that was STOP E (`wp22_phase2a_STOP_E.md`). The operator then granted *"up
-> to 4 rounds"*, which D-709 reads as four per review gate, so **rounds 3 and 4
-> are available and this is round 3. It is REMEDIES-ONLY (D-709), and it adds no
-> scope.**
+> **ROUND 4 OF FOUR UNDER D-709 — THE LAST ROUND THIS GATE HAS.** Three rounds
+> have failed it: the REVIEW-design of revision 1 (3 BLOCKING / 7 MAJOR /
+> 8 MINOR), the confirmation of revision 2 (1 BLOCKING / 5 MAJOR), and round 3's
+> review of revision 3 (**26 of 28 prior findings CLOSED**, 4 new MAJOR).
+> Remedies only (D-709). A fourth failure is STOP and split with no fifth round.
 >
-> **THE ONE REMEDY THAT IS NOT A CORRECTION OF WORDS**: §6.5's criterion was
-> passed at 1.77x by a value-free quotient of stone counts, so it is REPLACED
-> rather than reworded. The stone-count quotient is now the registered referent —
-> the strongest partition that knows nothing the calculus names — the random
-> permutation is demoted to a floor, and the raw code is labelled the identity it
-> always was. **The criterion can now fail, and §7.4 reports whether it does.**
+> **WHAT ROUND 3 FOUND, AND THE FIRST OF THE FOUR IS THE ONE THAT MATTERS.**
+> The criterion revision 3 registered is CLASS-COUNT MONOTONE under
+> position-clustered labels, so **its FAIL side is sound and its PASS side is
+> not**. §7.4 now reports the twelve fails as evidence and withdraws the four
+> passes. Round 3 also measured that revision 3's headline — *"it fires on every
+> affordable rung"* — is false: **T4 is affordable at `L = 7` (1 720
+> observations per nominal parameter) and at `L = 9` (40.4), and MET at both**.
+> The unaffordability is true at the covering length and nowhere else. Two
+> reviewers, on two documents, found that missing qualifier independently.
 >
-> `wp22_phase2a_STOP_E.md` is not deleted: it is the record of what two rounds
-> found, and its finding list is this revision's input.
+> **AND ROUND 4 ADDS ONE MEASUREMENT, DISCLOSED AS POST-HOC.** A NESTED test —
+> does `count × class` explain more than `count` alone, beyond what the same
+> refinement by a value-free partition earns? — is immune to the monotonicity,
+> and it **disagrees**: the enum ADDS at 13 of 16 cells. It was built after the
+> registered criterion had already fired, so §6.5 registers it as nothing and
+> §7.4b reports it as a finding beside the verdict, never in place of it.
+>
+> **THE ROW IS UNDECIDED AND §7.4c SAYS WHY**, which is a more useful answer than
+> either revision reached: the one cell that is comfortably affordable AND passes
+> the registered criterion is `L = 7` T4, and the nested test says the enum adds
+> nothing there (0.93, below its own null); where the nested test says the enum
+> adds most, the parameter count is 161 700 or 7 647 059. **No cell is both
+> affordable and supported by both measurements.**
 
 **Governing revision**: `c5123c1` (`dev`), the revision every file, line and count
 quoted below was read at (D-692). **REVISION 2 IS THE ONE FIX ROUND** granted
@@ -526,31 +536,44 @@ function of the one above it, and none of them a hand-written class list:
 | **T2** | `(min_own, min_opp)` | none beyond dropping `open`; the alive-or-dead boolean revision 1 carried here refines nothing (§5.1). |
 | **T1** | `(clip(min_own), clip(min_opp))`, `clip(x) = x` for `x ≤ 4`, `5` for `5 ≤ x < ∞`, `∞` for dead | **A CHOICE inside a constraint.** `LAW-SUPPORT` (`:69`) reads `own ≥ 6−2k`, so `k = 1 ⟺ cost ≤ 2` and `k = 2 ⟺ cost ≤ 4`; the law CONSTRAINS the clip to refine `{≤2 \| 3–4 \| ≥5 \| dead}` and does not determine it. The shipped clip keeps four cost values apart because the finer resolution is cheap at this rung, and that is a choice this memo makes, not one the law makes. |
 
-**THE CLIP LADDER, EXHAUSTIVELY, BECAUSE TWO REVISIONS GOT ITS LICENCE WRONG.**
-Revision 1 clipped at `min(cost, 4)`, which merged `cost = 4` — a `LAW-SUPPORT`
-`k = 2` candidate — with 5 and 6, and folded `∞` in, so it could not state
-either boundary and landed on `k = 16`. Revision 2 fixed the clip and claimed
-the boundaries were *"expressible only if 1, 2, 3 and 4 stay apart"*, **and that
-"only if" is false**. MEASURED at `L = 11`, every clip that expresses both
-boundaries:
+**THE CLIP LADDER, AND THREE REVISIONS GOT ITS LICENCE WRONG IN THREE DIFFERENT
+WAYS.** Revision 1 clipped at `min(cost, 4)`, merging `cost = 4` — a
+`LAW-SUPPORT` `k = 2` candidate — with 5 and 6, and folding `∞` in, so it stated
+neither boundary. Revision 2 fixed the clip and claimed the boundaries were
+*"expressible only if 1, 2, 3 and 4 stay apart"*, which is false. **Revision 3
+then said "every clip that expresses both boundaries" and listed FOUR. There are
+TWENTY**, and its "coarsest" was not the coarsest.
 
-| clip | `k` | `C(k+2,3)` |
+**MEASURED, EXHAUSTIVELY**: over all partitions of the cost range
+`{1, 2, 3, 4, 5, 6, ∞}`, the ones in which BOTH `{cost ≤ 2}` and `{cost ≤ 4}`
+are unions of blocks number **20**, and they take six distinct `k` at `L = 11`:
+
+| clip, blocks separated by `\|` (`9` = `∞`, dead) | `k` | `C(k+2,3)` |
 |---|---|---|
-| **`{≤2 \| 3–4 \| ≥5 \| dead}` — the COARSEST faithful one** | **16** | **816** |
-| `{1 \| 2 \| 3–4 \| ≥5 \| dead}` | 25 | 2 925 |
-| `{≤2 \| 3 \| 4 \| ≥5 \| dead}` | 25 | 2 925 |
-| `{1 \| 2 \| 3 \| 4 \| ≥5 \| dead}` — shipped | 36 | 8 436 |
+| **`12 \| 34 \| 5,6,dead` — the COARSEST faithful one** | **9** | **165** |
+| five clips including `12 \| 34 \| 5,6 \| dead` and `1 \| 2 \| 34 \| 5,6,dead` | 16 | 816 |
+| `12 \| 34 \| 5 \| 6 \| dead` | 23 | 2 300 |
+| seven clips | 25 | 2 925 |
+| two clips | 34 | 7 140 |
+| three clips, including the shipped `1 \| 2 \| 3 \| 4 \| 5,6 \| dead` | **36** | **8 436** |
+| the unclipped `min` | 47 | 18 424 |
 
-**AND THE COARSEST FAITHFUL CLIP GIVES 816, WHICH IS THE FIGURE §1.1 CALLS AN
-IMPORT — SO THE COINCIDENCE IS NAMED HERE RATHER THAN AVOIDED.** It arrives by a
-route that has nothing to do with Rapfi: `LAW-SUPPORT`'s two readings plus
-`DEF-WINDOW`'s dead give four cost buckets a side, `4² = 16` joint classes, and
-`C(18,3) = 816`. That it equals `C(16+2,3)` for Rapfi's hand-designed 16-member
-enum is a fact about the arithmetic of small multisets and not evidence that
-either derivation informed the other. **D-706 forbids importing a number; it
-does not forbid deriving one that coincides with an imported one**, and the
-defence is that the derivation is printed above and can be checked without
-reading a word about a 4-axis game.
+**THE SHIPPED CLIP IS ONE OF TWENTY AND IT IS THE SECOND-FINEST, WHICH IS A
+CHOICE AND IS NOW STATED AS ONE.** `LAW-SUPPORT` constrains the partition to
+refine nothing and to let two cuts be read; it does not pick among twenty. The
+shipped one keeps every finite cost apart and merges only `5` with `6`, on the
+ground that the finer resolution is cheap at this rung — that is this memo's
+choice and not the law's.
+
+**AND `C(18,3) = 816` ARRIVES FROM FIVE OF THE TWENTY, WHICH IS WORTH NAMING
+BECAUSE IT IS THE FIGURE §1.1 CALLS AN IMPORT.** It is not the coarsest faithful
+answer — that is `k = 9` and 165 — and it is not privileged: it is what any
+four-bucket-a-side faithful clip gives, and `4² = 16`. That it equals
+`C(16+2,3)` for Rapfi's hand-designed 16-member enum is arithmetic about small
+multisets. **D-706 forbids importing a number, not deriving one that coincides
+with an imported one**; the defence is the enumeration above, checkable without
+reading a word about a 4-axis game, and revision 3's claim that 816 was the
+coarsest faithful answer is withdrawn.
 
 **WHAT EACH RUNG COSTS IN `t`-CONSISTENCY, MEASURED**, since the clips are
 choices and a choice should be priced. Over the 57 996 patterns whose placement
@@ -648,6 +671,34 @@ in knowledge of it are different objects, and a reader is entitled to know which
 this is. What is NOT known at registration is whether the direction survives the
 full 45 271-row population, the covering length, or the coarse rungs — and that
 is what §7.4 reports.
+
+**AND A SECOND MEASUREMENT, ADDED IN ROUND 4, WHICH IS NOT A SECOND CRITERION
+AND MUST NOT BE READ AS ONE.** Round 3's reviewer showed that the criterion above
+is CLASS-COUNT MONOTONE under position-clustered labels: `ω²`'s
+degrees-of-freedom correction removes about 1 % of the entitlement the matched
+null actually measures, because the effective `n` is nearer the 3 487 games than
+the millions of observations. **Its FAIL side survives that** — a partition that
+scores BELOW a COARSER value-free one has lost without any entitlement argument —
+**and its PASS side does not**, so §7.4 reports the passes and does not lean on
+them.
+
+The measurement that is immune to it is NESTED. `count` refines into
+`count × class`, so the join can only explain more, and the question becomes
+whether it explains more than **the same refinement by a value-free partition of
+the enum's own shape** earns:
+
+> does `ω²(count × class) − ω²(count)` exceed
+> `ω²(count × permuted class) − ω²(count)`, at the same rung and length?
+
+**IT WAS BUILT AFTER THE UNNESTED CRITERION HAD ALREADY FIRED, AND THAT IS
+DISCLOSED RATHER THAN BURIED.** A statistic introduced once a registered one has
+returned an unwelcome answer is exactly the post-hoc move this project's process
+exists to forbid. **So it is NOT registered as a criterion, it does not rescue
+anything, and §7.4 reports it as a finding beside the registered verdict rather
+than in place of it.** What licenses reporting it at all is that it answers a
+question the registered criterion cannot ask — *conditional on stone counts,
+does the enum carry label information?* — and that a matrix pricing this row
+would otherwise have neither answer.
 
 **WHAT THIS CRITERION IS NOT.** It is not a strength gate — D-614 stands, no
 offline number moves a config — and it does not select a rung, a length or a
@@ -819,6 +870,18 @@ Scored cells per position: **111.1** at `L = 7`, **180.6** at `L = 11` and
 | 11 | T3 | 302 621 | 9 408 | 8 174 025 | 869 | 7 | 3 977 | 6 350 | 118 |
 | 11 | **T2** | **18 424** | **1 533** | 8 174 025 | 5 332 | **41** | 322 | 620 | **32** |
 | 11 | T1 | 8 436 | 535 | 8 174 025 | 15 279 | 53 | 118 | 204 | 4 |
+| 9 | T4 | 161 700 | 21 371 | 6 537 654 | 306 | 8 | 8 278 | 13 855 | 1 142 |
+| 9 | T2 | 3 654 | 976 | 6 537 654 | 6 698 | 57 | 196 | 359 | 71 |
+| 13 | T4 | 7 647 059 | 108 075 | 9 979 912 | 92 | 3 | 67 227 | 93 617 | 2 483 |
+| 13 | T2 | 18 424 | 1 534 | 9 979 912 | 6 506 | 41 | 322 | 620 | 24 |
+
+**AND THE AFFORDABILITY OF T4 IS A FUNCTION OF LENGTH, WHICH §7.4 TURNS ON**:
+observations per NOMINAL parameter at T4 are **1 720 at `L = 7`** (2 925
+parameters), **40.4 at `L = 9`** (161 700), **1.07 at `L = 11`** and **1.31 at
+`L = 13`** (7 647 059 each). Buro's safe-fit line is `≥ 20` (**ARCH**), so **T4
+is comfortably affordable at `L = 7`, affordable at `L = 9`, and not affordable
+at the covering length.** An earlier revision wrote the unaffordability without
+that qualifier and a matrix repeated it.
 
 **The growth curves separate the rungs cleanly** at `L = 11`, distinct codes
 every 5 000 positions:
@@ -834,11 +897,11 @@ T1    409   455   470   486   499   511   520    527    535   flat from 15 000 o
 observed codes sit at or below his `≤ 4` line (**ARCH**) and 620 below his
 `≥ 20` line (**ARCH**); at T4 those are 67 227 and 93 617 of 108 074.
 
-### 7.4 THE REGISTERED CRITERION FIRES, AND IT FIRES ON EVERY AFFORDABLE RUNG
+### 7.4 THE REGISTERED CRITERION FIRES, ITS PASS SIDE IS UNSOUND, AND A NESTED TEST DISAGREES
 
-The criterion (§6.5): **the enum's `ω²` must EXCEED the stone-count quotient's,
-at the WINDOW unit, at the rung and length a matrix prices the row at.** No
-margin, no free parameter.
+**The registered criterion** (§6.5): the enum's `ω²` must EXCEED the stone-count
+quotient's, at the WINDOW unit, at the rung and length a matrix prices the row
+at. No margin, no free parameter.
 
 | L | rung | enum classes | enum `ω²` | count-only classes | count-only `ω²` | ratio | criterion |
 |---|---|---|---|---|---|---|---|
@@ -852,58 +915,105 @@ margin, no free parameter.
 | 9 | T1 | 15 | 0.002215 | 38 | 0.004158 | 0.533 | **FAILS** |
 | 11 | **T4** | 231 | 0.005504 | 52 | 0.004894 | **1.125** | MET |
 | 11 | T3 | 61 | 0.003187 | 52 | 0.004894 | 0.651 | **FAILS** |
-| 11 | **T2** | 22 | 0.003119 | 52 | 0.004894 | **0.637** | **FAILS** |
+| 11 | T2 | 22 | 0.003119 | 52 | 0.004894 | 0.637 | **FAILS** |
 | 11 | T1 | 16 | 0.002495 | 52 | 0.004894 | 0.510 | **FAILS** |
 | 13 | T4 | 232 | 0.004668 | 69 | 0.005600 | 0.834 | **FAILS** |
 | 13 | T3 | 62 | 0.002704 | 69 | 0.005600 | 0.483 | **FAILS** |
 | 13 | T2 | 23 | 0.002646 | 69 | 0.005600 | 0.472 | **FAILS** |
 | 13 | T1 | 16 | 0.002115 | 69 | 0.005600 | 0.378 | **FAILS** |
 
-**MET IN 4 OF 16 CELLS. THE ONLY RUNG THAT EVER BEATS STONE COUNTING IS T4, THE
-FULL TUPLE, AND ONLY BY 1.4 % TO 12.5 % — AND T4 IS THE RUNG §7.1 PRICES AT
-1.07 OBSERVATIONS PER NOMINAL PARAMETER.** Every coarsening loses, and it loses
-by a lot: `L = 11` T2, the densest affordable rung, sits at **0.637** of a
-quotient that cannot see a window, an open window, a completion cost, or game
-rule 4.
+**FAILS AT 12 OF 16 CELLS. THE FOUR IT DOES NOT ARE ALL T4.**
 
-**SO THE CRITERION LEAVES `R-A4-CLASS` UNPRICED, AND THAT IS THE CRITERION
-WORKING.** §6.5 registered what failing means before the run — *"threat
-structure adds nothing over counting stones, and `R-A4-CLASS` is UNPRICED at
-that rung — not merely ranked lower"* — and that is what the measurement says at
-every rung a corpus of this size could fit.
+**AND HALF OF THAT TABLE IS EVIDENCE AND HALF IS NOT** (§6.5, round 3's
+finding). **The twelve FAILS stand**: a partition scoring below a COARSER
+value-free one has lost, and no entitlement argument is needed to say so.
+**The four METS do not**: the statistic is class-count monotone under
+position-clustered labels, and T4 has 231 classes against the referent's 52 at
+`L = 11`. §7.1's earlier gloss — *"T4 is the only rung worth having"* — rested on
+those four and is withdrawn.
 
-**THREE THINGS THIS DOES NOT SAY, because the temptation to over-read a
-decisive-looking table is the whole reason §6.5 was rewritten.**
+**AND ONE CLAIM AN EARLIER REVISION MADE IS FALSE ON THIS TABLE'S OWN NEIGHBOUR.**
+It said the criterion fires on every AFFORDABLE rung and that the only rung
+beating stone counts cannot be fitted. §7.3 measures otherwise: T4 costs **1 720
+observations per nominal parameter at `L = 7`** and **40.4 at `L = 9`**, both
+above Buro's `≥ 20` line, and it is MET at both. **The unaffordability is true
+AT THE COVERING LENGTH and nowhere else**, and two independent reviewers found
+the missing qualifier.
 
-1. **It does not say the enum is wrong.** Its arithmetic survived two
-   independent re-derivations. It says the enum's classes do not separate this
-   corpus's labels better than stone counts do, at this statistic and this unit.
-2. **It does not say a threat-class eval cannot work.** `ω²` over
-   position-level labels is a weak instrument: every observation of one position
-   carries that position's single label, the effective `n` is nearer 3 487 games
-   than 8 million cells, and a partition can carry decision-relevant structure
-   that a marginal variance decomposition cannot see. What it does say is that
-   **this corpus, through this instrument, cannot license the row**, and D-483
-   forbids pricing on a number that is not there.
-3. **It does not transfer to the WINDOW-indexed rows.** `R-A5-TOPK`,
-   `R-A2-L11F` and `R-A3-L11F+F7` are not quotients of this tuple and are not
-   measured here.
+### 7.4b THE NESTED MEASUREMENT, and it answers the other way
 
-**AND THE FLOOR AND THE CEILING, reported as §6.5 labels them.** The matched
-random quotient — the FLOOR — is cleared everywhere by 2.0x to 3.6x, which now
-says only that the enum is not noise. The un-quotiented folded window code — the
-CEILING, an identity — is 0.005171 at `L = 7`, 0.006837 at `L = 9`, 0.008842 at
-`L = 11` and 0.010542 at `L = 13`.
+Built in round 4, after the criterion had fired, and reported as a finding rather
+than a verdict (§6.5's disclosure). *Conditional on stone counts, does the enum
+carry label information?* Window unit; increments over `ω²(count-only)`; the
+referent is the same refinement by a permuted class table, worst of three
+replicates.
 
-**One cell is reported because it looks like the opposite and is not.** At the
-CODE unit at `L = 11`, T4's `ω²` is 0.020985 against the count-only quotient's
-0.009248 — 2.27x. **That comparison is between 108 074 observed classes and
-6 856**, and `ω²`'s degrees-of-freedom correction does not make partitions two
-orders of magnitude apart in class count comparable. The criterion binds the
-window unit for exactly this reason, and at the window unit the class counts are
-16-to-23, 78-to-38, 231-to-52 — the same order. The code-unit number is not
-evidence for the row and is printed so that nobody finds it later and thinks it
-was hidden.
+| L | rung | `ω²(count)` | `ω²(count × class)` | increment | worst null increment | ratio | |
+|---|---|---|---|---|---|---|---|
+| 7 | **T4** | 0.003525 | 0.004167 | +0.000642 | +0.000690 | **0.93** | **adds nothing** |
+| 7 | T3 | 0.003525 | 0.004167 | +0.000642 | +0.000690 | 0.93 | adds nothing |
+| 7 | T2 | 0.003525 | 0.004167 | +0.000642 | +0.000637 | 1.01 | adds |
+| 9 | T4 | 0.004158 | 0.006060 | +0.001902 | +0.001223 | **1.56** | adds |
+| 9 | T2 | 0.004158 | 0.005682 | +0.001524 | +0.000867 | **1.76** | adds |
+| 11 | T4 | 0.004894 | 0.007637 | +0.002743 | +0.001904 | **1.44** | adds |
+| 11 | T2 | 0.004894 | 0.006470 | +0.001576 | +0.001247 | 1.26 | adds |
+| 11 | T1 | 0.004894 | 0.006082 | +0.001188 | +0.001208 | 0.98 | adds nothing |
+| 13 | T4 | 0.005600 | 0.008777 | +0.003177 | +0.001904 | **1.67** | adds |
+| 13 | T2 | 0.005600 | 0.007562 | +0.001962 | +0.001157 | **1.70** | adds |
+
+**THE ENUM ADDS AT 13 OF 16 CELLS, AND IT DISAGREES WITH THE REGISTERED
+CRITERION AT EVERY COARSE RUNG.** The two are not in contradiction — they ask
+different questions. *Does a codebook indexed by the enum ALONE explain more than
+one indexed by stone counts alone?* is the registered question, and the answer at
+every coarse rung is no, because the enum has fewer classes. *Does the enum carry
+anything counts do not?* is the nested question, and the answer at `L ≥ 9` is
+yes.
+
+### 7.4c THE CONVERGENCE THAT DECIDES THE ROW'S STANDING, AND IT IS NOT A KILL
+
+**The one cell where the enum is comfortably affordable AND the registered
+criterion passes is `L = 7` T4** — 2 925 nominal parameters, 1 720 observations
+each, 856 codes observed at median 174, the cheapest traffic in the field at
+`3L = 21`. **The nested test says the enum adds NOTHING there: 0.93, below its
+own null.** At `L = 7` the count key very nearly determines the class, which is
+why the join is the same 0.004167 at all four rungs.
+
+**And where the nested test says the enum adds most — `L = 9` and `L = 11` at
+T4 — the parameter counts are 161 700 and 7 647 059**, which is 40.4 and 1.07
+observations per nominal parameter. **No cell is simultaneously affordable and
+supported by both measurements.**
+
+**SO THE ROW IS UNDECIDED, AND THAT IS THE FINDING.** It is not killed: 13 of 16
+nested cells say the enum carries structure stone counts do not, and the twelve
+registered FAILS are about a comparison a codebook does not have to make. It is
+not priced either: the registered criterion is the one that was registered, its
+PASS side is unsound, and the cell that survives both affordability and the
+registered test is the cell the nested test disowns. **Deciding it needs an
+instrument neither this corpus nor `ω²` over position-level labels can supply**,
+and naming that is more useful to a matrix than a verdict this evidence cannot
+carry.
+
+### 7.4d What none of this says
+
+1. **It does not say the enum is wrong.** Three independent implementations agree
+   on its arithmetic — the author's, the first reviewer's and round 3's — and
+   round 3's own full-corpus walk reproduced all four census receipts cell for
+   cell.
+2. **It does not transfer** to `R-A5-TOPK`, `R-A2-L11F`, `R-A3-L11F+F7` or
+   `R-A1-L8F`, which are not quotients of this tuple.
+3. **It does not settle the CODE unit.** The criterion binds the window unit,
+   where the enum's and the referent's class counts are the same order (16-to-23,
+   78-to-38, 231-to-52). At the code unit they are not — 108 074 against 6 856 at
+   `L = 11`. **MEASURED, at my own count rather than a reviewer's**: five cells
+   put the enum above the referent at the code unit — `L = 7` T4 and T3 (1.140
+   against 1.014 on the window), `L = 9` T4 (1.62 against 1.108), `L = 11` T4
+   (2.269 against 1.125) and `L = 13` T4 (1.636) — and **exactly one of them
+   flips the VERDICT between units**: `L = 13` T4, which fails at 0.834 on the
+   window and passes at 1.636 on the code. All five are at T4, where the
+   class-count gap is widest, which is the same monotonicity §7.4 withdraws the
+   window-unit passes for. **None of the five is evidence in either direction**,
+   and they are printed so that nobody finds them in the census output and
+   thinks they were hidden.
 
 ### 7.5 What §7 does NOT report
 

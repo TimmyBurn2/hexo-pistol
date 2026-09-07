@@ -73,7 +73,8 @@ class Moments:
 
 def report(path, unit, kept, seed, scored_cells, legal_sample, legal_stride,
            window_moments, code_moments, window_null, code_null,
-           window_raw, code_raw, window_count, code_count, curve):
+           window_raw, code_raw, window_count, code_count,
+           window_join, window_join_null, curve):
     lines = []
 
     def say(text=""):
@@ -102,6 +103,12 @@ def report(path, unit, kept, seed, scored_cells, legal_sample, legal_stride,
     rows.append(("window", "raw folded", window_raw))
     rows.append(("window", "COUNT-ONLY", window_count))
     for rung in E.LADDER:
+        rows.append(("window", f"JOIN count x {rung}", window_join[rung]))
+    for rung in E.LADDER:
+        for r in range(NULL_REPLICATES):
+            rows.append(("window", f"JOINNULL count x {rung} r{r}",
+                         window_join_null[(rung, r)]))
+    for rung in E.LADDER:
         for r in range(NULL_REPLICATES):
             rows.append(("window", f"null {rung} r{r}", window_null[(rung, r)]))
     for rung in E.LADDER:
@@ -114,7 +121,7 @@ def report(path, unit, kept, seed, scored_cells, legal_sample, legal_stride,
     say("## observations per parameter, at both population units")
     say("unit\tpartition\tdistinct\tobservations\tmean\tmedian\t<=4\t<20\t<75\tcover90")
     for name, partition, store in rows:
-        if partition.startswith("null"):
+        if partition.startswith("null") or partition.startswith("JOINNULL"):
             continue
         counts = sorted(store.n.values(), reverse=True)
         if not counts:

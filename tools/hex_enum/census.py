@@ -206,6 +206,13 @@ def main(argv):
     code_raw = Moments()
     window_count = Moments()
     code_count = Moments()
+    # THE NESTED COMPARISON. `count` refines into `count x class`, so the join
+    # can only explain more, and the question is whether it explains more than
+    # the SAME refinement by a value-free partition earns. This is immune to the
+    # class-count monotonicity that makes an unnested ratio reward padding.
+    window_join = {rung: Moments() for rung in E.LADDER}
+    window_join_null = {(rung, r): Moments() for rung in E.LADDER
+                        for r in range(NULL_REPLICATES)}
     curve = collections.defaultdict(list)
     scored_cells = 0
     legal_sample = []
@@ -241,8 +248,12 @@ def main(argv):
                     window_count.add(unit.counts[code], label)
                     for rung in E.LADDER:
                         window_moments[rung].add(unit.classes[rung][code], label)
+                        window_join[rung].add(
+                            (unit.counts[code], unit.classes[rung][code]), label)
                         for r, null in enumerate(unit.nulls[rung]):
                             window_null[(rung, r)].add(null[code], label)
+                            window_join_null[(rung, r)].add(
+                                (unit.counts[code], null[code]), label)
             scored_cells += len(per_cell)
             for axes in per_cell.values():
                 present = [axes.get(a) for a in (0, 1, 2)]
@@ -270,7 +281,8 @@ def main(argv):
 
     report(out_path, unit, kept, seed, scored_cells, legal_sample, legal_stride,
            window_moments, code_moments, window_null, code_null,
-           window_raw, code_raw, window_count, code_count, curve)
+           window_raw, code_raw, window_count, code_count,
+           window_join, window_join_null, curve)
     return 0
 
 
