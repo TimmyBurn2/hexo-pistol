@@ -8,11 +8,9 @@
 #
 # THE CUT BINDS HERE (U2_node_protocol.md §7.2, carried from WPQ_seed.md): a
 # seat with the quiet cut disabled would make the SPRT measure nothing about
-# the prune (CLAUDE.md rule 6). `quiet_top_k`/`widen_schedule` are stage Q's
-# own knobs, validated here for schema completeness and not yet read by the
-# search this D-scope ships (docs/decisions.md D-353, D-356) — carrying them
-# is what a `deny_unknown_fields` document requires; whether stage Q's own
-# widening schedule reads them is WP-1.5c's (`WPQ_seed.md`).
+# the prune (CLAUDE.md rule 6). Stage Q's own knobs are no longer in the schema
+# at all: nothing read them, so they armed nothing, and WP-1.5c re-adds what it
+# consumes (docs/decisions.md D-675, `WPQ_seed.md`).
 #
 # Validate this file with tools/config_check.sh.
 
@@ -34,9 +32,7 @@ kind = "staged"
 # in the one place they still agree by construction.
 quiet_radius = 2
 # Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
-quiet_top_k = 16
 # Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
-widen_schedule = [32]
 # THE CAP ARMED. K = 16 is not a choice made in this file: it is what the
 # registered calibration selected, by the rule stated before the run and applied
 # inside the instrument itself — `CAL/SELECTED K=16` in

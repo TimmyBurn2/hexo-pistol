@@ -185,7 +185,6 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
     let config = accepted(common::VALID_STAGED);
     let pistol_engine::config::CandidatePolicy::Staged {
         quiet_radius,
-        quiet_top_k,
         safety_net_top_k,
         tier_t_top_k: _,
         root_reorder: _,
@@ -193,7 +192,6 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
         extension_budget: _,
         lmr_min_depth_turns: _,
         lmr_late_index: _,
-        widen_schedule,
         tier_t_own_count,
         tier_t_opponent_count,
         q_depth_turns,
@@ -206,11 +204,9 @@ fn a_staged_document_with_every_key_in_range_is_accepted() {
         panic!("the committed staged fixture must parse as Staged");
     };
     assert_eq!(quiet_radius, 2);
-    assert_eq!(quiet_top_k, 16);
     // The safety-net cap is OFF in every committed document until an SPRT says
     // otherwise (docs/decisions.md D-478, D-482).
     assert_eq!(safety_net_top_k, 0);
-    assert_eq!(widen_schedule, vec![32]);
     assert_eq!(tier_t_own_count, 2);
     assert_eq!(tier_t_opponent_count, 3);
     assert_eq!(q_depth_turns, 0);
@@ -237,50 +233,42 @@ fn a_staged_quiet_radius_out_of_range_is_refused() {
     }
 }
 
+/// `quiet_top_k` and `widen_schedule` left the schema in D-675, so a document
+/// carrying either is now REFUSED rather than validated and ignored.
+///
+/// This is hard rule 1's `deny_unknown_fields` doing the work four validation
+/// tests used to do. It is the stronger guarantee: those tests pinned that an
+/// out-of-range value was rejected, and said nothing about the fact that every
+/// in-range value was rejected by nothing and read by no one. The audit's
+/// reproducer (A-17) is the case they missed — two documents differing only in
+/// `quiet_top_k` produced byte-identical searches while the handshake called
+/// them different instruments.
+///
+/// WP-1.5c re-adds whichever of the two it consumes, with the code that
+/// consumes it.
 #[test]
-fn a_staged_quiet_top_k_of_zero_is_refused() {
-    let (key, why) = rejection(&common::replacing_staged(
-        "quiet_top_k = 16",
-        "quiet_top_k = 0",
-    ));
-    assert_eq!(key, "search.candidate_policy.quiet_top_k");
-    assert!(why.contains("at least 1"), "unexpected reason: {why}");
-}
-
-#[test]
-fn an_empty_widen_schedule_is_refused() {
-    let (key, why) = rejection(&common::replacing_staged(
-        "widen_schedule = [32]",
-        "widen_schedule = []",
-    ));
-    assert_eq!(key, "search.candidate_policy.widen_schedule");
-    assert!(why.contains("non-empty"), "unexpected reason: {why}");
-}
-
-/// `quiet_top_k = 64` with `widen_schedule = [32]` passes a naive
-/// "non-empty and strictly increasing" check while describing a widening
-/// that NARROWS — the cross-field rule revision 3's validator lacked
-/// (`U3_tier_t.md` §10).
-#[test]
-fn a_widen_schedule_entry_that_does_not_exceed_quiet_top_k_is_refused() {
-    let document = common::replacing_staged("quiet_top_k = 16", "quiet_top_k = 64");
-    let (key, why) = rejection(&document);
-    assert_eq!(key, "search.candidate_policy.widen_schedule");
-    assert!(
-        why.contains("greater than quiet_top_k"),
-        "unexpected reason: {why}"
-    );
-}
-
-#[test]
-fn a_widen_schedule_that_does_not_strictly_increase_is_refused() {
-    let document = common::replacing_staged("widen_schedule = [32]", "widen_schedule = [40, 40]");
-    let (key, why) = rejection(&document);
-    assert_eq!(key, "search.candidate_policy.widen_schedule");
-    assert!(
-        why.contains("strictly increasing"),
-        "unexpected reason: {why}"
-    );
+fn a_staged_document_carrying_a_dropped_stage_q_key_is_refused_by_name() {
+    for (key, line) in [
+        ("quiet_top_k", "quiet_top_k = 16"),
+        ("widen_schedule", "widen_schedule = [32]"),
+    ] {
+        let document = common::VALID_STAGED.replace(
+            "[search.candidate_policy]",
+            &format!("[search.candidate_policy]\n{line}"),
+        );
+        let (found, why) = rejection(&document);
+        assert_eq!(
+            found,
+            format!("search.candidate_policy.{key}"),
+            "the refusal names the FULL path of the key an operator has to delete, \
+             not merely the table it sits in: {why}"
+        );
+        assert!(
+            why.contains("unknown field"),
+            "and says the schema does not have it, rather than that its value is \
+             out of range: {why}"
+        );
+    }
 }
 
 #[test]

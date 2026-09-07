@@ -59,8 +59,6 @@ tt_bytes = 1048576
 [search.candidate_policy]
 kind = "staged"
 quiet_radius = 2
-quiet_top_k = 16
-widen_schedule = [32]
 safety_net_top_k = 0
 tier_t_top_k = 0
 # Re-sort the ROOT's candidates by the previous iteration's scores (W2, the one

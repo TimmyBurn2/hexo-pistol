@@ -6,13 +6,14 @@
 # thing that differs is [search.candidate_policy], which is what the SPRT this
 # document seats judges.
 #
-# THE CUT BINDS HERE (U2_node_protocol.md §7.2, carried from WPQ_seed.md): a
-# seat with the quiet cut disabled would make the SPRT measure nothing about
-# the prune (CLAUDE.md rule 6). `quiet_top_k`/`widen_schedule` are stage Q's
-# own knobs, validated here for schema completeness and not yet read by the
-# search this D-scope ships (docs/decisions.md D-353, D-356) — carrying them
-# is what a `deny_unknown_fields` document requires; whether stage Q's own
-# widening schedule reads them is WP-1.5c's (`WPQ_seed.md`).
+# WHAT THIS SEAT ACTUALLY VARIES, corrected (docs/decisions.md D-675). This
+# block used to open "THE CUT BINDS HERE" and then say, four lines later, that
+# the two knobs naming that cut were "not yet read by the search this D-scope
+# ships" — both cannot be true of one knob, and the second was. `quiet_top_k`
+# and `widen_schedule` are gone from the schema; stage Q's widening is WP-1.5c's
+# to add back with the code that reads it (`WPQ_seed.md`). What this seat varies
+# against configs/instrument_v0.toml is the rest of [search.candidate_policy],
+# which is what the SPRT it seats judges (U3_tier_t.md §10, D-310, D-353).
 #
 # Validate this file with tools/config_check.sh.
 
@@ -34,9 +35,7 @@ kind = "staged"
 # in the one place they still agree by construction.
 quiet_radius = 2
 # Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
-quiet_top_k = 16
 # Stage Q's own knob (see the header). U3_tier_t.md §10's registered value.
-widen_schedule = [32]
 # The safety-net cap (docs/decisions.md D-478, D-482): cells of the quiet ball a
 # safety-net row may emit, at every node but the root turn's. 0 disables it, and
 # 0 is the committed value everywhere until an SPRT says otherwise.

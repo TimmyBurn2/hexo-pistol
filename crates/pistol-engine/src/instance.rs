@@ -235,11 +235,9 @@ fn solver_wiring(section: &crate::config::SolverSection) -> Option<pistol_search
 /// Two enums, and they are deliberately different types: one is a document's
 /// vocabulary and the other is a search's. The radii are never compared with
 /// the rules' radius-8 legal region (CLAUDE.md rule 2, docs/decisions.md
-/// D-20). Under `Staged`, `quiet_top_k` and `widen_schedule` are validated at
-/// the config layer (`validate.rs`) for schema completeness against
-/// `U3_tier_t.md` §10 and go no further — `pistol_search::StagedParams`
-/// deliberately does not carry them, because this D-scope's search does not
-/// arm stage Q's widening schedule (docs/decisions.md D-353).
+/// D-20). Every field of the document's `Staged` is destructured by name here,
+/// so a key nothing maps is a compile error rather than a silent one
+/// (docs/decisions.md D-675).
 fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
     match policy {
         CandidatePolicy::Radius { radius } => SearchCandidatePolicy::Radius { radius: *radius },
@@ -252,8 +250,6 @@ fn search_policy(policy: &CandidatePolicy) -> SearchCandidatePolicy {
             killers,
             history,
             countermove,
-            quiet_top_k: _,
-            widen_schedule: _,
             safety_net_top_k,
             tier_t_top_k,
             root_reorder,

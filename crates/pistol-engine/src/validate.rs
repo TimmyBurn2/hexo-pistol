@@ -80,7 +80,6 @@ impl SearchSection {
             }
             CandidatePolicy::Staged {
                 quiet_radius,
-                quiet_top_k,
                 // The safety-net cap has no invalid value to refuse: `0` is the
                 // off-value and every other `u64` names a cap width, so a check
                 // here could never fire (docs/experiments/wp15d_design.md §3).
@@ -91,7 +90,6 @@ impl SearchSection {
                 extension_budget: _,
                 lmr_min_depth_turns: _,
                 lmr_late_index: _,
-                widen_schedule,
                 tier_t_own_count,
                 tier_t_opponent_count,
                 q_depth_turns,
@@ -101,38 +99,6 @@ impl SearchSection {
                 countermove: _,
             } => {
                 check_radius("search.candidate_policy.quiet_radius", *quiet_radius)?;
-                if *quiet_top_k == 0 {
-                    return Err(EngineError::config(
-                        "search.candidate_policy.quiet_top_k",
-                        format!("must be at least 1, got {quiet_top_k}"),
-                    ));
-                }
-                // Stage Q's own schema (`U3_tier_t.md` §10), validated for
-                // completeness even though this D-scope's search does not
-                // read the schedule (docs/decisions.md D-353): non-empty,
-                // strictly increasing, and every entry strictly greater than
-                // `quiet_top_k` — the cross-field rule revision 3's validator
-                // lacked, which let `quiet_top_k = 64` with `[32]` pass as a
-                // widening that NARROWS.
-                if widen_schedule.is_empty() {
-                    return Err(EngineError::config(
-                        "search.candidate_policy.widen_schedule",
-                        "must be non-empty",
-                    ));
-                }
-                let mut previous = *quiet_top_k;
-                for &boundary in widen_schedule {
-                    if boundary <= previous {
-                        return Err(EngineError::config(
-                            "search.candidate_policy.widen_schedule",
-                            format!(
-                                "must be strictly increasing and every entry strictly greater \
-                                 than quiet_top_k ({quiet_top_k}), got {boundary} after {previous}"
-                            ),
-                        ));
-                    }
-                    previous = boundary;
-                }
                 for (key, count) in [
                     ("search.candidate_policy.tier_t_own_count", tier_t_own_count),
                     (

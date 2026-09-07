@@ -9,13 +9,14 @@
 # tactical config (cut disabled, so a `require 20` derivation holds) and the
 # SPRT seat (cut enabled, or the match measures nothing about the prune).
 #
-# THE CUT IS DISABLED: `quiet_top_k` is set above the whole candidate pool a
-# fifteen-stone position's radius-2 ball can ever hold (MEASURED, the radius-2
-# ball's largest regime mean over the pinned census is under 400 —
-# `crates/pistol-solver/tests/wp15b_census.rs`), so no legitimate cell is ever
-# cut and the tactical suite's `require 20` derivation
-# (U4_soundness_instrument.md §8.3) is not silently weakened by the prune it
-# is not testing.
+# THE CUT IS DISABLED, AND NOT BY A VALUE IN THIS FILE (docs/decisions.md
+# D-675). `quiet_top_k` was set above the whole candidate pool a fifteen-stone
+# position's radius-2 ball can ever hold (MEASURED, the radius-2 ball's largest
+# regime mean over the pinned census is under 400 —
+# `crates/pistol-solver/tests/wp15b_census.rs`), but no code path read the key,
+# so the cut was unarmed whatever it said. The tactical suite's `require 20`
+# derivation (U4_soundness_instrument.md §8.3) needed "no legitimate cell is
+# ever cut" and still has it, from the code rather than from a number here.
 #
 # Validate this file with tools/config_check.sh.
 
@@ -33,8 +34,6 @@ quiet_radius = 2
 # Disabled: see the header. 1024 is not a guess — the radius-2 ball's
 # measured largest regime mean is under 400 (wp15b_census.rs), and a bounded
 # ball at 17 stones cannot exceed 18 * 17 = 306 at radius 2.
-quiet_top_k = 1024
-widen_schedule = [2048]
 # The safety-net cap (docs/decisions.md D-478, D-482): cells of the quiet ball a
 # safety-net row may emit, at every node but the root turn's. 0 disables it, and
 # 0 is the committed value everywhere until an SPRT says otherwise.

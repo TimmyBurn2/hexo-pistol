@@ -25,8 +25,6 @@ kind = "staged"
 # Matches configs/gate_staged_v0.toml: same quiet ball, same cut, so the
 # third seat differs from the staged seat on the heuristics alone.
 quiet_radius = 1
-quiet_top_k = 128
-widen_schedule = [256]
 # The safety-net cap (docs/decisions.md D-478, D-482): cells of the quiet ball a
 # safety-net row may emit, at every node but the root turn's. 0 disables it, and
 # 0 is the committed value everywhere until an SPRT says otherwise.

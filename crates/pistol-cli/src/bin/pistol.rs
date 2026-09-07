@@ -141,22 +141,18 @@ fn echoable_config(stated: &str) -> Result<PathBuf, String> {
 /// against the pre-WP-1.4 revision.
 fn identity_lines(path: &Path, config: &Config) -> Vec<String> {
     // `id candidate_policy radius <n>` under Radius, unchanged. Under Staged,
-    // `id candidate_policy staged quiet_radius <n> quiet_top_k <k>` — one
-    // line, whitespace-delimited, multi-token value, the same shape
+    // `id candidate_policy staged quiet_radius <n>` — one line,
+    // whitespace-delimited, multi-token value, the same shape
     // `id budgets depth_turns nodes` already establishes (docs/decisions.md
-    // D-230; `U2_node_protocol.md` §U2-M item 2). `tier_t_own_count`,
-    // `tier_t_opponent_count` and `widen_schedule` do not ride on this line —
-    // U2-M item 2 names only `quiet_radius` and `quiet_top_k`.
+    // D-230; `U2_node_protocol.md` §U2-M item 2). `quiet_top_k` rode here until
+    // D-675: a key no code path reads is provenance that says two runs are
+    // different instruments when they are the same search.
     let candidate_policy_line = match &config.search.candidate_policy {
         pistol_engine::config::CandidatePolicy::Radius { radius } => {
             format!("candidate_policy radius {radius}")
         }
-        pistol_engine::config::CandidatePolicy::Staged {
-            quiet_radius,
-            quiet_top_k,
-            ..
-        } => {
-            format!("candidate_policy staged quiet_radius {quiet_radius} quiet_top_k {quiet_top_k}")
+        pistol_engine::config::CandidatePolicy::Staged { quiet_radius, .. } => {
+            format!("candidate_policy staged quiet_radius {quiet_radius}")
         }
     };
     let mut lines = vec![

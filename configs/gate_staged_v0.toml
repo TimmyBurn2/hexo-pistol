@@ -8,10 +8,12 @@
 # radius 2 or 3 is minutes to hours of CI time, and this is what fits inside a
 # CI run.
 #
-# THE CUT IS DISABLED: MEASURED balls 22/22/22/18/15 at eleven stones
-# (configs/gate_v0.toml's own header), bounded by 6 * 17 = 102 three turns
-# deeper — `quiet_top_k = 128` never cuts a legitimate cell from any of the
-# five gate cases.
+# THE CUT IS DISABLED, AND NOT BY A VALUE IN THIS FILE (docs/decisions.md
+# D-675). `quiet_top_k` was set above the reachable ball here — MEASURED balls
+# 22/22/22/18/15 at eleven stones (configs/gate_v0.toml's own header), bounded
+# by 6 * 17 = 102 three turns deeper — but no code path ever read the key, so
+# the cut was unarmed whatever it said. The conclusion the five gate cases rest
+# on is unchanged and now rests on the code: an unarmed cut cuts nothing.
 #
 # Validate this file with tools/config_check.sh.
 
@@ -28,8 +30,6 @@ kind = "staged"
 quiet_radius = 1
 # Disabled: see the header. 128 exceeds the measured bound of
 # 6 * 17 = 102 three turns deeper than the deepest measured ball.
-quiet_top_k = 128
-widen_schedule = [256]
 # The safety-net cap (docs/decisions.md D-478, D-482): cells of the quiet ball a
 # safety-net row may emit, at every node but the root turn's. 0 disables it, and
 # 0 is the committed value everywhere until an SPRT says otherwise.

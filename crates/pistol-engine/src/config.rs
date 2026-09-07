@@ -217,17 +217,11 @@ pub enum CandidatePolicy {
         /// Hex distance the fallback's quiet ball reaches, in
         /// `1..=`[`MAX_CANDIDATE_RADIUS`].
         quiet_radius: u32,
-        /// Stage Q's own knob: the first batch's quiet-cell count. Validated
-        /// for schema completeness against `U3_tier_t.md` §10; this D-scope's
-        /// search does not read it (docs/decisions.md D-353 — stage Q's
-        /// widening schedule is not armed).
-        quiet_top_k: u64,
         /// The safety-net cap (docs/decisions.md D-478, D-482): on the batched
         /// row where Tier F and Tier T are both empty, how many cells of the
         /// delta-ranked quiet ball the search may consider, at every node but
-        /// the root turn's. `0` disables the cap and is the committed value —
-        /// the `q_depth_turns` shape, and the opposite of `quiet_top_k`, where
-        /// a LARGE value is what disables the cut (`U3_tier_t.md` §10).
+        /// the root turn's. `0` disables the cap and is the committed value,
+        /// the same shape as `q_depth_turns`.
         safety_net_top_k: u64,
         tier_t_top_k: u64,
         root_reorder: bool,
@@ -235,11 +229,6 @@ pub enum CandidatePolicy {
         extension_budget: u32,
         lmr_min_depth_turns: u32,
         lmr_late_index: u64,
-        /// Stage Q's own knob: cumulative quiet-cell batch boundaries after
-        /// the first, strictly increasing, each greater than `quiet_top_k`.
-        /// Validated for schema completeness; not read by this D-scope's
-        /// search (docs/decisions.md D-353).
-        widen_schedule: Vec<u64>,
         /// `LAW-SUPPORT`'s threshold for the side to move's own qualifying
         /// windows: 2 or 3 (`U3_tier_t.md` §6.1, the THRESHOLD reading).
         tier_t_own_count: u8,
