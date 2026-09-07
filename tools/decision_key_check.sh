@@ -95,6 +95,15 @@ keys_of() { # $1 = a file to read
 # "no" about a shape that must never appear in the file it guards — so the only
 # place it can be watched refusing is a file seeded on purpose.
 
+# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
+# obligation 2, docs/decisions.md D-285). Discovering the shortage through
+# `mktemp`'s own error message is discovering it in `mktemp`'s vocabulary, and
+# that vocabulary describes `mktemp` rather than this gate.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -x "$PREFLIGHT" ] || void "the scratch preflight is missing beside this script: $PREFLIGHT"
+"$PREFLIGHT" "${TMPDIR:-/tmp}" ||
+	void "no scratch room; the lines above name the filesystem"
+
 # NAMED, not a bare `set -e` death: an unwritable or full $TMPDIR is an
 # environmental refusal and reads as one (item 1's second failure).
 SEED="$(mktemp -d)" || void "mktemp could not make a scratch directory for the self-test"

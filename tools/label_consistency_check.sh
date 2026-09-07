@@ -111,6 +111,15 @@ command -v awk >/dev/null || void "awk is not on PATH, and it is this gate's who
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 	void "not a git repository: this gate reads the TRACKED bytes of its subject"
 
+# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
+# obligation 2, docs/decisions.md D-285). Discovering the shortage through
+# `mktemp`'s own error message is discovering it in `mktemp`'s vocabulary, and
+# that vocabulary describes `mktemp` rather than this gate.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -x "$PREFLIGHT" ] || void "the scratch preflight is missing beside this script: $PREFLIGHT"
+"$PREFLIGHT" "${TMPDIR:-/tmp}" ||
+	void "no scratch room; the lines above name the filesystem"
+
 # NAMED, not a bare `set -e` death (tools/SHELL_CHECKLIST.md item 1).
 WORK="$(mktemp -d)" || void "mktemp could not make a scratch directory"
 # The trap preserves the body's status rather than replacing it with `rm`'s

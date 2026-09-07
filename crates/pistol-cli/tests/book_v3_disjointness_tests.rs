@@ -21,6 +21,15 @@ fn tree(name: &str) -> PathBuf {
         root.join("tools/book_v3_disjointness.sh"),
     )
     .expect("the script copies");
+    // The script preflights its scratch filesystem through this sibling
+    // (tools/SHELL_CHECKLIST.md item 12 obligation 2) and resolves it beside
+    // itself, so a tree holding the script alone is one the script correctly
+    // VOIDS in rather than running blind.
+    std::fs::copy(
+        repo("tools/scratch_preflight.sh"),
+        root.join("tools/scratch_preflight.sh"),
+    )
+    .expect("the preflight copies");
     // A stand-in for `book_keys`: every body line of these fixtures IS its own
     // key, so the script's set arithmetic is exercised without a nested cargo
     // build, which would block on the target directory's lock.

@@ -18,7 +18,8 @@
 # criterion being replaced (D-447).
 #
 # Usage: tools/puzzle_corpus/tests/run_tests.sh
-# Exit:  0 every test passed; 1 one did not.
+# Exit:  0 every test passed; 1 one did not;
+#        2 THE RUN IS VOID — no test was adjudicated (item 12).
 
 set -uo pipefail
 
@@ -32,6 +33,19 @@ printf '== T1/T2/NEG: extractor unit, load, negative controls ==\n'
 python3 tools/puzzle_corpus/tests/test_extract.py | grep -v '^  ok' || fail "extractor tests"
 
 printf '\n== T4: determinism, two runs from cache ==\n'
+# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
+# obligation 2). A void and not a `fail`: `fail` here records a TEST as failed
+# and keeps going, and a filesystem with no room is not a test result. This
+# runner has no other void, so it exits directly and says which class it is.
+PREFLIGHT="$ROOT/tools/scratch_preflight.sh"
+[ -x "$PREFLIGHT" ] || {
+  printf 'puzzle-corpus-tests: RUN VOID: no scratch preflight at %s\n' "$PREFLIGHT" >&2
+  exit 2
+}
+"$PREFLIGHT" "${TMPDIR:-/tmp}" || {
+  printf 'puzzle-corpus-tests: RUN VOID: no scratch room; the lines above name the filesystem\n' >&2
+  exit 2
+}
 SCRATCH="$(mktemp -d)"
 trap 'rm -rf -- "$SCRATCH"' EXIT
 python3 tools/puzzle_corpus/extract.py --offline --out "$SCRATCH/a.jsonl" >/dev/null || fail "run 1"

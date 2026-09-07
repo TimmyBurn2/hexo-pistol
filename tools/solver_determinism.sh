@@ -72,6 +72,19 @@ BIN="${BUILT[0]}"
 [ -f "$BIN" ] || void "cargo named \`$BIN\` for --bin solver-selftest and it is not a regular file"
 [ -x "$BIN" ] || void "cargo named \`$BIN\` for --bin solver-selftest and it is not executable"
 
+# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
+# obligation 2, docs/decisions.md D-285). BOTH filesystems, because they are
+# two: the scratch files go under `$TMPDIR` and the build goes to this
+# repository's target tree, and on this machine those are a RAM-backed tmpfs and
+# an nvme partition. A shortage on either otherwise reaches the log in `mktemp`'s
+# or `cargo`'s vocabulary, which describes those tools rather than this gate.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -x "$PREFLIGHT" ] || void "the scratch preflight is missing beside this script: $PREFLIGHT"
+for SCRATCH_FS in "${TMPDIR:-/tmp}" "$ROOT"; do
+	"$PREFLIGHT" "$SCRATCH_FS" ||
+		void "no scratch room; the lines above name the filesystem"
+done
+
 OUT="$(mktemp -d)" || void "mktemp refused"
 trap 'rm -rf "$OUT"' EXIT
 

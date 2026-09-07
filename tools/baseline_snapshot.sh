@@ -474,6 +474,20 @@ digest "$CONFIG" "the config"; CONFIG_SHA256="$DIGEST"
 digest "$CORPUS" "the corpus"; CORPUS_SHA256="$DIGEST"
 digest "$OPENINGS" "the opening corpus"; OPENINGS_SHA256="$DIGEST"
 
+# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
+# obligation 2, docs/decisions.md D-285). Discovering the shortage through
+# `mktemp`'s own error message is discovering it in `mktemp`'s vocabulary, and
+# that vocabulary describes `mktemp` rather than this script.
+#
+# REFUSED AS A `fail` AND NOT AS A VOID, deliberately. Item 12 obligation 2 is
+# addressed to a GATE, and this is an instrument that adjudicates nothing — it
+# either wrote its record or it did not. Introducing a void class here would
+# also move an exit code this script's own suite and its recorded verdicts read.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -x "$PREFLIGHT" ] || fail "the scratch preflight is missing beside this script: $PREFLIGHT"
+"$PREFLIGHT" "${TMPDIR:-/tmp}" ||
+	fail "no scratch room; the lines above name the filesystem"
+
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 

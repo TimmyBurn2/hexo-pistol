@@ -77,6 +77,11 @@ fn scratch_tree(name: &str, fixture: &str) -> PathBuf {
     }
     for file in [
         "tools/bench_delta.sh",
+        // The script preflights its scratch filesystem through this sibling
+        // (tools/SHELL_CHECKLIST.md item 12 obligation 2) and resolves it beside
+        // itself, so a scratch tree holding the script alone is one the script
+        // correctly refuses to run in.
+        "tools/scratch_preflight.sh",
         "configs/instrument_v0.toml",
         "configs/eval_v0_weights.toml",
     ] {

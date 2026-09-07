@@ -138,6 +138,20 @@ SIDE_BASE="$1"; SIDE_CAND="$2"; REPS="${3:-5}"
 [ -f "$WEIGHTS" ] || fail "no weights at $WEIGHTS"
 [ -f "$FIXTURE" ] || fail "no fixture at $FIXTURE"
 
+# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
+# obligation 2, docs/decisions.md D-285). Discovering the shortage through
+# `mktemp`'s own error message is discovering it in `mktemp`'s vocabulary, and
+# that vocabulary describes `mktemp` rather than this script.
+#
+# REFUSED AS A `fail` AND NOT AS A VOID, deliberately. Item 12 obligation 2 is
+# addressed to a GATE, and this is an instrument that adjudicates nothing — it
+# either wrote its record or it did not. Introducing a void class here would
+# also move an exit code this script's own suite and its recorded verdicts read.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -x "$PREFLIGHT" ] || fail "the scratch preflight is missing beside this script: $PREFLIGHT"
+"$PREFLIGHT" "${TMPDIR:-/tmp}" ||
+	fail "no scratch room; the lines above name the filesystem"
+
 WORK="$(mktemp -d)"
 # An ARRAY and not a whitespace-joined string: `for wt in $WORKTREES` word-splits
 # on the spaces a TMPDIR may contain, so the removal loop below would iterate over

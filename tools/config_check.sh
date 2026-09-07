@@ -27,6 +27,11 @@
 #
 # Usage: tools/config_check.sh [path ...]   (default: every .toml under configs/)
 # Exit:  0 all valid, 1 one or more rejected or nothing to check.
+#        THERE IS NO VOID CLASS, stated rather than left to be inferred from
+#        silence (tools/SHELL_CHECKLIST.md item 12 obligation 1). This gate
+#        writes no scratch and reads only committed documents, so it has no
+#        way to be short of anything: every non-zero answer is a document
+#        that did not load.
 
 set -euo pipefail
 

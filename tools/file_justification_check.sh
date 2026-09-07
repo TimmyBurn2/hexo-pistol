@@ -65,7 +65,8 @@
 #
 # Usage: tools/file_justification_check.sh
 # Exit:  0 every tracked .rs/.sh/.py file is under the cap or registered,
-#        1 otherwise.
+#        1 otherwise,
+#        2 THE RUN IS VOID — no verdict was taken (item 12).
 
 set -euo pipefail
 
@@ -73,6 +74,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 fail() { printf 'file_justification_check: FAIL: %s\n' "$*" >&2; exit 1; }
+# THE VOID, NAMED (tools/SHELL_CHECKLIST.md item 12 obligation 1): this gate
+# seeds a scratch tree before it reads the tracked one, and a filesystem with
+# no room for the seed is not a rule-9 finding.
+void() { printf 'file_justification_check: RUN VOID: %s\n' "$*" >&2; exit 2; }
 
 command -v git >/dev/null || fail "git is not on PATH"
 
@@ -149,6 +154,15 @@ verdict() {
 }
 
 # --- the self-test, on files nobody tracks --------------------------------
+
+# SCRATCH SPACE, ASKED FOR BEFORE THE WORK (tools/SHELL_CHECKLIST.md item 12
+# obligation 2, docs/decisions.md D-285). Discovering the shortage through
+# `mktemp`'s own error message is discovering it in `mktemp`'s vocabulary, and
+# that vocabulary describes `mktemp` rather than this gate.
+PREFLIGHT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/scratch_preflight.sh"
+[ -x "$PREFLIGHT" ] || void "the scratch preflight is missing beside this script: $PREFLIGHT"
+"$PREFLIGHT" "${TMPDIR:-/tmp}" ||
+	void "no scratch room; the lines above name the filesystem"
 
 SEED="$(mktemp -d)"
 trap 'rm -rf "$SEED"' EXIT
