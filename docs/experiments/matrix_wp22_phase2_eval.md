@@ -181,7 +181,7 @@ today — a third thing §1.4's capability owes.
 ### 1.7 The wall cost
 
 - **Instrument seat**: the registered dry-run figure is **2.046 s per opening**
-  (`matrix_wp22_quiet_scale.md:250-253`, at a 50 000-node seat). 8 500 openings
+  (`matrix_wp22_quiet_scale.md:252-253`, *"a MEASURED 2.046 s per opening in the design's registered dry run"*, at a 50 000-node seat). 8 500 openings
   is **4.83 h**, DERIVED at that seat and valid only there.
 - **Play seat**: ESTIMATED and marked as such, because it cannot be measured
   without the capability §1.4 says does not exist. Arithmetic: 500 ms per answer
@@ -392,7 +392,7 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 | **nodes/sec floor** | **no change registered**; the row costs no throughput at all. |
 | **determinism** | the tuner is stochastic, the **engine** stays deterministic (D-7 unaffected). |
 | **seed budget** | the tuner's own; not a fit. |
-| **books — AND THIS IS THE KILL** | fishtest's live data, **EMP**, over 46 sampled runs: a **median of 120 000 games for 4 parameters**. 120 000 games is 60 000 pairs is **`ceil_to_500(60 500) = 61 000` openings — 7.2x the whole of `book_v3`** — and `book_v3` may not be used for it at all: D-644 makes it *"acceptance-only (no labels, no tuning, no corpus input)"*. D-635's defect class applies on top: tuning and acceptance books must be disjoint or the acceptance run is a self-match. **At the instrument seat's 2.046 s per opening that is 34.7 h of games before any acceptance run.** |
+| **books — AND THIS IS THE KILL** | fishtest's live data, **EMP**, over 46 sampled runs: a **median of 120 000 games for 4 parameters**. 120 000 games is 60 000 pairs is **`ceil_to_500(60 000 + 500) = 60 500` openings — 7.1x the whole of `book_v3`** — and `book_v3` may not be used for it at all: D-644 makes it *"acceptance-only (no labels, no tuning, no corpus input)"*. D-635's defect class applies on top: tuning and acceptance books must be disjoint or the acceptance run is a self-match. **At the instrument seat's 2.046 s per opening that is 34.4 h of games before any acceptance run.** |
 | **kill condition** | fired: no committed book funds it and the one book that could is barred by ADR. |
 | **strongest known attack — against the kill** | the 120 000 figure is a chess median and **EMP, NON-TRANSFERABLE**; a dozen integers on a smaller board might converge far sooner, and nothing here measures that. The kill is a cost kill on the only evidence available, not a proof of infeasibility. |
 
@@ -424,10 +424,10 @@ cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 
 ## §5 THE TWO ACCEPTANCE ARMS, REGISTERED PER ROW — AND THE FINDING IS THAT THEY DO NOT DISCRIMINATE
 
-D-705: *"a Stage 2 eval row registers a node-matched arm at the instrument seat
-and a time-matched arm at the play seat; acceptance = node-matched h1 AND
-time-matched not h0; each row pre-registers a nodes/sec floor for the bench
-bracket."*
+D-705, whole: *"a Stage 2 eval row registers a node-matched arm at the
+instrument seat and a time-matched arm at the play seat; acceptance =
+node-matched h1 AND time-matched not h0; each row pre-registers a nodes/sec
+floor for the bench bracket — flips if the play seat is redefined."*
 
 | row | node-matched arm | time-matched arm | nodes/sec floor registered |
 |---|---|---|---|
@@ -436,7 +436,7 @@ bracket."*
 | R-A2-L11F | as above, and it needs **≥ 4 nets** for one arm (§3) | not runnable | 341 617 (0.64x) |
 | R-A3-L11F+F7 | as above | not runnable | 341 617 (0.64x) |
 | R-A1-L11 | killed before the arm | — | — |
-| R-C-SPSA | needs 61 000 openings of tuning FIRST (§4) | not runnable | no change |
+| R-C-SPSA | needs 60 500 openings of tuning FIRST (§4) | not runnable | no change |
 | R-H-EXT | Δ = 10 on `book_v3`, **or** a large-effect screen on `book_v2`'s holdout at **elo1 = 40, power 0.9067** | not runnable | **403 391** (0.76x) |
 | R-D-W1 | killed by ruling | — | — |
 
@@ -474,6 +474,16 @@ The books fund one acceptance run (§1.6). So the field's real question is not
    **second instrument-seat pentanomial** to replace the 24-pair sample every
    figure in §1.6 is tilted from. And if it wins, D-614's bar moves and every
    learned row is measured against the right incumbent.
+   **AND WHAT ITS SCREEN CAN AND CANNOT CONCLUDE, said here rather than left for
+   the attack.** §1.6 measures that the holdout clears D-653's 0.9 floor only at
+   `elo1 = 40`, so a screen there registers *"accept only if three or four hand
+   integers are worth 40 normalized Elo"*, which is a large ask. **A negative
+   screen therefore kills nothing**: it says the effect is under 40 nelo, and the
+   row would still need `book_v3` to be tested at Δ = 10 like every other row.
+   What the screen buys is the two pentanomials and a cheap look, not a verdict —
+   and a matrix that presented it as a free acceptance would be selling the
+   holdout's 0.7430 at `elo1 = 30` as though it were 0.9.
+
 2. **R-A4-CLASS at `L = 11`, rung T2.** 18 424 nominal parameters, 1 533 observed
    codes at median 41 observations, a growth curve that has flattened, the
    registered purity criterion met at **3.58x**, a closed-form fit with no
@@ -514,7 +524,7 @@ not netted against it.
 | R-A3-L11F+F7 | a fit with virtual features and a coalescing step | the factor regresses, which its own source warns of, and 1.2 observations per real parameter is the density that killed A1 |
 | R-A2-L11F | a trainer, a dependency, ≥ 4 nets, a digest discipline, a shape check | the α-β width optimum sits below the accuracy optimum, measured in three games |
 | R-A1-L11 | — | killed: 1.2 observations per parameter, and unfolded it learns twelve answers |
-| R-C-SPSA | 61 000 openings of tuning on a book that does not exist | killed on cost; the kill rests on a chess median and is marked EMP |
+| R-C-SPSA | 60 500 openings of tuning on a book that does not exist | killed on cost; the kill rests on a chess median and is marked EMP |
 | R-D-W1 | — | killed by ruling: the estimator question is settled by R-C and a 0.66 % MSE difference is not a 10-nelo effect |
 
 ---
