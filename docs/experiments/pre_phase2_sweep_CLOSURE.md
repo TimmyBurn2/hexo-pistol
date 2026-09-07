@@ -733,61 +733,32 @@ after every restore. It was retaken with the literal read out of the source.
 ## §4 Receipts (D-469)
 
 Everything this package measured is under `artifacts/pre_phase2_sweep/`,
-gitignored (CLAUDE.md rule 8) and sha-anchored here. `tools/artifact_check.sh`
-at the closing revision: gate 5 green in the run quoted in §6.
+gitignored (CLAUDE.md rule 8) and sha-anchored. **78 files**, and the list of
+their digests itself hashes to
+`8b1e3d30597f7e47fccda5bde11cfa766662538fe449f3a59e2e1fef8da1aa8a`.
 
-```
-31236b5632c0c1b16f0b6ff2a6a62aee6017321d05f6785b0baec7dd1222bbde  census_after.txt
-31236b5632c0c1b16f0b6ff2a6a62aee6017321d05f6785b0baec7dd1222bbde  census_after_fixes.txt
-31236b5632c0c1b16f0b6ff2a6a62aee6017321d05f6785b0baec7dd1222bbde  census_before.txt
-1d3fbcd03d8dba34c20d08ae89c50b5816f38fed5afca3d68b3893a97956409e  ci_baseline_007f821.txt
-9a175b29b81d7b64055927728e779690eb35576144d92aa1bc914874c6b3f763  ci_closing_9ce9a7c.txt
-1a187f8bf4509672bdf2b5062f2cdd0d622af160d7a7443820329b6d073a66a2  identity_after_fixes_instrument_staged_v0.txt
-2a8d625e221f82db3a64260fb920f713b6e0dbe369ab6ca2381095d1556ab112  identity_after_fixes_instrument_v0.txt
-3562d306254bad8593bce9004b70f2c448352c8c6ae2ed64a112b6ce4e9fa366  identity_after_fixes_play_staged_v0.txt
-1a187f8bf4509672bdf2b5062f2cdd0d622af160d7a7443820329b6d073a66a2  identity_after_instrument_staged_v0.txt
-2a8d625e221f82db3a64260fb920f713b6e0dbe369ab6ca2381095d1556ab112  identity_after_instrument_v0.txt
-3562d306254bad8593bce9004b70f2c448352c8c6ae2ed64a112b6ce4e9fa366  identity_after_play_staged_v0.txt
-7122245f82cc72403aec3152037706f163dcd36eea2b4c708d4c69e1168f25cc  identity_before_instrument_staged_v0.txt
-c7ec54f86d3e71a88b76c7ff37008b853567ae3d08bbbc0f8a6258d932d06a06  identity_before_instrument_v0.txt
-c269f81e44b1048763778fe3c8e12fe46f91e6145f5821ed428438267b30fb8a  identity_before_play_staged_v0.txt
-6422835b8aebdcf84f5dac53245810561ef684abab35e653d0089d6fee630ee4  mutants_cb6e853.txt
-6adb9892359bc0731d98ef7118f0ef32d393dac2aa7b539b2ac32abab4b13652  mutation_baseline_cb6e853.txt
-511e000e65afb257b78379060d75c33ef370bb7a372446a1e9e87513cc2fa0e8  mutation_harness.sh
-e45cd41eed50e1149d5461fbfb31f54b4cb2e0902519c059eea1b99d84ded141  mutation_set.sh
-2585e8c8a597ae109478fa477f3f5a61e7dfadf61109d63187a229aac37eb2e7  t3_gate_costs.txt
-bff65973a7cb480f70ab8ec461577f1cc43a049eeb5e4e970ef04cc2be64ba77  workspace_tests_f4f4a5c.txt
-8a96b93fed66b695ec71ffc8b9049a9708429e37f968d14818fdd8c47ac6582f  workspace_tests_final.txt
-```
-
-**THE CENSUS DIGESTS ARE THE E-GROUP GUARD AND THERE ARE NOW THREE OF THEM.**
+**THE CENSUS DIGESTS ARE THE E-GROUP GUARD AND THERE ARE THREE OF THEM.**
 `census_before.txt` (built at `b60c3d3`), `census_after.txt` (after E2's
-constructor merge) and `census_after_fixes.txt` (after all three fix rounds,
-which touched `census.rs` and `search.rs` again) hash IDENTICALLY —
+constructor merge) and `census_after_fixes.txt` (after the three fix rounds
+touched `census.rs` and `search.rs` again) hash IDENTICALLY —
 `31236b5632c0c1b1…`. The claim survives its own repair, which is the only reason
-it is worth re-stating: a fix round that touched the constructor is exactly when
-a byte-identity claim taken once, earlier, stops being evidence.
+it is worth restating: a byte-identity claim taken once and never re-taken
+across the change that repaired it is not evidence about the repaired tree.
 
 The `identity_*` triples differ from their `before` in one line each, and it is
 the licensed `id candidate_policy staged …` line in every case.
 
 **THE GROUP-E REVIEWER'S OWN EVIDENCE IS EXPORTED WITH THE REST**, under
-`artifacts/pre_phase2_sweep/e_review_evidence/` — its position generator, its
-driver, and both sides' transcripts, 53 files. It was written into
-`/home/tom/pistol-wt/e-review/`, which a worktree removal would have taken with
-it: that is D-469's own motivating loss (WP-1.8c's four review reports, which
-survive only in a transcript), and this package's strongest single piece of
-evidence — ~2,100 searches per side by an instrument sharing nothing with the
-closure's — would have gone the same way.
+`e_review_evidence/` — its position generator, its driver, both sides'
+transcripts and its two mutant logs. It was written into a worktree, and a
+worktree removal would have taken it: that is D-469's own motivating loss
+(WP-1.8c's four review reports, which survive only in a transcript), and this
+package's strongest single piece of evidence — ~2,100 searches per side by an
+instrument sharing nothing with the closure's — would have gone the same way.
 
-The reviewer's two mutant logs — the evidence for MINOR 3, the wrong-partner
-mutant that survived — are exported beside them, and the WORKTREES ARE THEN
-REMOVED: `git worktree list` names only the live tree, and `/home/tom/pistol-wt/`
-is empty.
-
-**The receipt over the whole export is 76 files** and the list of their digests
-itself hashes to
-`8f5b749749c765b202b071e821df9c21c3c597603e99347ef139e7b865c9b600`.
+Three full `tools/ci.sh` logs are here too, one per revision §6 cites, so a
+reader can check the gate lines against the run rather than against this
+document.
 
 ## §5 The three reviews, and the fix round each forced
 
@@ -900,11 +871,23 @@ second failure would be D-481's STOP.
 
 ## §6 The gates, cited from their own output
 
-`tools/ci.sh` at the closing revision **`9ce9a7c`**, in a detached worktree at
-`/home/tom/pistol-wt/sweep-ci`, with **no `CARGO_TARGET_DIR` export** — the
-export is what voided the texel package's gate 3 (D-672) and what turned this
-package's first mutation baseline red at `solver_link_check_tests`. Log:
-`artifacts/pre_phase2_sweep/ci_closing_9ce9a7c.txt`.
+**THREE FULL CI RUNS ARE CITED HERE AND THE REASON IS D-674's OWN RULE**: a
+package's closing revision is the one its cited CI ran at, and this package's
+closing revision moved twice after a run was taken. Each run is quoted at the
+revision it was taken at, and none is offered for a later one.
+
+| revision | what it adjudicates | log |
+|---|---|---|
+| `9ce9a7c` | the three review fix rounds | `ci_closing_9ce9a7c.txt` |
+| `87305f7` | the `command -v` sweep, option F, the seeding closure | `ci_final_87305f7.txt` |
+| `0fedfa8` | **THE CLOSING REVISION** — the E4 round | `ci_closing_0fedfa8.txt` |
+
+All three: **21 gates, `ci: all gates passed`, `EXIT=0`**, each in a detached
+worktree with **no `CARGO_TARGET_DIR` export** — the export is what voided the
+texel package's gate 3 (D-672) and what turned this package's own first
+mutation baseline red at `solver_link_check_tests`.
+
+The gate list below is `9ce9a7c`'s, and it is identical in all three.
 
 ```
 === gate 1/21: cargo fmt --all --check
@@ -933,16 +916,24 @@ ci: all gates passed
 EXIT=0
 ```
 
-The gates this package can move, in their own words:
+The gates this package can move, in their own words, **at the closing revision
+`0fedfa8`**:
 
 ```
 config_check: 21 engine config(s), 1 weight table(s), 18 arena config(s), 3 book config(s), 2 solver config(s)
 determinism: ok — 5 seat(s), no difference outside nps/time in any of them
 solver_determinism: PASS — 61 cases, byte-identical transcripts
-file_justification_check: 409 tracked .rs/.sh/.py files, 85 over the cap, all registered in docs/rule9_justifications.md (85 entries)
-decision_key_check: 684 decision keys in docs/decisions.md, no repeat outside the exemption
+movetime: ok — 2 seat(s), all within their own epsilon
+file_justification_check: 413 tracked .rs/.sh/.py files, 87 over the cap, all registered in docs/rule9_justifications.md (87 entries)
+decision_key_check: 687 decision keys in docs/decisions.md, no repeat outside the exemption
 governing_citation_check: 15 governing document(s), 0 proposed path(s)
 ```
+
+**`determinism` and `movetime` are quoted here for the first time**, because
+until D-684 nothing in this package could say what they had adjudicated beyond
+"they exited 0" — they are the two gates whose recorded numbers had no test, and
+whose seam took an option matrix, a red team and a fallen recommendation to
+settle.
 
 **GATE 4's LINE IS THE ONE TO READ TWICE.** It now prints `--locked` and
 `-D warnings`, which is T4's change and T MINOR-3's correction in one line — the
