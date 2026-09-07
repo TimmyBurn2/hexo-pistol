@@ -930,3 +930,135 @@ own test could hear.
   off a list by eye instead of derived by a command, and one gate went red
   because an allowlist was one document stale. Where a property is available,
   the list is the defect — not a belt beside a brace.
+
+## ERRATA
+
+Appended by the pre-Phase-2 sweep (`docs/experiments/pre_phase2_sweep_CLOSURE.md`,
+items H1-H3), append-only. Nothing above is edited and nothing this package did is
+undone. Each entry names the ruling it is written under.
+
+### E-1 — the closing revision is not the revision the CI ran at, and the diff is docs-only (D-674)
+
+§8 cites `tools/ci.sh` at **`5ab5152`** and says so in its own words: *"a log
+cannot quote itself, so what the closing run adjudicates is every line of this
+package except this section and the receipt line that names it."* The package
+CLOSED at **`007f821`**. D-674 gives two ways to hold a package's closing
+revision green, and this is the second: the diff between them is quoted, and it is
+docs-only.
+
+```
+$ git diff --stat 5ab5152..007f821
+ docs/experiments/texel_gaps_CLOSURE.md | 144 ++++++++++++++++++++++++++++-----
+ 1 file changed, 123 insertions(+), 21 deletions(-)
+
+$ git diff --name-status 5ab5152..007f821
+M	docs/experiments/texel_gaps_CLOSURE.md
+```
+
+One file, and it is this one. Nothing under `crates/`, `configs/` or `tools/`
+differs, which is the claim §8 already makes for `5ab5152` against `f73539e` and
+which now covers the closing revision too. `docs/decisions.md` is not in the diff
+either — D-674's wording admits decisions because a closure commonly appends one,
+and this closure did not.
+
+**What this entry does NOT claim.** It does not claim that every gate would pass
+at `007f821`; it claims that no gate's SUBJECT moved between the cited run and the
+close. Gate 21 reads documents, so a docs-only diff is not by itself proof for
+that gate — but `texel_gaps_CLOSURE.md` is not on
+`tools/governing_citation_check.sh`'s `GOVERNING` array (the array is at
+`tools/governing_citation_check.sh:47-63`), so gate 21 does not read it, and the
+only file the diff touches is one no gate reads.
+
+### E-2 — the population behind "525 of 1140", and its relation to "68 of 268" (D-479)
+
+D-479's rule is that a number is bound to the run and the population that produced
+it, and that a document stating a ratio names the terms of BOTH its numerator and
+its denominator. §2 item A and D-666 state two ratios about one guard, and only one
+of them had its population written down. Both are named here.
+
+**"525 of 1140" — the space is stated, closed-form, and holds no engine.** The
+denominator is the set of integer triples `{(w1, w2, w3) : 1 <= w1 < w2 < w3 <= 20}`,
+whose size is `C(20,3) = 1140`. The numerator is the subset satisfying
+`w1 + w2 > w3`, which is the condition for the schema relation `w3 >= w2 + 1`'s
+missing bound `total - 2*top + 1` to exceed the bound `tempo_constraints` already
+carried — derived from the schema, not observed from a run. It is **525**. The bound
+20 is the test's own choice and nothing else in the tree fixes it; the ratio is a
+property of that stated box and moves with it. RE-DERIVED for this entry by an
+instrument sharing nothing with the shipped test — a `python3` `itertools.combinations`
+enumeration rather than `tools/texel/`'s solver path:
+
+```
+|{1<=w1<w2<w3<=20}| = 1140
+  of which w1+w2>w3 : 525
+C(n,3)==268 for n in 3..60: []
+```
+
+**"68 of 268" — the space was never stated, and the two ratios are not about the
+same thing.** `docs/experiments/wp22_phase1_review_rounds_4_5.md:140` reports
+*"68 of 268 admissible committed triples reach the flatness refusal"*, repeated at
+`docs/experiments/wp22_HANDOFF.md:167`. D-666 records it as NOT REPRODUCED with the
+attempted reproducers. This entry adds the part D-666 left implicit and D-479
+requires: **the two ratios name different guards over different populations, so
+neither corrects the other and neither is the other's re-derivation.**
+
+| | denominator | numerator | the guard reached |
+|---|---|---|---|
+| "68 of 268" | "admissible committed triples", a space no instrument in the tree defines and `C(n,3)` cannot produce | 68 | named as **the flatness refusal** — `round_to_schema`'s OUTPUT loop |
+| "525 of 1140" | `1 <= w1 < w2 < w3 <= 20`, stated by the shipped test | 525 | the **INPUT** check, `fit.py:274-278` at `ac61305` |
+
+`docs/research/training_pipeline_2026-09.md` §7 (Gap A) names the input check
+correctly — *"The schema's third relation, `w3 >= w2 + 1`, is enforced **only** by
+`round_to_schema`'s *input* check at `fit.py:255`"* — so the misnaming is the
+review's phrase and not §7's. **That citation's LINE has moved and its MECHANISM
+has not** (D-477): at `ac61305` the input refusal is `fit.py:274-278` and the
+flatness loop is `fit.py:287-293`, both inside `round_to_schema` at `fit.py:263`,
+because this package's own item-A commit lengthened the docstring above them. §2
+above and §7 of `training_pipeline_2026-09.md` are RECORDS and keep the number
+they were written with; this entry states where the guards are now. The two guards behave oppositely under the fix, which
+is why conflating them would have hidden the whole result: under the stated
+quadratic the INPUT guard fires 525 times before the fix and 0 after, while the
+FLATNESS guard fires 0 times either way; over the 240-row synthetic probe the
+FLATNESS guard fires 204 times under both constraint sets and the input guard 0
+times under both. **No constraint set can retire the flatness guard** — it exists
+for Python's half-to-even rounding — so a ratio about it could never have measured
+Gap A's fix, whatever its population turned out to be.
+
+### E-3 — the grant ledger: neither closure doc quotes one, so neither has one (D-673)
+
+D-673: *"a loop grant exists only as the operator's words quoted in the package's
+closure doc; an unrecorded grant did not happen."* Searched at `ac61305` with
+`/usr/bin/grep -rn -i "grant\|operator"` over each package's closure doc and the
+documents it names.
+
+**`texel_gaps` (this document): NO GRANT IS RECORDED, AND NONE WAS NEEDED.** The
+document quotes no operator words anywhere. The standing cap is one fix round per
+review, and this package ran two reviews with one fix round each — REVIEW-impl
+(`texel_gaps_impl_REVIEW.md`, §6) fixed at `8e7fdf0`/`6b85681`/`f73539e`, and the
+scoped confirmation (`texel_gaps_confirm_REVIEW.md`, §7) fixed at `19d565a`. Two
+fix rounds in the package, one per review, and the cap is per review. **No
+exceedance. Nothing to undo, and nothing was undone.**
+
+**`book_v3` (`docs/experiments/book_v3_SUMMARY.md`): A GRANT IS ASSERTED AND NOT
+QUOTED, WHICH IS THE PROCESS FINDING.** `book_v3_SUMMARY.md:12-14` reads *"This
+package stopped once and was resumed by the operator, who returned the blocking
+decision to the session rather than ruling on it. It then ran three more rounds
+under an explicit two-round grant."* The operator's words appear nowhere in that
+document, in `book_v3_registration.md`, or in `matrix_book_v3_storage.md`. Under
+D-673 the grant did not happen, and the sentence rests on nothing a successor can
+check.
+
+**What the finding is, stated exactly, because the obvious reading is the wrong
+one.** The finding is NOT that book_v3 blew a cap. The cap D-481 states is one fix
+round per review, and `book_v3_registration.md:502-509` records exactly one — §13,
+*"This is the package's **one** fix round (D-481)"*. The "three more rounds" of the
+summary sentence are PACKAGE rounds after the R1 stop, which the standing cap does
+not govern and which the asserted grant was therefore not needed for. So the
+defect is the sentence's shape rather than its arithmetic: **it states a budget
+(two) and a spend (three) where neither term is anchored to anything a reader can
+verify, and a successor reading it cannot tell whether a cap was exceeded, whether
+a grant existed, or whether the two numbers are even in the same unit.** That is
+what D-673 exists to make impossible going forward: the grant is the quote or it is
+not a grant.
+
+**Nothing is undone in either package.** D-673's last clause is explicit, and both
+packages' work stands on its own gates.
