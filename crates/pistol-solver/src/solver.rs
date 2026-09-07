@@ -33,7 +33,6 @@ pub enum SolveOutcome {
 /// Everything one solve produced.
 #[derive(Debug, Clone)]
 pub struct SolveResult {
-    /// The value.
     pub outcome: SolveOutcome,
     /// df-pn node visits.
     pub nodes: u64,

@@ -30,6 +30,11 @@ impl GameState {
     /// by rule 4 ([`CoreError::IllegalTurn`]); and a cell that is occupied or
     /// outside the legal region ([`CoreError::OccupiedCell`],
     /// [`CoreError::OutsideLegalRegion`], [`CoreError::FirstStoneNotAtOrigin`]).
+    ///
+    /// # Errors
+    ///
+    /// [`CoreError::GameDecided`], [`CoreError::TurnInProgress`], and whatever
+    /// [`GameState::place`] refuses either stone with.
     pub fn make_turn(&mut self, turn: Turn) -> Result<Outcome, CoreError> {
         if let Outcome::Win { winner, turn } = self.outcome() {
             return Err(CoreError::GameDecided { winner, turn });
@@ -58,6 +63,10 @@ impl GameState {
     ///
     /// With [`HISTORY_DESYNC`] if the history holds a second stone with no
     /// first stone before it.
+    ///
+    /// # Errors
+    ///
+    /// [`CoreError::TurnInProgress`] mid-turn, or [`CoreError::NothingToUndo`].
     pub fn unmake_turn(&mut self) -> Result<Turn, CoreError> {
         if self.phase() != Phase::First {
             return Err(CoreError::TurnInProgress { turn: self.turn() });

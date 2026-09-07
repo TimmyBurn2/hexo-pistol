@@ -43,11 +43,20 @@ impl Budget {
 
     /// Turn a caller's optional budget into a budget, or into the named error
     /// that says one was required.
+    ///
+    /// # Errors
+    ///
+    /// [`EngineError::BudgetMissing`] when there is none.
     pub fn require(budget: Option<Budget>) -> Result<Budget, EngineError> {
         budget.ok_or(EngineError::BudgetMissing)
     }
 
     /// Reject a budget that asks for no work at all.
+    ///
+    /// # Errors
+    ///
+    /// [`EngineError::Config`] naming the budget's own key: zero of anything,
+    /// or a movetime past [`MAX_MOVETIME_MS`].
     pub fn validate(self) -> Result<(), EngineError> {
         let amount = match self {
             Budget::DepthTurns(turns) => u64::from(turns),
@@ -69,6 +78,11 @@ impl Budget {
     }
 
     /// Reject a budget the given mode cannot honour.
+    ///
+    /// # Errors
+    ///
+    /// [`EngineError::InstrumentBudgetUnsupported`] for a budget that is not
+    /// reproducible, in instrument mode.
     pub fn check_supported(self, mode: EngineMode) -> Result<(), EngineError> {
         match mode {
             EngineMode::Instrument if !self.is_reproducible() => {
@@ -79,6 +93,11 @@ impl Budget {
     }
 
     /// The whole gate in one call: present, non-zero, and legal for the mode.
+    ///
+    /// # Errors
+    ///
+    /// Whichever of [`Budget::require`], [`Budget::validate`] and
+    /// [`Budget::check_supported`] refuses first.
     pub fn resolve(budget: Option<Budget>, mode: EngineMode) -> Result<Budget, EngineError> {
         let budget = Budget::require(budget)?;
         budget.validate()?;

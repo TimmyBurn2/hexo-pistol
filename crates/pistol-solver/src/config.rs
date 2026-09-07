@@ -84,6 +84,11 @@ pub struct SolverParams {
 
 impl SolverSection {
     /// Validate into [`SolverParams`], or refuse by name.
+    ///
+    /// # Errors
+    ///
+    /// [`SolverConfigError::Epsilon`], [`SolverConfigError::ZoneOrders`], or
+    /// whichever bound refuses first.
     pub fn validate(&self) -> Result<SolverParams, SolverConfigError> {
         let epsilon =
             Epsilon::new(self.epsilon_num, self.epsilon_den).ok_or(SolverConfigError::Epsilon {
@@ -115,6 +120,10 @@ impl SolverSection {
 
 impl SolverConfigFile {
     /// Validate the version and the section together.
+    ///
+    /// # Errors
+    ///
+    /// [`SolverConfigError::SchemaVersion`], else the section's own refusal.
     pub fn validate(&self) -> Result<SolverParams, SolverConfigError> {
         if self.schema_version != SOLVER_SCHEMA_VERSION {
             return Err(SolverConfigError::SchemaVersion {
@@ -132,6 +141,11 @@ impl SolverConfigFile {
     /// one schema place, and nothing re-reads them from literals). The
     /// grammar is deliberately tiny — five integer keys in one `[solver]`
     /// table plus a schema_version — and anything else is refused by name.
+    ///
+    /// # Errors
+    ///
+    /// A message naming the line: an unknown key, a repeat, a value that is not
+    /// an integer, or a required key the document does not carry.
     pub fn parse(text: &str) -> Result<SolverConfigFile, String> {
         let mut schema_version: Option<u32> = None;
         let mut keys: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();

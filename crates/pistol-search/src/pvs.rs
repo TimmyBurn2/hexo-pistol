@@ -279,17 +279,12 @@ impl<'a> Run<'a> {
             return 0;
         }
         if depth_plies == 0 {
-            // The horizon is a turn boundary or it is not a horizon
-            // (docs/decisions.md D-111). `plies_for` sums the stones each turn
-            // ahead owes, so the ply budget runs out exactly where a turn does,
-            // and a mid-turn horizon would mean that arithmetic — or a future
-            // extension's — had drifted. A diagnostic and not a correctness
-            // invariant, so it is `debug_assert!` under D-129's taxonomy: it
-            // runs at every leaf, and the profiles that read it are `cargo
-            // test`'s and `release-checked`'s (D-128). The other horizon, the
-            // one an empty candidate set reaches, is a correctness invariant and
-            // carries the same statement as an always-on `assert!` under
-            // `NO_CANDIDATES_MID_TURN` below.
+            // The horizon is a turn boundary or it is not a horizon (D-111),
+            // and a mid-turn one would mean `plies_for`'s arithmetic had
+            // drifted. `debug_assert!` because it is a diagnostic under D-129's
+            // taxonomy and runs at every leaf; the other horizon, the one an
+            // empty candidate set reaches, is a correctness invariant and says
+            // the same thing as an always-on assert below.
             debug_assert!(
                 self.position.state().phase() == Phase::First,
                 "pistol-search invariant {STATIC_EVAL_MID_TURN}: the horizon landed at phase 1, \
@@ -430,12 +425,11 @@ impl<'a> Run<'a> {
                 // the ROOT TURN, spelled in turns rather than plies because rule
                 // 3 gives turn 1 one stone and every later turn two, so no ply
                 // threshold names the played turn at every turn number.
-                // A K too large for `usize` is a cap above every possible pool,
-                // which is a cap that never binds -- NOT `truncate(0)`, which an
-                // `as` narrowing would produce on a 32-bit target and which
-                // would empty the set and panic at `cells[0]`. No target is
-                // pinned anywhere in this repository, so the saturation is the
-                // guard rather than an argument about which one this is.
+                // Saturating and not `as`: a K too large for `usize` is a cap
+                // that never binds, where an `as` narrowing gives `truncate(0)`
+                // on a 32-bit target — an empty set and a panic at `cells[0]`.
+                // No target is pinned in this repository, so the saturation is
+                // the guard rather than an argument about which one this is.
                 let cap = usize::try_from(params.safety_net_top_k).unwrap_or(usize::MAX);
                 if params.safety_net_top_k > 0
                     && self.turns_from_root() > 0
@@ -448,16 +442,11 @@ impl<'a> Run<'a> {
                     set.cells.truncate(cap);
                 }
                 // THE TIER-T WIDTH CAP (W1). Same shape as the safety net's
-                // above and for the same reasons: the root turn is exempt
-                // because rule 3 gives turn 1 one stone and every later turn
-                // two, so no ply threshold names the played turn at every turn
-                // number; a truncated node proves a LOWER BOUND and nothing
-                // more, which the store rule below reads off `truncated`; and a
-                // K too large for `usize` saturates rather than narrowing to
-                // zero. It caps TIER T and never the net — the two are
-                // different sets with different widths — and never the FILTERED
-                // or WIN-NOW rows, whose cells are a cover the search proved it
-                // needs.
+                // above and for the same three reasons: the root turn is
+                // exempt, a truncated node proves a LOWER BOUND only, and the
+                // cap saturates. It caps TIER T and never the net — different
+                // sets, different widths — and never the FILTERED or WIN-NOW
+                // rows, whose cells are a cover the search proved it needs.
                 let tier_cap = usize::try_from(params.tier_t_top_k).unwrap_or(usize::MAX);
                 if params.tier_t_top_k > 0
                     && self.turns_from_root() > 0
@@ -563,18 +552,12 @@ impl<'a> Run<'a> {
                 )
             });
             let won = matches!(outcome, PlyOutcome::Win { .. });
-            // LATE MOVE REDUCTIONS (S3). A candidate deep in the UNFORCED
-            // range of a BATCHED row is one the generator ranked last and the
-            // ordering heuristics did not lift: searching it at full depth
-            // costs the same as searching the move that is probably best. It
-            // is scanned shallower instead, and any scan that beats alpha is
+            // LATE MOVE REDUCTIONS (S3). Any scan that beats alpha is
             // re-searched at full depth before it can change anything, so a
-            // reduction can cost time and never a move.
-            //
-            // WHOLE TURNS ONLY: D-111 forbids a horizon that lands between a
-            // turn's two stones, so the reduction is two plies and never one.
-            // FILTERED and WIN-NOW rows are never reduced — a forced reply and
-            // a winning stone are the two things a shallower look loses.
+            // reduction can cost time and never a move. Two plies and never
+            // one, because D-111 forbids a horizon between a turn's stones;
+            // FILTERED and WIN-NOW rows are never reduced, a forced reply and a
+            // winning stone being what a shallower look loses.
             let reduction = self.reduction(row_class, forced_bound, index, depth_plies);
             let score = match outcome {
                 // Rule 4: this stone ended the turn and the game. The distance
@@ -982,21 +965,12 @@ impl<'a> Run<'a> {
         let check_now = match self.stop {
             Stop::Deadline(_) => true,
             Stop::DepthTurns(_) | Stop::Nodes(_) => {
-                // THE MASK RUNS ON THE COUNTER THAT MOVES BY ONE (WP-1.8c §4d).
-                // wp18b §3 put it on the DERIVED total, and a solver call
-                // absorbs its whole node count at once — so an exact-multiple
-                // test on that total steps OVER the multiples and does not
-                // fire. MEASURED: the ON seat spent a mean 156,313 nodes per
-                // position against a 50,000 budget, max 648,192. `search_nodes`
-                // increments once per visit and so lands on every multiple; the
-                // SPENT test below still reads the derived total, so the budget
-                // stopped at is still the shared one.
-                //
-                // The second disjunct bounds the ON seat's overshoot by ONE
-                // visit's own calls — which is what wp18b §3 claimed and did
-                // not have. It is `false` for the whole life of every gate-off
-                // search, so every committed config's node counts are
-                // byte-unchanged.
+                // THE MASK RUNS ON THE COUNTER THAT MOVES BY ONE (WP-1.8c §4d):
+                // a solver call absorbs its whole node count at once, so an
+                // exact-multiple test on the derived total steps over the
+                // multiples and never fires. The second disjunct bounds the ON
+                // seat's overshoot by one visit's own calls, and is `false` for
+                // every gate-off search, so committed node counts do not move.
                 self.search_nodes.is_multiple_of(NODE_CHECK_INTERVAL) || self.solver_nodes > 0
             }
         };

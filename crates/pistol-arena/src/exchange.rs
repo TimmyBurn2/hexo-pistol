@@ -80,6 +80,11 @@ pub(crate) fn first_iteration_nodes(line: &str) -> Option<u64> {
 }
 
 /// Send the position and the budget, and read to `bestmove`.
+///
+/// # Errors
+///
+/// [`ArenaError`] if the engine closes, hangs, or answers with a line this
+/// grammar does not admit.
 pub fn ask(
     channel: &mut Channel,
     moves: &[Turn],

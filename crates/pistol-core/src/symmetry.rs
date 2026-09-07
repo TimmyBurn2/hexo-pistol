@@ -21,7 +21,6 @@ pub struct Symmetry {
 }
 
 impl Symmetry {
-    /// The identity.
     pub const IDENTITY: Symmetry = Symmetry {
         sixths: 0,
         reflected: false,

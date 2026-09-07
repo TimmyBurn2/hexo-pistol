@@ -140,15 +140,11 @@ pub fn found(out: &mut String, written: &Written<'_>) {
     let decided = score::verdict(records, sprt);
     let _ = writeln!(out, "verdict {}", decided.token());
     let _ = writeln!(out, "verdict_unit {}", Unit::Pair.token());
-    // A forfeited run still says what it WOULD have concluded, because hiding
-    // it would be a silent skip. It drops whole PAIRS and not individual games:
-    // the pentanomial is built from consecutive pairs, so filtering one game
-    // out of a flat list shifts every later game by one and every "pair" after
-    // the first forfeit would straddle two different openings — a number nobody
-    // computed, printed on the line that exists to keep the run honest
-    // (docs/decisions.md D-158). How many pairs went is reported, because a
-    // conclusion drawn from a smaller sample than the run played is not the
-    // same conclusion.
+    // A forfeited run still says what it WOULD have concluded; hiding it would
+    // be a silent skip. Whole PAIRS go and not individual games, because
+    // filtering one game out of a flat list makes every later "pair" straddle
+    // two openings (docs/decisions.md D-158). How many went is reported: a
+    // conclusion drawn from a smaller sample is not the same conclusion.
     let (clean, dropped) = if decided == Verdict::InvalidForfeit {
         let kept = score::pairs_without_forfeits(records);
         (

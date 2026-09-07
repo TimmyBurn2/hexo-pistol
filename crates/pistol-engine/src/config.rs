@@ -349,6 +349,11 @@ pub enum TieBreak {
 impl Config {
     /// Read, parse and validate a config file. This is the entry point; it
     /// never yields a configuration that has not passed [`Config::validate`].
+    ///
+    /// # Errors
+    ///
+    /// [`EngineError::Config`] for an unreadable file, else whatever the parse or
+    /// the validation refuses.
     pub fn load(path: &Path) -> Result<Self, EngineError> {
         let text = std::fs::read_to_string(path).map_err(|io| {
             EngineError::config(path.display().to_string(), format!("cannot read: {io}"))
@@ -363,6 +368,11 @@ impl Config {
     /// The blunt name is the point: a caller that skips [`Config::validate`] is
     /// visible at the call site (docs/decisions.md D-17). Prefer
     /// [`Config::load`].
+    ///
+    /// # Errors
+    ///
+    /// [`EngineError::Config`] naming the line and column for syntax, or the key
+    /// path for a schema violation.
     pub fn parse_unvalidated(text: &str) -> Result<Self, EngineError> {
         // Two stages, for two kinds of error. The first parse reports syntax
         // with a line and column; the second reports schema violations with the

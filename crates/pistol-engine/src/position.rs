@@ -55,6 +55,11 @@ impl PositionSpec {
     /// wrong with a stated stone list is an [`EngineError::IllegalPosition`],
     /// because a stone list is a claim about a whole position rather than about
     /// one move.
+    ///
+    /// # Errors
+    ///
+    /// [`EngineError`] when the stated position is not reachable through the rules:
+    /// the replay's own refusal, named at the ply that broke.
     pub fn replay(&self) -> Result<GameState, EngineError> {
         let state = match self {
             PositionSpec::Start { moves } => replay_moves(moves)?,

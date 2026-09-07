@@ -140,6 +140,12 @@ fn path(word: &str, what: &str) -> Result<PathBuf, ArenaError> {
 }
 
 /// Read a report.
+///
+/// # Errors
+///
+/// [`ArenaError::Config`] under the key `replay report`, naming what the
+/// document says where this grammar wanted something else, starting with its
+/// first word.
 pub fn read(text: &str, source_sha256: String) -> Result<Transcript, ArenaError> {
     let head = text
         .split('\n')

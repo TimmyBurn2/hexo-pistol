@@ -81,6 +81,10 @@ impl GameState {
     /// already-won position is therefore not refused here, and a caller that must
     /// not stand on one asks [`GameState::outcome`] — which is what the engine
     /// does, in both directions of its `position` verb (docs/decisions.md D-84).
+    ///
+    /// # Errors
+    ///
+    /// Whatever [`GameState::place`] refuses the first offending ply with.
     pub fn from_plies(plies: &[Coord]) -> Result<GameState, CoreError> {
         let mut state = GameState::new_game();
         for &at in plies {
@@ -156,6 +160,11 @@ impl GameState {
     /// Refuses, by name: a stone after the game is decided, a stone on an
     /// occupied cell, and a stone outside the legal region — which on an empty
     /// board is the origin alone (rules 3, 4, 5).
+    ///
+    /// # Errors
+    ///
+    /// [`CoreError::GameDecided`], [`CoreError::OccupiedCell`],
+    /// [`CoreError::FirstStoneNotAtOrigin`] or [`CoreError::OutsideLegalRegion`].
     pub fn place(&mut self, at: Coord) -> Result<PlyOutcome, CoreError> {
         if let Outcome::Win { winner, turn } = self.outcome {
             return Err(CoreError::GameDecided { winner, turn });
@@ -214,6 +223,10 @@ impl GameState {
     /// # Panics
     ///
     /// With [`HISTORY_DESYNC`] if the board does not hold the recorded stone.
+    ///
+    /// # Errors
+    ///
+    /// [`CoreError::NothingToUndo`] when no ply has been played.
     pub fn undo(&mut self) -> Result<Coord, CoreError> {
         // Peeked, not popped: the board comes off first, so no failure can
         // leave the state half-taken-back.

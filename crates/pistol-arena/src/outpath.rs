@@ -7,6 +7,10 @@ use crate::error::ArenaError;
 ///
 /// The creation and the existence check are ONE syscall (`O_EXCL`), so there
 /// is no window in which two runs can both believe they own the path.
+///
+/// # Errors
+///
+/// [`ArenaError::Io`] if the path already exists or cannot be created.
 pub fn claim(path: &Path) -> Result<File, ArenaError> {
     OpenOptions::new()
         .write(true)
@@ -39,6 +43,10 @@ pub fn claim(path: &Path) -> Result<File, ArenaError> {
 /// run dispatched in the window between this process's claim and this removal
 /// is refused although the path is free milliseconds later (docs/decisions.md
 /// D-200).
+///
+/// # Errors
+///
+/// [`ArenaError::Io`] if the claimed file cannot be removed.
 pub fn abandon(path: &Path) -> Result<(), ArenaError> {
     std::fs::remove_file(path)
         .map_err(|io| ArenaError::io(format!("removing the claimed {}", path.display()), io))

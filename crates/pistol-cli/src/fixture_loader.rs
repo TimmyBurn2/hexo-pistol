@@ -11,6 +11,11 @@ use crate::fixtures::{
 };
 
 /// Read and parse a fixture.
+///
+/// # Errors
+///
+/// [`FixtureError`] carrying the path if the file cannot be read, else
+/// whatever [`parse`] refuses.
 pub fn load(path: &Path) -> Result<Suite, FixtureError> {
     let text = fs::read_to_string(path).map_err(|io| FixtureError {
         path: path.to_path_buf(),
@@ -34,6 +39,11 @@ struct OpenCase {
 }
 
 /// Parse a fixture whose text is already in hand.
+///
+/// # Errors
+///
+/// [`FixtureError`] naming the line: an unknown directive, a malformed case,
+/// or a `require` the case count cannot satisfy.
 pub fn parse(text: &str, path: &Path) -> Result<Suite, FixtureError> {
     let mut required: Option<usize> = None;
     let mut cases: Vec<Case> = Vec::new();

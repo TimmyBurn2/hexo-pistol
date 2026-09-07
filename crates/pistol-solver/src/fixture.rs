@@ -85,6 +85,11 @@ impl FixtureCase {
 }
 
 /// Load and validate a fixture file.
+///
+/// # Errors
+///
+/// [`FixtureError`] naming the line: an unknown directive, a case with no
+/// name, or a field the grammar does not admit.
 pub fn load(text: &str) -> Result<Vec<FixtureCase>, FixtureError> {
     let mut cases = Vec::new();
     let mut name: Option<String> = None;

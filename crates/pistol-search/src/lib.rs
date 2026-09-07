@@ -1,22 +1,10 @@
-//! `pistol-search` — the classical search.
-//!
-//! Principal variation search with iterative deepening, a transposition table,
-//! move ordering and budget handling. No MCTS, and in Stage 0 no quiescence, no
-//! threat generation and none of the reductions the research report parks in
-//! later stages.
-//!
-//! Two invariants constrain everything here:
-//!
-//! - the determinism law (CLAUDE.md rule 4) — in instrument mode nothing
-//!   nondeterministic may influence move choice, so no unseeded hash iteration
-//!   on a choice path, no time-based tie-breaks, no thread races;
-//! - the search candidate policy is config, never a literal, and it is a
-//!   different concept from the rules' radius-8 legal region
-//!   ([`candidate_cells`], docs/decisions.md D-20).
+//! `pistol-search` — the classical search: PVS, iterative deepening, a
+//! transposition table, move ordering, threat-only quiescence, budgets. No
+//! MCTS.
 //!
 //! # Units
 //!
-//! Depth is measured internally in **plies** — a turn is two same-side plies
+//! Depth is measured internally in **plies** — a turn is two same-side plies,
 //! with the phase bit in the position key — and externally in **turns**
 //! (docs/decisions.md D-9). Everything a caller sees is turns: the budget, the
 //! reported depth, the mate distance, and the principal variation.
@@ -28,9 +16,10 @@ pub mod fallback;
 pub mod info;
 pub mod params;
 pub mod score;
-pub mod search; // Public per docs/decisions.md D-353 (`U2_node_protocol.md` §5.35, U2-Z item
+// Public per docs/decisions.md D-353 (`U2_node_protocol.md` §5.35, U2-Z item
 // 17): the one entry point the differential gate's expensive half drives from
 // an integration test. A permanent surface commitment.
+pub mod search;
 pub mod staged;
 pub mod stop;
 pub mod tt;

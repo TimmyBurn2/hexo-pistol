@@ -77,6 +77,11 @@ pub struct GenerateSection {
 
 impl RandomOpeningsConfig {
     /// Read and validate a document.
+    ///
+    /// # Errors
+    ///
+    /// [`RandomOpeningsError::Read`] if the file cannot be read, else whatever
+    /// [`RandomOpeningsConfig::parse`] refuses.
     pub fn load(path: &Path) -> Result<RandomOpeningsConfig, RandomOpeningsError> {
         let text = std::fs::read_to_string(path).map_err(|io| RandomOpeningsError::Read {
             path: path.to_path_buf(),
@@ -86,6 +91,11 @@ impl RandomOpeningsConfig {
     }
 
     /// Parse and validate a document held as text.
+    ///
+    /// # Errors
+    ///
+    /// [`RandomOpeningsError::Schema`] for syntax or an unknown key, else
+    /// whatever [`RandomOpeningsConfig::validate`] refuses.
     pub fn parse(text: &str) -> Result<RandomOpeningsConfig, RandomOpeningsError> {
         // Two stages, for two kinds of error, the way pistol-engine's config
         // does it: the first parse reports syntax with a line and column, the
@@ -113,6 +123,11 @@ impl RandomOpeningsConfig {
     /// keep the generator's work bounded and its output inside the arithmetic
     /// D-175 rests on. A validator that only runs on one of two doors is not a
     /// validator (CLAUDE.md rule 3).
+    ///
+    /// # Errors
+    ///
+    /// [`RandomOpeningsError::SchemaVersion`], else the first field bound the
+    /// document breaks, named by key.
     pub fn validate(&self) -> Result<(), RandomOpeningsError> {
         if self.schema_version != RANDOM_OPENINGS_SCHEMA_VERSION {
             return Err(RandomOpeningsError::SchemaVersion {

@@ -5,6 +5,10 @@
 /// message: `--corpus --out-dir x` is a forgotten value, and silently taking
 /// `--out-dir` as the corpus path would run the tool on a file named after a
 /// flag.
+///
+/// # Errors
+///
+/// The usage text, for a word that is not a `--flag` or a flag with no value.
 pub fn pairs<'a>(words: &[&'a str], usage: &str) -> Result<Vec<(&'a str, &'a str)>, String> {
     let mut found = Vec::new();
     let mut rest = words;
@@ -25,6 +29,10 @@ pub fn pairs<'a>(words: &[&'a str], usage: &str) -> Result<Vec<(&'a str, &'a str
 }
 
 /// The one value of a flag that must appear exactly once.
+///
+/// # Errors
+///
+/// The usage text, for a flag that is absent or given more than once.
 pub fn one<'a>(found: &[(&'a str, &'a str)], name: &str, usage: &str) -> Result<&'a str, String> {
     let mut matches = found.iter().filter(|(flag, _)| *flag == name);
     let Some((_, value)) = matches.next() else {
@@ -58,6 +66,10 @@ pub fn optional<'a>(found: &[(&'a str, &'a str)], name: &str) -> Result<Option<&
 }
 
 /// Refuse a flag this command does not have.
+///
+/// # Errors
+///
+/// The usage text, naming the unknown flag and what this command does take.
 pub fn only(found: &[(&str, &str)], allowed: &[&str], usage: &str) -> Result<(), String> {
     for (flag, _) in found {
         if !allowed.contains(flag) {

@@ -24,7 +24,7 @@ pub enum Death {
 /// A closed pipe and an exited process are TWO EVENTS: the reader thread
 /// ends at EOF on stdout, which a child can produce while continuing to
 /// run. An unbounded `wait()` there blocks in a place the watchdog cannot
-/// see — control has already left [`Channel::receive`] — so an engine that
+/// see — control has already left [`crate::channel::Channel::receive`] — so an engine that
 /// closed its output and kept running hung the whole arena with no report
 /// written at all, defeating both the liveness device and the promise that
 /// an abandoned run keeps its evidence (docs/decisions.md D-159, D-160).

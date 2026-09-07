@@ -116,6 +116,11 @@ impl Turn {
     ///
     /// Refuses one cell given twice: a turn places two stones, and a cell holds
     /// one (rules 3 and 5).
+    ///
+    /// # Errors
+    ///
+    /// [`CoreError::IllegalTurn`] carrying [`PAIR_OF_ONE_CELL`] when the two cells
+    /// are the same.
     pub fn pair(a: Coord, b: Coord) -> Result<Turn, CoreError> {
         if a == b {
             return Err(CoreError::IllegalTurn {

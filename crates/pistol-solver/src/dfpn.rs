@@ -526,22 +526,17 @@ impl<'a> Search<'a> {
         threat: &mut ThreatState,
         moves: &[Turn],
     ) -> Vec<(Turn, Key128)> {
-        // The key is a pure XOR of one `cell_key` per stone with the side and
-        // phase words, so a child's key is the parent's with two stones and the
-        // side turned over — no board mutation, no `ThreatState` traffic. The
-        // phase word cancels because the turn starts and ends at `Phase::First`.
+        // A pure XOR, so a child's key is the parent's with two stones and the
+        // side turned over; the phase word cancels because the turn starts and
+        // ends at `Phase::First`.
         //
-        // THE PRECONDITION IS THAT THE TURN DOES NOT COMPLETE A WIN, and it is
-        // not the weaker "both stones are placed": `GameState::place` restores
+        // THE PRECONDITION IS THAT THE TURN DOES NOT COMPLETE A WIN, not the
+        // weaker "both stones are placed": `GameState::place` restores
         // `Phase::First` on a winning ply and returns BEFORE turning the side
-        // over, so a pair whose second stone completes six places both stones,
-        // lands at `Phase::First`, and leaves the side unflipped — this formula
-        // would then be wrong by exactly the two side words. Both call sites
-        // discharge it: the OR node has already answered
-        // `can_win_this_turn(attacker, Two)` with a leaf proof and the AND node
-        // `can_win_this_turn(defender, Two)` with a leaf disproof, and that
-        // query is complete for two-stone completions. The debug assert below
-        // and the descent assert in both loops are what keep it discharged.
+        // over, so a winning pair would leave this formula wrong by exactly the
+        // two side words. Both call sites discharge it through
+        // `can_win_this_turn(_, Two)`, which is complete for two-stone
+        // completions; the asserts below keep it discharged.
         let mover = state.to_move();
         let base = state
             .key()

@@ -98,6 +98,10 @@ impl Board {
     /// nothing else: whether the cell is *legal* is [`Board::is_legal_placement`],
     /// and whether the resulting position is *reachable* is
     /// [`crate::GameState::place`]'s question (docs/decisions.md D-35).
+    ///
+    /// # Errors
+    ///
+    /// [`CoreError::OccupiedCell`] if a stone already stands there.
     pub fn apply(&mut self, at: Coord, player: Player) -> Result<(), CoreError> {
         match self.stones.entry(at) {
             Entry::Occupied(_) => Err(CoreError::OccupiedCell { at }),
@@ -110,6 +114,10 @@ impl Board {
     }
 
     /// Take the stone off `at`, returning its player.
+    ///
+    /// # Errors
+    ///
+    /// [`CoreError::UnoccupiedCell`] if no stone stands there.
     pub fn undo(&mut self, at: Coord) -> Result<Player, CoreError> {
         let player = self
             .stones
@@ -174,6 +182,11 @@ impl Board {
     /// refuses anything beyond [`LEGAL_RADIUS`] of all of them under rule 5
     /// ([`CoreError::OutsideLegalRegion`]). Collapsing the two into one message
     /// would make the empty-board diagnostic a lie about which rule bit.
+    ///
+    /// # Errors
+    ///
+    /// [`CoreError::OccupiedCell`], [`CoreError::FirstStoneNotAtOrigin`] on an
+    /// empty board, or [`CoreError::OutsideLegalRegion`].
     pub fn check_placement(&self, at: Coord) -> Result<(), CoreError> {
         if self.is_occupied(at) {
             return Err(CoreError::OccupiedCell { at });

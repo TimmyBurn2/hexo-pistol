@@ -53,6 +53,10 @@ pub struct Channel {
 
 impl Channel {
     /// Start `binary --config config` and begin reading its answers.
+    ///
+    /// # Errors
+    ///
+    /// [`ArenaError::Spawn`] if the process will not start.
     pub fn start(label: &str, binary: &Path, config: &Path) -> Result<Channel, ArenaError> {
         let mut child = Command::new(binary)
             .arg("--config")
@@ -139,6 +143,10 @@ impl Channel {
     }
 
     /// Send one line. A broken pipe is a closed engine, not an I/O surprise.
+    ///
+    /// # Errors
+    ///
+    /// [`Received::Closed`] when the pipe is gone or the write fails.
     pub fn send(&mut self, line: &str) -> Result<(), Received> {
         let Some(stdin) = self.stdin.as_mut() else {
             return Err(Received::Closed);
@@ -153,6 +161,10 @@ impl Channel {
     ///
     /// [`ArenaError::Hung`] on expiry — never a game result. `opening` and
     /// `turn` travel in so the refusal can say where the run stopped.
+    ///
+    /// # Errors
+    ///
+    /// [`ArenaError::Hung`] on the timeout, naming the opening and turn.
     pub fn receive(
         &mut self,
         timeout_ms: u64,

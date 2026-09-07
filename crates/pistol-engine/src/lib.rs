@@ -1,29 +1,10 @@
-//! `pistol-engine` — composition root and the seam everything else wraps.
+//! `pistol-engine` — composition root, and the only seam the future API layer
+//! adapts (CLAUDE.md rule 11).
 //!
-//! This crate owns the [`Engine`] trait (`new_game` / `set_position` /
-//! `go(Budget) -> SearchOutcome`) and the wiring that builds a search from a
-//! config. It is the only seam the future API layer adapts (CLAUDE.md rule 11):
-//! pistol-api stays empty until that layer is specified, and the line protocol
-//! in pistol-cli is this trait spelled as text (docs/decisions.md D-5).
-//!
-//! - [`config`] — the complete, explicit, schema-versioned configuration. Every
-//!   field is required, unknown fields are rejected, and no tunable has a
-//!   code-side default.
-//! - [`budget`] — the closed set of ways to tell the engine when to stop. An
-//!   absent budget is an error, never a fallback.
-//! - [`error`] — the named failures. Nothing in this workspace fails silently.
-//! - [`engine`] — the trait, and what each verb promises.
-//! - [`position`] — a stated position, and the replay through the rules that is
-//!   the only way one becomes a game (docs/decisions.md D-42).
-//! - [`instance`] — [`Pistol`], the engine those parts compose into.
-//!
-//! # Determinism
-//!
-//! In instrument mode nothing here may influence a move choice
-//! nondeterministically (CLAUDE.md rule 4). This crate reads a clock in exactly
-//! one place — translating a wall-clock budget into the instant it expires at,
-//! which instrument mode refuses to be given at all (docs/decisions.md D-22,
-//! D-73) — and holds no other nondeterministic state.
+//! It owns the [`Engine`] trait and the wiring that builds a search from a
+//! config. The line protocol in `pistol-cli` is this trait spelled as text
+//! (docs/decisions.md D-5), and `pistol-api` stays empty until that layer is
+//! specified.
 
 pub mod budget;
 pub mod config;

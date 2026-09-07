@@ -22,7 +22,7 @@ use crate::params::CandidatePolicy;
 /// function cannot express (it takes no threat state). This is deliberate and
 /// named (`U2_node_protocol.md` §5.35, U2-Z item 21): the two callers that
 /// reach this function under `Staged` — [`crate::fallback::fallback_turn`]
-/// (U2-Z item 8) and [`crate::search::Searcher::check_root`]'s no-candidates
+/// (U2-Z item 8) and `Searcher::check_root`'s no-candidates
 /// check — both need only a bounded, threat-state-free reachability answer,
 /// never the search's real per-node set.
 pub fn candidate_cells(board: &Board, policy: CandidatePolicy) -> Vec<Coord> {

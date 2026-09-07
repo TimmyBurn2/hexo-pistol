@@ -150,6 +150,12 @@ pub(crate) fn ball(max_radius: u32) -> Vec<Coord> {
 /// discards the WHOLE candidate and the next one is drawn from the next words
 /// of the same stream — a resample rule that is a function of the draws made so
 /// far and of nothing else, which is what makes the run reproducible.
+///
+/// # Errors
+///
+/// Whatever [`RandomOpeningsConfig::validate`] refuses, and
+/// [`RandomOpeningsError`] if the draw cannot fill the book within its own
+/// bounded attempts.
 pub fn generate(config: &RandomOpeningsConfig) -> Result<Book, RandomOpeningsError> {
     // Revalidated, not trusted. This is `pub` and every field of the config is
     // `pub`, so the struct-literal door exists whether or not anyone uses it

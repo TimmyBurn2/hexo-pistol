@@ -223,7 +223,7 @@ pub fn score_token(score: i32) -> String {
     }
 }
 
-/// Whether [`one_line`] would leave this text exactly as it is.
+/// Whether `one_line` would leave this text exactly as it is.
 ///
 /// The folding below is LOSSY and not reversible: a control character becomes
 /// `?`, and `?` is a character a path may legitimately contain. That is the

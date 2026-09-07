@@ -10,6 +10,11 @@ impl Config {
     ///
     /// [`Config::load`] runs this for you; call it directly only when you
     /// parsed with [`Config::parse_unvalidated`].
+    ///
+    /// # Errors
+    ///
+    /// [`EngineError::Config`] naming the first key whose value the schema does
+    /// not admit, starting with `schema_version`.
     pub fn validate(&self) -> Result<(), EngineError> {
         if self.schema_version != SCHEMA_VERSION {
             return Err(EngineError::config(
@@ -195,6 +200,11 @@ impl crate::config::SolverSection {
     /// keys here, the six solver keys through the solver's own validator
     /// (`SolverConfigFile::parse` is its single parser, so the validation
     /// is the same one the selftest and the gates run).
+    ///
+    /// # Errors
+    ///
+    /// [`EngineError::Config`] naming `solver.on_search_path` when it is armed
+    /// under a policy whose threat state the trigger cannot read.
     pub fn validate(&self, search: &crate::config::SearchSection) -> Result<(), EngineError> {
         if self.on_search_path && matches!(search.candidate_policy, CandidatePolicy::Radius { .. })
         {

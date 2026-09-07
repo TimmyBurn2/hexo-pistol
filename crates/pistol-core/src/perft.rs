@@ -17,6 +17,11 @@ pub const PERFT_OVERFLOW: &str = "PERFT_OVERFLOW";
 /// # Panics
 ///
 /// With [`PERFT_OVERFLOW`] if the count exceeds `u64`.
+///
+/// # Errors
+///
+/// [`CoreError::TurnInProgress`] at any depth on a half-played position, which
+/// is not one this count is defined on (docs/decisions.md D-50).
 pub fn perft(state: &mut GameState, depth_turns: u32) -> Result<u64, CoreError> {
     if depth_turns == 0 {
         // Counted at a turn boundary or not counted at all. The turn-level API is

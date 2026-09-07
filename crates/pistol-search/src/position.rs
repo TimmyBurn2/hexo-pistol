@@ -73,12 +73,15 @@ impl Position {
         self.placed.clear();
     }
 
-    /// The game.
+    /// The authority. Everything else this type holds — the eval's running
+    /// sum, the threat state — is a cache maintained against it, so a reader
+    /// deciding what is true asks here (docs/decisions.md D-42).
     pub fn state(&self) -> &GameState {
         &self.state
     }
 
-    /// The stones.
+    /// Rule 5's own answer about legality, reached through the game rather
+    /// than kept beside it (CLAUDE.md rule 2).
     pub fn board(&self) -> &Board {
         self.state.board()
     }
@@ -108,6 +111,11 @@ impl Position {
     ///
     /// A refused stone leaves the evaluation untouched, so a caller that handles
     /// the refusal is standing on the position it started from.
+    ///
+    /// # Errors
+    ///
+    /// Whatever [`GameState::place`] refuses, before the eval or the threat state
+    /// has been touched.
     pub fn place(&mut self, at: Coord) -> Result<PlyOutcome, CoreError> {
         let mover = self.state.to_move();
         let outcome = self.state.place(at)?;

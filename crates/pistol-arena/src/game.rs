@@ -20,6 +20,11 @@ pub struct Rules<'a> {
 ///
 /// `a_is_p1` decides the seating; `channels` are indexed by ENGINE (`0` is A),
 /// which is how compute and forfeits are attributed.
+///
+/// # Errors
+///
+/// [`ArenaError`] if a seat stops talking or breaks the protocol. An ILLEGAL
+/// move is a forfeit recorded in the game, not an error.
 pub fn play(
     opening: &Opening,
     a_is_p1: bool,

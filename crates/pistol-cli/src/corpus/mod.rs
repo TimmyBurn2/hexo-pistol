@@ -36,7 +36,6 @@ pub const NO_GAMES: &str = "this corpus holds no games: an empty document is ref
 /// A corpus this tool refuses to read, and where it gave up.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CorpusError {
-    /// The file.
     pub path: PathBuf,
     /// The 1-based line, where the problem is on one.
     pub line: Option<usize>,
@@ -73,6 +72,11 @@ impl std::error::Error for CorpusError {}
 /// A rules-level failure is a different thing and is *not* fatal: those games
 /// are excluded, listed by hash with their named error in a committed header,
 /// and counted in the stats block, which is the opposite of silent.
+///
+/// # Errors
+///
+/// [`CorpusError`] carrying the line and column of the first record this
+/// grammar cannot read.
 pub fn read(path: &Path, text: &str) -> Result<Vec<Record>, CorpusError> {
     let refuse = |line: Option<usize>, column: Option<usize>, why: String| CorpusError {
         path: path.to_path_buf(),

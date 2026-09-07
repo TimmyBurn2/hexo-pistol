@@ -42,6 +42,10 @@ impl Weights {
     /// load-time half of docs/decisions.md D-21, which config validation
     /// deliberately does not check. Relative paths resolve against the process's
     /// working directory, exactly as the operator wrote them.
+    ///
+    /// # Errors
+    ///
+    /// [`EvalError::WeightsUnreadable`], else whatever [`Weights::parse`] refuses.
     pub fn load(path: &Path) -> Result<Weights, EvalError> {
         let text = fs::read_to_string(path).map_err(|io| EvalError::WeightsUnreadable {
             path: path.to_path_buf(),
@@ -55,6 +59,11 @@ impl Weights {
     /// Two stages, for two kinds of error: the first parse reports syntax with a
     /// line and column, the second reports schema violations with the key path
     /// `serde_path_to_error` recovers.
+    ///
+    /// # Errors
+    ///
+    /// [`EvalError`] naming the line and column for syntax, or the key path for a
+    /// schema violation or an entry out of band.
     pub fn parse(text: &str) -> Result<Weights, EvalError> {
         let document: toml::Value = toml::from_str(text).map_err(error::from_toml_syntax)?;
         let document: Document =

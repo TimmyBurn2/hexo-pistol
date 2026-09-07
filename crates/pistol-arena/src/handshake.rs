@@ -27,6 +27,11 @@ impl Identity {
 }
 
 /// Shake hands, and refuse an engine a strength claim may not come from.
+///
+/// # Errors
+///
+/// [`ArenaError::Handshake`] naming the engine and what its identity block
+/// said, and [`ArenaError::Hung`] if it never answers.
 pub fn shake(channel: &mut Channel, timeout_ms: u64) -> Result<Identity, ArenaError> {
     let label = channel.label().to_string();
     let refuse = |why: String| ArenaError::Handshake {

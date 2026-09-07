@@ -5,6 +5,11 @@ use std::str::FromStr;
 /// Refused: an empty string, a sign, leading zeros on anything but `0` itself,
 /// spaces, and a value the target type cannot hold. The explanation is the caller's
 /// to wrap with whatever the count was for.
+///
+/// # Errors
+///
+/// A message naming the spelling this refuses: empty, signed, a leading zero,
+/// whitespace, or a value the type cannot hold.
 pub fn plain_count<T: FromStr>(text: &str) -> Result<T, String> {
     if text.is_empty() {
         return Err(String::from(

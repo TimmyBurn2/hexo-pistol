@@ -102,6 +102,12 @@ impl Searcher {
     /// config before it gets here, but a [`SearchParams`] can be built by
     /// anyone, and a search that quietly repaired one would be the silent
     /// fallback CLAUDE.md rule 3 forbids.
+    ///
+    /// # Errors
+    ///
+    /// [`SearchError::Params`] naming the key: a zero or unrepresentable radius, a
+    /// tier-T count outside `{2, 3}`, a `q_depth_turns` past this build's ceiling,
+    /// or a solver armed under a policy that carries no threat state.
     pub fn new(params: SearchParams, eval: Box<dyn Eval>) -> Result<Searcher, SearchError> {
         let (key, radius) = match params.candidate_policy {
             CandidatePolicy::Radius { radius } => ("search.candidate_policy.radius", radius),
@@ -115,14 +121,11 @@ impl Searcher {
                 "must be at least 1: a radius of 0 reaches only occupied cells",
             ));
         }
-        // The other end, and it is this crate's to refuse rather than the
-        // engine's: the engine's ceiling binds documents, and a `SearchParams`
-        // built in code never passes through it. A radius no `Coord` can step is
-        // not a wide search, it is a radius the geometry cannot express — and
-        // the generator used to answer it by quietly substituting the largest
-        // one it could, which is the silent repair rule 3 forbids. This bound is
-        // about what a coordinate can hold and is never compared with the rules'
-        // legal region (docs/decisions.md D-20, D-77).
+        // This crate's to refuse, not the engine's: the engine's ceiling binds
+        // documents and a `SearchParams` built in code never passes through it.
+        // The generator used to substitute the largest radius it could, which is
+        // the silent repair rule 3 forbids. About what a coordinate can hold,
+        // never compared with the rules' legal region (D-20, D-77).
         if i16::try_from(radius).is_err() {
             return Err(SearchError::params(
                 key,
@@ -306,6 +309,11 @@ impl Searcher {
     ///
     /// The report is a borrow, so a caller can print it, collect it, or ignore
     /// it without the search allocating on its behalf.
+    ///
+    /// # Errors
+    ///
+    /// [`SearchError`] from the root check: a decided position, or a budget this
+    /// build cannot honour.
     pub fn search(
         &mut self,
         state: &GameState,

@@ -17,28 +17,13 @@ const HOT_MIN: u32 = WINDOW_LEN - TURN_STONES;
 /// The own-stone count at which a SINGLE stone completes the window.
 const WIN_IN_ONE_PLY: u32 = WINDOW_LEN - 1;
 
-// The assert that is not vacuous, in `pistol_core::window`'s idiom. Both
-// constants above are DERIVED, so an assert restating a definition would pin
-// nothing; these are claims about the CLASSES. First: the greatest live count
-// this module maintains — three — stays BELOW hot, or the doc's "disjoint from
-// hot" is false and one window is in two sets that are supposed to be apart.
-// Second: exactly ONE count separates hot from a win in one ply, which is what
-// makes the sets nest the way the table above says. Both are claims about
-// `WIN_LEN` against `TURN_STONES`, and both fail if D-243's flip clause fires
-// without this module being revisited, which is the whole point of writing them
-// down here (docs/decisions.md D-262).
-//
-// THE THIRD CONJUNCT GUARDS THE DERIVATION AND NOT THE VALUE, and it is here
-// because the first two do not. Re-spell `HOT_MIN` as `WIN_IN_ONE_PLY - 1` and
-// nothing moves today — it is still 4 — but at `TURN_STONES = 3` the first two
-// read `3 < 4 && 5 == 5` and PASS while the hot threshold stays at 4 where
-// D-243's counting identity says it must become 3: the flip clause fires
-// silently, which is the one outcome this assert exists to prevent. The
-// counting identity itself is `HOT_MIN + TURN_STONES == WINDOW_LEN` — a turn's
-// stones fill a hot window's slack exactly — and stating it holds under ANY
-// spelling of `HOT_MIN`. At the constants as they stand it restates the
-// definition above and pins nothing; its whole content is that it survives a
-// re-derivation and fails when the flip fires (docs/decisions.md D-262).
+// Three claims about the CLASSES, not restatements of the derived constants
+// above: the greatest live count stays below hot, exactly one count separates
+// hot from a win in one ply, and a turn's stones fill a hot window's slack
+// exactly. The third guards the DERIVATION where the first two guard the
+// values, and it is the one that fires when D-243's flip clause does.
+// docs/decisions.md D-262 carries the argument for all three, including why
+// the third is honestly vacuous at the constants as they stand.
 const _: () = assert!(
     3 < HOT_MIN && WIN_IN_ONE_PLY == HOT_MIN + 1 && HOT_MIN + TURN_STONES == WINDOW_LEN,
     "hot must sit above every maintained live count, one stone below the win, and a turn's \

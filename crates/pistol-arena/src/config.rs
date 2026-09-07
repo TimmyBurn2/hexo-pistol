@@ -194,6 +194,11 @@ pub struct EngineSection {
 
 impl ArenaConfig {
     /// Read, parse and validate. Never yields an unvalidated configuration.
+    ///
+    /// # Errors
+    ///
+    /// [`ArenaError::Config`] for an unreadable file, else whatever the parse
+    /// or the validation refuses.
     pub fn load(path: &Path) -> Result<Self, ArenaError> {
         let text = std::fs::read_to_string(path).map_err(|io| {
             ArenaError::config(path.display().to_string(), format!("cannot read: {io}"))
@@ -207,6 +212,11 @@ impl ArenaConfig {
     ///
     /// The blunt name is the point (docs/decisions.md D-17). Prefer
     /// [`ArenaConfig::load`].
+    ///
+    /// # Errors
+    ///
+    /// [`ArenaError::Config`] naming the line and column for syntax, or the key
+    /// path for a schema violation.
     pub fn parse_unvalidated(text: &str) -> Result<Self, ArenaError> {
         // Two stages for two kinds of error, as pistol-engine does it: syntax
         // with a line and column, then schema violations with the key path

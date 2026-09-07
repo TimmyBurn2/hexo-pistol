@@ -141,6 +141,11 @@ impl std::error::Error for SelftestError {}
 /// error rather than a failed case: the fixture or the config is broken, and
 /// reporting it as a tactical miss would be the quiet kind of wrong (CLAUDE.md
 /// rule 3).
+///
+/// # Errors
+///
+/// [`SelftestError`] naming the case and line: an engine a config will not
+/// build, or a case whose answer is not what the fixture states.
 pub fn run(configs: &[(PathBuf, Config)], suite: &Suite) -> Result<Report, SelftestError> {
     let mut carried: Vec<(PathBuf, Pistol)> = Vec::new();
     for (path, config) in configs {

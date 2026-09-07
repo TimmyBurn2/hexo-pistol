@@ -60,7 +60,7 @@ pub struct StagedSet {
     /// prefix. `crate::ordering::order` is never called under `Staged`
     /// (`U2_node_protocol.md` §5.4): the caller may promote the table's move
     /// only within `cells[forced..]`, never across this boundary
-    /// ([`StagedSet::promote_table_move`]).
+    /// (`StagedSet::promote_table_move`).
     pub forced: usize,
     /// Whether a BATCHED or BATCHED-lost row just filled found Tier T empty
     /// and used the quiet-ball safety net instead (this module's doc). `false`

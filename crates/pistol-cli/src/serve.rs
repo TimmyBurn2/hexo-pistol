@@ -22,6 +22,11 @@ const QUOTED_BYTES: usize = 32;
 ///
 /// An I/O failure is returned rather than swallowed, and the answers already
 /// written for the failing line are not retried (CLAUDE.md rule 3).
+///
+/// # Errors
+///
+/// An [`io::Error`] from the input or the output. A refused protocol line is
+/// an `error` line to the client and not an error here.
 pub fn serve(
     session: &mut Session<'_>,
     input: &mut dyn BufRead,

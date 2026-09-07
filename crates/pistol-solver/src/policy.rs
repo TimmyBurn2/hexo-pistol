@@ -60,25 +60,20 @@ pub fn threat_pairs(
 ) {
     let mut candidates = Vec::new();
     candidate_cells(threat, attacker, &mut candidates);
-    // ARM A'S DEF-PLAN FILTER, AS A PREDICATE (WP-1.8c leg 3). The set and the
-    // ORDER are the ones the apply/undo filter emitted — the same `i < j` walk
-    // over the same candidates — so df-pn's first-minimum tie-break sees the
-    // same sequence. What changes is the test.
+    // ARM A'S DEF-PLAN FILTER, AS A PREDICATE (WP-1.8c leg 3): the same `i < j`
+    // walk in the same order, so df-pn's first-minimum tie-break sees the same
+    // sequence. Only the test changes.
     //
-    // A pair creates a hot window iff, after it, some live attacker window
-    // holds four or more own stones. Own counts never fall, and attacker stones
-    // never kill an attacker window's liveness, so from a live window at own k
-    // the pair reaches four exactly two ways: k == 3 and the pair supplies one
-    // of that window's empties (the `cells_raising_to_hot` class), or k == 2
-    // and the pair supplies TWO of them. k <= 1 cannot reach four with two
-    // stones. The classes NEST (`sets.rs`), so "hot" here is exactly
-    // `own >= 4 && live` and those two routes are all of them.
+    // Own counts never fall and attacker stones never kill an attacker window's
+    // liveness, so a pair reaches four from a live window at own k exactly two
+    // ways — k == 3 with one supplied empty (`cells_raising_to_hot`), or k == 2
+    // with two. k <= 1 cannot. The classes nest (`sets.rs`), so those two
+    // routes are all of them.
     //
-    // `hot_already` is the general statement for a position that is already
-    // hot, where the committed filter passes every pair. A search node past
-    // step 1 is never such a position, but this function is public and the
-    // three-site agreement test drives it directly on fixture positions that
-    // ARE — so the arm is exercised rather than dead.
+    // `hot_already` covers a position that is already hot, which a search node
+    // past step 1 never is — but this function is public and the three-site
+    // agreement test drives it on fixture positions that ARE, so the arm is
+    // exercised rather than dead.
     out.clear();
     let hot_already = !threat.hot_windows(attacker).is_empty();
     let mut raisers = Vec::new();
@@ -194,16 +189,11 @@ pub fn blocking_pairs(
     out: &mut Vec<Turn>,
 ) {
     out.clear();
-    // THE FAST PATH (WP-1.8b §7a's bench-abort fix, semantics-preserving):
-    // a covering pair CONTAINS a minimal cover, and a pair is exactly two
-    // cells, so the covering-pair set is CONSTRUCTED from the minimal
-    // covers — each one-cell cover `a` with every legal partner `x`, each
-    // two-cell cover as itself — instead of scanned out of ~10^5 legal
-    // pairs with a per-pair window check (the spec form, ~26 ms per AND
-    // visit MEASURED at the anchor's t38; this form is the same SET for a
-    // small multiple of |minimal covers| x |legal| constructions).
-    // `covers_plans` stays as the specification, and the pinned agreement
-    // test below now drives BOTH directions of the equivalence.
+    // THE FAST PATH (WP-1.8b §7a, semantics-preserving): a covering pair
+    // CONTAINS a minimal cover, so the set is CONSTRUCTED from the minimal
+    // covers rather than scanned out of ~10^5 legal pairs (the spec form,
+    // MEASURED at ~26 ms per AND visit). `covers_plans` stays as the
+    // specification and the agreement test below drives both directions.
     let covers = threat.blocking_covers(attacker.opponent(), crate::HitBudget::Two);
     let crate::Cover::Minimal(minimal_covers) = covers else {
         panic!(

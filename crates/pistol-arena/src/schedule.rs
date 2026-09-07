@@ -23,6 +23,11 @@ pub struct Played {
 /// Returns the completed prefix even when a run is abandoned, so that a hang on
 /// the last game of a long run does not discard everything before it
 /// (docs/decisions.md D-160).
+///
+/// # Errors
+///
+/// The first game's [`ArenaError`] in slot order, so two runs of one
+/// configuration report the same failure.
 pub fn run(
     config: &ArenaConfig,
     openings: &Openings,

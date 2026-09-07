@@ -24,6 +24,11 @@ const RADIUS: i16 = {
 /// refusal (rule 4). A position in the middle of a turn is
 /// [`CoreError::TurnInProgress`]: it owes one stone, which is a ply, and
 /// [`GameState::place`] is what places it.
+///
+/// # Errors
+///
+/// [`CoreError::TurnInProgress`] when the position sits between a turn's two
+/// stones. A decided position yields an empty list rather than an error.
 pub fn generate_turns(state: &GameState) -> Result<Vec<Turn>, CoreError> {
     if state.outcome().is_decided() {
         return Ok(Vec::new());

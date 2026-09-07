@@ -17,6 +17,11 @@ use crate::transcript::{RecordedGame, Transcript};
 /// reason the generation path does (docs/decisions.md D-160) — and a caller must
 /// treat a pass with any game missing as no answer at all, because a criterion
 /// over SOME of a report's games is a criterion over a sample nobody registered.
+///
+/// # Errors
+///
+/// The first game's [`ArenaError`], in slot order, so two runs of one report
+/// report the same failure.
 pub fn run(transcript: &Transcript, workers: usize) -> (Result<(), ArenaError>, Replayed) {
     let started = std::time::Instant::now();
     let total = transcript.games.len();
@@ -223,6 +228,11 @@ fn walk(
 /// is the generation path's own function and digests the binary before it
 /// spawns anything, so a decoy at the recorded path is refused here too
 /// (docs/decisions.md D-252).
+///
+/// # Errors
+///
+/// [`ArenaError::IdentityDrift`] naming the seat whose engine is no longer
+/// the one the report was taken with.
 pub fn verify_engines(transcript: &Transcript) -> Result<(), ArenaError> {
     for slot in 0..2 {
         let section = &transcript.engines[slot];

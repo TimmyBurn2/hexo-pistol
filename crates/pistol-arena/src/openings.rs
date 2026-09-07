@@ -58,6 +58,12 @@ pub struct Openings {
 ///
 /// `turn_cap` is passed in because the rule it participates in — that a cap must
 /// leave room for at least one engine move — needs both documents to state it.
+///
+/// # Errors
+///
+/// [`ArenaError::OpeningsDigest`] if the body does not hash to the header's
+/// claim, and [`ArenaError::Openings`] for an unreadable file, a malformed
+/// line, a repeat up to a symmetry, or a window the book cannot fill.
 pub fn load(path: &Path, take: usize, skip: usize, turn_cap: u32) -> Result<Openings, ArenaError> {
     let bytes = std::fs::read(path)
         .map_err(|io| ArenaError::openings(path, 0, format!("cannot read: {io}")))?;

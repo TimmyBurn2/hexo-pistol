@@ -64,6 +64,11 @@ impl SplitMix64 {
     /// `bound` is a cell count and is never zero; a zero would be a bug in the
     /// caller rather than a document this tool was given, so it is an assertion
     /// and not a refusal.
+    ///
+    /// # Errors
+    ///
+    /// [`RandomOpeningsError`] if every one of the bounded rejection tries lands
+    /// in the discarded tail, which is a draw the run refuses rather than biases.
     pub fn below(&mut self, bound: u64) -> Result<u64, RandomOpeningsError> {
         assert!(bound > 0, "a sampling bound is a cell count and is never 0");
         let widest = u64::MAX - rejection_remainder(bound);

@@ -101,6 +101,11 @@ pub struct Selection {
 /// balance evidence is counted over all of them — an opening's outcome record is
 /// a fact about the opening, and narrowing it to the rated band would throw away
 /// evidence without making it truer.
+///
+/// # Errors
+///
+/// A static message when no candidate carries an opening, or when the surviving
+/// classes cannot fill the selection.
 pub fn select(replayed: &[Candidate<'_>]) -> Result<Selection, &'static str> {
     let mut class_games: BTreeMap<Vec<(Coord, Player)>, (usize, usize)> = BTreeMap::new();
     for candidate in replayed {

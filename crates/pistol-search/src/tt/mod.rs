@@ -46,6 +46,11 @@ impl Table {
     /// an operator edits. It does not restate the engine's power-of-two rule:
     /// that one is config policy (docs/decisions.md D-19), and this constructor
     /// answers only for what it can build.
+    ///
+    /// # Errors
+    ///
+    /// [`SearchError::Params`] naming `search.tt_bytes` when it will not hold one
+    /// bucket.
     pub fn new(tt_bytes: u64) -> Result<Table, SearchError> {
         if tt_bytes < BUCKET_BYTES {
             return Err(SearchError::params(

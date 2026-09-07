@@ -17,6 +17,11 @@ pub const SHA256_HEX_LEN: usize = 64;
 
 impl ArenaConfig {
     /// Apply every rule `serde` could not.
+    ///
+    /// # Errors
+    ///
+    /// [`ArenaError::Config`] naming the first key whose value this schema does
+    /// not admit, starting with `schema_version`.
     pub fn validate(&self) -> Result<(), ArenaError> {
         if self.schema_version != ARENA_SCHEMA_VERSION {
             return Err(ArenaError::config(
@@ -193,15 +198,11 @@ impl ArenaConfig {
             if engine.binary.as_os_str().is_empty() {
                 return Err(ArenaError::config(format!("{key}.binary"), "no path given"));
             }
-            // A NAME IS NOT A PATH, and the two halves of the binding disagree
-            // about which file it means. `identity::digest_of` reads it with
-            // `std::fs::read`, which resolves against the working directory;
-            // `Channel::start` runs it with `Command::new`, which for a name
-            // containing no separator execs through `$PATH`. Where both resolve,
-            // the digest attests one file and the games are played by another,
-            // which is the whole defect D-283 exists to close, wearing the shape
-            // that closed it. Refused HERE because it is a spelling property of
-            // the document, checkable offline (D-21).
+            // A NAME IS NOT A PATH: `digest_of` reads it against the working
+            // directory and `Channel::start` execs it through `$PATH`, so where
+            // both resolve the digest attests one file and the games are played
+            // by another — D-283's own defect. Refused HERE because it is a
+            // spelling property of the document, checkable offline (D-21).
             if !engine.binary.as_os_str().as_encoded_bytes().contains(&b'/') {
                 return Err(ArenaError::config(
                     format!("{key}.binary"),

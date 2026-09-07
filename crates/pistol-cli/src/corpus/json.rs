@@ -59,6 +59,10 @@ impl<'a> Scanner<'a> {
     }
 
     /// Refuse here, by name.
+    ///
+    /// # Errors
+    ///
+    /// Always: a [`ScanError`] at the current offset carrying `why`.
     pub fn refuse<T>(&self, why: impl Into<String>) -> Result<T, ScanError> {
         Err(ScanError::new(self.at, why))
     }
@@ -77,6 +81,10 @@ impl<'a> Scanner<'a> {
     }
 
     /// Consume this exact byte, or refuse naming what was expected.
+    ///
+    /// # Errors
+    ///
+    /// [`ScanError`] naming the wanted byte and what stood there, or the end.
     pub fn expect(&mut self, wanted: u8) -> Result<(), ScanError> {
         match self.peek() {
             Some(byte) if byte == wanted => {
@@ -101,6 +109,10 @@ impl<'a> Scanner<'a> {
     }
 
     /// A quoted string, with no escape ever accepted.
+    ///
+    /// # Errors
+    ///
+    /// [`ScanError`] for a missing opening quote, an escape, or no closing one.
     pub fn string(&mut self) -> Result<&'a str, ScanError> {
         self.skip_space();
         let opened = self.at;
@@ -129,6 +141,11 @@ impl<'a> Scanner<'a> {
     /// Refuses a leading `+`, a leading zero, a fraction and an exponent. Those
     /// are all valid JSON in some position and none of them is in this schema,
     /// so accepting any of them would be accepting a different document.
+    ///
+    /// # Errors
+    ///
+    /// [`ScanError`] for no digits, a leading zero, a sign the schema does not
+    /// admit, or a value past `i64`.
     pub fn integer(&mut self) -> Result<i64, ScanError> {
         self.skip_space();
         let from = self.at;
@@ -173,6 +190,10 @@ impl<'a> Scanner<'a> {
     }
 
     /// Refuse anything after the object.
+    ///
+    /// # Errors
+    ///
+    /// [`ScanError`] carrying [`TRAILING_INPUT`] if anything follows.
     pub fn expect_end(&mut self) -> Result<(), ScanError> {
         match self.peek() {
             None => Ok(()),

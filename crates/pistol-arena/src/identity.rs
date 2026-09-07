@@ -22,6 +22,12 @@ pub struct EngineIdentity {
 }
 
 /// The SHA-256 of a file this run depends on.
+///
+/// # Errors
+///
+/// [`ArenaError::Io`] if the path cannot be read or is not a regular file —
+/// a FIFO would block this call forever, which is a hang where a refusal
+/// belongs.
 pub fn digest_of(path: &Path) -> Result<String, ArenaError> {
     // A REGULAR FILE, CHECKED BEFORE IT IS READ. `fs::read` on a FIFO BLOCKS
     // until a writer appears, and this call happens before any channel exists,
@@ -53,15 +59,17 @@ pub fn digest_of(path: &Path) -> Result<String, ArenaError> {
 /// weights digest, and a log that cannot recover those cannot be re-run. It
 /// also fails the run early on an engine a strength claim may not come from,
 /// rather than on the first game.
+///
+/// # Errors
+///
+/// [`ArenaError::EngineBinaryDigestMismatch`] or the config's own mismatch,
+/// and whatever the handshake refuses.
 pub fn capture(engine: &EngineSection, timeout_ms: u64) -> Result<EngineIdentity, ArenaError> {
-    // THE BINARY IS BOUND BY CONTENT AND THE CHECK COMES FIRST, before the
-    // process starts. A path is not an identity — the same path is a different
-    // program after every build — and the stale-binary case is the one that
-    // exits 0: a decoy sitting where cargo did not write is a regular file, is
-    // executable, speaks the protocol, and plays every game (docs/decisions.md
-    // D-252's reproducer). Refusing here rather than at validation keeps
-    // validation pure and offline (D-21), and refusing before the spawn means a
-    // run this document does not describe never produces a game.
+    // THE BINARY IS BOUND BY CONTENT AND THE CHECK COMES FIRST. A path is not
+    // an identity, and the stale-binary case is the one that exits 0: a decoy
+    // is a regular file, is executable, speaks the protocol, and plays every
+    // game (D-252's reproducer). Here rather than at validation keeps validation
+    // offline (D-21); before the spawn means an undescribed run plays nothing.
     let binary_sha256 = digest_of(&engine.binary)?;
     if binary_sha256 != engine.binary_sha256 {
         return Err(ArenaError::EngineBinaryDigestMismatch {
@@ -96,6 +104,10 @@ pub fn capture(engine: &EngineSection, timeout_ms: u64) -> Result<EngineIdentity
 /// (the id lines attest values from the bytes each process actually read). The
 /// handshake is deterministic by construction — nothing in it is measured or
 /// timed — so on an honest run this can never fire.
+///
+/// # Errors
+///
+/// [`ArenaError::IdentityDrift`] naming the field that moved.
 pub fn verify_respawn(
     engine: &EngineSection,
     expected: &EngineIdentity,

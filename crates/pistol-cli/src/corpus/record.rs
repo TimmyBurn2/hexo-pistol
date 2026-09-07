@@ -81,6 +81,11 @@ impl Record {
 const KEYS: [&str; 5] = ["game_hash", "moves", "winner", "source", "elo"];
 
 /// Read one line.
+///
+/// # Errors
+///
+/// [`super::json::ScanError`] at the offset: `EXPECTED_OBJECT` when the line is not this
+/// document at all, else the token that went wrong inside one.
 pub fn parse(line: &str) -> Result<Record, super::json::ScanError> {
     let mut scanner = Scanner::new(line);
     // Named rather than left to `expect`'s generic message: this is the refusal

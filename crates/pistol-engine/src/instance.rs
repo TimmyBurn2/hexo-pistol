@@ -32,6 +32,11 @@ impl Pistol {
     /// [`EngineError::Config`] against `eval.weights_file` — the loud load-time
     /// half of D-21. Relative paths resolve against the process's working
     /// directory, exactly as the operator wrote them.
+    ///
+    /// # Errors
+    ///
+    /// [`EngineError`] from the validation, from a config key nothing consumes,
+    /// from an unreadable weight table, or from the search refusing its params.
     pub fn from_config(config: Config) -> Result<Pistol, EngineError> {
         config.validate()?;
         check_consumed(&config)?;
@@ -129,14 +134,11 @@ impl Engine for Pistol {
                 .search(&self.state, stop, report)
                 .map_err(from_search);
         }
-        // THE CENSUS LIFETIME IS EXACTLY THIS `go`, and every limb of that is
-        // load-bearing (docs/experiments/wp20b_design.md §6.1). The searcher's
-        // collector does not stop on its own and `new_game`'s `clear` does not
-        // touch it, so without the disarm every later `go` in this session
-        // would pay the fold and accumulate rows across `go` boundaries. The
-        // take comes FIRST because taking after the disarm panics, and both
-        // run on the ERROR path too — a refused search that left the collector
-        // armed is the same leak by a quieter route.
+        // THE CENSUS LIFETIME IS EXACTLY THIS `go` (wp20b_design.md §6.1). The
+        // collector does not stop on its own and `new_game` does not clear it,
+        // so without the disarm every later `go` accumulates rows. The take
+        // comes FIRST because taking after the disarm panics, and both run on
+        // the ERROR path — a refused search that left it armed is the same leak.
         self.searcher.collect_trigger_census();
         let answer = self
             .searcher

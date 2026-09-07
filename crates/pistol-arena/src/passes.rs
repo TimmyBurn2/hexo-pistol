@@ -11,6 +11,11 @@ use crate::label_cache::LabelCache;
 /// a writer appears, with no channel yet in existence and so no watchdog to end
 /// it — a hang where a refusal belongs (docs/decisions.md D-252's sibling case
 /// in `identity::digest_of`).
+///
+/// # Errors
+///
+/// [`ArenaError::Io`] or [`ArenaError::Config`] if the source is unreadable
+/// or not a regular file, else whatever the transcript reader refuses.
 pub fn read_report(source: &Path) -> Result<crate::transcript::Transcript, ArenaError> {
     let meta = std::fs::metadata(source)
         .map_err(|io| ArenaError::io(format!("reading {}", source.display()), io))?;
@@ -38,6 +43,11 @@ pub fn read_report(source: &Path) -> Result<crate::transcript::Transcript, Arena
 /// the census. Claimed by the caller before any game, for the reason `--out`
 /// is (docs/decisions.md D-200): a census file discovered to be unwritable
 /// after sixty hours of asking is sixty hours of rows nothing can hold.
+///
+/// # Errors
+///
+/// [`ArenaError`] from reading the report, from a seat that will not answer,
+/// or from a write to the claimed output.
 pub fn capture(
     source: &Path,
     out_path: &Path,
@@ -101,6 +111,11 @@ pub fn capture(
 }
 
 /// Turn one capture into the training corpus: a pure file transform.
+///
+/// # Errors
+///
+/// [`ArenaError`] if either input cannot be read or parsed, if the capture and
+/// the report are not of one run, or if the output cannot be written.
 pub fn labels(
     capture_path: &Path,
     report: &Path,

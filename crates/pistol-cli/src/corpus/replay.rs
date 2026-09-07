@@ -14,6 +14,11 @@ pub const PROBE_REFUSAL_IMPOSSIBLE: &str = "PROBE_REFUSAL_IMPOSSIBLE";
 /// [`Turn::Single`], which makes pistol-core assert that the stone *wins*: a
 /// truncated turn and an abandoned one look identical here and are told apart
 /// there (`SINGLE_THAT_DOES_NOT_WIN`).
+///
+/// # Errors
+///
+/// A [`Verdict`] when the ply list cannot be grouped into whole turns —
+/// `SINGLE_THAT_DOES_NOT_WIN` for a lone stone that ends nothing.
 pub fn group_turns(moves: &[Coord]) -> Result<Vec<GroupedTurn>, Verdict> {
     let mut turns = Vec::new();
     let mut index = 0usize;

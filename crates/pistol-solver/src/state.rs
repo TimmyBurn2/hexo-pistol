@@ -39,6 +39,50 @@ const fn slot(side: Player) -> usize {
 /// is restored from a log rather than recomputed, and a log can only be
 /// replayed in reverse. Every caller unwinds in that order already; a caller
 /// that cannot rebuilds through [`ThreatState::new`] and `apply`.
+///
+/// # The store is not exported, and that is CHECKED
+///
+/// The packed key, its hasher, the line store and the class sets are
+/// `pub(crate)` and their modules are private. That is not tidiness: the whole
+/// ground for the store being its own file is that a different store replaces
+/// exactly that file and nothing else, and every internal name a consumer can
+/// reach is a commitment that replacement would have to unwind
+/// (docs/decisions.md D-254, D-261). It has happened once — the per-window
+/// hashed table D-254 adopted became per-axis line bitboards behind the same
+/// queries.
+///
+/// A doc sentence about visibility is falsified by any commit that
+/// re-publishes what it names, silently and with every gate green. The first
+/// example goes through the public door and compiles; the two after it reach
+/// for the store's own and must not.
+///
+/// ```
+/// use pistol_core::window::Window;
+/// use pistol_core::{Axis, Coord};
+/// let window = Window::new(Axis::ConstR, Coord::new(0, 0)).unwrap();
+/// let state = pistol_solver::ThreatState::new();
+/// let _ = state.masks(window);
+/// ```
+///
+/// ```compile_fail
+/// use pistol_core::window::Window;
+/// use pistol_core::{Axis, Coord};
+/// let window = Window::new(Axis::ConstR, Coord::new(0, 0)).unwrap();
+/// let state = pistol_solver::ThreatState::new();
+/// let _ = pistol_solver::table::empty_cells(window, state.masks(window));
+/// ```
+///
+/// ```compile_fail
+/// let _ = pistol_solver::line::unpack(0);
+/// ```
+///
+/// A bare `compile_fail` passes on ANY compilation error, and the error-code
+/// form does not repair it: this toolchain accepts `compile_fail,E0999` on code
+/// whose real error is `E0603`. What makes the second example non-vacuous is
+/// the FIRST: every line of it appears there and compiles, so the only line it
+/// can fail on is the one that differs. WHAT THIS DOES NOT COVER: a re-export
+/// of the same item under another path leaves both examples failing, so that
+/// door is judged at the `pub use` list and is not mechanized (D-261).
 #[derive(Debug, Clone, Default)]
 pub struct ThreatState {
     table: LineStore,

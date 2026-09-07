@@ -19,6 +19,11 @@ pub struct Seat<'a> {
 ///
 /// `drive` receives the channels indexed exactly as `seats` was, which is how
 /// compute and forfeits are attributed.
+///
+/// # Errors
+///
+/// Whatever the spawn, the handshake or `drive` refuses. The teardown runs on
+/// the error path too.
 pub fn with_seats<const N: usize, T>(
     seats: &[Seat<'_>; N],
     hang_timeout_ms: u64,

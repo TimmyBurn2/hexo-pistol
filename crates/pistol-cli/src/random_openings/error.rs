@@ -48,14 +48,12 @@ pub enum RandomOpeningsError {
     RadiusPastCeiling {
         /// The radius asked for.
         max_radius: u32,
-        /// The ceiling.
         ceiling: u32,
     },
     /// A book size past the typo ceiling, or of no openings at all.
     CountPastCeiling {
         /// The count asked for.
         n_openings: usize,
-        /// The ceiling.
         ceiling: usize,
     },
     /// The pool of distinct openings ran dry before the book was full.
@@ -139,7 +137,6 @@ pub enum RandomOpeningsError {
     },
     /// An output could not be written.
     Write {
-        /// The path.
         path: PathBuf,
         /// The operating system's reason.
         why: String,

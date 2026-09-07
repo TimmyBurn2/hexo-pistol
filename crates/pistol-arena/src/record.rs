@@ -44,7 +44,7 @@ pub enum End {
     /// One side stopped playing legally, and lost for it.
     Forfeit(ForfeitReason),
     /// The INSTRUMENT declined to read this game: a search's first iteration
-    /// ran past [`FIRST_ITERATION_MULTIPLE`] times the node budget it was
+    /// ran past [`crate::exchange::FIRST_ITERATION_MULTIPLE`] times the node budget it was
     /// given, so the budget was not a bound on that position and the
     /// equal-per-side-compute premise rule 6 rests on does not hold for it
     /// (`docs/audit/repo_audit_2026-09.md` A-01, D-578,
