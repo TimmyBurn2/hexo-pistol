@@ -172,6 +172,98 @@ for CASE in m_both:both m_neither:neither; do
   esac
 done
 
+# --- the sealbot seat's clock contract ---------------------------------------
+# The seat reads `sealbot_shim: ready` BEFORE it starts timing, and REQUIRES a
+# whole-millisecond `engine_time_ms` in every reply (docs/decisions.md D-699).
+# Both are hard rule 3 refusals, and a refusal that never fires is not a pin, so
+# each is driven by a stub that breaks exactly one of them.
+write_bad_stub() { # $1 = name, $2 = preamble line or "", $3 = reply JSON
+  {
+    printf 'import sys\n'
+    [ -n "$2" ] && printf 'sys.stdout.write(%s + "\\n"); sys.stdout.flush()\n' "\"$2\""
+    printf 'for line in sys.stdin:\n'
+    printf '    line = line.strip()\n'
+    printf '    if not line or line == "quit":\n'
+    printf '        break\n'
+    printf '    sys.stdout.write(%s + "\\n")\n' "'$3'"
+    printf '    sys.stdout.flush()\n'
+  } > "$SCRATCH/badstub_$1.py"
+}
+GOOD_MOVES='"moves": [[1, 1], [-1, 1]]'
+write_bad_stub silent    ""                      "{$GOOD_MOVES, \"engine_time_ms\": 0}"
+write_bad_stub wrongword "sealbot_shim: rrready"  "{$GOOD_MOVES, \"engine_time_ms\": 0}"
+write_bad_stub notime    "sealbot_shim: ready"    "{$GOOD_MOVES}"
+write_bad_stub floattime "sealbot_shim: ready"    "{$GOOD_MOVES, \"engine_time_ms\": 0.5}"
+
+# The wanted text is the REFUSAL's own distinctive wording, not the field name:
+# `engine_time_ms` is a key in every transcript record, so grepping for it
+# matches whether or not the contract was enforced. A mutant that dropped the
+# requirement passed an earlier draft of this loop for exactly that reason.
+for CASE in "silent:engine timeout" "wrongword:before the first request" \
+            "notime:no whole-millisecond" "floattime:no whole-millisecond"; do
+  STUB="${CASE%%:*}"
+  WANT="${CASE##*:}"
+  # A short seat timeout: `silent` is meant to time out, and a 10 s wait per
+  # case would make this suite one nobody runs.
+  sed -e "s#tools/sealbot/tests/stub_sealbot.py\", \"[^\"]*\"#$SCRATCH/badstub_$STUB.py\"#" \
+      -e "s#^turn_timeout_seconds = 10.0#turn_timeout_seconds = 1.0#" \
+      -e "s#matchserver/m1\"#matchserver/bad_$STUB\"#" \
+      "$SCRATCH/m1.toml" > "$SCRATCH/bad_$STUB.toml"
+  tools/sealbot/run_match.sh "$SCRATCH/bad_$STUB.toml" >"$SCRATCH/bad_$STUB.log" 2>&1 || true
+  # The seat cannot answer, so the referee forfeits it -- a POSITIVE fact, and
+  # the record names which half of the contract was broken.
+  BAD_SAID="$(cat "$SCRATCH/bad_$STUB.log" "$SCRATCH/bad_$STUB"/g*.jsonl 2>/dev/null || true)"
+  case "$BAD_SAID" in
+    *"$WANT"*) : ;;
+    *) fail "a sealbot stub breaking '$STUB' was not refused naming '$WANT': $(printf '%s' "$BAD_SAID" | head -c 400)" ;;
+  esac
+  # AND the referee acted on it: a refusal nobody scored is not a refusal.
+  case "$BAD_SAID" in
+    *forfeited*) : ;;
+    *) fail "the '$STUB' stub's breach was named but no forfeit was scored: $(printf '%s' "$BAD_SAID" | head -c 400)" ;;
+  esac
+  printf '  ok: the sealbot seat refuses the %s stub and forfeits it, naming "%s"\n' "$STUB" "$WANT"
+done
+
+# THE CONTROL for the four above: the GOOD stub answers, and its engine time
+# reaches the transcript as a number and not as a null. Without this, four
+# refusals are equally explained by a seat that refuses everything.
+GOOD_TIMES="$(python3 - "$SCRATCH/m1" <<'ENDPYCTRL'
+import json, pathlib, sys
+seen = []
+for f in sorted(pathlib.Path(sys.argv[1]).glob("g*.jsonl")):
+    for line in f.read_text().splitlines():
+        r = json.loads(line)
+        if r.get("event") == "turn" and r["engine"] == "stub-sealbot":
+            seen.append(r["engine_time_ms"])
+print(json.dumps(seen))
+ENDPYCTRL
+)"
+case "$GOOD_TIMES" in
+  *null*) fail "the good sealbot stub's engine_time_ms reached the transcript as null: $GOOD_TIMES" ;;
+  "[]") fail "no stub-sealbot turns in m1's transcript, so the control asserts nothing" ;;
+  *) printf '  ok: the good stub reports engine_time_ms into the transcript: %s\n' "$GOOD_TIMES" ;;
+esac
+
+# --- one spelling of the readiness line, across all three producers ----------
+# CI CANNOT DRIVE THE REAL SHIM: it needs a sealbot checkout this repository
+# does not contain, so every test above runs against the stub. The one thing a
+# gate can check is that the three files agree on the word — if `sealbot_shim.py`
+# and `sealbot_client.rs` ever drift apart, the stub keeps passing and every
+# real anchor forfeits its first turn. Same shape as the `info totals` consumer
+# register in tools/SHELL_CHECKLIST.md: one grammar, several homes.
+READY_LINE='sealbot_shim: ready'
+for HOME_FILE in tools/sealbot/sealbot_shim.py tools/sealbot/tests/stub_sealbot.py \
+                 tools/sealbot/matchserver/src/sealbot_client.rs; do
+  grep -qF -- "$READY_LINE" "$HOME_FILE" \
+    || fail "$HOME_FILE does not spell the readiness line '$READY_LINE'"
+done
+# And the real shim must write it to STDOUT, which is the stream the client
+# reads; writing it only to stderr is the defect this whole change removes.
+grep -q 'for stream in (sys.stdout, sys.stderr)' tools/sealbot/sealbot_shim.py \
+  || fail "sealbot_shim.py no longer writes the readiness line to stdout as well as stderr"
+printf '  ok: all three producers spell the readiness line alike, and the shim writes it to stdout\n'
+
 # --- the overwrite refusal (item 12: a refusal is exit 2, by name) -----------
 set +e
 REFUSAL_OUTPUT="$(tools/sealbot/run_match.sh "$SCRATCH/m1.toml" 2>&1)"

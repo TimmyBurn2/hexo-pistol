@@ -13,8 +13,15 @@ reached over a simpler contract:
     stdin:  one JSON object per request:
             {"setup": [[q, r], ...], "moves": [[q, r], ...],
              "time_limit": <seconds>}
-    stdout: one JSON object per reply:
-            {"moves": [[q, r], ...]}
+    stdout: `sealbot_shim: ready` once the bot is constructed, THEN one JSON
+            object per reply:
+            {"moves": [[q, r], ...], "engine_time_ms": <int>}
+
+The readiness line is written to stdout AND stderr, and the client reads the
+stdout one before it starts timing: without it the interpreter start and the
+extension import land inside the first measured answer of every game
+(docs/decisions.md D-699). `engine_time_ms` is the bot's own elapsed time for
+the answer, in whole milliseconds.
 
 `setup` is the server-played opening (the origin cross); `moves` is every
 stone after it, in true play order. `time_limit` comes with every request —
@@ -29,6 +36,10 @@ from __future__ import annotations
 
 import json
 import sys
+import time
+
+
+READY = "sealbot_shim: ready"
 
 
 def main() -> int:
@@ -45,8 +56,14 @@ def main() -> int:
     from game import HexGame
 
     bot = MinimaxBot(default_limit)
-    sys.stderr.write("sealbot_shim: ready\n")
-    sys.stderr.flush()
+    # BOTH STREAMS, deliberately. stdout is what the client reads before it
+    # starts the clock, so the interpreter start, the extension import and this
+    # construction are not charged to the first answer of a game. stderr keeps
+    # the line the run's per-game `.stderr` files have always carried, which is
+    # what proves one shim process per game.
+    for stream in (sys.stdout, sys.stderr):
+        stream.write(READY + "\n")
+        stream.flush()
 
     for line in sys.stdin:
         line = line.strip()
@@ -62,8 +79,18 @@ def main() -> int:
         for q, r in request.get("moves", []):
             game.make_move(int(q), int(r))
         bot.time_limit = float(request.get("time_limit", default_limit))
+        started = time.monotonic()
         result = bot.get_move(game)
-        reply = {"moves": [[int(q), int(r)] for q, r in result]}
+        # The bot's OWN elapsed time, not the server's wall: the difference
+        # between the two is the seat's overhead, and until this was reported
+        # nothing could measure it (docs/decisions.md D-699). It is `get_move`'s
+        # whole span, so it carries sealbot's untimed setup and its rollback --
+        # it is the engine's elapsed time for the answer, not pure search.
+        engine_time_ms = int((time.monotonic() - started) * 1000)
+        reply = {
+            "moves": [[int(q), int(r)] for q, r in result],
+            "engine_time_ms": engine_time_ms,
+        }
         sys.stdout.write(json.dumps(reply) + "\n")
         sys.stdout.flush()
     return 0

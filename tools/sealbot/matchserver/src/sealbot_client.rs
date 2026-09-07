@@ -4,9 +4,17 @@
 //! this client only speaks the request/reply shape:
 //!
 //! ```text
+//! preamble `sealbot_shim: ready`, once, before any request
 //! request  {"setup": [[q,r], ...], "moves": [[q,r], ...], "time_limit": s}
-//! reply    {"moves": [[q,r], ...]}
+//! reply    {"moves": [[q,r], ...], "engine_time_ms": n}
 //! ```
+//!
+//! The preamble is read in `new_game`, BEFORE the clock starts, so the shim's
+//! interpreter start and extension import are not charged to the first answer
+//! of a game — the defect docs/decisions.md D-699 records at 26 ms per game.
+//! `engine_time_ms` is the engine's own elapsed time for the answer and is
+//! REQUIRED: without it nothing separates this seat's search from its
+//! overhead, which is the state D-699 stops on.
 //!
 //! `setup` is the server-played opening (the origin cross); `moves` is every
 //! stone after it, in true play order. The stones come back in sealbot's own
@@ -20,6 +28,9 @@ use serde_json::{Value, json};
 
 use crate::client::{EngineClient, EngineFailure, EngineReply, LineProcess};
 use crate::deadline;
+
+/// The line the shim writes once its bot is constructed, on stdout and stderr.
+const READY: &str = "sealbot_shim: ready";
 
 /// One configured sealbot seat.
 pub struct SealbotClient {
@@ -103,6 +114,26 @@ impl SealbotClient {
                 why: format!("serialising the request: {error}"),
             })
     }
+    /// Read the shim's readiness line, before anything is timed.
+    ///
+    /// The deadline is `turn_timeout_seconds`, which is what `PistolClient`'s
+    /// own handshake already uses — a start-up that outlasts the seat's answer
+    /// budget is the same failure as an answer that does, and it needs no
+    /// second knob (CLAUDE.md hard rule 1).
+    fn await_ready(&mut self) -> Result<(), EngineFailure> {
+        let timeout = self.timeout_seconds;
+        let process = self.process.as_mut().expect("spawned");
+        let line = process.read_line(deadline(timeout))?;
+        if line.trim() != READY {
+            return Err(EngineFailure::Protocol {
+                why: format!(
+                    "expected `{READY}` before the first request; got: {}",
+                    &line[..line.len().min(200)]
+                ),
+            });
+        }
+        Ok(())
+    }
 }
 
 impl EngineClient for SealbotClient {
@@ -118,7 +149,7 @@ impl EngineClient for SealbotClient {
         self.game_no = game_no;
         let process = LineProcess::spawn(&self.command, &self.cwd, &self.stderr_path())?;
         self.process = Some(process);
-        Ok(())
+        self.await_ready()
     }
 
     fn pick_turn(
@@ -140,14 +171,18 @@ impl EngineClient for SealbotClient {
                 return Err(failure);
             }
         };
-        let reply: Value = serde_json::from_str(&line).map_err(|error| {
-            EngineFailure::Protocol {
-                why: format!("reply is not JSON ({error}): {}", &line[..line.len().min(200)]),
-            }
-        })?;
-        let stones_value = reply["moves"].as_array().ok_or_else(|| EngineFailure::Protocol {
-            why: format!("reply has no moves array: {}", &line[..line.len().min(200)]),
-        })?;
+        let reply: Value =
+            serde_json::from_str(&line).map_err(|error| EngineFailure::Protocol {
+                why: format!(
+                    "reply is not JSON ({error}): {}",
+                    &line[..line.len().min(200)]
+                ),
+            })?;
+        let stones_value = reply["moves"]
+            .as_array()
+            .ok_or_else(|| EngineFailure::Protocol {
+                why: format!("reply has no moves array: {}", &line[..line.len().min(200)]),
+            })?;
         let mut stones = Vec::with_capacity(stones_value.len());
         for stone in stones_value {
             let pair = stone
@@ -172,10 +207,24 @@ impl EngineClient for SealbotClient {
             );
             stones.push(Coord::new(q, r));
         }
+        // REQUIRED, not optional: a shim that stopped reporting it would put
+        // this seat back in the state D-699 stops on — a null column nobody
+        // notices — so its absence is a named refusal (hard rule 3). Whole
+        // milliseconds: a JSON float would make `as_u64` answer None and fire
+        // this refusal for the wrong reason.
+        let engine_time_ms =
+            reply["engine_time_ms"]
+                .as_u64()
+                .ok_or_else(|| EngineFailure::Protocol {
+                    why: format!(
+                        "reply has no whole-millisecond `engine_time_ms`: {}",
+                        &line[..line.len().min(200)]
+                    ),
+                })?;
         Ok(EngineReply {
             stones,
             nodes: None,
-            engine_time_ms: None,
+            engine_time_ms: Some(engine_time_ms),
             wall_ms: started.elapsed().as_millis() as u64,
             raw: line,
         })
