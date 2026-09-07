@@ -30,6 +30,11 @@ def check(name, condition, detail=""):
         print(f"  FAIL: {name}: {detail}")
 
 
+def pattern(text):
+    """`.` empty, `x` own, `o` opponent — the memo's mover-relative reading."""
+    return tuple({".": 0, "x": 1, "o": 2}[c] for c in text)
+
+
 CORPUS_HEADER = "# synthetic corpus for test_hex_enum.py\n"
 
 
@@ -179,12 +184,100 @@ def a_fit_beats_the_labels_own_variance_on_its_training_games():
           f"train MSEs {trains} against the zero table's {trivial}")
 
 
+def the_count_only_baseline_is_blind_to_everything_the_tuple_carries():
+    """The referent the criterion is stated against must be structure-free.
+
+    A referent that could see completion cost would not be a test of whether
+    threat structure adds anything over stone counting, which is the one
+    comparison a random partition of the enum's own shape cannot make.
+    """
+    sys.path.insert(0, str(HERE))
+    from census import Length
+
+    unit = Length(11, 1)
+    same_counts = ("xxxxx." + ".....", "x.x.x." + "x.x..")
+    codes = []
+    for text in same_counts:
+        pat = pattern(text)
+        code = 0
+        for power, index in zip(unit.powers, unit.slots):
+            code += pat[index] * power
+        codes.append(code)
+    a, b = (E.tuple_of(pattern(t), 11) for t in same_counts)
+    check("two patterns the tuple separates share one count-only key",
+          unit.counts[codes[0]] == unit.counts[codes[1]] and a != b,
+          f"keys {unit.counts[codes[0]]} and {unit.counts[codes[1]]}, tuples {a} {b}")
+    check("one of them completes a six with a single stone and the other does not",
+          a[0][0] == 1 and b[0][0] > 1, f"{a} {b}")
+
+    # AND IT MUST SEPARATE, NOT ONLY MERGE. A referent stuck at a constant would
+    # pass every merging check ever written and would make the criterion it is
+    # stated against report a wrong PASS; the suite could not see that until
+    # this half was added.
+    differing = ("xxxxx." + ".....", "xxxx.." + ".....")
+    keys = []
+    for text in differing:
+        pat = pattern(text)
+        code = 0
+        for power, index in zip(unit.powers, unit.slots):
+            code += pat[index] * power
+        keys.append(unit.counts[code])
+    check("two patterns with different stone counts get different referent keys",
+          keys[0] != keys[1], f"both {keys[0]}")
+    distinct = len(set(unit.counts))
+    check("the referent is not a constant and not the whole code space",
+          1 < distinct < unit.size, f"{distinct} distinct keys over {unit.size} codes")
+    check("the referent's key count matches the (own, opp) pairs a pattern admits",
+          distinct == sum(1 for own in range(unit.length)
+                          for opp in range(unit.length)
+                          if own + opp <= unit.length - 1),
+          f"{distinct} keys")
+
+
+def the_nested_null_is_matched_on_the_joins_own_cell_count():
+    """The referent for the nested test must not be finer than what it referees.
+
+    A null built by permuting the class table over the WHOLE code space gives
+    `(count, class)` about four times the cells of the real join, and a finer
+    partition of this space scores higher whatever it means — so that null
+    carries the advantage the nested test exists to remove, on the null's side.
+    Permuting within each count stratum matches the cell count exactly.
+    """
+    sys.path.insert(0, str(HERE))
+    from census import Length
+
+    for length in (7, 11):
+        unit = Length(length, 20260907)
+        for rung in E.LADDER:
+            real = {(unit.counts[c], unit.classes[rung][c]) for c in range(unit.size)}
+            matched = {(unit.counts[c], unit.join_nulls[rung][0][c])
+                       for c in range(unit.size)}
+            unmatched = {(unit.counts[c], unit.nulls[rung][0][c])
+                         for c in range(unit.size)}
+            check(f"L{length} {rung}: the nested null has the join's cell count",
+                  len(matched) == len(real),
+                  f"real {len(real)}, matched null {len(matched)}")
+            # AND IT MUST STILL BE A PERMUTATION, not the identity: a null equal
+            # to the thing it referees would pass the check above and test
+            # nothing.
+            check(f"L{length} {rung}: and it is not the class table itself",
+                  any(unit.join_nulls[rung][0][c] != unit.classes[rung][c]
+                      for c in range(unit.size)),
+                  "the null is the identity")
+            if length == 11 and rung == "T4":
+                check("the unmatched null really is coarser-blind — it is finer",
+                      len(unmatched) > 2 * len(real),
+                      f"unmatched {len(unmatched)} against real {len(real)}")
+
+
 def main():
     for test in (the_census_keeps_only_quiet_eval_rows_and_both_terms_add_up,
                  a_corpus_of_one_label_has_no_between_class_variance,
                  the_pilot_refuses_a_corpus_it_cannot_split,
                  the_pilot_is_deterministic_at_a_fixed_seed,
-                 a_fit_beats_the_labels_own_variance_on_its_training_games):
+                 a_fit_beats_the_labels_own_variance_on_its_training_games,
+                 the_count_only_baseline_is_blind_to_everything_the_tuple_carries,
+                 the_nested_null_is_matched_on_the_joins_own_cell_count):
         print(test.__name__)
         test()
     if FAILURES:
