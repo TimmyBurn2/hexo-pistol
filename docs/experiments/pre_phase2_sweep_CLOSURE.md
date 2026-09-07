@@ -1128,8 +1128,18 @@ nobody reviewed is the one every gate harness now depends on.
 gitignored: the three confirmers' evidence (`t_*`, `e_*`, `c_*`), the swap-mutant
 before/after for D-690 (`fix_new2_site_mutant.txt`) and the full `tools/ci.sh` log
 this section cites (`ci_confirm_fixes.txt`) and the CLOSING run this section cites
-(`ci_closing_confirm.txt`). **61 files**, and the list of their digests itself
-hashes to `34343a056e5301434c3e342b4ade70045a69476debcf2baa83520e02b8970693`.
+(`ci_closing_confirm.txt`). **68 files**, and the list of their digests itself
+hashes to `42e597f9ab285f63e537703cf48a7e1bab228fb4e0522bcb8a38182f5b08ba5d`.
+
+**SEVEN OF THE SIXTY-EIGHT ARE `stray_*`, AND THEY ARE WHY D-469 EXISTS.** The
+group-C confirmation wrote part of its evidence to `/home/tom/pistol-wt/` — the
+worktrees' PARENT, outside both the repository and the worktree it removed — so
+those logs survived its own cleanup and were then orphaned outside version
+control, one `rm -rf` from gone. They are exported here under a `stray_` prefix
+and the parent directory is removed. **D-469 says export before removing a
+worktree; it does not say where an agent may write in the meantime, and this is
+the gap** — the rule guards the removal and not the writing, so evidence placed
+beside a worktree rather than inside it is outside the rule's reach entirely.
 
 **AND THIS SECTION IS ONE EDIT PAST THE RUN IT CITES, WHICH IS D-674's OWN
 SITUATION AND THE SAME ONE §6 RECORDS.** The closing run was taken at the staged
