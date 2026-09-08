@@ -1,6 +1,6 @@
 # WP-2.2 Phase 2a — closure.
 
-**Closing revision**: named in §6 below, with its CI receipt.
+**Closing revision**: `9af38b1` (`dev`), CI green there from the gate's own log.
 **Exit**: **STOP AND SPLIT at both gates.** `wp22_phase2a_STOP_E.md` carries
 Stage E's split, `wp22_phase2a_STOP_SUMMARY.md` carries the matrix's, and D-710
 is the ADR.
@@ -79,10 +79,38 @@ tuple agree with zero disagreements; three census runs agree cell for cell.
 
 ## 6. CI AT THE CLOSING REVISION
 
-Recorded in §6 of this file at close; see `artifacts/wp22_phase2a/ci_closing.txt`
-for the gate's own log (D-674). The commits between the revision CI's scratch
-tree was taken at and the closing revision are **docs-only**, and the diff is
-quoted below.
+`tools/ci.sh`, full log `artifacts/wp22_phase2a/ci_closing.txt`:
+**`ci: all gates passed`**, `EXIT=0`, **22 of 22 gates** — the total having gone
+21 → 22 when this package added gate 19. The lines a successor reads:
+
+```
+file_justification_check: 430 tracked .rs/.sh/.py files, 89 over the cap, all registered
+decision_key_check: 712 decision keys in docs/decisions.md, no repeat outside the exemption
+label_consistency_check: 6 documents ... every document agrees with itself
+governing_citation_check: 16 governing document(s), 0 proposed path(s)
+```
+
+**712 KEYS IS THE CHECK THAT THE RUN ADJUDICATED THE FINAL STATE**: the log
+opened at 703 before this package's paste block, and 703 + 8 (D-702…D-709) + 1
+(D-710) = 712, so gate 19 read the closing ADR and not a stale blob. Likewise
+430 tracked files is 421 + this package's nine (`tools/hex_enum/`'s seven
+modules, its runner, and `receipt_digest_check.py`).
+
+**THE DIFF BETWEEN THE REVISION CI's SCRATCH TREE WAS TAKEN AT AND THE CLOSING
+REVISION IS DOCS-ONLY, AND IT IS QUOTED RATHER THAN ASSERTED** (D-674).
+`git diff --name-only 695b670 9af38b1 | grep -v "^docs/"` returns **nothing**:
+
+```
+ docs/decisions.md                                  |   2 +
+ docs/experiments/hex_threat_enum_v1.md             |   6 +-
+ docs/experiments/matrix_wp22_phase2_eval.md        |  34 +-
+ docs/experiments/matrix_wp22_phase2_eval_REDTEAM_round4.md | 852 +++
+ docs/experiments/wp22_phase2a_CLOSURE.md           |  91 +
+ docs/experiments/wp22_phase2a_STOP_E.md            |  25 +-
+ docs/experiments/wp22_phase2a_STOP_SUMMARY.md      | 212 +
+```
+
+No file under `crates/`, `tools/` or `configs/` moved after the code gates ran.
 
 ## 7. WHAT A SUCCESSOR READS FIRST
 
