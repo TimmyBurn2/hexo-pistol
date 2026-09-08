@@ -1,24 +1,29 @@
-# OPTION MATRIX — the quiet-structure eval family for Phase 2, revision 4.
+# OPTION MATRIX — the quiet-structure eval family for Phase 2, revision 6.
 
-> **ROUND 3 OF FOUR UNDER D-709, REMEDIES ONLY.** Two DECISION-RED-TEAM rounds
-> have failed this matrix: round 1 at `0641504` (4 BLOCKING, 11 MAJOR, 10 MINOR)
-> and round 2 at `564dc9e` (1 new BLOCKING, 7 new MAJOR, and **all ten of round
-> 1's MINORs still landing**). §12 and §13 are the round tables. Every finding
-> was re-derived here before it was acted on.
+> **ROUND 4 OF FOUR UNDER D-709 — THE LAST ROUND THIS GATE HAS.** Three
+> DECISION-RED-TEAM rounds have failed this matrix: `0641504` (4 BLOCKING, 11
+> MAJOR, 10 MINOR), `564dc9e` (1 BLOCKING, 7 MAJOR, and all ten of round 1's
+> MINORs still landing) and `c7a3ee1` (3 BLOCKING, 8 MAJOR, 10 MINOR). §12, §13
+> and §14 are the round tables.
 >
-> **THE FIELD CHANGED TWICE AND `R-A4-CLASS` IS BACK IN IT.** Revision 2 dropped
-> the row on a spent round cap; revision 3 dropped it on a conclusion that was
-> **false on its own receipted census** — `L = 7` T4 is affordable at 1 720
-> observations per nominal parameter and the registered criterion passes there.
-> Two reviewers found that independently, on two documents. **Revision 4 restores
-> it as UNDECIDED at rank 4**, and §2.5 carries both measurements and their
-> disagreement rather than a verdict neither supports.
+> **THE FIELD HAS EIGHT LIVE ROWS AND `R-A4-CLASS` HAS MOVED UP TWICE.** Revision
+> 2 dropped it on a spent round cap; revision 3 dropped it on a conclusion false
+> on its own census; revision 5 ranked it fourth as UNDECIDED on a nested figure
+> of 0.93. **Stage E's fourth round measured that 0.93 to be an artifact of a
+> null permuted over the whole code space — ~4x the cells of the join it
+> refereed. Corrected, it is 1.71, the enum ADDS at all sixteen cells, and the
+> row is PRICED AND WEAK.** It now ranks second, on the ground that it is the
+> only row whose criterion was registered, could fail, was run, and did not fire
+> — and it is kept out of first place by the SIZE of what it buys, 1.4 % to
+> 10.8 % over counting stones.
+>
+> **TWO ROWS WERE MISSING FROM THE FIELD AND BOTH WERE ON THIS PAGE BEFORE THEY
+> WERE PRICED**: `R-A1-L8F` (round 1) and `R-A1-L7F` (round 3), the second
+> quoted in `R-A3`'s own factor cell.
 >
 > **AND ONE CORRECTION REACHES PAST THIS DOCUMENT**: `eval_families_2026-09.md`
-> §A1's *"1.4 observations per parameter"* for `R-A1-L11` is the RECIPROCAL —
-> 62 370 ÷ 45 271 is parameters per POSITION, and the row's real density is
-> **0.73**. This matrix inherited the mislabel into a table written to fix that
-> exact class of error.
+> §A1's *"1.4 observations per parameter"* is the RECIPROCAL — the real density
+> is **0.73 positions per parameter**.
 
 **Governing revision**: `54eb3ba` (`dev`) for every file, line and count quoted
 below (D-692), except where a paragraph names a later one.
@@ -342,75 +347,82 @@ projections of that tuple whose boundaries are `LAW-SUPPORT`'s and
    observed codes, median 41 observations, 322 at or below Buro's ≤ 4 line and
    620 below his ≥ 20 line**, and a growth curve that moves 35 % over nine times
    the data.
-4. **TWO REGISTERED CRITERIA DISAGREE AND THE ROW IS UNDECIDED.** The
-   stone-count criterion fails at 12 of 16 cells; its four passes are withdrawn
-   as class-count monotone; a nested test built afterwards says the enum ADDS at
-   13 of 16; and no cell is both affordable and supported by both. **§2.5 is the
-   finding, and it is a finding rather than a verdict.**
+4. **THE ROW IS LIVE AND SMALL.** The stone-count criterion fails at 12 of 16
+   cells and passes at four, all T4; the corrected nested test says the enum ADDS
+   at **all sixteen**; and **`L = 9` T4 is affordable (40.4 observations per
+   nominal parameter), MET (1.108) and adds (1.64)**. The margins — 1.4 % at
+   `L = 7`, 10.8 % at `L = 9` — are the finding. **§2.5.**
 
    *(Revision 2 reported *"MET at all sixteen cells, by 2.0x to 3.6x"*, which was
    the RANDOM-permutation referent — a FLOOR whose only claim is that the enum is
    not noise. Revision 3 replaced it and then over-read the replacement. Both are
    named now, and §2.5 says which half of each is evidence.)*
 
-### §2.5 THE ROW IS UNDECIDED, AND THAT IS THE MEASUREMENT
+### §2.5 THE ROW IS PRICED AND WEAK
 
-`hex_threat_enum_v1.md` revision 4 §7.4. **Two measurements, and they disagree.**
+`docs/experiments/wp22_phase2a_STOP_E.md`, which carries Stage E's corrected
+measurement after its fourth round. **Two criteria, and they now agree on the
+one thing that matters.**
 
 **(a) The REGISTERED criterion** — the enum's `ω²` must exceed the stone-count
-quotient's, window unit, no free parameter — **fails at 12 of 16 cells**:
+quotient's, window unit, no free parameter — **fails at 12 of 16 cells and
+passes at four, all at T4**:
 
-| L | rung | enum `ω²` | stone-count `ω²` | ratio | |
+| L | rung | ratio | | L | rung | ratio | |
+|---|---|---|---|---|---|---|---|
+| 7 | **T4 / T3** | 1.014 | MET | 11 | **T4** | 1.125 | MET |
+| 7 | T2 | 0.793 | FAILS | 11 | T2 | 0.637 | FAILS |
+| 9 | **T4** | 1.108 | MET | 13 | T4 | 0.834 | FAILS |
+
+Its FAIL side is evidence; **its PASS side is not** — the statistic is
+class-count monotone under position-clustered labels, and T4 carries 231 classes
+against the referent's 52 at `L = 11`.
+
+**(b) The NESTED test, with its null CORRECTED.** Revision 5 reported this test
+against a null permuted over the whole code space, whose join had **~4x the cells
+of the join it refereed**. That is a correctness defect, it was fixed at the code
+(`permuted_within_counts`, matching at 1.00x everywhere), and the corrected run
+over the full population at twelve replicates says:
+
+| L | rung | increment | null mean | ratio, mean | ratio, max |
 |---|---|---|---|---|---|
-| 7 | **T4 / T3** | 0.003573 | 0.003525 | 1.014 | MET |
-| 7 | T2 | 0.002796 | 0.003525 | 0.793 | **FAILS** |
-| 9 | **T4** | 0.004606 | 0.004158 | 1.108 | MET |
-| 9 | T2 | 0.002799 | 0.004158 | 0.673 | **FAILS** |
-| 11 | **T4** | 0.005504 | 0.004894 | 1.125 | MET |
-| 11 | T2 | 0.003119 | 0.004894 | **0.637** | **FAILS** |
-| 13 | T4 | 0.004668 | 0.005600 | 0.834 | **FAILS** |
+| 7 | T4 | +0.000642 | +0.000241 | **2.67** | **1.71** |
+| 9 | T4 | +0.001902 | +0.001011 | **1.88** | **1.64** |
+| 11 | T2 | +0.001576 | +0.000485 | **3.25** | **2.51** |
+| 13 | T2 | +0.001962 | +0.000599 | **3.27** | **2.48** |
 
-**HALF OF THAT IS EVIDENCE AND HALF IS NOT.** The statistic is class-count
-monotone under position-clustered labels, so **the twelve FAILS stand** — losing
-to a COARSER value-free partition needs no entitlement argument — **and the four
-METS do not**. *(Two of those four are one partition: `L = 7` T4 and T3 are
-identical, `k = 25`, and the sixteen cells are fifteen distinct partitions.)*
+**THE ENUM ADDS AT ALL SIXTEEN CELLS, UNDER BOTH SUMMARIES**, 1.36x to 3.50x.
+Revision 5's `L = 7` T4 figure of 0.93 — the number that made the row UNDECIDED
+and set its rank — was an artifact of the unmatched null and is **1.71**
+corrected.
 
-**(b) A NESTED test, built afterwards and disclosed as post-hoc**, asks whether
-`count × class` explains more than `count` alone beyond what the same refinement
-by a value-free partition earns. It is immune to the monotonicity, and it
-**disagrees: the enum ADDS at 13 of 16 cells**, by 1.26x to 1.76x at `L ≥ 9`.
+**(c) SO THE ROW IS LIVE, AND ITS SIZE IS SMALL.**
 
-**(c) THE CONVERGENCE, and it is why the row is neither killed nor priced.**
+- **`L = 9` T4 is AFFORDABLE** (40.4 observations per nominal parameter, above
+  the Buro `≥ 20` line this matrix cites), **MET** (1.108), and **ADDS** (1.64
+  worst / 1.88 mean). `L = 7` T4 is comfortably affordable (1 720 per parameter),
+  MET (1.014) and ADDS (1.71 / 2.67).
+- **Every coarse rung fails the registered criterion and adds on the nested
+  one**, and both are true for the same reason: the enum ALONE has fewer classes
+  than stone counts alone, and CONDITIONAL on counts it carries real structure.
+- **The margins are the whole story.** 1.014 on the registered criterion at
+  `L = 7` and 1.108 at `L = 9` are 1.4 % and 10.8 %. A row that is real and
+  small is what this measures.
 
-- The one cell that is comfortably affordable **and** passes the registered
-  criterion is **`L = 7` T4**: 2 925 nominal parameters, **1 720 observations
-  each**, the cheapest traffic in the field at `3L = 21`. **The nested test says
-  the enum adds nothing there — 0.93, below its own null.**
-- Where the nested test says the enum adds most — `L = 9` and `L = 11` at T4 —
-  the parameter counts are **161 700 and 7 647 059**, or 40.4 and 1.07
-  observations each.
-- **No cell is simultaneously affordable and supported by both measurements.**
+**WHAT REVISION 5 GOT WRONG AND WHY IT IS RECORDED**: it wrote *"no cell is
+simultaneously affordable and supported by both measurements"*, which was false
+in the row's FAVOUR-denying direction — a hedge where the evidence supported a
+modest positive. Round 4 of Stage E's gate named it: the conclusion *"declines a
+good result rather than hiding a bad one"*.
 
-**SO THE ROW GOES BACK IN THE FIELD AS UNDECIDED.** Revision 2 dropped it on a
-spent round cap; revision 3 wrote that *"the only rung that beats counting stones
-cannot be fitted"*, **and that is false on this table** — T4 is affordable at
-`L = 7` (1 720 per parameter) and at `L = 9` (40.4, above the Buro line this
-matrix cites), and MET at both. The unaffordability is true AT THE COVERING
-LENGTH and revision 3 dropped the qualifier its own source carried. **Two
-reviewers found that independently, on two documents.**
+**WHAT THE CODE UNIT SAYS.** Five cells put the enum above the referent there —
+`L = 7` T4 and T3 (1.140), `L = 9` T4 (1.62), `L = 11` T4 (2.269), `L = 13` T4
+(1.636) — and **exactly one flips the verdict between units**: `L = 13` T4, 0.834
+window against 1.636 code. All five are at T4 where the class-count gap is
+widest. **None is evidence in either direction.**
 
-**WHAT THE CODE UNIT SAYS, printed because five cells there read the other way.**
-Five put the enum above the referent — `L = 7` T4 and T3 (1.140), `L = 9` T4
-(1.62), `L = 11` T4 (2.269), `L = 13` T4 (1.636) — and **exactly one flips the
-verdict between units**: `L = 13` T4, 0.834 on the window and 1.636 on the code.
-All five are at T4, where the class-count gap is widest, which is the same
-monotonicity that withdraws the window passes. **None is evidence in either
-direction.**
-
-**WHAT NONE OF THIS TRANSFERS TO**: `R-A5-TOPK`, `R-A1-L8F`, `R-A2-L11F` and
-`R-A3-L11F+F7`, which are not quotients of this tuple and are not measured by
-either criterion.
+**WHAT NONE OF THIS TRANSFERS TO**: `R-A5-TOPK`, `R-A1-L7F`, `R-A1-L8F`,
+`R-A2-L11F` and `R-A3-L11F+F7`, which are not quotients of this tuple.
 
 **AND ONE FINDING AGAINST THE ROW AS `eval_families` §7 PROPOSES IT**, recorded
 in the enum memo's §5.5 and not softened here: **the tuple merges patterns whose
@@ -534,18 +546,18 @@ by construction (`C(k+2,3)` is a size-3 multiset over the three axes at one
 cell), and `R-A1`, `R-A2`, `R-A3`, `R-A5` are per-WINDOW rows in the shape
 `eval_families` states them, which is the shape `handcrafted_v0` already sums in.
 
-### R-A4-CLASS — windows quotiented through the Stage E enum, scored on the 3-axis multiset. **UNDECIDED**
+### R-A4-CLASS — windows quotiented through the Stage E enum, scored on the 3-axis multiset. **LIVE, at `L = 9` or `L = 7`, rung T4**
 
 | column | value |
 |---|---|
-| **parameters** (DERIVED) | at `L = 11`: **T4 7 647 059**, T3 302 621, **T2 18 424**, T1 8 436. At `L = 7`: T4 2 925, T2 680. |
+| **parameters** (DERIVED) | **The live cells are T4 at `L = 7` (2 925) and `L = 9` (161 700)** — §2.5. For completeness: at `L = 11`, T4 7 647 059, T3 302 621, T2 18 424, T1 8 436; at `L = 7`, T2 680. |
 | **observations per parameter** (MEASURED, per scored cell) | T4 **1.07 per nominal**, 75.6 per observed code, **median 3**; T2 **444 per nominal**, 5 332 per observed code, **median 41**; T1 969 per nominal, median 53. Population 8 174 025 scored cells over 45 271 positions (180.6 per position). |
-| **window touches / stone, and the ratio to 18** (DERIVED) | `3L` = **33**, **1.83x**. `L = 13` is 39 (2.17x) and buys one class and one code. |
+| **window touches / stone, and the ratio to 18** (DERIVED) | at the live lengths, `3L` = **21** (`L = 7`, 1.17x) and **27** (`L = 9`, 1.50x) — the two cheapest codebook figures in the field after `R-A1-L7F`'s 21. `L = 11` is 33 (1.83x) and `L = 13` is 39 (2.17x) for one extra class and one extra code. |
 | **nodes/sec floor, PRE-REGISTERED as a bench bracket** (ESTIMATED) | Arithmetic on the page: today **529 255** nps (§1.2, receipted) with the eval at **44.70 %** of the profile (§1.8); a codebook at 1.83x the traffic and a per-touch cost ratio `c ∈ [0.5, 1.5]` gives `nps ∈ [296 959, 549 733]` = **[0.56x, 1.04x]**. **FLOOR REGISTERED AT 296 959 nps (0.56x)**; below it the row aborts on cost, per hard rule 5's abort-threshold discipline. *(Revision 2 registered 341 617 from the unreceipted run and the understated share.)* |
 | **determinism and quantization** | Closed-form fit, no seed. Integer after bake; one class lookup plus one code lookup per touch. The accumulator is bounded by construction: `3L` active windows times the clamped maximum, `training_pipeline_2026-09.md` §4's *"no combination of possible active features can exceed the maximum value"*. `EVAL_MAX = 16 000` with an i64 intermediate is the shape to keep. |
 | **seed budget** (MEASURED, §3) | **1 fit, ≥ 8 splits** for any validation number; ±3.5 % on a single split. No training seed. |
 | **books, BOTH arms** | node-matched Δ = 10: **8 000 pairs on `book_v3`, power 0.9045, the whole book**. Time-matched: **not runnable** (§1.4) — no arena movetime, no named play seat, no play-seat pentanomial. |
-| **kill condition — AND IT NO LONGER PUTS THE ROW OUT** | Two criteria have been registered against this row and §2.5 carries both. *(An earlier revision cited "§2.5 measures a value-free quotient passes it at 1.77x"; that 1.77x is `hex_threat_enum_v1.md` §6.5's figure against the WITHDRAWN random-permutation criterion, and §2.5 contains no such number. The cross-reference is corrected.)* The row's own §7.1 arithmetic separately kills **T4 and T3 at `L = 11`** on density (1.07 and 27 observations per nominal parameter), which leaves T2 and T1 — and those are the rungs the criterion was the only positive evidence for. |
+| **kill condition — REGISTERED, RUN, AND NOT FIRED AT T4** | The stone-count criterion is the row's kill; it fires at every coarse rung and does not fire at T4, where the corrected nested test also says the enum adds. **The rung is therefore not a free choice: T4 at `L = 7` or `L = 9`, and nowhere else.** *(An earlier revision cited "§2.5 measures a value-free quotient passes it at 1.77x"; that 1.77x is `hex_threat_enum_v1.md` §6.5's figure against the WITHDRAWN random-permutation criterion, and §2.5 contains no such number. The cross-reference is corrected.)* The row's own §7.1 arithmetic separately kills **T4 and T3 at `L = 11`** on density (1.07 and 27 observations per nominal parameter), which leaves T2 and T1 — and those are the rungs the criterion was the only positive evidence for. |
 | **strongest known attack, and it landed** | **The `t = 1` / `t = 2` merge** (enum memo §5.5): classes contain patterns whose exact `DEF-T` after a stone at the cell differs, and `RULE-EXACT` (`threat_calculus_v1.md:64-66`) makes `t` the truth. **The count depends on the population and the memo now prints both**: over patterns where a stone at the cell does NOT complete a six (rule 4 ends the turn, so no threat question survives), **27 of the 335 classes present and 5 348 of 57 996 patterns**; without that exclusion, **32 of 357 and 6 099 of 59 049**. The memo's earlier reason for not repairing it — *"not something a single-axis class can hold"* — is **false**, and the price IS quoted: adding single-axis `t` as a seventh component removes the merge entirely at **`k` 357 → 384** under the rule-4-excluded reading (the confirming reviewer's 393 is the same computation without that exclusion, and the two differ by exactly the completing patterns). At the rung a matrix would use, T2, the repair is `k` 47 → 58 and **+86 % parameters**. |
 
 ### R-A5-TOPK — top-K folded codes plus one rare bucket
@@ -684,7 +696,7 @@ floor for the bench bracket — flips if the play seat is redefined."*
 
 | row | node-matched arm | time-matched arm | nodes/sec floor registered |
 |---|---|---|---|
-| R-A4-CLASS | Δ = 10, 8 000 pairs, `book_v3` whole — as every learned row | not runnable | **296 959** (0.56x) at `L = 11`; **396 371** (0.75x) at `L = 7` — the highest floor of any CODEBOOK row, tied with `R-A1-L7F`, and below `R-H-EXT`'s 0.95x |
+| R-A4-CLASS | Δ = 10, 8 000 pairs, `book_v3` whole — as every learned row | not runnable | **396 371** (0.75x) at `L = 7`, **339 538** (0.64x) at `L = 9`; the `L = 11` rungs are out on density |
 | R-A5-TOPK | as above | not runnable | **296 959** (0.56x) |
 | R-A1-L7F | as above | not runnable | **396 371** (0.75x) |
 | R-A1-L8F | as above | not runnable | **365 760** (0.69x) |
@@ -759,52 +771,71 @@ what remains is build cost, on which the rows genuinely differ.
 
 1. **R-H-EXT.** No fit, no artifact, no digest discipline, no shape check, no
    seed, no quantization, no new dependency, and 18 touches per stone against
-   every codebook row's 21, 24 or 33. **Its build cost is NOT nil and §4 says
-   so**: 3 to 6 integers with no procedure and no metric to choose their values,
-   which is R-A2's structure at a smaller scale — bounded by the calculus's τ
-   table and D-622's dominance constraints where a net's weights are bounded by
-   nothing, but a real cost against one funded run. Its terms are ones
-   `threat_calculus_v1.md` has listed as SPRT-gated candidates since v1.0 and
-   nobody has gated. And if it wins, D-614's bar — *"vs handcrafted_v0"* —
-   moves, and every learned row was otherwise measured against the wrong
-   incumbent.
-2. **R-A5-TOPK.** The leading learned row: a closed-form fit, no training seed,
-   the same throughput bracket as every L11 codebook. **Its parameter count is
-   811 or 143 depending on the evaluator's summand** (§4), and that question is
-   the architect's; it does not stop the row being run, because both counts are
-   affordable against 12 980 519 window observations.
-3. **R-A1-L8F.** Denser than any other free table in the field — 2 920
-   parameters at median 273 observations, only 24 cells under ten — and the
-   cheapest codebook traffic at 1.33x. It ranks below R-A5 only because it sits
-   below `eval_families` §0.1's covering minimum, **and that boundary is an
-   unrun enumeration** (§4).
-4. **R-A4-CLASS at `L = 7`, rung T4.** It re-enters the field at the one cell
-   that is affordable — 2 925 nominal parameters at 1 720 observations each, 856
-   codes observed at median 174 — at the cheapest codebook traffic
-   (`3L = 21`, 1.17x, tied with `R-A1-L7F`) and therefore the highest codebook
-   floor, 396 371 (0.75x) — the least throughput risk among the learned rows,
-   though not in the field, since `R-H-EXT` registers 0.95x. It ranks below
-   R-A1-L8F because §2.5's nested test says the enum adds nothing over stone
-   counts at exactly this cell, and above R-A3 in ONE currency, which is what
-   §4's table exists to force: **positions per parameter**, where R-A4 at
-   `L = 7` T4 is `45 271 / 2 925 = 15.5` and R-A3 is `45 271 / 38 983 = 1.16`,
-   a factor of **13.3**. *(An earlier revision said "three orders of magnitude"
-   by setting scored-cell observations against window observations — the
-   cross-currency comparison §4 promises never to make. Even corrected to one
-   observation unit the two are not comparable, because R-A4 is priced per
-   scored CELL and R-A3 per `(axis, start)` WINDOW; positions is the only unit
-   both rows share.)* **It is the only row in the field carrying a
-   criterion that was registered before its run, could fail, and was run** — and
-   the honest reading of that criterion is that it disagrees with itself.
-5. **R-A3-L11F+F7.** Zero inference cost over A1 and the documented remedy for
-   §0.3, but its source disowns the remedy at 200 000x this corpus's size and
-   its real parameter count is A1's killed 1.2 positions each.
-6. **R-A2-L11F.** The strongest published shape and the furthest from runnable
+   every codebook row's 21 to 33. **Its build cost is NOT nil and §4 says so**:
+   3 to 6 integers with no procedure and no metric to choose their values, which
+   is R-A2's structure at a smaller scale — bounded by the calculus's τ table and
+   D-622's dominance constraints where a net's weights are bounded by nothing,
+   but a real cost against one funded run. Running it first also moves D-614's
+   bar, which is *"vs handcrafted_v0"*, so every learned row would otherwise be
+   measured against an incumbent nobody has tried to improve.
+
+2. **R-A4-CLASS at `L = 9` or `L = 7`, rung T4 — and it MOVES UP on the
+   corrected measurement.** Revision 5 ranked it fourth on a nested figure of
+   0.93 that was an artifact of an unmatched null; corrected, it is **1.71**.
+   At `L = 9` T4 the row is affordable (40.4 observations per nominal
+   parameter), MET on the registered criterion (1.108) and adding on the nested
+   one (1.64 worst / 1.88 mean). **It is the only row in the field carrying a
+   criterion that was registered before its run, could fail, was run, and did
+   not fire.** Traffic 21 or 27 touches; floor 396 371 or 339 538. It beats R-A3
+   by **13.3x** in the one currency both share — positions per parameter, 15.5
+   against 1.16. *(An earlier revision claimed "three orders of magnitude" by
+   setting scored-cell observations against window observations, the
+   cross-currency comparison §4 promises never to make.)* **What keeps it out of
+   rank 1 among the learned rows is the SIZE of what it buys**: 1.4 % at `L = 7`
+   and 10.8 % at `L = 9` over a quotient that only counts stones.
+
+3. **R-A5-TOPK.** A closed-form fit, no training seed, no dependency this
+   repository lacks. **Its parameter count is 811 or 143 depending on the
+   evaluator's summand** (§4) — the architect's question, and it does not stop
+   the row being run, because both are affordable against 12 980 519 window
+   observations. It ranks below R-A4 because R-A4's criterion has been run and
+   R-A5's kill — that one bucket scores all novel structure alike — has not been
+   measured by anything.
+
+4. **R-A1-L7F.** The densest free table in the field: 1 029 parameters at median
+   1 282 observations with **not one cell under ten**, and the cheapest traffic
+   of any codebook row (`3L = 21`, floor 396 371). It ranks here and not higher
+   because it is furthest below `eval_families` §0.1's covering minimum, **and
+   because §2.5 measures that at `L = 7` a quotient knowing only stone counts
+   explains as much as the threat tuple does** — evidence, on one tuple and one
+   statistic, that seven cells is near where structure stops being visible on
+   this corpus.
+
+5. **R-A1-L8F.** 2 920 parameters at median 273, 24 cells under ten, traffic 24.
+   Below R-A1-L7F on density and above it on covering; both share one kill and
+   **the enumeration that would settle it has never been run** — `eval_families`
+   §8 still lists it as *"minutes of compute, not run (D-291)"*.
+
+6. **R-A3-L11F+F7.** Zero inference cost over A1 and the documented remedy for
+   §0.3, but its source disowns the remedy at 200 000x this corpus's size and its
+   real density is 1.16 positions per parameter.
+
+7. **R-A2-L11F.** The strongest published shape and the furthest from runnable
    here: a trainer that does not exist in this repository, a non-reproducible
-   training run, **≥ 4 nets against one funded acceptance arm**, and the
-   paradigm under which three games measure its trade to lose.
-7. **R-A1-L11** — scored and killed (§4). **R-C-SPSA** — killed on cost against
+   training run, **≥ 4 nets against one funded acceptance arm**, and the paradigm
+   under which three games measure its trade to lose.
+
+8. **R-A1-L11** — scored and killed (§4). **R-C-SPSA** — killed on cost against
    the ledger. **R-D-W1** — killed by ruling (D-704).
+
+**WHAT WOULD REORDER THIS**: a second acceptance book moves R-A2 up, because its
+seed budget stops being a selection problem; running `THM-WINDOW`'s enumeration
+(minutes, never taken) settles whether R-A1-L7F's and R-A1-L8F's shared kill is
+real; an ADR moving the arena's movetime refusal makes §5's column real; a ruling
+that R-H-EXT is out of Phase 2's scope removes rank 1; and a decision on the
+evaluator's summand settles R-A5's parameter count.
+
+**NOTHING IS SELECTED HERE** and no ADR of selection is written.
 
 ### THE STRONGEST SURVIVING ATTACK ON THIS ORDER, and it is the red team's own
 
@@ -842,7 +873,7 @@ is out of scope removes rank 1 entirely.
 | row | **BUILD cost** (§6's axis; book cost is the field's common one) | failure mode |
 |---|---|---|
 | R-H-EXT | no fit, no artifact, no seed — **but 3 to 6 integers with no procedure and no metric to choose their values** (§4) | it loses, and the incumbent stands — which is a finding and not a waste, because the calculus has been calling these terms candidates since v1.0 |
-| R-A4-CLASS | a fit and a backend, as any codebook row | **UNDECIDED (§2.5)**: two criteria disagree and no cell is both affordable and supported by both. Its known defect is the `t` merge, bigger than first published and repairable at a price nobody has quoted (T2: `k` 47 → 58) |
+| R-A4-CLASS | a fit and a backend, as any codebook row | its effect is SMALL — 1.4 % at `L = 7` and 10.8 % at `L = 9` over stone counting — and its known defect is the `t` merge: 27 of 335 classes, repairable at T4 for `k` 357 → 384 |
 | R-A5-TOPK | a fit and a backend | the rare bucket scores all novel structure alike, and the tail is where novel structure is |
 | R-A1-L7F | a fit and a backend | it is furthest below the covering minimum, and §2.5 measures that at `L = 7` stone counts explain as much as threat structure |
 | R-A1-L8F | a fit and a backend | it is below the covering minimum — and the enumeration that would settle whether that matters has never been run |
@@ -989,3 +1020,34 @@ than established, and its build cost not nil. **The second half is conceded and
 fixed (NEW-8); the first is answered by NEW-4's paragraph and remains an
 argument.** Its bigger re-ranking — that `R-A4-CLASS` at `L = 7` T4 belongs in
 the field — **is accepted and acted on.**
+
+---
+
+## §14 WHAT THE THIRD RED TEAM CHANGED, AND WHAT STAGE E's FOURTH ROUND CHANGED WITH IT
+
+`matrix_wp22_phase2_eval_REDTEAM_round3.md`, fresh context, at `c7a3ee1` —
+**FAIL**, 3 BLOCKING, 8 MAJOR, 10 MINOR. It verified all eight receipts, re-derived
+all sixteen registered-criterion ratios and all sixteen nested ratios with its own
+parser (144/144 shared cells agreeing between `census_r3` and `census_r4`), and
+re-did §3's paired analysis from the pilot receipt. Round 4 of four (D-709).
+
+| finding | what changed, and what was run |
+|---|---|
+| **R3-B1** (BLOCKING) — the decisive nested figure was the MAX of three replicates over an unregistered replicate count; the mean of the same three gives 1.11 | **Resolved by MEASUREMENT, not by choosing a summary.** `--null-replicates` was added, and Stage E's round 4 then found the deeper defect below. At twelve replicates with the corrected null the enum adds under **both** summaries at all sixteen cells, so the choice no longer decides anything. |
+| **Stage E round 4, NEW-1** (BLOCKING, found while R3-B1 was being fixed) — **the nested null was permuted over the whole code space and its join had ~4x the cells of the join it refereed** | fixed at the code: `permuted_within_counts` permutes within each stone-count stratum, matching the join's cell count at **1.00x** at every rung and length (MEASURED: 3.96 → 1.00 at `L = 7` T4). `test_census.py` pins that it matches AND that it is not the identity. **The corrected run reverses §2.5.** |
+| **R3-B2** — `census_r4`'s digest is in no tracked document, and `n6_mutants`' printed digest matches nothing on disk | both wired, **and the recurring class got a structural fix**: `tools/receipt_digest_check.py` verifies every digest a document prints against the receipt on disk and flags a document that names a receipt directory without printing its digest. **It caught three instances on its first run, two of which no reviewer had listed.** It cannot be a CI gate — `artifacts/` is gitignored, the reason `book_v3_ledger.md` gives about its own disjointness script. |
+| **R3-B3** — the field is still incomplete | **`R-A1-L7F` added and ranked fourth**: 1 029 parameters, median 1 282, **no cell under ten**, traffic 21. `R-A1-L8F`'s *"densest free table the corpus supports"* is corrected. |
+| **MAJOR** — *"three orders of magnitude"* is cross-currency | corrected to **13.3x** in positions per parameter, the only unit R-A4 and R-A3 share. *(The red team's own 6.6x was cross-currency too.)* |
+| **MAJOR** — the `t`-merge figures mix populations, and 393 against 384 | both populations printed with their denominators, and the 393/384 difference explained: they are the same computation with and without the rule-4 exclusion. |
+| **MAJOR** — NEW-3's, NEW-8's and NEW-13's fixes each missed a site | all sites swept: the currency table's two rows, §6's build-cost sentence, and the two *"highest floor"* claims. |
+| **MAJOR** — the ARITHMETIC file is headed for a revision it does not check | corrected, and it now says which revisions it checks and which it does not. |
+| **MINOR ×10** | the four round-1 minors round 2 found still landing, plus round 3's — all closed. |
+
+**THE RANKING DISPUTE, ACROSS THREE RED TEAMS.** Round 1 and round 2 would rank
+`R-A5-TOPK` first and `R-H-EXT` second or not at all; round 3 would order
+A5 → L7F → L8F → A4 and **not rank R-H-EXT until the operator rules**. This
+matrix ranks `R-H-EXT` first on build cost with its book cost equalised and its
+build cost no longer priced at nil, and ranks `R-A4-CLASS` second on the
+corrected measurement. **The disagreement is real, it is recorded in §6, and its
+two open questions go to the architect** — may `book_v3` fund a row that does not
+answer R7, and is `R-H-EXT` in Phase 2's scope.
