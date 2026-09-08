@@ -1,34 +1,30 @@
-# The hex threat enum — derivation memo, revision 4.
+# The hex threat enum — derivation memo, revision 4. **STOPPED AND SPLIT.**
 
-> **ROUND 4 OF FOUR UNDER D-709 — THE LAST ROUND THIS GATE HAS.** Three rounds
-> have failed it: the REVIEW-design of revision 1 (3 BLOCKING / 7 MAJOR /
-> 8 MINOR), the confirmation of revision 2 (1 BLOCKING / 5 MAJOR), and round 3's
-> review of revision 3 (**26 of 28 prior findings CLOSED**, 4 new MAJOR).
-> Remedies only (D-709). A fourth failure is STOP and split with no fifth round.
+> **FOUR ROUNDS, FOUR FAILURES, AND D-709's GRANT IS SPENT.**
+> `wp22_phase2a_STOP_E.md` is the record and carries the split. No fifth round
+> is self-granted, so **the body below is not revised again.**
 >
-> **WHAT ROUND 3 FOUND, AND THE FIRST OF THE FOUR IS THE ONE THAT MATTERS.**
-> The criterion revision 3 registered is CLASS-COUNT MONOTONE under
-> position-clustered labels, so **its FAIL side is sound and its PASS side is
-> not**. §7.4 now reports the twelve fails as evidence and withdraws the four
-> passes. Round 3 also measured that revision 3's headline — *"it fires on every
-> affordable rung"* — is false: **T4 is affordable at `L = 7` (1 720
-> observations per nominal parameter) and at `L = 9` (40.4), and MET at both**.
-> The unaffordability is true at the covering length and nowhere else. Two
-> reviewers, on two documents, found that missing qualifier independently.
+> **WHAT IS SETTLED AND CARRIES FORWARD**: §1 through §5, §6.1 through §6.4, and
+> §7.1 through §7.3. Four independent implementations of the tuple — this
+> session's and three reviewers' — agree with **zero disagreements**, every
+> quotation and line number reproduced at every round, the even-`L` refusal is
+> closed at the code across all seven entry points, and §7.1-§7.3's census is
+> replicated three times with no cell disagreement.
 >
-> **AND ROUND 4 ADDS ONE MEASUREMENT, DISCLOSED AS POST-HOC.** A NESTED test —
-> does `count × class` explain more than `count` alone, beyond what the same
-> refinement by a value-free partition earns? — is immune to the monotonicity,
-> and it **disagrees**: the enum ADDS at 13 of 16 cells. It was built after the
-> registered criterion had already fired, so §6.5 registers it as nothing and
-> §7.4b reports it as a finding beside the verdict, never in place of it.
+> **WHAT IS SUPERSEDED**: **§6.5's criterion and §7.4b / §7.4c**. Round 4
+> MEASURED that the nested test's null was permuted over the whole code space,
+> so its join had **~4x the cells of the join it refereed** (194 against 49 at
+> `L = 7` T4). That is a correctness defect and it is FIXED at the code —
+> `permuted_within_counts` matches the cell count at 1.00x everywhere — and the
+> corrected run **reverses §7.4c**: the enum ADDS at all sixteen cells, `L = 7`
+> T4 goes 0.93 → 1.71, and the row is **PRICED AND WEAK, not undecided**. The
+> corrected table is in the STOP document; it is not written into §7.4 because
+> this gate has no round left to review it.
 >
-> **THE ROW IS UNDECIDED AND §7.4c SAYS WHY**, which is a more useful answer than
-> either revision reached: the one cell that is comfortably affordable AND passes
-> the registered criterion is `L = 7` T4, and the nested test says the enum adds
-> nothing there (0.93, below its own null); where the nested test says the enum
-> adds most, the parameter count is 161 700 or 7 647 059. **No cell is both
-> affordable and supported by both measurements.**
+> **THE ONE DEFECT, FOUR TIMES**: a referent not matched on the property driving
+> its score — first absent, then a floor read as a criterion, then class-count
+> monotone, then finer than what it refereed. That is what the successor package
+> is for.
 
 **Governing revision**: `c5123c1` (`dev`), the revision every file, line and count
 quoted below was read at (D-692). **REVISION 2 IS THE ONE FIX ROUND** granted
