@@ -380,9 +380,13 @@ against the referent's 52 at `L = 11`.
 
 **(b) The NESTED test, with its null CORRECTED.** Revision 5 reported this test
 against a null permuted over the whole code space, whose join had **~4x the cells
-of the join it refereed**. That is a correctness defect, it was fixed at the code
-(`permuted_within_counts`, matching at 1.00x everywhere), and the corrected run
-over the full population at twelve replicates says:
+of the join it refereed**. That is a correctness defect and it was fixed at the code
+(`permuted_within_counts`), **which matches at 1.00x over the CODE SPACE and
+NOT on the observed population the statistic counts — there the null join is
+still 1.167x to 1.834x finer.** The residual's direction UNDERSTATES the enum, so
+the table below is a lower bound; the claim that it matched everywhere was false
+and is corrected. The corrected run over the full population at twelve
+replicates says:
 
 | L | rung | increment | null mean | ratio, mean | ratio, max |
 |---|---|---|---|---|---|
@@ -786,7 +790,12 @@ what remains is build cost, on which the rows genuinely differ.
    parameter), MET on the registered criterion (1.108) and adding on the nested
    one (1.64 worst / 1.88 mean). **It is the only row in the field carrying a
    criterion that was registered before its run, could fail, was run, and did
-   not fire.** Traffic 21 or 27 touches; floor 396 371 or 339 538. It beats R-A3
+   not fire — AND THAT GROUND IS WEAKER THAN IT SOUNDS**: the registered
+   criterion's PASS side is disclaimed by §2.5 itself as class-count monotone,
+   and the nested test that replaces it was sent back to a successor package as
+   unsettled one commit before this ranking was written. **A rank resting on two
+   disclaimed instruments is not a rank**, which is why §7 of the HANDUP carries
+   this row UNRANKED. Traffic 21 or 27 touches; floor 396 371 or 339 538. It beats R-A3
    by **13.3x** in the one currency both share — positions per parameter, 15.5
    against 1.16. *(An earlier revision claimed "three orders of magnitude" by
    setting scored-cell observations against window observations, the
@@ -803,13 +812,16 @@ what remains is build cost, on which the rows genuinely differ.
    measured by anything.
 
 4. **R-A1-L7F.** The densest free table in the field: 1 029 parameters at median
-   1 282 observations with **not one cell under ten**, and the cheapest traffic
-   of any codebook row (`3L = 21`, floor 396 371). It ranks here and not higher
-   because it is furthest below `eval_families` §0.1's covering minimum, **and
-   because §2.5 measures that at `L = 7` a quotient knowing only stone counts
-   explains as much as the threat tuple does** — evidence, on one tuple and one
-   statistic, that seven cells is near where structure stops being visible on
-   this corpus.
+   1 282 observations with **not one cell under ten**, and traffic of `3L = 21` — tied with
+   `R-A4-CLASS` at `L = 7` for the cheapest in the field, which an earlier
+   revision claimed for each of them separately. It ranks here and not higher
+   because it is furthest below `eval_families` §0.1's covering minimum. **AND
+   THE SECOND REASON AN EARLIER REVISION GAVE IS WITHDRAWN**: it said §2.5
+   measures that at `L = 7` stone counts explain as much as the threat tuple,
+   which was true of the UNCORRECTED nested figure and is false of the corrected
+   one — §2.5 now measures `L = 7` T4 as MET (1.014) and ADDING (1.71 / 2.67).
+   The correction that promoted `R-A4-CLASS` was not applied to the row it also
+   demoted, and this is that fix.
 
 5. **R-A1-L8F.** 2 920 parameters at median 273, 24 cells under ten, traffic 24.
    Below R-A1-L7F on density and above it on covering; both share one kill and

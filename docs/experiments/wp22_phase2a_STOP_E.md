@@ -41,10 +41,27 @@ the code before this stop is recorded.
 
 `tools/hex_enum/lengths.py` gains `permuted_within_counts`, which permutes the
 class assignment **inside each stone-count stratum**, so the null join's cell
-count and per-cell code multiplicities are exactly the real join's. **MEASURED**:
-the ratio of null-join cells to real-join cells goes from **3.96 / 3.08 / 3.98 /
-4.03** to **1.00 at every rung and length**. `test_census.py` pins both halves —
-that the null matches the join's cell count, and that it is not the identity.
+count and per-cell code multiplicities are exactly the real join's. **MEASURED**: over the CODE
+SPACE the ratio of null-join cells to real-join cells goes from **3.96 / 3.08 /
+3.98 / 4.03** to **1.00 at every rung and length**, and `test_census.py` pins
+both halves — that it matches there, and that it is not the identity.
+
+**AND THAT IS NOT THE POPULATION THE STATISTIC USES, WHICH IS THE FIFTH INSTANCE
+OF THIS DEFECT AND WAS CREATED BY THE FIX FOR THE FOURTH.** `Moments.terms()`
+counts `classes = len(self.n)` — the cells actually OBSERVED on the corpus, not
+the cells the code space admits. MEASURED on `census_r5`'s own output, the null
+join is still finer than the real join at **all sixteen cells**: **1.167x** at
+`L = 7`, 1.270x at `L = 9`, 1.410x at `L = 11` and **1.834x** at `L = 13` T4. So
+*"matched at 1.00x everywhere"* is true of the code space and FALSE of the
+observed population, and the fourth round's remedy repeated the fourth round's
+finding one population to the left.
+
+**THE DIRECTION OF THE RESIDUAL IS CONSERVATIVE AND THE CONCLUSION SURVIVES.** A
+null that is FINER than what it referees scores HIGHER, so the enum's margins are
+UNDERSTATED, not overstated: correcting it raises every ratio. The corrected
+table below therefore reports a lower bound on what the enum adds. **What is
+wrong is the stated property of the instrument in the one sentence licensing the
+reversal**, and that sentence is corrected here rather than defended.
 
 ## THE CORRECTED RESULT, AND IT REVERSES §7.4c
 

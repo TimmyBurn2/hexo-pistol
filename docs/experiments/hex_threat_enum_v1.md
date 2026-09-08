@@ -15,8 +15,10 @@
 > MEASURED that the nested test's null was permuted over the whole code space,
 > so its join had **~4x the cells of the join it refereed** (194 against 49 at
 > `L = 7` T4). That is a correctness defect and it is FIXED at the code —
-> `permuted_within_counts` matches the cell count at 1.00x everywhere — and the
-> corrected run **reverses §7.4c**: the enum ADDS at all sixteen cells, `L = 7`
+> `permuted_within_counts` matches the cell count at 1.00x over the CODE SPACE,
+> though **not on the observed population the statistic actually counts, where it
+> is still 1.17x to 1.83x finer** (`wp22_phase2a_STOP_E.md`) — a residual whose
+> direction UNDERSTATES the enum. The corrected run **reverses §7.4c**: the enum ADDS at all sixteen cells, `L = 7`
 > T4 goes 0.93 → 1.71, and the row is **PRICED AND WEAK, not undecided**. The
 > corrected table is in the STOP document; it is not written into §7.4 because
 > this gate has no round left to review it.

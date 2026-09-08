@@ -1,9 +1,39 @@
-# WP-2.2 Phase 2a — HANDUP. Nothing is selected here.
+# WP-2.2 Phase 2a — **STOP AND SPLIT.** This was written as a HANDUP and its exit did not hold.
+
+> **BOTH GATES ARE OUT OF ROUNDS AND NEITHER SURVIVED.** Stage E failed four
+> reviews and split (`wp22_phase2a_STOP_E.md`); the matrix failed four
+> DECISION-RED-TEAM rounds — `0641504`, `564dc9e`, `c7a3ee1`, `695b6708` — the
+> last returning **4 BLOCKING, 10 MAJOR, 13 MINOR**. D-709's grant is spent, no
+> fifth round is self-granted, and **the dispatch's own clause applies: "Second
+> FAIL = STOP: the matrix splits (D-481), the split proposal is the STOP
+> summary." This document is that summary.**
+>
+> **THE SINGLE THING THAT STOPS IT GOING UP AS A RANKED FIELD**, in round 4's own
+> words: *"the nested test cannot carry a rank, and two ranks rest on it."*
+> `R-A4-CLASS`'s rank 2 rests on a criterion whose PASS side §2.5 disclaims and
+> on a nested test that Stage E's stop sent back as an unsettled package one
+> commit earlier.
+>
+> **AND THE FIFTH INSTANCE OF ONE DEFECT WAS CREATED BY THE FIX FOR THE FOURTH.**
+> `permuted_within_counts` matches the null join's cell count over the CODE
+> SPACE; `Moments.terms()` counts the cells actually OBSERVED, where the null is
+> still **1.167x to 1.834x finer**. The direction is conservative — a finer null
+> understates the enum — so the corrected conclusion survives as a LOWER BOUND,
+> and the claim that it "matched everywhere" was false and is corrected at every
+> site. **Five referents, five rounds, one property unchecked each time.**
+>
+> **WHAT GOES UP ANYWAY, because round 4 says so and this session agrees**: §2's
+> arena finding, §1.6's books arithmetic, §3's seed budget, the throughput seats,
+> the five Phase-2b obligations and the two book questions are *"settled and
+> replicated"*. **`R-A4-CLASS` goes up UNRANKED**, with the referent question
+> returned to Stage E's successor package.
+>
+> **THE SPLIT** is in §7.
 
 **Governing revision**: `695b6708` (`dev`) plus the closing commits this document
-names. **NO SELECTION AND NO ADR OF SELECTION** (D-708): the field is ranked, the
-strongest surviving attack on each row is quoted, and the two questions that
-decide Phase 2b are put to the architect.
+names. **NO SELECTION AND NO ADR OF SELECTION** (D-708). The order in §1 is recorded
+as what the matrix reached and **is not handed up as a ranking** — §7 says which
+parts are and which are not.
 
 ---
 
@@ -150,6 +180,26 @@ Every verification worktree named in these receipts was exported before removal
 first draft of this HANDUP — it named `seed_pilot/` and printed none of its
 digests — which is the fourth instance of that class in this package and the
 second the checker found rather than a reviewer.
+
+---
+
+## 7. THE SPLIT (D-481)
+
+Round 4's own division, adopted.
+
+| part | disposition |
+|---|---|
+| **§1.4 the arena's movetime refusal; §1.6 the books arithmetic and its four power cells; §3 the seed budget; §1.2/§1.3 the throughput seats; §2's Phase-2b obligations; the two book questions** | **GOES UP. Settled and replicated** — every power figure cross-checked digit for digit against `book_v3`'s committed 0.9045, every throughput replicated, the paired seed analysis reproduced independently twice. |
+| **The rows' parameter counts, densities, traffic and floors** | **GOES UP**, with §4's currency table and the `eval_families` §A1 reciprocal correction. |
+| **`R-A4-CLASS`** | **GOES UP UNRANKED.** Its measurements are real and its RANK is not: both instruments that would place it are disclaimed. |
+| **The RANKING of the eight rows** | **DOES NOT GO UP.** Four red teams produced four orderings and none survived its successor. |
+| **§2.5's criterion, §6's axis, and the nested test** | **BACK TO STAGE E's SUCCESSOR PACKAGE**, with the referent question its `wp22_phase2a_STOP_E.md` already owes. |
+
+**WHAT THE SUCCESSOR OWES ON TOP OF STAGE E's THREE ITEMS**: a ranking axis that
+answers "which row is worth the one funded run" rather than "which is cheapest
+to build" — round 3 measured that with one funded run *"run first"* is *"run
+only"*, and no prior about Elo exists that D-614 would let a matrix substitute an
+offline metric for.
 
 ---
 
